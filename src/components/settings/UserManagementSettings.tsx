@@ -49,6 +49,28 @@ export const UserManagementSettings = () => {
   const onSubmit = async (values: CreateUserForm) => {
     setIsLoading(true);
     try {
+      // Check if the user has permission to create users with this role
+      const { data: currentUser } = await supabase.auth.getUser();
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", currentUser.user?.id)
+        .single();
+
+      // Role hierarchy validation
+      const roleHierarchy = {
+        admin: ["admin", "manager", "staff", "customer"],
+        manager: ["staff", "customer"],
+        staff: ["customer"],
+        customer: [],
+      };
+
+      const allowedRoles = roleHierarchy[currentProfile?.role as keyof typeof roleHierarchy] || [];
+      
+      if (!allowedRoles.includes(values.role)) {
+        throw new Error("You don't have permission to create users with this role");
+      }
+
       // Create the user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: values.email,
