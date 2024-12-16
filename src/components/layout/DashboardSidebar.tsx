@@ -32,7 +32,7 @@ export const DashboardSidebar = ({ open, onOpenChange }: DashboardSidebarProps) 
   const location = useLocation();
 
   return (
-    <Sidebar defaultOpen={open} onOpenChange={onOpenChange}>
+    <Sidebar open={open} onOpenChange={onOpenChange}>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold">Customer Manager</span>
