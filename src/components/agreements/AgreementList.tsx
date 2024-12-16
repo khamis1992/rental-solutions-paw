@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Receipt, CreditCard, History } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -75,15 +75,9 @@ export const AgreementList = () => {
     window.open(`/agreements/${agreementId}/print`, '_blank', 'width=800,height=600');
   };
 
-  const handleViewInvoice = (agreementId: string) => {
+  const handleAgreementClick = (agreementId: string) => {
     setSelectedAgreementId(agreementId);
-  };
-
-  const handleViewPayments = (agreementId: string) => {
     setSelectedPaymentTrackingId(agreementId);
-  };
-
-  const handleViewPaymentHistory = (agreementId: string) => {
     setSelectedPaymentHistoryId(agreementId);
   };
 
@@ -106,7 +100,14 @@ export const AgreementList = () => {
           <TableBody>
             {agreements.map((agreement) => (
               <TableRow key={agreement.id}>
-                <TableCell className="font-medium">{agreement.id}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => handleAgreementClick(agreement.id)}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {agreement.id}
+                  </button>
+                </TableCell>
                 <TableCell>
                   <Link 
                     to={`/customers/${agreement.customerId}`}
@@ -143,31 +144,7 @@ export const AgreementList = () => {
                       onClick={() => handlePrintContract(agreement.id)}
                       title="Print Contract"
                     >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleViewInvoice(agreement.id)}
-                      title="View Invoice"
-                    >
-                      <Receipt className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleViewPayments(agreement.id)}
-                      title="View Payments"
-                    >
-                      <CreditCard className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleViewPaymentHistory(agreement.id)}
-                      title="Payment History"
-                    >
-                      <History className="h-4 w-4" />
+                      <Printer className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
