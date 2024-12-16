@@ -3,22 +3,20 @@
 import { useState } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar/sidebar-context";
+import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { open, setOpen } = useSidebar();
 
   return (
-    <SidebarProvider defaultOpen={sidebarOpen}>
-      <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar />
-        <div className={`transition-sidebar ${sidebarOpen ? "ml-64" : "ml-16"}`}>
-          <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          <main className="container mx-auto p-6">
-            {children}
-          </main>
-        </div>
+    <>
+      <DashboardSidebar />
+      <div className={`transition-sidebar ${open ? "ml-64" : "ml-16"}`}>
+        <DashboardHeader onMenuClick={() => setOpen(!open)} />
+        <main className="container mx-auto p-6">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </>
   );
 };
