@@ -9,7 +9,294 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      damages: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          images: string[] | null
+          lease_id: string
+          notes: string | null
+          repair_cost: number | null
+          reported_date: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          images?: string[] | null
+          lease_id: string
+          notes?: string | null
+          repair_cost?: number | null
+          reported_date?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[] | null
+          lease_id?: string
+          notes?: string | null
+          repair_cost?: number | null
+          reported_date?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "damages_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leases: {
+        Row: {
+          created_at: string
+          customer_id: string
+          end_date: string
+          id: string
+          initial_mileage: number
+          notes: string | null
+          return_mileage: number | null
+          start_date: string
+          status: Database["public"]["Enums"]["lease_status"] | null
+          total_amount: number
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          end_date: string
+          id?: string
+          initial_mileage: number
+          notes?: string | null
+          return_mileage?: number | null
+          start_date: string
+          status?: Database["public"]["Enums"]["lease_status"] | null
+          total_amount: number
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          end_date?: string
+          id?: string
+          initial_mileage?: number
+          notes?: string | null
+          return_mileage?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["lease_status"] | null
+          total_amount?: number
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance: {
+        Row: {
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          performed_by: string | null
+          scheduled_date: string
+          service_type: string
+          status: Database["public"]["Enums"]["maintenance_status"] | null
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          scheduled_date: string
+          service_type: string
+          status?: Database["public"]["Enums"]["maintenance_status"] | null
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          scheduled_date?: string
+          service_type?: string
+          status?: Database["public"]["Enums"]["maintenance_status"] | null
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          lease_id: string
+          payment_date: string | null
+          payment_method: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          lease_id: string
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          lease_id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          driver_license: string | null
+          full_name: string | null
+          id: string
+          phone_number: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          driver_license?: string | null
+          full_name?: string | null
+          id: string
+          phone_number?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          driver_license?: string | null
+          full_name?: string | null
+          id?: string
+          phone_number?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          color: string | null
+          created_at: string
+          daily_rate: number
+          description: string | null
+          id: string
+          image_url: string | null
+          license_plate: string
+          make: string
+          mileage: number | null
+          model: string
+          status: Database["public"]["Enums"]["vehicle_status"] | null
+          updated_at: string
+          vin: string
+          year: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          daily_rate: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          license_plate: string
+          make: string
+          mileage?: number | null
+          model: string
+          status?: Database["public"]["Enums"]["vehicle_status"] | null
+          updated_at?: string
+          vin: string
+          year: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          daily_rate?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          license_plate?: string
+          make?: string
+          mileage?: number | null
+          model?: string
+          status?: Database["public"]["Enums"]["vehicle_status"] | null
+          updated_at?: string
+          vin?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +305,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      lease_status: "pending" | "active" | "completed" | "cancelled"
+      maintenance_status:
+        | "scheduled"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
+      user_role: "admin" | "staff" | "customer"
+      vehicle_status: "available" | "rented" | "maintenance" | "retired"
     }
     CompositeTypes: {
       [_ in never]: never
