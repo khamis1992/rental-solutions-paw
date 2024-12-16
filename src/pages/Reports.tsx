@@ -4,6 +4,7 @@ import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { FleetStatus } from "@/components/reports/FleetStatus";
 import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
 import { LeaseToOwn } from "@/components/reports/LeaseToOwn";
+import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
 
 const Reports = () => {
   return (
@@ -21,6 +22,7 @@ const Reports = () => {
           <TabsTrigger value="fleet">Fleet Status</TabsTrigger>
           <TabsTrigger value="customer">Customer Analytics</TabsTrigger>
           <TabsTrigger value="lease">Lease-to-Own</TabsTrigger>
+          <TabsTrigger value="installment">Installment Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="revenue">
@@ -37,6 +39,10 @@ const Reports = () => {
 
         <TabsContent value="lease">
           <LeaseToOwn />
+        </TabsContent>
+
+        <TabsContent value="installment">
+          <InstallmentAnalysis />
         </TabsContent>
       </Tabs>
     </DashboardLayout>

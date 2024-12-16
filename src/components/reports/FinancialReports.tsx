@@ -13,9 +13,13 @@ import {
   Bar,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 export const FinancialReports = () => {
+  const { toast } = useToast();
+
   const { data: financialData, isLoading } = useQuery({
     queryKey: ["financial-reports"],
     queryFn: async () => {
@@ -94,6 +98,25 @@ export const FinancialReports = () => {
   const revenueData = Object.values(monthlyRevenue || {});
   const expenseData = Object.values(monthlyExpenses || {});
 
+  const exportData = (data: any, filename: string) => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      Object.keys(data[0]).join(",") + "\n" +
+      data.map((row: any) => Object.values(row).join(",")).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${filename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "Export Successful",
+      description: `${filename} has been downloaded`,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -105,8 +128,16 @@ export const FinancialReports = () => {
   return (
     <div className="grid gap-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Revenue by Agreement Type</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => exportData(revenueData, "revenue-by-type")}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
@@ -143,8 +174,16 @@ export const FinancialReports = () => {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Monthly Expenses</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => exportData(expenseData, "monthly-expenses")}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="h-[400px]">
