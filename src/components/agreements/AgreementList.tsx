@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Receipt, CreditCard } from "lucide-react";
+import { Eye, FileText, Receipt, CreditCard, History } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { InvoiceDialog } from "./InvoiceDialog";
 import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
+import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 
 const agreements = [
   {
@@ -64,6 +65,7 @@ const getStatusColor = (status: string) => {
 export const AgreementList = () => {
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
+  const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
 
   const handleViewContract = (agreementId: string) => {
     window.open(`/agreements/${agreementId}/view`, '_blank');
@@ -79,6 +81,10 @@ export const AgreementList = () => {
 
   const handleViewPayments = (agreementId: string) => {
     setSelectedPaymentTrackingId(agreementId);
+  };
+
+  const handleViewPaymentHistory = (agreementId: string) => {
+    setSelectedPaymentHistoryId(agreementId);
   };
 
   return (
@@ -155,6 +161,14 @@ export const AgreementList = () => {
                     >
                       <CreditCard className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleViewPaymentHistory(agreement.id)}
+                      title="Payment History"
+                    >
+                      <History className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -173,6 +187,12 @@ export const AgreementList = () => {
         agreementId={selectedPaymentTrackingId || ""}
         open={!!selectedPaymentTrackingId}
         onOpenChange={(open) => !open && setSelectedPaymentTrackingId(null)}
+      />
+
+      <PaymentHistoryDialog
+        agreementId={selectedPaymentHistoryId || ""}
+        open={!!selectedPaymentHistoryId}
+        onOpenChange={(open) => !open && setSelectedPaymentHistoryId(null)}
       />
     </>
   );
