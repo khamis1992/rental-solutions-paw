@@ -1,4 +1,4 @@
-import { Home, Car, Users, FileText, Settings } from "lucide-react";
+import { Home, Car, Users, Calendar, FileText, Settings, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
@@ -15,8 +15,10 @@ const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
   { icon: Car, label: "Vehicles", href: "/vehicles" },
   { icon: Users, label: "Customers", href: "/customers" },
-  { icon: FileText, label: "Agreements", href: "/agreements" },
+  { icon: Calendar, label: "Calendar", href: "/calendar" },
+  { icon: FileText, label: "Reports", href: "/reports" },
   { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
 export const DashboardSidebar = () => {

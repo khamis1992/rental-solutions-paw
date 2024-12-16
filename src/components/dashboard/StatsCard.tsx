@@ -5,7 +5,7 @@ interface StatsCardProps {
   title: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
-  description?: string;
+  description?: React.ReactNode;
   className?: string;
 }
 
@@ -25,7 +25,7 @@ export const StatsCard = ({
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <div className="text-xs text-muted-foreground mt-1">{description}</div>
         )}
       </CardContent>
     </Card>
