@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -6,69 +5,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
-interface VehicleFiltersProps {
-  filters: {
-    status: string;
-    make: string;
-    model: string;
-    year: string;
-  };
-  setFilters: React.Dispatch<
-    React.SetStateAction<{
-      status: string;
-      make: string;
-      model: string;
-      year: string;
-    }>
-  >;
+interface VehicleFilters {
+  status: string;
+  searchQuery: string;
 }
 
-export const VehicleFilters = ({ filters, setFilters }: VehicleFiltersProps) => {
+interface VehicleFiltersProps {
+  filters: VehicleFilters;
+  setFilters: (filters: VehicleFilters) => void;
+}
+
+export const VehicleFilters = ({
+  filters,
+  setFilters,
+}: VehicleFiltersProps) => {
   return (
-    <div className="grid gap-4 md:grid-cols-4 mb-6">
-      <Select
-        value={filters.status}
-        onValueChange={(value) =>
-          setFilters((prev) => ({ ...prev, status: value }))
-        }
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="available">Available</SelectItem>
-          <SelectItem value="rented">Rented</SelectItem>
-          <SelectItem value="maintenance">Maintenance</SelectItem>
-          <SelectItem value="retired">Retired</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Input
-        placeholder="Make"
-        value={filters.make}
-        onChange={(e) =>
-          setFilters((prev) => ({ ...prev, make: e.target.value }))
-        }
-      />
-
-      <Input
-        placeholder="Model"
-        value={filters.model}
-        onChange={(e) =>
-          setFilters((prev) => ({ ...prev, model: e.target.value }))
-        }
-      />
-
-      <Input
-        placeholder="Year"
-        type="number"
-        value={filters.year}
-        onChange={(e) =>
-          setFilters((prev) => ({ ...prev, year: e.target.value }))
-        }
-      />
+    <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="w-full md:w-1/3">
+        <Select
+          value={filters.status}
+          onValueChange={(value) =>
+            setFilters({ ...filters, status: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="available">Available</SelectItem>
+            <SelectItem value="rented">Rented</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="w-full md:w-1/3">
+        <Input
+          placeholder="Search vehicles..."
+          value={filters.searchQuery}
+          onChange={(e) =>
+            setFilters({ ...filters, searchQuery: e.target.value })
+          }
+        />
+      </div>
     </div>
   );
 };
