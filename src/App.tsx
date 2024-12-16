@@ -11,6 +11,7 @@ import Customers from "./pages/Customers";
 import Agreements from "./pages/Agreements";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => {
                 <Route path="/agreements" element={<Agreements />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/help" element={<Help />} />
               </Routes>
               <Toaster />
               <Sonner />
