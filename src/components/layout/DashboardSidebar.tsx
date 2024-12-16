@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { SidebarProps } from "@/components/ui/sidebar/types";
+import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -24,8 +25,9 @@ const menuItems = [
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
-export const DashboardSidebar = ({ open, onOpenChange }: SidebarProps) => {
+export const DashboardSidebar = () => {
   const location = useLocation();
+  const { open } = useSidebar();
 
   return (
     <Sidebar className="fixed inset-y-0 left-0 z-50">
