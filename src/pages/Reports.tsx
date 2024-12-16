@@ -1,9 +1,10 @@
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FleetAnalytics } from "@/components/reports/FleetAnalytics";
-import { FinancialReports } from "@/components/reports/FinancialReports";
-import { CustomerInsights } from "@/components/reports/CustomerInsights";
+import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
+import { FleetStatus } from "@/components/reports/FleetStatus";
+import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
+import { LeaseToOwn } from "@/components/reports/LeaseToOwn";
 
 const Reports = () => {
   return (
@@ -16,27 +17,32 @@ const Reports = () => {
             <div className="mb-6">
               <h1 className="text-3xl font-bold">Reports & Analytics</h1>
               <p className="text-muted-foreground mt-1">
-                Comprehensive insights into fleet performance, financials, and customer behavior
+                Comprehensive insights into your fleet operations and business performance.
               </p>
             </div>
 
-            <Tabs defaultValue="fleet" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-                <TabsTrigger value="fleet">Fleet Analytics</TabsTrigger>
-                <TabsTrigger value="financial">Financial</TabsTrigger>
-                <TabsTrigger value="customer">Customer</TabsTrigger>
+            <Tabs defaultValue="revenue" className="space-y-6">
+              <TabsList className="bg-muted/50 p-1 rounded-lg">
+                <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
+                <TabsTrigger value="fleet">Fleet Status</TabsTrigger>
+                <TabsTrigger value="customer">Customer Analytics</TabsTrigger>
+                <TabsTrigger value="lease">Lease-to-Own</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="fleet" className="space-y-6">
-                <FleetAnalytics />
+              <TabsContent value="revenue">
+                <RevenueAnalysis />
               </TabsContent>
 
-              <TabsContent value="financial" className="space-y-6">
-                <FinancialReports />
+              <TabsContent value="fleet">
+                <FleetStatus />
               </TabsContent>
 
-              <TabsContent value="customer" className="space-y-6">
-                <CustomerInsights />
+              <TabsContent value="customer">
+                <CustomerAnalytics />
+              </TabsContent>
+
+              <TabsContent value="lease">
+                <LeaseToOwn />
               </TabsContent>
             </Tabs>
           </div>
