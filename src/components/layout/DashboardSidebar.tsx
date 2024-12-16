@@ -12,7 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { SidebarProps } from "@/components/ui/sidebar/types";
 import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
 
 const menuItems = [

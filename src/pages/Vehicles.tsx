@@ -57,7 +57,7 @@ const Vehicles = () => {
   return (
     <SidebarProvider defaultOpen={sidebarOpen}>
       <div className="min-h-screen flex w-full">
-        <DashboardSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+        <DashboardSidebar />
         <div className="flex-1">
           <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           <main className="container py-6">
