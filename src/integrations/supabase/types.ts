@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       damages: {
         Row: {
           created_at: string
@@ -213,6 +254,30 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          resource: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          resource: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          resource?: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -302,7 +367,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      log_audit_event: {
+        Args: {
+          p_user_id: string
+          p_action: string
+          p_entity_type: string
+          p_entity_id: string
+          p_changes: Json
+          p_ip_address: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       lease_status: "pending" | "active" | "completed" | "cancelled"
@@ -312,7 +387,7 @@ export type Database = {
         | "completed"
         | "cancelled"
       payment_status: "pending" | "completed" | "failed" | "refunded"
-      user_role: "admin" | "staff" | "customer"
+      user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status: "available" | "rented" | "maintenance" | "retired"
     }
     CompositeTypes: {
