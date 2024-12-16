@@ -59,6 +59,16 @@ const getStatusColor = (status: string) => {
 };
 
 export const AgreementList = () => {
+  const handleViewContract = (agreementId: string) => {
+    // Open contract in new window/tab
+    window.open(`/agreements/${agreementId}/view`, '_blank');
+  };
+
+  const handlePrintContract = (agreementId: string) => {
+    // Open print dialog for contract
+    window.open(`/agreements/${agreementId}/print`, '_blank', 'width=800,height=600');
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -100,10 +110,20 @@ export const AgreementList = () => {
               <TableCell>{formatCurrency(agreement.amount)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleViewContract(agreement.id)}
+                    title="View Contract"
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handlePrintContract(agreement.id)}
+                    title="Print Contract"
+                  >
                     <FileText className="h-4 w-4" />
                   </Button>
                 </div>
