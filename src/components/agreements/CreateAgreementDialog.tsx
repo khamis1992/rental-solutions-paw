@@ -10,16 +10,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FilePlus2 } from "lucide-react";
 import { useAgreementForm } from "./hooks/useAgreementForm";
+import { AgreementTypeSelect } from "./form/AgreementTypeSelect";
+import { CustomerSelect } from "./form/CustomerSelect";
+import { VehicleSelect } from "./form/VehicleSelect";
+import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export function CreateAgreementDialog() {
   const {
@@ -31,9 +30,27 @@ export function CreateAgreementDialog() {
     agreementType,
     updateMonthlyPayment,
     watch,
+    setValue,
   } = useAgreementForm(() => {
     // Callback after successful creation
   });
+
+  const handleVehicleSelect = async (vehicleId: string) => {
+    try {
+      const { data: vehicle } = await supabase
+        .from('vehicles')
+        .select('daily_rate')
+        .eq('id', vehicleId)
+        .single();
+
+      if (vehicle) {
+        // Set total amount to monthly rent (daily rate * 30)
+        setValue('totalAmount', vehicle.daily_rate * 30);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle rate:', error);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -52,51 +69,9 @@ export function CreateAgreementDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="agreementType">Agreement Type</Label>
-              <Select
-                {...register("agreementType")}
-                onValueChange={(value) =>
-                  register("agreementType").onChange({
-                    target: { value },
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-                  <SelectItem value="short_term">Short Term Rental</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customerId">Customer</Label>
-              <Select {...register("customerId")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">John Doe</SelectItem>
-                  <SelectItem value="2">Jane Smith</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="vehicleId">Vehicle</Label>
-              <Select {...register("vehicleId")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select vehicle" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">2024 Toyota Camry</SelectItem>
-                  <SelectItem value="2">2023 Honda CR-V</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <AgreementTypeSelect register={register} />
+            <CustomerSelect register={register} />
+            <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
 
             <div className="space-y-2">
               <Label htmlFor="initialMileage">Initial Mileage</Label>
@@ -122,60 +97,11 @@ export function CreateAgreementDialog() {
             </div>
 
             {agreementType === "lease_to_own" && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="downPayment">Down Payment</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register("downPayment")}
-                    onChange={(e) => {
-                      register("downPayment").onChange(e);
-                      updateMonthlyPayment();
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="monthlyPayment">Monthly Payment</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register("monthlyPayment")}
-                    readOnly
-                    value={watch("monthlyPayment") || ""}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="interestRate">Interest Rate (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    {...register("interestRate")}
-                    onChange={(e) => {
-                      register("interestRate").onChange(e);
-                      updateMonthlyPayment();
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="leaseDuration">Lease Duration (months)</Label>
-                  <Input
-                    type="number"
-                    placeholder="12"
-                    {...register("leaseDuration")}
-                    onChange={(e) => {
-                      register("leaseDuration").onChange(e);
-                      updateMonthlyPayment();
-                    }}
-                  />
-                </div>
-              </>
+              <LeaseToOwnFields
+                register={register}
+                updateMonthlyPayment={updateMonthlyPayment}
+                watch={watch}
+              />
             )}
 
             <div className="col-span-2 space-y-2">
