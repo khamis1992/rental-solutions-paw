@@ -16,7 +16,7 @@ export type ViewMode = "grid" | "list";
 const Vehicles = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [filters, setFilters] = useState({
-    status: "",
+    status: "all",
     make: "",
     model: "",
     year: "",
@@ -29,7 +29,7 @@ const Vehicles = () => {
         .from("vehicles")
         .select("*");
 
-      if (filters.status) {
+      if (filters.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
       }
       if (filters.make) {
