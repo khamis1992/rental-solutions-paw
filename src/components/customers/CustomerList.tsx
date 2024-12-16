@@ -7,8 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CustomerList = () => {
   const { data: customers, isLoading } = useQuery({
@@ -54,7 +55,11 @@ export const CustomerList = () => {
               <TableCell>{customer.phone_number}</TableCell>
               <TableCell>{customer.address}</TableCell>
               <TableCell>{customer.driver_license}</TableCell>
-              <TableCell className="capitalize">{customer.role}</TableCell>
+              <TableCell>
+                <Badge variant={customer.role === "customer" ? "secondary" : "default"}>
+                  {customer.role}
+                </Badge>
+              </TableCell>
               <TableCell>
                 {new Date(customer.created_at).toLocaleDateString()}
               </TableCell>

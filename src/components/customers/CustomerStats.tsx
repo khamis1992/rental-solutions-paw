@@ -23,8 +23,8 @@ export const CustomerStats = () => {
       return {
         total: total || 0,
         newThisMonth: newThisMonth || 0,
-        active: total || 0, // For demo purposes
-        inactive: 0, // For demo purposes
+        active: total || 0,
+        inactive: 0,
       };
     },
   });
