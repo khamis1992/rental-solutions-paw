@@ -24,7 +24,7 @@ const Maintenance = () => {
     queryFn: async () => {
       let query = supabase
         .from("maintenance")
-        .select("*, vehicles(make, model, year)");
+        .select("*, vehicles(make, model, year, license_plate)");
 
       if (filters.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
@@ -78,18 +78,56 @@ const Maintenance = () => {
                   // Ensure we only pass valid status types
                   const status = record.status === "cancelled" ? "scheduled" : record.status || "scheduled";
                   
+                  // Mock data for demonstration - in a real app, this would come from the database
+                  const mockParts = [
+                    {
+                      name: "Oil Filter",
+                      partNumber: "OF-123",
+                      quantity: 1,
+                      status: "in_stock" as const,
+                      cost: 15.99,
+                      supplier: "AutoParts Inc",
+                    },
+                    {
+                      name: "Synthetic Oil",
+                      partNumber: "SO-456",
+                      quantity: 5,
+                      status: "in_stock" as const,
+                      cost: 12.99,
+                      supplier: "AutoParts Inc",
+                    },
+                  ];
+
+                  const mockIssues = [
+                    "Oil level critically low",
+                    "Minor oil leak detected",
+                  ];
+
                   return (
                     <JobCard
                       key={record.id}
                       id={record.id}
                       vehicleId={record.vehicle_id}
+                      vehicleInfo={record.vehicles ? {
+                        make: record.vehicles.make,
+                        model: record.vehicles.model,
+                        year: record.vehicles.year,
+                        licensePlate: record.vehicles.license_plate,
+                      } : undefined}
                       serviceType={record.service_type}
+                      category="routine"
                       priority="medium"
                       status={status}
                       scheduledDate={record.scheduled_date}
+                      dueDate={record.scheduled_date} // For demo, using same date
                       description={record.description || ""}
                       assignedTo={record.performed_by}
                       estimatedHours={4}
+                      laborRate={75}
+                      parts={mockParts}
+                      vehicleCondition="Regular maintenance required"
+                      diagnosedIssues={mockIssues}
+                      technicianNotes={record.notes || "No additional notes"}
                     />
                   );
                 })}
