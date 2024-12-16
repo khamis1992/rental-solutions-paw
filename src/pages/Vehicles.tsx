@@ -15,6 +15,7 @@ export type ViewMode = "grid" | "list";
 
 const Vehicles = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [filters, setFilters] = useState({
     status: "",
     make: "",
@@ -54,11 +55,11 @@ const Vehicles = () => {
   });
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={sidebarOpen}>
       <div className="min-h-screen flex w-full">
-        <DashboardSidebar />
+        <DashboardSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
         <div className="flex-1">
-          <DashboardHeader />
+          <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
           <main className="container py-6">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold">Vehicles</h1>

@@ -32,7 +32,7 @@ export const DashboardSidebar = ({ open, onOpenChange }: DashboardSidebarProps) 
   const location = useLocation();
 
   return (
-    <Sidebar open={open} onOpenChange={onOpenChange}>
+    <Sidebar defaultOpen={open} onOpenChange={onOpenChange}>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold">Customer Manager</span>
@@ -44,7 +44,7 @@ export const DashboardSidebar = ({ open, onOpenChange }: DashboardSidebarProps) 
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
                     asChild
-                    active={location.pathname === item.href}
+                    isActive={location.pathname === item.href}
                   >
                     <a
                       href={item.href}
