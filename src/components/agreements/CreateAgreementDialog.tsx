@@ -31,6 +31,7 @@ type FormData = {
   startDate: string;
   endDate: string;
   totalAmount: number;
+  initialMileage: number;
   downPayment?: number;
   monthlyPayment?: number;
   interestRate?: number;
@@ -46,21 +47,20 @@ export function CreateAgreementDialog() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const { error } = await supabase.from("leases").insert([
-        {
-          agreement_type: data.agreementType,
-          customer_id: data.customerId,
-          vehicle_id: data.vehicleId,
-          start_date: data.startDate,
-          end_date: data.endDate,
-          total_amount: data.totalAmount,
-          down_payment: data.downPayment,
-          monthly_payment: data.monthlyPayment,
-          interest_rate: data.interestRate,
-          lease_duration: data.leaseDuration,
-          notes: data.notes,
-        },
-      ]);
+      const { error } = await supabase.from("leases").insert({
+        agreement_type: data.agreementType,
+        customer_id: data.customerId,
+        vehicle_id: data.vehicleId,
+        start_date: data.startDate,
+        end_date: data.endDate,
+        total_amount: data.totalAmount,
+        initial_mileage: data.initialMileage,
+        down_payment: data.downPayment,
+        monthly_payment: data.monthlyPayment,
+        interest_rate: data.interestRate,
+        lease_duration: data.leaseDuration,
+        notes: data.notes,
+      });
 
       if (error) throw error;
 
@@ -143,6 +143,15 @@ export function CreateAgreementDialog() {
                   <SelectItem value="2">2023 Honda CR-V</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="initialMileage">Initial Mileage</Label>
+              <Input
+                type="number"
+                {...register("initialMileage")}
+                placeholder="Enter initial mileage"
+              />
             </div>
 
             <div className="space-y-2">
