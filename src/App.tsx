@@ -10,6 +10,7 @@ import Maintenance from "./pages/Maintenance";
 import Customers from "./pages/Customers";
 import Agreements from "./pages/Agreements";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => {
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/agreements" element={<Agreements />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
               </Routes>
               <Toaster />
               <Sonner />
