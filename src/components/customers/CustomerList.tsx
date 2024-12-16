@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 export const CustomerList = () => {
   const { data: customers, isLoading } = useQuery({
@@ -51,7 +52,14 @@ export const CustomerList = () => {
         <TableBody>
           {customers?.map((customer) => (
             <TableRow key={customer.id}>
-              <TableCell>{customer.full_name}</TableCell>
+              <TableCell>
+                <Link
+                  to={`/customers/${customer.id}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {customer.full_name}
+                </Link>
+              </TableCell>
               <TableCell>{customer.phone_number}</TableCell>
               <TableCell>{customer.address}</TableCell>
               <TableCell>{customer.driver_license}</TableCell>
