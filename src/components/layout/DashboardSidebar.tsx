@@ -1,31 +1,27 @@
-import { Home, Users, Car, Calendar, FileText, Search, Settings, HelpCircle, User } from "lucide-react";
+import { Home, Car, Users, Calendar, FileText, Settings, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useLocation } from "react-router-dom";
 
 const menuItems = [
-  { icon: Home, label: "Dashboard", href: "/dashboard" },
-  { icon: Users, label: "Users", href: "/users" },
+  { icon: Home, label: "Dashboard", href: "/" },
   { icon: Car, label: "Vehicles", href: "/vehicles" },
+  { icon: Users, label: "Customers", href: "/customers" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
   { icon: FileText, label: "Reports", href: "/reports" },
-  { icon: Search, label: "Search", href: "/search" },
   { icon: Settings, label: "Settings", href: "/settings" },
   { icon: HelpCircle, label: "Help", href: "/help" },
-  { icon: User, label: "Profile", href: "/profile" },
 ];
 
 export const DashboardSidebar = () => {
-  const location = useLocation();
-
   return (
     <Sidebar>
       <SidebarContent>
@@ -40,10 +36,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuButton asChild>
                     <a
                       href={item.href}
-                      className={cn(
-                        "flex items-center gap-2",
-                        location.pathname === item.href && "text-primary"
-                      )}
+                      className="flex items-center gap-2"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
