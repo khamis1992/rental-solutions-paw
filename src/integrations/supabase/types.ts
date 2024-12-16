@@ -99,44 +99,68 @@ export type Database = {
       }
       leases: {
         Row: {
+          agreement_type: Database["public"]["Enums"]["agreement_type"]
           created_at: string
           customer_id: string
+          down_payment: number | null
+          early_payoff_allowed: boolean | null
           end_date: string
           id: string
           initial_mileage: number
+          interest_rate: number | null
+          lease_duration: unknown | null
+          monthly_payment: number | null
           notes: string | null
+          ownership_transferred: boolean | null
           return_mileage: number | null
           start_date: string
           status: Database["public"]["Enums"]["lease_status"] | null
           total_amount: number
+          trade_in_value: number | null
           updated_at: string
           vehicle_id: string
         }
         Insert: {
+          agreement_type?: Database["public"]["Enums"]["agreement_type"]
           created_at?: string
           customer_id: string
+          down_payment?: number | null
+          early_payoff_allowed?: boolean | null
           end_date: string
           id?: string
           initial_mileage: number
+          interest_rate?: number | null
+          lease_duration?: unknown | null
+          monthly_payment?: number | null
           notes?: string | null
+          ownership_transferred?: boolean | null
           return_mileage?: number | null
           start_date: string
           status?: Database["public"]["Enums"]["lease_status"] | null
           total_amount: number
+          trade_in_value?: number | null
           updated_at?: string
           vehicle_id: string
         }
         Update: {
+          agreement_type?: Database["public"]["Enums"]["agreement_type"]
           created_at?: string
           customer_id?: string
+          down_payment?: number | null
+          early_payoff_allowed?: boolean | null
           end_date?: string
           id?: string
           initial_mileage?: number
+          interest_rate?: number | null
+          lease_duration?: unknown | null
+          monthly_payment?: number | null
           notes?: string | null
+          ownership_transferred?: boolean | null
           return_mileage?: number | null
           start_date?: string
           status?: Database["public"]["Enums"]["lease_status"] | null
           total_amount?: number
+          trade_in_value?: number | null
           updated_at?: string
           vehicle_id?: string
         }
@@ -206,6 +230,44 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_schedules: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          lease_id: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          lease_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          lease_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_schedules_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
             referencedColumns: ["id"]
           },
         ]
@@ -380,6 +442,7 @@ export type Database = {
       }
     }
     Enums: {
+      agreement_type: "lease_to_own" | "short_term"
       lease_status: "pending" | "active" | "completed" | "cancelled"
       maintenance_status:
         | "scheduled"

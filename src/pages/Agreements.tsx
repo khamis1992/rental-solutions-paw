@@ -3,6 +3,7 @@ import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { AgreementFilters } from "@/components/agreements/AgreementFilters";
+import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 
 const Agreements = () => {
   return (
@@ -18,6 +19,7 @@ const Agreements = () => {
                 Manage and track all vehicle rental agreements
               </p>
             </div>
+            <CreateAgreementDialog />
           </div>
           <AgreementStats />
           <div className="mt-6">
