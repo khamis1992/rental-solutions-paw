@@ -7,30 +7,30 @@ import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDi
 
 const Agreements = () => {
   return (
-    <>
+    <div className="flex h-screen overflow-hidden">
       <DashboardSidebar />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader />
-        <main className="container py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">Rental Agreements</h1>
-              <p className="text-muted-foreground mt-1">
-                Manage and track all vehicle rental agreements
-              </p>
+        <main className="flex-1 overflow-y-auto">
+          <div className="container py-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Rental Agreements</h1>
+                <p className="text-muted-foreground mt-1">
+                  Manage and track all vehicle rental agreements
+                </p>
+              </div>
+              <CreateAgreementDialog />
             </div>
-            <CreateAgreementDialog />
-          </div>
-          <AgreementStats />
-          <div className="mt-6">
-            <AgreementFilters />
-          </div>
-          <div className="mt-6">
-            <AgreementList />
+            <div className="grid gap-6">
+              <AgreementStats />
+              <AgreementFilters />
+              <AgreementList />
+            </div>
           </div>
         </main>
       </div>
-    </>
+    </div>
   );
 };
 
