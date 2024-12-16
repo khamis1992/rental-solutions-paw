@@ -136,39 +136,6 @@ export type Database = {
           },
         ]
       }
-      import_logs: {
-        Row: {
-          created_at: string | null
-          errors: Json | null
-          file_name: string
-          id: string
-          import_type: string
-          records_processed: number | null
-          status: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          errors?: Json | null
-          file_name: string
-          id?: string
-          import_type: string
-          records_processed?: number | null
-          status?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          errors?: Json | null
-          file_name?: string
-          id?: string
-          import_type?: string
-          records_processed?: number | null
-          status?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       leases: {
         Row: {
           agreement_type: Database["public"]["Enums"]["agreement_type"]
