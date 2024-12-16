@@ -1,13 +1,48 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Car, DollarSign, Users, FileText } from "lucide-react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <DashboardSidebar />
+        <div className="flex-1">
+          <DashboardHeader />
+          <main className="container py-6">
+            <h1 className="text-3xl font-bold mb-6">Dashboard Overview</h1>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <StatsCard
+                title="Total Vehicles"
+                value="124"
+                icon={Car}
+                description="+2 this month"
+              />
+              <StatsCard
+                title="Active Customers"
+                value="1,429"
+                icon={Users}
+                description="+18.2% from last month"
+              />
+              <StatsCard
+                title="Active Rentals"
+                value="89"
+                icon={FileText}
+                description="23 pending returns"
+              />
+              <StatsCard
+                title="Monthly Revenue"
+                value="$48,574"
+                icon={DollarSign}
+                description="+7.4% from last month"
+              />
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
