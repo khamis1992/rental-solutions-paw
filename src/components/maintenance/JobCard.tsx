@@ -9,7 +9,6 @@ import {
   Wrench,
   User,
   Car,
-  Tool,
   Package,
   DollarSign,
   FileText,
