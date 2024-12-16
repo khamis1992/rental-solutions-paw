@@ -8,46 +8,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Printer } from "lucide-react";
+import { Eye, Printer, FileText, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { InvoiceDialog } from "./InvoiceDialog";
 import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
-
-const agreements = [
-  {
-    id: "AGR-001",
-    customer: "John Doe",
-    customerId: "1", // Added customerId for linking
-    vehicle: "2024 Toyota Camry",
-    startDate: "2024-03-15",
-    endDate: "2024-03-20",
-    status: "active",
-    amount: 450.00,
-  },
-  {
-    id: "AGR-002",
-    customer: "Jane Smith",
-    customerId: "2",
-    vehicle: "2023 Honda CR-V",
-    startDate: "2024-03-18",
-    endDate: "2024-03-25",
-    status: "pending",
-    amount: 680.00,
-  },
-  {
-    id: "AGR-003",
-    customer: "Mike Johnson",
-    customerId: "3",
-    vehicle: "2024 BMW X5",
-    startDate: "2024-03-10",
-    endDate: "2024-03-17",
-    status: "expired",
-    amount: 890.00,
-  },
-];
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -63,16 +32,109 @@ const getStatusColor = (status: string) => {
 };
 
 export const AgreementList = () => {
+  const navigate = useNavigate();
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
 
-  const handleViewContract = (agreementId: string) => {
-    window.open(`/agreements/${agreementId}/view`, '_blank');
+  const handleViewContract = async (agreementId: string) => {
+    try {
+      const { data: agreement, error } = await supabase
+        .from('leases')
+        .select('*')
+        .eq('id', agreementId)
+        .single();
+
+      if (error) throw error;
+
+      if (agreement) {
+        navigate(`/agreements/${agreementId}/view`);
+      } else {
+        toast.error("Agreement not found");
+      }
+    } catch (error) {
+      console.error('Error viewing contract:', error);
+      toast.error("Failed to view contract");
+    }
   };
 
-  const handlePrintContract = (agreementId: string) => {
-    window.open(`/agreements/${agreementId}/print`, '_blank', 'width=800,height=600');
+  const handlePrintContract = async (agreementId: string) => {
+    try {
+      const { data: agreement, error } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          vehicles (make, model, year),
+          profiles (full_name, address)
+        `)
+        .eq('id', agreementId)
+        .single();
+
+      if (error) throw error;
+
+      if (agreement) {
+        // Open in new window for printing
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Rental Agreement - ${agreement.id}</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; }
+                  .header { text-align: center; margin-bottom: 30px; }
+                  .section { margin-bottom: 20px; }
+                  .footer { margin-top: 50px; }
+                </style>
+              </head>
+              <body>
+                <div class="header">
+                  <h1>Rental Agreement</h1>
+                  <p>Agreement ID: ${agreement.id}</p>
+                </div>
+                <div class="section">
+                  <h2>Vehicle Details</h2>
+                  <p>${agreement.vehicles.year} ${agreement.vehicles.make} ${agreement.vehicles.model}</p>
+                </div>
+                <div class="section">
+                  <h2>Customer Details</h2>
+                  <p>${agreement.profiles.full_name}</p>
+                  <p>${agreement.profiles.address}</p>
+                </div>
+                <div class="section">
+                  <h2>Agreement Terms</h2>
+                  <p>Start Date: ${new Date(agreement.start_date).toLocaleDateString()}</p>
+                  <p>End Date: ${new Date(agreement.end_date).toLocaleDateString()}</p>
+                  <p>Total Amount: ${formatCurrency(agreement.total_amount)}</p>
+                </div>
+                <div class="footer">
+                  <p>Signatures:</p>
+                  <div style="margin-top: 30px;">
+                    <div style="float: left; width: 45%;">
+                      ____________________<br>
+                      Customer Signature
+                    </div>
+                    <div style="float: right; width: 45%;">
+                      ____________________<br>
+                      Company Representative
+                    </div>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+          printWindow.print();
+        } else {
+          toast.error("Unable to open print window");
+        }
+      } else {
+        toast.error("Agreement not found");
+      }
+    } catch (error) {
+      console.error('Error printing contract:', error);
+      toast.error("Failed to print contract");
+    }
   };
 
   const handleAgreementClick = (agreementId: string) => {
