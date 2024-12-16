@@ -6,8 +6,7 @@ import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters";
 import { JobCard } from "@/components/maintenance/JobCard";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,11 +51,7 @@ const Maintenance = () => {
         <main className="container py-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Maintenance</h1>
-            <div className="flex gap-2">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Create Job Card
-              </Button>
-            </div>
+            <CreateJobDialog />
           </div>
           
           <MaintenanceStats records={maintenanceRecords || []} isLoading={isLoading} />
@@ -75,10 +70,8 @@ const Maintenance = () => {
             <TabsContent value="jobs">
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {maintenanceRecords?.map((record) => {
-                  // Ensure we only pass valid status types
                   const status = record.status === "cancelled" ? "scheduled" : record.status || "scheduled";
                   
-                  // Mock data for demonstration - in a real app, this would come from the database
                   const mockParts = [
                     {
                       name: "Oil Filter",
@@ -119,7 +112,7 @@ const Maintenance = () => {
                       priority="medium"
                       status={status}
                       scheduledDate={record.scheduled_date}
-                      dueDate={record.scheduled_date} // For demo, using same date
+                      dueDate={record.scheduled_date}
                       description={record.description || ""}
                       assignedTo={record.performed_by}
                       estimatedHours={4}
