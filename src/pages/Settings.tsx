@@ -5,6 +5,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { BillingSettings } from "@/components/settings/BillingSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
+import { UserManagementSettings } from "@/components/settings/UserManagementSettings";
 
 const Settings = () => {
   return (
@@ -24,6 +25,7 @@ const Settings = () => {
             <TabsTrigger value="billing">Billing & Payments</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
             <GeneralSettings />
@@ -39,6 +41,9 @@ const Settings = () => {
           </TabsContent>
           <TabsContent value="integrations">
             <IntegrationSettings />
+          </TabsContent>
+          <TabsContent value="users">
+            <UserManagementSettings />
           </TabsContent>
         </Tabs>
       </div>
