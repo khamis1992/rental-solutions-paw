@@ -5,7 +5,6 @@ import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters";
-import { MaintenanceCalendar } from "@/components/maintenance/MaintenanceCalendar";
 import { JobCard } from "@/components/maintenance/JobCard";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -45,12 +44,6 @@ const Maintenance = () => {
     },
   });
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      toast.info(`Selected date: ${date.toLocaleDateString()}`);
-    }
-  };
-
   return (
     <>
       <DashboardSidebar />
@@ -71,7 +64,6 @@ const Maintenance = () => {
           <Tabs defaultValue="list" className="mt-6">
             <TabsList>
               <TabsTrigger value="list">List View</TabsTrigger>
-              <TabsTrigger value="calendar">Calendar</TabsTrigger>
               <TabsTrigger value="jobs">Job Cards</TabsTrigger>
             </TabsList>
             
@@ -80,47 +72,27 @@ const Maintenance = () => {
               <MaintenanceList records={maintenanceRecords || []} isLoading={isLoading} />
             </TabsContent>
             
-            <TabsContent value="calendar">
-              <div className="grid md:grid-cols-[300px,1fr] gap-6">
-                <MaintenanceCalendar
-                  tasks={[]}
-                  onDateSelect={handleDateSelect}
-                />
-                <div className="space-y-4">
-                  {maintenanceRecords?.map((record) => (
+            <TabsContent value="jobs">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {maintenanceRecords?.map((record) => {
+                  // Ensure we only pass valid status types
+                  const status = record.status === "cancelled" ? "scheduled" : record.status || "scheduled";
+                  
+                  return (
                     <JobCard
                       key={record.id}
                       id={record.id}
                       vehicleId={record.vehicle_id}
                       serviceType={record.service_type}
                       priority="medium"
-                      status={record.status || "scheduled"}
+                      status={status}
                       scheduledDate={record.scheduled_date}
                       description={record.description || ""}
                       assignedTo={record.performed_by}
                       estimatedHours={4}
                     />
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="jobs">
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {maintenanceRecords?.map((record) => (
-                  <JobCard
-                    key={record.id}
-                    id={record.id}
-                    vehicleId={record.vehicle_id}
-                    serviceType={record.service_type}
-                    priority="medium"
-                    status={record.status || "scheduled"}
-                    scheduledDate={record.scheduled_date}
-                    description={record.description || ""}
-                    assignedTo={record.performed_by}
-                    estimatedHours={4}
-                  />
-                ))}
+                  );
+                })}
               </div>
             </TabsContent>
           </Tabs>
