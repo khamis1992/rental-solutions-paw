@@ -9,6 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -36,6 +38,19 @@ export const FinancialReports = () => {
     },
   });
 
+  const { data: maintenanceData } = useQuery({
+    queryKey: ["maintenance-costs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance")
+        .select("*")
+        .order('created_at');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const monthlyRevenue = financialData?.reduce((acc: any, payment) => {
     const date = new Date(payment.created_at);
     const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
@@ -45,19 +60,39 @@ export const FinancialReports = () => {
         month: monthYear,
         shortTerm: 0,
         leaseToOwn: 0,
+        total: 0,
       };
     }
 
+    const amount = payment.amount || 0;
+    acc[monthYear].total += amount;
+
     if (payment.lease?.agreement_type === 'short_term') {
-      acc[monthYear].shortTerm += payment.amount;
+      acc[monthYear].shortTerm += amount;
     } else {
-      acc[monthYear].leaseToOwn += payment.amount;
+      acc[monthYear].leaseToOwn += amount;
     }
 
     return acc;
   }, {});
 
+  const monthlyExpenses = maintenanceData?.reduce((acc: any, record) => {
+    const date = new Date(record.created_at);
+    const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    
+    if (!acc[monthYear]) {
+      acc[monthYear] = {
+        month: monthYear,
+        maintenance: 0,
+      };
+    }
+
+    acc[monthYear].maintenance += record.cost || 0;
+    return acc;
+  }, {});
+
   const revenueData = Object.values(monthlyRevenue || {});
+  const expenseData = Object.values(monthlyExpenses || {});
 
   if (isLoading) {
     return (
@@ -95,7 +130,38 @@ export const FinancialReports = () => {
                   name="Lease to Own"
                   stroke="#82ca9d"
                 />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  name="Total Revenue"
+                  stroke="#ff7300"
+                />
               </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={expenseData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                />
+                <Bar
+                  dataKey="maintenance"
+                  name="Maintenance Expenses"
+                  fill="#ff8042"
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
