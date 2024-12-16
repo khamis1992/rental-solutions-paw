@@ -5,6 +5,7 @@ import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { VehicleGrid } from "@/components/vehicles/VehicleGrid";
 import { VehicleList } from "@/components/vehicles/VehicleList";
 import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
+import { VehicleStats } from "@/components/vehicles/VehicleStats";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +71,7 @@ const Vehicles = () => {
             </div>
           </div>
           
+          <VehicleStats vehicles={vehicles || []} isLoading={isLoading} />
           <VehicleFilters filters={filters} setFilters={setFilters} />
           
           {viewMode === "grid" ? (

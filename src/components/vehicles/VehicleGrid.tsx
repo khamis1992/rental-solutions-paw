@@ -39,13 +39,13 @@ export const VehicleGrid = ({ vehicles, isLoading }: VehicleGridProps) => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {vehicles.map((vehicle) => (
-        <Card key={vehicle.id} className="overflow-hidden">
+        <Card key={vehicle.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
           <div className="relative h-48 bg-muted">
             {vehicle.image_url ? (
               <img
-                src={vehicle.image_url}
+                src={vehicle.image_url || `https://picsum.photos/seed/${vehicle.id}/800/400`}
                 alt={`${vehicle.make} ${vehicle.model}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
