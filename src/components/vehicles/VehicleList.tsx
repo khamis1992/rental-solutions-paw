@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface Vehicle {
   id: string;
@@ -25,9 +26,10 @@ interface Vehicle {
 interface VehicleListProps {
   vehicles: Vehicle[];
   isLoading: boolean;
+  onVehicleClick?: (vehicleId: string) => void;
 }
 
-export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
+export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleListProps) => {
   if (isLoading) {
     return (
       <div className="rounded-md border">
@@ -40,6 +42,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
               <TableHead>VIN</TableHead>
               <TableHead>Mileage</TableHead>
               <TableHead className="text-right">Daily Rate</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -56,6 +59,9 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-[150px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px]" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-[100px]" />
@@ -82,11 +88,12 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
             <TableHead>VIN</TableHead>
             <TableHead>Mileage</TableHead>
             <TableHead className="text-right">Daily Rate</TableHead>
+            <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {vehicles.map((vehicle) => (
-            <TableRow key={vehicle.id}>
+            <TableRow key={vehicle.id} className="cursor-pointer hover:bg-muted/50">
               <TableCell className="font-medium">
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </TableCell>
@@ -108,6 +115,15 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
               <TableCell>{vehicle.mileage.toLocaleString()} km</TableCell>
               <TableCell className="text-right">
                 {formatCurrency(vehicle.daily_rate)}/day
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onVehicleClick?.(vehicle.id)}
+                >
+                  View Details
+                </Button>
               </TableCell>
             </TableRow>
           ))}

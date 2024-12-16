@@ -2,6 +2,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface Vehicle {
   id: string;
@@ -17,9 +18,10 @@ interface Vehicle {
 interface VehicleGridProps {
   vehicles: Vehicle[];
   isLoading: boolean;
+  onVehicleClick?: (vehicleId: string) => void;
 }
 
-export const VehicleGrid = ({ vehicles, isLoading }: VehicleGridProps) => {
+export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGridProps) => {
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -39,7 +41,11 @@ export const VehicleGrid = ({ vehicles, isLoading }: VehicleGridProps) => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {vehicles.map((vehicle) => (
-        <Card key={vehicle.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+        <Card
+          key={vehicle.id}
+          className="overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => onVehicleClick?.(vehicle.id)}
+        >
           <div className="relative h-48 bg-muted">
             {vehicle.image_url ? (
               <img
@@ -77,6 +83,9 @@ export const VehicleGrid = ({ vehicles, isLoading }: VehicleGridProps) => {
             <p className="text-lg font-semibold">
               {formatCurrency(vehicle.daily_rate)}/day
             </p>
+            <Button variant="ghost" size="sm">
+              View Details
+            </Button>
           </CardFooter>
         </Card>
       ))}
