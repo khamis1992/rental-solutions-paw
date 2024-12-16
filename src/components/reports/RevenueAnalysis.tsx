@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowTrendingUp, Banknote, CreditCard } from "lucide-react";
+import { TrendingUp, Banknote, CreditCard } from "lucide-react";
 
 export const RevenueAnalysis = () => {
   const { data: revenueData } = useQuery({
@@ -56,7 +56,7 @@ export const RevenueAnalysis = () => {
         <StatsCard
           title="Lease-to-Own Revenue"
           value={formatCurrency(leaseToOwnRevenue)}
-          icon={ArrowTrendingUp}
+          icon={TrendingUp}
           description="+15.3% from last month"
           className="bg-white"
         />
