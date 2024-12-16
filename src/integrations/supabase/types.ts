@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      applied_discounts: {
+        Row: {
+          created_at: string
+          discount_amount: number
+          id: string
+          lease_id: string
+          promo_code_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          discount_amount: number
+          id?: string
+          lease_id: string
+          promo_code_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          lease_id?: string
+          promo_code_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applied_discounts_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applied_discounts_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promotional_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -240,7 +279,9 @@ export type Database = {
           created_at: string
           due_date: string
           id: string
+          last_reminder_sent: string | null
           lease_id: string | null
+          reminder_count: number | null
           status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string
         }
@@ -249,7 +290,9 @@ export type Database = {
           created_at?: string
           due_date: string
           id?: string
+          last_reminder_sent?: string | null
           lease_id?: string | null
+          reminder_count?: number | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string
         }
@@ -258,7 +301,9 @@ export type Database = {
           created_at?: string
           due_date?: string
           id?: string
+          last_reminder_sent?: string | null
           lease_id?: string | null
+          reminder_count?: number | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string
         }
@@ -389,6 +434,51 @@ export type Database = {
         }
         Relationships: []
       }
+      promotional_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number | null
+          description: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          end_date: string | null
+          id: string
+          max_uses: number | null
+          min_rental_duration: number | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type: Database["public"]["Enums"]["discount_type"]
+          discount_value: number
+          end_date?: string | null
+          id?: string
+          max_uses?: number | null
+          min_rental_duration?: number | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: Database["public"]["Enums"]["discount_type"]
+          discount_value?: number
+          end_date?: string | null
+          id?: string
+          max_uses?: number | null
+          min_rental_duration?: number | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       security_deposits: {
         Row: {
           amount: number
@@ -503,6 +593,7 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
+      discount_type: "percentage" | "fixed_amount"
       lease_status: "pending" | "active" | "completed" | "cancelled"
       maintenance_status:
         | "scheduled"

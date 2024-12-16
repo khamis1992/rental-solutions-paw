@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, Receipt } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { InvoiceDialog } from "./InvoiceDialog";
 
 const agreements = [
   {
@@ -59,79 +61,99 @@ const getStatusColor = (status: string) => {
 };
 
 export const AgreementList = () => {
+  const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
+
   const handleViewContract = (agreementId: string) => {
-    // Open contract in new window/tab
     window.open(`/agreements/${agreementId}/view`, '_blank');
   };
 
   const handlePrintContract = (agreementId: string) => {
-    // Open print dialog for contract
     window.open(`/agreements/${agreementId}/print`, '_blank', 'width=800,height=600');
   };
 
+  const handleViewInvoice = (agreementId: string) => {
+    setSelectedAgreementId(agreementId);
+  };
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Agreement ID</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Vehicle</TableHead>
-            <TableHead>Start Date</TableHead>
-            <TableHead>End Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {agreements.map((agreement) => (
-            <TableRow key={agreement.id}>
-              <TableCell className="font-medium">{agreement.id}</TableCell>
-              <TableCell>
-                <Link 
-                  to={`/customers/${agreement.customerId}`}
-                  className="text-primary hover:underline"
-                >
-                  {agreement.customer}
-                </Link>
-              </TableCell>
-              <TableCell>{agreement.vehicle}</TableCell>
-              <TableCell>{agreement.startDate}</TableCell>
-              <TableCell>{agreement.endDate}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={getStatusColor(agreement.status)}
-                >
-                  {agreement.status.charAt(0).toUpperCase() + agreement.status.slice(1)}
-                </Badge>
-              </TableCell>
-              <TableCell>{formatCurrency(agreement.amount)}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleViewContract(agreement.id)}
-                    title="View Contract"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handlePrintContract(agreement.id)}
-                    title="Print Contract"
-                  >
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Agreement ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Vehicle</TableHead>
+              <TableHead>Start Date</TableHead>
+              <TableHead>End Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {agreements.map((agreement) => (
+              <TableRow key={agreement.id}>
+                <TableCell className="font-medium">{agreement.id}</TableCell>
+                <TableCell>
+                  <Link 
+                    to={`/customers/${agreement.customerId}`}
+                    className="text-primary hover:underline"
+                  >
+                    {agreement.customer}
+                  </Link>
+                </TableCell>
+                <TableCell>{agreement.vehicle}</TableCell>
+                <TableCell>{agreement.startDate}</TableCell>
+                <TableCell>{agreement.endDate}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={getStatusColor(agreement.status)}
+                  >
+                    {agreement.status.charAt(0).toUpperCase() + agreement.status.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{formatCurrency(agreement.amount)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleViewContract(agreement.id)}
+                      title="View Contract"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handlePrintContract(agreement.id)}
+                      title="Print Contract"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleViewInvoice(agreement.id)}
+                      title="View Invoice"
+                    >
+                      <Receipt className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      
+      <InvoiceDialog
+        agreementId={selectedAgreementId || ""}
+        open={!!selectedAgreementId}
+        onOpenChange={(open) => !open && setSelectedAgreementId(null)}
+      />
+    </>
   );
 };
