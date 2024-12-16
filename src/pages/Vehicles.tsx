@@ -7,9 +7,10 @@ import { VehicleList } from "@/components/vehicles/VehicleList";
 import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
 import { VehicleStats } from "@/components/vehicles/VehicleStats";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Plus } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CreateVehicleDialog } from "@/components/vehicles/CreateVehicleDialog";
 
 export type ViewMode = "grid" | "list";
 
@@ -65,9 +66,7 @@ const Vehicles = () => {
               <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}>
                 {viewMode === "grid" ? <List className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
               </Button>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Add Vehicle
-              </Button>
+              <CreateVehicleDialog />
             </div>
           </div>
           
