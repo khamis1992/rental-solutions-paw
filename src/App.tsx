@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Index from "./pages/Index";
 import Vehicles from "./pages/Vehicles";
+import Maintenance from "./pages/Maintenance";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/vehicles" element={<Vehicles />} />
+                <Route path="/maintenance" element={<Maintenance />} />
               </Routes>
               <Toaster />
               <Sonner />
