@@ -10,11 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 const agreements = [
   {
     id: "AGR-001",
     customer: "John Doe",
+    customerId: "1", // Added customerId for linking
     vehicle: "2024 Toyota Camry",
     startDate: "2024-03-15",
     endDate: "2024-03-20",
@@ -24,6 +26,7 @@ const agreements = [
   {
     id: "AGR-002",
     customer: "Jane Smith",
+    customerId: "2",
     vehicle: "2023 Honda CR-V",
     startDate: "2024-03-18",
     endDate: "2024-03-25",
@@ -33,6 +36,7 @@ const agreements = [
   {
     id: "AGR-003",
     customer: "Mike Johnson",
+    customerId: "3",
     vehicle: "2024 BMW X5",
     startDate: "2024-03-10",
     endDate: "2024-03-17",
@@ -74,7 +78,14 @@ export const AgreementList = () => {
           {agreements.map((agreement) => (
             <TableRow key={agreement.id}>
               <TableCell className="font-medium">{agreement.id}</TableCell>
-              <TableCell>{agreement.customer}</TableCell>
+              <TableCell>
+                <Link 
+                  to={`/customers/${agreement.customerId}`}
+                  className="text-primary hover:underline"
+                >
+                  {agreement.customer}
+                </Link>
+              </TableCell>
               <TableCell>{agreement.vehicle}</TableCell>
               <TableCell>{agreement.startDate}</TableCell>
               <TableCell>{agreement.endDate}</TableCell>
