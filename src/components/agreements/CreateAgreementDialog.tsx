@@ -19,66 +19,21 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FilePlus2 } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-type FormData = {
-  agreementType: "lease_to_own" | "short_term";
-  customerId: string;
-  vehicleId: string;
-  startDate: string;
-  endDate: string;
-  totalAmount: number;
-  initialMileage: number;
-  downPayment?: number;
-  monthlyPayment?: number;
-  interestRate?: number;
-  leaseDuration?: string;
-  notes?: string;
-};
+import { useAgreementForm } from "./hooks/useAgreementForm";
 
 export function CreateAgreementDialog() {
-  const [open, setOpen] = useState(false);
-  const { toast } = useToast();
-  const { register, handleSubmit, watch, reset } = useForm<FormData>();
-  const agreementType = watch("agreementType");
-
-  const onSubmit = async (data: FormData) => {
-    try {
-      const { error } = await supabase.from("leases").insert({
-        agreement_type: data.agreementType,
-        customer_id: data.customerId,
-        vehicle_id: data.vehicleId,
-        start_date: data.startDate,
-        end_date: data.endDate,
-        total_amount: data.totalAmount,
-        initial_mileage: data.initialMileage,
-        down_payment: data.downPayment,
-        monthly_payment: data.monthlyPayment,
-        interest_rate: data.interestRate,
-        lease_duration: data.leaseDuration,
-        notes: data.notes,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Agreement created successfully",
-      });
-      setOpen(false);
-      reset();
-    } catch (error) {
-      console.error("Error creating agreement:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create agreement",
-        variant: "destructive",
-      });
-    }
-  };
+  const {
+    open,
+    setOpen,
+    register,
+    handleSubmit,
+    onSubmit,
+    agreementType,
+    updateMonthlyPayment,
+    watch,
+  } = useAgreementForm(() => {
+    // Callback after successful creation
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -124,7 +79,6 @@ export function CreateAgreementDialog() {
                   <SelectValue placeholder="Select customer" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* We'll need to fetch customers from the database */}
                   <SelectItem value="1">John Doe</SelectItem>
                   <SelectItem value="2">Jane Smith</SelectItem>
                 </SelectContent>
@@ -138,7 +92,6 @@ export function CreateAgreementDialog() {
                   <SelectValue placeholder="Select vehicle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* We'll need to fetch vehicles from the database */}
                   <SelectItem value="1">2024 Toyota Camry</SelectItem>
                   <SelectItem value="2">2023 Honda CR-V</SelectItem>
                 </SelectContent>
@@ -155,22 +108,16 @@ export function CreateAgreementDialog() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
-              <Input type="date" {...register("startDate")} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
-              <Input type="date" {...register("endDate")} />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="totalAmount">Total Amount</Label>
               <Input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 {...register("totalAmount")}
+                onChange={(e) => {
+                  register("totalAmount").onChange(e);
+                  updateMonthlyPayment();
+                }}
               />
             </div>
 
@@ -183,6 +130,10 @@ export function CreateAgreementDialog() {
                     step="0.01"
                     placeholder="0.00"
                     {...register("downPayment")}
+                    onChange={(e) => {
+                      register("downPayment").onChange(e);
+                      updateMonthlyPayment();
+                    }}
                   />
                 </div>
 
@@ -193,6 +144,8 @@ export function CreateAgreementDialog() {
                     step="0.01"
                     placeholder="0.00"
                     {...register("monthlyPayment")}
+                    readOnly
+                    value={watch("monthlyPayment") || ""}
                   />
                 </div>
 
@@ -203,6 +156,10 @@ export function CreateAgreementDialog() {
                     step="0.01"
                     placeholder="0.00"
                     {...register("interestRate")}
+                    onChange={(e) => {
+                      register("interestRate").onChange(e);
+                      updateMonthlyPayment();
+                    }}
                   />
                 </div>
 
@@ -212,6 +169,10 @@ export function CreateAgreementDialog() {
                     type="number"
                     placeholder="12"
                     {...register("leaseDuration")}
+                    onChange={(e) => {
+                      register("leaseDuration").onChange(e);
+                      updateMonthlyPayment();
+                    }}
                   />
                 </div>
               </>
