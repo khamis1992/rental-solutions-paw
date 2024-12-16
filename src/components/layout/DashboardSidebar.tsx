@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { SidebarProps } from "@/components/ui/sidebar/types";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -23,16 +24,11 @@ const menuItems = [
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
-interface DashboardSidebarProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export const DashboardSidebar = ({ open, onOpenChange }: DashboardSidebarProps) => {
+export const DashboardSidebar = ({ open, onOpenChange }: SidebarProps) => {
   const location = useLocation();
 
   return (
-    <Sidebar open={open} onOpenChange={onOpenChange}>
+    <Sidebar className="fixed inset-y-0 left-0 z-50">
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold">Customer Manager</span>
