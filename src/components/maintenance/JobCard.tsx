@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Calendar, Clock, Tool, User } from "lucide-react";
+import { AlertCircle, Calendar, Clock, Wrench, User } from "lucide-react";
 
 interface JobCardProps {
   id: string;
@@ -69,7 +69,7 @@ export const JobCard = ({
             </div>
           )}
           <div className="flex items-start text-sm">
-            <Tool className="w-4 h-4 mr-2 mt-1" />
+            <Wrench className="w-4 h-4 mr-2 mt-1" />
             <p className="text-muted-foreground">{description}</p>
           </div>
         </div>

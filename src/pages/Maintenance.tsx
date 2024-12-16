@@ -8,7 +8,7 @@ import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters"
 import { MaintenanceCalendar } from "@/components/maintenance/MaintenanceCalendar";
 import { JobCard } from "@/components/maintenance/JobCard";
 import { Button } from "@/components/ui/button";
-import { Plus, ListFilter } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -94,7 +94,7 @@ const Maintenance = () => {
                       vehicleId={record.vehicle_id}
                       serviceType={record.service_type}
                       priority="medium"
-                      status={record.status}
+                      status={record.status || "scheduled"}
                       scheduledDate={record.scheduled_date}
                       description={record.description || ""}
                       assignedTo={record.performed_by}
@@ -114,7 +114,7 @@ const Maintenance = () => {
                     vehicleId={record.vehicle_id}
                     serviceType={record.service_type}
                     priority="medium"
-                    status={record.status}
+                    status={record.status || "scheduled"}
                     scheduledDate={record.scheduled_date}
                     description={record.description || ""}
                     assignedTo={record.performed_by}
