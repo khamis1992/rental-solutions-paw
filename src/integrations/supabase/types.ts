@@ -279,7 +279,10 @@ export type Database = {
           id: string
           lease_id: string
           payment_date: string | null
-          payment_method: string | null
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          security_deposit_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           transaction_id: string | null
           updated_at: string
@@ -290,7 +293,10 @@ export type Database = {
           id?: string
           lease_id: string
           payment_date?: string | null
-          payment_method?: string | null
+          payment_method?:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
           updated_at?: string
@@ -301,7 +307,10 @@ export type Database = {
           id?: string
           lease_id?: string
           payment_date?: string | null
-          payment_method?: string | null
+          payment_method?:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
           updated_at?: string
@@ -312,6 +321,13 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_security_deposit_id_fkey"
+            columns: ["security_deposit_id"]
+            isOneToOne: false
+            referencedRelation: "security_deposits"
             referencedColumns: ["id"]
           },
         ]
@@ -372,6 +388,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      security_deposits: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          lease_id: string
+          notes: string | null
+          refund_amount: number | null
+          refund_date: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          lease_id: string
+          notes?: string | null
+          refund_amount?: number | null
+          refund_date?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          lease_id?: string
+          notes?: string | null
+          refund_amount?: number | null
+          refund_date?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_deposits_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicles: {
         Row: {
@@ -449,6 +509,11 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
+      payment_method_type:
+        | "credit_card"
+        | "debit_card"
+        | "cash"
+        | "bank_transfer"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status: "available" | "rented" | "maintenance" | "retired"
