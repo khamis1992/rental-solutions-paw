@@ -1,19 +1,18 @@
 import { 
   Car, DollarSign, Users, FileText, ArrowUpRight, 
-  Plus, Clock, CheckCircle, AlertCircle, CalendarClock,
-  CarFront, BellRing, AlertTriangle
+  Clock, CheckCircle, CalendarClock, CarFront, 
+  BellRing, AlertTriangle
 } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 
 const Index = () => {
-  // Fetch upcoming rentals and alerts
   const { data: upcomingRentals } = useQuery({
     queryKey: ["upcoming-rentals"],
     queryFn: async () => {
@@ -84,10 +83,6 @@ const Index = () => {
                 Here's what's happening with your rental fleet today.
               </p>
             </div>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Rental
-            </Button>
           </div>
           
           {/* KPI Cards */}
@@ -228,7 +223,7 @@ const Index = () => {
             </Card>
           </div>
 
-          {/* Recent Activity Section */}
+          {/* Recent Activity and Quick Actions */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
             {/* Recent Activity - Spans 4 columns */}
             <Card className="lg:col-span-4">
@@ -282,32 +277,8 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Quick Actions - Spans 3 columns */}
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {[
-                    { icon: Car, label: "Add New Vehicle", color: "bg-blue-50 text-blue-500" },
-                    { icon: Users, label: "Register Customer", color: "bg-purple-50 text-purple-500" },
-                    { icon: FileText, label: "Create Agreement", color: "bg-emerald-50 text-emerald-500" },
-                    { icon: AlertCircle, label: "Report Issue", color: "bg-red-50 text-red-500" }
-                  ].map((action, i) => (
-                    <button
-                      key={i}
-                      className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors"
-                    >
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${action.color}`}>
-                        <action.icon className="h-5 w-5" />
-                      </div>
-                      <span className="font-medium">{action.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Quick Actions Section */}
+            <QuickActions />
           </div>
         </main>
       </div>
