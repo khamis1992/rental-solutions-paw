@@ -1,54 +1,42 @@
-"use client";
-
-import { Home, Users, FileText, BarChart2, Calendar, Settings, HelpCircle } from "lucide-react";
+import { Home, Car, Users, Calendar, FileText, Settings, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useSidebar } from "@/components/ui/sidebar/sidebar-context";
 
 const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
+  { icon: Car, label: "Vehicles", href: "/vehicles" },
   { icon: Users, label: "Customers", href: "/customers" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },
   { icon: FileText, label: "Reports", href: "/reports" },
-  { icon: BarChart2, label: "Analytics", href: "/analytics" },
   { icon: Settings, label: "Settings", href: "/settings" },
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
 export const DashboardSidebar = () => {
-  const location = useLocation();
-  const { open } = useSidebar();
-
   return (
-    <Sidebar className="fixed inset-y-0 left-0 z-50">
+    <Sidebar>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
-          <span className="font-semibold">Customer Manager</span>
+          <span className="font-semibold">AutoRent Pro</span>
         </div>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === item.href}
-                  >
+                  <SidebarMenuButton asChild>
                     <a
                       href={item.href}
-                      className={cn(
-                        "flex items-center gap-2",
-                        location.pathname === item.href && "text-primary"
-                      )}
+                      className="flex items-center gap-2"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>

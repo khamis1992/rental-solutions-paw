@@ -1,150 +1,124 @@
-import { MainLayout } from "@/components/layout/MainLayout";
+import { Car, DollarSign, Users, FileText, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Calendar, FileText, DollarSign } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-const statsCards = [
-  {
-    title: "Total Customers",
-    value: "2,345",
-    icon: Users,
-    change: "+12.5%",
-    trend: "up",
-  },
-  {
-    title: "Active Rentals",
-    value: "145",
-    icon: Calendar,
-    change: "+5.2%",
-    trend: "up",
-  },
-  {
-    title: "Total Revenue",
-    value: "$23,456",
-    icon: DollarSign,
-    change: "+8.4%",
-    trend: "up",
-  },
-  {
-    title: "Pending Reports",
-    value: "12",
-    icon: FileText,
-    change: "-2.3%",
-    trend: "down",
-  },
-];
 
 const Index = () => {
   return (
-    <MainLayout>
-      <div className="flex flex-col gap-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statsCards.map((card) => (
-            <Card key={card.title}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                <card.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{card.value}</div>
-                <p className={cn(
-                  "text-xs text-muted-foreground",
-                  card.trend === "up" ? "text-green-500" : "text-red-500"
-                )}>
-                  {card.change} from last month
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 border-b pb-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">New Customer Registration</p>
-                      <p className="text-xs text-muted-foreground">John Doe registered as a new customer</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">2h ago</span>
-                  </div>
-                  <div className="flex items-center gap-4 border-b pb-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Rental Started</p>
-                      <p className="text-xs text-muted-foreground">Vehicle XYZ-123 rented by Sarah Smith</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">4h ago</span>
-                  </div>
-                  <div className="flex items-center gap-4 border-b pb-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Report Generated</p>
-                      <p className="text-xs text-muted-foreground">Monthly revenue report for October 2023</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">6h ago</span>
-                  </div>
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <button className="w-full rounded-lg border p-4 text-left hover:bg-muted/50">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Add New Customer</p>
-                      <p className="text-sm text-muted-foreground">Register a new customer in the system</p>
-                    </div>
-                  </div>
-                </button>
-                <button className="w-full rounded-lg border p-4 text-left hover:bg-muted/50">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Start New Rental</p>
-                      <p className="text-sm text-muted-foreground">Begin a new vehicle rental process</p>
-                    </div>
-                  </div>
-                </button>
-                <button className="w-full rounded-lg border p-4 text-left hover:bg-muted/50">
-                  <div className="flex items-center gap-4">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Generate Report</p>
-                      <p className="text-sm text-muted-foreground">Create a new custom report</p>
-                    </div>
-                  </div>
-                </button>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <DashboardSidebar />
+        <div className="flex-1">
+          <DashboardHeader />
+          <main className="container py-6">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+              <div className="flex gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Last updated: {new Date().toLocaleString()}
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+              <StatsCard
+                title="Total Vehicles"
+                value="124"
+                icon={Car}
+                description={
+                  <span className="flex items-center text-emerald-600">
+                    <ArrowUpRight className="mr-1 h-4 w-4" />
+                    +2 this month
+                  </span>
+                }
+              />
+              <StatsCard
+                title="Active Customers"
+                value="1,429"
+                icon={Users}
+                description={
+                  <span className="flex items-center text-emerald-600">
+                    <ArrowUpRight className="mr-1 h-4 w-4" />
+                    +18.2% from last month
+                  </span>
+                }
+              />
+              <StatsCard
+                title="Active Rentals"
+                value="89"
+                icon={FileText}
+                description={
+                  <span className="flex items-center text-yellow-600">
+                    23 pending returns
+                  </span>
+                }
+              />
+              <StatsCard
+                title="Monthly Revenue"
+                value="$48,574"
+                icon={DollarSign}
+                description={
+                  <span className="flex items-center text-emerald-600">
+                    <ArrowUpRight className="mr-1 h-4 w-4" />
+                    +7.4% from last month
+                  </span>
+                }
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="col-span-2">
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4 p-4 rounded-lg border">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Car className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium">New Vehicle Added</h4>
+                          <p className="text-sm text-muted-foreground">
+                            2024 Toyota Camry - Added to fleet
+                          </p>
+                        </div>
+                        <span className="text-sm text-muted-foreground">2h ago</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2">
+                    <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent text-left">
+                      <Car className="h-4 w-4" />
+                      <span>Add New Vehicle</span>
+                    </button>
+                    <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent text-left">
+                      <Users className="h-4 w-4" />
+                      <span>Register Customer</span>
+                    </button>
+                    <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent text-left">
+                      <FileText className="h-4 w-4" />
+                      <span>Create Rental Agreement</span>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
         </div>
       </div>
-    </MainLayout>
+    </SidebarProvider>
   );
 };
 
