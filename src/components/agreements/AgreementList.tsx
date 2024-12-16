@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Receipt } from "lucide-react";
+import { Eye, FileText, Receipt, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { InvoiceDialog } from "./InvoiceDialog";
+import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 
 const agreements = [
   {
@@ -62,6 +63,7 @@ const getStatusColor = (status: string) => {
 
 export const AgreementList = () => {
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
+  const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
 
   const handleViewContract = (agreementId: string) => {
     window.open(`/agreements/${agreementId}/view`, '_blank');
@@ -73,6 +75,10 @@ export const AgreementList = () => {
 
   const handleViewInvoice = (agreementId: string) => {
     setSelectedAgreementId(agreementId);
+  };
+
+  const handleViewPayments = (agreementId: string) => {
+    setSelectedPaymentTrackingId(agreementId);
   };
 
   return (
@@ -141,6 +147,14 @@ export const AgreementList = () => {
                     >
                       <Receipt className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleViewPayments(agreement.id)}
+                      title="View Payments"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -153,6 +167,12 @@ export const AgreementList = () => {
         agreementId={selectedAgreementId || ""}
         open={!!selectedAgreementId}
         onOpenChange={(open) => !open && setSelectedAgreementId(null)}
+      />
+
+      <PaymentTrackingDialog
+        agreementId={selectedPaymentTrackingId || ""}
+        open={!!selectedPaymentTrackingId}
+        onOpenChange={(open) => !open && setSelectedPaymentTrackingId(null)}
       />
     </>
   );
