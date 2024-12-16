@@ -17,6 +17,11 @@ export type AgreementFormData = {
   interestRate?: number;
   leaseDuration?: string;
   notes?: string;
+  lateFeeRate?: number;
+  lateFeeGracePeriod?: number;
+  damagePenaltyRate?: number;
+  fuelPenaltyRate?: number;
+  lateReturnFee?: number;
 };
 
 export const useAgreementForm = (onSuccess: () => void) => {
@@ -61,6 +66,11 @@ export const useAgreementForm = (onSuccess: () => void) => {
         interest_rate: data.interestRate,
         lease_duration: data.leaseDuration,
         notes: data.notes,
+        late_fee_rate: data.lateFeeRate,
+        late_fee_grace_period: `${data.lateFeeGracePeriod} days`,
+        damage_penalty_rate: data.damagePenaltyRate,
+        fuel_penalty_rate: data.fuelPenaltyRate,
+        late_return_fee: data.lateReturnFee,
       });
 
       if (error) throw error;
@@ -91,5 +101,6 @@ export const useAgreementForm = (onSuccess: () => void) => {
     agreementType,
     updateMonthlyPayment,
     watch,
+    setValue,
   };
 };

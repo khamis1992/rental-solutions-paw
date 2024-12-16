@@ -141,12 +141,17 @@ export type Database = {
           agreement_type: Database["public"]["Enums"]["agreement_type"]
           created_at: string
           customer_id: string
+          damage_penalty_rate: number | null
           down_payment: number | null
           early_payoff_allowed: boolean | null
           end_date: string
+          fuel_penalty_rate: number | null
           id: string
           initial_mileage: number
           interest_rate: number | null
+          late_fee_grace_period: unknown | null
+          late_fee_rate: number | null
+          late_return_fee: number | null
           lease_duration: unknown | null
           monthly_payment: number | null
           notes: string | null
@@ -163,12 +168,17 @@ export type Database = {
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
           created_at?: string
           customer_id: string
+          damage_penalty_rate?: number | null
           down_payment?: number | null
           early_payoff_allowed?: boolean | null
           end_date: string
+          fuel_penalty_rate?: number | null
           id?: string
           initial_mileage: number
           interest_rate?: number | null
+          late_fee_grace_period?: unknown | null
+          late_fee_rate?: number | null
+          late_return_fee?: number | null
           lease_duration?: unknown | null
           monthly_payment?: number | null
           notes?: string | null
@@ -185,12 +195,17 @@ export type Database = {
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
           created_at?: string
           customer_id?: string
+          damage_penalty_rate?: number | null
           down_payment?: number | null
           early_payoff_allowed?: boolean | null
           end_date?: string
+          fuel_penalty_rate?: number | null
           id?: string
           initial_mileage?: number
           interest_rate?: number | null
+          late_fee_grace_period?: unknown | null
+          late_fee_rate?: number | null
+          late_return_fee?: number | null
           lease_duration?: unknown | null
           monthly_payment?: number | null
           notes?: string | null
@@ -373,6 +388,50 @@ export type Database = {
             columns: ["security_deposit_id"]
             isOneToOne: false
             referencedRelation: "security_deposits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      penalties: {
+        Row: {
+          amount: number
+          applied_date: string
+          created_at: string
+          description: string | null
+          id: string
+          lease_id: string
+          status: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          applied_date?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          lease_id: string
+          status?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          applied_date?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          lease_id?: string
+          status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "penalties_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
             referencedColumns: ["id"]
           },
         ]

@@ -17,8 +17,8 @@ import { AgreementTypeSelect } from "./form/AgreementTypeSelect";
 import { CustomerSelect } from "./form/CustomerSelect";
 import { VehicleSelect } from "./form/VehicleSelect";
 import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
+import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 
 export function CreateAgreementDialog() {
   const {
@@ -103,6 +103,13 @@ export function CreateAgreementDialog() {
                 watch={watch}
               />
             )}
+
+            <div className="col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Late Fees & Penalties</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <LateFeesPenaltiesFields register={register} />
+              </div>
+            </div>
 
             <div className="col-span-2 space-y-2">
               <Label htmlFor="notes">Notes</Label>
