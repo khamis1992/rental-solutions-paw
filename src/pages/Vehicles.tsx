@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { VehicleGrid } from "@/components/vehicles/VehicleGrid";
@@ -54,35 +53,33 @@ const Vehicles = () => {
   });
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <DashboardSidebar />
-        <div className="flex-1">
-          <DashboardHeader />
-          <main className="container py-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold">Vehicles</h1>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}>
-                  {viewMode === "grid" ? <List className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
-                </Button>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" /> Add Vehicle
-                </Button>
-              </div>
+    <>
+      <DashboardSidebar />
+      <div className="flex-1">
+        <DashboardHeader />
+        <main className="container py-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Vehicles</h1>
+            <div className="flex gap-2">
+              <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}>
+                {viewMode === "grid" ? <List className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
+              </Button>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Vehicle
+              </Button>
             </div>
-            
-            <VehicleFilters filters={filters} setFilters={setFilters} />
-            
-            {viewMode === "grid" ? (
-              <VehicleGrid vehicles={vehicles || []} isLoading={isLoading} />
-            ) : (
-              <VehicleList vehicles={vehicles || []} isLoading={isLoading} />
-            )}
-          </main>
-        </div>
+          </div>
+          
+          <VehicleFilters filters={filters} setFilters={setFilters} />
+          
+          {viewMode === "grid" ? (
+            <VehicleGrid vehicles={vehicles || []} isLoading={isLoading} />
+          ) : (
+            <VehicleList vehicles={vehicles || []} isLoading={isLoading} />
+          )}
+        </main>
       </div>
-    </SidebarProvider>
+    </>
   );
 };
 
