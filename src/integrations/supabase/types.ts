@@ -89,6 +89,56 @@ export type Database = {
           },
         ]
       }
+      credit_assessments: {
+        Row: {
+          assessment_date: string
+          created_at: string
+          credit_score: number
+          customer_id: string
+          debt_to_income_ratio: number | null
+          employment_status: string
+          id: string
+          monthly_income: number
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_date?: string
+          created_at?: string
+          credit_score: number
+          customer_id: string
+          debt_to_income_ratio?: number | null
+          employment_status: string
+          id?: string
+          monthly_income: number
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_date?: string
+          created_at?: string
+          credit_score?: number
+          customer_id?: string
+          debt_to_income_ratio?: number | null
+          employment_status?: string
+          id?: string
+          monthly_income?: number
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       damages: {
         Row: {
           created_at: string
@@ -317,6 +367,69 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_history: {
+        Row: {
+          actual_payment_date: string | null
+          amount_due: number
+          amount_paid: number | null
+          created_at: string
+          early_payment_discount: number | null
+          id: string
+          late_fee_applied: number | null
+          lease_id: string
+          original_due_date: string
+          payment_id: string
+          remaining_balance: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_payment_date?: string | null
+          amount_due: number
+          amount_paid?: number | null
+          created_at?: string
+          early_payment_discount?: number | null
+          id?: string
+          late_fee_applied?: number | null
+          lease_id: string
+          original_due_date: string
+          payment_id: string
+          remaining_balance: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_payment_date?: string | null
+          amount_due?: number
+          amount_paid?: number | null
+          created_at?: string
+          early_payment_discount?: number | null
+          id?: string
+          late_fee_applied?: number | null
+          lease_id?: string
+          original_due_date?: string
+          payment_id?: string
+          remaining_balance?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_history_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
         ]
@@ -671,6 +784,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_credit_score: {
+        Args: {
+          p_monthly_income: number
+          p_employment_status: string
+          p_debt_to_income_ratio: number
+        }
+        Returns: number
+      }
       log_audit_event: {
         Args: {
           p_user_id: string
@@ -679,6 +800,13 @@ export type Database = {
           p_entity_id: string
           p_changes: Json
           p_ip_address: string
+        }
+        Returns: undefined
+      }
+      update_payment_schedule: {
+        Args: {
+          p_lease_id: string
+          p_delay_days?: number
         }
         Returns: undefined
       }
