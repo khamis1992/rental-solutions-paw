@@ -7,6 +7,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import Index from "./pages/Index";
 import Vehicles from "./pages/Vehicles";
 import Maintenance from "./pages/Maintenance";
+import Customers from "./pages/Customers";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/vehicles" element={<Vehicles />} />
                 <Route path="/maintenance" element={<Maintenance />} />
+                <Route path="/customers" element={<Customers />} />
               </Routes>
               <Toaster />
               <Sonner />
