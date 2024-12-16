@@ -37,7 +37,7 @@ export const VehicleFilters = ({ filters, setFilters }: VehicleFiltersProps) => 
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Status</SelectItem>
+          <SelectItem value="all">All Status</SelectItem>
           <SelectItem value="available">Available</SelectItem>
           <SelectItem value="rented">Rented</SelectItem>
           <SelectItem value="maintenance">Maintenance</SelectItem>
