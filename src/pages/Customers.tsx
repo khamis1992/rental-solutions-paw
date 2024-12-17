@@ -2,7 +2,6 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CustomerList } from "@/components/customers/CustomerList";
 import { CustomerStats } from "@/components/customers/CustomerStats";
-import { CustomerFilters } from "@/components/customers/CustomerFilters";
 import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialog";
 import { ImportExportCustomers } from "@/components/customers/ImportExportCustomers";
 
@@ -23,7 +22,6 @@ const Customers = () => {
       </div>
       <CustomerStats />
       <div className="mt-6 space-y-4">
-        <CustomerFilters />
         <CustomerList />
       </div>
     </DashboardLayout>
