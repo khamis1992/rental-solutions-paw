@@ -46,43 +46,48 @@ serve(async (req) => {
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',');
       if (values.length === headers.length) {
+        // Generate a UUID for each new customer
+        const uuid = crypto.randomUUID();
         customers.push({
+          id: uuid,
           full_name: values[0]?.trim(),
           phone_number: values[1]?.trim(),
           address: values[2]?.trim(),
           driver_license: values[3]?.trim(),
           role: 'customer'
         });
-        console.log(`Processed customer row ${i}: ${values[0]?.trim()}`);
+        console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${uuid}`);
       }
       
       // Insert batch when it reaches batchSize or it's the last batch
       if (customers.length === batchSize || i === rows.length - 1) {
-        console.log(`Inserting batch of ${customers.length} customers...`);
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert(customers);
+        if (customers.length > 0) {
+          console.log(`Inserting batch of ${customers.length} customers...`);
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert(customers);
 
-        if (insertError) {
-          console.error('Error inserting customers:', insertError);
-          throw insertError;
-        }
-        
-        // Update import log with progress
-        const { error: updateError } = await supabase
-          .from('import_logs')
-          .update({
-            records_processed: i,
-            status: i === rows.length - 1 ? 'completed' : 'processing'
-          })
-          .eq('file_name', fileName);
+          if (insertError) {
+            console.error('Error inserting customers:', insertError);
+            throw insertError;
+          }
+          
+          // Update import log with progress
+          const { error: updateError } = await supabase
+            .from('import_logs')
+            .update({
+              records_processed: i,
+              status: i === rows.length - 1 ? 'completed' : 'processing'
+            })
+            .eq('file_name', fileName);
 
-        if (updateError) {
-          console.error('Error updating import log:', updateError);
-          throw updateError;
+          if (updateError) {
+            console.error('Error updating import log:', updateError);
+            throw updateError;
+          }
+          
+          console.log(`Successfully inserted batch, processed ${i} rows so far`);
         }
-        
-        console.log(`Successfully inserted batch, processed ${i} rows so far`);
         // Clear the batch array
         customers.length = 0;
       }
