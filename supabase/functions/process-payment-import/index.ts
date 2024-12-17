@@ -73,14 +73,25 @@ serve(async (req) => {
           const paymentType = values[headers.indexOf('Payment_Type')];
           const paymentDescription = values[headers.indexOf('Payment_Description')];
 
+          if (!customerIdentifier) {
+            throw new Error('Customer identifier is missing');
+          }
+
+          if (!customerIdentifier.includes('+974')) {
+            throw new Error('Invalid customer identifier format. Expected: "name +974xxxxxxxx"');
+          }
+
           // Parse the customer identifier (format: "name +974xxxxxxxx")
-          const [fullName, phoneNumber] = customerIdentifier.split('+974');
+          const [fullName, phoneWithPrefix] = customerIdentifier.split('+974');
+          if (!fullName || !phoneWithPrefix) {
+            throw new Error(`Invalid customer identifier format in row ${i + 1}. Expected: "name +974xxxxxxxx"`);
+          }
 
           // Get customer ID from identifier
           const { data: customerData } = await supabase
             .from('profiles')
             .select('id')
-            .or(`phone_number.eq.+974${phoneNumber.trim()},full_name.eq.${fullName.trim()}`)
+            .or(`phone_number.eq.+974${phoneWithPrefix.trim()},full_name.eq.${fullName.trim()}`)
             .single();
 
           if (!customerData) {
@@ -101,6 +112,9 @@ serve(async (req) => {
 
           // Convert date from MM-DD-YYYY to ISO format
           const [month, day, year] = paymentDate.split('-');
+          if (!month || !day || !year) {
+            throw new Error(`Invalid date format in row ${i + 1}. Expected: MM-DD-YYYY`);
+          }
           const isoDate = `${year}-${month}-${day}`;
 
           // Create payment record
