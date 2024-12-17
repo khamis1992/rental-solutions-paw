@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Printer, FileText, AlertCircle } from "lucide-react";
+import { Eye, Printer } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -17,6 +17,7 @@ import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -31,11 +32,69 @@ const getStatusColor = (status: string) => {
   }
 };
 
+interface Agreement {
+  id: string;
+  customer: {
+    id: string;
+    full_name: string;
+  };
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+  };
+  start_date: string;
+  end_date: string;
+  status: string;
+  total_amount: number;
+}
+
 export const AgreementList = () => {
   const navigate = useNavigate();
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
+
+  const { data: agreements = [], isLoading } = useQuery({
+    queryKey: ['agreements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leases')
+        .select(`
+          id,
+          start_date,
+          end_date,
+          status,
+          total_amount,
+          profiles:customer_id (id, full_name),
+          vehicles (id, make, model, year)
+        `);
+
+      if (error) {
+        toast.error("Failed to fetch agreements");
+        throw error;
+      }
+
+      return data.map((lease: any) => ({
+        id: lease.id,
+        customer: {
+          id: lease.profiles.id,
+          full_name: lease.profiles.full_name,
+        },
+        vehicle: {
+          id: lease.vehicles.id,
+          make: lease.vehicles.make,
+          model: lease.vehicles.model,
+          year: lease.vehicles.year,
+        },
+        start_date: lease.start_date,
+        end_date: lease.end_date,
+        status: lease.status,
+        total_amount: lease.total_amount,
+      }));
+    },
+  });
 
   const handleViewContract = async (agreementId: string) => {
     try {
@@ -137,11 +196,9 @@ export const AgreementList = () => {
     }
   };
 
-  const handleAgreementClick = (agreementId: string) => {
-    setSelectedAgreementId(agreementId);
-    setSelectedPaymentTrackingId(agreementId);
-    setSelectedPaymentHistoryId(agreementId);
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -160,11 +217,11 @@ export const AgreementList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {agreements.map((agreement) => (
+            {agreements.map((agreement: Agreement) => (
               <TableRow key={agreement.id}>
                 <TableCell>
                   <button
-                    onClick={() => handleAgreementClick(agreement.id)}
+                    onClick={() => setSelectedAgreementId(agreement.id)}
                     className="font-medium text-primary hover:underline"
                   >
                     {agreement.id}
@@ -172,15 +229,15 @@ export const AgreementList = () => {
                 </TableCell>
                 <TableCell>
                   <Link 
-                    to={`/customers/${agreement.customerId}`}
+                    to={`/customers/${agreement.customer.id}`}
                     className="text-primary hover:underline"
                   >
-                    {agreement.customer}
+                    {agreement.customer.full_name}
                   </Link>
                 </TableCell>
-                <TableCell>{agreement.vehicle}</TableCell>
-                <TableCell>{agreement.startDate}</TableCell>
-                <TableCell>{agreement.endDate}</TableCell>
+                <TableCell>{`${agreement.vehicle.year} ${agreement.vehicle.make} ${agreement.vehicle.model}`}</TableCell>
+                <TableCell>{new Date(agreement.start_date).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(agreement.end_date).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <Badge
                     variant="secondary"
@@ -189,7 +246,7 @@ export const AgreementList = () => {
                     {agreement.status.charAt(0).toUpperCase() + agreement.status.slice(1)}
                   </Badge>
                 </TableCell>
-                <TableCell>{formatCurrency(agreement.amount)}</TableCell>
+                <TableCell>{formatCurrency(agreement.total_amount)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button 
