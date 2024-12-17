@@ -11,11 +11,15 @@ export const ImportVehicles = () => {
   const handleFileUpload = async (file: File) => {
     try {
       setIsUploading(true);
+      
+      // Validate file type
+      if (!file.name.endsWith('.csv')) {
+        throw new Error('Please upload a CSV file');
+      }
 
       // Upload file to Supabase Storage
       const fileName = `vehicles/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase
-        .storage
+      const { error: uploadError } = await supabase.storage
         .from('imports')
         .upload(fileName, file);
 
