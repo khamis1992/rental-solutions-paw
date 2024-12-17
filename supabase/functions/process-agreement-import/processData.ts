@@ -9,12 +9,12 @@ export const processImportData = async (
 ) => {
   let successCount = 0;
   let errorCount = 0;
-  let errors = [];
+  let errors: any[] = [];
 
   for (let i = 1; i < rows.length; i++) {
     if (!rows[i].trim()) continue;
 
-    let currentRowValues;
+    let currentRowValues: string[] = [];
     try {
       currentRowValues = rows[i].split(',').map(v => v.trim());
       
@@ -64,7 +64,7 @@ export const processImportData = async (
       const errorData = {
         row: i + 1,
         error: error.message,
-        data: currentRowValues ? Object.fromEntries(headers.map((h, idx) => [h, currentRowValues[idx]])) : null
+        data: currentRowValues.length ? Object.fromEntries(headers.map((h, idx) => [h, currentRowValues[idx]])) : null
       };
       errors.push(errorData);
 

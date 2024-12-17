@@ -4,7 +4,6 @@ export const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Map common status values to our enum values
 export const statusMapping: { [key: string]: string } = {
   'active': 'active',
   'pending': 'pending',
@@ -26,7 +25,7 @@ export const validateRowData = (rowData: any, headers: string[]) => {
     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
 
-  const mappedStatus = statusMapping[rowData.status];
+  const mappedStatus = statusMapping[rowData.status.toLowerCase()];
   if (!mappedStatus) {
     throw new Error(`Invalid status value: "${rowData.status}". Allowed values are: ${Object.keys(statusMapping).join(', ')}`);
   }
