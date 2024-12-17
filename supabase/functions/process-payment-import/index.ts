@@ -84,13 +84,13 @@ serve(async (req) => {
             .single();
 
           if (customerError || !customerData) {
-            throw new Error(`Customer not found: ${customerIdentifier}`);
+            throw new Error(`Customer "${customerIdentifier}" not found in the system. Please make sure the customer exists before importing their payments.`);
           }
 
           // First try to find an active lease
           let { data: activeLease } = await supabase
             .from('leases')
-            .select('id')
+            .select('id, status')
             .eq('customer_id', customerData.id)
             .eq('status', 'active')
             .order('start_date', { ascending: false })
@@ -99,7 +99,8 @@ serve(async (req) => {
 
           // If no active lease is found, try to find the most recent lease of any status
           if (!activeLease) {
-            const { data: anyLease } = await supabase
+            console.log(`No active lease found for ${customerIdentifier}, checking for any lease...`);
+            const { data: anyLease, error: leaseError } = await supabase
               .from('leases')
               .select('id, status')
               .eq('customer_id', customerData.id)
@@ -108,9 +109,9 @@ serve(async (req) => {
               .single();
 
             if (!anyLease) {
-              throw new Error(`No lease found for customer: ${customerIdentifier}`);
+              throw new Error(`No lease found for customer "${customerIdentifier}". Please create a lease for this customer before importing their payments.`);
             } else {
-              console.log(`Found non-active lease (${anyLease.status}) for customer: ${customerIdentifier}`);
+              console.log(`Found ${anyLease.status} lease for customer: ${customerIdentifier}`);
               activeLease = anyLease;
             }
           }
