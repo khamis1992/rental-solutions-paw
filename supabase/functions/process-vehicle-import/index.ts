@@ -31,7 +31,10 @@ serve(async (req) => {
 
     if (downloadError) {
       console.error('Failed to download file:', downloadError)
-      throw new Error(`Failed to download file: ${downloadError.message}`)
+      return new Response(
+        JSON.stringify({ success: false, error: `Failed to download file: ${downloadError.message}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
     }
 
     // Convert the file to text and parse CSV
@@ -44,7 +47,13 @@ serve(async (req) => {
     const missingFields = requiredFields.filter(field => !headers.includes(field))
     
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Missing required fields: ${missingFields.join(', ')}` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
     }
 
     const errors: string[] = []
@@ -112,7 +121,7 @@ serve(async (req) => {
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 400
       }
     )
   }

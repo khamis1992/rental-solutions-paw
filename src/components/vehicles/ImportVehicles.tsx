@@ -41,14 +41,14 @@ export const ImportVehicles = () => {
 
       console.log('Edge function response:', response);
 
-      if (processError) {
-        console.error('Edge function error:', processError);
-        throw processError;
+      if (processError || !response.success) {
+        console.error('Edge function error:', processError || response.error);
+        throw new Error(processError?.message || response.error || 'Failed to process file');
       }
 
       toast({
         title: "Import Started",
-        description: "Your file is being processed. You'll be notified when it's complete.",
+        description: response.message || "Your file is being processed. You'll be notified when it's complete.",
       });
 
       if (response.errors?.length > 0) {
