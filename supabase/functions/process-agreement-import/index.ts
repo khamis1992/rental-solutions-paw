@@ -8,6 +8,18 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 }
 
+// Map common status values to our enum values
+const statusMapping: { [key: string]: string } = {
+  'active': 'active',
+  'pending': 'pending',
+  'completed': 'completed',
+  'cancelled': 'cancelled',
+  'closed': 'completed', // Map 'closed' to 'completed'
+  'done': 'completed',
+  'cancel': 'cancelled',
+  'canceled': 'cancelled'
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -85,6 +97,12 @@ serve(async (req) => {
             throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
           }
 
+          // Map status to valid enum value
+          const mappedStatus = statusMapping[rowData.status];
+          if (!mappedStatus) {
+            throw new Error(`Invalid status value: ${rowData.status}. Allowed values are: ${Object.keys(statusMapping).join(', ')}`);
+          }
+
           // Get customer ID from full name
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
@@ -107,7 +125,7 @@ serve(async (req) => {
               checkout_date: rowData.checkoutDate,
               checkin_date: rowData.checkinDate,
               return_date: rowData.returnDate,
-              status: rowData.status,
+              status: mappedStatus,
             });
 
           if (leaseError) {
