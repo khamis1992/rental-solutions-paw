@@ -116,8 +116,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "customer_identifier,lease_identifier,amount,Vehicle_number,Vehicle-brand,payment_date,payment_method,status,Payment_Number,Customer_License,Payment_Type,Payment_Description\n" +
-                      "John Doe,lease-123,1000,ABC123,Toyota,03-20-2024,credit_card,completed,INV001,DL12345,installment,Monthly payment";
+    const csvContent = "customer_identifier,amount,Vehicle_number,Vehicle-brand,payment_date,payment_method,status,Payment_Number,Customer_License,Payment_Type,Payment_Description\n" +
+                      "John Doe,1000,ABC123,Toyota,03-20-2024,credit_card,completed,INV001,DL12345,installment,Monthly payment";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

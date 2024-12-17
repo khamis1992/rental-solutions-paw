@@ -64,7 +64,6 @@ serve(async (req) => {
       if (values.length === headers.length) {
         try {
           const customerIdentifier = values[headers.indexOf('customer_identifier')];
-          const leaseIdentifier = values[headers.indexOf('lease_identifier')];
           const amount = parseFloat(values[headers.indexOf('amount')]);
           const paymentDate = values[headers.indexOf('payment_date')];
           const paymentMethod = values[headers.indexOf('payment_method')];
@@ -88,16 +87,18 @@ serve(async (req) => {
             throw new Error(`Customer not found: ${customerIdentifier}`);
           }
 
-          // Get lease ID
+          // Get the most recent active lease for this customer
           const { data: leaseData } = await supabase
             .from('leases')
             .select('id')
             .eq('customer_id', customerData.id)
-            .eq('id', leaseIdentifier)
+            .eq('status', 'active')
+            .order('start_date', { ascending: false })
+            .limit(1)
             .single();
 
           if (!leaseData) {
-            throw new Error(`Lease not found for customer: ${customerIdentifier}`);
+            throw new Error(`No active lease found for customer: ${customerIdentifier}`);
           }
 
           // Convert date from MM-DD-YYYY to ISO format
