@@ -8,155 +8,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Download, Upload, Loader2, FileDown } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCustomerImport } from "./hooks/useCustomerImport";
+import { useCustomerExport } from "./hooks/useCustomerExport";
 
 export const ImportExportCustomers = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { isUploading, handleFileUpload } = useCustomerImport();
+  const { handleExport, downloadTemplate } = useCustomerExport();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== "text/csv") {
-      toast({
-        title: "Error",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Create import log
-      const { error: logError } = await supabase
-        .from("import_logs")
-        .insert({
-          file_name: fileName,
-          import_type: "customers",
-          status: "pending",
-        });
-
-      if (logError) throw logError;
-
-      // Poll for import completion
-      const pollInterval = setInterval(async () => {
-        const { data: importLog } = await supabase
-          .from("import_logs")
-          .select("status, records_processed")
-          .eq("file_name", fileName)
-          .single();
-
-        if (importLog?.status === "completed") {
-          clearInterval(pollInterval);
-          toast({
-            title: "Success",
-            description: `Successfully imported ${importLog.records_processed} customers`,
-          });
-          // Invalidate both customers and customer-stats queries
-          queryClient.invalidateQueries({ queryKey: ["customers"] });
-          queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
-          setIsUploading(false);
-          setIsImportOpen(false);
-        } else if (importLog?.status === "error") {
-          clearInterval(pollInterval);
-          throw new Error("Import failed");
-        }
-      }, 2000);
-
-      // Set a timeout to stop polling after 30 seconds
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (isUploading) {
-          setIsUploading(false);
-          toast({
-            title: "Error",
-            description: "Import timed out. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }, 30000);
-
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsUploading(false);
-    }
-  };
-
-  const handleExport = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name,phone_number,address,driver_license,role")
-        .eq("role", "customer");
-
-      if (error) throw error;
-
-      // Convert data to CSV
-      const headers = ["Full Name,Phone Number,Address,Driver License,Role"];
-      const csvData = data.map(row => 
-        Object.values(row).join(",")
-      );
-      
-      const csv = [...headers, ...csvData].join("\n");
-      
-      // Create and download file
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `customers-${new Date().toISOString()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+    if (file) {
+      handleFileUpload(file).then((success) => {
+        if (success) setIsImportOpen(false);
       });
     }
-  };
-
-  const downloadTemplate = () => {
-    // Create sample data
-    const headers = ["Full Name,Phone Number,Address,Driver License"];
-    const sampleData = [
-      "John Doe,+974 1234 5678,123 Main St Doha,DL123456",
-      "Jane Smith,+974 2345 6789,456 Park Ave Doha,DL234567"
-    ];
-    
-    const csv = [...headers, ...sampleData].join("\n");
-    
-    // Create and download file
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "customer-import-template.csv");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
   };
 
   return (
@@ -195,14 +62,14 @@ export const ImportExportCustomers = () => {
             <Input
               type="file"
               accept=".csv"
-              onChange={handleFileUpload}
+              onChange={onFileChange}
               disabled={isUploading}
               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
             />
             {isUploading && (
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Uploading...</span>
+                <span>Processing import...</span>
               </div>
             )}
           </div>
