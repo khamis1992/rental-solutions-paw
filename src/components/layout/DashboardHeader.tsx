@@ -1,6 +1,7 @@
 import { Search, Bell, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +20,8 @@ type Notification = {
 };
 
 export const DashboardHeader = () => {
-  // Fetch notifications from multiple sources
+  const navigate = useNavigate();
+
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
@@ -119,7 +121,11 @@ export const DashboardHeader = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate("/settings")}
+          >
             <Settings className="h-4 w-4" />
           </Button>
           <div className="h-8 w-8 rounded-full bg-primary/10" />
