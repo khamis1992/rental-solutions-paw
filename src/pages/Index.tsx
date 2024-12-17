@@ -3,6 +3,13 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { 
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Car, Clock, CheckCircle } from "lucide-react";
 
 const Index = () => {
   return (
