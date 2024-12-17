@@ -1,6 +1,7 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { CustomerDocumentUpload } from "./CustomerDocumentUpload";
+import { ContractDocumentUpload } from "./ContractDocumentUpload";
 import { UseFormReturn } from "react-hook-form";
 
 interface CustomerFormFieldsProps {
@@ -80,6 +81,17 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
           <CustomerDocumentUpload
             label="Driver License Document"
             fieldName="license_document_url"
+            onUploadComplete={field.onChange}
+          />
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="contract_document_url"
+        render={({ field }) => (
+          <ContractDocumentUpload
+            label="Contract Document"
+            fieldName="contract_document_url"
             onUploadComplete={field.onChange}
           />
         )}
