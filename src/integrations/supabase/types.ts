@@ -139,6 +139,48 @@ export type Database = {
           },
         ]
       }
+      customer_notes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          note: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          note: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          note?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       damages: {
         Row: {
           created_at: string
@@ -693,6 +735,56 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_assessments: {
+        Row: {
+          assessment_date: string
+          created_at: string
+          customer_id: string
+          id: string
+          late_payment_count: number
+          missed_payment_count: number
+          notes: string | null
+          payment_score: number
+          risk_level: string
+          total_penalties: number
+          updated_at: string
+        }
+        Insert: {
+          assessment_date?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          late_payment_count?: number
+          missed_payment_count?: number
+          notes?: string | null
+          payment_score: number
+          risk_level: string
+          total_penalties?: number
+          updated_at?: string
+        }
+        Update: {
+          assessment_date?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          late_payment_count?: number
+          missed_payment_count?: number
+          notes?: string | null
+          payment_score?: number
+          risk_level?: string
+          total_penalties?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_deposits: {
         Row: {
           amount: number
@@ -801,6 +893,12 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_risk_score: {
+        Args: {
+          p_customer_id: string
+        }
+        Returns: number
+      }
       log_audit_event: {
         Args: {
           p_user_id: string
@@ -816,6 +914,12 @@ export type Database = {
         Args: {
           p_lease_id: string
           p_delay_days?: number
+        }
+        Returns: undefined
+      }
+      update_risk_assessment: {
+        Args: {
+          p_customer_id: string
         }
         Returns: undefined
       }

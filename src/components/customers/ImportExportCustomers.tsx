@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, Upload, Loader2 } from "lucide-react";
+import { Download, Upload, Loader2, FileDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const ImportExportCustomers = () => {
@@ -112,6 +112,27 @@ export const ImportExportCustomers = () => {
     }
   };
 
+  const downloadTemplate = () => {
+    // Create sample data
+    const headers = ["Full Name,Phone Number,Address,Driver License"];
+    const sampleData = [
+      "John Doe,+974 1234 5678,123 Main St Doha,DL123456",
+      "Jane Smith,+974 2345 6789,456 Park Ave Doha,DL234567"
+    ];
+    
+    const csv = [...headers, ...sampleData].join("\n");
+    
+    // Create and download file
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "customer-import-template.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   return (
     <div className="flex gap-2">
       <Button
@@ -128,13 +149,20 @@ export const ImportExportCustomers = () => {
         <Download className="mr-2 h-4 w-4" />
         Export
       </Button>
+      <Button
+        variant="outline"
+        onClick={downloadTemplate}
+      >
+        <FileDown className="mr-2 h-4 w-4" />
+        Download Template
+      </Button>
 
       <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Import Customers</DialogTitle>
             <DialogDescription>
-              Upload a CSV file containing customer data. The file should include columns for: Full Name, Phone Number, Address, and Driver License.
+              Upload a CSV file containing customer data. The file should include columns for: Full Name, Phone Number, Address, and Driver License. You can download a template file using the &quot;Download Template&quot; button.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
