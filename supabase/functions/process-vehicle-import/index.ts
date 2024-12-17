@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { corsHeaders } from '../_shared/cors.ts'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,7 +17,10 @@ serve(async (req) => {
     console.log('Processing vehicle import file:', fileName)
 
     if (!fileName) {
-      throw new Error('fileName is required')
+      return new Response(
+        JSON.stringify({ success: false, error: 'fileName is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
     }
 
     // Initialize Supabase client
@@ -43,10 +50,12 @@ serve(async (req) => {
     const headers = rows[0].toLowerCase().split(',').map(h => h.trim())
     console.log('CSV Headers:', headers)
 
+    // Validate required fields
     const requiredFields = ['make', 'model', 'year', 'license_plate', 'vin']
     const missingFields = requiredFields.filter(field => !headers.includes(field))
     
     if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields)
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -77,22 +86,21 @@ serve(async (req) => {
           status: headers.includes('status') ? values[headers.indexOf('status')] : 'available'
         }
 
-        // Validate required fields
-        for (const field of requiredFields) {
-          if (!vehicleData[field as keyof typeof vehicleData]) {
-            throw new Error(`Missing value for required field: ${field}`)
-          }
+        // Validate required fields for each row
+        const missingValues = Object.entries(vehicleData)
+          .filter(([key, value]) => requiredFields.includes(key) && !value)
+          .map(([key]) => key)
+
+        if (missingValues.length > 0) {
+          throw new Error(`Row ${i + 1}: Missing values for ${missingValues.join(', ')}`)
         }
 
         console.log('Inserting vehicle:', vehicleData)
-
-        // Insert vehicle data
         const { error: insertError } = await supabase
           .from('vehicles')
           .insert(vehicleData)
 
         if (insertError) {
-          console.error(`Error inserting row ${i + 1}:`, insertError)
           throw insertError
         }
 
@@ -106,8 +114,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Import completed. Successfully processed ${successCount} vehicles with ${errors.length} errors.`,
-        errors
+        message: `Successfully imported ${successCount} vehicles`,
+        errors: errors.length > 0 ? errors : undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

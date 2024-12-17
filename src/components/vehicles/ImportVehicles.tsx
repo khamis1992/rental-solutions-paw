@@ -41,9 +41,9 @@ export const ImportVehicles = () => {
 
       console.log('Edge function response:', response);
 
-      if (processError || !response.success) {
-        console.error('Edge function error:', processError || response.error);
-        throw new Error(processError?.message || response.error || 'Failed to process file');
+      if (processError || !response?.success) {
+        console.error('Edge function error:', processError || response?.error);
+        throw new Error(processError?.message || response?.error || 'Failed to process file');
       }
 
       toast({
