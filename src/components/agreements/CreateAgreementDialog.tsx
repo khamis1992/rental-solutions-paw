@@ -18,9 +18,12 @@ import { CustomerSelect } from "./form/CustomerSelect";
 import { VehicleSelect } from "./form/VehicleSelect";
 import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
 import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
+import { CustomerDocuments } from "./CustomerDocuments";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CreateAgreementDialog() {
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const {
     open,
     setOpen,
@@ -44,7 +47,6 @@ export function CreateAgreementDialog() {
         .single();
 
       if (vehicle) {
-        // Set total amount to monthly rent (daily rate * 30)
         setValue('totalAmount', vehicle.daily_rate * 30);
       }
     } catch (error) {
@@ -72,7 +74,11 @@ export function CreateAgreementDialog() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <AgreementTypeSelect register={register} />
-            <CustomerSelect register={register} />
+            <CustomerSelect 
+              register={register} 
+              onCustomerSelect={setSelectedCustomerId}
+            />
+            {selectedCustomerId && <CustomerDocuments customerId={selectedCustomerId} />}
             <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
 
             <div className="space-y-2">
