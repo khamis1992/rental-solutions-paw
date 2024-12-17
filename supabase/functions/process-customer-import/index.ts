@@ -41,40 +41,49 @@ serve(async (req) => {
     // Process customers in smaller batches for better performance
     const batchSize = 50;
     const customers = [];
+    const timestamp = Date.now();
     
     console.log('Starting to process customer rows...');
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',');
       if (values.length === headers.length) {
-        const email = `customer${i}@example.com`; // Generate a unique email
-        const password = crypto.randomUUID(); // Generate a random password
+        const randomString = Math.random().toString(36).substring(7);
+        const email = `customer${i}_${timestamp}_${randomString}@example.com`;
+        const password = crypto.randomUUID();
         
-        // Create auth user first
-        console.log(`Creating auth user for: ${values[0]?.trim()}`);
-        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            full_name: values[0]?.trim()
-          }
-        });
-
-        if (authError) {
-          console.error('Error creating auth user:', authError);
-          throw authError;
-        }
-
-        if (authUser?.user) {
-          customers.push({
-            id: authUser.user.id,
-            full_name: values[0]?.trim(),
-            phone_number: values[1]?.trim(),
-            address: values[2]?.trim(),
-            driver_license: values[3]?.trim(),
-            role: 'customer'
+        try {
+          // Create auth user first
+          console.log(`Creating auth user for: ${values[0]?.trim()}`);
+          const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: {
+              full_name: values[0]?.trim()
+            }
           });
-          console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${authUser.user.id}`);
+
+          if (authError) {
+            console.error('Error creating auth user:', authError);
+            // Skip this user and continue with the next one
+            continue;
+          }
+
+          if (authUser?.user) {
+            customers.push({
+              id: authUser.user.id,
+              full_name: values[0]?.trim(),
+              phone_number: values[1]?.trim(),
+              address: values[2]?.trim(),
+              driver_license: values[3]?.trim(),
+              role: 'customer'
+            });
+            console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${authUser.user.id}`);
+          }
+        } catch (error) {
+          console.error(`Error processing row ${i}:`, error);
+          // Skip this user and continue with the next one
+          continue;
         }
       }
       
