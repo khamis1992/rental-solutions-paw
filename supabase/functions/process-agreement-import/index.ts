@@ -66,80 +66,84 @@ serve(async (req) => {
     for (let i = 1; i < rows.length; i++) {
       if (!rows[i].trim()) continue;
 
+      let currentRowValues; // Declare values array outside try block
       try {
-        const values = rows[i].split(',').map(v => v.trim());
-        if (values.length === headers.length) {
-          // Extract values with validation
-          const rowData = {
-            agreementNumber: values[headers.indexOf('Agreement Number')]?.trim(),
-            licenseNo: values[headers.indexOf('License No')]?.trim(),
-            fullName: values[headers.indexOf('full_name')]?.trim(),
-            licenseNumber: values[headers.indexOf('License Number')]?.trim(),
-            checkoutDate: values[headers.indexOf('Check-out Date')]?.trim(),
-            checkinDate: values[headers.indexOf('Check-in Date')]?.trim(),
-            returnDate: values[headers.indexOf('Return Date')]?.trim(),
-            status: values[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
-          };
-
-          // Validate required fields
-          const missingFields = [];
-          if (!rowData.agreementNumber) missingFields.push('Agreement Number');
-          if (!rowData.fullName) missingFields.push('full_name');
-          if (!rowData.status) missingFields.push('STATUS');
-
-          if (missingFields.length > 0) {
-            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-          }
-
-          // Map status to valid enum value
-          const mappedStatus = statusMapping[rowData.status];
-          if (!mappedStatus) {
-            throw new Error(`Invalid status value: "${rowData.status}". Allowed values are: ${Object.keys(statusMapping).join(', ')}`);
-          }
-
-          // Get customer ID from full name
-          const { data: customerData, error: customerError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('full_name', rowData.fullName)
-            .single();
-
-          if (customerError || !customerData) {
-            throw new Error(`Customer "${rowData.fullName}" not found`);
-          }
-
-          // Create lease record
-          const { error: leaseError } = await supabase
-            .from('leases')
-            .insert({
-              customer_id: customerData.id,
-              agreement_number: rowData.agreementNumber,
-              license_no: rowData.licenseNo,
-              license_number: rowData.licenseNumber,
-              checkout_date: rowData.checkoutDate,
-              checkin_date: rowData.checkinDate,
-              return_date: rowData.returnDate,
-              status: mappedStatus,
-            });
-
-          if (leaseError) {
-            throw leaseError;
-          }
-
-          successCount++;
-          console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
-
-        } else {
-          throw new Error(`Row has incorrect number of columns. Expected ${headers.length}, got ${values.length}`);
+        currentRowValues = rows[i].split(',').map(v => v.trim());
+        
+        if (currentRowValues.length !== headers.length) {
+          throw new Error(`Row has incorrect number of columns. Expected ${headers.length}, got ${currentRowValues.length}`);
         }
+
+        // Extract values with validation
+        const rowData = {
+          agreementNumber: currentRowValues[headers.indexOf('Agreement Number')]?.trim(),
+          licenseNo: currentRowValues[headers.indexOf('License No')]?.trim(),
+          fullName: currentRowValues[headers.indexOf('full_name')]?.trim(),
+          licenseNumber: currentRowValues[headers.indexOf('License Number')]?.trim(),
+          checkoutDate: currentRowValues[headers.indexOf('Check-out Date')]?.trim(),
+          checkinDate: currentRowValues[headers.indexOf('Check-in Date')]?.trim(),
+          returnDate: currentRowValues[headers.indexOf('Return Date')]?.trim(),
+          status: currentRowValues[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
+        };
+
+        // Validate required fields
+        const missingFields = [];
+        if (!rowData.agreementNumber) missingFields.push('Agreement Number');
+        if (!rowData.fullName) missingFields.push('full_name');
+        if (!rowData.status) missingFields.push('STATUS');
+
+        if (missingFields.length > 0) {
+          throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+        }
+
+        // Map status to valid enum value
+        const mappedStatus = statusMapping[rowData.status];
+        if (!mappedStatus) {
+          throw new Error(`Invalid status value: "${rowData.status}". Allowed values are: ${Object.keys(statusMapping).join(', ')}`);
+        }
+
+        // Get customer ID from full name
+        const { data: customerData, error: customerError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('full_name', rowData.fullName)
+          .single();
+
+        if (customerError || !customerData) {
+          throw new Error(`Customer "${rowData.fullName}" not found`);
+        }
+
+        // Create lease record
+        const { error: leaseError } = await supabase
+          .from('leases')
+          .insert({
+            customer_id: customerData.id,
+            agreement_number: rowData.agreementNumber,
+            license_no: rowData.licenseNo,
+            license_number: rowData.licenseNumber,
+            checkout_date: rowData.checkoutDate,
+            checkin_date: rowData.checkinDate,
+            return_date: rowData.returnDate,
+            status: mappedStatus,
+          });
+
+        if (leaseError) {
+          throw leaseError;
+        }
+
+        successCount++;
+        console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
+
       } catch (error) {
         console.error(`Error processing row ${i + 1}:`, error);
         errorCount++;
-        errors.push({
+        
+        const errorData = {
           row: i + 1,
           error: error.message,
-          data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
-        });
+          data: currentRowValues ? Object.fromEntries(headers.map((h, idx) => [h, currentRowValues[idx]])) : null
+        };
+        errors.push(errorData);
 
         // Log the error in agreement_import_errors
         await supabase
@@ -152,7 +156,7 @@ serve(async (req) => {
               .single()).data?.id,
             row_number: i + 1,
             error_message: error.message,
-            row_data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
+            row_data: errorData.data
           });
       }
     }
