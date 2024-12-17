@@ -21,7 +21,7 @@ import { format } from "date-fns";
 import { PaymentImport } from "./PaymentImport";
 
 interface PaymentHistoryDialogProps {
-  agreementId: string;
+  agreementId?: string; // Make optional
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -34,7 +34,7 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from("payments")
         .select(`
           *,
@@ -43,8 +43,14 @@ export function PaymentHistoryDialog({
             status
           )
         `)
-        .eq("lease_id", agreementId)
         .order("created_at", { ascending: false });
+
+      // Only filter by lease_id if it's provided
+      if (agreementId) {
+        query.eq("lease_id", agreementId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data;
@@ -87,7 +93,7 @@ export function PaymentHistoryDialog({
         <DialogHeader>
           <DialogTitle>Payment History</DialogTitle>
           <DialogDescription>
-            View all payments and transactions for this agreement
+            View all payments and transactions
           </DialogDescription>
         </DialogHeader>
 
