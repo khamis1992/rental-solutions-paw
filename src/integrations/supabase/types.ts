@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agreement_import_errors: {
+        Row: {
+          created_at: string | null
+          customer_identifier: string | null
+          error_message: string | null
+          id: string
+          import_log_id: string | null
+          row_data: Json | null
+          row_number: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_identifier?: string | null
+          error_message?: string | null
+          id?: string
+          import_log_id?: string | null
+          row_data?: Json | null
+          row_number?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_identifier?: string | null
+          error_message?: string | null
+          id?: string
+          import_log_id?: string | null
+          row_data?: Json | null
+          row_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_import_errors_import_log_id_fkey"
+            columns: ["import_log_id"]
+            isOneToOne: false
+            referencedRelation: "import_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applied_discounts: {
         Row: {
           created_at: string
@@ -927,6 +965,7 @@ export type Database = {
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
       discount_type: "percentage" | "fixed_amount"
+      import_type: "payments" | "customers" | "agreements"
       lease_status: "pending" | "active" | "completed" | "cancelled"
       maintenance_status:
         | "scheduled"
