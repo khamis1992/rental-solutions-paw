@@ -12,13 +12,6 @@ export const GettingStartedGuide = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="aspect-video relative rounded-lg overflow-hidden">
-            <img
-              src="/placeholder.svg"
-              alt="Dashboard overview"
-              className="object-cover w-full h-full"
-            />
-          </div>
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Getting Started Guide</h3>
             <p className="text-muted-foreground">
