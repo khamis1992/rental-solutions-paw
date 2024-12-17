@@ -5,8 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
-}
+};
 
 // Map common status values to our enum values
 const statusMapping: { [key: string]: string } = {
@@ -14,13 +13,14 @@ const statusMapping: { [key: string]: string } = {
   'pending': 'pending',
   'completed': 'completed',
   'cancelled': 'cancelled',
-  'closed': 'completed', // Map 'closed' to 'completed'
+  'closed': 'completed',
   'done': 'completed',
   'cancel': 'cancelled',
   'canceled': 'cancelled'
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -62,19 +62,13 @@ serve(async (req) => {
     let errorCount = 0;
     let errors = [];
 
-    // Update import log status to processing
-    await supabase
-      .from('import_logs')
-      .update({ status: 'processing' })
-      .eq('file_name', fileName);
-
     // Process each row
     for (let i = 1; i < rows.length; i++) {
       if (!rows[i].trim()) continue;
 
-      const values = rows[i].split(',').map(v => v.trim());
-      if (values.length === headers.length) {
-        try {
+      try {
+        const values = rows[i].split(',').map(v => v.trim());
+        if (values.length === headers.length) {
           // Extract values with validation
           const rowData = {
             agreementNumber: values[headers.indexOf('Agreement Number')]?.trim(),
@@ -84,7 +78,7 @@ serve(async (req) => {
             checkoutDate: values[headers.indexOf('Check-out Date')]?.trim(),
             checkinDate: values[headers.indexOf('Check-in Date')]?.trim(),
             returnDate: values[headers.indexOf('Return Date')]?.trim(),
-            status: values[headers.indexOf('STATUS')]?.trim()?.toLowerCase(), // Convert status to lowercase
+            status: values[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
           };
 
           // Validate required fields
@@ -135,39 +129,31 @@ serve(async (req) => {
           successCount++;
           console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
 
-        } catch (error) {
-          console.error(`Error processing row ${i + 1}:`, error);
-          errorCount++;
-          errors.push({
-            row: i + 1,
-            error: error.message,
-            data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
-          });
-
-          // Log the error in agreement_import_errors
-          await supabase
-            .from('agreement_import_errors')
-            .insert({
-              import_log_id: (await supabase
-                .from('import_logs')
-                .select('id')
-                .eq('file_name', fileName)
-                .single()).data?.id,
-              row_number: i + 1,
-              customer_identifier: values[headers.indexOf('full_name')],
-              error_message: error.message,
-              row_data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
-            });
+        } else {
+          throw new Error(`Row has incorrect number of columns. Expected ${headers.length}, got ${values.length}`);
         }
-      } else {
-        console.error(`Row ${i + 1} has incorrect number of columns`);
+      } catch (error) {
+        console.error(`Error processing row ${i + 1}:`, error);
         errorCount++;
         errors.push({
           row: i + 1,
-          error: 'Incorrect number of columns',
-          expected: headers.length,
-          found: values.length
+          error: error.message,
+          data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
         });
+
+        // Log the error in agreement_import_errors
+        await supabase
+          .from('agreement_import_errors')
+          .insert({
+            import_log_id: (await supabase
+              .from('import_logs')
+              .select('id')
+              .eq('file_name', fileName)
+              .single()).data?.id,
+            row_number: i + 1,
+            error_message: error.message,
+            row_data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
+          });
       }
     }
 
@@ -192,24 +178,25 @@ serve(async (req) => {
       { 
         status: 200,
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        }
       }
     );
+
   } catch (error) {
     console.error('Import process failed:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message || 'An unexpected error occurred',
         details: error.toString()
       }),
       { 
         status: 500,
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        }
       }
     );
   }
