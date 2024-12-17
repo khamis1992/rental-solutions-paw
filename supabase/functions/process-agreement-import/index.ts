@@ -63,28 +63,37 @@ serve(async (req) => {
       const values = rows[i].split(',').map(v => v.trim());
       if (values.length === headers.length) {
         try {
-          const agreementNumber = values[headers.indexOf('Agreement Number')];
-          const licenseNo = values[headers.indexOf('License No')];
-          const fullName = values[headers.indexOf('full_name')];
-          const licenseNumber = values[headers.indexOf('License Number')];
-          const checkoutDate = values[headers.indexOf('Check-out Date')];
-          const checkinDate = values[headers.indexOf('Check-in Date')];
-          const returnDate = values[headers.indexOf('Return Date')];
-          const status = values[headers.indexOf('STATUS')].toLowerCase();
+          // Extract values with validation
+          const rowData = {
+            agreementNumber: values[headers.indexOf('Agreement Number')]?.trim(),
+            licenseNo: values[headers.indexOf('License No')]?.trim(),
+            fullName: values[headers.indexOf('full_name')]?.trim(),
+            licenseNumber: values[headers.indexOf('License Number')]?.trim(),
+            checkoutDate: values[headers.indexOf('Check-out Date')]?.trim(),
+            checkinDate: values[headers.indexOf('Check-in Date')]?.trim(),
+            returnDate: values[headers.indexOf('Return Date')]?.trim(),
+            status: values[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
+          };
 
-          if (!agreementNumber || !fullName || !status) {
-            throw new Error('Missing required fields');
+          // Validate required fields
+          const missingFields = [];
+          if (!rowData.agreementNumber) missingFields.push('Agreement Number');
+          if (!rowData.fullName) missingFields.push('full_name');
+          if (!rowData.status) missingFields.push('STATUS');
+
+          if (missingFields.length > 0) {
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
           }
 
           // Get customer ID from full name
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('full_name', fullName.trim())
+            .eq('full_name', rowData.fullName)
             .single();
 
           if (customerError || !customerData) {
-            throw new Error(`Customer "${fullName}" not found`);
+            throw new Error(`Customer "${rowData.fullName}" not found`);
           }
 
           // Create lease record
@@ -92,13 +101,13 @@ serve(async (req) => {
             .from('leases')
             .insert({
               customer_id: customerData.id,
-              agreement_number: agreementNumber,
-              license_no: licenseNo,
-              license_number: licenseNumber,
-              checkout_date: checkoutDate,
-              checkin_date: checkinDate,
-              return_date: returnDate,
-              status: status,
+              agreement_number: rowData.agreementNumber,
+              license_no: rowData.licenseNo,
+              license_number: rowData.licenseNumber,
+              checkout_date: rowData.checkoutDate,
+              checkin_date: rowData.checkinDate,
+              return_date: rowData.returnDate,
+              status: rowData.status,
             });
 
           if (leaseError) {
@@ -106,14 +115,15 @@ serve(async (req) => {
           }
 
           successCount++;
-          console.log(`Successfully imported agreement: ${agreementNumber}`);
+          console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
 
         } catch (error) {
           console.error(`Error processing row ${i + 1}:`, error);
           errorCount++;
           errors.push({
             row: i + 1,
-            error: error.message
+            error: error.message,
+            data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
           });
 
           // Log the error in agreement_import_errors
@@ -131,6 +141,15 @@ serve(async (req) => {
               row_data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
             });
         }
+      } else {
+        console.error(`Row ${i + 1} has incorrect number of columns`);
+        errorCount++;
+        errors.push({
+          row: i + 1,
+          error: 'Incorrect number of columns',
+          expected: headers.length,
+          found: values.length
+        });
       }
     }
 
