@@ -11,6 +11,18 @@ export const processImportData = async (
   let errorCount = 0;
   let errors: any[] = [];
 
+  // Get first available vehicle for testing
+  const { data: vehicle } = await supabase
+    .from('vehicles')
+    .select('id')
+    .eq('status', 'available')
+    .limit(1)
+    .single();
+
+  if (!vehicle) {
+    throw new Error('No available vehicle found for import testing');
+  }
+
   for (let i = 1; i < rows.length; i++) {
     if (!rows[i].trim()) continue;
 
@@ -36,11 +48,12 @@ export const processImportData = async (
         throw new Error(`Customer "${rowData.fullName}" not found`);
       }
 
-      // Create lease record
+      // Create lease record with the test vehicle
       const { error: leaseError } = await supabase
         .from('leases')
         .insert({
           customer_id: customerData.id,
+          vehicle_id: vehicle.id, // Use test vehicle ID
           agreement_number: rowData.agreementNumber,
           license_no: rowData.licenseNo,
           license_number: rowData.licenseNumber,
@@ -48,6 +61,8 @@ export const processImportData = async (
           checkin_date: rowData.checkinDate,
           return_date: rowData.returnDate,
           status: mappedStatus,
+          total_amount: 0, // Set a default value
+          initial_mileage: 0, // Set a default value
         });
 
       if (leaseError) {
