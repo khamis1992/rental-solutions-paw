@@ -3,208 +3,134 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FilePlus2 } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { FilePlus2 } from "lucide-react";
+import { useAgreementForm } from "./hooks/useAgreementForm";
+import { AgreementTypeSelect } from "./form/AgreementTypeSelect";
+import { CustomerSelect } from "./form/CustomerSelect";
+import { VehicleSelect } from "./form/VehicleSelect";
+import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
+import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
+import { supabase } from "@/integrations/supabase/client";
 
-const formSchema = z.object({
-  agreementType: z.enum(["short_term", "lease_to_own"] as const),
-  customerId: z.string().min(1, "Customer is required"),
-  vehicleId: z.string().min(1, "Vehicle is required"),
-  startDate: z.date(),
-  endDate: z.date(),
-  totalAmount: z.number().min(0),
-  downPayment: z.number().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-export const CreateAgreementDialog = () => {
-  const [open, setOpen] = useState(false);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      agreementType: "short_term",
-      customerId: "",
-      vehicleId: "",
-      startDate: new Date(),
-      endDate: new Date(),
-      totalAmount: 0,
-      downPayment: 0,
-    },
+export function CreateAgreementDialog() {
+  const {
+    open,
+    setOpen,
+    register,
+    handleSubmit,
+    onSubmit,
+    agreementType,
+    updateMonthlyPayment,
+    watch,
+    setValue,
+  } = useAgreementForm(() => {
+    // Callback after successful creation
   });
 
-  const onSubmit = async (values: FormValues) => {
+  const handleVehicleSelect = async (vehicleId: string) => {
     try {
-      // Handle form submission
-      console.log(values);
-      setOpen(false);
+      const { data: vehicle } = await supabase
+        .from('vehicles')
+        .select('daily_rate')
+        .eq('id', vehicleId)
+        .single();
+
+      if (vehicle) {
+        // Set total amount to monthly rent (daily rate * 30)
+        setValue('totalAmount', vehicle.daily_rate * 30);
+      }
     } catch (error) {
-      console.error("Error creating agreement:", error);
+      console.error('Error fetching vehicle rate:', error);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors w-full">
+        <Button className="w-full justify-start">
           <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500">
             <FilePlus2 className="h-5 w-5" />
           </div>
           <span className="font-medium">New Agreement</span>
-        </button>
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create New Agreement</DialogTitle>
           <DialogDescription>
-            Enter the details for the new rental agreement.
+            Create a new lease-to-own or short-term rental agreement.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="agreementType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Agreement Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select agreement type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="short_term">Short Term Rental</SelectItem>
-                      <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <AgreementTypeSelect register={register} />
+            <CustomerSelect register={register} />
+            <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="initialMileage">Initial Mileage</Label>
+              <Input
+                type="number"
+                {...register("initialMileage")}
+                placeholder="Enter initial mileage"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="totalAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Amount</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="totalAmount">Total Amount</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                {...register("totalAmount")}
+                onChange={(e) => {
+                  register("totalAmount").onChange(e);
+                  updateMonthlyPayment();
+                }}
               />
-
-              {form.watch("agreementType") === "lease_to_own" && (
-                <FormField
-                  control={form.control}
-                  name="downPayment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Down Payment</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value))
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
             </div>
 
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Create Agreement</Button>
+            {agreementType === "lease_to_own" && (
+              <LeaseToOwnFields
+                register={register}
+                updateMonthlyPayment={updateMonthlyPayment}
+                watch={watch}
+              />
+            )}
+
+            <div className="col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Late Fees & Penalties</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <LateFeesPenaltiesFields register={register} />
+              </div>
             </div>
-          </form>
-        </Form>
+
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea placeholder="Additional notes..." {...register("notes")} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Create Agreement</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
-};
+}
