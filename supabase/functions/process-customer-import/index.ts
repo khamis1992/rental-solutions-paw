@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,138 +29,134 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
 
-    // Download the CSV file
-    console.log('Downloading file from storage...');
-    const { data: fileData, error: downloadError } = await supabase.storage
+    // Download the file from storage
+    const { data: fileData, error: downloadError } = await supabase
+      .storage
       .from('imports')
-      .download(fileName)
+      .download(fileName);
 
     if (downloadError) {
-      console.error('Error downloading file:', downloadError);
-      throw downloadError;
+      throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
-    console.log('File downloaded successfully, processing content...');
+    // Convert the file to text and parse CSV
     const text = await fileData.text();
     const rows = text.split('\n');
-    const headers = rows[0].split(',');
+    const headers = rows[0].split(',').map(h => h.trim());
     console.log('CSV Headers:', headers);
-    
-    // Process customers in smaller batches for better performance
-    const batchSize = 50;
-    const customers = [];
-    const timestamp = Date.now();
+
     let successCount = 0;
     let errorCount = 0;
-    
-    console.log('Starting to process customer rows...');
+    const timestamp = Date.now();
+
+    // Update import log status to processing
+    await supabase
+      .from('import_logs')
+      .update({ status: 'processing' })
+      .eq('file_name', fileName);
+
+    // Process each row
     for (let i = 1; i < rows.length; i++) {
-      const values = rows[i].split(',');
+      if (!rows[i].trim()) continue; // Skip empty rows
+
+      const values = rows[i].split(',').map(v => v.trim());
       if (values.length === headers.length) {
         try {
           // Generate unique email and password
           const randomString = Math.random().toString(36).substring(7);
           const email = `customer${i}_${timestamp}_${randomString}@example.com`;
           const password = crypto.randomUUID();
-          
-          // Create auth user first
-          console.log(`Creating auth user for: ${values[0]?.trim()}`);
-          const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: values[0]?.trim()
-            }
-          });
 
-          if (authError) {
-            console.error(`Error creating auth user for row ${i}:`, authError);
-            errorCount++;
+          // Create customer profile data object
+          const customerData = {
+            full_name: values[headers.indexOf('full_name')] || values[headers.indexOf('name')],
+            phone_number: values[headers.indexOf('phone_number')] || values[headers.indexOf('phone')],
+            address: values[headers.indexOf('address')],
+            driver_license: values[headers.indexOf('driver_license')],
+            role: 'customer'
+          };
+
+          console.log('Processing customer:', customerData);
+
+          // Check if profile already exists with the same name
+          const { data: existingProfiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('full_name', customerData.full_name)
+            .limit(1);
+
+          if (existingProfiles && existingProfiles.length > 0) {
+            console.log(`Profile already exists for ${customerData.full_name}, updating...`);
+            
+            // Update existing profile
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update(customerData)
+              .eq('id', existingProfiles[0].id);
+
+            if (updateError) {
+              throw updateError;
+            }
+            
+            successCount++;
             continue;
           }
 
-          if (authUser?.user) {
-            // Check if profile already exists
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('id', authUser.user.id)
-              .single();
+          // Create auth user first
+          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+          });
 
-            if (existingProfile) {
-              console.log(`Profile already exists for user ${authUser.user.id}, skipping...`);
-              errorCount++;
-              continue;
-            }
-
-            customers.push({
-              id: authUser.user.id,
-              full_name: values[0]?.trim(),
-              phone_number: values[1]?.trim(),
-              address: values[2]?.trim(),
-              driver_license: values[3]?.trim(),
-              role: 'customer'
-            });
-            successCount++;
-            console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${authUser.user.id}`);
+          if (authError) {
+            throw authError;
           }
+
+          // Create profile with the auth user's ID
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              ...customerData,
+              id: authData.user.id,
+            });
+
+          if (profileError) {
+            throw profileError;
+          }
+
+          successCount++;
+          console.log(`Successfully imported customer: ${customerData.full_name}`);
+
         } catch (error) {
           console.error(`Error processing row ${i}:`, error);
           errorCount++;
-          continue;
         }
-      }
-      
-      // Insert batch when it reaches batchSize or it's the last batch
-      if (customers.length === batchSize || i === rows.length - 1) {
-        if (customers.length > 0) {
-          console.log(`Inserting batch of ${customers.length} customers...`);
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert(customers);
-
-          if (insertError) {
-            console.error('Error inserting customers:', insertError);
-            errorCount += customers.length;
-            successCount -= customers.length;
-          }
-          
-          // Update import log with progress
-          const { error: updateError } = await supabase
-            .from('import_logs')
-            .update({
-              records_processed: successCount,
-              errors: { failed: errorCount },
-              status: i === rows.length - 1 ? 'completed' : 'processing'
-            })
-            .eq('file_name', fileName);
-
-          if (updateError) {
-            console.error('Error updating import log:', updateError);
-          }
-          
-          console.log(`Successfully inserted batch, processed ${i} rows so far`);
-        }
-        // Clear the batch array
-        customers.length = 0;
+      } else {
+        console.warn(`Skipping row ${i}: invalid number of columns`);
+        errorCount++;
       }
     }
 
-    console.log('Import process completed successfully');
-    console.log(`Total successful imports: ${successCount}`);
-    console.log(`Total failed imports: ${errorCount}`);
-    
+    // Update import log with final status
+    await supabase
+      .from('import_logs')
+      .update({
+        status: 'completed',
+        records_processed: successCount,
+        errors: errorCount
+      })
+      .eq('file_name', fileName);
+
     return new Response(
-      JSON.stringify({ 
-        message: 'Import completed successfully',
-        stats: {
-          success: successCount,
-          errors: errorCount
-        }
+      JSON.stringify({
+        success: true,
+        message: `Import completed. Successfully processed ${successCount} records with ${errorCount} errors.`,
+        processed: successCount,
+        errors: errorCount
       }),
       { 
         status: 200,
