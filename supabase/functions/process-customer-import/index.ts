@@ -46,17 +46,36 @@ serve(async (req) => {
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',');
       if (values.length === headers.length) {
-        // Generate a UUID for each new customer
-        const uuid = crypto.randomUUID();
-        customers.push({
-          id: uuid,
-          full_name: values[0]?.trim(),
-          phone_number: values[1]?.trim(),
-          address: values[2]?.trim(),
-          driver_license: values[3]?.trim(),
-          role: 'customer'
+        const email = `customer${i}@example.com`; // Generate a unique email
+        const password = crypto.randomUUID(); // Generate a random password
+        
+        // Create auth user first
+        console.log(`Creating auth user for: ${values[0]?.trim()}`);
+        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: values[0]?.trim()
+          }
         });
-        console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${uuid}`);
+
+        if (authError) {
+          console.error('Error creating auth user:', authError);
+          throw authError;
+        }
+
+        if (authUser?.user) {
+          customers.push({
+            id: authUser.user.id,
+            full_name: values[0]?.trim(),
+            phone_number: values[1]?.trim(),
+            address: values[2]?.trim(),
+            driver_license: values[3]?.trim(),
+            role: 'customer'
+          });
+          console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${authUser.user.id}`);
+        }
       }
       
       // Insert batch when it reaches batchSize or it's the last batch
