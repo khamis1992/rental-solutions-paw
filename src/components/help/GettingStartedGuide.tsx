@@ -14,7 +14,7 @@ export const GettingStartedGuide = () => {
         <CardContent className="space-y-4">
           <div className="aspect-video relative rounded-lg overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
+              src="/placeholder.svg"
               alt="Dashboard overview"
               className="object-cover w-full h-full"
             />
@@ -40,7 +40,6 @@ export const GettingStartedGuide = () => {
           </div>
         </CardContent>
       </Card>
-
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
