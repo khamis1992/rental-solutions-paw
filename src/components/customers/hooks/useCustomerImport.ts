@@ -22,15 +22,21 @@ export const useCustomerImport = () => {
 
     setIsUploading(true);
     try {
+      console.log('Starting file upload process...');
       const fileExt = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
+      console.log('Uploading file to storage:', fileName);
       const { error: uploadError } = await supabase.storage
         .from("imports")
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
+      console.log('File uploaded successfully, creating import log...');
       const { error: logError } = await supabase
         .from("import_logs")
         .insert({
@@ -39,10 +45,25 @@ export const useCustomerImport = () => {
           status: "pending",
         });
 
-      if (logError) throw logError;
+      if (logError) {
+        console.error('Import log creation error:', logError);
+        throw logError;
+      }
+
+      console.log('Starting import process via Edge Function...');
+      const { error: functionError } = await supabase.functions
+        .invoke('process-customer-import', {
+          body: { fileName }
+        });
+
+      if (functionError) {
+        console.error('Edge Function error:', functionError);
+        throw functionError;
+      }
 
       // Poll for import completion
       const pollInterval = setInterval(async () => {
+        console.log('Checking import status...');
         const { data: importLog } = await supabase
           .from("import_logs")
           .select("status, records_processed")
@@ -88,6 +109,7 @@ export const useCustomerImport = () => {
 
       return true;
     } catch (error: any) {
+      console.error('Import process error:', error);
       toast({
         title: "Error",
         description: error.message,
