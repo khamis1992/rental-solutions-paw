@@ -29,34 +29,46 @@ serve(async (req) => {
     const text = await fileData.text()
     const rows = text.split('\n')
     const headers = rows[0].split(',')
-    const customers = rows.slice(1).map(row => {
-      const values = row.split(',')
-      return {
-        full_name: values[0],
-        phone_number: values[1],
-        address: values[2],
-        driver_license: values[3],
-        role: 'customer'
+    
+    // Process customers in smaller batches for better performance
+    const batchSize = 50
+    const customers = []
+    
+    for (let i = 1; i < rows.length; i++) {
+      const values = rows[i].split(',')
+      if (values.length === headers.length) {
+        customers.push({
+          full_name: values[0]?.trim(),
+          phone_number: values[1]?.trim(),
+          address: values[2]?.trim(),
+          driver_license: values[3]?.trim(),
+          role: 'customer'
+        })
       }
-    })
+      
+      // Insert batch when it reaches batchSize or it's the last batch
+      if (customers.length === batchSize || i === rows.length - 1) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert(customers)
 
-    // Insert customers
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .insert(customers)
+        if (insertError) throw insertError
+        
+        // Update import log with progress
+        const { error: updateError } = await supabase
+          .from('import_logs')
+          .update({
+            records_processed: i,
+            status: i === rows.length - 1 ? 'completed' : 'processing'
+          })
+          .eq('file_name', fileName)
 
-    if (insertError) throw insertError
-
-    // Update import log
-    const { error: updateError } = await supabase
-      .from('import_logs')
-      .update({
-        status: 'completed',
-        records_processed: customers.length
-      })
-      .eq('file_name', fileName)
-
-    if (updateError) throw updateError
+        if (updateError) throw updateError
+        
+        // Clear the batch array
+        customers.length = 0
+      }
+    }
 
     return new Response(
       JSON.stringify({ message: 'Import completed successfully' }),

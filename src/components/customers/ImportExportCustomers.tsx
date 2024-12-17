@@ -17,12 +17,13 @@ export const ImportExportCustomers = () => {
   const { isUploading, handleFileUpload } = useCustomerImport();
   const { handleExport, downloadTemplate } = useCustomerExport();
 
-  const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      handleFileUpload(file).then((success) => {
-        if (success) setIsImportOpen(false);
-      });
+      const success = await handleFileUpload(file);
+      if (success) {
+        setIsImportOpen(false);
+      }
     }
   };
 
