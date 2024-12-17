@@ -37,6 +37,7 @@ export const CreateCustomerDialog = ({
       driver_license: "",
       id_document_url: "",
       license_document_url: "",
+      contract_document_url: "",
     },
   });
 

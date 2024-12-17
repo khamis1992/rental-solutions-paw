@@ -609,6 +609,7 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          contract_document_url: string | null
           created_at: string
           driver_license: string | null
           full_name: string | null
@@ -621,6 +622,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          contract_document_url?: string | null
           created_at?: string
           driver_license?: string | null
           full_name?: string | null
@@ -633,6 +635,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          contract_document_url?: string | null
           created_at?: string
           driver_license?: string | null
           full_name?: string | null
