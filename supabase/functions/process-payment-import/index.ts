@@ -74,24 +74,14 @@ serve(async (req) => {
           const paymentDescription = values[headers.indexOf('Payment_Description')];
 
           if (!customerIdentifier) {
-            throw new Error('Customer identifier is missing');
+            throw new Error('Customer identifier (full name) is missing');
           }
 
-          if (!customerIdentifier.includes('+974')) {
-            throw new Error('Invalid customer identifier format. Expected: "name +974xxxxxxxx"');
-          }
-
-          // Parse the customer identifier (format: "name +974xxxxxxxx")
-          const [fullName, phoneWithPrefix] = customerIdentifier.split('+974');
-          if (!fullName || !phoneWithPrefix) {
-            throw new Error(`Invalid customer identifier format in row ${i + 1}. Expected: "name +974xxxxxxxx"`);
-          }
-
-          // Get customer ID from identifier
+          // Get customer ID from identifier using full name
           const { data: customerData } = await supabase
             .from('profiles')
             .select('id')
-            .or(`phone_number.eq.+974${phoneWithPrefix.trim()},full_name.eq.${fullName.trim()}`)
+            .eq('full_name', customerIdentifier.trim())
             .single();
 
           if (!customerData) {
