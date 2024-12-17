@@ -8,8 +8,8 @@ export const useCustomerImport = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
+  const handleFileUpload = async (file: File): Promise<boolean> => {
+    if (!file) return false;
 
     if (file.type !== "text/csv") {
       toast({
@@ -17,7 +17,7 @@ export const useCustomerImport = () => {
         description: "Please upload a CSV file",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     setIsUploading(true);
@@ -55,6 +55,7 @@ export const useCustomerImport = () => {
             title: "Success",
             description: `Successfully imported ${importLog.records_processed} customers`,
           });
+          // Invalidate queries to refresh the data
           queryClient.invalidateQueries({ queryKey: ["customers"] });
           queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
           setIsUploading(false);
@@ -69,7 +70,7 @@ export const useCustomerImport = () => {
           title: "Processing",
           description: "Import in progress...",
         });
-      }, 1000); // Reduced to 1 second
+      }, 1000);
 
       // Set a timeout to stop polling after 15 seconds
       setTimeout(() => {
@@ -82,8 +83,9 @@ export const useCustomerImport = () => {
             variant: "destructive",
           });
         }
-      }, 15000); // Reduced to 15 seconds
+      }, 15000);
 
+      return true;
     } catch (error: any) {
       toast({
         title: "Error",
@@ -91,6 +93,7 @@ export const useCustomerImport = () => {
         variant: "destructive",
       });
       setIsUploading(false);
+      return false;
     }
   };
 
