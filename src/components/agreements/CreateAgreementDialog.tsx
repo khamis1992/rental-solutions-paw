@@ -20,7 +20,6 @@ import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
 import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
 import { CustomerDocuments } from "./CustomerDocuments";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 export function CreateAgreementDialog() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -38,20 +37,10 @@ export function CreateAgreementDialog() {
     // Callback after successful creation
   });
 
-  const handleVehicleSelect = async (vehicleId: string) => {
-    try {
-      const { data: vehicle } = await supabase
-        .from('vehicles')
-        .select('daily_rate')
-        .eq('id', vehicleId)
-        .single();
-
-      if (vehicle) {
-        setValue('totalAmount', vehicle.daily_rate * 30);
-      }
-    } catch (error) {
-      console.error('Error fetching vehicle rate:', error);
-    }
+  const handleVehicleSelect = (vehicleId: string) => {
+    // Set a default total amount when vehicle is selected
+    // This can be adjusted by the user later
+    setValue('totalAmount', 3000); // Default value, can be modified
   };
 
   return (
