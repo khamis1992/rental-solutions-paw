@@ -49,9 +49,8 @@ serve(async (req) => {
           color: values[headers.indexOf('color')],
           license_plate: values[headers.indexOf('license_plate')],
           vin: values[headers.indexOf('vin')],
-          daily_rate: parseFloat(values[headers.indexOf('daily_rate')]),
           mileage: parseInt(values[headers.indexOf('mileage')] || '0'),
-          status: 'available'
+          status: values[headers.indexOf('status')] || 'available'
         };
 
         // Insert vehicle data

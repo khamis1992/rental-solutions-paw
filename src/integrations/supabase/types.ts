@@ -889,7 +889,6 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
-          daily_rate: number
           description: string | null
           id: string
           image_url: string | null
@@ -905,7 +904,6 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string
-          daily_rate: number
           description?: string | null
           id?: string
           image_url?: string | null
@@ -921,7 +919,6 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string
-          daily_rate?: number
           description?: string | null
           id?: string
           image_url?: string | null
