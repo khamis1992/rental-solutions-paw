@@ -7,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -44,6 +43,14 @@ export const CustomerList = () => {
     );
   }
 
+  if (!customers?.length) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No customers found
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -65,21 +72,21 @@ export const CustomerList = () => {
                   to={`/customers/${customer.id}`}
                   className="text-blue-600 hover:underline"
                 >
-                  {customer.full_name}
+                  {customer.full_name || 'Unnamed Customer'}
                 </Link>
               </TableCell>
-              <TableCell>{customer.phone_number}</TableCell>
-              <TableCell>{customer.address}</TableCell>
-              <TableCell>{customer.driver_license}</TableCell>
+              <TableCell>{customer.phone_number || 'N/A'}</TableCell>
+              <TableCell>{customer.address || 'N/A'}</TableCell>
+              <TableCell>{customer.driver_license || 'N/A'}</TableCell>
               <TableCell className="flex gap-2">
                 {customer.id_document_url && (
-                  <FileText className="h-4 w-4 text-green-500" title="ID Document" />
+                  <FileText className="h-4 w-4 text-green-500" aria-label="ID Document" />
                 )}
                 {customer.license_document_url && (
-                  <FileText className="h-4 w-4 text-blue-500" title="License Document" />
+                  <FileText className="h-4 w-4 text-blue-500" aria-label="License Document" />
                 )}
                 {customer.contract_document_url && (
-                  <FileText className="h-4 w-4 text-orange-500" title="Contract Document" />
+                  <FileText className="h-4 w-4 text-orange-500" aria-label="Contract Document" />
                 )}
               </TableCell>
               <TableCell>
