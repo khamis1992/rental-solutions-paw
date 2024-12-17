@@ -129,10 +129,6 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
                 <dd>{vehicle.vin}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="font-medium">Daily Rate:</dt>
-                <dd>{formatCurrency(vehicle.daily_rate)}</dd>
-              </div>
-              <div className="flex justify-between">
                 <dt className="font-medium">Mileage:</dt>
                 <dd>{vehicle.mileage?.toLocaleString()} km</dd>
               </div>

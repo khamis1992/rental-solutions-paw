@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface Vehicle {
@@ -17,7 +16,6 @@ interface Vehicle {
   model: string;
   year: number;
   status: string;
-  daily_rate: number;
   license_plate: string;
   vin: string;
   mileage: number;
@@ -41,7 +39,6 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
               <TableHead>License Plate</TableHead>
               <TableHead>VIN</TableHead>
               <TableHead>Mileage</TableHead>
-              <TableHead className="text-right">Daily Rate</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -59,9 +56,6 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-[150px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-[100px]" />
@@ -87,7 +81,6 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
             <TableHead>License Plate</TableHead>
             <TableHead>VIN</TableHead>
             <TableHead>Mileage</TableHead>
-            <TableHead className="text-right">Daily Rate</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -113,9 +106,6 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
               <TableCell>{vehicle.license_plate}</TableCell>
               <TableCell>{vehicle.vin}</TableCell>
               <TableCell>{vehicle.mileage.toLocaleString()} km</TableCell>
-              <TableCell className="text-right">
-                {formatCurrency(vehicle.daily_rate)}/day
-              </TableCell>
               <TableCell>
                 <Button
                   variant="ghost"
