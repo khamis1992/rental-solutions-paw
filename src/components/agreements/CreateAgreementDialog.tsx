@@ -55,9 +55,11 @@ export function CreateAgreementDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <FilePlus2 className="mr-2 h-4 w-4" />
-          New Agreement
+        <Button className="w-full justify-start">
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500">
+            <FilePlus2 className="h-5 w-5" />
+          </div>
+          <span className="font-medium">New Agreement</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
