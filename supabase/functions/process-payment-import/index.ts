@@ -77,18 +77,18 @@ serve(async (req) => {
           }
 
           // Get customer ID from identifier using full name
-          const { data: customerData } = await supabase
+          const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
             .eq('full_name', customerIdentifier.trim())
             .single();
 
-          if (!customerData) {
+          if (customerError || !customerData) {
             throw new Error(`Customer not found: ${customerIdentifier}`);
           }
 
-          // Get the most recent active lease for this customer
-          const { data: leaseData } = await supabase
+          // First try to find an active lease
+          let { data: activeLease } = await supabase
             .from('leases')
             .select('id')
             .eq('customer_id', customerData.id)
@@ -97,8 +97,22 @@ serve(async (req) => {
             .limit(1)
             .single();
 
-          if (!leaseData) {
-            throw new Error(`No active lease found for customer: ${customerIdentifier}`);
+          // If no active lease is found, try to find the most recent lease of any status
+          if (!activeLease) {
+            const { data: anyLease } = await supabase
+              .from('leases')
+              .select('id, status')
+              .eq('customer_id', customerData.id)
+              .order('start_date', { ascending: false })
+              .limit(1)
+              .single();
+
+            if (!anyLease) {
+              throw new Error(`No lease found for customer: ${customerIdentifier}`);
+            } else {
+              console.log(`Found non-active lease (${anyLease.status}) for customer: ${customerIdentifier}`);
+              activeLease = anyLease;
+            }
           }
 
           // Convert date from MM-DD-YYYY to ISO format
@@ -112,7 +126,7 @@ serve(async (req) => {
           const { error: paymentError } = await supabase
             .from('payments')
             .insert({
-              lease_id: leaseData.id,
+              lease_id: activeLease.id,
               amount,
               status,
               payment_date: new Date(isoDate).toISOString(),
@@ -128,7 +142,7 @@ serve(async (req) => {
           console.log(`Successfully imported payment for customer: ${customerIdentifier}`);
 
         } catch (error) {
-          console.error(`Error processing row ${i}:`, error);
+          console.error(`Error processing row ${i + 1}:`, error);
           errorCount++;
           errors.push({
             row: i + 1,
@@ -153,7 +167,8 @@ serve(async (req) => {
         success: true,
         message: `Import completed. Successfully processed ${successCount} payments with ${errorCount} errors.`,
         processed: successCount,
-        errors: errorCount
+        errors: errorCount,
+        errorDetails: errors
       }),
       { 
         status: 200,
