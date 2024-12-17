@@ -11,6 +11,7 @@ export const ImportVehicles = () => {
   const handleFileUpload = async (file: File) => {
     try {
       setIsUploading(true);
+      console.log('Starting file upload process...', file);
       
       // Validate file type
       if (!file.name.endsWith('.csv')) {
@@ -19,11 +20,18 @@ export const ImportVehicles = () => {
 
       // Upload file to Supabase Storage
       const fileName = `vehicles/${Date.now()}-${file.name}`;
+      console.log('Uploading file to storage:', fileName);
+      
       const { error: uploadError } = await supabase.storage
         .from('imports')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('File uploaded successfully, calling edge function...');
 
       // Call Edge Function to process the file
       const { data: response, error: processError } = await supabase.functions
@@ -31,11 +39,16 @@ export const ImportVehicles = () => {
           body: { fileName }
         });
 
-      if (processError) throw processError;
+      console.log('Edge function response:', response);
+
+      if (processError) {
+        console.error('Edge function error:', processError);
+        throw processError;
+      }
 
       toast({
-        title: "Import Completed",
-        description: response.message,
+        title: "Import Started",
+        description: "Your file is being processed. You'll be notified when it's complete.",
       });
 
       if (response.errors?.length > 0) {
@@ -61,6 +74,7 @@ export const ImportVehicles = () => {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('File selected:', file.name);
       await handleFileUpload(file);
     }
   };

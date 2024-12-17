@@ -23,12 +23,14 @@ serve(async (req) => {
     )
 
     // Download the file from storage
+    console.log('Downloading file from storage...')
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
       .download(fileName)
 
     if (downloadError) {
+      console.error('Failed to download file:', downloadError)
       throw new Error(`Failed to download file: ${downloadError.message}`)
     }
 
@@ -73,12 +75,17 @@ serve(async (req) => {
           }
         }
 
+        console.log('Inserting vehicle:', vehicleData)
+
         // Insert vehicle data
         const { error: insertError } = await supabase
           .from('vehicles')
           .insert(vehicleData)
 
-        if (insertError) throw insertError
+        if (insertError) {
+          console.error(`Error inserting row ${i + 1}:`, insertError)
+          throw insertError
+        }
 
         successCount++
       } catch (error) {
