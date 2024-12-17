@@ -613,6 +613,8 @@ export type Database = {
           driver_license: string | null
           full_name: string | null
           id: string
+          id_document_url: string | null
+          license_document_url: string | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string
@@ -623,6 +625,8 @@ export type Database = {
           driver_license?: string | null
           full_name?: string | null
           id: string
+          id_document_url?: string | null
+          license_document_url?: string | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
@@ -633,6 +637,8 @@ export type Database = {
           driver_license?: string | null
           full_name?: string | null
           id?: string
+          id_document_url?: string | null
+          license_document_url?: string | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string

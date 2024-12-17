@@ -10,19 +10,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { CustomerFormFields } from "./CustomerFormFields";
 
 interface CreateCustomerDialogProps {
   open: boolean;
@@ -42,6 +35,8 @@ export const CreateCustomerDialog = ({
       phone_number: "",
       address: "",
       driver_license: "",
+      id_document_url: "",
+      license_document_url: "",
     },
   });
 
@@ -94,58 +89,7 @@ export const CreateCustomerDialog = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1 234 567 890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="123 Main St" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="driver_license"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Driver License</FormLabel>
-                  <FormControl>
-                    <Input placeholder="DL12345678" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <CustomerFormFields form={form} />
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Customer"}
