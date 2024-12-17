@@ -55,24 +55,50 @@ export const ImportExportCustomers = () => {
 
       if (logError) throw logError;
 
-      toast({
-        title: "Success",
-        description: "File uploaded successfully. Processing will begin shortly.",
-      });
+      // Poll for import completion
+      const pollInterval = setInterval(async () => {
+        const { data: importLog } = await supabase
+          .from("import_logs")
+          .select("status, records_processed")
+          .eq("file_name", fileName)
+          .single();
 
-      // Refresh the customer list after a short delay
+        if (importLog?.status === "completed") {
+          clearInterval(pollInterval);
+          toast({
+            title: "Success",
+            description: `Successfully imported ${importLog.records_processed} customers`,
+          });
+          // Invalidate both customers and customer-stats queries
+          queryClient.invalidateQueries({ queryKey: ["customers"] });
+          queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+          setIsUploading(false);
+          setIsImportOpen(false);
+        } else if (importLog?.status === "error") {
+          clearInterval(pollInterval);
+          throw new Error("Import failed");
+        }
+      }, 2000);
+
+      // Set a timeout to stop polling after 30 seconds
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["customers"] });
-      }, 5000);
+        clearInterval(pollInterval);
+        if (isUploading) {
+          setIsUploading(false);
+          toast({
+            title: "Error",
+            description: "Import timed out. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, 30000);
 
-      setIsImportOpen(false);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setIsUploading(false);
     }
   };
