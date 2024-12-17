@@ -55,9 +55,11 @@ export const useCustomerImport = () => {
             title: "Success",
             description: `Successfully imported ${importLog.records_processed} customers`,
           });
-          // Invalidate queries to refresh the data
-          queryClient.invalidateQueries({ queryKey: ["customers"] });
-          queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+          
+          // Force refresh the queries
+          await queryClient.invalidateQueries({ queryKey: ["customers"] });
+          await queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+          
           setIsUploading(false);
           return true;
         } else if (importLog?.status === "error") {
@@ -65,7 +67,6 @@ export const useCustomerImport = () => {
           throw new Error("Import failed");
         }
         
-        // Update toast to show progress
         toast({
           title: "Processing",
           description: "Import in progress...",

@@ -20,8 +20,10 @@ export const ImportExportCustomers = () => {
   const onFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      await handleFileUpload(file);
-      setIsImportOpen(false);
+      const success = await handleFileUpload(file);
+      if (success) {
+        setIsImportOpen(false);
+      }
     }
   };
 
