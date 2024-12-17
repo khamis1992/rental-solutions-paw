@@ -14,7 +14,7 @@ export const AgreementManagementGuide = () => {
         <CardContent className="space-y-4">
           <div className="aspect-video relative rounded-lg overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1483058712412-4245e9b90334"
+              src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6"
               alt="Rental agreements interface"
               className="object-cover w-full h-full"
             />

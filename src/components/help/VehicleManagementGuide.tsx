@@ -14,7 +14,7 @@ export const VehicleManagementGuide = () => {
         <CardContent className="space-y-4">
           <div className="aspect-video relative rounded-lg overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1498050108023-c5249f4df085"
+              src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d"
               alt="Vehicle management interface"
               className="object-cover w-full h-full"
             />

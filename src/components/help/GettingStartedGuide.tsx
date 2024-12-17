@@ -14,7 +14,7 @@ export const GettingStartedGuide = () => {
         <CardContent className="space-y-4">
           <div className="aspect-video relative rounded-lg overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
+              src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
               alt="Dashboard overview"
               className="object-cover w-full h-full"
             />

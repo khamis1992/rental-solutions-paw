@@ -14,7 +14,7 @@ export const CustomerManagementGuide = () => {
         <CardContent className="space-y-4">
           <div className="aspect-video relative rounded-lg overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81"
+              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"
               alt="Customer management interface"
               className="object-cover w-full h-full"
             />
