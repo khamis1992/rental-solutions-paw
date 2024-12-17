@@ -27,7 +27,7 @@ export const DashboardSidebar = () => {
     <Sidebar>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
-          <span className="font-semibold">AutoRent Pro</span>
+          <span className="font-semibold">Rental Solutions</span>
         </div>
         <SidebarGroup>
           <SidebarGroupContent>

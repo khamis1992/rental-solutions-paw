@@ -8,14 +8,14 @@ export const GettingStartedGuide = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            Welcome to AutoRent Pro
+            Welcome to Rental Solutions
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Getting Started Guide</h3>
             <p className="text-muted-foreground">
-              AutoRent Pro is your comprehensive solution for managing vehicle rentals efficiently. 
+              Rental Solutions is your comprehensive solution for managing vehicle rentals efficiently. 
               Our platform streamlines every aspect of your rental business, from vehicle management 
               to customer relationships and financial tracking.
             </p>
@@ -77,12 +77,12 @@ export const GettingStartedGuide = () => {
           <CardContent>
             <div className="space-y-4">
               <p className="text-muted-foreground">
-                We offer multiple channels of support to ensure you get the most out of AutoRent Pro:
+                We offer multiple channels of support to ensure you get the most out of Rental Solutions:
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <span className="text-primary">•</span>
-                  24/7 Email Support: support@autorentpro.com
+                  24/7 Email Support: support@rentalsolutions.com
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary">•</span>
