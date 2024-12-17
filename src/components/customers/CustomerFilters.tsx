@@ -8,7 +8,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const CustomerFilters = () => {
+interface CustomerFiltersProps {
+  onSearchChange: (value: string) => void;
+  onRoleChange?: (value: string) => void;
+  onStatusChange?: (value: string) => void;
+}
+
+export const CustomerFilters = ({ onSearchChange, onRoleChange, onStatusChange }: CustomerFiltersProps) => {
   return (
     <div className="flex flex-col gap-4 md:flex-row">
       <div className="flex-1">
@@ -17,11 +23,12 @@ export const CustomerFilters = () => {
           <Input
             placeholder="Search customers..."
             className="pl-8 md:w-[300px] lg:w-[400px]"
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
       </div>
       <div className="flex flex-col gap-4 sm:flex-row">
-        <Select>
+        <Select onValueChange={onRoleChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
@@ -32,7 +39,7 @@ export const CustomerFilters = () => {
             <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
         </Select>
-        <Select>
+        <Select onValueChange={onStatusChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
