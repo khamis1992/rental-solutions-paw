@@ -84,7 +84,7 @@ serve(async (req) => {
             checkoutDate: values[headers.indexOf('Check-out Date')]?.trim(),
             checkinDate: values[headers.indexOf('Check-in Date')]?.trim(),
             returnDate: values[headers.indexOf('Return Date')]?.trim(),
-            status: values[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
+            status: values[headers.indexOf('STATUS')]?.trim()?.toLowerCase(), // Convert status to lowercase
           };
 
           // Validate required fields
@@ -100,7 +100,7 @@ serve(async (req) => {
           // Map status to valid enum value
           const mappedStatus = statusMapping[rowData.status];
           if (!mappedStatus) {
-            throw new Error(`Invalid status value: ${rowData.status}. Allowed values are: ${Object.keys(statusMapping).join(', ')}`);
+            throw new Error(`Invalid status value: "${rowData.status}". Allowed values are: ${Object.keys(statusMapping).join(', ')}`);
           }
 
           // Get customer ID from full name
