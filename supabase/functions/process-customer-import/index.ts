@@ -42,16 +42,19 @@ serve(async (req) => {
     const batchSize = 50;
     const customers = [];
     const timestamp = Date.now();
+    let successCount = 0;
+    let errorCount = 0;
     
     console.log('Starting to process customer rows...');
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',');
       if (values.length === headers.length) {
-        const randomString = Math.random().toString(36).substring(7);
-        const email = `customer${i}_${timestamp}_${randomString}@example.com`;
-        const password = crypto.randomUUID();
-        
         try {
+          // Check if a user with this email already exists
+          const randomString = Math.random().toString(36).substring(7);
+          const email = `customer${i}_${timestamp}_${randomString}@example.com`;
+          const password = crypto.randomUUID();
+          
           // Create auth user first
           console.log(`Creating auth user for: ${values[0]?.trim()}`);
           const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
@@ -64,12 +67,25 @@ serve(async (req) => {
           });
 
           if (authError) {
-            console.error('Error creating auth user:', authError);
-            // Skip this user and continue with the next one
+            console.error(`Error creating auth user for row ${i}:`, authError);
+            errorCount++;
             continue;
           }
 
           if (authUser?.user) {
+            // Check if profile already exists
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', authUser.user.id)
+              .single();
+
+            if (existingProfile) {
+              console.log(`Profile already exists for user ${authUser.user.id}, skipping...`);
+              errorCount++;
+              continue;
+            }
+
             customers.push({
               id: authUser.user.id,
               full_name: values[0]?.trim(),
@@ -78,11 +94,12 @@ serve(async (req) => {
               driver_license: values[3]?.trim(),
               role: 'customer'
             });
+            successCount++;
             console.log(`Processed customer row ${i}: ${values[0]?.trim()} with ID: ${authUser.user.id}`);
           }
         } catch (error) {
           console.error(`Error processing row ${i}:`, error);
-          // Skip this user and continue with the next one
+          errorCount++;
           continue;
         }
       }
@@ -97,21 +114,22 @@ serve(async (req) => {
 
           if (insertError) {
             console.error('Error inserting customers:', insertError);
-            throw insertError;
+            errorCount += customers.length;
+            successCount -= customers.length;
           }
           
           // Update import log with progress
           const { error: updateError } = await supabase
             .from('import_logs')
             .update({
-              records_processed: i,
+              records_processed: successCount,
+              errors: { failed: errorCount },
               status: i === rows.length - 1 ? 'completed' : 'processing'
             })
             .eq('file_name', fileName);
 
           if (updateError) {
             console.error('Error updating import log:', updateError);
-            throw updateError;
           }
           
           console.log(`Successfully inserted batch, processed ${i} rows so far`);
@@ -122,8 +140,17 @@ serve(async (req) => {
     }
 
     console.log('Import process completed successfully');
+    console.log(`Total successful imports: ${successCount}`);
+    console.log(`Total failed imports: ${errorCount}`);
+    
     return new Response(
-      JSON.stringify({ message: 'Import completed successfully' }),
+      JSON.stringify({ 
+        message: 'Import completed successfully',
+        stats: {
+          success: successCount,
+          errors: errorCount
+        }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
