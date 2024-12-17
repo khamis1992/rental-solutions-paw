@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -116,8 +116,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "customer_identifier,lease_identifier,amount,payment_date,payment_method,status\n" +
-                      "John Doe,lease-123,1000,2024-03-20,credit_card,completed";
+    const csvContent = "customer_identifier,lease_identifier,amount,Vehicle_number,Vehicle-brand,payment_date,payment_method,status,Payment_Number,Customer_License,Payment_Type,Payment_Description\n" +
+                      "John Doe +974123456789,lease-123,1000,ABC123,Toyota,03-20-2024,credit_card,completed,INV001,DL12345,installment,Monthly payment";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

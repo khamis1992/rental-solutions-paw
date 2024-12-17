@@ -21,10 +21,7 @@ const Agreements = () => {
           >
             Import Payments
           </Button>
-          <CreateAgreementDialog 
-            open={isDialogOpen} 
-            onOpenChange={setIsDialogOpen}
-          />
+          <CreateAgreementDialog />
         </div>
       </div>
       <AgreementStats />

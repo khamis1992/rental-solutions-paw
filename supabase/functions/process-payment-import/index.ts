@@ -48,6 +48,7 @@ serve(async (req) => {
 
     let successCount = 0;
     let errorCount = 0;
+    let errors = [];
 
     // Update import log status to processing
     await supabase
@@ -68,12 +69,18 @@ serve(async (req) => {
           const paymentDate = values[headers.indexOf('payment_date')];
           const paymentMethod = values[headers.indexOf('payment_method')];
           const status = values[headers.indexOf('status')];
+          const paymentNumber = values[headers.indexOf('Payment_Number')];
+          const paymentType = values[headers.indexOf('Payment_Type')];
+          const paymentDescription = values[headers.indexOf('Payment_Description')];
 
-          // Get customer ID from identifier (could be email, phone, or full name)
+          // Parse the customer identifier (format: "name +974xxxxxxxx")
+          const [fullName, phoneNumber] = customerIdentifier.split('+974');
+
+          // Get customer ID from identifier
           const { data: customerData } = await supabase
             .from('profiles')
             .select('id')
-            .or(`phone_number.eq.${customerIdentifier},full_name.eq.${customerIdentifier}`)
+            .or(`phone_number.eq.+974${phoneNumber.trim()},full_name.eq.${fullName.trim()}`)
             .single();
 
           if (!customerData) {
@@ -92,6 +99,10 @@ serve(async (req) => {
             throw new Error(`Lease not found for customer: ${customerIdentifier}`);
           }
 
+          // Convert date from MM-DD-YYYY to ISO format
+          const [month, day, year] = paymentDate.split('-');
+          const isoDate = `${year}-${month}-${day}`;
+
           // Create payment record
           const { error: paymentError } = await supabase
             .from('payments')
@@ -99,8 +110,9 @@ serve(async (req) => {
               lease_id: leaseData.id,
               amount,
               status,
-              payment_date: new Date(paymentDate).toISOString(),
+              payment_date: new Date(isoDate).toISOString(),
               payment_method,
+              transaction_id: paymentNumber,
             });
 
           if (paymentError) {
@@ -113,6 +125,10 @@ serve(async (req) => {
         } catch (error) {
           console.error(`Error processing row ${i}:`, error);
           errorCount++;
+          errors.push({
+            row: i + 1,
+            error: error.message
+          });
         }
       }
     }
@@ -123,7 +139,7 @@ serve(async (req) => {
       .update({
         status: 'completed',
         records_processed: successCount,
-        errors: errorCount
+        errors: errors.length > 0 ? errors : null
       })
       .eq('file_name', fileName);
 
