@@ -4,17 +4,28 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 }
 
 serve(async (req) => {
+  // Always handle CORS preflight requests first
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
   }
 
   try {
     console.log('Starting customer import process...');
     const { fileName } = await req.json();
     console.log('Processing file:', fileName);
+
+    // Validate input
+    if (!fileName) {
+      throw new Error('fileName is required');
+    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -50,7 +61,7 @@ serve(async (req) => {
       const values = rows[i].split(',');
       if (values.length === headers.length) {
         try {
-          // Check if a user with this email already exists
+          // Generate unique email and password
           const randomString = Math.random().toString(36).substring(7);
           const email = `customer${i}_${timestamp}_${randomString}@example.com`;
           const password = crypto.randomUUID();
@@ -151,13 +162,28 @@ serve(async (req) => {
           errors: errorCount
         }
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        status: 200,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        } 
+      }
     );
   } catch (error) {
     console.error('Import process failed:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        error: error.message || 'An unexpected error occurred',
+        details: error.toString()
+      }),
+      { 
+        status: 500,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        } 
+      }
     );
   }
 });
