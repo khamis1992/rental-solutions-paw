@@ -31,7 +31,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 
 const formSchema = z.object({
-  agreementType: z.enum(["short_term", "lease_to_own"]),
+  agreementType: z.enum(["short_term", "lease_to_own"] as const),
   customerId: z.string().min(1, "Customer is required"),
   vehicleId: z.string().min(1, "Vehicle is required"),
   startDate: z.date(),
@@ -40,10 +40,12 @@ const formSchema = z.object({
   downPayment: z.number().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export const CreateAgreementDialog = () => {
   const [open, setOpen] = useState(false);
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       agreementType: "short_term",
@@ -56,7 +58,7 @@ export const CreateAgreementDialog = () => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     try {
       // Handle form submission
       console.log(values);
