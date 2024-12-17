@@ -301,13 +301,16 @@ export type Database = {
       }
       leases: {
         Row: {
+          agreement_number: string | null
           agreement_type: Database["public"]["Enums"]["agreement_type"]
+          checkin_date: string | null
+          checkout_date: string | null
           created_at: string
           customer_id: string
           damage_penalty_rate: number | null
           down_payment: number | null
           early_payoff_allowed: boolean | null
-          end_date: string
+          end_date: string | null
           fuel_penalty_rate: number | null
           id: string
           initial_mileage: number
@@ -316,11 +319,14 @@ export type Database = {
           late_fee_rate: number | null
           late_return_fee: number | null
           lease_duration: unknown | null
+          license_no: string | null
+          license_number: string | null
           monthly_payment: number | null
           notes: string | null
           ownership_transferred: boolean | null
+          return_date: string | null
           return_mileage: number | null
-          start_date: string
+          start_date: string | null
           status: Database["public"]["Enums"]["lease_status"] | null
           total_amount: number
           trade_in_value: number | null
@@ -328,13 +334,16 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          agreement_number?: string | null
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
+          checkin_date?: string | null
+          checkout_date?: string | null
           created_at?: string
           customer_id: string
           damage_penalty_rate?: number | null
           down_payment?: number | null
           early_payoff_allowed?: boolean | null
-          end_date: string
+          end_date?: string | null
           fuel_penalty_rate?: number | null
           id?: string
           initial_mileage: number
@@ -343,11 +352,14 @@ export type Database = {
           late_fee_rate?: number | null
           late_return_fee?: number | null
           lease_duration?: unknown | null
+          license_no?: string | null
+          license_number?: string | null
           monthly_payment?: number | null
           notes?: string | null
           ownership_transferred?: boolean | null
+          return_date?: string | null
           return_mileage?: number | null
-          start_date: string
+          start_date?: string | null
           status?: Database["public"]["Enums"]["lease_status"] | null
           total_amount: number
           trade_in_value?: number | null
@@ -355,13 +367,16 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          agreement_number?: string | null
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
+          checkin_date?: string | null
+          checkout_date?: string | null
           created_at?: string
           customer_id?: string
           damage_penalty_rate?: number | null
           down_payment?: number | null
           early_payoff_allowed?: boolean | null
-          end_date?: string
+          end_date?: string | null
           fuel_penalty_rate?: number | null
           id?: string
           initial_mileage?: number
@@ -370,11 +385,14 @@ export type Database = {
           late_fee_rate?: number | null
           late_return_fee?: number | null
           lease_duration?: unknown | null
+          license_no?: string | null
+          license_number?: string | null
           monthly_payment?: number | null
           notes?: string | null
           ownership_transferred?: boolean | null
+          return_date?: string | null
           return_mileage?: number | null
-          start_date?: string
+          start_date?: string | null
           status?: Database["public"]["Enums"]["lease_status"] | null
           total_amount?: number
           trade_in_value?: number | null

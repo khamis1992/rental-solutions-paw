@@ -63,46 +63,28 @@ serve(async (req) => {
       const values = rows[i].split(',').map(v => v.trim());
       if (values.length === headers.length) {
         try {
-          const customerIdentifier = values[headers.indexOf('customer_identifier')];
-          const vehicleId = values[headers.indexOf('vehicle_id')];
-          const startDate = values[headers.indexOf('start_date')];
-          const endDate = values[headers.indexOf('end_date')];
-          const totalAmount = parseFloat(values[headers.indexOf('total_amount')]);
-          const initialMileage = parseInt(values[headers.indexOf('initial_mileage')]);
-          const agreementType = values[headers.indexOf('agreement_type')];
-          const downPayment = parseFloat(values[headers.indexOf('down_payment')]) || null;
-          const monthlyPayment = parseFloat(values[headers.indexOf('monthly_payment')]) || null;
-          const interestRate = parseFloat(values[headers.indexOf('interest_rate')]) || null;
-          const leaseDuration = values[headers.indexOf('lease_duration')] || null;
+          const agreementNumber = values[headers.indexOf('Agreement Number')];
+          const licenseNo = values[headers.indexOf('License No')];
+          const fullName = values[headers.indexOf('full_name')];
+          const licenseNumber = values[headers.indexOf('License Number')];
+          const checkoutDate = values[headers.indexOf('Check-out Date')];
+          const checkinDate = values[headers.indexOf('Check-in Date')];
+          const returnDate = values[headers.indexOf('Return Date')];
+          const status = values[headers.indexOf('STATUS')].toLowerCase();
 
-          if (!customerIdentifier || !vehicleId || !startDate || !endDate || !totalAmount) {
+          if (!agreementNumber || !fullName || !status) {
             throw new Error('Missing required fields');
           }
 
-          // Get customer ID from identifier using full name
+          // Get customer ID from full name
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('full_name', customerIdentifier.trim())
+            .eq('full_name', fullName.trim())
             .single();
 
           if (customerError || !customerData) {
-            throw new Error(`Customer "${customerIdentifier}" not found`);
-          }
-
-          // Verify vehicle exists and is available
-          const { data: vehicleData, error: vehicleError } = await supabase
-            .from('vehicles')
-            .select('id, status')
-            .eq('id', vehicleId)
-            .single();
-
-          if (vehicleError || !vehicleData) {
-            throw new Error(`Vehicle with ID "${vehicleId}" not found`);
-          }
-
-          if (vehicleData.status !== 'available') {
-            throw new Error(`Vehicle with ID "${vehicleId}" is not available`);
+            throw new Error(`Customer "${fullName}" not found`);
           }
 
           // Create lease record
@@ -110,31 +92,21 @@ serve(async (req) => {
             .from('leases')
             .insert({
               customer_id: customerData.id,
-              vehicle_id: vehicleId,
-              start_date: startDate,
-              end_date: endDate,
-              total_amount: totalAmount,
-              initial_mileage: initialMileage,
-              agreement_type: agreementType,
-              down_payment: downPayment,
-              monthly_payment: monthlyPayment,
-              interest_rate: interestRate,
-              lease_duration: leaseDuration ? `${leaseDuration} months` : null,
-              status: 'pending'
+              agreement_number: agreementNumber,
+              license_no: licenseNo,
+              license_number: licenseNumber,
+              checkout_date: checkoutDate,
+              checkin_date: checkinDate,
+              return_date: returnDate,
+              status: status,
             });
 
           if (leaseError) {
             throw leaseError;
           }
 
-          // Update vehicle status
-          await supabase
-            .from('vehicles')
-            .update({ status: 'leased' })
-            .eq('id', vehicleId);
-
           successCount++;
-          console.log(`Successfully imported agreement for customer: ${customerIdentifier}`);
+          console.log(`Successfully imported agreement: ${agreementNumber}`);
 
         } catch (error) {
           console.error(`Error processing row ${i + 1}:`, error);
@@ -154,7 +126,7 @@ serve(async (req) => {
                 .eq('file_name', fileName)
                 .single()).data?.id,
               row_number: i + 1,
-              customer_identifier: values[headers.indexOf('customer_identifier')],
+              customer_identifier: values[headers.indexOf('full_name')],
               error_message: error.message,
               row_data: Object.fromEntries(headers.map((h, idx) => [h, values[idx]]))
             });

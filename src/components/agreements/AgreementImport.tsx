@@ -116,8 +116,8 @@ export const AgreementImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "customer_identifier,vehicle_id,start_date,end_date,total_amount,initial_mileage,agreement_type,down_payment,monthly_payment,interest_rate,lease_duration\n" +
-                      "John Doe,1,2024-03-20,2025-03-20,50000,1000,lease_to_own,5000,1000,5,12";
+    const csvContent = "Agreement Number,License No,full_name,License Number,Check-out Date,Check-in Date,Return Date,STATUS\n" +
+                      "AGR001,LIC123,John Doe,DL456,2024-03-20,2024-03-21,2024-03-22,active";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
