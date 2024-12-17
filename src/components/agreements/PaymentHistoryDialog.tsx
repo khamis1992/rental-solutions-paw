@@ -18,6 +18,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { PaymentImport } from "./PaymentImport";
 
 interface PaymentHistoryDialogProps {
   agreementId: string;
@@ -90,66 +91,70 @@ export function PaymentHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="p-4 rounded-lg border bg-card">
-            <div className="text-sm text-muted-foreground">Total Paid</div>
-            <div className="text-2xl font-semibold">{formatCurrency(totalPaid)}</div>
-          </div>
-          <div className="p-4 rounded-lg border bg-card">
-            <div className="text-sm text-muted-foreground">Total Refunded</div>
-            <div className="text-2xl font-semibold">{formatCurrency(totalRefunded)}</div>
-          </div>
-        </div>
+        <div className="space-y-6">
+          <PaymentImport />
 
-        {isLoading ? (
-          <div>Loading payment history...</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment Method</TableHead>
-                <TableHead>Transaction ID</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paymentHistory?.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell>
-                    {format(new Date(payment.created_at), "PP")}
-                  </TableCell>
-                  <TableCell>
-                    {payment.security_deposits ? "Security Deposit" : "Payment"}
-                  </TableCell>
-                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={getStatusColor(payment.status)}
-                    >
-                      {payment.status.charAt(0).toUpperCase() +
-                        payment.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {payment.payment_method
-                      ? payment.payment_method
-                          .split("_")
-                          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                          .join(" ")
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {payment.transaction_id || "N/A"}
-                  </TableCell>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="text-sm text-muted-foreground">Total Paid</div>
+              <div className="text-2xl font-semibold">{formatCurrency(totalPaid)}</div>
+            </div>
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="text-sm text-muted-foreground">Total Refunded</div>
+              <div className="text-2xl font-semibold">{formatCurrency(totalRefunded)}</div>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div>Loading payment history...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Payment Method</TableHead>
+                  <TableHead>Transaction ID</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              </TableHeader>
+              <TableBody>
+                {paymentHistory?.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell>
+                      {format(new Date(payment.created_at), "PP")}
+                    </TableCell>
+                    <TableCell>
+                      {payment.security_deposits ? "Security Deposit" : "Payment"}
+                    </TableCell>
+                    <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={getStatusColor(payment.status)}
+                      >
+                        {payment.status.charAt(0).toUpperCase() +
+                          payment.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {payment.payment_method
+                        ? payment.payment_method
+                            .split("_")
+                            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(" ")
+                        : "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {payment.transaction_id || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
