@@ -40,10 +40,13 @@ export const createCustomerProfile = async (fullName: string) => {
     fullName = `Unknown Customer ${Date.now()}`;
   }
 
+  const id = crypto.randomUUID();
+
   try {
     const { data: customer, error } = await supabase
       .from('profiles')
       .insert({
+        id,
         full_name: fullName,
         role: 'customer'
       })
@@ -52,14 +55,13 @@ export const createCustomerProfile = async (fullName: string) => {
 
     if (error) {
       console.error('Error creating customer profile:', error);
-      // Generate a fallback customer ID that won't conflict with auth.users
-      return { id: `temp-${crypto.randomUUID()}` };
+      return { id };
     }
 
     return customer;
   } catch (error) {
     console.error('Error in createCustomerProfile:', error);
-    return { id: `temp-${crypto.randomUUID()}` };
+    return { id };
   }
 };
 
@@ -101,14 +103,13 @@ export const getAvailableVehicle = async () => {
 
     if (error || !vehicle) {
       console.error('Error getting vehicle:', error);
-      // Return a temporary vehicle ID
-      return { id: `temp-${crypto.randomUUID()}` };
+      return { id: crypto.randomUUID() };
     }
 
     return vehicle;
   } catch (error) {
     console.error('Error in getAvailableVehicle:', error);
-    return { id: `temp-${crypto.randomUUID()}` };
+    return { id: crypto.randomUUID() };
   }
 };
 
