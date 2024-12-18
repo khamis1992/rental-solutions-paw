@@ -31,6 +31,7 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
 
       console.log("Retrieved vehicles:", vehicles);
 
+      // Count each vehicle only once based on its status
       const counts = {
         available: vehicles.filter(v => v.status === 'available').length,
         maintenance: vehicles.filter(v => v.status === 'maintenance').length,
