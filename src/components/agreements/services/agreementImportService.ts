@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { convertDateFormat } from "../utils/dateUtils";
 import { retryOperation } from "../utils/retryUtils";
 import { getOrCreateCustomer, getAvailableVehicle } from "./entityService";
 import { Database } from "@/integrations/supabase/types";
@@ -28,23 +27,13 @@ export const createAgreement = async (agreement: Record<string, string>, custome
       returnDate: agreement['Return Date']
     });
 
-    const startDate = convertDateFormat(agreement['Check-out Date']);
-    const endDate = convertDateFormat(agreement['Check-in Date']);
-    const returnDate = convertDateFormat(agreement['Return Date']);
-
-    console.log('Converted dates:', {
-      startDate,
-      endDate,
-      returnDate
-    });
-
     const agreementData = {
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      start_date: startDate,
-      end_date: endDate,
-      return_date: returnDate,
+      start_date: agreement['Check-out Date'],
+      end_date: agreement['Check-in Date'],
+      return_date: agreement['Return Date'],
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customerId,
       vehicle_id: vehicleId,
