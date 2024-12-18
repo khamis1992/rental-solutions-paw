@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders } from './utils.ts';
 import { processImportData } from './processData.ts';
 
 console.log("Loading agreement import function...");
@@ -25,7 +25,7 @@ serve(async (req) => {
     try {
       const text = await req.text();
       console.log('Raw request body:', text);
-      body = JSON.parse(text || '{}');
+      body = JSON.parse(text);
       console.log('Parsed request body:', body);
     } catch (parseError) {
       console.error('Error parsing request body:', parseError);
