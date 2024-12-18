@@ -29,10 +29,14 @@ const parseDate = (dateStr: string): string | null => {
 
     // Check if the first part is a year (YYYY-MM-DD format)
     if (parts[0].length === 4) {
-      [year, month, day] = parts.map(part => parseInt(part.trim(), 10));
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      day = parseInt(parts[2], 10);
     } else {
-      // Assume DD/MM/YYYY format
-      [day, month, year] = parts.map(part => parseInt(part.trim(), 10));
+      // For MM/DD/YYYY format (US format)
+      month = parseInt(parts[0], 10);
+      day = parseInt(parts[1], 10);
+      year = parseInt(parts[2], 10);
     }
 
     // Validate the parsed numbers
@@ -48,7 +52,7 @@ const parseDate = (dateStr: string): string | null => {
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
   
-  throw new Error(`Invalid date format: ${dateStr}. Please use DD/MM/YYYY or YYYY-MM-DD format.`);
+  throw new Error(`Invalid date format: ${dateStr}. Please use MM/DD/YYYY or YYYY-MM-DD format.`);
 };
 
 export const validateRowData = (rowData: any, headers: string[]) => {
