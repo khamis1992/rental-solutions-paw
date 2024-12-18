@@ -89,13 +89,13 @@ export const getOrCreateCustomer = async (fullName: string) => {
   }
 };
 
-export const getOrCreateVehicle = async (carNo: string) => {
+export const getOrCreateVehicle = async (licensePlate: string) => {
   try {
     // First try to find existing vehicle
     const { data: existingVehicle, error: searchError } = await supabase
       .from('vehicles')
       .select('id, license_plate')
-      .eq('license_plate', carNo)
+      .eq('license_plate', licensePlate)
       .maybeSingle();
 
     if (existingVehicle) {
@@ -107,7 +107,7 @@ export const getOrCreateVehicle = async (carNo: string) => {
     const { data: newVehicle, error: createError } = await supabase
       .from('vehicles')
       .insert({
-        license_plate: carNo,
+        license_plate: licensePlate,
         make: 'Default',
         model: 'Model',
         year: new Date().getFullYear(),
@@ -134,8 +134,8 @@ export const createAgreement = async (agreement: Record<string, string>) => {
     // Get or create customer based on Customer Name from CSV
     const customer = await getOrCreateCustomer(agreement['Customer Name']);
     
-    // Get or create vehicle based on Car No from CSV
-    const vehicle = await getOrCreateVehicle(agreement['Car No']);
+    // Get or create vehicle based on License Plate from CSV
+    const vehicle = await getOrCreateVehicle(agreement['License Plate']);
 
     const agreementData = {
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,

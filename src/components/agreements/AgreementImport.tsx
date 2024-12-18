@@ -81,7 +81,7 @@ export const AgreementImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Agreement Number,Car No,Customer Name,License Number,Start Date,End Date,Return Date,STATUS\n" +
+    const csvContent = "Agreement Number,License Plate,Customer Name,License Number,Start Date,End Date,Return Date,STATUS\n" +
                       "AGR001,ABC123,John Doe,DL456,27/03/2024,28/03/2024,29/03/2024,active";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
