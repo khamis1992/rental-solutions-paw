@@ -21,9 +21,15 @@ const queryClient = new QueryClient({
   },
 });
 
+// Get initial session
+const initialSession = await supabase.auth.getSession();
+
 root.render(
   <React.StrictMode>
-    <SessionContextProvider supabaseClient={supabase} initialSession={null}>
+    <SessionContextProvider 
+      supabaseClient={supabase} 
+      initialSession={initialSession.data.session}
+    >
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <SidebarProvider>
