@@ -28,7 +28,7 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
       const counts = {
         available: vehicles.filter(v => v.status === 'available').length,
         maintenance: vehicles.filter(v => v.status === 'maintenance').length,
-        service: vehicles.filter(v => v.status === 'service').length,
+        needsMaintenance: vehicles.filter(v => ['accident', 'retired'].includes(v.status as string)).length,
       };
 
       return counts;
@@ -51,8 +51,8 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
       bgColor: "bg-orange-50",
     },
     {
-      title: "Due for Service",
-      value: vehicleCounts?.service || 0,
+      title: "Needs Attention",
+      value: vehicleCounts?.needsMaintenance || 0,
       icon: AlertTriangle,
       color: "text-red-500",
       bgColor: "bg-red-50",
