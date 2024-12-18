@@ -19,50 +19,17 @@ const normalizeStatus = (status: string): LeaseStatus => {
   return statusMap[status.toLowerCase().trim()] || 'pending_payment';
 };
 
-const formatDateForPostgres = (dateStr: string): string | null => {
-  if (!dateStr || dateStr.trim() === '') return null;
-  
-  // Parse DD/MM/YYYY format
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    // Convert to YYYY-MM-DD format, swapping day and month to correct order
-    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    
-    // Validate the date is valid
-    const date = new Date(formattedDate);
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date detected:', { dateStr, formattedDate });
-      return null;
-    }
-    
-    console.log('Date formatting:', {
-      original: dateStr,
-      parts: { day, month, year },
-      formatted: formattedDate
-    });
-    return formattedDate;
-  }
-  
-  console.warn('Invalid date format:', dateStr);
-  return null;
-};
-
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
-    console.log('Raw CSV data for dates:', {
-      checkoutDate: agreement['Check-out Date'],
-      checkinDate: agreement['Check-in Date'],
-      returnDate: agreement['Return Date']
-    });
+    console.log('Raw agreement data:', agreement);
 
     const agreementData = {
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      start_date: formatDateForPostgres(agreement['Check-out Date']),
-      end_date: formatDateForPostgres(agreement['Check-in Date']),
-      return_date: formatDateForPostgres(agreement['Return Date']),
+      start_date: agreement['Check-out Date'] || null,
+      end_date: agreement['Check-in Date'] || null,
+      return_date: agreement['Return Date'] || null,
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customerId,
       vehicle_id: vehicleId,

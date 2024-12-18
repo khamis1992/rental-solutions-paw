@@ -27,7 +27,6 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
-      // First, let's verify if we have any agreements
       const { count, error: countError } = await supabase
         .from('leases')
         .select('*', { count: 'exact', head: true });
@@ -39,7 +38,6 @@ export const useAgreements = () => {
         throw countError;
       }
 
-      // Now fetch the full agreement data with relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`
