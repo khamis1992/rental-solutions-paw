@@ -10,6 +10,19 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface MaintenanceRecord {
   id: string;
@@ -77,6 +90,38 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('maintenance')
+        .delete()
+        .eq('id', record.id);
+
+      if (error) throw error;
+
+      // If the maintenance was active, set the vehicle back to available
+      if (record.status === 'scheduled' || record.status === 'in_progress') {
+        const { error: vehicleError } = await supabase
+          .from('vehicles')
+          .update({ status: 'available' })
+          .eq('id', record.vehicle_id);
+
+        if (vehicleError) throw vehicleError;
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
+        queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
+        queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
+      ]);
+
+      toast.success('Maintenance record deleted successfully');
+    } catch (error: any) {
+      console.error("Error deleting maintenance record:", error);
+      toast.error('Failed to delete maintenance record');
+    }
+  };
+
   return (
     <TableRow>
       <TableCell>{record.vehicles?.license_plate || 'N/A'}</TableCell>
@@ -111,6 +156,29 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
       </TableCell>
       <TableCell className="text-right">
         {record.cost ? `${record.cost} QAR` : '-'}
+      </TableCell>
+      <TableCell>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Maintenance Record</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this maintenance record? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </TableCell>
     </TableRow>
   );
