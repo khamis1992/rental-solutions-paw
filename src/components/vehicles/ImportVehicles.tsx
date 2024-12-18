@@ -28,7 +28,7 @@ export const ImportVehicles = () => {
 
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
-        throw uploadError;
+        throw new Error(`Failed to upload file: ${uploadError.message}`);
       }
 
       console.log('File uploaded successfully, calling edge function...');
@@ -41,14 +41,19 @@ export const ImportVehicles = () => {
 
       console.log('Edge function response:', response);
 
-      if (processError || !response?.success) {
-        console.error('Edge function error:', processError || response?.error);
-        throw new Error(processError?.message || response?.error || 'Failed to process file');
+      if (processError) {
+        console.error('Edge function error:', processError);
+        throw processError;
+      }
+
+      if (!response?.success) {
+        console.error('Import failed:', response?.error);
+        throw new Error(response?.error || 'Failed to process file');
       }
 
       toast({
-        title: "Import Started",
-        description: response.message || "Your file is being processed. You'll be notified when it's complete.",
+        title: "Import Successful",
+        description: response.message,
       });
 
       if (response.errors?.length > 0) {

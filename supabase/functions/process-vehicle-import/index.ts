@@ -46,7 +46,15 @@ serve(async (req) => {
 
     // Convert the file to text and parse CSV
     const text = await fileData.text()
-    const rows = text.split('\n')
+    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0)
+    
+    if (rows.length < 2) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'CSV file must contain a header row and at least one data row' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
     const headers = rows[0].toLowerCase().split(',').map(h => h.trim())
     console.log('CSV Headers:', headers)
 
@@ -71,10 +79,13 @@ serve(async (req) => {
     // Process each row (skip header)
     for (let i = 1; i < rows.length; i++) {
       try {
-        const row = rows[i].trim()
-        if (!row) continue // Skip empty rows
+        const values = rows[i].split(',').map(v => v.trim())
         
-        const values = row.split(',').map(v => v.trim())
+        // Skip empty rows
+        if (values.length !== headers.length) {
+          throw new Error(`Invalid number of columns. Expected ${headers.length}, got ${values.length}`)
+        }
+
         const vehicleData = {
           make: values[headers.indexOf('make')],
           model: values[headers.indexOf('model')],
@@ -92,7 +103,12 @@ serve(async (req) => {
           .map(([key]) => key)
 
         if (missingValues.length > 0) {
-          throw new Error(`Row ${i + 1}: Missing values for ${missingValues.join(', ')}`)
+          throw new Error(`Missing values for ${missingValues.join(', ')}`)
+        }
+
+        // Validate year format
+        if (isNaN(vehicleData.year) || vehicleData.year < 1900 || vehicleData.year > new Date().getFullYear() + 1) {
+          throw new Error(`Invalid year value: ${values[headers.indexOf('year')]}`)
         }
 
         console.log('Inserting vehicle:', vehicleData)
