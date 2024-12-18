@@ -1,6 +1,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FileText, Printer, Receipt } from "lucide-react";
 import { formatDateToDisplay } from "../utils/dateUtils";
 import type { Agreement } from "../hooks/useAgreements";
 
@@ -41,22 +42,28 @@ export const AgreementTableRow = ({
           variant="ghost"
           size="sm"
           onClick={() => onViewContract(agreement.id)}
+          title="View Contract"
         >
-          View Contract
+          <span className="sr-only">View Contract</span>
+          <FileText className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onPrintContract(agreement.id)}
+          title="Print Contract"
         >
-          Print
+          <span className="sr-only">Print Contract</span>
+          <Printer className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onAgreementClick(agreement.id)}
+          title="View Invoice"
         >
-          View Invoice
+          <span className="sr-only">View Invoice</span>
+          <Receipt className="h-4 w-4" />
         </Button>
       </TableCell>
     </TableRow>
