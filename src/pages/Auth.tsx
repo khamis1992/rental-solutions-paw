@@ -99,6 +99,9 @@ const AuthPage = () => {
                   label: 'font-medium',
                   message: 'text-sm',
                 },
+                style: {
+                  anchor: { display: 'none' }, // This will hide all anchor links including "Sign Up"
+                },
               }}
               providers={["google"]}
               redirectTo={window.location.origin}
