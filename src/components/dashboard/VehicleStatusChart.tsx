@@ -1,14 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { ChartStatusSelect } from "./charts/ChartStatusSelect";
+import { DonutChart } from "./charts/DonutChart";
+import { ChartLegend } from "./charts/ChartLegend";
 
 const STATUS_COLORS = {
   accident: "#2DD4BF",
@@ -23,7 +19,6 @@ const STATUS_COLORS = {
 
 type VehicleStatus = keyof typeof STATUS_COLORS;
 
-// Convert the colors object to the format expected by ChartConfig
 const config = {
   ...Object.entries(STATUS_COLORS).reduce((acc, [key, value]) => ({
     ...acc,
@@ -55,14 +50,12 @@ export const VehicleStatusChart = () => {
         throw error;
       }
 
-      // Count vehicles by status
       const counts = vehicles.reduce((acc, vehicle) => {
         const status = vehicle.status || 'unknown';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
-      // Transform to array format for chart
       const data = Object.entries(counts).map(([status, count]) => ({
         name: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         value: count,
@@ -90,10 +83,8 @@ export const VehicleStatusChart = () => {
         item.name.toLowerCase() === selectedStatus.toLowerCase()
       );
 
-  // Calculate total vehicles for "all" view
   const totalVehicles = vehicleCounts?.reduce((sum, item) => sum + item.value, 0) || 0;
 
-  // Find the status with the highest count for center display
   const primaryStatus = selectedStatus === "all"
     ? { value: totalVehicles, name: "Total Vehicles" }
     : filteredData?.reduce((prev, current) => 
@@ -105,82 +96,23 @@ export const VehicleStatusChart = () => {
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold">Vehicle Status</h3>
-          <Select 
-            value={selectedStatus} 
-            onValueChange={setSelectedStatus}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Vehicle Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Vehicle Types</SelectItem>
-              {vehicleCounts?.map((status) => (
-                <SelectItem key={status.name} value={status.name.toLowerCase()}>
-                  {status.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ChartStatusSelect
+            selectedStatus={selectedStatus}
+            onStatusChange={setSelectedStatus}
+            statusData={vehicleCounts || []}
+          />
         </div>
 
         <div className="flex gap-8">
-          <div className="relative flex-1">
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-4xl font-bold">{primaryStatus?.value}</span>
-              <span className="text-xl">{primaryStatus?.name}</span>
-            </div>
-            <ChartContainer config={config}>
-              <ResponsiveContainer width="100%" height={400}>
-                <PieChart>
-                  <Pie
-                    data={filteredData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={120}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {filteredData?.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload?.length) return null;
-                      return (
-                        <ChartTooltipContent
-                          className="bg-background border-border"
-                          payload={payload}
-                        />
-                      );
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
-
-          <div className="w-[200px] space-y-3 py-4">
-            {vehicleCounts?.map((status, index) => (
-              <div 
-                key={index} 
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={() => setSelectedStatus(status.name.toLowerCase())}
-              >
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: status.color }}
-                />
-                <span className="flex-1">
-                  {status.name}
-                </span>
-                <span className="font-semibold">
-                  {status.value}
-                </span>
-              </div>
-            ))}
-          </div>
+          <DonutChart
+            data={filteredData || []}
+            config={config}
+            primaryStatus={primaryStatus}
+          />
+          <ChartLegend
+            data={vehicleCounts || []}
+            onStatusSelect={setSelectedStatus}
+          />
         </div>
       </CardContent>
     </Card>
