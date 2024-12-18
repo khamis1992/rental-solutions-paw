@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -7,56 +7,25 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 const COLORS = {
+  accident: "#2DD4BF",
   available: "#4F7BE4",
   maintenance: "#4FD1C5",
   police_station: "#2DD4BF",
-  accident: "#10B981",
   out_of_service: "#CA8A04",
   stolen: "#EF4444",
   reserve: "#8B5CF6",
   on_rent: "#1E40AF"
 };
 
-type CustomLabelProps = {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  innerRadius: number;
-  outerRadius: number;
-  value: number;
-  name: string;
-};
-
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ 
-  cx, 
-  cy, 
-  midAngle, 
-  innerRadius, 
-  outerRadius, 
-  value, 
-  name 
-}: CustomLabelProps) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text 
-      x={x} 
-      y={y} 
-      fill="white" 
-      textAnchor={x > cx ? 'start' : 'end'} 
-      dominantBaseline="central"
-    >
-      {`${name} (${value})`}
-    </text>
-  );
-};
+type VehicleStatus = keyof typeof COLORS;
 
 export const VehicleStatusChart = () => {
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+
   const { data: vehicleCounts, isLoading } = useQuery({
     queryKey: ["vehicle-status-counts"],
     queryFn: async () => {
@@ -81,7 +50,7 @@ export const VehicleStatusChart = () => {
       const data = Object.entries(counts).map(([status, count]) => ({
         name: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         value: count,
-        color: COLORS[status as keyof typeof COLORS] || "#CBD5E1"
+        color: COLORS[status as VehicleStatus] || "#CBD5E1"
       }));
 
       console.log("Vehicle counts:", data);
@@ -92,9 +61,6 @@ export const VehicleStatusChart = () => {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Vehicle Status Analysis</CardTitle>
-        </CardHeader>
         <CardContent className="h-[400px] flex items-center justify-center">
           <div className="animate-pulse w-full h-full bg-muted rounded-md" />
         </CardContent>
@@ -102,59 +68,92 @@ export const VehicleStatusChart = () => {
     );
   }
 
+  const filteredData = selectedStatus === "all" 
+    ? vehicleCounts 
+    : vehicleCounts?.filter(item => 
+        item.name.toLowerCase() === selectedStatus.toLowerCase()
+      );
+
   // Find the status with the highest count for center display
-  const primaryStatus = vehicleCounts?.reduce((prev, current) => 
+  const primaryStatus = filteredData?.reduce((prev, current) => 
     (prev.value > current.value) ? prev : current
   );
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Vehicle Status Analysis</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[400px] relative">
-          <div className="absolute inset-0 flex items-center justify-center flex-col">
-            <span className="text-4xl font-bold">{primaryStatus?.value}</span>
-            <span className="text-xl text-muted-foreground">{primaryStatus?.name}</span>
+      <CardContent className="pt-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">Vehicle Status</h3>
+          <Select 
+            value={selectedStatus} 
+            onValueChange={setSelectedStatus}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Vehicle Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Vehicle Types</SelectItem>
+              {vehicleCounts?.map((status) => (
+                <SelectItem key={status.name} value={status.name.toLowerCase()}>
+                  {status.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex gap-8">
+          <div className="relative flex-1">
+            <div className="absolute inset-0 flex items-center justify-center flex-col">
+              <span className="text-4xl font-bold">{primaryStatus?.value}</span>
+              <span className="text-xl">{primaryStatus?.name}</span>
+            </div>
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={filteredData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={80}
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {filteredData?.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    return (
+                      <ChartTooltipContent
+                        className="bg-background border-border"
+                        payload={payload}
+                      />
+                    );
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={vehicleCounts}
-                cx="50%"
-                cy="50%"
-                innerRadius={80}
-                outerRadius={120}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {vehicleCounts?.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  return (
-                    <ChartTooltipContent
-                      className="bg-background border-border"
-                      payload={payload}
-                    />
-                  );
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-4 grid grid-cols-2 gap-4">
+
+          <div className="w-[200px] space-y-3 py-4">
             {vehicleCounts?.map((status, index) => (
-              <div key={index} className="flex items-center gap-2">
+              <div 
+                key={index} 
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => setSelectedStatus(status.name.toLowerCase())}
+              >
                 <div 
                   className="w-3 h-3 rounded-full" 
                   style={{ backgroundColor: status.color }}
                 />
-                <span className="text-sm text-muted-foreground">
-                  {status.name} - {status.value}
+                <span className="flex-1">
+                  {status.name}
+                </span>
+                <span className="font-semibold">
+                  {status.value}
                 </span>
               </div>
             ))}
