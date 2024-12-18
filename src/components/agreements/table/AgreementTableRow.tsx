@@ -23,10 +23,6 @@ export const AgreementTableRow = ({
   const navigate = useNavigate();
   const badgeVariant = agreement.status as "active" | "pending_payment" | "pending_deposit" | "closed";
 
-  const handleLicensePlateClick = () => {
-    navigate(`/vehicles/${agreement.vehicle.id}`);
-  };
-
   const handleCustomerClick = () => {
     navigate(`/customers/${agreement.customer.id}`);
   };
@@ -43,7 +39,7 @@ export const AgreementTableRow = ({
       </TableCell>
       <TableCell>
         <button
-          onClick={handleLicensePlateClick}
+          onClick={() => onNameClick(agreement.id)}
           className="text-blue-600 hover:underline"
         >
           {agreement.vehicle.license_plate}
