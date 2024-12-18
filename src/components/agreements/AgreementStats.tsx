@@ -29,7 +29,7 @@ export const AgreementStats = () => {
       data.forEach((lease) => {
         if (lease.status === 'active') {
           counts.active++;
-        } else if (lease.status === 'completed') {
+        } else if (lease.status === 'closed') {
           counts.expired++;
         } else if (lease.status === 'pending') {
           counts.pending++;
