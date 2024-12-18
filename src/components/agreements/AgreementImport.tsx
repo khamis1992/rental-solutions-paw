@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
+import { parseCSV, validateCSVHeaders } from "./utils/csvUtils";
+import { getOrCreateCustomer, getAvailableVehicle, createAgreement } from "./services/agreementImportService";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -25,103 +28,65 @@ export const AgreementImport = () => {
     }
 
     setIsUploading(true);
-    let pollInterval: number;
+    setProgress(0);
 
     try {
-      console.log('Starting file upload process...');
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      console.log('Uploading file to storage:', fileName);
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      // Read file content
+      const content = await file.text();
+      const lines = content.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
 
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
+      // Validate headers
+      const { isValid, missingHeaders } = validateCSVHeaders(headers);
+      if (!isValid) {
+        throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
       }
 
-      console.log('File uploaded successfully, creating import log...');
-      const { error: logError } = await supabase
-        .from("import_logs")
-        .insert({
-          file_name: fileName,
-          import_type: "agreements",
-          status: "pending",
-        });
+      const agreements = parseCSV(content);
+      const totalAgreements = agreements.length;
+      let processedCount = 0;
 
-      if (logError) {
-        console.error('Import log creation error:', logError);
-        throw logError;
+      // Get available vehicle
+      const vehicle = await getAvailableVehicle();
+      if (!vehicle?.id) {
+        throw new Error('No available vehicles found');
       }
 
-      console.log('Starting import process via Edge Function...');
-      const { error: functionError } = await supabase.functions
-        .invoke('process-agreement-import', {
-          body: { fileName },
-          headers: {
-            'Content-Type': 'application/json',
+      // Process agreements
+      for (const agreement of agreements) {
+        try {
+          const customer = await getOrCreateCustomer(agreement['full_name']);
+          if (!customer?.id) {
+            console.error('Failed to create/get customer:', agreement['full_name']);
+            continue;
           }
-        });
 
-      if (functionError) {
-        console.error('Edge Function error:', functionError);
-        throw functionError;
+          await createAgreement(agreement, customer.id, vehicle.id);
+          processedCount++;
+          setProgress((processedCount / totalAgreements) * 100);
+        } catch (error) {
+          console.error('Error processing agreement:', error);
+        }
       }
 
-      // Poll for import completion
-      pollInterval = window.setInterval(async () => {
-        console.log('Checking import status...');
-        const { data: importLog } = await supabase
-          .from("import_logs")
-          .select("status, records_processed")
-          .eq("file_name", fileName)
-          .single();
-
-        if (importLog?.status === "completed") {
-          window.clearInterval(pollInterval);
-          toast({
-            title: "Success",
-            description: `Successfully imported ${importLog.records_processed} agreements`,
-          });
-          
-          // Force refresh the queries
-          await queryClient.invalidateQueries({ queryKey: ["agreements"] });
-          
-          setIsUploading(false);
-        } else if (importLog?.status === "error") {
-          window.clearInterval(pollInterval);
-          throw new Error("Import failed");
-        }
-      }, 1000);
-
-      // Set a timeout to stop polling after 15 seconds
-      setTimeout(() => {
-        if (pollInterval) {
-          window.clearInterval(pollInterval);
-        }
-        if (isUploading) {
-          setIsUploading(false);
-          toast({
-            title: "Error",
-            description: "Import timed out. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }, 15000);
-
+      toast({
+        title: "Success",
+        description: `Successfully imported ${processedCount} agreements`,
+      });
+      
+      await queryClient.invalidateQueries({ queryKey: ["agreements"] });
+      await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
+      
     } catch (error: any) {
       console.error('Import process error:', error);
-      if (pollInterval) {
-        window.clearInterval(pollInterval);
-      }
       toast({
         title: "Error",
         description: error.message || "Failed to import agreements",
         variant: "destructive",
       });
+    } finally {
       setIsUploading(false);
+      setProgress(0);
     }
   };
 
@@ -158,9 +123,12 @@ export const AgreementImport = () => {
         </Button>
       </div>
       {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Importing agreements...
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Importing agreements...
+          </div>
+          <Progress value={progress} className="h-2" />
         </div>
       )}
     </div>
