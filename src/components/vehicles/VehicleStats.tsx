@@ -33,7 +33,7 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
 
       const counts = {
         available: vehicles.filter(v => v.status === 'available').length,
-        maintenance: vehicles.filter(v => ['maintenance', 'accident'].includes(v.status)).length,
+        maintenance: vehicles.filter(v => v.status === 'maintenance').length,
         needsAttention: vehicles.filter(v => ['accident', 'police_station'].includes(v.status)).length,
       };
 
