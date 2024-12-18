@@ -2,10 +2,10 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "../utils/dateUtils";
-import { useNavigate } from "react-router-dom";
 import type { Agreement } from "../hooks/useAgreements";
 import { useState } from "react";
 import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
+import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
 
 interface AgreementTableRowProps {
   agreement: Agreement;
@@ -22,13 +22,9 @@ export const AgreementTableRow = ({
   onAgreementClick,
   onNameClick,
 }: AgreementTableRowProps) => {
-  const navigate = useNavigate();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
   const badgeVariant = agreement.status as "active" | "pending_payment" | "pending_deposit" | "closed";
-
-  const handleCustomerClick = () => {
-    navigate(`/customers/${agreement.customer.id}`);
-  };
 
   return (
     <>
@@ -52,7 +48,7 @@ export const AgreementTableRow = ({
         <TableCell>{`${agreement.vehicle.make} ${agreement.vehicle.model}`}</TableCell>
         <TableCell>
           <button
-            onClick={handleCustomerClick}
+            onClick={() => setShowCustomerDetails(true)}
             className="text-blue-600 hover:underline"
           >
             {agreement.customer.full_name}
@@ -93,6 +89,11 @@ export const AgreementTableRow = ({
         vehicleId={agreement.vehicle.id}
         open={showVehicleDetails}
         onOpenChange={setShowVehicleDetails}
+      />
+      <CustomerDetailsDialog
+        customerId={agreement.customer.id}
+        open={showCustomerDetails}
+        onOpenChange={setShowCustomerDetails}
       />
     </>
   );
