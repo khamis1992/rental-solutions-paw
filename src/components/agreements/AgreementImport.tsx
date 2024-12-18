@@ -26,6 +26,9 @@ export const AgreementImport = () => {
       const agreements = parseCSV(content);
       const totalAgreements = agreements.length;
       let processedCount = 0;
+      let pendingPaymentCount = 0;
+
+      console.log('Total agreements in CSV:', totalAgreements);
 
       // Get default customer and vehicle once for all agreements
       const customer = await getOrCreateCustomer();
@@ -33,18 +36,36 @@ export const AgreementImport = () => {
       
       for (const agreement of agreements) {
         try {
+          // Log each agreement's status before processing
+          console.log('Processing agreement:', {
+            number: agreement['Agreement Number'],
+            status: agreement['STATUS']
+          });
+
+          if (agreement['STATUS']?.toLowerCase() === 'pending_payment') {
+            pendingPaymentCount++;
+            console.log('Found pending_payment agreement:', agreement['Agreement Number']);
+          }
+
           await createAgreement(agreement, customer.id, vehicle.id);
           processedCount++;
         } catch (error) {
           console.error('Error processing agreement:', error);
+          console.error('Failed agreement data:', agreement);
         } finally {
           setProgress((processedCount / totalAgreements) * 100);
         }
       }
 
+      console.log('Import summary:', {
+        total: totalAgreements,
+        processed: processedCount,
+        pendingPayment: pendingPaymentCount
+      });
+
       toast({
         title: "Import Complete",
-        description: `Processed ${processedCount} agreements`,
+        description: `Processed ${processedCount} agreements (${pendingPaymentCount} pending payment)`,
       });
       
       await queryClient.invalidateQueries({ queryKey: ["agreements"] });
@@ -52,6 +73,11 @@ export const AgreementImport = () => {
       
     } catch (error) {
       console.error('Import process error:', error);
+      toast({
+        title: "Import Error",
+        description: "Failed to process some agreements. Check console for details.",
+        variant: "destructive"
+      });
     } finally {
       setIsUploading(false);
       setProgress(0);
