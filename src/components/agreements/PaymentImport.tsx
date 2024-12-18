@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import { retryOperation } from "./utils/retryUtils";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -31,67 +32,94 @@ export const PaymentImport = () => {
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       console.log('Uploading file to storage:', fileName);
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      const uploadOperation = async () => {
+        const { error: uploadError } = await supabase.storage
+          .from("imports")
+          .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: false
+          });
 
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
-      }
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+          throw uploadError;
+        }
+        return { fileName };
+      };
+
+      const { fileName: uploadedFileName } = await retryOperation(uploadOperation, 3);
 
       console.log('File uploaded successfully, creating import log...');
-      const { error: logError } = await supabase
-        .from("import_logs")
-        .insert({
-          file_name: fileName,
-          import_type: "payments",
-          status: "pending",
-        });
+      const logOperation = async () => {
+        const { error: logError } = await supabase
+          .from("import_logs")
+          .insert({
+            file_name: uploadedFileName,
+            import_type: "payments",
+            status: "pending",
+          });
 
-      if (logError) {
-        console.error('Import log creation error:', logError);
-        throw logError;
-      }
+        if (logError) {
+          console.error('Import log creation error:', logError);
+          throw logError;
+        }
+      };
+
+      await retryOperation(logOperation, 3);
 
       console.log('Starting import process via Edge Function...');
-      const { error: functionError } = await supabase.functions
-        .invoke('process-payment-import', {
-          body: { fileName }
-        });
+      const processOperation = async () => {
+        const { error: functionError } = await supabase.functions
+          .invoke('process-payment-import', {
+            body: { fileName: uploadedFileName }
+          });
 
-      if (functionError) {
-        console.error('Edge Function error:', functionError);
-        throw functionError;
-      }
+        if (functionError) {
+          console.error('Edge Function error:', functionError);
+          throw functionError;
+        }
+      };
+
+      await retryOperation(processOperation, 3);
 
       // Poll for import completion
       const pollInterval = setInterval(async () => {
         console.log('Checking import status...');
-        const { data: importLog } = await supabase
-          .from("import_logs")
-          .select("status, records_processed")
-          .eq("file_name", fileName)
-          .single();
+        try {
+          const { data: importLog } = await supabase
+            .from("import_logs")
+            .select("status, records_processed")
+            .eq("file_name", uploadedFileName)
+            .single();
 
-        if (importLog?.status === "completed") {
+          if (importLog?.status === "completed") {
+            clearInterval(pollInterval);
+            toast({
+              title: "Success",
+              description: `Successfully imported ${importLog.records_processed} payments`,
+            });
+            
+            // Force refresh the queries
+            await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+            
+            setIsUploading(false);
+          } else if (importLog?.status === "error") {
+            clearInterval(pollInterval);
+            throw new Error("Import failed");
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
           clearInterval(pollInterval);
-          toast({
-            title: "Success",
-            description: `Successfully imported ${importLog.records_processed} payments`,
-          });
-          
-          // Force refresh the queries
-          await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-          
           setIsUploading(false);
-        } else if (importLog?.status === "error") {
-          clearInterval(pollInterval);
-          throw new Error("Import failed");
+          toast({
+            title: "Error",
+            description: "Failed to check import status",
+            variant: "destructive",
+          });
         }
-      }, 1000);
+      }, 2000);
 
-      // Set a timeout to stop polling after 15 seconds
+      // Set a timeout to stop polling after 30 seconds
       setTimeout(() => {
         clearInterval(pollInterval);
         if (isUploading) {
@@ -102,13 +130,13 @@ export const PaymentImport = () => {
             variant: "destructive",
           });
         }
-      }, 15000);
+      }, 30000);
 
     } catch (error: any) {
       console.error('Import process error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to process import",
         variant: "destructive",
       });
       setIsUploading(false);
