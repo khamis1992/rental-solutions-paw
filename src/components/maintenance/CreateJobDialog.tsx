@@ -59,7 +59,7 @@ export function CreateJobDialog() {
           <Plus className="mr-2 h-4 w-4" /> Create Job Card
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Job Card</DialogTitle>
         </DialogHeader>
