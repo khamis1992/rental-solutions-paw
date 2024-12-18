@@ -6,6 +6,16 @@ import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDi
 import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDialog";
 import { AgreementImport } from "@/components/agreements/AgreementImport";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,8 +23,15 @@ const Agreements = () => {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
   const [showAgreementImport, setShowAgreementImport] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [password, setPassword] = useState("");
 
   const handleDeleteAllAgreements = async () => {
+    if (password !== "4830") {
+      toast.error("Incorrect password");
+      return;
+    }
+
     try {
       setIsDeleting(true);
       console.log('Calling delete-all-agreements function...');
@@ -40,6 +57,8 @@ const Agreements = () => {
       toast.error("Failed to delete agreements");
     } finally {
       setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setPassword("");
     }
   };
 
@@ -62,7 +81,7 @@ const Agreements = () => {
           </Button>
           <Button
             variant="destructive"
-            onClick={handleDeleteAllAgreements}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={isDeleting}
           >
             {isDeleting ? "Deleting..." : "Delete All Agreements"}
@@ -87,6 +106,41 @@ const Agreements = () => {
         open={isPaymentHistoryOpen}
         onOpenChange={setIsPaymentHistoryOpen}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Agreements</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please enter the password to confirm deletion of all agreements.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input
+              type="password"
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowDeleteDialog(false);
+              setPassword("");
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAllAgreements}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete All"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
