@@ -24,7 +24,7 @@ interface CreateUserForm {
   email: string;
   password: string;
   full_name: string;
-  role: "admin" | "staff" | "customer";
+  role: "admin" | "staff";
 }
 
 export const CreateUserForm = () => {
@@ -42,27 +42,6 @@ export const CreateUserForm = () => {
   const onSubmit = async (values: CreateUserForm) => {
     setIsLoading(true);
     try {
-      // Check if the user has permission to create users with this role
-      const { data: currentUser } = await supabase.auth.getUser();
-      const { data: currentProfile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", currentUser.user?.id)
-        .single();
-
-      // Role hierarchy validation
-      const roleHierarchy = {
-        admin: ["admin", "staff", "customer"],
-        staff: ["customer"],
-        customer: [],
-      };
-
-      const allowedRoles = roleHierarchy[currentProfile?.role as keyof typeof roleHierarchy] || [];
-      
-      if (!allowedRoles.includes(values.role)) {
-        throw new Error("You don't have permission to create users with this role");
-      }
-
       // Create the user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
@@ -98,6 +77,7 @@ export const CreateUserForm = () => {
 
       form.reset();
     } catch (error: any) {
+      console.error("Error creating user:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -176,7 +156,6 @@ export const CreateUserForm = () => {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="customer">Customer</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
