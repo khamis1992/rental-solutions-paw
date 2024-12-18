@@ -4,7 +4,7 @@ export interface PaymentData {
   customerName: string;
   amount: number;
   paymentDate: string;
-  paymentMethod: 'Card' | 'Online' | 'Transfer' | 'Cash';
+  paymentMethod: 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
   status: string;
   paymentNumber: string;
 }
@@ -55,7 +55,7 @@ export const createPaymentRecord = async (
   const isoDate = `${year}-${month}-${day}`;
 
   // Validate payment method
-  const validPaymentMethods = ['Card', 'Online', 'Transfer', 'Cash'];
+  const validPaymentMethods = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'];
   const paymentMethod = validPaymentMethods.includes(paymentData.paymentMethod)
     ? paymentData.paymentMethod
     : 'Cash'; // Default to Cash if invalid method provided
