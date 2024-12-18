@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         lease_id: agreementId,
         amount: data.amount,
         payment_method: data.paymentMethod,
+        description: data.description,
         payment_date: new Date().toISOString(),
       });
 
@@ -69,6 +71,14 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             <SelectItem value="cheque">Cheque</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          placeholder="Add payment notes or description..."
+          {...register("description")}
+        />
       </div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Adding Payment..." : "Add Payment"}
