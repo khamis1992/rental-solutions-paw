@@ -35,7 +35,7 @@ export const AgreementImport = () => {
           console.log('Processing agreement:', {
             number: agreement['Agreement Number'],
             status: agreement['STATUS'],
-            customerName: agreement['full_name']
+            customerName: agreement['Customer Name']
           });
 
           if (agreement['STATUS']?.toLowerCase() === 'pending_payment') {
@@ -81,8 +81,8 @@ export const AgreementImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Agreement Number,License No,full_name,License Number,Check-out Date,Check-in Date,Return Date,STATUS\n" +
-                      "AGR001,LIC123,John Doe,DL456,03/27/2024,03/28/2024,03/29/2024,active";
+    const csvContent = "Agreement Number,Car No,Customer Name,License Number,Start Date,End Date,Return Date,STATUS\n" +
+                      "AGR001,ABC123,John Doe,DL456,27/03/2024,28/03/2024,29/03/2024,active";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

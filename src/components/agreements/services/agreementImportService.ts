@@ -65,10 +65,14 @@ export const getOrCreateCustomer = async (fullName: string) => {
       return existingCustomer;
     }
 
+    // Generate a new UUID for the customer
+    const newCustomerId = crypto.randomUUID();
+
     // If no existing customer, create new one
     const { data: newCustomer, error: createError } = await supabase
       .from('profiles')
       .insert({
+        id: newCustomerId,
         full_name: fullName,
         role: 'customer'
       })
@@ -85,36 +89,59 @@ export const getOrCreateCustomer = async (fullName: string) => {
   }
 };
 
-export const getAvailableVehicle = async () => {
-  const { data: vehicle, error } = await supabase
-    .from('vehicles')
-    .select('id, license_plate')
-    .eq('status', 'available')
-    .limit(1)
-    .single();
+export const getOrCreateVehicle = async (carNo: string) => {
+  try {
+    // First try to find existing vehicle
+    const { data: existingVehicle, error: searchError } = await supabase
+      .from('vehicles')
+      .select('id, license_plate')
+      .eq('license_plate', carNo)
+      .single();
 
-  if (error) throw error;
-  if (!vehicle) throw new Error('No available vehicles found');
+    if (existingVehicle) {
+      console.log('Found existing vehicle:', existingVehicle);
+      return existingVehicle;
+    }
 
-  return vehicle;
+    // If no existing vehicle, create a new one
+    const { data: newVehicle, error: createError } = await supabase
+      .from('vehicles')
+      .insert({
+        license_plate: carNo,
+        make: 'Default',
+        model: 'Model',
+        year: new Date().getFullYear(),
+        vin: `TEMP-${Date.now()}`,
+        status: 'available'
+      })
+      .select()
+      .single();
+
+    if (createError) throw createError;
+
+    console.log('Created new vehicle:', newVehicle);
+    return newVehicle;
+  } catch (error) {
+    console.error('Error in getOrCreateVehicle:', error);
+    throw error;
+  }
 };
 
 export const createAgreement = async (agreement: Record<string, string>) => {
   try {
     console.log('Raw CSV data:', agreement);
 
-    // Get or create customer based on full_name from CSV
-    const customer = await getOrCreateCustomer(agreement['full_name']);
+    // Get or create customer based on Customer Name from CSV
+    const customer = await getOrCreateCustomer(agreement['Customer Name']);
     
-    // Get available vehicle
-    const vehicle = await getAvailableVehicle();
+    // Get or create vehicle based on Car No from CSV
+    const vehicle = await getOrCreateVehicle(agreement['Car No']);
 
     const agreementData = {
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
-      license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      start_date: formatDateForPostgres(agreement['Start Date'] || agreement['Check-out Date']),
-      end_date: formatDateForPostgres(agreement['End Date'] || agreement['Check-in Date']),
+      start_date: formatDateForPostgres(agreement['Start Date']),
+      end_date: formatDateForPostgres(agreement['End Date']),
       return_date: formatDateForPostgres(agreement['Return Date']),
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customer.id,
