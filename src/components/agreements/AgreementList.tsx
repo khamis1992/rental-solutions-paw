@@ -42,8 +42,8 @@ export const AgreementList = () => {
         .from('leases')
         .select(`
           id,
-          start_date,
-          end_date,
+          checkout_date,
+          checkin_date,
           status,
           total_amount,
           profiles:customer_id (id, full_name),
@@ -67,8 +67,8 @@ export const AgreementList = () => {
           model: lease.vehicles.model,
           year: lease.vehicles.year,
         },
-        start_date: lease.start_date || '',
-        end_date: lease.end_date || '',
+        start_date: lease.checkout_date || '',
+        end_date: lease.checkin_date || '',
         status: lease.status,
         total_amount: lease.total_amount,
       }));
