@@ -5,15 +5,17 @@ import { parseDate } from "../utils/dateUtils";
 type LeaseStatus = Database["public"]["Enums"]["lease_status"];
 
 const normalizeStatus = (status: string): LeaseStatus => {
-  if (!status) return 'pending';
+  if (!status) return 'pending_payment';
   const statusMap: Record<string, LeaseStatus> = {
-    'open': 'open',
+    'open': 'active',
     'active': 'active',
     'closed': 'closed',
-    'cancelled': 'cancelled',
-    'pending': 'pending'
+    'cancelled': 'closed',
+    'pending': 'pending_payment',
+    'pending_payment': 'pending_payment',
+    'pending_deposit': 'pending_deposit'
   };
-  return statusMap[status.toLowerCase().trim()] || 'pending';
+  return statusMap[status.toLowerCase().trim()] || 'pending_payment';
 };
 
 export const createCustomerProfile = async (fullName: string) => {
