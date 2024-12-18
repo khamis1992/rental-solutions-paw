@@ -24,7 +24,8 @@ const Maintenance = () => {
           vehicles (
             make,
             model,
-            year
+            year,
+            license_plate
           )
         `);
 
