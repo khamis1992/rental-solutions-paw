@@ -2,10 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { convertDateFormat } from "../utils/dateUtils";
 import { retryOperation } from "../utils/retryUtils";
 import { getOrCreateCustomer, getAvailableVehicle } from "./entityService";
+import { Database } from "@/integrations/supabase/types";
 
-const normalizeStatus = (status: string): string => {
+type LeaseStatus = Database['public']['Enums']['lease_status'];
+
+const normalizeStatus = (status: string): LeaseStatus => {
   if (!status) return 'pending_payment';
-  const statusMap: Record<string, string> = {
+  const statusMap: Record<string, LeaseStatus> = {
     'open': 'active',
     'active': 'active',
     'closed': 'closed',
