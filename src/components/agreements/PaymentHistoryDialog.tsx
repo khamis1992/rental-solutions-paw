@@ -112,21 +112,23 @@ export function PaymentHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Payment History</DialogTitle>
           <DialogDescription>
             View all payments and transactions
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
-          <div className="space-y-6 p-1">
-            <PaymentImport />
-            <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
-            <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
-          </div>
-        </ScrollArea>
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full w-full">
+            <div className="space-y-6 px-6">
+              <PaymentImport />
+              <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
+              <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
+            </div>
+          </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
