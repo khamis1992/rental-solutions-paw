@@ -28,12 +28,12 @@ export const AgreementImport = () => {
     let pollInterval: number;
 
     try {
-      console.log('Starting file upload process...', file);
+      console.log('Starting file upload process...');
       const fileExt = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       console.log('Uploading file to storage:', fileName);
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("imports")
         .upload(fileName, file);
 
@@ -42,9 +42,7 @@ export const AgreementImport = () => {
         throw uploadError;
       }
 
-      console.log('File uploaded successfully:', uploadData);
-
-      console.log('Creating import log...');
+      console.log('File uploaded successfully, creating import log...');
       const { error: logError } = await supabase
         .from("import_logs")
         .insert({
@@ -59,19 +57,18 @@ export const AgreementImport = () => {
       }
 
       console.log('Starting import process via Edge Function...');
-      console.log('Sending fileName to Edge Function:', fileName);
-      
-      const { data: functionData, error: functionError } = await supabase.functions
+      const { error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
           body: { fileName },
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
       if (functionError) {
         console.error('Edge Function error:', functionError);
         throw functionError;
       }
-
-      console.log('Edge Function response:', functionData);
 
       // Poll for import completion
       pollInterval = window.setInterval(async () => {
@@ -82,8 +79,6 @@ export const AgreementImport = () => {
           .eq("file_name", fileName)
           .single();
 
-        console.log('Import log status:', importLog);
-
         if (importLog?.status === "completed") {
           window.clearInterval(pollInterval);
           toast({
@@ -93,7 +88,6 @@ export const AgreementImport = () => {
           
           // Force refresh the queries
           await queryClient.invalidateQueries({ queryKey: ["agreements"] });
-          await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
           
           setIsUploading(false);
         } else if (importLog?.status === "error") {
@@ -102,7 +96,7 @@ export const AgreementImport = () => {
         }
       }, 1000);
 
-      // Set a timeout to stop polling after 30 seconds
+      // Set a timeout to stop polling after 15 seconds
       setTimeout(() => {
         if (pollInterval) {
           window.clearInterval(pollInterval);
@@ -115,7 +109,7 @@ export const AgreementImport = () => {
             variant: "destructive",
           });
         }
-      }, 30000);
+      }, 15000);
 
     } catch (error: any) {
       console.error('Import process error:', error);

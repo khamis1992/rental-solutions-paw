@@ -19,88 +19,85 @@ export const processImportData = async (
     .limit(1)
     .single();
 
-  const defaultVehicleId = vehicle?.id;
+  if (!vehicle) {
+    throw new Error('No available vehicle found for import testing');
+  }
 
   for (let i = 1; i < rows.length; i++) {
     if (!rows[i].trim()) continue;
 
+    let currentRowValues: string[] = [];
     try {
-      console.log(`Processing row ${i}:`, rows[i]);
-      const currentRowValues = rows[i].split(',').map(v => v.trim());
-      const rowData = extractRowData(currentRowValues, headers);
+      currentRowValues = rows[i].split(',').map(v => v.trim());
       
-      // Get or create customer profile
-      let customerId;
-      const { data: customerData } = await supabase
+      if (currentRowValues.length !== headers.length) {
+        throw new Error(`Row has incorrect number of columns. Expected ${headers.length}, got ${currentRowValues.length}`);
+      }
+
+      const rowData = extractRowData(currentRowValues, headers);
+      const mappedStatus = validateRowData(rowData, headers);
+
+      // Get customer ID from full name
+      const { data: customerData, error: customerError } = await supabase
         .from('profiles')
         .select('id')
         .eq('full_name', rowData.fullName)
         .single();
 
-      if (customerData) {
-        customerId = customerData.id;
-      } else {
-        // Create a placeholder profile
-        const { data: newCustomer, error: customerError } = await supabase
-          .from('profiles')
-          .insert({
-            full_name: rowData.fullName,
-            role: 'customer'
-          })
-          .select()
-          .single();
-
-        if (customerError) {
-          console.error('Error creating customer:', customerError);
-          throw customerError;
-        }
-        
-        customerId = newCustomer?.id;
+      if (customerError || !customerData) {
+        throw new Error(`Customer "${rowData.fullName}" not found`);
       }
 
-      console.log('Customer ID:', customerId);
-      console.log('Parsed dates:', {
-        checkout: rowData.checkoutDate,
-        checkin: rowData.checkinDate,
-        return: rowData.returnDate
-      });
-
-      // Insert lease record with available data
+      // Upsert lease record with the test vehicle
       const { error: leaseError } = await supabase
         .from('leases')
         .upsert({
           agreement_number: rowData.agreementNumber,
-          customer_id: customerId,
-          vehicle_id: defaultVehicleId,
+          customer_id: customerData.id,
+          vehicle_id: vehicle.id,
           license_no: rowData.licenseNo,
           license_number: rowData.licenseNumber,
-          checkout_date: rowData.checkoutDate,
-          checkin_date: rowData.checkinDate,
+          start_date: rowData.checkoutDate,
+          end_date: rowData.checkinDate,
           return_date: rowData.returnDate,
-          status: rowData.status || 'pending',
-          total_amount: 0,
-          initial_mileage: 0,
+          status: mappedStatus,
+          total_amount: 0, // Set a default value
+          initial_mileage: 0, // Set a default value
         }, {
           onConflict: 'agreement_number',
           ignoreDuplicates: false
         });
 
       if (leaseError) {
-        console.error(`Row ${i + 1} insert error:`, leaseError);
         throw leaseError;
       }
 
       successCount++;
-      console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
+      console.log(`Successfully imported/updated agreement: ${rowData.agreementNumber}`);
 
     } catch (error: any) {
       console.error(`Error processing row ${i + 1}:`, error);
       errorCount++;
-      errors.push({
+      
+      const errorData = {
         row: i + 1,
         error: error.message,
-        data: rows[i]
-      });
+        data: currentRowValues.length ? Object.fromEntries(headers.map((h, idx) => [h, currentRowValues[idx]])) : null
+      };
+      errors.push(errorData);
+
+      await supabase
+        .from('agreement_import_errors')
+        .insert({
+          import_log_id: (await supabase
+            .from('import_logs')
+            .select('id')
+            .eq('file_name', fileName)
+            .single()).data?.id,
+          row_number: i + 1,
+          error_message: error.message,
+          row_data: errorData.data
+        });
     }
   }
 

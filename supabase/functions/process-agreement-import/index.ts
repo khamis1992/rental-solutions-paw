@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from './utils.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { processImportData } from './processData.ts';
 
 console.log("Loading agreement import function...");
@@ -19,28 +19,11 @@ serve(async (req) => {
 
   try {
     console.log('Starting agreement import process...');
-    
-    // Log request details for debugging
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    // Get and validate the request body
-    let body;
-    try {
-      const text = await req.text();
-      console.log('Raw request body:', text);
-      body = JSON.parse(text || '{}');
-      console.log('Parsed request body:', body);
-    } catch (parseError) {
-      console.error('Error parsing request body:', parseError);
-      throw new Error(`Invalid JSON in request body: ${parseError.message}`);
-    }
-    
-    const { fileName } = body;
-    console.log('Extracted fileName:', fileName);
+    const { fileName } = await req.json();
+    console.log('Processing file:', fileName);
 
-    if (!fileName || typeof fileName !== 'string' || !fileName.trim()) {
-      throw new Error('fileName is required and must be a non-empty string');
+    if (!fileName) {
+      throw new Error('fileName is required');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -53,7 +36,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Download the file from storage
-    console.log('Downloading file from storage:', fileName);
+    console.log('Downloading file from storage...');
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -78,7 +61,7 @@ serve(async (req) => {
     );
 
     // Update import log with final status
-    const { error: updateError } = await supabase
+    await supabase
       .from('import_logs')
       .update({
         status: 'completed',
@@ -86,11 +69,6 @@ serve(async (req) => {
         errors: errors.length > 0 ? errors : null
       })
       .eq('file_name', fileName);
-
-    if (updateError) {
-      console.error('Error updating import log:', updateError);
-      throw updateError;
-    }
 
     return new Response(
       JSON.stringify({
@@ -101,6 +79,7 @@ serve(async (req) => {
         errorDetails: errors
       }),
       { 
+        status: 200,
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
@@ -111,9 +90,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Import process failed:', error);
     
+    // Ensure we return a proper error response with CORS headers
     return new Response(
       JSON.stringify({
-        success: false,
         error: error.message || 'An unexpected error occurred',
         details: error.toString()
       }),
