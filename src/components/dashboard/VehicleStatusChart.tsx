@@ -54,14 +54,24 @@ export const VehicleStatusChart = () => {
   }
 
   const chartConfig = {
-    colors: {
-      available: { theme: { light: "#10b981", dark: "#34d399" } },
-      maintenance: { theme: { light: "#f97316", dark: "#fb923c" } },
-      police_station: { theme: { light: "#3b82f6", dark: "#60a5fa" } },
-      accident: { theme: { light: "#dc2626", dark: "#ef4444" } },
-      reserve: { theme: { light: "#059669", dark: "#10b981" } },
-      stolen: { theme: { light: "#7c3aed", dark: "#8b5cf6" } },
+    available: {
+      theme: { light: "#10b981", dark: "#34d399" }
     },
+    maintenance: {
+      theme: { light: "#f97316", dark: "#fb923c" }
+    },
+    police_station: {
+      theme: { light: "#3b82f6", dark: "#60a5fa" }
+    },
+    accident: {
+      theme: { light: "#dc2626", dark: "#ef4444" }
+    },
+    reserve: {
+      theme: { light: "#059669", dark: "#10b981" }
+    },
+    stolen: {
+      theme: { light: "#7c3aed", dark: "#8b5cf6" }
+    }
   };
 
   return (
