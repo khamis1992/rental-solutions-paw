@@ -60,40 +60,40 @@ serve(async (req) => {
       const values = rows[i].split(',').map(v => v.trim());
       if (values.length === headers.length) {
         try {
-          const customerIdentifier = values[headers.indexOf('customer_identifier')];
-          const amount = parseFloat(values[headers.indexOf('amount')]);
-          const paymentDate = values[headers.indexOf('payment_date')];
-          const paymentMethod = values[headers.indexOf('payment_method')];
+          const customerName = values[headers.indexOf('Customer Name')];
+          const amount = parseFloat(values[headers.indexOf('Amount')]);
+          const licensePlate = values[headers.indexOf('License Plate')];
+          const paymentDate = values[headers.indexOf('Payment_Date')];
+          const paymentMethod = values[headers.indexOf('Payment_Method')];
           const status = values[headers.indexOf('status')];
           const paymentNumber = values[headers.indexOf('Payment_Number')];
 
-          if (!customerIdentifier) {
-            throw new Error('Customer identifier (full name) is missing');
+          if (!customerName) {
+            throw new Error('Customer Name is missing');
           }
 
-          // Get customer ID from identifier using full name
+          // Get customer ID from name
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('full_name', customerIdentifier.trim())
+            .eq('full_name', customerName.trim())
             .single();
 
           if (customerError || !customerData) {
-            throw new Error(`Customer "${customerIdentifier}" not found in the system`);
+            throw new Error(`Customer "${customerName}" not found in the system`);
           }
 
-          // Find active lease for customer
+          // Find active lease for customer and vehicle
           const { data: activeLease } = await supabase
             .from('leases')
-            .select('id')
+            .select('id, vehicle:vehicles(license_plate)')
             .eq('customer_id', customerData.id)
             .eq('status', 'active')
-            .order('start_date', { ascending: false })
-            .limit(1)
+            .eq('vehicles.license_plate', licensePlate)
             .single();
 
           if (!activeLease) {
-            throw new Error(`No active lease found for customer "${customerIdentifier}"`);
+            throw new Error(`No active lease found for customer "${customerName}" with vehicle "${licensePlate}"`);
           }
 
           // Convert date from DD-MM-YYYY to ISO format
@@ -117,7 +117,7 @@ serve(async (req) => {
           }
 
           successCount++;
-          console.log(`Successfully imported payment for customer: ${customerIdentifier}`);
+          console.log(`Successfully imported payment for customer: ${customerName}`);
 
         } catch (error) {
           console.error(`Error processing row ${i + 1}:`, error);
