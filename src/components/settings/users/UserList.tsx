@@ -25,6 +25,7 @@ export const UserList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        // Fetch only admin and staff users from profiles
         const { data: profiles, error } = await supabase
           .from("profiles")
           .select("id, full_name, role")
@@ -32,19 +33,24 @@ export const UserList = () => {
 
         if (error) throw error;
 
-        // Fetch emails from auth.users (this requires the service_role key)
+        // Fetch emails from auth.users
         const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
         
         if (authError) throw authError;
 
-        // Combine profile data with email addresses
-        const usersWithEmail = profiles.map((profile) => ({
-          ...profile,
-          email: authUsers.users.find((user) => user.id === profile.id)?.email || "N/A",
-        }));
+        // Combine profile data with email addresses, ensuring only admin and staff users are included
+        const usersWithEmail = profiles
+          .filter((profile): profile is { id: string; full_name: string | null; role: "admin" | "staff" } => 
+            profile.role === "admin" || profile.role === "staff"
+          )
+          .map((profile) => ({
+            ...profile,
+            email: authUsers.users.find((user) => user.id === profile.id)?.email || "N/A",
+          }));
 
         setUsers(usersWithEmail);
       } catch (error: any) {
+        console.error("Error fetching users:", error);
         toast({
           title: "Error",
           description: error.message,
