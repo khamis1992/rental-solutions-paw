@@ -4,15 +4,34 @@ export const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const isValidDate = (day: number, month: number, year: number): boolean => {
+  // Check if month is between 1 and 12
+  if (month < 1 || month > 12) return false;
+  
+  // Check if day is valid for the given month
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if (day < 1 || day > daysInMonth) return false;
+  
+  return true;
+};
+
 const parseDate = (dateStr: string): string => {
   if (!dateStr) return '';
   
   // Handle DD/MM/YYYY format
   const parts = dateStr.split('/');
   if (parts.length === 3) {
-    const [day, month, year] = parts;
+    const [dayStr, monthStr, yearStr] = parts;
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    const year = parseInt(yearStr, 10);
+
+    if (!isValidDate(day, month, year)) {
+      throw new Error(`Invalid date: ${dateStr}. Please use DD/MM/YYYY format with valid day and month values.`);
+    }
+
     // Convert to YYYY-MM-DD format for PostgreSQL
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
   return dateStr;
 };
