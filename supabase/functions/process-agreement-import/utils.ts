@@ -15,8 +15,8 @@ const isValidDate = (day: number, month: number, year: number): boolean => {
   return true;
 };
 
-const parseDate = (dateStr: string): string => {
-  if (!dateStr) return '';
+const parseDate = (dateStr: string): string | null => {
+  if (!dateStr || dateStr.trim() === '') return null;
   
   // Clean the input string and split by either '/' or '-'
   const cleanDateStr = dateStr.trim();
