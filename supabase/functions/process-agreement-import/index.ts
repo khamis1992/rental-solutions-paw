@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from './utils.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { processImportData } from './processData.ts';
 
 console.log("Loading agreement import function...");
@@ -10,7 +10,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Max-Age': '86400',
+      },
     });
   }
 
