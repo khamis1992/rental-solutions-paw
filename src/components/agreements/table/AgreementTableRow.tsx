@@ -31,12 +31,14 @@ interface Props {
 }
 
 const getStatusColor = (status: string) => {
-  switch (status) {
-    case "active":
+  const normalizedStatus = status.toLowerCase();
+  switch (normalizedStatus) {
+    case "open":
       return "bg-green-500/10 text-green-500 hover:bg-green-500/20";
-    case "pending":
+    case "pending_deposit":
+    case "pending_payment":
       return "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20";
-    case "expired":
+    case "closed":
       return "bg-red-500/10 text-red-500 hover:bg-red-500/20";
     default:
       return "bg-gray-500/10 text-gray-500 hover:bg-gray-500/20";
@@ -89,7 +91,7 @@ export const AgreementTableRow = ({
           variant="secondary"
           className={getStatusColor(agreement.status)}
         >
-          {agreement.status.charAt(0).toUpperCase() + agreement.status.slice(1)}
+          {agreement.status}
         </Badge>
       </TableCell>
       <TableCell>{formatCurrency(agreement.total_amount)}</TableCell>
