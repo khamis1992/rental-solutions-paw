@@ -8,11 +8,15 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [vehicleComboboxOpen, setVehicleComboboxOpen] = useState(false);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     vehicle_id: "",
@@ -99,22 +103,53 @@ export function CreateJobDialog() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="vehicle_id">Vehicle</Label>
-            <Select
-              value={formData.vehicle_id}
-              onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a vehicle" />
-              </SelectTrigger>
-              <SelectContent>
-                {vehicles.map((vehicle) => (
-                  <SelectItem key={vehicle.id} value={vehicle.id}>
-                    {vehicle.make} {vehicle.model} ({vehicle.license_plate})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={vehicleComboboxOpen} onOpenChange={setVehicleComboboxOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={vehicleComboboxOpen}
+                  className="w-full justify-between"
+                >
+                  {formData.vehicle_id ? (
+                    vehicles.find((vehicle) => vehicle.id === formData.vehicle_id)
+                      ? `${vehicles.find((vehicle) => vehicle.id === formData.vehicle_id)?.make} ${
+                          vehicles.find((vehicle) => vehicle.id === formData.vehicle_id)?.model
+                        } (${vehicles.find((vehicle) => vehicle.id === formData.vehicle_id)?.license_plate})`
+                      : "Select a vehicle"
+                  ) : (
+                    "Select a vehicle"
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Search vehicles..." />
+                  <CommandEmpty>No vehicle found.</CommandEmpty>
+                  <CommandGroup>
+                    {vehicles.map((vehicle) => (
+                      <CommandItem
+                        key={vehicle.id}
+                        value={`${vehicle.make} ${vehicle.model} ${vehicle.license_plate}`}
+                        onSelect={() => {
+                          setFormData({ ...formData, vehicle_id: vehicle.id });
+                          setVehicleComboboxOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.vehicle_id === vehicle.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label htmlFor="service_type">Service Type</Label>
