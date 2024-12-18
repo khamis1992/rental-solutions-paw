@@ -22,30 +22,24 @@ const normalizeStatus = (status: string): LeaseStatus => {
 const formatDateForPostgres = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
-  // Parse DD/MM/YYYY format
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    // Convert to YYYY-MM-DD format, swapping day and month to correct order
-    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    
-    // Validate the date is valid
-    const date = new Date(formattedDate);
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date detected:', { dateStr, formattedDate });
-      return null;
+  try {
+    // Parse DD/MM/YYYY format
+    const [day, month, year] = dateStr.split('/').map(num => num.trim());
+    if (day && month && year) {
+      // Convert to YYYY-MM-DD format
+      const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      console.log('Date formatting:', {
+        original: dateStr,
+        parts: { day, month, year },
+        formatted: formattedDate
+      });
+      return formattedDate;
     }
-    
-    console.log('Date formatting:', {
-      original: dateStr,
-      parts: { day, month, year },
-      formatted: formattedDate
-    });
-    return formattedDate;
+  } catch (error) {
+    console.error('Error parsing date:', dateStr, error);
   }
   
-  console.warn('Invalid date format:', dateStr);
-  return null;
+  return dateStr; // Return original string if parsing fails
 };
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
