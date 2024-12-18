@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from '@supabase/supabase-js';
 import { validateRowData, extractRowData } from './utils.ts';
 
 export const processImportData = async (
@@ -9,7 +9,7 @@ export const processImportData = async (
 ) => {
   let successCount = 0;
   let errorCount = 0;
-  let errors: any[] = [];
+  const errors: any[] = [];
 
   // Get first available vehicle for testing
   const { data: vehicle } = await supabase
@@ -57,8 +57,8 @@ export const processImportData = async (
           vehicle_id: vehicle.id,
           license_no: rowData.licenseNo,
           license_number: rowData.licenseNumber,
-          checkout_date: rowData.checkoutDate,
-          checkin_date: rowData.checkinDate,
+          start_date: rowData.checkoutDate,
+          end_date: rowData.checkinDate,
           return_date: rowData.returnDate,
           status: mappedStatus,
           total_amount: 0, // Set a default value
@@ -75,7 +75,7 @@ export const processImportData = async (
       successCount++;
       console.log(`Successfully imported/updated agreement: ${rowData.agreementNumber}`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error processing row ${i + 1}:`, error);
       errorCount++;
       
