@@ -20,14 +20,19 @@ serve(async (req) => {
   try {
     console.log('Starting agreement import process...');
     
-    // Log the raw request body for debugging
+    // Log request details for debugging
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
+    // Get the raw request body
     const rawBody = await req.text();
     console.log('Raw request body:', rawBody);
 
-    // Parse the JSON body
+    // Parse the JSON body with error handling
     let body;
     try {
       body = JSON.parse(rawBody);
+      console.log('Parsed request body:', body);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       return new Response(
@@ -106,7 +111,6 @@ serve(async (req) => {
         errorDetails: errors
       }),
       { 
-        status: 200,
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
