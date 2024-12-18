@@ -13,7 +13,8 @@ export const statusMapping: { [key: string]: string } = {
   'closed': 'completed',
   'done': 'completed',
   'cancel': 'cancelled',
-  'canceled': 'cancelled'
+  'canceled': 'cancelled',
+  'open': 'active'
 };
 
 export const validateRowData = (rowData: any, headers: string[]) => {
