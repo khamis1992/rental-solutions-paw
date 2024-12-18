@@ -7,6 +7,8 @@ import { MaintenanceHistory } from "./profile/MaintenanceHistory";
 import { DamageHistory } from "./profile/DamageHistory";
 import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
 
 interface VehicleDetailsProps {
   vehicleId: string;
@@ -27,6 +29,10 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
     },
   });
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -45,6 +51,18 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Vehicle Details</h1>
+        <Button
+          onClick={handlePrint}
+          variant="outline"
+          className="print:hidden"
+        >
+          <Printer className="mr-2 h-4 w-4" />
+          Print Details
+        </Button>
+      </div>
+
       {/* Vehicle Image */}
       <div className="relative h-[300px] w-full overflow-hidden rounded-lg bg-muted">
         {vehicle.image_url ? (
@@ -62,7 +80,7 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
       {/* Vehicle Information Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-5 print:hidden">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="damages">Damages</TabsTrigger>
@@ -90,6 +108,21 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
           <VehicleDocuments vehicleId={vehicleId} />
         </TabsContent>
       </Tabs>
+
+      {/* Print-only content */}
+      <style type="text/css" media="print">{`
+        @page {
+          size: auto;
+          margin: 20mm;
+        }
+        
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      `}</style>
     </div>
   );
 };
