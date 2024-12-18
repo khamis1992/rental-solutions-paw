@@ -20,39 +20,49 @@ const normalizeStatus = (status: string): LeaseStatus => {
 
 const formatDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
-  return dateStr; // Return date string as-is without validation
+  return dateStr;
 };
 
-// Simplified function that creates a default customer profile
 export const getOrCreateCustomer = async () => {
   try {
     // First try to get an existing default customer
-    const { data: existingCustomer } = await supabase
+    const { data: existingCustomer, error: fetchError } = await supabase
       .from('profiles')
       .select('id')
       .eq('full_name', 'Default Customer')
-      .single();
+      .maybeSingle();
       
     if (existingCustomer) {
       console.log('Using existing default customer:', existingCustomer);
       return existingCustomer;
     }
     
-    // Create a new default customer with a generated UUID
-    const newCustomerId = uuidv4();
-    const { data: newCustomer, error } = await supabase
+    // Create a default auth user first
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: `default_customer_${Date.now()}@example.com`,
+      password: uuidv4(),
+      email_confirm: true
+    });
+
+    if (authError) {
+      console.error('Error creating auth user:', authError);
+      throw authError;
+    }
+
+    // Create a new default customer using the auth user's ID
+    const { data: newCustomer, error: profileError } = await supabase
       .from('profiles')
       .insert({
-        id: newCustomerId,
+        id: authData.user.id,
         full_name: 'Default Customer',
         role: 'customer'
       })
       .select()
       .single();
       
-    if (error) {
-      console.error('Error creating default customer:', error);
-      throw error;
+    if (profileError) {
+      console.error('Error creating default customer:', profileError);
+      throw profileError;
     }
     
     console.log('Created new default customer:', newCustomer);
