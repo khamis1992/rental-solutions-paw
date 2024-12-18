@@ -15,6 +15,7 @@ export interface Agreement {
     make: string;
     model: string;
     year: number;
+    license_plate: string;
   };
   start_date: string;
   end_date: string;
@@ -60,7 +61,8 @@ export const useAgreements = () => {
             id,
             make,
             model,
-            year
+            year,
+            license_plate
           )
         `);
 
@@ -84,6 +86,7 @@ export const useAgreements = () => {
           make: lease.vehicles?.make || '',
           model: lease.vehicles?.model || '',
           year: lease.vehicles?.year || '',
+          license_plate: lease.vehicles?.license_plate || 'N/A',
         },
         start_date: lease.start_date || '',
         end_date: lease.end_date || '',
