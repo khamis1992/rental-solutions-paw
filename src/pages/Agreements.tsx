@@ -16,7 +16,7 @@ const Agreements = () => {
   useEffect(() => {
     const deleteAllAgreements = async () => {
       try {
-        const { error } = await supabase.functions.invoke('delete-all-agreements');
+        const { data, error } = await supabase.functions.invoke('delete-all-agreements');
         
         if (error) throw error;
         
