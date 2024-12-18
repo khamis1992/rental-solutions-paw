@@ -24,32 +24,9 @@ serve(async (req) => {
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    // Get the raw request body
-    const rawBody = await req.text();
-    console.log('Raw request body:', rawBody);
-
-    // Parse the JSON body with error handling
-    let body;
-    try {
-      body = JSON.parse(rawBody);
-      console.log('Parsed request body:', body);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      return new Response(
-        JSON.stringify({
-          error: 'Invalid JSON in request body',
-          details: parseError.message,
-          receivedBody: rawBody
-        }),
-        { 
-          status: 400,
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
+    // Get the request body
+    const body = await req.json();
+    console.log('Request body:', body);
 
     const { fileName } = body;
     console.log('Processing file:', fileName);
