@@ -9,7 +9,6 @@ import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 import { AgreementTableHeader } from "./table/AgreementTableHeader";
 import { AgreementTableRow } from "./table/AgreementTableRow";
-import { formatCurrency } from "@/lib/utils";
 
 interface Agreement {
   id: string;
@@ -38,6 +37,7 @@ export const AgreementList = () => {
   const { data: agreements = [], isLoading } = useQuery({
     queryKey: ['agreements'],
     queryFn: async () => {
+      console.log("Fetching agreements...");
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -46,31 +46,42 @@ export const AgreementList = () => {
           checkin_date,
           status,
           total_amount,
-          profiles:customer_id (id, full_name),
-          vehicles (id, make, model, year)
+          customer:customer_id (
+            id,
+            full_name
+          ),
+          vehicle:vehicle_id (
+            id,
+            make,
+            model,
+            year
+          )
         `);
 
       if (error) {
+        console.error("Error fetching agreements:", error);
         toast.error("Failed to fetch agreements");
         throw error;
       }
 
+      console.log("Fetched agreements:", data);
+      
       return data.map((lease: any) => ({
         id: lease.id,
         customer: {
-          id: lease.profiles.id,
-          full_name: lease.profiles.full_name,
+          id: lease.customer?.id || '',
+          full_name: lease.customer?.full_name || 'Unknown Customer',
         },
         vehicle: {
-          id: lease.vehicles.id,
-          make: lease.vehicles.make,
-          model: lease.vehicles.model,
-          year: lease.vehicles.year,
+          id: lease.vehicle?.id || '',
+          make: lease.vehicle?.make || '',
+          model: lease.vehicle?.model || '',
+          year: lease.vehicle?.year || '',
         },
         start_date: lease.checkout_date || '',
         end_date: lease.checkin_date || '',
-        status: lease.status,
-        total_amount: lease.total_amount,
+        status: lease.status || 'pending',
+        total_amount: lease.total_amount || 0,
       }));
     },
   });
