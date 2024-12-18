@@ -25,7 +25,6 @@ export const StatusList = ({ statuses, onUpdate, onToggle }: StatusListProps) =>
       <TableHeader>
         <TableRow>
           <TableHead>Status Name</TableHead>
-          <TableHead>Current Usage</TableHead>
           <TableHead>Active</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>

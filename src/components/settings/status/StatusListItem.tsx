@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Check, Pencil, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface StatusListItemProps {
   status: {
@@ -19,20 +17,6 @@ interface StatusListItemProps {
 export const StatusListItem = ({ status, onUpdate, onToggle }: StatusListItemProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-
-  // Query to get the count of vehicles with this status
-  const { data: vehicleCount = 0 } = useQuery({
-    queryKey: ["vehicleStatusCount", status.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("vehicles")
-        .select("*", { count: 'exact', head: true })
-        .eq("status", status.name);
-
-      if (error) throw error;
-      return count || 0;
-    },
-  });
 
   return (
     <TableRow key={status.id}>
@@ -66,7 +50,6 @@ export const StatusListItem = ({ status, onUpdate, onToggle }: StatusListItemPro
           status.name
         )}
       </TableCell>
-      <TableCell>{vehicleCount} vehicles</TableCell>
       <TableCell>
         <Button
           variant={status.is_active ? "default" : "secondary"}
