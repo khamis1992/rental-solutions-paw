@@ -43,8 +43,8 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (maintenanceError) throw maintenanceError;
 
-      // If status is completed, update vehicle status to available
-      if (newStatus === 'completed') {
+      // If status is completed or cancelled, update vehicle status to available
+      if (newStatus === 'completed' || newStatus === 'cancelled') {
         const { error: vehicleError } = await supabase
           .from('vehicles')
           .update({ status: 'available' })
