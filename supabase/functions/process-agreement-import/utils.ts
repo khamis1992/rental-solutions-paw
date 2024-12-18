@@ -18,22 +18,28 @@ const isValidDate = (day: number, month: number, year: number): boolean => {
 const parseDate = (dateStr: string): string => {
   if (!dateStr) return '';
   
-  // Handle DD/MM/YYYY format
-  const parts = dateStr.split('/');
+  // Split by either '/' or '-'
+  const parts = dateStr.split(/[-/]/);
   if (parts.length === 3) {
-    const [dayStr, monthStr, yearStr] = parts;
-    const day = parseInt(dayStr, 10);
-    const month = parseInt(monthStr, 10);
-    const year = parseInt(yearStr, 10);
+    let day: number, month: number, year: number;
+
+    // Check if the first part is a year (YYYY-MM-DD format)
+    if (parts[0].length === 4) {
+      [year, month, day] = parts.map(part => parseInt(part, 10));
+    } else {
+      // Assume DD/MM/YYYY format
+      [day, month, year] = parts.map(part => parseInt(part, 10));
+    }
 
     if (!isValidDate(day, month, year)) {
-      throw new Error(`Invalid date: ${dateStr}. Please use DD/MM/YYYY format with valid day and month values.`);
+      throw new Error(`Invalid date: ${dateStr}. Please use DD/MM/YYYY or YYYY-MM-DD format with valid day and month values.`);
     }
 
     // Convert to YYYY-MM-DD format for PostgreSQL
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
-  return dateStr;
+  
+  throw new Error(`Invalid date format: ${dateStr}. Please use DD/MM/YYYY or YYYY-MM-DD format.`);
 };
 
 export const validateRowData = (rowData: any, headers: string[]) => {
