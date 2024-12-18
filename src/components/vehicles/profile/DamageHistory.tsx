@@ -77,7 +77,8 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
             description: data.description,
             repair_cost: data.repair_cost,
             notes: data.notes,
-            status: 'reported'
+            status: 'reported',
+            lease_id: null // Add a null lease_id since it's required by the schema
           }
         ]);
       

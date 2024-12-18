@@ -184,21 +184,39 @@ export type Database = {
       }
       company_settings: {
         Row: {
+          address: string | null
+          automatic_updates: boolean | null
+          business_email: string | null
+          company_name: string | null
           created_at: string
+          dark_mode: boolean | null
           id: string
           logo_url: string | null
+          phone: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          automatic_updates?: boolean | null
+          business_email?: string | null
+          company_name?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           id?: string
           logo_url?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          automatic_updates?: boolean | null
+          business_email?: string | null
+          company_name?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           id?: string
           logo_url?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -21,6 +21,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen" | "on_rent" | "out_of_service";
+
 const STATUS_COLORS = {
   accident: "#F97316",      // Bright Orange
   available: "#0EA5E9",     // Ocean Blue
@@ -37,7 +39,7 @@ interface Vehicle {
   make: string;
   model: string;
   year: number;
-  status: string;
+  status: VehicleStatus;
   vin: string;
   mileage: number;
   license_plate: string;
@@ -56,7 +58,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
   const queryClient = useQueryClient();
 
   const updateVehicleStatus = useMutation({
-    mutationFn: async ({ vehicleId, newStatus }: { vehicleId: string; newStatus: string }) => {
+    mutationFn: async ({ vehicleId, newStatus }: { vehicleId: string; newStatus: VehicleStatus }) => {
       const { error } = await supabase
         .from('vehicles')
         .update({ status: newStatus })
@@ -87,7 +89,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
     setShowVehicleDetails(true);
   };
 
-  const handleStatusChange = (vehicleId: string, newStatus: string) => {
+  const handleStatusChange = (vehicleId: string, newStatus: VehicleStatus) => {
     updateVehicleStatus.mutate({ vehicleId, newStatus });
   };
 
@@ -154,11 +156,10 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
               </TableCell>
               <TableCell>
                 <Select
-                  defaultValue={vehicle.status}
-                  onValueChange={(value) => handleStatusChange(vehicle.id, value)}
-                  onClick={(e) => e.stopPropagation()}
+                  value={vehicle.status}
+                  onValueChange={(value: VehicleStatus) => handleStatusChange(vehicle.id, value)}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[140px]" onClick={(e) => e.stopPropagation()}>
                     <SelectValue>
                       <Badge
                         className="text-white"

@@ -34,9 +34,8 @@ export const GeneralSettings = () => {
         .single();
 
       if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
+
+      // Update form data when settings are loaded
       if (data) {
         setFormData({
           companyName: data.company_name || "",
@@ -47,7 +46,9 @@ export const GeneralSettings = () => {
           automaticUpdates: data.automatic_updates || true
         });
       }
-    }
+
+      return data;
+    },
   });
 
   const handleSave = async () => {
