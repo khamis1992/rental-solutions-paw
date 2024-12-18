@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       const { error } = await supabase
         .from(table)
         .delete()
-        .neq('id', '')
+        .gt('id', '00000000-0000-0000-0000-000000000000') // Use a valid UUID comparison
       
       if (error) {
         console.error(`Error deleting from ${table}:`, error)
