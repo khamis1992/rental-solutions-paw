@@ -18,6 +18,7 @@ export type Database = {
           lease_id: string | null
           updated_at: string | null
           uploaded_by: string | null
+          vehicle_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -27,6 +28,7 @@ export type Database = {
           lease_id?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
+          vehicle_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -36,6 +38,7 @@ export type Database = {
           lease_id?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
+          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -50,6 +53,13 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
