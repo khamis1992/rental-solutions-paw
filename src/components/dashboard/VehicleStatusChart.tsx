@@ -33,6 +33,7 @@ export const VehicleStatusChart = () => {
       const data = Object.entries(counts).map(([status, count]) => ({
         status: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         count: count,
+        fill: `var(--${status}-color)`, // This will be used for bar colors
       }));
 
       console.log("Vehicle counts:", data);
@@ -83,7 +84,10 @@ export const VehicleStatusChart = () => {
         <div className="h-[300px]">
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={vehicleCounts} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <BarChart 
+                data={vehicleCounts} 
+                margin={{ top: 20, right: 20, bottom: 40, left: 20 }}
+              >
                 <XAxis 
                   dataKey="status" 
                   angle={-45}
@@ -92,10 +96,13 @@ export const VehicleStatusChart = () => {
                   interval={0}
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis allowDecimals={false} />
+                <YAxis 
+                  allowDecimals={false}
+                  tickFormatter={(value) => Math.floor(value)}
+                />
                 <Tooltip
                   content={({ active, payload }) => {
-                    if (!active || !payload) return null;
+                    if (!active || !payload?.length) return null;
                     return (
                       <ChartTooltipContent
                         className="bg-background border-border"
@@ -106,8 +113,9 @@ export const VehicleStatusChart = () => {
                 />
                 <Bar
                   dataKey="count"
-                  fill="var(--color-available)"
+                  fill="currentColor"
                   radius={[4, 4, 0, 0]}
+                  className="fill-primary"
                 />
               </BarChart>
             </ResponsiveContainer>
