@@ -1,55 +1,18 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
-import { Database } from "@/integrations/supabase/types";
-
-type LeaseStatus = Database["public"]["Enums"]["lease_status"];
+import { parseCSV, validateCSVHeaders } from "./utils/csvUtils";
+import { getOrCreateCustomer, getAvailableVehicle, createAgreement } from "./services/agreementImportService";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const parseCSV = (content: string) => {
-    const lines = content.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
-      return headers.reduce((obj, header, index) => {
-        obj[header] = values[index];
-        return obj;
-      }, {} as Record<string, string>);
-    });
-  };
-
-  const normalizeStatus = (status: string): LeaseStatus => {
-    if (!status) return 'pending';
-    const statusMap: Record<string, LeaseStatus> = {
-      'open': 'open',
-      'active': 'active',
-      'closed': 'closed',
-      'cancelled': 'cancelled',
-      'pending': 'pending'
-    };
-    return statusMap[status.toLowerCase().trim()] || 'pending';
-  };
-
-  const parseDate = (dateStr: string): string | null => {
-    if (!dateStr) return null;
-    try {
-      const [day, month, year] = dateStr.split('/').map(Number);
-      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    } catch (error) {
-      console.error('Date parsing error:', error);
-      return null;
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -70,77 +33,39 @@ export const AgreementImport = () => {
     try {
       // Read file content
       const content = await file.text();
+      const lines = content.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+
+      // Validate headers
+      const { isValid, missingHeaders } = validateCSVHeaders(headers);
+      if (!isValid) {
+        throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+      }
+
       const agreements = parseCSV(content);
       const totalAgreements = agreements.length;
       let processedCount = 0;
 
-      // Process agreements in batches
-      const batchSize = 10;
-      for (let i = 0; i < agreements.length; i += batchSize) {
-        const batch = agreements.slice(i, i + batchSize);
-        
-        // Process each agreement in the batch
-        for (const agreement of batch) {
-          // First, get or create customer
-          let customerId: string | null = null;
-          const { data: existingCustomer } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('full_name', agreement['full_name'])
-            .single();
+      // Get available vehicle
+      const vehicle = await getAvailableVehicle();
+      if (!vehicle?.id) {
+        throw new Error('No available vehicles found');
+      }
 
-          if (existingCustomer) {
-            customerId = existingCustomer.id;
-          } else {
-            // Generate a new UUID for the customer
-            const newCustomerId = crypto.randomUUID();
-            const { data: newCustomer, error: customerError } = await supabase
-              .from('profiles')
-              .insert({
-                id: newCustomerId,
-                full_name: agreement['full_name'] || `Unknown Customer ${Date.now()}`,
-                role: 'customer'
-              })
-              .select()
-              .single();
-            
-            if (customerError) throw customerError;
-            customerId = newCustomer?.id || null;
-          }
-
-          // Get first available vehicle
-          const { data: vehicle } = await supabase
-            .from('vehicles')
-            .select('id')
-            .eq('status', 'available')
-            .limit(1)
-            .single();
-
-          if (!customerId || !vehicle?.id) {
-            console.error('Missing customer ID or vehicle ID');
+      // Process agreements
+      for (const agreement of agreements) {
+        try {
+          const customer = await getOrCreateCustomer(agreement['full_name']);
+          if (!customer?.id) {
+            console.error('Failed to create/get customer:', agreement['full_name']);
             continue;
           }
 
-          // Create agreement
-          const status = normalizeStatus(agreement['STATUS']);
-          await supabase
-            .from('leases')
-            .insert({
-              agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
-              license_no: agreement['License No'],
-              license_number: agreement['License Number'],
-              checkout_date: parseDate(agreement['Check-out Date']),
-              checkin_date: parseDate(agreement['Check-in Date']),
-              return_date: parseDate(agreement['Return Date']),
-              status: status,
-              customer_id: customerId,
-              vehicle_id: vehicle.id,
-              total_amount: 0,
-              initial_mileage: 0
-            });
-
+          await createAgreement(agreement, customer.id, vehicle.id);
           processedCount++;
           setProgress((processedCount / totalAgreements) * 100);
+        } catch (error) {
+          console.error('Error processing agreement:', error);
         }
       }
 
