@@ -4,7 +4,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -32,6 +31,7 @@ serve(async (req) => {
       .download(fileName);
 
     if (downloadError) {
+      console.error('Download error:', downloadError);
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
@@ -53,12 +53,14 @@ serve(async (req) => {
       if (!rows[i].trim()) continue;
 
       const values = rows[i].split(',').map(v => v.trim());
+      console.log(`Processing row ${i}:`, values);
+      
       if (values.length === headers.length) {
         try {
           const customerName = values[headers.indexOf('Customer Name')];
           const amount = parseFloat(values[headers.indexOf('Amount')]);
           const paymentDate = values[headers.indexOf('Payment_Date')];
-          const paymentMethod = values[headers.indexOf('Payment_Method')];
+          const paymentMethodValue = values[headers.indexOf('Payment_Method')];
           const status = values[headers.indexOf('status')];
           const paymentNumber = values[headers.indexOf('Payment_Number')];
 
@@ -66,7 +68,7 @@ serve(async (req) => {
             throw new Error('Customer Name is missing');
           }
 
-          // Get customer ID from name
+          console.log('Looking up customer:', customerName);
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
@@ -77,7 +79,7 @@ serve(async (req) => {
             throw new Error(`Customer "${customerName}" not found in the system`);
           }
 
-          // Find active lease for customer
+          console.log('Found customer:', customerData.id);
           const { data: activeLease, error: leaseError } = await supabase
             .from('leases')
             .select('id')
@@ -91,11 +93,11 @@ serve(async (req) => {
             throw new Error(`No active lease found for customer "${customerName}"`);
           }
 
-          // Convert date from DD-MM-YYYY to ISO format
+          console.log('Found lease:', activeLease.id);
           const [day, month, year] = paymentDate.split('-');
           const isoDate = `${year}-${month}-${day}`;
 
-          // Create payment record
+          console.log('Creating payment record...');
           const { error: paymentError } = await supabase
             .from('payments')
             .insert({
@@ -103,7 +105,7 @@ serve(async (req) => {
               amount,
               status,
               payment_date: new Date(isoDate).toISOString(),
-              payment_method,
+              payment_method: paymentMethodValue,
               transaction_id: paymentNumber,
             });
 
