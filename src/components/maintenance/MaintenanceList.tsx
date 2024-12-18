@@ -27,6 +27,15 @@ interface MaintenanceRecord {
   vehicles: Vehicle;
 }
 
+const STATUS_COLORS = {
+  scheduled: "bg-blue-100 text-blue-800",
+  in_progress: "bg-yellow-100 text-yellow-800",
+  completed: "bg-green-100 text-green-800",
+  urgent: "bg-red-100 text-red-800",
+  delayed: "bg-purple-100 text-purple-800",
+  cancelled: "bg-gray-100 text-gray-800",
+} as const;
+
 interface MaintenanceListProps {
   records: MaintenanceRecord[];
   isLoading: boolean;
@@ -103,7 +112,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -123,13 +132,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
               <TableCell>{record.service_type}</TableCell>
               <TableCell>
                 <Badge
-                  variant={
-                    record.status === "completed"
-                      ? "default"
-                      : record.status === "in_progress"
-                      ? "secondary"
-                      : "destructive"
-                  }
+                  className={STATUS_COLORS[record.status as keyof typeof STATUS_COLORS] || "bg-gray-100 text-gray-800"}
                 >
                   {record.status}
                 </Badge>
