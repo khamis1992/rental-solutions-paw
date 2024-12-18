@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +17,7 @@ export function CreateJobDialog() {
     description: "",
     scheduled_date: "",
     performed_by: "",
+    cost: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,7 +27,10 @@ export function CreateJobDialog() {
     try {
       const { error } = await supabase
         .from("maintenance")
-        .insert([formData]);
+        .insert([{
+          ...formData,
+          cost: formData.cost ? parseFloat(formData.cost) : null,
+        }]);
 
       if (error) throw error;
 
@@ -39,6 +42,7 @@ export function CreateJobDialog() {
         description: "",
         scheduled_date: "",
         performed_by: "",
+        cost: "",
       });
     } catch (error) {
       toast.error("Failed to create job card");
@@ -94,6 +98,17 @@ export function CreateJobDialog() {
               value={formData.scheduled_date}
               onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cost">Cost</Label>
+            <Input
+              id="cost"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={formData.cost}
+              onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
             />
           </div>
           <div className="space-y-2">
