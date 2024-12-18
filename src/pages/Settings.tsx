@@ -6,6 +6,7 @@ import { BillingSettings } from "@/components/settings/BillingSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { UserManagementSettings } from "@/components/settings/UserManagementSettings";
+import { VehicleStatusSettings } from "@/components/settings/VehicleStatusSettings";
 
 const Settings = () => {
   return (
@@ -26,6 +27,7 @@ const Settings = () => {
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="vehicle-status">Vehicle Status</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
             <GeneralSettings />
@@ -44,6 +46,9 @@ const Settings = () => {
           </TabsContent>
           <TabsContent value="users">
             <UserManagementSettings />
+          </TabsContent>
+          <TabsContent value="vehicle-status">
+            <VehicleStatusSettings />
           </TabsContent>
         </Tabs>
       </div>
