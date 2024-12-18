@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 import { corsHeaders } from './corsHeaders.ts';
-import { parseDate } from './dateUtils.ts';
-import { normalizeStatus } from './statusUtils.ts';
 import { processImportData } from './processData.ts';
 
 console.log("Loading agreement import function...");
@@ -18,6 +16,8 @@ serve(async (req) => {
 
   try {
     console.log('Starting agreement import process...');
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
     // Parse request body with detailed error logging
     let requestData;
