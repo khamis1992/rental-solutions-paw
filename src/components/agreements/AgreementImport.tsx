@@ -26,45 +26,32 @@ export const AgreementImport = () => {
       const agreements = parseCSV(content);
       const totalAgreements = agreements.length;
       let processedCount = 0;
-      let errorCount = 0;
 
-      // Get or create a vehicle once for all agreements
+      // Get default customer and vehicle once for all agreements
+      const customer = await getOrCreateCustomer();
       const vehicle = await getAvailableVehicle();
       
       for (const agreement of agreements) {
         try {
-          // Pass the full_name from the CSV to getOrCreateCustomer
-          const customer = await getOrCreateCustomer(agreement['full_name']);
           await createAgreement(agreement, customer.id, vehicle.id);
           processedCount++;
-        } catch (error: any) {
+        } catch (error) {
           console.error('Error processing agreement:', error);
-          errorCount++;
-          toast({
-            title: "Error Processing Agreement",
-            description: error.message || "Failed to process agreement",
-            variant: "destructive",
-          });
         } finally {
-          setProgress(((processedCount + errorCount) / totalAgreements) * 100);
+          setProgress((processedCount / totalAgreements) * 100);
         }
       }
 
       toast({
         title: "Import Complete",
-        description: `Processed ${processedCount} agreements (${errorCount} errors)`,
+        description: `Processed ${processedCount} agreements`,
       });
       
       await queryClient.invalidateQueries({ queryKey: ["agreements"] });
       await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Import process error:', error);
-      toast({
-        title: "Import Failed",
-        description: error.message || "Failed to import agreements",
-        variant: "destructive",
-      });
     } finally {
       setIsUploading(false);
       setProgress(0);
