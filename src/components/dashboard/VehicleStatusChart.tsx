@@ -19,8 +19,26 @@ const COLORS = {
   on_rent: "#1E40AF"
 };
 
+type CustomLabelProps = {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  value: number;
+  name: string;
+};
+
 const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, name }: any) => {
+const renderCustomizedLabel = ({ 
+  cx, 
+  cy, 
+  midAngle, 
+  innerRadius, 
+  outerRadius, 
+  value, 
+  name 
+}: CustomLabelProps) => {
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -33,7 +51,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, val
       textAnchor={x > cx ? 'start' : 'end'} 
       dominantBaseline="central"
     >
-      {name} ({value})
+      {`${name} (${value})`}
     </text>
   );
 };
@@ -57,7 +75,7 @@ export const VehicleStatusChart = () => {
         const status = vehicle.status || 'unknown';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
-      }, {});
+      }, {} as Record<string, number>);
 
       // Transform to array format for chart
       const data = Object.entries(counts).map(([status, count]) => ({
