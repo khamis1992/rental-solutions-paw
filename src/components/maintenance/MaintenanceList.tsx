@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 
-type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+export type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+export type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen";
 
 interface MaintenanceRecord {
   id: string;
   vehicle_id: string;
   service_type: string;
-  status: MaintenanceStatus;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
   scheduled_date: string;
   cost: number | null;
   vehicles: {
@@ -23,6 +24,23 @@ interface MaintenanceRecord {
     license_plate: string;
   };
 }
+
+interface AccidentMaintenanceRecord {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  status: "urgent";
+  scheduled_date: string;
+  cost: number | null;
+  vehicles: {
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
+
+type CombinedMaintenanceRecord = MaintenanceRecord | AccidentMaintenanceRecord;
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
@@ -77,7 +95,7 @@ export const MaintenanceList = () => {
         id: vehicle.id,
         vehicle_id: vehicle.id,
         service_type: "Accident Repair",
-        status: "urgent" as MaintenanceStatus,
+        status: "urgent" as const,
         scheduled_date: new Date().toISOString(),
         cost: null,
         vehicles: {
@@ -108,12 +126,12 @@ export const MaintenanceList = () => {
         .order('scheduled_date', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as MaintenanceRecord[];
     },
   });
 
   // Combine regular maintenance records with accident vehicles
-  const allRecords = [...maintenanceRecords, ...accidentVehicles];
+  const allRecords: CombinedMaintenanceRecord[] = [...maintenanceRecords, ...accidentVehicles];
 
   if (isLoadingMaintenance || isLoadingAccidents) {
     return (
