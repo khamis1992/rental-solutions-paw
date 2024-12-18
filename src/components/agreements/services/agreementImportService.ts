@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
-import { v4 as uuidv4 } from '@supabase/supabase-js';
 
 type LeaseStatus = Database["public"]["Enums"]["lease_status"];
 
