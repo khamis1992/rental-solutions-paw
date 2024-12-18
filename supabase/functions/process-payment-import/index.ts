@@ -8,8 +8,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204 
+    });
   }
 
   try {
@@ -32,6 +36,7 @@ serve(async (req) => {
       }
     );
 
+    // Download and process the file
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -43,7 +48,7 @@ serve(async (req) => {
     }
 
     const text = await fileData.text();
-    const rows = text.split('\n');
+    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
     const headers = rows[0].split(',').map(h => h.trim());
     console.log('CSV Headers:', headers);
 
@@ -76,6 +81,7 @@ serve(async (req) => {
             throw new Error('Customer Name is missing');
           }
 
+          // First check if customer exists in profiles
           console.log('Looking up customer:', customerName);
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
@@ -90,6 +96,20 @@ serve(async (req) => {
               amount,
               paymentDate,
               reason: 'Customer not found in system'
+            });
+            continue;
+          }
+
+          // Verify the customer exists in auth.users
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(customerData.id);
+          
+          if (userError || !userData.user) {
+            console.log(`Auth user not found for customer "${customerName}", skipping payment`);
+            skippedCustomers.push({
+              customerName,
+              amount,
+              paymentDate,
+              reason: 'Auth user not found'
             });
             continue;
           }
@@ -181,8 +201,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Import process failed:', error);
+    
     return new Response(
       JSON.stringify({ 
+        success: false,
         error: error.message || 'An unexpected error occurred',
         details: error.toString()
       }),
