@@ -10,7 +10,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Max-Age': '86400',
+      }
     });
   }
 
@@ -86,6 +89,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Import process failed:', error);
+    
+    // Ensure we return a proper error response with CORS headers
     return new Response(
       JSON.stringify({
         error: error.message || 'An unexpected error occurred',

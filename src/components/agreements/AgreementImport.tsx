@@ -25,6 +25,8 @@ export const AgreementImport = () => {
     }
 
     setIsUploading(true);
+    let pollInterval: number;
+
     try {
       console.log('Starting file upload process...');
       const fileExt = file.name.split(".").pop();
@@ -57,7 +59,10 @@ export const AgreementImport = () => {
       console.log('Starting import process via Edge Function...');
       const { error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
-          body: { fileName }
+          body: { fileName },
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
       if (functionError) {
@@ -66,7 +71,7 @@ export const AgreementImport = () => {
       }
 
       // Poll for import completion
-      const pollInterval = setInterval(async () => {
+      pollInterval = window.setInterval(async () => {
         console.log('Checking import status...');
         const { data: importLog } = await supabase
           .from("import_logs")
@@ -75,7 +80,7 @@ export const AgreementImport = () => {
           .single();
 
         if (importLog?.status === "completed") {
-          clearInterval(pollInterval);
+          window.clearInterval(pollInterval);
           toast({
             title: "Success",
             description: `Successfully imported ${importLog.records_processed} agreements`,
@@ -86,14 +91,16 @@ export const AgreementImport = () => {
           
           setIsUploading(false);
         } else if (importLog?.status === "error") {
-          clearInterval(pollInterval);
+          window.clearInterval(pollInterval);
           throw new Error("Import failed");
         }
       }, 1000);
 
       // Set a timeout to stop polling after 15 seconds
       setTimeout(() => {
-        clearInterval(pollInterval);
+        if (pollInterval) {
+          window.clearInterval(pollInterval);
+        }
         if (isUploading) {
           setIsUploading(false);
           toast({
@@ -106,9 +113,12 @@ export const AgreementImport = () => {
 
     } catch (error: any) {
       console.error('Import process error:', error);
+      if (pollInterval) {
+        window.clearInterval(pollInterval);
+      }
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to import agreements",
         variant: "destructive",
       });
       setIsUploading(false);
@@ -117,7 +127,7 @@ export const AgreementImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = "Agreement Number,License No,full_name,License Number,Check-out Date,Check-in Date,Return Date,STATUS\n" +
-                      "AGR001,LIC123,John Doe,DL456,20/03/2024,21/03/2024,22/03/2024,active";
+                      "AGR001,LIC123,John Doe,DL456,27/03/2024,28/03/2024,29/03/2024,active";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
