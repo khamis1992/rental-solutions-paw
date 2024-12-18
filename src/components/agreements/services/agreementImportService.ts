@@ -26,8 +26,9 @@ const formatDateForPostgres = (dateStr: string): string | null => {
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     const [day, month, year] = parts;
-    // Convert to YYYY-MM-DD format
+    // Convert to YYYY-MM-DD format, but swap day and month
     const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    console.log('Raw date parts:', { day, month, year });
     console.log('Formatted date:', { original: dateStr, formatted: formattedDate });
     return formattedDate;
   }
