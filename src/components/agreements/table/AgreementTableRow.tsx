@@ -27,6 +27,10 @@ export const AgreementTableRow = ({
     navigate(`/vehicles/${agreement.vehicle.id}`);
   };
 
+  const handleCustomerClick = () => {
+    navigate(`/customers/${agreement.customer.id}`);
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -46,7 +50,14 @@ export const AgreementTableRow = ({
         </button>
       </TableCell>
       <TableCell>{`${agreement.vehicle.make} ${agreement.vehicle.model}`}</TableCell>
-      <TableCell>{agreement.customer.full_name}</TableCell>
+      <TableCell>
+        <button
+          onClick={handleCustomerClick}
+          className="text-blue-600 hover:underline"
+        >
+          {agreement.customer.full_name}
+        </button>
+      </TableCell>
       <TableCell>{formatDateToDisplay(agreement.start_date)}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
       <TableCell>
