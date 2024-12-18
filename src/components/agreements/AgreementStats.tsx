@@ -2,9 +2,6 @@ import { FileCheck, FileClock, FileX, FileText } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
-
-type LeaseStatus = Database['public']['Enums']['lease_status'];
 
 export const AgreementStats = () => {
   const { data: stats = { active: 0, pending: 0, expired: 0, total: 0 } } = useQuery({
@@ -27,11 +24,11 @@ export const AgreementStats = () => {
       };
 
       data.forEach((lease) => {
-        if (lease.status === 'active') {
+        if (lease.status === 'open') {
           counts.active++;
         } else if (lease.status === 'closed') {
           counts.expired++;
-        } else if (lease.status === 'pending') {
+        } else if (['pending_payment', 'pending_deposit'].includes(lease.status)) {
           counts.pending++;
         }
       });
