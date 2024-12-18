@@ -17,15 +17,19 @@ const Vehicles = () => {
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles", filters],
     queryFn: async () => {
+      console.log("Current filters:", filters); // Log current filters
+
       let query = supabase.from("vehicles").select("*");
 
       if (filters.status !== "all") {
-        // Ensure we're using the correct status format for the database query
-        const dbStatus = filters.status.toLowerCase().replace(" ", "_");
-        query = query.eq("status", dbStatus);
+        // Log the status we're filtering by
+        console.log("Filtering by status:", filters.status);
+        query = query.eq("status", filters.status);
       }
 
       if (filters.searchQuery) {
+        // Log the search query
+        console.log("Searching for:", filters.searchQuery);
         query = query.or(
           `make.ilike.%${filters.searchQuery}%,model.ilike.%${filters.searchQuery}%,license_plate.ilike.%${filters.searchQuery}%`
         );
@@ -38,14 +42,15 @@ const Vehicles = () => {
         throw error;
       }
 
-      // Add console log to see what vehicles are being returned
-      console.log("Fetched vehicles:", data);
+      // Log the raw response from Supabase
+      console.log("Raw Supabase response:", data);
+      
       return data || [];
     },
   });
 
-  // Add console log to see what vehicles are being passed to components
-  console.log("Filtered vehicles:", vehicles);
+  // Log the final filtered vehicles being passed to components
+  console.log("Vehicles being rendered:", vehicles);
 
   return (
     <DashboardLayout>
