@@ -35,82 +35,14 @@ const formatDate = (dateStr: string): string | null => {
   }
 };
 
-export const createCustomerProfile = async (fullName: string) => {
-  if (!fullName) {
-    fullName = `Unknown Customer ${Date.now()}`;
-  }
-
-  const id = crypto.randomUUID();
-
-  try {
-    const { data: customer, error } = await supabase
-      .from('profiles')
-      .insert({
-        id,
-        full_name: fullName,
-        role: 'customer'
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating customer profile:', error);
-      return { id };
-    }
-
-    return customer;
-  } catch (error) {
-    console.error('Error in createCustomerProfile:', error);
-    return { id };
-  }
+// Simplified to just return a UUID
+export const getOrCreateCustomer = async () => {
+  return { id: crypto.randomUUID() };
 };
 
-export const getOrCreateCustomer = async (fullName: string) => {
-  if (!fullName) {
-    return createCustomerProfile('');
-  }
-
-  try {
-    const { data: existingCustomer, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('full_name', fullName)
-      .maybeSingle();
-
-    if (existingCustomer) {
-      return existingCustomer;
-    }
-
-    if (error) {
-      console.error('Error finding customer:', error);
-    }
-
-    return createCustomerProfile(fullName);
-  } catch (error) {
-    console.error('Error in getOrCreateCustomer:', error);
-    return createCustomerProfile(fullName);
-  }
-};
-
+// Simplified to just return a UUID
 export const getAvailableVehicle = async () => {
-  try {
-    const { data: vehicle, error } = await supabase
-      .from('vehicles')
-      .select('id')
-      .eq('status', 'available')
-      .limit(1)
-      .maybeSingle();
-
-    if (error || !vehicle) {
-      console.error('Error getting vehicle:', error);
-      return { id: crypto.randomUUID() };
-    }
-
-    return vehicle;
-  } catch (error) {
-    console.error('Error in getAvailableVehicle:', error);
-    return { id: crypto.randomUUID() };
-  }
+  return { id: crypto.randomUUID() };
 };
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
