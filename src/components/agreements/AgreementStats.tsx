@@ -15,6 +15,7 @@ export const AgreementStats = () => {
         .select('status');
 
       if (error) throw error;
+      console.log('Fetched agreements:', data); // Add this log to debug
       return data;
     },
   });
@@ -32,6 +33,13 @@ export const AgreementStats = () => {
   ).length;
 
   const totalAgreements = agreements.length;
+
+  console.log('Agreement counts:', { // Add these logs to debug
+    closed: closedAgreements,
+    active: activeAgreements,
+    pending: pendingAgreements,
+    total: totalAgreements
+  });
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
