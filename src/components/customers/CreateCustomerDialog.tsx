@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,15 +18,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CustomerFormFields } from "./CustomerFormFields";
 
 interface CreateCustomerDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  children?: ReactNode;
 }
 
-export const CreateCustomerDialog = ({
-  open,
-  onOpenChange,
-}: CreateCustomerDialogProps) => {
+export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -61,7 +58,7 @@ export const CreateCustomerDialog = ({
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
       form.reset();
-      onOpenChange(false);
+      setOpen(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -74,12 +71,14 @@ export const CreateCustomerDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Customer
-        </Button>
+        {children || (
+          <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Customer
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
