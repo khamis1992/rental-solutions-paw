@@ -17,11 +17,6 @@ interface User {
   email?: string;
 }
 
-interface AuthUser {
-  id: string;
-  email?: string;
-}
-
 export const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,30 +25,19 @@ export const UserList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Fetch only admin and staff users from profiles
         const { data: profiles, error } = await supabase
           .from("profiles")
-          .select("id, full_name, role")
+          .select("id, full_name, role, email")
           .in("role", ["admin", "staff"]);
 
         if (error) throw error;
 
-        // Fetch emails from auth.users
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-        
-        if (authError) throw authError;
+        // Type assertion to ensure profiles match User interface
+        const typedUsers = profiles.filter((profile): profile is User => 
+          profile.role === "admin" || profile.role === "staff"
+        );
 
-        // Combine profile data with email addresses, ensuring only admin and staff users are included
-        const usersWithEmail = profiles
-          .filter((profile): profile is { id: string; full_name: string | null; role: "admin" | "staff" } => 
-            profile.role === "admin" || profile.role === "staff"
-          )
-          .map((profile) => ({
-            ...profile,
-            email: (authUsers.users as AuthUser[]).find((user) => user.id === profile.id)?.email || "N/A",
-          }));
-
-        setUsers(usersWithEmail);
+        setUsers(typedUsers);
       } catch (error: any) {
         console.error("Error fetching users:", error);
         toast({
@@ -86,7 +70,7 @@ export const UserList = () => {
         {users.map((user) => (
           <TableRow key={user.id}>
             <TableCell>{user.full_name || "N/A"}</TableCell>
-            <TableCell>{user.email}</TableCell>
+            <TableCell>{user.email || "N/A"}</TableCell>
             <TableCell className="capitalize">{user.role}</TableCell>
           </TableRow>
         ))}
