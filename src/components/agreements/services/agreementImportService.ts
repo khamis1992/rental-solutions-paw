@@ -23,23 +23,36 @@ const formatDateForPostgres = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
   try {
-    // Parse DD/MM/YYYY format
-    const [day, month, year] = dateStr.split('/').map(num => num.trim());
-    if (day && month && year) {
-      // Convert to YYYY-MM-DD format
-      const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      console.log('Date formatting:', {
-        original: dateStr,
-        parts: { day, month, year },
-        formatted: formattedDate
-      });
-      return formattedDate;
+    // Split the date string and remove any whitespace
+    const parts = dateStr.split('/').map(part => part.trim());
+    
+    if (parts.length !== 3) {
+      console.error('Invalid date format. Expected DD/MM/YYYY but got:', dateStr);
+      return null;
     }
+
+    const [day, month, year] = parts;
+    
+    // Validate each part is a number
+    if (!day || !month || !year || isNaN(Number(day)) || isNaN(Number(month)) || isNaN(Number(year))) {
+      console.error('Invalid date parts:', { day, month, year });
+      return null;
+    }
+
+    // Format as YYYY-MM-DD for Postgres
+    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    
+    console.log('Date formatting:', {
+      original: dateStr,
+      parts: { day, month, year },
+      formatted: formattedDate
+    });
+    
+    return formattedDate;
   } catch (error) {
     console.error('Error parsing date:', dateStr, error);
+    return null;
   }
-  
-  return dateStr; // Return original string if parsing fails
 };
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
