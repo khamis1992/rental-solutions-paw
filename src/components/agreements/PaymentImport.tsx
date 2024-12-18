@@ -32,55 +32,42 @@ export const PaymentImport = () => {
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       console.log('Uploading file to storage:', fileName);
-      const uploadOperation = async () => {
-        const { error: uploadError } = await supabase.storage
-          .from("imports")
-          .upload(fileName, file, {
-            cacheControl: "3600",
-            upsert: false
-          });
+      const { error: uploadError } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false
+        });
 
-        if (uploadError) {
-          console.error('Storage upload error:', uploadError);
-          throw uploadError;
-        }
-        return { fileName };
-      };
-
-      const { fileName: uploadedFileName } = await retryOperation(uploadOperation, 3);
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       console.log('File uploaded successfully, creating import log...');
-      const logOperation = async () => {
-        const { error: logError } = await supabase
-          .from("import_logs")
-          .insert({
-            file_name: uploadedFileName,
-            import_type: "payments",
-            status: "pending",
-          });
+      const { error: logError } = await supabase
+        .from("import_logs")
+        .insert({
+          file_name: fileName,
+          import_type: "payments",
+          status: "pending",
+        });
 
-        if (logError) {
-          console.error('Import log creation error:', logError);
-          throw logError;
-        }
-      };
-
-      await retryOperation(logOperation, 3);
+      if (logError) {
+        console.error('Import log creation error:', logError);
+        throw logError;
+      }
 
       console.log('Starting import process via Edge Function...');
-      const processOperation = async () => {
-        const { error: functionError } = await supabase.functions
-          .invoke('process-payment-import', {
-            body: { fileName: uploadedFileName }
-          });
+      const { error: functionError } = await supabase.functions
+        .invoke('process-payment-import', {
+          body: { fileName }
+        });
 
-        if (functionError) {
-          console.error('Edge Function error:', functionError);
-          throw functionError;
-        }
-      };
-
-      await retryOperation(processOperation, 3);
+      if (functionError) {
+        console.error('Edge Function error:', functionError);
+        throw functionError;
+      }
 
       // Poll for import completion
       const pollInterval = setInterval(async () => {
@@ -89,7 +76,7 @@ export const PaymentImport = () => {
           const { data: importLog } = await supabase
             .from("import_logs")
             .select("status, records_processed")
-            .eq("file_name", uploadedFileName)
+            .eq("file_name", fileName)
             .single();
 
           if (importLog?.status === "completed") {
@@ -101,6 +88,7 @@ export const PaymentImport = () => {
             
             // Force refresh the queries
             await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+            await queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
             
             setIsUploading(false);
           } else if (importLog?.status === "error") {
