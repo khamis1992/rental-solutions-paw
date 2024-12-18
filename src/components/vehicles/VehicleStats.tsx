@@ -19,18 +19,25 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
   const { data: vehicleCounts, isLoading: isLoadingCounts } = useQuery({
     queryKey: ["vehicle-counts"],
     queryFn: async () => {
+      console.log("Fetching vehicle counts...");
       const { data: vehicles, error } = await supabase
         .from("vehicles")
         .select("status");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching vehicles:", error);
+        throw error;
+      }
+
+      console.log("Retrieved vehicles:", vehicles);
 
       const counts = {
         available: vehicles.filter(v => v.status === 'available').length,
-        maintenance: vehicles.filter(v => v.status === 'maintenance').length,
-        needsAttention: vehicles.filter(v => ['accident', 'police_station'].includes(v.status as string)).length,
+        maintenance: vehicles.filter(v => ['maintenance', 'accident'].includes(v.status)).length,
+        needsAttention: vehicles.filter(v => ['accident', 'police_station'].includes(v.status)).length,
       };
 
+      console.log("Calculated counts:", counts);
       return counts;
     },
   });
