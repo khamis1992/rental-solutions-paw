@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,24 +9,8 @@ import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 import { AgreementTableHeader } from "./table/AgreementTableHeader";
 import { AgreementTableRow } from "./table/AgreementTableRow";
 import { formatCurrency } from "@/lib/utils";
-
-interface Agreement {
-  id: string;
-  customer: {
-    id: string;
-    full_name: string;
-  };
-  vehicle: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-  };
-  start_date: string;
-  end_date: string;
-  status: string;
-  total_amount: number;
-}
+import { useAgreements } from "./hooks/useAgreements";
+import type { Agreement } from "./hooks/useAgreements";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -35,57 +18,7 @@ export const AgreementList = () => {
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
 
-  const { data: agreements = [], isLoading } = useQuery({
-    queryKey: ['agreements'],
-    queryFn: async () => {
-      console.log("Fetching agreements...");
-      const { data, error } = await supabase
-        .from('leases')
-        .select(`
-          id,
-          checkout_date,
-          checkin_date,
-          status,
-          total_amount,
-          customer:customer_id (
-            id,
-            full_name
-          ),
-          vehicle:vehicle_id (
-            id,
-            make,
-            model,
-            year
-          )
-        `);
-
-      if (error) {
-        console.error("Error fetching agreements:", error);
-        toast.error("Failed to fetch agreements");
-        throw error;
-      }
-
-      console.log("Fetched agreements:", data);
-      
-      return data.map((lease: any) => ({
-        id: lease.id,
-        customer: {
-          id: lease.customer?.id || '',
-          full_name: lease.customer?.full_name || 'Unknown Customer',
-        },
-        vehicle: {
-          id: lease.vehicle?.id || '',
-          make: lease.vehicle?.make || '',
-          model: lease.vehicle?.model || '',
-          year: lease.vehicle?.year || '',
-        },
-        start_date: lease.checkout_date || '',
-        end_date: lease.checkin_date || '',
-        status: lease.status || 'pending',
-        total_amount: lease.total_amount || 0,
-      }));
-    },
-  });
+  const { data: agreements = [], isLoading } = useAgreements();
 
   const handleViewContract = async (agreementId: string) => {
     try {
