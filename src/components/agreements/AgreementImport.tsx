@@ -4,12 +4,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -27,7 +25,6 @@ export const AgreementImport = () => {
     }
 
     setIsUploading(true);
-    setProgress(0);
     let pollInterval: number;
 
     try {
@@ -46,7 +43,6 @@ export const AgreementImport = () => {
       }
 
       console.log('File uploaded successfully:', uploadData);
-      setProgress(20);
 
       console.log('Creating import log...');
       const { error: logError } = await supabase
@@ -62,8 +58,8 @@ export const AgreementImport = () => {
         throw logError;
       }
 
-      setProgress(40);
       console.log('Starting import process via Edge Function...');
+      console.log('Sending fileName to Edge Function:', fileName);
       
       const { data: functionData, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
@@ -76,12 +72,8 @@ export const AgreementImport = () => {
       }
 
       console.log('Edge Function response:', functionData);
-      setProgress(60);
 
-      // Poll for import completion with increasing intervals
-      let pollCount = 0;
-      const maxPolls = 10;
-      
+      // Poll for import completion
       pollInterval = window.setInterval(async () => {
         console.log('Checking import status...');
         const { data: importLog } = await supabase
@@ -91,13 +83,9 @@ export const AgreementImport = () => {
           .single();
 
         console.log('Import log status:', importLog);
-        pollCount++;
-        
-        setProgress(60 + (pollCount * 4)); // Increment progress gradually
 
         if (importLog?.status === "completed") {
           window.clearInterval(pollInterval);
-          setProgress(100);
           toast({
             title: "Success",
             description: `Successfully imported ${importLog.records_processed} agreements`,
@@ -108,11 +96,11 @@ export const AgreementImport = () => {
           await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
           
           setIsUploading(false);
-        } else if (importLog?.status === "error" || pollCount >= maxPolls) {
+        } else if (importLog?.status === "error") {
           window.clearInterval(pollInterval);
-          throw new Error("Import failed or timed out");
+          throw new Error("Import failed");
         }
-      }, 2000); // Poll every 2 seconds instead of 1
+      }, 1000);
 
       // Set a timeout to stop polling after 30 seconds
       setTimeout(() => {
@@ -176,12 +164,9 @@ export const AgreementImport = () => {
         </Button>
       </div>
       {isUploading && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Importing agreements...
-          </div>
-          <Progress value={progress} className="h-2" />
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Importing agreements...
         </div>
       )}
     </div>

@@ -10,12 +10,19 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders,
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Max-Age': '86400',
+      }
     });
   }
 
   try {
     console.log('Starting agreement import process...');
+    
+    // Log request details for debugging
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
     // Get and validate the request body
     let body;
@@ -32,8 +39,8 @@ serve(async (req) => {
     const { fileName } = body;
     console.log('Extracted fileName:', fileName);
 
-    if (!fileName) {
-      throw new Error('fileName is required');
+    if (!fileName || typeof fileName !== 'string' || !fileName.trim()) {
+      throw new Error('fileName is required and must be a non-empty string');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -69,6 +76,21 @@ serve(async (req) => {
       headers,
       fileName
     );
+
+    // Update import log with final status
+    const { error: updateError } = await supabase
+      .from('import_logs')
+      .update({
+        status: 'completed',
+        records_processed: successCount,
+        errors: errors.length > 0 ? errors : null
+      })
+      .eq('file_name', fileName);
+
+    if (updateError) {
+      console.error('Error updating import log:', updateError);
+      throw updateError;
+    }
 
     return new Response(
       JSON.stringify({
