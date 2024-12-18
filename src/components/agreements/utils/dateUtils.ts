@@ -1,6 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-
 export const parseDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
@@ -12,16 +9,17 @@ export const parseDate = (dateStr: string): string | null => {
     const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (ddmmyyyy) {
       const [_, day, month, year] = ddmmyyyy;
+      // Validate date components
+      const d = parseInt(day, 10);
+      const m = parseInt(month, 10);
+      const y = parseInt(year, 10);
+      
+      // Basic date validation
+      if (m < 1 || m > 12) return null;
+      const daysInMonth = new Date(y, m, 0).getDate();
+      if (d < 1 || d > daysInMonth) return null;
+      
       // Ensure day and month are padded with leading zeros
-      const paddedDay = day.padStart(2, '0');
-      const paddedMonth = month.padStart(2, '0');
-      return `${year}-${paddedMonth}-${paddedDay}`;
-    }
-    
-    // Try to parse MM/DD/YYYY format
-    const mmddyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (mmddyyyy) {
-      const [_, month, day, year] = mmddyyyy;
       const paddedDay = day.padStart(2, '0');
       const paddedMonth = month.padStart(2, '0');
       return `${year}-${paddedMonth}-${paddedDay}`;
@@ -31,19 +29,4 @@ export const parseDate = (dateStr: string): string | null => {
   }
   
   return null;
-};
-
-export const fixAgreementDates = async () => {
-  try {
-    const { data, error } = await supabase.functions.invoke('fix-agreement-dates');
-    
-    if (error) throw error;
-    
-    toast.success(data.message);
-    return data;
-  } catch (error) {
-    console.error('Error fixing agreement dates:', error);
-    toast.error('Failed to fix agreement dates');
-    throw error;
-  }
 };
