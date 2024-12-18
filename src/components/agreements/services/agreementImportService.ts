@@ -55,15 +55,34 @@ const formatDate = (dateStr: string): string | null => {
   }
 };
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const retryOperation = async <T>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delayMs = 1000
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries === 0) throw error;
+    console.log(`Retrying operation. Attempts remaining: ${retries}`);
+    await delay(delayMs);
+    return retryOperation(operation, retries - 1, delayMs * 2);
+  }
+};
+
 export const getOrCreateCustomer = async () => {
   try {
     // First try to get an existing customer
-    const { data: existingCustomer } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'customer')
-      .limit(1)
-      .single();
+    const { data: existingCustomer } = await retryOperation(async () => 
+      await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'customer')
+        .limit(1)
+        .single()
+    );
       
     if (existingCustomer) {
       console.log('Using existing customer:', existingCustomer.id);
@@ -72,15 +91,17 @@ export const getOrCreateCustomer = async () => {
     
     // Create a new customer with a generated UUID
     const newCustomerId = crypto.randomUUID();
-    const { data: newCustomer, error } = await supabase
-      .from('profiles')
-      .insert({
-        id: newCustomerId,
-        full_name: `Default Customer`,
-        role: 'customer'
-      })
-      .select()
-      .single();
+    const { data: newCustomer, error } = await retryOperation(async () =>
+      await supabase
+        .from('profiles')
+        .insert({
+          id: newCustomerId,
+          full_name: `Default Customer`,
+          role: 'customer'
+        })
+        .select()
+        .single()
+    );
       
     if (error) {
       console.error('Error creating customer:', error);
@@ -98,29 +119,33 @@ export const getOrCreateCustomer = async () => {
 export const getAvailableVehicle = async () => {
   try {
     // First try to get an existing available vehicle
-    const { data: existingVehicle } = await supabase
-      .from('vehicles')
-      .select('id')
-      .limit(1)
-      .single();
+    const { data: existingVehicle } = await retryOperation(async () =>
+      await supabase
+        .from('vehicles')
+        .select('id')
+        .limit(1)
+        .single()
+    );
 
     if (existingVehicle) {
       return existingVehicle;
     }
 
     // If no vehicle exists, create a default one
-    const { data: newVehicle } = await supabase
-      .from('vehicles')
-      .insert({
-        make: 'Default',
-        model: 'Model',
-        year: 2024,
-        license_plate: 'TEMP-' + Date.now(),
-        vin: 'TEMP-' + Date.now(),
-        status: 'available'
-      })
-      .select()
-      .single();
+    const { data: newVehicle } = await retryOperation(async () =>
+      await supabase
+        .from('vehicles')
+        .insert({
+          make: 'Default',
+          model: 'Model',
+          year: 2024,
+          license_plate: 'TEMP-' + Date.now(),
+          vin: 'TEMP-' + Date.now(),
+          status: 'available'
+        })
+        .select()
+        .single()
+    );
 
     return newVehicle;
   } catch (error) {
@@ -147,14 +172,20 @@ export const createAgreement = async (agreement: Record<string, string>, custome
 
     console.log('Creating agreement with data:', agreementData);
 
-    const { error } = await supabase
-      .from('leases')
-      .upsert(agreementData, {
-        onConflict: 'agreement_number',
-        ignoreDuplicates: true // Changed to true to skip duplicates instead of updating them
-      });
+    const { error } = await retryOperation(async () =>
+      await supabase
+        .from('leases')
+        .upsert(agreementData, {
+          onConflict: 'agreement_number',
+          ignoreDuplicates: true // Skip duplicates instead of updating them
+        })
+    );
 
     if (error) {
+      if (error.code === '23505') { // Duplicate key error
+        console.log('Skipping duplicate agreement:', agreementData.agreement_number);
+        return;
+      }
       console.error('Error creating agreement:', error);
       throw error;
     }
