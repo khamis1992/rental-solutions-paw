@@ -37,3 +37,19 @@ export const convertDateFormat = (dateStr: string): string | null => {
     return null;
   }
 };
+
+export const formatDateToDisplay = (dateStr: string | null): string => {
+  if (!dateStr) return '';
+  
+  try {
+    const date = new Date(dateStr);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    console.error('Error formatting date:', dateStr, error);
+    return dateStr;
+  }
+};
