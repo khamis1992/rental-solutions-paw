@@ -92,19 +92,19 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
           <VehicleOverview vehicle={vehicle} />
         </TabsContent>
 
-        <TabsContent value="maintenance" className="mt-6">
+        <TabsContent value="maintenance" className="mt-6 print:hidden">
           <MaintenanceHistory vehicleId={vehicleId} />
         </TabsContent>
 
-        <TabsContent value="damages" className="mt-6">
+        <TabsContent value="damages" className="mt-6 print:hidden">
           <DamageHistory vehicleId={vehicleId} />
         </TabsContent>
 
-        <TabsContent value="agreements" className="mt-6">
+        <TabsContent value="agreements" className="mt-6 print:hidden">
           <AssociatedAgreements vehicleId={vehicleId} />
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-6">
+        <TabsContent value="documents" className="mt-6 print:hidden">
           <VehicleDocuments vehicleId={vehicleId} />
         </TabsContent>
       </Tabs>
