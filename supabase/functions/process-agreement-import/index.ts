@@ -19,25 +19,48 @@ serve(async (req) => {
   try {
     console.log('Starting agreement import process...');
     
-    // Parse request body with error handling
+    // Parse request body with detailed error logging
     let requestData;
     try {
       const rawBody = await req.text();
       console.log('Raw request body:', rawBody);
+      
+      if (!rawBody) {
+        throw new Error('Empty request body');
+      }
+      
       requestData = JSON.parse(rawBody);
+      console.log('Parsed request data:', requestData);
     } catch (error) {
       console.error('Error parsing request body:', error);
-      throw new Error('Invalid JSON in request body');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid JSON in request body',
+          details: error.message
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
-    console.log('Parsed request body:', requestData);
-    
     const { fileName } = requestData;
     if (!fileName) {
-      throw new Error('fileName is required');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'fileName is required'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
-    console.log('Extracted fileName:', fileName);
+    console.log('Processing file:', fileName);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

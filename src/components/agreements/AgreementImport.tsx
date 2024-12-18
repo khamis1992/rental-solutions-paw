@@ -35,7 +35,7 @@ export const AgreementImport = () => {
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       console.log('Uploading file to storage:', fileName);
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("imports")
         .upload(fileName, file);
 
@@ -44,7 +44,7 @@ export const AgreementImport = () => {
         throw uploadError;
       }
 
-      console.log('File uploaded successfully:', uploadData);
+      console.log('File uploaded successfully:', fileName);
       setProgress(20);
 
       console.log('Creating import log...');
@@ -66,10 +66,8 @@ export const AgreementImport = () => {
       
       const { data: functionData, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
+          method: 'POST',
           body: { fileName },
-          headers: {
-            'Content-Type': 'application/json',
-          }
         });
 
       if (functionError) {
