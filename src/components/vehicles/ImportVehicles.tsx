@@ -15,6 +15,19 @@ const VALID_STATUSES = [
   'stolen'
 ];
 
+// Helper function to normalize status values
+const normalizeStatus = (status: string): string => {
+  // Convert to lowercase and handle special cases
+  const normalized = status.toLowerCase();
+  if (normalized === 'police station') {
+    return 'police_station';
+  }
+  if (normalized === 'out of service') {
+    return 'maintenance';
+  }
+  return normalized;
+};
+
 export const ImportVehicles = () => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
@@ -76,7 +89,7 @@ export const ImportVehicles = () => {
       // Call Edge Function to process the file
       const { data: response, error: processError } = await supabase.functions
         .invoke('process-vehicle-import', {
-          body: { fileName }
+          body: { fileName, normalizeStatus: true }
         });
 
       console.log('Edge function response:', response);
