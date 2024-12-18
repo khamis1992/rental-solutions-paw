@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { VehicleSearchSelect } from "./form/VehicleSearchSelect";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
@@ -97,11 +97,25 @@ export function CreateJobDialog() {
           <DialogTitle>Create New Job Card</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <VehicleSearchSelect
-            vehicles={vehicles}
-            selectedVehicleId={formData.vehicle_id}
-            onVehicleSelect={(vehicleId) => setFormData({ ...formData, vehicle_id: vehicleId })}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="vehicle_id">Vehicle</Label>
+            <Select
+              value={formData.vehicle_id}
+              onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a vehicle" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="service_type">Service Type</Label>
             <Input
