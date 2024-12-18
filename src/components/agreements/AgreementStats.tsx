@@ -7,62 +7,64 @@ import { Database } from "@/integrations/supabase/types";
 type LeaseStatus = Database['public']['Enums']['lease_status'];
 
 export const AgreementStats = () => {
-  const { data: stats = { active: 0, pending: 0, expired: 0, total: 0 } } = useQuery({
-    queryKey: ['agreement-stats'],
+  const { data: agreements = [] } = useQuery({
+    queryKey: ['agreements-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leases')
         .select('status');
 
-      if (error) {
-        console.error('Error fetching agreement stats:', error);
-        throw error;
-      }
+      if (error) throw error;
+      console.log('Fetched agreements:', data);
+      return data;
+    },
+  });
 
-      const counts = {
-        active: 0,
-        pending: 0,
-        expired: 0,
-        total: data.length
-      };
+  const closedAgreements = agreements.filter(agreement => 
+    agreement.status?.toLowerCase() === 'closed'
+  ).length;
 
-      data.forEach((lease) => {
-        if (lease.status === 'active') {
-          counts.active++;
-        } else if (lease.status === 'closed') {
-          counts.expired++;
-        } else if (lease.status === 'pending') {
-          counts.pending++;
-        }
-      });
+  const activeAgreements = agreements.filter(agreement => 
+    agreement.status?.toLowerCase() === 'open'
+  ).length;
 
-      return counts;
-    }
+  const pendingAgreements = agreements.filter(agreement => 
+    agreement.status?.toLowerCase() === 'pending_deposit' || 
+    agreement.status?.toLowerCase() === 'pending_payment'
+  ).length;
+
+  const totalAgreements = agreements.length;
+
+  console.log('Agreement counts:', {
+    closed: closedAgreements,
+    active: activeAgreements,
+    pending: pendingAgreements,
+    total: totalAgreements
   });
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatsCard
         title="Active Agreements"
-        value={stats.active.toString()}
+        value={activeAgreements.toString()}
         icon={FileCheck}
         description="Currently active rentals"
       />
       <StatsCard
         title="Pending Agreements"
-        value={stats.pending.toString()}
+        value={pendingAgreements.toString()}
         icon={FileClock}
         description="Awaiting processing"
       />
       <StatsCard
-        title="Expired Agreements"
-        value={stats.expired.toString()}
+        title="Closed Agreements"
+        value={closedAgreements.toString()}
         icon={FileX}
-        description="Need attention"
+        description="Completed rentals"
       />
       <StatsCard
         title="Total Agreements"
-        value={stats.total.toString()}
+        value={totalAgreements.toString()}
         icon={FileText}
         description="All time"
       />
