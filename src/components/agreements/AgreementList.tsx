@@ -55,7 +55,6 @@ export const AgreementList = () => {
         throw error;
       }
 
-      // Return the raw data without date formatting
       return data.map((lease: any) => ({
         id: lease.id,
         customer: {
@@ -68,8 +67,8 @@ export const AgreementList = () => {
           model: lease.vehicles.model,
           year: lease.vehicles.year,
         },
-        start_date: lease.start_date,
-        end_date: lease.end_date,
+        start_date: lease.start_date || '',
+        end_date: lease.end_date || '',
         status: lease.status,
         total_amount: lease.total_amount,
       }));
