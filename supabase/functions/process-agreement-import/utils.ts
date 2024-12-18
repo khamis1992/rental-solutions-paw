@@ -1,7 +1,6 @@
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 const isValidDate = (day: number, month: number, year: number): boolean => {
@@ -83,6 +82,7 @@ export const validateRowData = (rowData: any, headers: string[]) => {
     'active': 'active',
     'pending': 'pending',
     'pending_payment': 'pending',
+    'pending_deposit': 'pending',
     'completed': 'completed',
     'cancelled': 'cancelled',
     'closed': 'completed',
