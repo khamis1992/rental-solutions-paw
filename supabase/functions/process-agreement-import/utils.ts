@@ -7,6 +7,7 @@ export const corsHeaders = {
 export const statusMapping: { [key: string]: string } = {
   'active': 'active',
   'pending': 'pending',
+  'pending_payment': 'pending',
   'completed': 'completed',
   'cancelled': 'cancelled',
   'closed': 'completed',
