@@ -17,7 +17,7 @@ export const AgreementStats = () => {
         description="Awaiting processing"
       />
       <StatsCard
-        title="Expired Agreements"
+        title="Closed Agreements"
         value="5"
         icon={FileX}
         description="Need attention"
