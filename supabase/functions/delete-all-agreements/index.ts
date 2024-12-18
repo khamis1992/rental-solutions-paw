@@ -15,16 +15,19 @@ Deno.serve(async (req) => {
     console.log('Starting deletion of all agreements and related data...')
 
     // Delete records from dependent tables first
-    await supabase.from('payment_history').delete().neq('id', '')
-    await supabase.from('payment_schedules').delete().neq('id', '')
-    await supabase.from('payments').delete().neq('id', '')
-    await supabase.from('penalties').delete().neq('id', '')
-    await supabase.from('applied_discounts').delete().neq('id', '')
-    await supabase.from('security_deposits').delete().neq('id', '')
-    await supabase.from('damages').delete().neq('id', '')
-    
-    // Finally, delete the agreements
-    await supabase.from('leases').delete().neq('id', '')
+    const deleteOperations = [
+      supabase.from('payment_history').delete().neq('id', ''),
+      supabase.from('payment_schedules').delete().neq('id', ''),
+      supabase.from('payments').delete().neq('id', ''),
+      supabase.from('penalties').delete().neq('id', ''),
+      supabase.from('applied_discounts').delete().neq('id', ''),
+      supabase.from('security_deposits').delete().neq('id', ''),
+      supabase.from('damages').delete().neq('id', ''),
+      supabase.from('leases').delete().neq('id', '')
+    ]
+
+    // Execute all delete operations
+    await Promise.all(deleteOperations)
 
     console.log('Successfully deleted all agreements and related data')
 
