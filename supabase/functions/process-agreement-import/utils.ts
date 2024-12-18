@@ -8,8 +8,10 @@ const isValidDate = (day: number, month: number, year: number): boolean => {
   // Check if month is between 1 and 12
   if (month < 1 || month > 12) return false;
   
-  // Check if day is valid for the given month
+  // Get the last day of the month for the given year/month
   const daysInMonth = new Date(year, month, 0).getDate();
+  
+  // Check if day is valid for the given month
   if (day < 1 || day > daysInMonth) return false;
   
   return true;
