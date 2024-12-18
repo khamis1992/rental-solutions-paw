@@ -20,6 +20,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { PaymentImport } from "./PaymentImport";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -32,6 +35,8 @@ export function PaymentHistoryDialog({
   open,
   onOpenChange,
 }: PaymentHistoryDialogProps) {
+  const queryClient = useQueryClient();
+
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
@@ -57,6 +62,48 @@ export function PaymentHistoryDialog({
     },
     enabled: open,
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!open) return;
+
+    const channel = supabase
+      .channel('payment-history-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments',
+          ...(agreementId ? { filter: `lease_id=eq.${agreementId}` } : {})
+        },
+        async (payload) => {
+          console.log('Real-time update received for payment history:', payload);
+          
+          // Invalidate and refetch the payment history query
+          await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
+          
+          // Show a toast notification
+          const eventType = payload.eventType;
+          toast.info(
+            eventType === 'INSERT'
+              ? 'New payment recorded'
+              : eventType === 'UPDATE'
+              ? 'Payment status updated'
+              : 'Payment record changed',
+            {
+              description: 'The payment history has been updated.'
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount or when dialog closes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [agreementId, open, queryClient]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

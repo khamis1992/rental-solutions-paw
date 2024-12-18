@@ -15,6 +15,9 @@ import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
 import { formatDateToDisplay } from "./utils/dateUtils";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -27,6 +30,8 @@ export const AgreementDetailsDialog = ({
   open,
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
+  const queryClient = useQueryClient();
+
   const { data: agreement, isLoading } = useQuery({
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
@@ -56,6 +61,48 @@ export const AgreementDetailsDialog = ({
     },
     enabled: !!agreementId && open,
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!agreementId || !open) return;
+
+    const channel = supabase
+      .channel('agreement-details-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leases',
+          filter: `id=eq.${agreementId}`
+        },
+        async (payload) => {
+          console.log('Real-time update received for agreement:', payload);
+          
+          // Invalidate and refetch the agreement details query
+          await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
+          
+          // Show a toast notification
+          const eventType = payload.eventType;
+          toast.info(
+            eventType === 'UPDATE' 
+              ? 'Agreement details updated'
+              : eventType === 'DELETE'
+              ? 'Agreement deleted'
+              : 'Agreement changed',
+            {
+              description: 'The agreement details have been updated.'
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount or when dialog closes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [agreementId, open, queryClient]);
 
   if (!open) return null;
 

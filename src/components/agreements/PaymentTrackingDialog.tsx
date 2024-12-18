@@ -17,6 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface PaymentTrackingDialogProps {
   agreementId: string;
@@ -29,6 +32,8 @@ export function PaymentTrackingDialog({
   open,
   onOpenChange,
 }: PaymentTrackingDialogProps) {
+  const queryClient = useQueryClient();
+
   const { data: payments, isLoading } = useQuery({
     queryKey: ["payment-schedules", agreementId],
     queryFn: async () => {
@@ -43,6 +48,48 @@ export function PaymentTrackingDialog({
     },
     enabled: open,
   });
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!agreementId || !open) return;
+
+    const channel = supabase
+      .channel('payment-schedules-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payment_schedules',
+          filter: `lease_id=eq.${agreementId}`
+        },
+        async (payload) => {
+          console.log('Real-time update received for payment schedule:', payload);
+          
+          // Invalidate and refetch the payment schedules query
+          await queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] });
+          
+          // Show a toast notification
+          const eventType = payload.eventType;
+          toast.info(
+            eventType === 'INSERT'
+              ? 'New payment schedule added'
+              : eventType === 'UPDATE'
+              ? 'Payment schedule updated'
+              : 'Payment schedule changed',
+            {
+              description: 'The payment schedule has been updated.'
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount or when dialog closes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [agreementId, open, queryClient]);
 
   const getStatusColor = (status: string, dueDate: string) => {
     const now = new Date();
