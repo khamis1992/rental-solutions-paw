@@ -36,9 +36,14 @@ const Vehicles = () => {
         throw error;
       }
 
+      // Add console log to see what vehicles are being returned
+      console.log("Fetched vehicles:", data);
       return data || [];
     },
   });
+
+  // Add console log to see what vehicles are being passed to components
+  console.log("Filtered vehicles:", vehicles);
 
   return (
     <DashboardLayout>
