@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
@@ -10,6 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Agreements = () => {
+  const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
+  const [showAgreementImport, setShowAgreementImport] = useState(false);
+
   useEffect(() => {
     const deleteAllAgreements = async () => {
       try {
