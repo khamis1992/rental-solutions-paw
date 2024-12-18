@@ -52,14 +52,21 @@ export const AgreementTableRow = ({
   onPrintContract,
   onAgreementClick 
 }: Props) => {
-  // Function to format dates properly
   const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    
     const date = new Date(dateString);
-    // Check if date is invalid (e.g., 1970-01-01) and return original string if it is
-    if (date.getFullYear() === 1970 || isNaN(date.getTime())) {
+    if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
+      // If date is invalid or 1970, return the original string
       return dateString;
     }
-    return date.toLocaleDateString();
+    
+    // Format the date as DD/MM/YYYY
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
   };
 
   return (
