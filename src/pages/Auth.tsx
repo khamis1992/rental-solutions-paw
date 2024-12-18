@@ -103,7 +103,6 @@ const AuthPage = () => {
                   anchor: { display: 'none' }, // This will hide all anchor links including "Sign Up"
                 },
               }}
-              providers={["google"]}
               redirectTo={window.location.origin}
               view="sign_in"
               showLinks={false}
