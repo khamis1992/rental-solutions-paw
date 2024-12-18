@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,6 +22,14 @@ const COLORS = {
 };
 
 type VehicleStatus = keyof typeof COLORS;
+
+const config = {
+  colors: COLORS,
+  theme: {
+    light: "#E2E8F0",
+    dark: "#334155",
+  },
+};
 
 export const VehicleStatusChart = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -108,34 +116,36 @@ export const VehicleStatusChart = () => {
               <span className="text-4xl font-bold">{primaryStatus?.value}</span>
               <span className="text-xl">{primaryStatus?.name}</span>
             </div>
-            <ResponsiveContainer width="100%" height={400}>
-              <PieChart>
-                <Pie
-                  data={filteredData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={80}
-                  outerRadius={120}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {filteredData?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    return (
-                      <ChartTooltipContent
-                        className="bg-background border-border"
-                        payload={payload}
-                      />
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <ChartContainer config={config}>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={filteredData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={120}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {filteredData?.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <ChartTooltipContent
+                          className="bg-background border-border"
+                          payload={payload}
+                        />
+                      );
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </div>
 
           <div className="w-[200px] space-y-3 py-4">
