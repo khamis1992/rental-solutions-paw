@@ -16,6 +16,18 @@ const VALID_STATUSES = [
   'stolen'
 ];
 
+// Helper function to normalize status values
+const normalizeStatus = (status: string): string => {
+  const normalized = status.toLowerCase();
+  if (normalized === 'police station') {
+    return 'police_station';
+  }
+  if (normalized === 'out of service') {
+    return 'maintenance';
+  }
+  return normalized;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -104,8 +116,13 @@ serve(async (req) => {
           license_plate: values[headers.indexOf('license_plate')],
           vin: values[headers.indexOf('vin')],
           mileage: headers.includes('mileage') ? parseInt(values[headers.indexOf('mileage')]) || 0 : 0,
-          status: headers.includes('status') ? values[headers.indexOf('status')].toLowerCase() : 'available'
+          status: headers.includes('status') 
+            ? normalizeStatus(values[headers.indexOf('status')]) 
+            : 'available'
         }
+
+        // Log the status before and after normalization
+        console.log(`Row ${i + 1} - Original status: ${values[headers.indexOf('status')]}, Normalized status: ${vehicleData.status}`);
 
         // Validate required fields for each row
         const missingValues = Object.entries(vehicleData)
