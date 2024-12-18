@@ -102,7 +102,8 @@ const AuthPage = () => {
               }}
               providers={["google"]}
               redirectTo={window.location.origin}
-              magicLink={true}
+              view="sign_in"
+              showLinks={false}
             />
           </CardContent>
         </Card>
