@@ -10,6 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 
+const STATUS_COLORS = {
+  accident: "#F97316",      // Bright Orange
+  available: "#0EA5E9",     // Ocean Blue
+  maintenance: "#4FD1C5",   // Teal
+  police_station: "#D946EF", // Magenta Pink
+  out_of_service: "#CA8A04", // Yellow
+  stolen: "#EF4444",        // Red
+  reserve: "#8B5CF6",       // Vivid Purple
+  on_rent: "#1E40AF"        // Deep Blue
+} as const;
+
 interface Vehicle {
   id: string;
   make: string;
@@ -86,13 +97,10 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
               </TableCell>
               <TableCell>
                 <Badge
-                  variant={
-                    vehicle.status === "available"
-                      ? "default"
-                      : vehicle.status === "rented"
-                      ? "secondary"
-                      : "destructive"
-                  }
+                  className="text-white"
+                  style={{
+                    backgroundColor: STATUS_COLORS[vehicle.status as keyof typeof STATUS_COLORS] || "#CBD5E1"
+                  }}
                 >
                   {vehicle.status}
                 </Badge>
