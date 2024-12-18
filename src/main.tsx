@@ -23,25 +23,53 @@ const queryClient = new QueryClient({
 
 // Initialize the app with session
 const initializeApp = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  root.render(
-    <React.StrictMode>
-      <SessionContextProvider 
-        supabaseClient={supabase} 
-        initialSession={session}
-      >
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <SidebarProvider>
-              <App />
-            </SidebarProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </SessionContextProvider>
-    </React.StrictMode>
-  );
+  try {
+    // Get the initial session
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error fetching session:', error);
+      throw error;
+    }
+
+    // Render the app with the session
+    root.render(
+      <React.StrictMode>
+        <SessionContextProvider 
+          supabaseClient={supabase} 
+          initialSession={session}
+        >
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <SidebarProvider>
+                <App />
+              </SidebarProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </React.StrictMode>
+    );
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    // Render the app without a session in case of error
+    root.render(
+      <React.StrictMode>
+        <SessionContextProvider 
+          supabaseClient={supabase} 
+          initialSession={null}
+        >
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <SidebarProvider>
+                <App />
+              </SidebarProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </React.StrictMode>
+    );
+  }
 };
 
 // Start the application
-initializeApp().catch(console.error);
+initializeApp();
