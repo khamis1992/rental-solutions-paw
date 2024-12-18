@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export interface Agreement {
   id: string;
@@ -24,6 +25,46 @@ export interface Agreement {
 }
 
 export const useAgreements = () => {
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('agreement-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'leases'
+        },
+        async (payload) => {
+          console.log('Real-time update received:', payload);
+          
+          // Invalidate and refetch the agreements query
+          await queryClient.invalidateQueries({ queryKey: ['agreements'] });
+          
+          // Show a toast notification
+          const eventType = payload.eventType;
+          const message = eventType === 'INSERT' 
+            ? 'New agreement created'
+            : eventType === 'UPDATE'
+            ? 'Agreement updated'
+            : 'Agreement deleted';
+          
+          toast.info(message, {
+            description: 'The agreements list has been updated.'
+          });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['agreements'],
     queryFn: async () => {
