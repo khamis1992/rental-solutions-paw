@@ -19,16 +19,7 @@ serve(async (req) => {
 
   try {
     console.log('Starting agreement import process...');
-    
-    // Log request details for debugging
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    // Get the request body
-    const body = await req.json();
-    console.log('Request body:', body);
-
-    const { fileName } = body;
+    const { fileName } = await req.json();
     console.log('Processing file:', fileName);
 
     if (!fileName) {
@@ -88,6 +79,7 @@ serve(async (req) => {
         errorDetails: errors
       }),
       { 
+        status: 200,
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
@@ -98,6 +90,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Import process failed:', error);
     
+    // Ensure we return a proper error response with CORS headers
     return new Response(
       JSON.stringify({
         error: error.message || 'An unexpected error occurred',

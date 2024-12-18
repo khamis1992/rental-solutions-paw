@@ -7,64 +7,62 @@ import { Database } from "@/integrations/supabase/types";
 type LeaseStatus = Database['public']['Enums']['lease_status'];
 
 export const AgreementStats = () => {
-  const { data: agreements = [] } = useQuery({
-    queryKey: ['agreements-stats'],
+  const { data: stats = { active: 0, pending: 0, expired: 0, total: 0 } } = useQuery({
+    queryKey: ['agreement-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leases')
         .select('status');
 
-      if (error) throw error;
-      console.log('Fetched agreements:', data);
-      return data;
-    },
-  });
+      if (error) {
+        console.error('Error fetching agreement stats:', error);
+        throw error;
+      }
 
-  const closedAgreements = agreements.filter(agreement => 
-    agreement.status?.toLowerCase() === 'closed'
-  ).length;
+      const counts = {
+        active: 0,
+        pending: 0,
+        expired: 0,
+        total: data.length
+      };
 
-  const activeAgreements = agreements.filter(agreement => 
-    agreement.status?.toLowerCase() === 'open'
-  ).length;
+      data.forEach((lease) => {
+        if (lease.status === 'active') {
+          counts.active++;
+        } else if (lease.status === 'completed') {
+          counts.expired++;
+        } else if (lease.status === 'pending') {
+          counts.pending++;
+        }
+      });
 
-  const pendingAgreements = agreements.filter(agreement => 
-    agreement.status?.toLowerCase() === 'pending_deposit' || 
-    agreement.status?.toLowerCase() === 'pending_payment'
-  ).length;
-
-  const totalAgreements = agreements.length;
-
-  console.log('Agreement counts:', {
-    closed: closedAgreements,
-    active: activeAgreements,
-    pending: pendingAgreements,
-    total: totalAgreements
+      return counts;
+    }
   });
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatsCard
         title="Active Agreements"
-        value={activeAgreements.toString()}
+        value={stats.active.toString()}
         icon={FileCheck}
         description="Currently active rentals"
       />
       <StatsCard
         title="Pending Agreements"
-        value={pendingAgreements.toString()}
+        value={stats.pending.toString()}
         icon={FileClock}
         description="Awaiting processing"
       />
       <StatsCard
-        title="Closed Agreements"
-        value={closedAgreements.toString()}
+        title="Expired Agreements"
+        value={stats.expired.toString()}
         icon={FileX}
-        description="Completed rentals"
+        description="Need attention"
       />
       <StatsCard
         title="Total Agreements"
-        value={totalAgreements.toString()}
+        value={stats.total.toString()}
         icon={FileText}
         description="All time"
       />
