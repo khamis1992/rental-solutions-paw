@@ -10,12 +10,14 @@ import { AgreementTableHeader } from "./table/AgreementTableHeader";
 import { AgreementTableRow } from "./table/AgreementTableRow";
 import { useAgreements } from "./hooks/useAgreements";
 import type { Agreement } from "./hooks/useAgreements";
+import { AgreementDetailsDialog } from "./AgreementDetailsDialog";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
+  const [selectedDetailsId, setSelectedDetailsId] = useState<string | null>(null);
 
   const { data: agreements = [], isLoading, error } = useAgreements();
 
@@ -143,6 +145,7 @@ export const AgreementList = () => {
                 onViewContract={handleViewContract}
                 onPrintContract={handlePrintContract}
                 onAgreementClick={setSelectedAgreementId}
+                onNameClick={setSelectedDetailsId}
               />
             ))}
           </TableBody>
@@ -165,6 +168,12 @@ export const AgreementList = () => {
         agreementId={selectedPaymentHistoryId || ""}
         open={!!selectedPaymentHistoryId}
         onOpenChange={(open) => !open && setSelectedPaymentHistoryId(null)}
+      />
+
+      <AgreementDetailsDialog
+        agreementId={selectedDetailsId || ""}
+        open={!!selectedDetailsId}
+        onOpenChange={(open) => !open && setSelectedDetailsId(null)}
       />
     </>
   );

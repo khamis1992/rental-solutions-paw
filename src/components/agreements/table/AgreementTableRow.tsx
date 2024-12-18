@@ -9,6 +9,7 @@ interface AgreementTableRowProps {
   onViewContract: (id: string) => void;
   onPrintContract: (id: string) => void;
   onAgreementClick: (id: string) => void;
+  onNameClick: (id: string) => void;
 }
 
 export const AgreementTableRow = ({
@@ -16,23 +17,27 @@ export const AgreementTableRow = ({
   onViewContract,
   onPrintContract,
   onAgreementClick,
+  onNameClick,
 }: AgreementTableRowProps) => {
-  // Type assertion to ensure status matches badge variants
   const badgeVariant = agreement.status as "active" | "pending_payment" | "pending_deposit" | "closed";
 
   return (
     <TableRow>
-      <TableCell>{agreement.agreement_number}</TableCell>
+      <TableCell>
+        <button
+          onClick={() => onNameClick(agreement.id)}
+          className="text-blue-600 hover:underline"
+        >
+          {agreement.agreement_number}
+        </button>
+      </TableCell>
       <TableCell>{agreement.vehicle.license_plate}</TableCell>
       <TableCell>{`${agreement.vehicle.make} ${agreement.vehicle.model}`}</TableCell>
       <TableCell>{agreement.customer.full_name}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.start_date)}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
       <TableCell>
-        <Badge
-          variant={badgeVariant}
-          className="capitalize"
-        >
+        <Badge variant={badgeVariant} className="capitalize">
           {agreement.status}
         </Badge>
       </TableCell>

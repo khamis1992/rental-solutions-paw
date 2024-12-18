@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agreement_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          document_url: string
+          id: string
+          lease_id: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          id?: string
+          lease_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          id?: string
+          lease_id?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_documents_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agreement_import_errors: {
         Row: {
           created_at: string | null
@@ -881,6 +926,63 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      traffic_fines: {
+        Row: {
+          created_at: string | null
+          fine_amount: number
+          fine_date: string
+          fine_location: string | null
+          fine_reference: string | null
+          fine_type: string
+          id: string
+          lease_id: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fine_amount: number
+          fine_date: string
+          fine_location?: string | null
+          fine_reference?: string | null
+          fine_type: string
+          id?: string
+          lease_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fine_amount?: number
+          fine_date?: string
+          fine_location?: string | null
+          fine_reference?: string | null
+          fine_type?: string
+          id?: string
+          lease_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traffic_fines_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traffic_fines_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
