@@ -35,6 +35,12 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
+      // Validate vehicle_id exists
+      if (!record.vehicle_id) {
+        toast.error('Vehicle ID is missing. Cannot update status.');
+        return;
+      }
+
       console.log("Current record:", record);
       console.log("Updating maintenance status to:", newStatus);
 
