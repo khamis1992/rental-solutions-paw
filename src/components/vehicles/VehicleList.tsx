@@ -21,17 +21,17 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen" | "on_rent" | "out_of_service";
+type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen";
 
 const STATUS_COLORS = {
   accident: "#F97316",      // Bright Orange
   available: "#0EA5E9",     // Ocean Blue
   maintenance: "#800000",   // Maroon
   police_station: "#D946EF", // Magenta Pink
-  out_of_service: "#CA8A04", // Yellow
+  retired: "#CA8A04",       // Yellow
   stolen: "#EF4444",        // Red
   reserve: "#8B5CF6",       // Vivid Purple
-  on_rent: "#22C55E"        // Green
+  rented: "#22C55E"         // Green
 } as const;
 
 interface Vehicle {
