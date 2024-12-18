@@ -57,9 +57,11 @@ export const AgreementImport = () => {
       }
 
       console.log('Starting import process via Edge Function...');
-      const { error: functionError } = await supabase.functions
+      console.log('Sending fileName to Edge Function:', fileName);
+      
+      const { data, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
-          body: { fileName },
+          body: JSON.stringify({ fileName }),
           headers: {
             'Content-Type': 'application/json',
           }
@@ -69,6 +71,8 @@ export const AgreementImport = () => {
         console.error('Edge Function error:', functionError);
         throw functionError;
       }
+
+      console.log('Edge Function response:', data);
 
       // Poll for import completion
       pollInterval = window.setInterval(async () => {
