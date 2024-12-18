@@ -6,7 +6,37 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+
+const COLORS = {
+  available: "#4F7BE4",
+  maintenance: "#4FD1C5",
+  police_station: "#2DD4BF",
+  accident: "#10B981",
+  out_of_service: "#CA8A04",
+  stolen: "#EF4444",
+  reserve: "#8B5CF6",
+  on_rent: "#1E40AF"
+};
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, name }: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor={x > cx ? 'start' : 'end'} 
+      dominantBaseline="central"
+    >
+      {name} ({value})
+    </text>
+  );
+};
 
 export const VehicleStatusChart = () => {
   const { data: vehicleCounts, isLoading } = useQuery({
@@ -31,9 +61,9 @@ export const VehicleStatusChart = () => {
 
       // Transform to array format for chart
       const data = Object.entries(counts).map(([status, count]) => ({
-        status: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        count: count,
-        fill: `var(--${status}-color)`, // This will be used for bar colors
+        name: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: count,
+        color: COLORS[status as keyof typeof COLORS] || "#CBD5E1"
       }));
 
       console.log("Vehicle counts:", data);
@@ -47,33 +77,17 @@ export const VehicleStatusChart = () => {
         <CardHeader>
           <CardTitle>Vehicle Status Analysis</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
+        <CardContent className="h-[400px] flex items-center justify-center">
           <div className="animate-pulse w-full h-full bg-muted rounded-md" />
         </CardContent>
       </Card>
     );
   }
 
-  const chartConfig = {
-    available: {
-      theme: { light: "#10b981", dark: "#34d399" }
-    },
-    maintenance: {
-      theme: { light: "#f97316", dark: "#fb923c" }
-    },
-    police_station: {
-      theme: { light: "#3b82f6", dark: "#60a5fa" }
-    },
-    accident: {
-      theme: { light: "#dc2626", dark: "#ef4444" }
-    },
-    reserve: {
-      theme: { light: "#059669", dark: "#10b981" }
-    },
-    stolen: {
-      theme: { light: "#7c3aed", dark: "#8b5cf6" }
-    }
-  };
+  // Find the status with the highest count for center display
+  const primaryStatus = vehicleCounts?.reduce((prev, current) => 
+    (prev.value > current.value) ? prev : current
+  );
 
   return (
     <Card>
@@ -81,45 +95,52 @@ export const VehicleStatusChart = () => {
         <CardTitle>Vehicle Status Analysis</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
-          <ChartContainer config={chartConfig}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={vehicleCounts} 
-                margin={{ top: 20, right: 20, bottom: 40, left: 20 }}
+        <div className="h-[400px] relative">
+          <div className="absolute inset-0 flex items-center justify-center flex-col">
+            <span className="text-4xl font-bold">{primaryStatus?.value}</span>
+            <span className="text-xl text-muted-foreground">{primaryStatus?.name}</span>
+          </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={vehicleCounts}
+                cx="50%"
+                cy="50%"
+                innerRadius={80}
+                outerRadius={120}
+                paddingAngle={2}
+                dataKey="value"
               >
-                <XAxis 
-                  dataKey="status" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                  tick={{ fontSize: 12 }}
+                {vehicleCounts?.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <ChartTooltipContent
+                      className="bg-background border-border"
+                      payload={payload}
+                    />
+                  );
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            {vehicleCounts?.map((status, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: status.color }}
                 />
-                <YAxis 
-                  allowDecimals={false}
-                  tickFormatter={(value) => value.toString()}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    return (
-                      <ChartTooltipContent
-                        className="bg-background border-border"
-                        payload={payload}
-                      />
-                    );
-                  }}
-                />
-                <Bar
-                  dataKey="count"
-                  fill="currentColor"
-                  radius={[4, 4, 0, 0]}
-                  className="fill-primary"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+                <span className="text-sm text-muted-foreground">
+                  {status.name} - {status.value}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
