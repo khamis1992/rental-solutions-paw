@@ -18,21 +18,28 @@ const isValidDate = (day: number, month: number, year: number): boolean => {
 const parseDate = (dateStr: string): string => {
   if (!dateStr) return '';
   
-  // Split by either '/' or '-'
-  const parts = dateStr.split(/[-/]/);
+  // Clean the input string and split by either '/' or '-'
+  const cleanDateStr = dateStr.trim();
+  const parts = cleanDateStr.split(/[-/]/);
+  
   if (parts.length === 3) {
     let day: number, month: number, year: number;
 
     // Check if the first part is a year (YYYY-MM-DD format)
     if (parts[0].length === 4) {
-      [year, month, day] = parts.map(part => parseInt(part, 10));
+      [year, month, day] = parts.map(part => parseInt(part.trim(), 10));
     } else {
       // Assume DD/MM/YYYY format
-      [day, month, year] = parts.map(part => parseInt(part, 10));
+      [day, month, year] = parts.map(part => parseInt(part.trim(), 10));
+    }
+
+    // Validate the parsed numbers
+    if (isNaN(day) || isNaN(month) || isNaN(year)) {
+      throw new Error(`Invalid date parts in: ${dateStr}. All parts must be valid numbers.`);
     }
 
     if (!isValidDate(day, month, year)) {
-      throw new Error(`Invalid date: ${dateStr}. Please use DD/MM/YYYY or YYYY-MM-DD format with valid day and month values.`);
+      throw new Error(`Invalid date: ${dateStr}. Day or month is out of range.`);
     }
 
     // Convert to YYYY-MM-DD format for PostgreSQL
