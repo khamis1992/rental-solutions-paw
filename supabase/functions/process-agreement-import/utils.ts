@@ -4,27 +4,14 @@ export const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-export const statusMapping: { [key: string]: string } = {
-  'active': 'active',
-  'pending': 'pending',
-  'pending_payment': 'pending',
-  'completed': 'completed',
-  'cancelled': 'cancelled',
-  'closed': 'completed',
-  'done': 'completed',
-  'cancel': 'cancelled',
-  'canceled': 'cancelled',
-  'open': 'active'
-};
-
 const parseDate = (dateStr: string): string => {
   if (!dateStr) return '';
   
-  // Parse MM/DD/YYYY
+  // Handle DD/MM/YYYY format
   const parts = dateStr.split('/');
   if (parts.length === 3) {
+    const [day, month, year] = parts;
     // Convert to YYYY-MM-DD format for PostgreSQL
-    const [month, day, year] = parts;
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
   return dateStr;
@@ -39,6 +26,19 @@ export const validateRowData = (rowData: any, headers: string[]) => {
   if (missingFields.length > 0) {
     throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
+
+  const statusMapping: { [key: string]: string } = {
+    'active': 'active',
+    'pending': 'pending',
+    'pending_payment': 'pending',
+    'completed': 'completed',
+    'cancelled': 'cancelled',
+    'closed': 'completed',
+    'done': 'completed',
+    'cancel': 'cancelled',
+    'canceled': 'cancelled',
+    'open': 'active'
+  };
 
   const mappedStatus = statusMapping[rowData.status.toLowerCase()];
   if (!mappedStatus) {
