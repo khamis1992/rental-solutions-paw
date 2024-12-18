@@ -9,25 +9,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Pencil, Trash, Plus, X, Check } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-
-type VehicleStatus = Database["public"]["Tables"]["vehicle_statuses"]["Row"];
+import { StatusList } from "./status/StatusList";
 
 export const VehicleStatusSettings = () => {
-  const [statuses, setStatuses] = useState<VehicleStatus[]>([]);
+  const [statuses, setStatuses] = useState<any[]>([]);
   const [newStatus, setNewStatus] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
   const { toast } = useToast();
 
   const loadStatuses = async () => {
@@ -73,12 +61,12 @@ export const VehicleStatusSettings = () => {
     loadStatuses();
   };
 
-  const updateStatus = async (id: string) => {
-    if (!editValue.trim()) return;
+  const updateStatus = async (id: string, name: string) => {
+    if (!name.trim()) return;
 
     const { error } = await supabase
       .from("vehicle_statuses")
-      .update({ name: editValue.trim() })
+      .update({ name: name.trim() })
       .eq("id", id);
 
     if (error) {
@@ -95,7 +83,6 @@ export const VehicleStatusSettings = () => {
       description: "Status updated successfully",
     });
 
-    setEditingId(null);
     loadStatuses();
   };
 
@@ -138,68 +125,11 @@ export const VehicleStatusSettings = () => {
           </Button>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Status Name</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {statuses.map((status) => (
-              <TableRow key={status.id}>
-                <TableCell>
-                  {editingId === status.id ? (
-                    <div className="flex gap-2">
-                      <Input
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="w-[200px]"
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => updateStatus(status.id)}
-                      >
-                        <Check className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setEditingId(null)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    status.name
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant={status.is_active ? "default" : "secondary"}
-                    onClick={() => toggleStatus(status.id, status.is_active || false)}
-                  >
-                    {status.is_active ? "Active" : "Inactive"}
-                  </Button>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setEditingId(status.id);
-                      setEditValue(status.name);
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <StatusList
+          statuses={statuses}
+          onUpdate={updateStatus}
+          onToggle={toggleStatus}
+        />
       </CardContent>
     </Card>
   );
