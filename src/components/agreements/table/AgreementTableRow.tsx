@@ -24,6 +24,7 @@ export const AgreementTableRow = ({
     <TableRow>
       <TableCell>{agreement.agreement_number}</TableCell>
       <TableCell>{agreement.vehicle.license_plate}</TableCell>
+      <TableCell>{`${agreement.vehicle.make} ${agreement.vehicle.model}`}</TableCell>
       <TableCell>{agreement.customer.full_name}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.start_date)}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
