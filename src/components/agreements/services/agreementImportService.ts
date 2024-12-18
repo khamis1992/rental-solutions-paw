@@ -19,10 +19,24 @@ const normalizeStatus = (status: string): LeaseStatus => {
 
 const formatDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
-  return dateStr; // Return date string as-is without validation
+  
+  try {
+    // Parse DD/MM/YYYY format
+    const [day, month, year] = dateStr.split('/').map(num => parseInt(num.trim(), 10));
+    
+    // Validate date parts
+    if (!day || !month || !year) return null;
+    if (month < 1 || month > 12) return null;
+    if (day < 1 || day > 31) return null;
+    
+    // Format as YYYY-MM-DD for Supabase
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error('Error parsing date:', dateStr, error);
+    return null;
+  }
 };
 
-// Simplified function that just returns a UUID for customer_id
 export const getOrCreateCustomer = async () => {
   try {
     // First try to get an existing customer
@@ -99,26 +113,35 @@ export const getAvailableVehicle = async () => {
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
+    const agreementData = {
+      agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
+      license_no: agreement['License No'] || 'UNKNOWN',
+      license_number: agreement['License Number'] || 'UNKNOWN',
+      checkout_date: formatDate(agreement['Check-out Date']),
+      checkin_date: formatDate(agreement['Check-in Date']),
+      return_date: formatDate(agreement['Return Date']),
+      status: normalizeStatus(agreement['STATUS']),
+      customer_id: customerId,
+      vehicle_id: vehicleId,
+      total_amount: 0,
+      initial_mileage: 0
+    };
+
+    console.log('Creating agreement with data:', agreementData);
+
     const { error } = await supabase
       .from('leases')
-      .insert({
-        agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
-        license_no: agreement['License No'] || 'UNKNOWN',
-        license_number: agreement['License Number'] || 'UNKNOWN',
-        checkout_date: formatDate(agreement['Check-out Date']),
-        checkin_date: formatDate(agreement['Check-in Date']),
-        return_date: formatDate(agreement['Return Date']),
-        status: normalizeStatus(agreement['STATUS']),
-        customer_id: customerId,
-        vehicle_id: vehicleId,
-        total_amount: 0,
-        initial_mileage: 0
+      .upsert(agreementData, {
+        onConflict: 'agreement_number',
+        ignoreDuplicates: false
       });
 
     if (error) {
       console.error('Error creating agreement:', error);
+      throw error;
     }
   } catch (error) {
     console.error('Error in createAgreement:', error);
+    throw error;
   }
 };
