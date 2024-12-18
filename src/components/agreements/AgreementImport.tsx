@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 import { parseCSV } from "./utils/csvUtils";
-import { getOrCreateCustomer, getAvailableVehicle, createAgreement } from "./services/agreementImportService";
+import { createAgreement, getOrCreateCustomer, getAvailableVehicle } from "./services/agreementImportService";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -86,7 +86,7 @@ export const AgreementImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = "Agreement Number,License No,full_name,License Number,Check-out Date,Check-in Date,Return Date,STATUS\n" +
-                      "AGR001,LIC123,John Doe,DL456,2024-03-27,2024-03-28,2024-03-29,active";
+                      "AGR001,LIC123,John Doe,DL456,03/27/2024,03/28/2024,03/29/2024,active";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
