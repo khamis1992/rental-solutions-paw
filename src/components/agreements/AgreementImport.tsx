@@ -28,11 +28,12 @@ export const AgreementImport = () => {
       let processedCount = 0;
       let errorCount = 0;
 
+      // Get or create a vehicle once for all agreements
       const vehicle = await getAvailableVehicle();
-
+      
       for (const agreement of agreements) {
         try {
-          const customer = await getOrCreateCustomer(agreement['full_name']);
+          const customer = await getOrCreateCustomer();
           await createAgreement(agreement, customer.id, vehicle.id);
           processedCount++;
         } catch (error) {
@@ -54,8 +55,9 @@ export const AgreementImport = () => {
     } catch (error: any) {
       console.error('Import process error:', error);
       toast({
-        title: "Import Completed with Errors",
-        description: "Some agreements may not have been imported correctly. Check console for details.",
+        title: "Import Failed",
+        description: error.message || "Failed to import agreements",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);

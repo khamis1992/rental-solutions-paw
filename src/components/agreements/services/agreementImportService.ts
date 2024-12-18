@@ -24,11 +24,35 @@ const formatDate = (dateStr: string): string | null => {
     // Handle DD/MM/YYYY format
     if (dateStr.includes('/')) {
       const [day, month, year] = dateStr.split('/');
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const parsedMonth = parseInt(month);
+      const parsedDay = parseInt(day);
+      
+      // Basic validation
+      if (parsedMonth > 12 || parsedDay > 31) {
+        console.error('Invalid date components:', { day, month, year });
+        return null;
+      }
+      
+      return `${year}-${parsedMonth.toString().padStart(2, '0')}-${parsedDay.toString().padStart(2, '0')}`;
     }
     
-    // Return as-is if it's already in YYYY-MM-DD format
-    return dateStr;
+    // Handle YYYY-MM-DD format
+    if (dateStr.includes('-')) {
+      const [year, month, day] = dateStr.split('-');
+      const parsedMonth = parseInt(month);
+      const parsedDay = parseInt(day);
+      
+      // Basic validation
+      if (parsedMonth > 12 || parsedDay > 31) {
+        console.error('Invalid date components:', { year, month, day });
+        return null;
+      }
+      
+      return dateStr;
+    }
+    
+    console.error('Unsupported date format:', dateStr);
+    return null;
   } catch (error) {
     console.error('Date parsing error:', error);
     return null;
@@ -40,9 +64,40 @@ export const getOrCreateCustomer = async () => {
   return { id: crypto.randomUUID() };
 };
 
-// Simplified to just return a UUID
+// Create a default vehicle if none exists
 export const getAvailableVehicle = async () => {
-  return { id: crypto.randomUUID() };
+  // First try to get an existing available vehicle
+  const { data: existingVehicle } = await supabase
+    .from('vehicles')
+    .select('id')
+    .eq('status', 'available')
+    .limit(1)
+    .maybeSingle();
+
+  if (existingVehicle) {
+    return existingVehicle;
+  }
+
+  // If no vehicle exists, create a default one
+  const { data: newVehicle, error } = await supabase
+    .from('vehicles')
+    .insert({
+      make: 'Default',
+      model: 'Model',
+      year: 2024,
+      license_plate: 'TEMP-' + Date.now(),
+      vin: 'TEMP-' + Date.now(),
+      status: 'available'
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating default vehicle:', error);
+    throw error;
+  }
+
+  return newVehicle;
 };
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
@@ -50,6 +105,11 @@ export const createAgreement = async (agreement: Record<string, string>, custome
     const checkoutDate = formatDate(agreement['Check-out Date']);
     const checkinDate = formatDate(agreement['Check-in Date']);
     const returnDate = formatDate(agreement['Return Date']);
+
+    if (!checkoutDate && !checkinDate && !returnDate) {
+      console.error('All dates are invalid:', agreement);
+      return;
+    }
 
     const { error } = await supabase
       .from('leases')
@@ -69,8 +129,10 @@ export const createAgreement = async (agreement: Record<string, string>, custome
 
     if (error) {
       console.error('Error creating agreement:', error);
+      throw error;
     }
   } catch (error) {
     console.error('Error in createAgreement:', error);
+    throw error;
   }
 };
