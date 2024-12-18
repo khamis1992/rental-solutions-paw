@@ -1,56 +1,49 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Table, TableBody } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import { toast } from "sonner";
-
-interface Vehicle {
-  make: string;
-  model: string;
-  year: number;
-  license_plate: string;
-}
-
-interface MaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  description: string | null;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled";
-  cost: number | null;
-  scheduled_date: string;
-  completed_date: string | null;
-  performed_by: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  vehicles: Vehicle;
-}
-
-const STATUS_COLORS = {
-  scheduled: "bg-blue-100 text-blue-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  completed: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
-} as const;
+import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
+import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('maintenance-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'maintenance'
+        },
+        async (payload) => {
+          console.log('Real-time update received:', payload);
+          
+          // Invalidate and refetch queries
+          await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+          await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+          
+          const eventType = payload.eventType;
+          const message = eventType === 'INSERT' 
+            ? 'New maintenance record created'
+            : eventType === 'UPDATE'
+            ? 'Maintenance record updated'
+            : 'Maintenance record deleted';
+          
+          toast.info(message);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Query to get vehicles in accident status
   const { data: accidentVehicles = [], isLoading: isLoadingAccidents } = useQuery({
@@ -81,7 +74,7 @@ export const MaintenanceList = () => {
 
   // Query to get maintenance records
   const { data: maintenanceRecords = [], isLoading: isLoadingMaintenance } = useQuery({
-    queryKey: ["maintenance-records"],
+    queryKey: ["maintenance"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("maintenance")
@@ -104,61 +97,21 @@ export const MaintenanceList = () => {
   // Combine regular maintenance records with accident vehicles
   const allRecords = [...maintenanceRecords, ...accidentVehicles];
 
-  const handleStatusChange = async (recordId: string, newStatus: MaintenanceRecord['status']) => {
-    try {
-      const { error } = await supabase
-        .from('maintenance')
-        .update({ status: newStatus })
-        .eq('id', recordId);
-
-      if (error) throw error;
-
-      // Invalidate and refetch the maintenance records
-      await queryClient.invalidateQueries({ queryKey: ['maintenance-records'] });
-      
-      toast.success('Status updated successfully');
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
-    }
-  };
-
   if (isLoadingMaintenance || isLoadingAccidents) {
     return (
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>License Plate</TableHead>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Service Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Scheduled Date</TableHead>
-              <TableHead className="text-right">Cost</TableHead>
-            </TableRow>
-          </TableHeader>
+          <MaintenanceTableHeader />
           <TableBody>
             {[...Array(5)].map((_, i) => (
-              <TableRow key={i}>
-                <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[250px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[150px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableCell>
-              </TableRow>
+              <tr key={i}>
+                <td><Skeleton className="h-4 w-[120px]" /></td>
+                <td><Skeleton className="h-4 w-[200px]" /></td>
+                <td><Skeleton className="h-4 w-[100px]" /></td>
+                <td><Skeleton className="h-4 w-[100px]" /></td>
+                <td><Skeleton className="h-4 w-[150px]" /></td>
+                <td><Skeleton className="h-4 w-[100px]" /></td>
+              </tr>
             ))}
           </TableBody>
         </Table>
@@ -169,57 +122,10 @@ export const MaintenanceList = () => {
   return (
     <div className="rounded-md border">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>License Plate</TableHead>
-            <TableHead>Vehicle</TableHead>
-            <TableHead>Service Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Scheduled Date</TableHead>
-            <TableHead className="text-right">Cost</TableHead>
-          </TableRow>
-        </TableHeader>
+        <MaintenanceTableHeader />
         <TableBody>
           {allRecords.map((record) => (
-            <TableRow key={record.id}>
-              <TableCell>{record.vehicles.license_plate}</TableCell>
-              <TableCell className="font-medium">
-                {record.vehicles.year} {record.vehicles.make} {record.vehicles.model}
-              </TableCell>
-              <TableCell>{record.service_type}</TableCell>
-              <TableCell>
-                {record.status === 'urgent' ? (
-                  <Badge variant="destructive">Urgent</Badge>
-                ) : (
-                  <Select
-                    defaultValue={record.status}
-                    onValueChange={(value) => 
-                      handleStatusChange(record.id, value as MaintenanceRecord['status'])
-                    }
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue>
-                        <Badge className={STATUS_COLORS[record.status]}>
-                          {record.status}
-                        </Badge>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </TableCell>
-              <TableCell>
-                {new Date(record.scheduled_date).toLocaleDateString()}
-              </TableCell>
-              <TableCell className="text-right">
-                {record.cost ? `${record.cost} QAR` : '-'}
-              </TableCell>
-            </TableRow>
+            <MaintenanceTableRow key={record.id} record={record} />
           ))}
         </TableBody>
       </Table>
