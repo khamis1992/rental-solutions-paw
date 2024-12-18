@@ -90,10 +90,15 @@ export const VehicleStatusChart = () => {
         item.name.toLowerCase() === selectedStatus.toLowerCase()
       );
 
+  // Calculate total vehicles for "all" view
+  const totalVehicles = vehicleCounts?.reduce((sum, item) => sum + item.value, 0) || 0;
+
   // Find the status with the highest count for center display
-  const primaryStatus = filteredData?.reduce((prev, current) => 
-    (prev.value > current.value) ? prev : current
-  );
+  const primaryStatus = selectedStatus === "all"
+    ? { value: totalVehicles, name: "Total Vehicles" }
+    : filteredData?.reduce((prev, current) => 
+        (prev.value > current.value) ? prev : current
+      );
 
   return (
     <Card>
