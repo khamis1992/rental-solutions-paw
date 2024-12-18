@@ -34,6 +34,19 @@ const retryOperation = async <T>(
   }
 };
 
+const convertDateFormat = (dateStr: string): string | null => {
+  if (!dateStr || dateStr.trim() === '') return null;
+  
+  // Split the date string by '/'
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
+  
+  // Rearrange to YYYY-MM-DD format
+  // Assuming input format is DD/MM/YYYY
+  const [day, month, year] = parts;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
 export const getOrCreateCustomer = async () => {
   try {
     // First try to get an existing customer
@@ -118,19 +131,32 @@ export const getAvailableVehicle = async () => {
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
+    // Log raw dates from CSV
     console.log('Raw CSV data for dates:', {
       checkoutDate: agreement['Check-out Date'],
       checkinDate: agreement['Check-in Date'],
       returnDate: agreement['Return Date']
     });
 
+    // Convert dates to PostgreSQL format
+    const startDate = convertDateFormat(agreement['Check-out Date']);
+    const endDate = convertDateFormat(agreement['Check-in Date']);
+    const returnDate = convertDateFormat(agreement['Return Date']);
+
+    // Log converted dates
+    console.log('Converted dates:', {
+      startDate,
+      endDate,
+      returnDate
+    });
+
     const agreementData = {
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      start_date: agreement['Check-out Date'] || null,
-      end_date: agreement['Check-in Date'] || null,
-      return_date: agreement['Return Date'] || null,
+      start_date: startDate,
+      end_date: endDate,
+      return_date: returnDate,
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customerId,
       vehicle_id: vehicleId,
