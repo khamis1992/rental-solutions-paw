@@ -2,6 +2,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "../utils/dateUtils";
+import { useNavigate } from "react-router-dom";
 import type { Agreement } from "../hooks/useAgreements";
 
 interface AgreementTableRowProps {
@@ -19,7 +20,12 @@ export const AgreementTableRow = ({
   onAgreementClick,
   onNameClick,
 }: AgreementTableRowProps) => {
+  const navigate = useNavigate();
   const badgeVariant = agreement.status as "active" | "pending_payment" | "pending_deposit" | "closed";
+
+  const handleLicensePlateClick = () => {
+    navigate(`/vehicles/${agreement.vehicle.id}`);
+  };
 
   return (
     <TableRow>
@@ -33,7 +39,7 @@ export const AgreementTableRow = ({
       </TableCell>
       <TableCell>
         <button
-          onClick={() => onAgreementClick(agreement.id)}
+          onClick={handleLicensePlateClick}
           className="text-blue-600 hover:underline"
         >
           {agreement.vehicle.license_plate}
