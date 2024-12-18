@@ -5,7 +5,6 @@ export const AgreementTableHeader = () => {
     <TableHeader>
       <TableRow>
         <TableHead>Agreement Number</TableHead>
-        <TableHead>License No</TableHead>
         <TableHead>Customer Name</TableHead>
         <TableHead>Start Date</TableHead>
         <TableHead>End Date</TableHead>
