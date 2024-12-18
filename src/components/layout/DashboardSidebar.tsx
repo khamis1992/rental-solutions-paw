@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const baseMenuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -30,16 +31,17 @@ export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
   const navigate = useNavigate();
   const { session, isLoading } = useSessionContext();
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (isLoading) return;
+    const checkSession = async () => {
+      if (isLoading) return;
 
-    if (!session) {
-      navigate('/auth');
-      return;
-    }
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
 
-    const checkUserRole = async () => {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -49,6 +51,11 @@ export const DashboardSidebar = () => {
 
         if (error) {
           console.error('Error fetching user profile:', error);
+          toast({
+            title: "Error",
+            description: "Could not fetch user profile",
+            variant: "destructive",
+          });
           return;
         }
 
@@ -59,12 +66,45 @@ export const DashboardSidebar = () => {
         }
       } catch (error) {
         console.error('Error checking user role:', error);
+        toast({
+          title: "Error",
+          description: "Could not verify user permissions",
+          variant: "destructive",
+        });
         setMenuItems(baseMenuItems);
       }
     };
 
-    checkUserRole();
-  }, [session, isLoading, navigate]);
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+      } else if (event === 'SIGNED_IN') {
+        checkSession();
+      }
+    });
+
+    // Initial check
+    checkSession();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [session, isLoading, navigate, toast]);
+
+  if (isLoading) {
+    return (
+      <Sidebar>
+        <SidebarContent>
+          <div className="flex h-14 items-center border-b px-6">
+            <span className="font-semibold">Rental Solutions</span>
+          </div>
+          <div className="p-4">Loading...</div>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
 
   return (
     <Sidebar>

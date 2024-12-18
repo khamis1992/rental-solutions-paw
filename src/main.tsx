@@ -23,14 +23,14 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <SessionContextProvider supabaseClient={supabase}>
+    <SessionContextProvider supabaseClient={supabase} initialSession={null}>
+      <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <SidebarProvider>
             <App />
           </SidebarProvider>
         </BrowserRouter>
-      </SessionContextProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </SessionContextProvider>
   </React.StrictMode>
 );
