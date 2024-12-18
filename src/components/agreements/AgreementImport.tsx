@@ -13,6 +13,41 @@ export const AgreementImport = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const parseCSV = (content: string) => {
+    const lines = content.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim());
+      return headers.reduce((obj, header, index) => {
+        obj[header] = values[index];
+        return obj;
+      }, {} as Record<string, string>);
+    });
+  };
+
+  const normalizeStatus = (status: string): string => {
+    if (!status) return 'pending';
+    const statusMap: Record<string, string> = {
+      'open': 'open',
+      'active': 'active',
+      'closed': 'closed',
+      'cancelled': 'cancelled',
+      'pending': 'pending'
+    };
+    return statusMap[status.toLowerCase().trim()] || 'pending';
+  };
+
+  const parseDate = (dateStr: string): string | null => {
+    if (!dateStr) return null;
+    try {
+      const [day, month, year] = dateStr.split('/').map(Number);
+      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    } catch (error) {
+      console.error('Date parsing error:', error);
+      return null;
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -30,64 +65,80 @@ export const AgreementImport = () => {
     setProgress(0);
 
     try {
-      console.log('Starting file upload process...', file);
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      console.log('Uploading file to storage:', fileName);
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      // Read file content
+      const content = await file.text();
+      const agreements = parseCSV(content);
+      const totalAgreements = agreements.length;
+      let processedCount = 0;
 
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
+      // Process agreements in batches
+      const batchSize = 10;
+      for (let i = 0; i < agreements.length; i += batchSize) {
+        const batch = agreements.slice(i, i + batchSize);
+        
+        // Process each agreement in the batch
+        for (const agreement of batch) {
+          // First, get or create customer
+          let customerId: string | null = null;
+          const { data: existingCustomer } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('full_name', agreement['full_name'])
+            .single();
+
+          if (existingCustomer) {
+            customerId = existingCustomer.id;
+          } else {
+            const { data: newCustomer } = await supabase
+              .from('profiles')
+              .insert({
+                full_name: agreement['full_name'] || `Unknown Customer ${Date.now()}`,
+                role: 'customer'
+              })
+              .select()
+              .single();
+            
+            customerId = newCustomer?.id || null;
+          }
+
+          // Get first available vehicle
+          const { data: vehicle } = await supabase
+            .from('vehicles')
+            .select('id')
+            .eq('status', 'available')
+            .limit(1)
+            .single();
+
+          // Create agreement
+          await supabase
+            .from('leases')
+            .insert({
+              agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
+              license_no: agreement['License No'],
+              license_number: agreement['License Number'],
+              checkout_date: parseDate(agreement['Check-out Date']),
+              checkin_date: parseDate(agreement['Check-in Date']),
+              return_date: parseDate(agreement['Return Date']),
+              status: normalizeStatus(agreement['STATUS']),
+              customer_id: customerId,
+              vehicle_id: vehicle?.id,
+              total_amount: 0,
+              initial_mileage: 0
+            });
+
+          processedCount++;
+          setProgress((processedCount / totalAgreements) * 100);
+        }
       }
 
-      console.log('File uploaded successfully:', fileName);
-      setProgress(20);
-
-      console.log('Creating import log...');
-      const { error: logError } = await supabase
-        .from("import_logs")
-        .insert({
-          file_name: fileName,
-          import_type: "agreements",
-          status: "pending",
-        });
-
-      if (logError) {
-        console.error('Import log creation error:', logError);
-        throw logError;
-      }
-
-      setProgress(40);
-      console.log('Starting import process via Edge Function...', { fileName });
-      
-      const { data: functionData, error: functionError } = await supabase.functions
-        .invoke('process-agreement-import', {
-          method: 'POST',
-          body: { fileName },
-        });
-
-      if (functionError) {
-        console.error('Edge Function error:', functionError);
-        throw functionError;
-      }
-
-      console.log('Edge Function response:', functionData);
-      setProgress(100);
-      
       toast({
         title: "Success",
-        description: "Agreements imported successfully",
+        description: `Successfully imported ${processedCount} agreements`,
       });
       
       await queryClient.invalidateQueries({ queryKey: ["agreements"] });
       await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
       
-      setIsUploading(false);
-
     } catch (error: any) {
       console.error('Import process error:', error);
       toast({
@@ -95,7 +146,9 @@ export const AgreementImport = () => {
         description: error.message || "Failed to import agreements",
         variant: "destructive",
       });
+    } finally {
       setIsUploading(false);
+      setProgress(0);
     }
   };
 
