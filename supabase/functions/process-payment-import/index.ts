@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
 };
 
 serve(async (req) => {
@@ -50,6 +50,7 @@ serve(async (req) => {
     let successCount = 0;
     let errorCount = 0;
     let errors = [];
+    let skippedCustomers = [];
 
     await supabase
       .from('import_logs')
@@ -83,7 +84,14 @@ serve(async (req) => {
             .single();
 
           if (customerError || !customerData) {
-            throw new Error(`Customer "${customerName}" not found in the system`);
+            console.log(`Customer "${customerName}" not found, skipping payment`);
+            skippedCustomers.push({
+              customerName,
+              amount,
+              paymentDate,
+              reason: 'Customer not found in system'
+            });
+            continue;
           }
 
           console.log('Found customer:', customerData.id);
@@ -97,7 +105,14 @@ serve(async (req) => {
             .single();
 
           if (leaseError || !activeLease) {
-            throw new Error(`No active lease found for customer "${customerName}"`);
+            console.log(`No active lease found for customer "${customerName}", skipping payment`);
+            skippedCustomers.push({
+              customerName,
+              amount,
+              paymentDate,
+              reason: 'No active lease found'
+            });
+            continue;
           }
 
           console.log('Found lease:', activeLease.id);
@@ -139,24 +154,28 @@ serve(async (req) => {
       .update({
         status: 'completed',
         records_processed: successCount,
-        errors: errors.length > 0 ? errors : null
+        errors: {
+          failed: errors,
+          skipped: skippedCustomers
+        }
       })
       .eq('file_name', fileName);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Import completed. Successfully processed ${successCount} payments with ${errorCount} errors.`,
+        message: `Import completed. Successfully processed ${successCount} payments. ${skippedCustomers.length} payments skipped due to missing customers.`,
         processed: successCount,
+        skipped: skippedCustomers.length,
         errors: errorCount,
+        skippedDetails: skippedCustomers,
         errorDetails: errors
       }),
       { 
-        status: 200,
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        }
       }
     );
 
@@ -168,11 +187,11 @@ serve(async (req) => {
         details: error.toString()
       }),
       { 
-        status: 500,
         headers: { 
-          ...corsHeaders, 
+          ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        },
+        status: 500
       }
     );
   }
