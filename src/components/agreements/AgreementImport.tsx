@@ -33,12 +33,18 @@ export const AgreementImport = () => {
       
       for (const agreement of agreements) {
         try {
-          const customer = await getOrCreateCustomer();
+          // Pass the full_name from the CSV to getOrCreateCustomer
+          const customer = await getOrCreateCustomer(agreement['full_name']);
           await createAgreement(agreement, customer.id, vehicle.id);
           processedCount++;
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error processing agreement:', error);
           errorCount++;
+          toast({
+            title: "Error Processing Agreement",
+            description: error.message || "Failed to process agreement",
+            variant: "destructive",
+          });
         } finally {
           setProgress(((processedCount + errorCount) / totalAgreements) * 100);
         }

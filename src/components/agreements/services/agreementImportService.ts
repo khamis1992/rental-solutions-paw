@@ -48,11 +48,6 @@ const formatDate = (dateStr: string): string | null => {
         return null;
       }
       
-      // Swap day and month if day is greater than 12 (assuming US date format)
-      if (parsedDay <= 12 && parsedMonth > 12) {
-        return `${year}-${parsedDay.toString().padStart(2, '0')}-${parsedMonth.toString().padStart(2, '0')}`;
-      }
-      
       return dateStr;
     }
     
@@ -64,8 +59,39 @@ const formatDate = (dateStr: string): string | null => {
   }
 };
 
-export const getOrCreateCustomer = async () => {
-  return { id: crypto.randomUUID() };
+export const getOrCreateCustomer = async (fullName: string) => {
+  try {
+    // First, try to find an existing customer by name
+    const { data: existingCustomer } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('full_name', fullName)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      return existingCustomer;
+    }
+
+    // If no customer exists, create a new one
+    const { data: newCustomer, error } = await supabase
+      .from('profiles')
+      .insert({
+        full_name: fullName || `Unknown Customer ${Date.now()}`,
+        role: 'customer'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating customer profile:', error);
+      throw error;
+    }
+
+    return newCustomer;
+  } catch (error) {
+    console.error('Error in getOrCreateCustomer:', error);
+    throw error;
+  }
 };
 
 export const getAvailableVehicle = async () => {
@@ -94,15 +120,11 @@ export const getAvailableVehicle = async () => {
         status: 'available'
       })
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
       console.error('Error creating default vehicle:', error);
       throw error;
-    }
-
-    if (!newVehicle) {
-      throw new Error('Failed to create default vehicle');
     }
 
     return newVehicle;
@@ -120,7 +142,7 @@ export const createAgreement = async (agreement: Record<string, string>, custome
 
     if (!checkoutDate && !checkinDate && !returnDate) {
       console.error('All dates are invalid:', agreement);
-      return;
+      throw new Error('Invalid dates in agreement');
     }
 
     const { error } = await supabase
