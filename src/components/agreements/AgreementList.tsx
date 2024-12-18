@@ -56,7 +56,7 @@ export const AgreementList = () => {
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
 
-  const { data: agreements = [], isLoading } = useQuery({
+  const { data: agreements = [], isLoading, refetch } = useQuery({
     queryKey: ['agreements'],
     queryFn: async () => {
       const { data, error } = await supabase
