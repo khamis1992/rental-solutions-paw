@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 import { parseCSV } from "./utils/csvUtils";
-import { createAgreement, getOrCreateCustomer, getAvailableVehicle } from "./services/agreementImportService";
+import { createAgreement } from "./services/agreementImportService";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -29,17 +29,13 @@ export const AgreementImport = () => {
       let pendingPaymentCount = 0;
 
       console.log('Total agreements in CSV:', totalAgreements);
-
-      // Get default customer and vehicle once for all agreements
-      const customer = await getOrCreateCustomer();
-      const vehicle = await getAvailableVehicle();
       
       for (const agreement of agreements) {
         try {
-          // Log each agreement's status before processing
           console.log('Processing agreement:', {
             number: agreement['Agreement Number'],
-            status: agreement['STATUS']
+            status: agreement['STATUS'],
+            customerName: agreement['full_name']
           });
 
           if (agreement['STATUS']?.toLowerCase() === 'pending_payment') {
@@ -47,7 +43,7 @@ export const AgreementImport = () => {
             console.log('Found pending_payment agreement:', agreement['Agreement Number']);
           }
 
-          await createAgreement(agreement, customer.id, vehicle.id);
+          await createAgreement(agreement);
           processedCount++;
         } catch (error) {
           console.error('Error processing agreement:', error);
