@@ -27,7 +27,7 @@ export const UserList = () => {
       try {
         const { data: profiles, error } = await supabase
           .from("profiles")
-          .select("id, full_name, role, email")
+          .select("id, full_name, role")
           .in("role", ["admin", "staff"]);
 
         if (error) throw error;
@@ -70,7 +70,7 @@ export const UserList = () => {
         {users.map((user) => (
           <TableRow key={user.id}>
             <TableCell>{user.full_name || "N/A"}</TableCell>
-            <TableCell>{user.email || "N/A"}</TableCell>
+            <TableCell>N/A</TableCell>
             <TableCell className="capitalize">{user.role}</TableCell>
           </TableRow>
         ))}
