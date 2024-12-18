@@ -8,7 +8,6 @@ import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 import { AgreementTableHeader } from "./table/AgreementTableHeader";
 import { AgreementTableRow } from "./table/AgreementTableRow";
-import { formatCurrency } from "@/lib/utils";
 import { useAgreements } from "./hooks/useAgreements";
 import type { Agreement } from "./hooks/useAgreements";
 
@@ -87,7 +86,7 @@ export const AgreementList = () => {
                   <h2>Agreement Terms</h2>
                   <p>Start Date: ${new Date(agreement.start_date).toLocaleDateString()}</p>
                   <p>End Date: ${new Date(agreement.end_date).toLocaleDateString()}</p>
-                  <p>Total Amount: ${formatCurrency(agreement.total_amount)}</p>
+                  <p>Total Amount: ${agreement.total_amount}</p>
                 </div>
                 <div class="footer">
                   <p>Signatures:</p>

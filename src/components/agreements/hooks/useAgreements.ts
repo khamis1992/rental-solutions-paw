@@ -26,20 +26,6 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
-      // First, let's get a raw count of agreements
-      const { count, error: countError } = await supabase
-        .from('leases')
-        .select('*', { count: 'exact', head: true });
-        
-      console.log("Total number of agreements in database:", count);
-      
-      if (countError) {
-        console.error("Error counting agreements:", countError);
-        toast.error("Failed to count agreements");
-        throw countError;
-      }
-
-      // Fetch all agreements with their relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -73,6 +59,7 @@ export const useAgreements = () => {
       
       const transformedData = data?.map((lease: any) => ({
         id: lease.id,
+        agreement_number: lease.agreement_number,
         customer: {
           id: lease.profiles?.id || lease.customer_id,
           full_name: lease.profiles?.full_name || 'Unknown Customer',
