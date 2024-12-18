@@ -32,43 +32,47 @@ const initializeApp = async () => {
       throw error;
     }
 
-    // Render the app with the session
-    root.render(
-      <React.StrictMode>
-        <SessionContextProvider 
-          supabaseClient={supabase} 
-          initialSession={session}
-        >
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <SidebarProvider>
-                <App />
-              </SidebarProvider>
-            </BrowserRouter>
-          </QueryClientProvider>
-        </SessionContextProvider>
-      </React.StrictMode>
-    );
+    // Set up auth state change listener
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session);
+      // Re-render with new session
+      renderApp(session);
+    });
+
+    // Initial render
+    renderApp(session);
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   } catch (error) {
     console.error('Failed to initialize app:', error);
-    // Render the app without a session in case of error
-    root.render(
-      <React.StrictMode>
-        <SessionContextProvider 
-          supabaseClient={supabase} 
-          initialSession={null}
-        >
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <SidebarProvider>
-                <App />
-              </SidebarProvider>
-            </BrowserRouter>
-          </QueryClientProvider>
-        </SessionContextProvider>
-      </React.StrictMode>
-    );
+    // Render without session in case of error
+    renderApp(null);
   }
+};
+
+// Helper function to render the app
+const renderApp = (session: any) => {
+  root.render(
+    <React.StrictMode>
+      <SessionContextProvider 
+        supabaseClient={supabase} 
+        initialSession={session}
+      >
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SidebarProvider>
+              <App />
+            </SidebarProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </SessionContextProvider>
+    </React.StrictMode>
+  );
 };
 
 // Start the application
