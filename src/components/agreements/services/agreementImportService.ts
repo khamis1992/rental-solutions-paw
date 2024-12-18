@@ -53,7 +53,7 @@ const formatDateForPostgres = (dateStr: string): string | null => {
 
 export const getOrCreateCustomer = async (fullName: string) => {
   try {
-    // First try to find existing customer
+    // First try to find existing customer by full name
     const { data: existingCustomer, error: searchError } = await supabase
       .from('profiles')
       .select('id, full_name')
@@ -65,10 +65,11 @@ export const getOrCreateCustomer = async (fullName: string) => {
       return existingCustomer;
     }
 
-    // Generate a new UUID for the customer
+    // If no existing customer, create new one with a new UUID
+    // Important: We're not linking to auth.users table during import
     const newCustomerId = crypto.randomUUID();
+    console.log('Creating new customer with ID:', newCustomerId);
 
-    // If no existing customer, create new one
     const { data: newCustomer, error: createError } = await supabase
       .from('profiles')
       .insert({
@@ -79,7 +80,10 @@ export const getOrCreateCustomer = async (fullName: string) => {
       .select()
       .single();
 
-    if (createError) throw createError;
+    if (createError) {
+      console.error('Error creating customer:', createError);
+      throw createError;
+    }
 
     console.log('Created new customer:', newCustomer);
     return newCustomer;
