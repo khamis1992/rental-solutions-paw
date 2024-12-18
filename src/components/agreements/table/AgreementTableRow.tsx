@@ -43,6 +43,18 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const formatDate = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString; // Return original if invalid
+  
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${day}/${month}/${year}`;
+};
+
 export const AgreementTableRow = ({ 
   agreement, 
   onViewContract, 
@@ -70,8 +82,8 @@ export const AgreementTableRow = ({
       <TableCell>
         {`${agreement.vehicle.year} ${agreement.vehicle.make} ${agreement.vehicle.model}`}
       </TableCell>
-      <TableCell>{agreement.start_date}</TableCell>
-      <TableCell>{agreement.end_date}</TableCell>
+      <TableCell>{formatDate(agreement.start_date)}</TableCell>
+      <TableCell>{formatDate(agreement.end_date)}</TableCell>
       <TableCell>
         <Badge
           variant="secondary"
