@@ -26,14 +26,25 @@ const formatDateForPostgres = (dateStr: string): string | null => {
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     const [day, month, year] = parts;
-    // Convert to YYYY-MM-DD format, but swap day and month
+    // Convert to YYYY-MM-DD format, swapping day and month to correct order
     const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    console.log('Raw date parts:', { day, month, year });
-    console.log('Formatted date:', { original: dateStr, formatted: formattedDate });
+    
+    // Validate the date is valid
+    const date = new Date(formattedDate);
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date detected:', { dateStr, formattedDate });
+      return null;
+    }
+    
+    console.log('Date formatting:', {
+      original: dateStr,
+      parts: { day, month, year },
+      formatted: formattedDate
+    });
     return formattedDate;
   }
   
-  console.log('Invalid date format:', dateStr);
+  console.warn('Invalid date format:', dateStr);
   return null;
 };
 
