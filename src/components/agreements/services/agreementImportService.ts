@@ -17,44 +17,6 @@ const normalizeStatus = (status: string): LeaseStatus => {
   return statusMap[status.toLowerCase().trim()] || 'pending_payment';
 };
 
-const formatDate = (dateStr: string): string | null => {
-  if (!dateStr || dateStr.trim() === '') return null;
-  
-  try {
-    // First, clean the input string
-    dateStr = dateStr.trim();
-    
-    // Handle different date formats
-    let day: number, month: number, year: number;
-    
-    // Try DD/MM/YYYY format
-    if (dateStr.includes('/')) {
-      [day, month, year] = dateStr.split('/').map(num => parseInt(num.trim(), 10));
-    } 
-    // Try DD-MM-YYYY format
-    else if (dateStr.includes('-')) {
-      [day, month, year] = dateStr.split('-').map(num => parseInt(num.trim(), 10));
-    } else {
-      return null;
-    }
-    
-    // Validate date parts
-    if (!day || !month || !year) return null;
-    if (month < 1 || month > 12) return null;
-    if (day < 1 || day > 31) return null;
-    
-    // Additional date validation
-    const date = new Date(year, month - 1, day);
-    if (isNaN(date.getTime())) return null;
-    
-    // Format as YYYY-MM-DD for Supabase
-    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-  } catch (error) {
-    console.error('Error parsing date:', dateStr, error);
-    return null;
-  }
-};
-
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const retryOperation = async <T>(
@@ -160,9 +122,9 @@ export const createAgreement = async (agreement: Record<string, string>, custome
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      checkout_date: formatDate(agreement['Check-out Date']),
-      checkin_date: formatDate(agreement['Check-in Date']),
-      return_date: formatDate(agreement['Return Date']),
+      start_date: agreement['Check-out Date'] || null,
+      end_date: agreement['Check-in Date'] || null,
+      return_date: agreement['Return Date'] || null,
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customerId,
       vehicle_id: vehicleId,
