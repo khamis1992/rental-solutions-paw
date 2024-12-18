@@ -48,22 +48,22 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
       title: "Available Vehicles",
       value: vehicleCounts?.available || 0,
       icon: Car,
-      color: "text-green-500",
-      bgColor: "bg-green-50",
+      color: "text-[#9b87f5]",
+      bgColor: "bg-[#9b87f5]/10",
     },
     {
       title: "In Maintenance",
       value: vehicleCounts?.maintenance || 0,
       icon: Wrench,
-      color: "text-orange-500",
-      bgColor: "bg-orange-50",
+      color: "text-[#F97316]",
+      bgColor: "bg-[#F97316]/10",
     },
     {
       title: "Needs Attention",
       value: vehicleCounts?.needsAttention || 0,
       icon: AlertTriangle,
-      color: "text-red-500",
-      bgColor: "bg-red-50",
+      color: "text-[#ea384c]",
+      bgColor: "bg-[#ea384c]/10",
     },
   ];
 
