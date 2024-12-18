@@ -1,5 +1,4 @@
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -15,15 +14,9 @@ interface MaintenanceRecord {
   id: string;
   vehicle_id: string;
   service_type: string;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
   cost: number | null;
   scheduled_date: string;
-  vehicles?: {
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
 }
 
 interface MaintenanceTableRowProps {
@@ -35,7 +28,11 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
-      // Update maintenance status
+      console.log('Updating maintenance status to:', newStatus);
+      console.log('Current record:', record);
+
+      // Start a transaction by using multiple operations
+      // 1. Update maintenance record
       const { error: maintenanceError } = await supabase
         .from('maintenance')
         .update({ 
@@ -44,75 +41,66 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
         })
         .eq('id', record.id);
 
-      if (maintenanceError) throw maintenanceError;
-
-      // If status is completed or cancelled, update vehicle status to available
-      if (newStatus === 'completed' || newStatus === 'cancelled') {
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: 'available' })
-          .eq('id', record.vehicle_id);
-
-        if (vehicleError) throw vehicleError;
-      } else if (newStatus === 'in_progress') {
-        // If status is in_progress, ensure vehicle is marked as in maintenance
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: 'maintenance' })
-          .eq('id', record.vehicle_id);
-
-        if (vehicleError) throw vehicleError;
+      if (maintenanceError) {
+        console.error('Error updating maintenance:', maintenanceError);
+        throw maintenanceError;
       }
 
-      // Invalidate and refetch queries to update UI
+      // 2. Update vehicle status based on maintenance status
+      let newVehicleStatus = 'maintenance';
+      if (newStatus === 'completed' || newStatus === 'cancelled') {
+        newVehicleStatus = 'available';
+      }
+
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({ status: newVehicleStatus })
+        .eq('id', record.vehicle_id);
+
+      if (vehicleError) {
+        console.error('Error updating vehicle:', vehicleError);
+        throw vehicleError;
+      }
+
+      console.log('Vehicle status updated to:', newVehicleStatus);
+
+      // Invalidate and refetch all relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
-        queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
+        queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] }),
+        // Add any other relevant queries that need to be invalidated
       ]);
       
-      toast.success('Status updated successfully');
+      toast.success(`Status updated to ${newStatus}`);
     } catch (error: any) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
+      console.error('Error in handleStatusChange:', error);
+      toast.error(error.message || 'Failed to update status');
     }
   };
 
   return (
-    <TableRow>
-      <TableCell>{record.vehicles?.license_plate || 'N/A'}</TableCell>
-      <TableCell>
-        {record.vehicles 
-          ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
-          : 'Vehicle details unavailable'}
-      </TableCell>
+    <TableRow key={record.id}>
       <TableCell>{record.service_type}</TableCell>
-      <TableCell>
-        {record.status === 'urgent' ? (
-          <Badge variant="destructive">Urgent</Badge>
-        ) : (
-          <Select
-            defaultValue={record.status}
-            onValueChange={handleStatusChange}
-            value={record.status}
-          >
-            <SelectTrigger className="w-[130px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-      </TableCell>
       <TableCell>
         {new Date(record.scheduled_date).toLocaleDateString()}
       </TableCell>
-      <TableCell className="text-right">
-        {record.cost ? `${record.cost} QAR` : '-'}
+      <TableCell>{record.cost ? `${record.cost} QAR` : '-'}</TableCell>
+      <TableCell>
+        <Select
+          value={record.status}
+          onValueChange={handleStatusChange}
+        >
+          <SelectTrigger className="w-[130px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="scheduled">Scheduled</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       </TableCell>
     </TableRow>
   );
