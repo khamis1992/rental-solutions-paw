@@ -8,9 +8,18 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const STATUS_COLORS = {
   accident: "#F97316",      // Bright Orange
@@ -43,11 +52,43 @@ interface VehicleListProps {
 export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleListProps) => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateVehicleStatus = useMutation({
+    mutationFn: async ({ vehicleId, newStatus }: { vehicleId: string; newStatus: string }) => {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ status: newStatus })
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast({
+        title: "Status updated",
+        description: "Vehicle status has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating vehicle status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update vehicle status",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleLicensePlateClick = (vehicleId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click if we click the license plate
+    e.stopPropagation();
     setSelectedVehicleId(vehicleId);
     setShowVehicleDetails(true);
+  };
+
+  const handleStatusChange = (vehicleId: string, newStatus: string) => {
+    updateVehicleStatus.mutate({ vehicleId, newStatus });
   };
 
   if (isLoading) {
@@ -112,14 +153,38 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </TableCell>
               <TableCell>
-                <Badge
-                  className="text-white"
-                  style={{
-                    backgroundColor: STATUS_COLORS[vehicle.status as keyof typeof STATUS_COLORS] || "#CBD5E1"
-                  }}
+                <Select
+                  defaultValue={vehicle.status}
+                  onValueChange={(value) => handleStatusChange(vehicle.id, value)}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {vehicle.status}
-                </Badge>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue>
+                      <Badge
+                        className="text-white"
+                        style={{
+                          backgroundColor: STATUS_COLORS[vehicle.status as keyof typeof STATUS_COLORS] || "#CBD5E1"
+                        }}
+                      >
+                        {vehicle.status}
+                      </Badge>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(STATUS_COLORS).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        <Badge
+                          className="text-white"
+                          style={{
+                            backgroundColor: STATUS_COLORS[status as keyof typeof STATUS_COLORS]
+                          }}
+                        >
+                          {status}
+                        </Badge>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>{vehicle.vin}</TableCell>
               <TableCell>{vehicle.mileage?.toLocaleString() || 0} km</TableCell>
