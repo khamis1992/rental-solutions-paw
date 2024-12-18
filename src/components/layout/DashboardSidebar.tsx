@@ -1,11 +1,9 @@
-import { Home, Car, Users, FileText, Settings, HelpCircle, Wrench, FilePen, BarChart3 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Home, Car, Users, FileText, Settings, HelpCircle, Wrench, FilePen, BarChart3, Gavel } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -18,6 +16,7 @@ const menuItems = [
   { icon: Users, label: "Customers", href: "/customers" },
   { icon: FilePen, label: "Agreements", href: "/agreements" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
+  { icon: Gavel, label: "Legal", href: "/legal" },
   { icon: Settings, label: "Settings", href: "/settings" },
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];

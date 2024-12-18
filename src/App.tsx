@@ -9,6 +9,7 @@ import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import CustomerProfile from "@/pages/CustomerProfile";
+import Legal from "@/pages/Legal";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <Route path="/reports" element={<Reports />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/help" element={<Help />} />
+      <Route path="/legal" element={<Legal />} />
     </Routes>
   );
 }
