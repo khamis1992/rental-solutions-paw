@@ -12,9 +12,11 @@ import { toast } from "sonner";
 const Agreements = () => {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
   const [showAgreementImport, setShowAgreementImport] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAllAgreements = async () => {
     try {
+      setIsDeleting(true);
       console.log('Calling delete-all-agreements function...');
       
       const { data, error } = await supabase.functions.invoke('delete-all-agreements', {
@@ -36,6 +38,8 @@ const Agreements = () => {
     } catch (error) {
       console.error('Error deleting agreements:', error);
       toast.error("Failed to delete agreements");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -59,8 +63,9 @@ const Agreements = () => {
           <Button
             variant="destructive"
             onClick={handleDeleteAllAgreements}
+            disabled={isDeleting}
           >
-            Delete All Agreements
+            {isDeleting ? "Deleting..." : "Delete All Agreements"}
           </Button>
           <CreateAgreementDialog />
         </div>
