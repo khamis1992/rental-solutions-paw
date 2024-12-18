@@ -5,16 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -100,8 +96,8 @@ serve(async (req) => {
             throw new Error(`No active lease found for customer "${customerIdentifier}"`);
           }
 
-          // Convert date from MM-DD-YYYY to ISO format
-          const [month, day, year] = paymentDate.split('-');
+          // Convert date from DD-MM-YYYY to ISO format
+          const [day, month, year] = paymentDate.split('-');
           const isoDate = `${year}-${month}-${day}`;
 
           // Create payment record
