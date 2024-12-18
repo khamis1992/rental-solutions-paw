@@ -25,7 +25,7 @@ export const AgreementStats = () => {
   ).length;
 
   const activeAgreements = agreements.filter(agreement => 
-    agreement.status?.toLowerCase() === 'open'
+    agreement.status?.toLowerCase() === 'active'
   ).length;
 
   const pendingAgreements = agreements.filter(agreement => 
