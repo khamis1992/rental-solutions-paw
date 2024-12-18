@@ -24,14 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CreateUserForm {
   email: string;
   password: string;
   full_name: string;
-  role: "admin" | "staff" | "customer" | "manager";
+  role: "admin" | "staff" | "customer";
 }
 
 export const UserManagementSettings = () => {
@@ -59,8 +59,7 @@ export const UserManagementSettings = () => {
 
       // Role hierarchy validation
       const roleHierarchy = {
-        admin: ["admin", "manager", "staff", "customer"],
-        manager: ["staff", "customer"],
+        admin: ["admin", "staff", "customer"],
         staff: ["customer"],
         customer: [],
       };
@@ -72,24 +71,28 @@ export const UserManagementSettings = () => {
       }
 
       // Create the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: values.full_name,
+        options: {
+          data: {
+            full_name: values.full_name,
+          },
         },
       });
 
       if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error("Failed to create user");
+      }
 
       // Update the user's role in the profiles table
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ 
           role: values.role,
-          id: authData.user.id, // Add the id field here
-          full_name: values.full_name // Also update the full_name in profiles
+          full_name: values.full_name
         })
         .eq("id", authData.user.id);
 
@@ -187,7 +190,6 @@ export const UserManagementSettings = () => {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="staff">Staff</SelectItem>
                       <SelectItem value="customer">Customer</SelectItem>
                     </SelectContent>
