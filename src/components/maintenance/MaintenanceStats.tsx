@@ -21,7 +21,7 @@ export const MaintenanceStats = () => {
         .select("id, status");
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as MaintenanceRecord[];
     },
   });
 
