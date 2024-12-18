@@ -7,6 +7,23 @@ import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 
+type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+
+interface MaintenanceRecord {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  status: MaintenanceStatus;
+  scheduled_date: string;
+  cost: number | null;
+  vehicles: {
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
+
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
 
@@ -58,9 +75,9 @@ export const MaintenanceList = () => {
       
       return data.map(vehicle => ({
         id: vehicle.id,
-        vehicle_id: vehicle.id, // Add vehicle_id for accident records
+        vehicle_id: vehicle.id,
         service_type: "Accident Repair",
-        status: "urgent",
+        status: "urgent" as MaintenanceStatus,
         scheduled_date: new Date().toISOString(),
         cost: null,
         vehicles: {

@@ -4,17 +4,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+
 interface MaintenanceRecord {
   id: string;
-  status: string;
+  status: MaintenanceStatus;
 }
 
-interface MaintenanceStatsProps {
-  records: MaintenanceRecord[];
-  isLoading: boolean;
-}
+export const MaintenanceStats = () => {
+  // Query to get maintenance records
+  const { data: records = [], isLoading: isLoadingMaintenance } = useQuery({
+    queryKey: ["maintenance"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance")
+        .select("id, status");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
-export const MaintenanceStats = ({ records, isLoading }: MaintenanceStatsProps) => {
   // Query to count vehicles in accident status
   const { data: accidentCount = 0, isLoading: isLoadingAccidents } = useQuery({
     queryKey: ["accident-vehicles-count"],
@@ -31,7 +41,7 @@ export const MaintenanceStats = ({ records, isLoading }: MaintenanceStatsProps) 
 
   const stats = {
     active: records.filter((r) => r.status === "in_progress").length,
-    urgent: records.filter((r) => r.status === "urgent").length + accidentCount, // Include accident vehicles in urgent count
+    urgent: records.filter((r) => r.status === "urgent").length + accidentCount,
     scheduled: records.filter((r) => r.status === "scheduled").length,
     completed: records.filter((r) => r.status === "completed").length,
   };
@@ -67,7 +77,7 @@ export const MaintenanceStats = ({ records, isLoading }: MaintenanceStatsProps) 
     },
   ];
 
-  if (isLoading || isLoadingAccidents) {
+  if (isLoadingMaintenance || isLoadingAccidents) {
     return (
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         {[1, 2, 3, 4].map((i) => (

@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters";
 import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
-import { supabase } from "@/integrations/supabase/client";
 
 const Maintenance = () => {
   const [filters, setFilters] = useState({
