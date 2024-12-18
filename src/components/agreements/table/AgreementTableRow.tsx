@@ -56,7 +56,7 @@ export const AgreementTableRow = ({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     // Check if date is invalid (e.g., 1970-01-01) and return original string if it is
-    if (date.getFullYear() === 1970) {
+    if (date.getFullYear() === 1970 || isNaN(date.getTime())) {
       return dateString;
     }
     return date.toLocaleDateString();
