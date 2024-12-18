@@ -26,31 +26,10 @@ const parseDate = (dateStr: string): string | null => {
   if (parts.length === 3) {
     let day: number, month: number, year: number;
 
-    // Check if the first part is a year (YYYY-MM-DD format)
-    if (parts[0].length === 4) {
-      year = parseInt(parts[0], 10);
-      month = parseInt(parts[1], 10);
-      day = parseInt(parts[2], 10);
-    } else {
-      // Try both DD/MM/YYYY and MM/DD/YYYY formats
-      const firstNum = parseInt(parts[0], 10);
-      const secondNum = parseInt(parts[1], 10);
-      year = parseInt(parts[2], 10);
-
-      // If first number is > 12, it must be a day (DD/MM/YYYY)
-      // If second number is > 12, first number must be month (MM/DD/YYYY)
-      if (firstNum > 12) {
-        day = firstNum;
-        month = secondNum;
-      } else if (secondNum > 12) {
-        month = firstNum;
-        day = secondNum;
-      } else {
-        // If both numbers are <= 12, assume MM/DD/YYYY format
-        month = firstNum;
-        day = secondNum;
-      }
-    }
+    // Assume DD/MM/YYYY format
+    day = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10);
+    year = parseInt(parts[2], 10);
 
     // Validate the parsed numbers
     if (isNaN(day) || isNaN(month) || isNaN(year)) {
@@ -65,7 +44,7 @@ const parseDate = (dateStr: string): string | null => {
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
   
-  throw new Error(`Invalid date format: ${dateStr}. Please use DD/MM/YYYY, MM/DD/YYYY, or YYYY-MM-DD format.`);
+  throw new Error(`Invalid date format: ${dateStr}. Please use DD/MM/YYYY format.`);
 };
 
 export const validateRowData = (rowData: any, headers: string[]) => {
@@ -101,14 +80,24 @@ export const validateRowData = (rowData: any, headers: string[]) => {
 };
 
 export const extractRowData = (currentRowValues: string[], headers: string[]) => {
+  const checkoutDate = parseDate(currentRowValues[headers.indexOf('Check-out Date')]?.trim());
+  const checkinDate = parseDate(currentRowValues[headers.indexOf('Check-in Date')]?.trim());
+  const returnDate = parseDate(currentRowValues[headers.indexOf('Return Date')]?.trim());
+
+  console.log('Parsed dates:', {
+    checkoutDate,
+    checkinDate,
+    returnDate
+  });
+
   return {
     agreementNumber: currentRowValues[headers.indexOf('Agreement Number')]?.trim(),
     licenseNo: currentRowValues[headers.indexOf('License No')]?.trim(),
     fullName: currentRowValues[headers.indexOf('full_name')]?.trim(),
     licenseNumber: currentRowValues[headers.indexOf('License Number')]?.trim(),
-    checkoutDate: parseDate(currentRowValues[headers.indexOf('Check-out Date')]?.trim()),
-    checkinDate: parseDate(currentRowValues[headers.indexOf('Check-in Date')]?.trim()),
-    returnDate: parseDate(currentRowValues[headers.indexOf('Return Date')]?.trim()),
+    checkoutDate,
+    checkinDate,
+    returnDate,
     status: currentRowValues[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
   };
 };
