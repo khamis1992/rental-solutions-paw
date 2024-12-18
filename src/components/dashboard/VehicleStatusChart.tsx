@@ -10,7 +10,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 
-const COLORS = {
+const STATUS_COLORS = {
   accident: "#2DD4BF",
   available: "#4F7BE4",
   maintenance: "#4FD1C5",
@@ -19,17 +19,22 @@ const COLORS = {
   stolen: "#EF4444",
   reserve: "#8B5CF6",
   on_rent: "#1E40AF"
-};
+} as const;
 
-type VehicleStatus = keyof typeof COLORS;
+type VehicleStatus = keyof typeof STATUS_COLORS;
 
-const config = {
-  colors: COLORS,
+// Convert the colors object to the format expected by ChartConfig
+const config = Object.entries(STATUS_COLORS).reduce((acc, [key, value]) => ({
+  ...acc,
+  [key]: {
+    color: value,
+  },
+}), {
   theme: {
     light: "#E2E8F0",
     dark: "#334155",
   },
-};
+});
 
 export const VehicleStatusChart = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -58,7 +63,7 @@ export const VehicleStatusChart = () => {
       const data = Object.entries(counts).map(([status, count]) => ({
         name: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         value: count,
-        color: COLORS[status as VehicleStatus] || "#CBD5E1"
+        color: STATUS_COLORS[status as VehicleStatus] || "#CBD5E1"
       }));
 
       console.log("Vehicle counts:", data);
