@@ -26,12 +26,12 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
-      // First, let's check if we have any leases at all without status filter
+      // First, let's do a direct count of all leases
       const { count, error: countError } = await supabase
         .from('leases')
         .select('*', { count: 'exact', head: true });
         
-      console.log("Total number of leases:", count);
+      console.log("Total number of leases in database:", count);
       
       if (countError) {
         console.error("Error counting leases:", countError);
@@ -39,7 +39,19 @@ export const useAgreements = () => {
         throw countError;
       }
 
-      // Now fetch the full data without status filter
+      // Now fetch all lease data with a simpler query first
+      const { data: rawLeases, error: rawError } = await supabase
+        .from('leases')
+        .select('*');
+
+      if (rawError) {
+        console.error("Error fetching raw leases:", rawError);
+        throw rawError;
+      }
+
+      console.log("Raw leases data (simplified query):", rawLeases);
+
+      // Now fetch the full data with relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -49,6 +61,8 @@ export const useAgreements = () => {
           status,
           total_amount,
           agreement_number,
+          customer_id,
+          vehicle_id,
           profiles!leases_customer_id_fkey (
             id,
             full_name
@@ -62,23 +76,23 @@ export const useAgreements = () => {
         `);
 
       if (error) {
-        console.error("Error fetching agreements:", error);
+        console.error("Error fetching agreements with relationships:", error);
         toast.error("Failed to fetch agreements");
         throw error;
       }
 
-      console.log("Raw agreements data:", data);
+      console.log("Full agreements data before transformation:", data);
       
       const transformedData = data?.map((lease: any) => {
         console.log("Processing lease:", lease);
-        return {
+        const transformed = {
           id: lease.id,
           customer: {
-            id: lease.profiles?.id || '',
+            id: lease.profiles?.id || lease.customer_id || '',
             full_name: lease.profiles?.full_name || 'Unknown Customer',
           },
           vehicle: {
-            id: lease.vehicles?.id || '',
+            id: lease.vehicles?.id || lease.vehicle_id || '',
             make: lease.vehicles?.make || '',
             model: lease.vehicles?.model || '',
             year: lease.vehicles?.year || '',
@@ -88,9 +102,11 @@ export const useAgreements = () => {
           status: lease.status || 'pending',
           total_amount: lease.total_amount || 0,
         };
+        console.log("Transformed lease:", transformed);
+        return transformed;
       }) || [];
 
-      console.log("Transformed agreements data:", transformedData);
+      console.log("Final transformed agreements data:", transformedData);
       return transformedData;
     },
   });
