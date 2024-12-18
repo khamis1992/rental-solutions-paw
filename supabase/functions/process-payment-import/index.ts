@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,7 +26,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Download the file from storage
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -37,7 +35,6 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
-    // Convert the file to text and parse CSV
     const text = await fileData.text();
     const rows = text.split('\n');
     const headers = rows[0].split(',').map(h => h.trim());
@@ -47,13 +44,11 @@ serve(async (req) => {
     let errorCount = 0;
     let errors = [];
 
-    // Update import log status to processing
     await supabase
       .from('import_logs')
       .update({ status: 'processing' })
       .eq('file_name', fileName);
 
-    // Process each row
     for (let i = 1; i < rows.length; i++) {
       if (!rows[i].trim()) continue;
 
@@ -62,7 +57,6 @@ serve(async (req) => {
         try {
           const customerName = values[headers.indexOf('Customer Name')];
           const amount = parseFloat(values[headers.indexOf('Amount')]);
-          const licensePlate = values[headers.indexOf('License Plate')];
           const paymentDate = values[headers.indexOf('Payment_Date')];
           const paymentMethod = values[headers.indexOf('Payment_Method')];
           const status = values[headers.indexOf('status')];
@@ -76,24 +70,25 @@ serve(async (req) => {
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
-            .eq('full_name', customerName.trim())
+            .ilike('full_name', customerName.trim())
             .single();
 
           if (customerError || !customerData) {
             throw new Error(`Customer "${customerName}" not found in the system`);
           }
 
-          // Find active lease for customer and vehicle
-          const { data: activeLease } = await supabase
+          // Find active lease for customer
+          const { data: activeLease, error: leaseError } = await supabase
             .from('leases')
-            .select('id, vehicle:vehicles(license_plate)')
+            .select('id')
             .eq('customer_id', customerData.id)
-            .eq('status', 'active')
-            .eq('vehicles.license_plate', licensePlate)
+            .in('status', ['active', 'pending_payment'])
+            .order('created_at', { ascending: false })
+            .limit(1)
             .single();
 
-          if (!activeLease) {
-            throw new Error(`No active lease found for customer "${customerName}" with vehicle "${licensePlate}"`);
+          if (leaseError || !activeLease) {
+            throw new Error(`No active lease found for customer "${customerName}"`);
           }
 
           // Convert date from DD-MM-YYYY to ISO format
@@ -130,7 +125,6 @@ serve(async (req) => {
       }
     }
 
-    // Update import log with final status
     await supabase
       .from('import_logs')
       .update({
