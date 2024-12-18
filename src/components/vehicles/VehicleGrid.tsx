@@ -80,7 +80,7 @@ export const VehicleGrid = ({ vehicles, isLoading }: VehicleGridProps) => {
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </h3>
               <p 
-                className="text-sm text-muted-foreground cursor-pointer hover:underline"
+                className="text-sm text-muted-foreground cursor-pointer hover:text-primary hover:underline"
                 onClick={() => setSelectedVehicleId(vehicle.id)}
               >
                 License: {vehicle.license_plate}
