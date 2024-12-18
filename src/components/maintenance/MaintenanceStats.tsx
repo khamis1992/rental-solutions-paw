@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Wrench, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MaintenanceRecord {
   id: string;
@@ -13,9 +15,23 @@ interface MaintenanceStatsProps {
 }
 
 export const MaintenanceStats = ({ records, isLoading }: MaintenanceStatsProps) => {
+  // Query to count vehicles in accident status
+  const { data: accidentCount = 0, isLoading: isLoadingAccidents } = useQuery({
+    queryKey: ["accident-vehicles-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("vehicles")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "accident");
+
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
   const stats = {
     active: records.filter((r) => r.status === "in_progress").length,
-    urgent: records.filter((r) => r.status === "urgent").length,
+    urgent: records.filter((r) => r.status === "urgent").length + accidentCount, // Include accident vehicles in urgent count
     scheduled: records.filter((r) => r.status === "scheduled").length,
     completed: records.filter((r) => r.status === "completed").length,
   };
@@ -51,7 +67,7 @@ export const MaintenanceStats = ({ records, isLoading }: MaintenanceStatsProps) 
     },
   ];
 
-  if (isLoading) {
+  if (isLoading || isLoadingAccidents) {
     return (
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         {[1, 2, 3, 4].map((i) => (

@@ -9,6 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Vehicle {
   make: string;
@@ -31,7 +33,37 @@ interface MaintenanceListProps {
 }
 
 export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) => {
-  if (isLoading) {
+  // Query to get vehicles in accident status
+  const { data: accidentVehicles = [], isLoading: isLoadingAccidents } = useQuery({
+    queryKey: ["accident-vehicles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("id, make, model, year, status")
+        .eq("status", "accident");
+
+      if (error) throw error;
+      
+      // Transform vehicle data to match maintenance record format
+      return data.map(vehicle => ({
+        id: vehicle.id,
+        service_type: "Accident Repair",
+        status: "urgent",
+        scheduled_date: new Date().toISOString(),
+        cost: null,
+        vehicles: {
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year
+        }
+      }));
+    }
+  });
+
+  // Combine regular maintenance records with accident vehicles
+  const allRecords = [...records, ...accidentVehicles];
+
+  if (isLoading || isLoadingAccidents) {
     return (
       <div className="rounded-md border">
         <Table>
@@ -83,7 +115,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {records.map((record) => (
+          {allRecords.map((record) => (
             <TableRow key={record.id}>
               <TableCell className="font-medium">
                 {record.vehicles.year} {record.vehicles.make} {record.vehicles.model}
