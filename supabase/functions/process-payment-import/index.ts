@@ -6,13 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Max-Age': '86400',
-}
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
-      status: 204,
-      headers: corsHeaders
+      headers: corsHeaders,
+      status: 204
     });
   }
 
@@ -69,8 +70,6 @@ serve(async (req) => {
           const paymentMethod = values[headers.indexOf('payment_method')];
           const status = values[headers.indexOf('status')];
           const paymentNumber = values[headers.indexOf('Payment_Number')];
-          const paymentType = values[headers.indexOf('Payment_Type')];
-          const paymentDescription = values[headers.indexOf('Payment_Description')];
 
           if (!customerIdentifier) {
             throw new Error('Customer identifier (full name) is missing');
@@ -84,43 +83,25 @@ serve(async (req) => {
             .single();
 
           if (customerError || !customerData) {
-            throw new Error(`Customer "${customerIdentifier}" not found in the system. Please make sure the customer exists before importing their payments.`);
+            throw new Error(`Customer "${customerIdentifier}" not found in the system`);
           }
 
-          // First try to find an active lease
-          let { data: activeLease } = await supabase
+          // Find active lease for customer
+          const { data: activeLease } = await supabase
             .from('leases')
-            .select('id, status')
+            .select('id')
             .eq('customer_id', customerData.id)
             .eq('status', 'active')
             .order('start_date', { ascending: false })
             .limit(1)
             .single();
 
-          // If no active lease is found, try to find the most recent lease of any status
           if (!activeLease) {
-            console.log(`No active lease found for ${customerIdentifier}, checking for any lease...`);
-            const { data: anyLease, error: leaseError } = await supabase
-              .from('leases')
-              .select('id, status')
-              .eq('customer_id', customerData.id)
-              .order('start_date', { ascending: false })
-              .limit(1)
-              .single();
-
-            if (!anyLease) {
-              throw new Error(`No lease found for customer "${customerIdentifier}". Please create a lease for this customer before importing their payments.`);
-            } else {
-              console.log(`Found ${anyLease.status} lease for customer: ${customerIdentifier}`);
-              activeLease = anyLease;
-            }
+            throw new Error(`No active lease found for customer "${customerIdentifier}"`);
           }
 
           // Convert date from MM-DD-YYYY to ISO format
           const [month, day, year] = paymentDate.split('-');
-          if (!month || !day || !year) {
-            throw new Error(`Invalid date format in row ${i + 1}. Expected: MM-DD-YYYY`);
-          }
           const isoDate = `${year}-${month}-${day}`;
 
           // Create payment record
@@ -179,6 +160,7 @@ serve(async (req) => {
         } 
       }
     );
+
   } catch (error) {
     console.error('Import process failed:', error);
     return new Response(
