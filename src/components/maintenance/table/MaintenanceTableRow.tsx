@@ -35,7 +35,10 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
-      // Update maintenance status
+      console.log("Current record:", record);
+      console.log("Updating maintenance status to:", newStatus);
+
+      // Update maintenance record
       const { error: maintenanceError } = await supabase
         .from('maintenance')
         .update({ 
@@ -46,34 +49,30 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (maintenanceError) throw maintenanceError;
 
-      // If status is completed or cancelled, update vehicle status to available
-      if (newStatus === 'completed' || newStatus === 'cancelled') {
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: 'available' })
-          .eq('id', record.vehicle_id);
+      // Update vehicle status based on maintenance status
+      const newVehicleStatus = (newStatus === 'completed' || newStatus === 'cancelled') 
+        ? 'available' 
+        : 'maintenance';
 
-        if (vehicleError) throw vehicleError;
-      } else if (newStatus === 'in_progress') {
-        // If status is in_progress, ensure vehicle is marked as in maintenance
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: 'maintenance' })
-          .eq('id', record.vehicle_id);
+      console.log("Updating vehicle status to:", newVehicleStatus);
+      
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({ status: newVehicleStatus })
+        .eq('id', record.vehicle_id);
 
-        if (vehicleError) throw vehicleError;
-      }
+      if (vehicleError) throw vehicleError;
 
-      // Invalidate and refetch queries to update UI
+      // Invalidate and refetch queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
       ]);
-      
+
       toast.success('Status updated successfully');
     } catch (error: any) {
-      console.error('Error updating status:', error);
+      console.error("Error in handleStatusChange:", error);
       toast.error('Failed to update status');
     }
   };
@@ -92,9 +91,8 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
           <Badge variant="destructive">Urgent</Badge>
         ) : (
           <Select
-            defaultValue={record.status}
-            onValueChange={handleStatusChange}
             value={record.status}
+            onValueChange={handleStatusChange}
           >
             <SelectTrigger className="w-[130px]">
               <SelectValue />
