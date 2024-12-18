@@ -1,30 +1,58 @@
 import { FileCheck, FileClock, FileX, FileText } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AgreementStats = () => {
+  const { data: agreements = [] } = useQuery({
+    queryKey: ['agreements-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leases')
+        .select('status');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const closedAgreements = agreements.filter(agreement => 
+    agreement.status === 'closed'
+  ).length;
+
+  const activeAgreements = agreements.filter(agreement => 
+    agreement.status === 'open'
+  ).length;
+
+  const pendingAgreements = agreements.filter(agreement => 
+    agreement.status === 'pending_payment' || agreement.status === 'pending_deposit'
+  ).length;
+
+  const totalAgreements = agreements.length;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatsCard
         title="Active Agreements"
-        value="89"
+        value={activeAgreements.toString()}
         icon={FileCheck}
         description="Currently active rentals"
       />
       <StatsCard
         title="Pending Agreements"
-        value="12"
+        value={pendingAgreements.toString()}
         icon={FileClock}
         description="Awaiting processing"
       />
       <StatsCard
         title="Closed Agreements"
-        value="5"
+        value={closedAgreements.toString()}
         icon={FileX}
-        description="Need attention"
+        description="Completed rentals"
       />
       <StatsCard
         title="Total Agreements"
-        value="432"
+        value={totalAgreements.toString()}
         icon={FileText}
         description="All time"
       />
