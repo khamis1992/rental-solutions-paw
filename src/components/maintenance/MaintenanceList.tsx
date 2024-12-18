@@ -80,8 +80,8 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Vehicle</TableHead>
               <TableHead>License Plate</TableHead>
+              <TableHead>Vehicle</TableHead>
               <TableHead>Service Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Scheduled Date</TableHead>
@@ -92,10 +92,10 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
             {[...Array(5)].map((_, i) => (
               <TableRow key={i}>
                 <TableCell>
-                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[100px]" />
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
+                  <Skeleton className="h-4 w-[250px]" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-[100px]" />
@@ -122,8 +122,8 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Vehicle</TableHead>
             <TableHead>License Plate</TableHead>
+            <TableHead>Vehicle</TableHead>
             <TableHead>Service Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Scheduled Date</TableHead>
@@ -133,10 +133,10 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
         <TableBody>
           {allRecords.map((record) => (
             <TableRow key={record.id}>
+              <TableCell>{record.vehicles.license_plate}</TableCell>
               <TableCell className="font-medium">
                 {record.vehicles.year} {record.vehicles.make} {record.vehicles.model}
               </TableCell>
-              <TableCell>{record.vehicles.license_plate}</TableCell>
               <TableCell>{record.service_type}</TableCell>
               <TableCell>
                 <Badge
