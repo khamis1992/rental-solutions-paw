@@ -1,72 +1,43 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from '../_shared/cors.ts';
+import { corsHeaders } from './corsHeaders.ts';
+import { parseDate } from './dateUtils.ts';
+import { normalizeStatus } from './statusUtils.ts';
+import type { ImportRequest, AgreementData, BatchError } from './types.ts';
 
 console.log("Loading agreement import function...");
-
-const parseDate = (dateStr: string): string | null => {
-  if (!dateStr || dateStr.trim() === '') return null;
-  
-  try {
-    // Remove any potential whitespace
-    dateStr = dateStr.trim();
-    
-    // Try to parse DD/MM/YYYY format
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      const day = parts[0].padStart(2, '0');
-      const month = parts[1].padStart(2, '0');
-      const year = parts[2];
-      return `${year}-${month}-${day}`;
-    }
-  } catch (error) {
-    console.error('Error parsing date:', dateStr, error);
-  }
-  
-  return null;
-};
-
-const normalizeStatus = (status: string): string => {
-  if (!status) return 'pending';
-  
-  const statusMap: Record<string, string> = {
-    'open': 'open',
-    'active': 'active',
-    'closed': 'closed',
-    'cancelled': 'cancelled',
-    'pending': 'pending',
-    'pending_payment': 'pending'
-  };
-
-  const normalizedStatus = status.toLowerCase().trim();
-  return statusMap[normalizedStatus] || 'pending';
-};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Max-Age': '86400',
-      },
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204 
     });
   }
 
   try {
     console.log('Starting agreement import process...');
     
-    // Get and validate the request body
-    const requestData = await req.json();
-    console.log('Request data:', requestData);
+    // Parse request body with error handling
+    let requestData: ImportRequest;
+    try {
+      const rawBody = await req.text();
+      console.log('Raw request body:', rawBody);
+      requestData = JSON.parse(rawBody);
+    } catch (error) {
+      console.error('Error parsing request body:', error);
+      throw new Error('Invalid JSON in request body');
+    }
+
+    console.log('Parsed request body:', requestData);
     
     const { fileName } = requestData;
     if (!fileName) {
       throw new Error('fileName is required');
     }
 
-    console.log('Processing file:', fileName);
+    console.log('Extracted fileName:', fileName);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -77,7 +48,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Download the file from storage
+    // Download and process the file
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -88,19 +59,17 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
-    // Convert the file to text and parse CSV
     const text = await fileData.text();
     const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
     const headers = rows[0].split(',').map(h => h.trim());
-    console.log('CSV Headers:', headers);
-
+    
     let successCount = 0;
     let errorCount = 0;
-    const errors = [];
+    const errors: BatchError[] = [];
     const batchSize = 50;
-    const agreements = [];
+    const agreements: AgreementData[] = [];
 
-    // Get first available vehicle for testing
+    // Get default vehicle for testing
     const { data: vehicle } = await supabase
       .from('vehicles')
       .select('id')
@@ -116,7 +85,6 @@ serve(async (req) => {
         console.log(`Processing row ${i}:`, rows[i]);
         const values = rows[i].split(',').map(v => v.trim());
         
-        // Extract data from CSV
         const agreementNumber = values[headers.indexOf('Agreement Number')]?.trim() || `AGR${Date.now()}`;
         const licenseNo = values[headers.indexOf('License No')]?.trim();
         const fullName = values[headers.indexOf('full_name')]?.trim();
@@ -138,7 +106,7 @@ serve(async (req) => {
           if (existingCustomer) {
             customerId = existingCustomer.id;
           } else {
-            const { data: newCustomer, error: customerError } = await supabase
+            const { data: newCustomer } = await supabase
               .from('profiles')
               .insert({
                 full_name: fullName || `Unknown Customer ${Date.now()}`,
@@ -146,8 +114,7 @@ serve(async (req) => {
               })
               .select()
               .single();
-
-            if (customerError) throw customerError;
+            
             customerId = newCustomer?.id;
           }
         } catch (error) {
@@ -198,15 +165,13 @@ serve(async (req) => {
             successCount += agreements.length;
           }
           
-          // Clear the batch array
           agreements.length = 0;
         }
       } catch (error) {
         console.error(`Error processing row ${i}:`, error);
         errors.push({
-          row: i,
-          error: error.message,
-          data: rows[i]
+          rows: i.toString(),
+          error: error.message
         });
         errorCount++;
       }

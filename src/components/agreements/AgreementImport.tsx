@@ -67,7 +67,7 @@ export const AgreementImport = () => {
       
       const { data: functionData, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
-          body: { fileName },
+          body: JSON.stringify({ fileName }),
           headers: {
             'Content-Type': 'application/json',
           }
