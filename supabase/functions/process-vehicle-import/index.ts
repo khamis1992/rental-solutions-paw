@@ -67,7 +67,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Missing required fields: ${missingFields.join(', ')}` 
+          error: `Missing required fields: ${missingFields.join(', ')}. The CSV must include these column headers: make, model, year, license_plate, vin` 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
