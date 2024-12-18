@@ -10,15 +10,6 @@ import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import CustomerProfile from "@/pages/CustomerProfile";
 import Legal from "@/pages/Legal";
-import { VehicleDetails } from "@/components/vehicles/VehicleDetails";
-import { useParams } from "react-router-dom";
-
-// Wrapper component to handle URL parameters
-const VehicleDetailsWrapper = () => {
-  const { id } = useParams();
-  if (!id) return <div>Vehicle ID not found</div>;
-  return <VehicleDetails vehicleId={id} />;
-};
 
 function App() {
   return (
@@ -28,7 +19,6 @@ function App() {
       <Route path="/customers" element={<Customers />} />
       <Route path="/customers/:id" element={<CustomerProfile />} />
       <Route path="/vehicles" element={<Vehicles />} />
-      <Route path="/vehicles/:id" element={<VehicleDetailsWrapper />} />
       <Route path="/agreements" element={<Agreements />} />
       <Route path="/maintenance" element={<Maintenance />} />
       <Route path="/reports" element={<Reports />} />
