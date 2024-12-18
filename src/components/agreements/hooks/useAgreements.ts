@@ -26,7 +26,7 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
-      // First, let's check if we have any leases at all
+      // First, let's check if we have any leases at all without status filter
       const { count, error: countError } = await supabase
         .from('leases')
         .select('*', { count: 'exact', head: true });
@@ -39,7 +39,7 @@ export const useAgreements = () => {
         throw countError;
       }
 
-      // Now fetch the full data
+      // Now fetch the full data without status filter
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -48,6 +48,7 @@ export const useAgreements = () => {
           checkin_date,
           status,
           total_amount,
+          agreement_number,
           profiles!leases_customer_id_fkey (
             id,
             full_name
