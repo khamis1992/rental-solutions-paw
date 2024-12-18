@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Download } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -124,40 +124,19 @@ export const ImportVehicles = () => {
     }
   };
 
-  const downloadTemplate = () => {
-    const headers = ['make', 'model', 'year', 'license_plate', 'vin', 'color', 'mileage', 'status'].join(',');
-    const sampleData = 'Toyota,Camry,2023,ABC123,1HGCM82633A123456,Black,5000,available';
-    const csvContent = `${headers}\n${sampleData}`;
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'vehicle_import_template.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
-
   return (
-    <div className="flex gap-2">
-      <Button onClick={downloadTemplate} variant="outline">
-        <Download className="mr-2 h-4 w-4" />
-        Download Template
-      </Button>
-      <Button disabled={isUploading} asChild>
-        <label className="cursor-pointer">
-          <Upload className="mr-2 h-4 w-4" />
-          {isUploading ? "Importing..." : "Import CSV"}
-          <input
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
-        </label>
-      </Button>
-    </div>
+    <Button disabled={isUploading} asChild>
+      <label className="cursor-pointer">
+        <Upload className="mr-2 h-4 w-4" />
+        {isUploading ? "Importing..." : "Import CSV"}
+        <input
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={isUploading}
+        />
+      </label>
+    </Button>
   );
 };
