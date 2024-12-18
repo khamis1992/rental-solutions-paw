@@ -19,12 +19,9 @@ import {
 } from "@/components/ui/table";
 import { Pencil, Trash, Plus, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-interface VehicleStatus {
-  id: string;
-  name: string;
-  is_active: boolean;
-}
+type VehicleStatus = Database["public"]["Tables"]["vehicle_statuses"]["Row"];
 
 export const VehicleStatusSettings = () => {
   const [statuses, setStatuses] = useState<VehicleStatus[]>([]);
@@ -48,7 +45,7 @@ export const VehicleStatusSettings = () => {
       return;
     }
 
-    setStatuses(data || []);
+    setStatuses(data);
   };
 
   const addStatus = async () => {
@@ -182,7 +179,7 @@ export const VehicleStatusSettings = () => {
                 <TableCell>
                   <Button
                     variant={status.is_active ? "default" : "secondary"}
-                    onClick={() => toggleStatus(status.id, status.is_active)}
+                    onClick={() => toggleStatus(status.id, status.is_active || false)}
                   >
                     {status.is_active ? "Active" : "Inactive"}
                   </Button>

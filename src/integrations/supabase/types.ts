@@ -489,7 +489,7 @@ export type Database = {
           actual_payment_date?: string | null
           amount_due: number
           amount_paid?: number | null
-          created_at?: string
+          created_at: string
           early_payment_discount?: number | null
           id?: string
           late_fee_applied?: number | null
@@ -498,7 +498,7 @@ export type Database = {
           payment_id: string
           remaining_balance: number
           status?: string
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           actual_payment_date?: string | null
@@ -548,7 +548,7 @@ export type Database = {
           amount: number
           created_at?: string
           due_date: string
-          id?: string
+          id: string
           last_reminder_sent?: string | null
           lease_id?: string | null
           reminder_count?: number | null
@@ -609,7 +609,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
-          lease_id?: string
+          lease_id: string
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
@@ -657,7 +657,7 @@ export type Database = {
           lease_id: string
           status?: string | null
           type: string
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           amount?: number
@@ -665,7 +665,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          lease_id?: string
+          lease_id: string
           status?: string | null
           type?: string
           updated_at?: string
@@ -737,7 +737,7 @@ export type Database = {
           created_at?: string
           driver_license?: string | null
           full_name?: string | null
-          id?: string
+          id: string
           id_document_url?: string | null
           license_document_url?: string | null
           phone_number?: string | null
@@ -809,14 +809,14 @@ export type Database = {
           assessment_date?: string
           created_at?: string
           customer_id: string
-          id?: string
+          id: string
           late_payment_count?: number
           missed_payment_count?: number
           notes?: string | null
           payment_score: number
           risk_level: string
           total_penalties?: number
-          updated_at?: string
+          updated_at: string
         }
         Update: {
           assessment_date?: string
@@ -829,7 +829,7 @@ export type Database = {
           payment_score?: number
           risk_level?: string
           total_penalties?: number
-          updated_at?: string
+          updated_at: string
         }
         Relationships: [
           {
@@ -868,7 +868,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
-          lease_id?: string
+          lease_id: string
           notes?: string | null
           refund_amount?: number | null
           refund_date?: string | null
@@ -885,6 +885,30 @@ export type Database = {
           },
         ]
       }
+      vehicle_statuses: {
+        Row: {
+          id: string;
+          name: string;
+          is_active: boolean | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          is_active?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          is_active?: boolean | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       vehicles: {
         Row: {
           color: string | null
@@ -1003,6 +1027,14 @@ export type Database = {
         | "accident"
         | "reserve"
         | "stolen"
+      vehicle_status_enum:
+        | "maintenance"
+        | "available"
+        | "rented"
+        | "police_station"
+        | "accident"
+        | "reserve"
+        | "stolen"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1019,7 +1051,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
@@ -1031,10 +1063,10 @@ export type Tables<
         PublicSchema["Views"])
     ? (PublicSchema["Tables"] &
         PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+      Row: infer R
+    }
+    ? R
+    : never
     : never
 
 export type TablesInsert<
@@ -1052,10 +1084,10 @@ export type TablesInsert<
     : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+      Insert: infer I
+    }
+    ? I
+    : never
     : never
 
 export type TablesUpdate<
