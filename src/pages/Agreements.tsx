@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
@@ -12,42 +12,32 @@ import { toast } from "sonner";
 const Agreements = () => {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
   const [showAgreementImport, setShowAgreementImport] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const deleteAllAgreements = async () => {
-      if (isDeleting) return; // Prevent multiple simultaneous deletion attempts
+  const handleDeleteAllAgreements = async () => {
+    try {
+      console.log('Calling delete-all-agreements function...');
       
-      try {
-        setIsDeleting(true);
-        console.log('Calling delete-all-agreements function...');
-        
-        const { data, error } = await supabase.functions.invoke('delete-all-agreements', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (error) {
-          console.error('Error deleting agreements:', error);
-          toast.error("Failed to delete agreements");
-          return;
-        }
-        
-        console.log('Delete operation response:', data);
-        toast.success("All agreements have been deleted successfully");
-        window.location.reload();
-      } catch (error) {
+      const { data, error } = await supabase.functions.invoke('delete-all-agreements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (error) {
         console.error('Error deleting agreements:', error);
         toast.error("Failed to delete agreements");
-      } finally {
-        setIsDeleting(false);
+        return;
       }
-    };
-
-    deleteAllAgreements();
-  }, []);
+      
+      console.log('Delete operation response:', data);
+      toast.success("All agreements have been deleted successfully");
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting agreements:', error);
+      toast.error("Failed to delete agreements");
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -65,6 +55,12 @@ const Agreements = () => {
             onClick={() => setIsPaymentHistoryOpen(true)}
           >
             Import Payments
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAllAgreements}
+          >
+            Delete All Agreements
           </Button>
           <CreateAgreementDialog />
         </div>

@@ -14,10 +14,10 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting deletion process...')
 
-    // Delete records from dependent tables first in sequence
+    // Delete records from dependent tables in reverse order of dependencies
     const tables = [
       'payment_history',
-      'payment_schedules',
+      'payment_schedules', 
       'payments',
       'penalties',
       'applied_discounts',
@@ -28,42 +28,45 @@ Deno.serve(async (req) => {
 
     for (const table of tables) {
       console.log(`Deleting records from ${table}...`)
-      const { error } = await supabase.from(table).delete().neq('id', '')
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .neq('id', '')
       
       if (error) {
         console.error(`Error deleting from ${table}:`, error)
-        throw error
+        throw new Error(`Failed to delete from ${table}: ${error.message}`)
       }
       
       console.log(`Successfully deleted records from ${table}`)
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'All agreements and related data deleted successfully' 
+      JSON.stringify({
+        success: true,
+        message: 'All agreements and related data deleted successfully'
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
+      {
+        headers: {
+          ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 200 
+        status: 200
       }
     )
   } catch (error) {
     console.error('Error in delete-all-agreements function:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
+      JSON.stringify({
+        success: false,
+        error: error.message
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
+      {
+        headers: {
+          ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 400 
+        status: 500
       }
     )
   }
