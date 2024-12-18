@@ -59,6 +59,8 @@ export const DashboardSidebar = () => {
           return;
         }
 
+        console.log('User profile:', profile); // Debug log
+
         if (profile?.role === 'admin') {
           setMenuItems([...baseMenuItems, settingsMenuItem]);
         } else {
