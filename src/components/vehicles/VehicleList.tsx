@@ -28,6 +28,30 @@ interface VehicleListProps {
 }
 
 export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleListProps) => {
+  // Helper function to determine badge variant based on status
+  const getBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'default';
+      case 'rented':
+        return 'secondary';
+      case 'maintenance':
+      case 'accident':
+      case 'police_station':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+  // Helper function to format status display
+  const formatStatus = (status: string) => {
+    if (status === 'police_station') {
+      return 'Police Station';
+    }
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   if (isLoading) {
     return (
       <div className="rounded-md border">
@@ -91,16 +115,8 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={
-                    vehicle.status === "available"
-                      ? "default"
-                      : vehicle.status === "rented"
-                      ? "secondary"
-                      : "destructive"
-                  }
-                >
-                  {vehicle.status}
+                <Badge variant={getBadgeVariant(vehicle.status)}>
+                  {formatStatus(vehicle.status)}
                 </Badge>
               </TableCell>
               <TableCell>{vehicle.license_plate}</TableCell>
