@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
+
+type LeaseStatus = Database["public"]["Enums"]["lease_status"];
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -25,9 +28,9 @@ export const AgreementImport = () => {
     });
   };
 
-  const normalizeStatus = (status: string): string => {
+  const normalizeStatus = (status: string): LeaseStatus => {
     if (!status) return 'pending';
-    const statusMap: Record<string, string> = {
+    const statusMap: Record<string, LeaseStatus> = {
       'open': 'open',
       'active': 'active',
       'closed': 'closed',
@@ -89,15 +92,19 @@ export const AgreementImport = () => {
           if (existingCustomer) {
             customerId = existingCustomer.id;
           } else {
-            const { data: newCustomer } = await supabase
+            // Generate a new UUID for the customer
+            const newCustomerId = crypto.randomUUID();
+            const { data: newCustomer, error: customerError } = await supabase
               .from('profiles')
               .insert({
+                id: newCustomerId,
                 full_name: agreement['full_name'] || `Unknown Customer ${Date.now()}`,
                 role: 'customer'
               })
               .select()
               .single();
             
+            if (customerError) throw customerError;
             customerId = newCustomer?.id || null;
           }
 
@@ -109,7 +116,13 @@ export const AgreementImport = () => {
             .limit(1)
             .single();
 
+          if (!customerId || !vehicle?.id) {
+            console.error('Missing customer ID or vehicle ID');
+            continue;
+          }
+
           // Create agreement
+          const status = normalizeStatus(agreement['STATUS']);
           await supabase
             .from('leases')
             .insert({
@@ -119,9 +132,9 @@ export const AgreementImport = () => {
               checkout_date: parseDate(agreement['Check-out Date']),
               checkin_date: parseDate(agreement['Check-in Date']),
               return_date: parseDate(agreement['Return Date']),
-              status: normalizeStatus(agreement['STATUS']),
+              status: status,
               customer_id: customerId,
-              vehicle_id: vehicle?.id,
+              vehicle_id: vehicle.id,
               total_amount: 0,
               initial_mileage: 0
             });
