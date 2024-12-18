@@ -36,35 +36,24 @@ export const getOrCreateCustomer = async () => {
       console.log('Using existing default customer:', existingCustomer);
       return existingCustomer;
     }
-    
-    // Create a default auth user first
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: `default_customer_${Date.now()}@example.com`,
-      password: uuidv4(),
-      email_confirm: true
-    });
 
-    if (authError) {
-      console.error('Error creating auth user:', authError);
-      throw authError;
-    }
-
-    // Create a new default customer using the auth user's ID
-    const { data: newCustomer, error: profileError } = await supabase
+    // If no default customer exists, create one with a UUID
+    const newCustomerId = uuidv4();
+    const { data: newCustomer, error: insertError } = await supabase
       .from('profiles')
       .insert({
-        id: authData.user.id,
+        id: newCustomerId,
         full_name: 'Default Customer',
         role: 'customer'
       })
       .select()
       .single();
-      
-    if (profileError) {
-      console.error('Error creating default customer:', profileError);
-      throw profileError;
+
+    if (insertError) {
+      console.error('Error creating default customer:', insertError);
+      throw insertError;
     }
-    
+
     console.log('Created new default customer:', newCustomer);
     return newCustomer;
   } catch (error) {
