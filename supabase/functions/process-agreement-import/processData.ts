@@ -9,7 +9,7 @@ export const processImportData = async (
 ) => {
   let successCount = 0;
   let errorCount = 0;
-  let errors: any[] = [];
+  const errors: any[] = [];
 
   // Get first available vehicle for testing
   const { data: vehicle } = await supabase
@@ -48,21 +48,24 @@ export const processImportData = async (
         throw new Error(`Customer "${rowData.fullName}" not found`);
       }
 
-      // Create lease record with the test vehicle
+      // Upsert lease record with the test vehicle
       const { error: leaseError } = await supabase
         .from('leases')
-        .insert({
-          customer_id: customerData.id,
-          vehicle_id: vehicle.id, // Use test vehicle ID
+        .upsert({
           agreement_number: rowData.agreementNumber,
+          customer_id: customerData.id,
+          vehicle_id: vehicle.id,
           license_no: rowData.licenseNo,
           license_number: rowData.licenseNumber,
-          checkout_date: rowData.checkoutDate,
-          checkin_date: rowData.checkinDate,
+          start_date: rowData.checkoutDate,
+          end_date: rowData.checkinDate,
           return_date: rowData.returnDate,
           status: mappedStatus,
           total_amount: 0, // Set a default value
           initial_mileage: 0, // Set a default value
+        }, {
+          onConflict: 'agreement_number',
+          ignoreDuplicates: false
         });
 
       if (leaseError) {
@@ -70,9 +73,9 @@ export const processImportData = async (
       }
 
       successCount++;
-      console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
+      console.log(`Successfully imported/updated agreement: ${rowData.agreementNumber}`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error processing row ${i + 1}:`, error);
       errorCount++;
       
