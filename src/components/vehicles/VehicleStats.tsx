@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Car, Wrench, AlertTriangle, Police, CarCrash, ShieldAlert, CarTaxiFront } from "lucide-react";
+import { Car, Wrench, AlertTriangle, Shield, AlertCircle, ShieldAlert, CarTaxiFront } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,14 +74,14 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
     {
       title: "Police Station",
       value: vehicleCounts?.policeStation || 0,
-      icon: Police,
+      icon: Shield,
       color: "text-[#3b82f6]",
       bgColor: "bg-[#3b82f6]/10",
     },
     {
       title: "Accident",
       value: vehicleCounts?.accident || 0,
-      icon: CarCrash,
+      icon: AlertCircle,
       color: "text-[#dc2626]",
       bgColor: "bg-[#dc2626]/10",
     },
