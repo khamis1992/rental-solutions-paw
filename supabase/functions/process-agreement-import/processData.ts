@@ -19,85 +19,74 @@ export const processImportData = async (
     .limit(1)
     .single();
 
-  if (!vehicle) {
-    throw new Error('No available vehicle found for import testing');
-  }
+  const defaultVehicleId = vehicle?.id;
 
   for (let i = 1; i < rows.length; i++) {
     if (!rows[i].trim()) continue;
 
-    let currentRowValues: string[] = [];
     try {
-      currentRowValues = rows[i].split(',').map(v => v.trim());
-      
-      if (currentRowValues.length !== headers.length) {
-        throw new Error(`Row has incorrect number of columns. Expected ${headers.length}, got ${currentRowValues.length}`);
-      }
-
+      const currentRowValues = rows[i].split(',').map(v => v.trim());
       const rowData = extractRowData(currentRowValues, headers);
-      const mappedStatus = validateRowData(rowData, headers);
-
-      // Get customer ID from full name
-      const { data: customerData, error: customerError } = await supabase
+      
+      // Get customer ID or create a placeholder
+      let customerId;
+      const { data: customerData } = await supabase
         .from('profiles')
         .select('id')
         .eq('full_name', rowData.fullName)
         .single();
 
-      if (customerError || !customerData) {
-        throw new Error(`Customer "${rowData.fullName}" not found`);
+      if (customerData) {
+        customerId = customerData.id;
+      } else {
+        // Create a placeholder profile
+        const { data: newCustomer } = await supabase
+          .from('profiles')
+          .insert({
+            full_name: rowData.fullName,
+            role: 'customer'
+          })
+          .select()
+          .single();
+        customerId = newCustomer?.id;
       }
 
-      // Upsert lease record with the test vehicle
+      // Insert lease record with available data
       const { error: leaseError } = await supabase
         .from('leases')
         .upsert({
           agreement_number: rowData.agreementNumber,
-          customer_id: customerData.id,
-          vehicle_id: vehicle.id,
+          customer_id: customerId,
+          vehicle_id: defaultVehicleId,
           license_no: rowData.licenseNo,
           license_number: rowData.licenseNumber,
           start_date: rowData.checkoutDate,
           end_date: rowData.checkinDate,
           return_date: rowData.returnDate,
-          status: mappedStatus,
-          total_amount: 0, // Set a default value
-          initial_mileage: 0, // Set a default value
+          status: rowData.status || 'pending',
+          total_amount: 0,
+          initial_mileage: 0,
         }, {
           onConflict: 'agreement_number',
           ignoreDuplicates: false
         });
 
       if (leaseError) {
+        console.error(`Row ${i + 1} insert error:`, leaseError);
         throw leaseError;
       }
 
       successCount++;
-      console.log(`Successfully imported/updated agreement: ${rowData.agreementNumber}`);
+      console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
 
     } catch (error: any) {
       console.error(`Error processing row ${i + 1}:`, error);
       errorCount++;
-      
-      const errorData = {
+      errors.push({
         row: i + 1,
         error: error.message,
-        data: currentRowValues.length ? Object.fromEntries(headers.map((h, idx) => [h, currentRowValues[idx]])) : null
-      };
-      errors.push(errorData);
-
-      await supabase
-        .from('agreement_import_errors')
-        .insert({
-          import_log_id: (await supabase
-            .from('import_logs')
-            .select('id')
-            .eq('file_name', fileName)
-            .single()).data?.id,
-          row_number: i + 1,
-          error_message: error.message,
-          row_data: errorData.data
-        });
+        data: rows[i]
+      });
     }
   }
 
