@@ -9,7 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
 
 const STATUS_COLORS = {
   accident: "#F97316",      // Bright Orange
@@ -40,11 +41,13 @@ interface VehicleListProps {
 }
 
 export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleListProps) => {
-  const navigate = useNavigate();
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [showVehicleDetails, setShowVehicleDetails] = useState(false);
 
   const handleLicensePlateClick = (vehicleId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click if we click the license plate
-    navigate(`/vehicles/${vehicleId}`);
+    setSelectedVehicleId(vehicleId);
+    setShowVehicleDetails(true);
   };
 
   if (isLoading) {
@@ -124,6 +127,14 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
           ))}
         </TableBody>
       </Table>
+
+      {selectedVehicleId && (
+        <VehicleDetailsDialog
+          vehicleId={selectedVehicleId}
+          open={showVehicleDetails}
+          onOpenChange={setShowVehicleDetails}
+        />
+      )}
     </div>
   );
 };
