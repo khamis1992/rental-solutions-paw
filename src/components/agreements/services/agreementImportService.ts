@@ -58,8 +58,8 @@ const formatDateForPostgres = (dateStr: string): string | null => {
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
     console.log('Raw CSV data for dates:', {
-      checkoutDate: agreement['Check-out Date'],
-      checkinDate: agreement['Check-in Date'],
+      startDate: agreement['Start Date'] || agreement['Check-out Date'],
+      endDate: agreement['End Date'] || agreement['Check-in Date'],
       returnDate: agreement['Return Date']
     });
 
@@ -67,8 +67,8 @@ export const createAgreement = async (agreement: Record<string, string>, custome
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      start_date: formatDateForPostgres(agreement['Check-out Date']),
-      end_date: formatDateForPostgres(agreement['Check-in Date']),
+      start_date: formatDateForPostgres(agreement['Start Date'] || agreement['Check-out Date']),
+      end_date: formatDateForPostgres(agreement['End Date'] || agreement['Check-in Date']),
       return_date: formatDateForPostgres(agreement['Return Date']),
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customerId,
