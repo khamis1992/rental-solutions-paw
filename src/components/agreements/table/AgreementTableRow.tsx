@@ -17,6 +17,9 @@ export const AgreementTableRow = ({
   onPrintContract,
   onAgreementClick,
 }: AgreementTableRowProps) => {
+  // Type assertion to ensure status matches badge variants
+  const badgeVariant = agreement.status as "active" | "pending_payment" | "pending_deposit" | "closed";
+
   return (
     <TableRow>
       <TableCell>{agreement.agreement_number}</TableCell>
@@ -26,7 +29,7 @@ export const AgreementTableRow = ({
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
       <TableCell>
         <Badge
-          variant={agreement.status}
+          variant={badgeVariant}
           className="capitalize"
         >
           {agreement.status}
