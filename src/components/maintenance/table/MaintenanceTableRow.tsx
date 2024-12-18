@@ -18,7 +18,7 @@ interface MaintenanceRecord {
   status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
   cost: number | null;
   scheduled_date: string;
-  vehicles: {
+  vehicles?: {
     make: string;
     model: string;
     year: number;
@@ -55,9 +55,11 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
   return (
     <TableRow>
-      <TableCell>{record.vehicles.license_plate}</TableCell>
+      <TableCell>{record.vehicles?.license_plate || 'N/A'}</TableCell>
       <TableCell>
-        {record.vehicles.year} {record.vehicles.make} {record.vehicles.model}
+        {record.vehicles 
+          ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
+          : 'Vehicle details unavailable'}
       </TableCell>
       <TableCell>{record.service_type}</TableCell>
       <TableCell>
