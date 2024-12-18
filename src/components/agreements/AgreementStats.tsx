@@ -15,26 +15,27 @@ export const AgreementStats = () => {
         .select('status');
 
       if (error) throw error;
-      console.log('Fetched agreements:', data); // Add this log to debug
+      console.log('Fetched agreements:', data);
       return data;
     },
   });
 
   const closedAgreements = agreements.filter(agreement => 
-    agreement.status === 'closed'
+    agreement.status?.toLowerCase() === 'closed'
   ).length;
 
   const activeAgreements = agreements.filter(agreement => 
-    agreement.status === 'active'
+    agreement.status?.toLowerCase() === 'open'
   ).length;
 
   const pendingAgreements = agreements.filter(agreement => 
-    agreement.status === 'pending'
+    agreement.status?.toLowerCase() === 'pending_deposit' || 
+    agreement.status?.toLowerCase() === 'pending_payment'
   ).length;
 
   const totalAgreements = agreements.length;
 
-  console.log('Agreement counts:', { // Add these logs to debug
+  console.log('Agreement counts:', {
     closed: closedAgreements,
     active: activeAgreements,
     pending: pendingAgreements,
