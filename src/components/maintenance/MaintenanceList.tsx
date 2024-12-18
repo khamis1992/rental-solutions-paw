@@ -16,6 +16,7 @@ interface Vehicle {
   make: string;
   model: string;
   year: number;
+  license_plate: string;
 }
 
 interface MaintenanceRecord {
@@ -48,7 +49,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, make, model, year, status")
+        .select("id, make, model, year, license_plate, status")
         .eq("status", "accident");
 
       if (error) throw error;
@@ -63,7 +64,8 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
         vehicles: {
           make: vehicle.make,
           model: vehicle.model,
-          year: vehicle.year
+          year: vehicle.year,
+          license_plate: vehicle.license_plate
         }
       }));
     }
@@ -79,6 +81,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
           <TableHeader>
             <TableRow>
               <TableHead>Vehicle</TableHead>
+              <TableHead>License Plate</TableHead>
               <TableHead>Service Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Scheduled Date</TableHead>
@@ -90,6 +93,9 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
               <TableRow key={i}>
                 <TableCell>
                   <Skeleton className="h-4 w-[250px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px]" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-4 w-[100px]" />
@@ -117,6 +123,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
         <TableHeader>
           <TableRow>
             <TableHead>Vehicle</TableHead>
+            <TableHead>License Plate</TableHead>
             <TableHead>Service Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Scheduled Date</TableHead>
@@ -129,6 +136,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
               <TableCell className="font-medium">
                 {record.vehicles.year} {record.vehicles.make} {record.vehicles.model}
               </TableCell>
+              <TableCell>{record.vehicles.license_plate}</TableCell>
               <TableCell>{record.service_type}</TableCell>
               <TableCell>
                 <Badge
