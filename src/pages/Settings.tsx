@@ -7,8 +7,42 @@ import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { UserManagementSettings } from "@/components/settings/UserManagementSettings";
 import { VehicleStatusSettings } from "@/components/settings/VehicleStatusSettings";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const Settings = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role !== "admin") {
+        toast({
+          title: "Access Denied",
+          description: "Only administrators can access settings",
+          variant: "destructive",
+        });
+        navigate("/");
+      }
+    };
+
+    checkAdminAccess();
+  }, [navigate, toast]);
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6">

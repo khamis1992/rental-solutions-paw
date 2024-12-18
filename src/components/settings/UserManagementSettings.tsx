@@ -31,7 +31,7 @@ interface CreateUserForm {
   email: string;
   password: string;
   full_name: string;
-  role: "admin" | "staff" | "customer" | "manager";
+  role: "admin" | "staff" | "customer";
 }
 
 export const UserManagementSettings = () => {
@@ -59,8 +59,7 @@ export const UserManagementSettings = () => {
 
       // Role hierarchy validation
       const roleHierarchy = {
-        admin: ["admin", "manager", "staff", "customer"],
-        manager: ["staff", "customer"],
+        admin: ["admin", "staff", "customer"],
         staff: ["customer"],
         customer: [],
       };
@@ -88,8 +87,8 @@ export const UserManagementSettings = () => {
         .from("profiles")
         .update({ 
           role: values.role,
-          id: authData.user.id, // Add the id field here
-          full_name: values.full_name // Also update the full_name in profiles
+          id: authData.user.id,
+          full_name: values.full_name
         })
         .eq("id", authData.user.id);
 
@@ -187,7 +186,6 @@ export const UserManagementSettings = () => {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="staff">Staff</SelectItem>
                       <SelectItem value="customer">Customer</SelectItem>
                     </SelectContent>
