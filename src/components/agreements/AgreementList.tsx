@@ -9,6 +9,7 @@ import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 import { AgreementTableHeader } from "./table/AgreementTableHeader";
 import { AgreementTableRow } from "./table/AgreementTableRow";
+import { formatCurrency } from "@/lib/utils";
 
 interface Agreement {
   id: string;
