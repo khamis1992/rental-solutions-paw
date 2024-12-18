@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { processPaymentRow } from './paymentUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,88 +65,25 @@ serve(async (req) => {
       console.log(`Processing row ${i}:`, values);
       
       if (values.length === headers.length) {
-        try {
-          const customerName = values[headers.indexOf('Customer Name')];
-          const amount = parseFloat(values[headers.indexOf('Amount')]);
-          const paymentDate = values[headers.indexOf('Payment_Date')];
-          const paymentMethodValue = values[headers.indexOf('Payment_Method')];
-          const status = values[headers.indexOf('status')];
-          const paymentNumber = values[headers.indexOf('Payment_Number')];
-
-          if (!customerName) {
-            throw new Error('Customer Name is missing');
-          }
-
-          // Look up customer in profiles
-          console.log('Looking up customer:', customerName);
-          const { data: customerData, error: customerError } = await supabase
-            .from('profiles')
-            .select('id')
-            .ilike('full_name', customerName.trim())
-            .single();
-
-          if (customerError || !customerData) {
-            console.log(`Customer "${customerName}" not found, skipping payment`);
-            skippedCustomers.push({
-              customerName,
-              amount,
-              paymentDate,
-              reason: 'Customer not found in system'
-            });
-            continue;
-          }
-
-          console.log('Found customer:', customerData.id);
-          const { data: activeLease, error: leaseError } = await supabase
-            .from('leases')
-            .select('id')
-            .eq('customer_id', customerData.id)
-            .in('status', ['active', 'pending_payment'])
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (leaseError || !activeLease) {
-            console.log(`No active lease found for customer "${customerName}", skipping payment`);
-            skippedCustomers.push({
-              customerName,
-              amount,
-              paymentDate,
-              reason: 'No active lease found'
-            });
-            continue;
-          }
-
-          console.log('Found lease:', activeLease.id);
-          const [day, month, year] = paymentDate.split('-');
-          const isoDate = `${year}-${month}-${day}`;
-
-          console.log('Creating payment record...');
-          const { error: paymentError } = await supabase
-            .from('payments')
-            .insert({
-              lease_id: activeLease.id,
-              amount,
-              status,
-              payment_date: new Date(isoDate).toISOString(),
-              payment_method: paymentMethodValue,
-              transaction_id: paymentNumber,
-            });
-
-          if (paymentError) {
-            throw paymentError;
-          }
-
+        const result = await processPaymentRow(supabase, headers, values);
+        
+        if (result.success) {
           successCount++;
-          console.log(`Successfully imported payment for customer: ${customerName}`);
-
-        } catch (error) {
-          console.error(`Error processing row ${i + 1}:`, error);
-          errorCount++;
-          errors.push({
-            row: i + 1,
-            error: error.message
-          });
+        } else {
+          if (result.error?.includes('No active lease found')) {
+            skippedCustomers.push({
+              customerName: values[headers.indexOf('Customer Name')],
+              amount: values[headers.indexOf('Amount')],
+              paymentDate: values[headers.indexOf('Payment_Date')],
+              reason: result.error
+            });
+          } else {
+            errorCount++;
+            errors.push({
+              row: i + 1,
+              error: result.error
+            });
+          }
         }
       }
     }
