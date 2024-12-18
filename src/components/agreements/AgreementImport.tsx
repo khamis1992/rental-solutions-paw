@@ -4,12 +4,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -27,15 +25,15 @@ export const AgreementImport = () => {
     }
 
     setIsUploading(true);
-    setProgress(0);
+    let pollInterval: number;
 
     try {
-      console.log('Starting file upload process...', file);
+      console.log('Starting file upload process...');
       const fileExt = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
       console.log('Uploading file to storage:', fileName);
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("imports")
         .upload(fileName, file);
 
@@ -44,10 +42,7 @@ export const AgreementImport = () => {
         throw uploadError;
       }
 
-      console.log('File uploaded successfully:', uploadData);
-      setProgress(20);
-
-      console.log('Creating import log...');
+      console.log('File uploaded successfully, creating import log...');
       const { error: logError } = await supabase
         .from("import_logs")
         .insert({
@@ -61,10 +56,8 @@ export const AgreementImport = () => {
         throw logError;
       }
 
-      setProgress(40);
-      console.log('Starting import process via Edge Function...', { fileName });
-      
-      const { data: functionData, error: functionError } = await supabase.functions
+      console.log('Starting import process via Edge Function...');
+      const { error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
           body: { fileName },
           headers: {
@@ -77,21 +70,52 @@ export const AgreementImport = () => {
         throw functionError;
       }
 
-      console.log('Edge Function response:', functionData);
-      setProgress(100);
-      
-      toast({
-        title: "Success",
-        description: "Agreements imported successfully",
-      });
-      
-      await queryClient.invalidateQueries({ queryKey: ["agreements"] });
-      await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
-      
-      setIsUploading(false);
+      // Poll for import completion
+      pollInterval = window.setInterval(async () => {
+        console.log('Checking import status...');
+        const { data: importLog } = await supabase
+          .from("import_logs")
+          .select("status, records_processed")
+          .eq("file_name", fileName)
+          .single();
+
+        if (importLog?.status === "completed") {
+          window.clearInterval(pollInterval);
+          toast({
+            title: "Success",
+            description: `Successfully imported ${importLog.records_processed} agreements`,
+          });
+          
+          // Force refresh the queries
+          await queryClient.invalidateQueries({ queryKey: ["agreements"] });
+          
+          setIsUploading(false);
+        } else if (importLog?.status === "error") {
+          window.clearInterval(pollInterval);
+          throw new Error("Import failed");
+        }
+      }, 1000);
+
+      // Set a timeout to stop polling after 15 seconds
+      setTimeout(() => {
+        if (pollInterval) {
+          window.clearInterval(pollInterval);
+        }
+        if (isUploading) {
+          setIsUploading(false);
+          toast({
+            title: "Error",
+            description: "Import timed out. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, 15000);
 
     } catch (error: any) {
       console.error('Import process error:', error);
+      if (pollInterval) {
+        window.clearInterval(pollInterval);
+      }
       toast({
         title: "Error",
         description: error.message || "Failed to import agreements",
@@ -134,12 +158,9 @@ export const AgreementImport = () => {
         </Button>
       </div>
       {isUploading && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Importing agreements...
-          </div>
-          <Progress value={progress} className="h-2" />
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Importing agreements...
         </div>
       )}
     </div>

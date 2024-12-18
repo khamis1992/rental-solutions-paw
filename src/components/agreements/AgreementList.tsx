@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Table, TableBody } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,9 +9,24 @@ import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
 import { AgreementTableHeader } from "./table/AgreementTableHeader";
 import { AgreementTableRow } from "./table/AgreementTableRow";
-import { formatCurrency } from "@/lib/utils";
-import { useAgreements } from "./hooks/useAgreements";
-import type { Agreement } from "./hooks/useAgreements";
+
+interface Agreement {
+  id: string;
+  customer: {
+    id: string;
+    full_name: string;
+  };
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+  };
+  start_date: string;
+  end_date: string;
+  status: string;
+  total_amount: number;
+}
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -18,7 +34,45 @@ export const AgreementList = () => {
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
 
-  const { data: agreements = [], isLoading, error } = useAgreements();
+  const { data: agreements = [], isLoading } = useQuery({
+    queryKey: ['agreements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leases')
+        .select(`
+          id,
+          start_date,
+          end_date,
+          status,
+          total_amount,
+          profiles:customer_id (id, full_name),
+          vehicles (id, make, model, year)
+        `);
+
+      if (error) {
+        toast.error("Failed to fetch agreements");
+        throw error;
+      }
+
+      return data.map((lease: any) => ({
+        id: lease.id,
+        customer: {
+          id: lease.profiles.id,
+          full_name: lease.profiles.full_name,
+        },
+        vehicle: {
+          id: lease.vehicles.id,
+          make: lease.vehicles.make,
+          model: lease.vehicles.model,
+          year: lease.vehicles.year,
+        },
+        start_date: lease.start_date,
+        end_date: lease.end_date,
+        status: lease.status,
+        total_amount: lease.total_amount,
+      }));
+    },
+  });
 
   const handleViewContract = async (agreementId: string) => {
     try {
@@ -120,15 +174,7 @@ export const AgreementList = () => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-4">Loading agreements...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-4 text-red-500">Error loading agreements: {error.message}</div>;
-  }
-
-  if (!agreements || agreements.length === 0) {
-    return <div className="text-center py-4">No agreements found. Try importing some agreements first.</div>;
+    return <div>Loading...</div>;
   }
 
   return (

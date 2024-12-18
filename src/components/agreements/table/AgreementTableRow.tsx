@@ -2,7 +2,10 @@ import { Link } from "react-router-dom";
 import { Eye, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TableCell, TableRow } from "@/components/ui/table";
+import {
+  TableCell,
+  TableRow,
+} from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 
 interface Agreement {
@@ -31,30 +34,16 @@ interface Props {
 }
 
 const getStatusColor = (status: string) => {
-  const normalizedStatus = status.toLowerCase();
-  switch (normalizedStatus) {
-    case "open":
+  switch (status) {
+    case "active":
       return "bg-green-500/10 text-green-500 hover:bg-green-500/20";
-    case "pending_deposit":
-    case "pending_payment":
+    case "pending":
       return "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20";
-    case "closed":
+    case "expired":
       return "bg-red-500/10 text-red-500 hover:bg-red-500/20";
     default:
       return "bg-gray-500/10 text-gray-500 hover:bg-gray-500/20";
   }
-};
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString; // Return original if invalid
-  
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  
-  return `${day}/${month}/${year}`;
 };
 
 export const AgreementTableRow = ({ 
@@ -63,6 +52,16 @@ export const AgreementTableRow = ({
   onPrintContract,
   onAgreementClick 
 }: Props) => {
+  // Function to format dates properly
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    // Check if date is invalid (e.g., 1970-01-01) and return original string if it is
+    if (date.getFullYear() === 1970) {
+      return dateString;
+    }
+    return date.toLocaleDateString();
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -91,7 +90,7 @@ export const AgreementTableRow = ({
           variant="secondary"
           className={getStatusColor(agreement.status)}
         >
-          {agreement.status}
+          {agreement.status.charAt(0).toUpperCase() + agreement.status.slice(1)}
         </Badge>
       </TableCell>
       <TableCell>{formatCurrency(agreement.total_amount)}</TableCell>
