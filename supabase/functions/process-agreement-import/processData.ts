@@ -25,10 +25,11 @@ export const processImportData = async (
     if (!rows[i].trim()) continue;
 
     try {
+      console.log(`Processing row ${i}:`, rows[i]);
       const currentRowValues = rows[i].split(',').map(v => v.trim());
       const rowData = extractRowData(currentRowValues, headers);
       
-      // Get customer ID or create a placeholder
+      // Get or create customer profile
       let customerId;
       const { data: customerData } = await supabase
         .from('profiles')
@@ -40,7 +41,7 @@ export const processImportData = async (
         customerId = customerData.id;
       } else {
         // Create a placeholder profile
-        const { data: newCustomer } = await supabase
+        const { data: newCustomer, error: customerError } = await supabase
           .from('profiles')
           .insert({
             full_name: rowData.fullName,
@@ -48,8 +49,21 @@ export const processImportData = async (
           })
           .select()
           .single();
+
+        if (customerError) {
+          console.error('Error creating customer:', customerError);
+          throw customerError;
+        }
+        
         customerId = newCustomer?.id;
       }
+
+      console.log('Customer ID:', customerId);
+      console.log('Parsed dates:', {
+        checkout: rowData.checkoutDate,
+        checkin: rowData.checkinDate,
+        return: rowData.returnDate
+      });
 
       // Insert lease record with available data
       const { error: leaseError } = await supabase
@@ -60,8 +74,8 @@ export const processImportData = async (
           vehicle_id: defaultVehicleId,
           license_no: rowData.licenseNo,
           license_number: rowData.licenseNumber,
-          start_date: rowData.checkoutDate,
-          end_date: rowData.checkinDate,
+          checkout_date: rowData.checkoutDate,
+          checkin_date: rowData.checkinDate,
           return_date: rowData.returnDate,
           status: rowData.status || 'pending',
           total_amount: 0,
