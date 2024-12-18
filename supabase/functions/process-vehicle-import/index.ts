@@ -6,6 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const VALID_STATUSES = [
+  'maintenance',
+  'available',
+  'rented',
+  'police_station',
+  'accident',
+  'reserve',
+  'stolen'
+];
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -109,6 +119,11 @@ serve(async (req) => {
         // Validate year format
         if (isNaN(vehicleData.year) || vehicleData.year < 1900 || vehicleData.year > new Date().getFullYear() + 1) {
           throw new Error(`Invalid year value: ${values[headers.indexOf('year')]}`)
+        }
+
+        // Validate status if provided
+        if (headers.includes('status') && !VALID_STATUSES.includes(vehicleData.status.toLowerCase())) {
+          throw new Error(`Invalid status value: ${vehicleData.status}. Valid values are: ${VALID_STATUSES.join(', ')}`)
         }
 
         console.log('Inserting vehicle:', vehicleData)

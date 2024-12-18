@@ -4,6 +4,16 @@ import { Upload } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const VALID_STATUSES = [
+  'maintenance',
+  'available',
+  'rented',
+  'police_station',
+  'accident',
+  'reserve',
+  'stolen'
+];
+
 export const ImportVehicles = () => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);

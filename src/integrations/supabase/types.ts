@@ -994,7 +994,15 @@ export type Database = {
         | "bank_transfer"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "admin" | "staff" | "customer" | "manager"
-      vehicle_status: "available" | "rented" | "maintenance" | "retired"
+      vehicle_status:
+        | "available"
+        | "rented"
+        | "maintenance"
+        | "retired"
+        | "police_station"
+        | "accident"
+        | "reserve"
+        | "stolen"
     }
     CompositeTypes: {
       [_ in never]: never
