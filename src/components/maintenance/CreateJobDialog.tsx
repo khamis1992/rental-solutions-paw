@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
@@ -20,23 +22,30 @@ export function CreateJobDialog() {
     cost: "",
   });
 
+  // Fetch available vehicles
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ["vehicles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("id, make, model, license_plate");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validate vehicle_id format (must be a valid UUID)
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(formData.vehicle_id)) {
-        throw new Error("Invalid vehicle ID format. Please use a valid UUID.");
-      }
-
       const { error } = await supabase
         .from("maintenance")
         .insert([{
           ...formData,
           cost: formData.cost ? parseFloat(formData.cost) : null,
-          status: "scheduled", // Set default status
+          status: "scheduled",
         }]);
 
       if (error) throw error;
@@ -72,14 +81,23 @@ export function CreateJobDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="vehicle_id">Vehicle ID</Label>
-            <Input
-              id="vehicle_id"
+            <Label htmlFor="vehicle_id">Vehicle</Label>
+            <Select
               value={formData.vehicle_id}
-              onChange={(e) => setFormData({ ...formData, vehicle_id: e.target.value })}
+              onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
               required
-              placeholder="Enter valid UUID"
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a vehicle" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="service_type">Service Type</Label>
