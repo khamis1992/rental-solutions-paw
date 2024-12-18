@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PaymentHistoryTable } from "./payments/PaymentHistoryTable";
 import { PaymentSummary } from "./payments/PaymentSummary";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -111,7 +112,7 @@ export function PaymentHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Payment History</DialogTitle>
           <DialogDescription>
@@ -119,11 +120,13 @@ export function PaymentHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <PaymentImport />
-          <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
-          <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
-        </div>
+        <ScrollArea className="flex-1">
+          <div className="space-y-6 p-1">
+            <PaymentImport />
+            <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
+            <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
