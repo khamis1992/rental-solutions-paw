@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Car, Wrench, AlertTriangle } from "lucide-react";
+import { Car, Wrench, AlertTriangle, Police, CarCrash, ShieldAlert, CarTaxiFront } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,6 @@ interface VehicleStatsProps {
 }
 
 export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
-  // Fetch vehicle counts directly from Supabase
   const { data: vehicleCounts, isLoading: isLoadingCounts } = useQuery({
     queryKey: ["vehicle-counts"],
     queryFn: async () => {
@@ -36,6 +35,10 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
         available: vehicles.filter(v => v.status === 'available').length,
         maintenance: vehicles.filter(v => v.status === 'maintenance').length,
         needsAttention: vehicles.filter(v => ['accident', 'police_station'].includes(v.status)).length,
+        policeStation: vehicles.filter(v => v.status === 'police_station').length,
+        accident: vehicles.filter(v => v.status === 'accident').length,
+        reserve: vehicles.filter(v => v.status === 'reserve').length,
+        stolen: vehicles.filter(v => v.status === 'stolen').length,
       };
 
       console.log("Calculated counts:", counts);
@@ -43,7 +46,7 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
     },
   });
 
-  const statCards = [
+  const mainStats = [
     {
       title: "Available Vehicles",
       value: vehicleCounts?.available || 0,
@@ -67,40 +70,104 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
     },
   ];
 
+  const detailedStats = [
+    {
+      title: "Police Station",
+      value: vehicleCounts?.policeStation || 0,
+      icon: Police,
+      color: "text-[#3b82f6]",
+      bgColor: "bg-[#3b82f6]/10",
+    },
+    {
+      title: "Accident",
+      value: vehicleCounts?.accident || 0,
+      icon: CarCrash,
+      color: "text-[#dc2626]",
+      bgColor: "bg-[#dc2626]/10",
+    },
+    {
+      title: "Reserve",
+      value: vehicleCounts?.reserve || 0,
+      icon: CarTaxiFront,
+      color: "text-[#059669]",
+      bgColor: "bg-[#059669]/10",
+    },
+    {
+      title: "Stolen",
+      value: vehicleCounts?.stolen || 0,
+      icon: ShieldAlert,
+      color: "text-[#7c3aed]",
+      bgColor: "bg-[#7c3aed]/10",
+    },
+  ];
+
   if (isLoadingCounts) {
     return (
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <Skeleton className="h-4 w-24 mb-2" />
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 mb-6">
-      {statCards.map((stat) => (
-        <Card key={stat.title}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {stat.title}
-                </p>
-                <p className="text-2xl font-bold">{stat.value}</p>
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        {mainStats.map((stat) => (
+          <Card key={stat.title}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    {stat.title}
+                  </p>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
               </div>
-              <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-4">
+        {detailedStats.map((stat) => (
+          <Card key={stat.title}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    {stat.title}
+                  </p>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
