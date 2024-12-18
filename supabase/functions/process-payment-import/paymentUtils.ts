@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 export interface PaymentData {
   customerName: string;
@@ -10,7 +10,7 @@ export interface PaymentData {
 }
 
 export const findCustomerWithActiveLease = async (
-  supabase: SupabaseClient,
+  supabase: any,
   customerName: string
 ): Promise<{ customerId: string; leaseId: string } | null> => {
   // Look up customer in profiles
@@ -47,7 +47,7 @@ export const findCustomerWithActiveLease = async (
 };
 
 export const createPaymentRecord = async (
-  supabase: SupabaseClient,
+  supabase: any,
   leaseId: string,
   paymentData: PaymentData
 ) => {
@@ -71,7 +71,7 @@ export const createPaymentRecord = async (
 };
 
 export const processPaymentRow = async (
-  supabase: SupabaseClient,
+  supabase: any,
   headers: string[],
   values: string[]
 ): Promise<{ success: boolean; error?: string }> => {
