@@ -24,7 +24,22 @@ export const useAgreements = () => {
   return useQuery({
     queryKey: ['agreements'],
     queryFn: async () => {
-      console.log("Fetching agreements...");
+      console.log("Starting to fetch agreements...");
+      
+      // First, let's check if we have any leases at all
+      const { count, error: countError } = await supabase
+        .from('leases')
+        .select('*', { count: 'exact', head: true });
+        
+      console.log("Total number of leases:", count);
+      
+      if (countError) {
+        console.error("Error counting leases:", countError);
+        toast.error("Failed to count agreements");
+        throw countError;
+      }
+
+      // Now fetch the full data
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -33,11 +48,11 @@ export const useAgreements = () => {
           checkin_date,
           status,
           total_amount,
-          customer:profiles!leases_customer_id_fkey (
+          profiles!leases_customer_id_fkey (
             id,
             full_name
           ),
-          vehicle:vehicles!leases_vehicle_id_fkey (
+          vehicles!leases_vehicle_id_fkey (
             id,
             make,
             model,
@@ -53,23 +68,29 @@ export const useAgreements = () => {
 
       console.log("Raw agreements data:", data);
       
-      return data?.map((lease: any) => ({
-        id: lease.id,
-        customer: {
-          id: lease.customer?.id || '',
-          full_name: lease.customer?.full_name || 'Unknown Customer',
-        },
-        vehicle: {
-          id: lease.vehicle?.id || '',
-          make: lease.vehicle?.make || '',
-          model: lease.vehicle?.model || '',
-          year: lease.vehicle?.year || '',
-        },
-        start_date: lease.checkout_date || '',
-        end_date: lease.checkin_date || '',
-        status: lease.status || 'pending',
-        total_amount: lease.total_amount || 0,
-      })) || [];
+      const transformedData = data?.map((lease: any) => {
+        console.log("Processing lease:", lease);
+        return {
+          id: lease.id,
+          customer: {
+            id: lease.profiles?.id || '',
+            full_name: lease.profiles?.full_name || 'Unknown Customer',
+          },
+          vehicle: {
+            id: lease.vehicles?.id || '',
+            make: lease.vehicles?.make || '',
+            model: lease.vehicles?.model || '',
+            year: lease.vehicles?.year || '',
+          },
+          start_date: lease.checkout_date || '',
+          end_date: lease.checkin_date || '',
+          status: lease.status || 'pending',
+          total_amount: lease.total_amount || 0,
+        };
+      }) || [];
+
+      console.log("Transformed agreements data:", transformedData);
+      return transformedData;
     },
   });
 };

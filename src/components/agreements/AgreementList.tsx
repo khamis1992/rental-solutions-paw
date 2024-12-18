@@ -18,7 +18,7 @@ export const AgreementList = () => {
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
 
-  const { data: agreements = [], isLoading } = useAgreements();
+  const { data: agreements = [], isLoading, error } = useAgreements();
 
   const handleViewContract = async (agreementId: string) => {
     try {
@@ -120,7 +120,15 @@ export const AgreementList = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-center py-4">Loading agreements...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-4 text-red-500">Error loading agreements: {error.message}</div>;
+  }
+
+  if (!agreements || agreements.length === 0) {
+    return <div className="text-center py-4">No agreements found. Try importing some agreements first.</div>;
   }
 
   return (
