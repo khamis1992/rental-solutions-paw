@@ -3,10 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { LogoUpload } from "./LogoUpload";
 
 export const GeneralSettings = () => {
   return (
     <div className="space-y-6">
+      <LogoUpload />
+
       <Card>
         <CardHeader>
           <CardTitle>Company Information</CardTitle>

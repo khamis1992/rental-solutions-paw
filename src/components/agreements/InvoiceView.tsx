@@ -3,6 +3,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InvoiceViewProps {
   data: InvoiceData;
@@ -10,12 +12,34 @@ interface InvoiceViewProps {
 }
 
 export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
+  const { data: settings } = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("company_settings")
+        .select("*")
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <Card className="p-8 max-w-3xl mx-auto bg-white shadow-lg">
       <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoice</h1>
-          <p className="text-gray-600">#{data.invoiceNumber}</p>
+        <div className="space-y-4">
+          {settings?.logo_url && (
+            <img
+              src={settings.logo_url}
+              alt="Company Logo"
+              className="h-16 object-contain"
+            />
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Invoice</h1>
+            <p className="text-gray-600">#{data.invoiceNumber}</p>
+          </div>
         </div>
         <Button variant="outline" size="sm" onClick={onPrint}>
           <Printer className="h-4 w-4 mr-2" />
