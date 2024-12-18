@@ -55,6 +55,7 @@ export const AgreementList = () => {
         throw error;
       }
 
+      // Return the raw data without date formatting
       return data.map((lease: any) => ({
         id: lease.id,
         customer: {
