@@ -1,7 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from './utils.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 import { processImportData } from './processData.ts';
+
+console.log("Loading agreement import function...");
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -21,18 +23,24 @@ serve(async (req) => {
       throw new Error('fileName is required');
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Download the file from storage
+    console.log('Downloading file from storage...');
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
       .download(fileName);
 
     if (downloadError) {
+      console.error('Download error:', downloadError);
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
