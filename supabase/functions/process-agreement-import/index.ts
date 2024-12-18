@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from './corsHeaders.ts';
+import { corsHeaders } from './utils.ts';
 import { processImportData } from './processData.ts';
 
 console.log("Loading agreement import function...");
@@ -8,59 +8,33 @@ console.log("Loading agreement import function...");
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
+    return new Response(null, {
+      status: 204,
       headers: corsHeaders,
-      status: 204 
     });
   }
 
   try {
     console.log('Starting agreement import process...');
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    // Parse request body with detailed error logging
-    let requestData;
+    // Get and validate the request body
+    let body;
     try {
-      const rawBody = await req.text();
-      console.log('Raw request body:', rawBody);
-      
-      if (!rawBody) {
-        throw new Error('Empty request body');
-      }
-      
-      requestData = JSON.parse(rawBody);
-      console.log('Parsed request data:', requestData);
-    } catch (error) {
-      console.error('Error parsing request body:', error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid JSON in request body',
-          details: error.message
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
+      const text = await req.text();
+      console.log('Raw request body:', text);
+      body = JSON.parse(text || '{}');
+      console.log('Parsed request body:', body);
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      throw new Error(`Invalid JSON in request body: ${parseError.message}`);
     }
+    
+    const { fileName } = body;
+    console.log('Extracted fileName:', fileName);
 
-    const { fileName } = requestData;
     if (!fileName) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'fileName is required'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
+      throw new Error('fileName is required');
     }
-
-    console.log('Processing file:', fileName);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -71,7 +45,8 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Download and process the file
+    // Download the file from storage
+    console.log('Downloading file from storage:', fileName);
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -82,26 +57,32 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
+    // Convert the file to text and parse CSV
     const text = await fileData.text();
-    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+    const rows = text.split('\n');
     const headers = rows[0].split(',').map(h => h.trim());
+    console.log('CSV Headers:', headers);
 
-    const result = await processImportData(supabase, rows, headers, fileName);
+    const { successCount, errorCount, errors } = await processImportData(
+      supabase,
+      rows,
+      headers,
+      fileName
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Import completed. Successfully processed ${result.successCount} agreements with ${result.errorCount} errors.`,
-        processed: result.successCount,
-        errors: result.errorCount,
-        errorDetails: result.errors
+        message: `Import completed. Successfully processed ${successCount} agreements with ${errorCount} errors.`,
+        processed: successCount,
+        errors: errorCount,
+        errorDetails: errors
       }),
       { 
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
-        },
-        status: 200
+        }
       }
     );
 

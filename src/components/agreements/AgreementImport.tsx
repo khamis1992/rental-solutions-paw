@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
-import { parseCSV, validateCSVHeaders } from "./utils/csvUtils";
-import { getOrCreateCustomer, getAvailableVehicle, createAgreement } from "./services/agreementImportService";
 
 export const AgreementImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -29,64 +28,118 @@ export const AgreementImport = () => {
 
     setIsUploading(true);
     setProgress(0);
+    let pollInterval: number;
 
     try {
-      // Read file content
-      const content = await file.text();
-      const lines = content.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
+      console.log('Starting file upload process...', file);
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      
+      console.log('Uploading file to storage:', fileName);
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file);
 
-      // Validate headers
-      const { isValid, missingHeaders } = validateCSVHeaders(headers);
-      if (!isValid) {
-        throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
       }
 
-      const agreements = parseCSV(content);
-      const totalAgreements = agreements.length;
-      let processedCount = 0;
+      console.log('File uploaded successfully:', uploadData);
+      setProgress(20);
 
-      // Get available vehicle
-      const vehicle = await getAvailableVehicle();
-      if (!vehicle?.id) {
-        throw new Error('No available vehicles found');
+      console.log('Creating import log...');
+      const { error: logError } = await supabase
+        .from("import_logs")
+        .insert({
+          file_name: fileName,
+          import_type: "agreements",
+          status: "pending",
+        });
+
+      if (logError) {
+        console.error('Import log creation error:', logError);
+        throw logError;
       }
 
-      // Process agreements
-      for (const agreement of agreements) {
-        try {
-          const customer = await getOrCreateCustomer(agreement['full_name']);
-          if (!customer?.id) {
-            console.error('Failed to create/get customer:', agreement['full_name']);
-            continue;
-          }
+      setProgress(40);
+      console.log('Starting import process via Edge Function...');
+      
+      const { data: functionData, error: functionError } = await supabase.functions
+        .invoke('process-agreement-import', {
+          body: { fileName },
+        });
 
-          await createAgreement(agreement, customer.id, vehicle.id);
-          processedCount++;
-          setProgress((processedCount / totalAgreements) * 100);
-        } catch (error) {
-          console.error('Error processing agreement:', error);
+      if (functionError) {
+        console.error('Edge Function error:', functionError);
+        throw functionError;
+      }
+
+      console.log('Edge Function response:', functionData);
+      setProgress(60);
+
+      // Poll for import completion with increasing intervals
+      let pollCount = 0;
+      const maxPolls = 10;
+      
+      pollInterval = window.setInterval(async () => {
+        console.log('Checking import status...');
+        const { data: importLog } = await supabase
+          .from("import_logs")
+          .select("status, records_processed")
+          .eq("file_name", fileName)
+          .single();
+
+        console.log('Import log status:', importLog);
+        pollCount++;
+        
+        setProgress(60 + (pollCount * 4)); // Increment progress gradually
+
+        if (importLog?.status === "completed") {
+          window.clearInterval(pollInterval);
+          setProgress(100);
+          toast({
+            title: "Success",
+            description: `Successfully imported ${importLog.records_processed} agreements`,
+          });
+          
+          // Force refresh the queries
+          await queryClient.invalidateQueries({ queryKey: ["agreements"] });
+          await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
+          
+          setIsUploading(false);
+        } else if (importLog?.status === "error" || pollCount >= maxPolls) {
+          window.clearInterval(pollInterval);
+          throw new Error("Import failed or timed out");
         }
-      }
+      }, 2000); // Poll every 2 seconds instead of 1
 
-      toast({
-        title: "Success",
-        description: `Successfully imported ${processedCount} agreements`,
-      });
-      
-      await queryClient.invalidateQueries({ queryKey: ["agreements"] });
-      await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
-      
+      // Set a timeout to stop polling after 30 seconds
+      setTimeout(() => {
+        if (pollInterval) {
+          window.clearInterval(pollInterval);
+        }
+        if (isUploading) {
+          setIsUploading(false);
+          toast({
+            title: "Error",
+            description: "Import timed out. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, 30000);
+
     } catch (error: any) {
       console.error('Import process error:', error);
+      if (pollInterval) {
+        window.clearInterval(pollInterval);
+      }
       toast({
         title: "Error",
         description: error.message || "Failed to import agreements",
         variant: "destructive",
       });
-    } finally {
       setIsUploading(false);
-      setProgress(0);
     }
   };
 

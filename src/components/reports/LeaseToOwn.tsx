@@ -22,9 +22,7 @@ export const LeaseToOwn = () => {
 
   const activeLeases = leaseData?.filter(lease => lease.status === 'active').length || 0;
   const completedLeases = leaseData?.filter(lease => lease.status === 'closed').length || 0;
-  const pendingLeases = leaseData?.filter(
-    lease => lease.status === 'pending_payment' || lease.status === 'pending_deposit'
-  ).length || 0;
+  const cancelledLeases = leaseData?.filter(lease => lease.status === 'cancelled').length || 0;
   const totalValue = leaseData?.reduce((sum, lease) => sum + lease.total_amount, 0) || 0;
 
   return (
@@ -43,8 +41,8 @@ export const LeaseToOwn = () => {
           className="bg-white"
         />
         <StatsCard
-          title="Pending"
-          value={pendingLeases.toString()}
+          title="Cancelled"
+          value={cancelledLeases.toString()}
           icon={AlertTriangle}
           className="bg-white"
         />
