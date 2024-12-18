@@ -21,22 +21,27 @@ const queryClient = new QueryClient({
   },
 });
 
-// Get initial session
-const initialSession = await supabase.auth.getSession();
+// Initialize the app with session
+const initializeApp = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  root.render(
+    <React.StrictMode>
+      <SessionContextProvider 
+        supabaseClient={supabase} 
+        initialSession={session}
+      >
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SidebarProvider>
+              <App />
+            </SidebarProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </SessionContextProvider>
+    </React.StrictMode>
+  );
+};
 
-root.render(
-  <React.StrictMode>
-    <SessionContextProvider 
-      supabaseClient={supabase} 
-      initialSession={initialSession.data.session}
-    >
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <SidebarProvider>
-            <App />
-          </SidebarProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </SessionContextProvider>
-  </React.StrictMode>
-);
+// Start the application
+initializeApp().catch(console.error);
