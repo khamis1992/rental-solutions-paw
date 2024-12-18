@@ -48,6 +48,11 @@ const formatDate = (dateStr: string): string | null => {
         return null;
       }
       
+      // Swap day and month if day is greater than 12 (assuming US date format)
+      if (parsedDay <= 12 && parsedMonth > 12) {
+        return `${year}-${parsedDay.toString().padStart(2, '0')}-${parsedMonth.toString().padStart(2, '0')}`;
+      }
+      
       return dateStr;
     }
     
@@ -59,45 +64,52 @@ const formatDate = (dateStr: string): string | null => {
   }
 };
 
-// Simplified to just return a UUID
 export const getOrCreateCustomer = async () => {
   return { id: crypto.randomUUID() };
 };
 
-// Create a default vehicle if none exists
 export const getAvailableVehicle = async () => {
-  // First try to get an existing available vehicle
-  const { data: existingVehicle } = await supabase
-    .from('vehicles')
-    .select('id')
-    .eq('status', 'available')
-    .limit(1)
-    .maybeSingle();
+  try {
+    // First try to get an existing available vehicle
+    const { data: existingVehicle } = await supabase
+      .from('vehicles')
+      .select('id')
+      .eq('status', 'available')
+      .limit(1)
+      .maybeSingle();
 
-  if (existingVehicle) {
-    return existingVehicle;
-  }
+    if (existingVehicle) {
+      return existingVehicle;
+    }
 
-  // If no vehicle exists, create a default one
-  const { data: newVehicle, error } = await supabase
-    .from('vehicles')
-    .insert({
-      make: 'Default',
-      model: 'Model',
-      year: 2024,
-      license_plate: 'TEMP-' + Date.now(),
-      vin: 'TEMP-' + Date.now(),
-      status: 'available'
-    })
-    .select()
-    .single();
+    // If no vehicle exists, create a default one
+    const { data: newVehicle, error } = await supabase
+      .from('vehicles')
+      .insert({
+        make: 'Default',
+        model: 'Model',
+        year: 2024,
+        license_plate: 'TEMP-' + Date.now(),
+        vin: 'TEMP-' + Date.now(),
+        status: 'available'
+      })
+      .select()
+      .maybeSingle();
 
-  if (error) {
-    console.error('Error creating default vehicle:', error);
+    if (error) {
+      console.error('Error creating default vehicle:', error);
+      throw error;
+    }
+
+    if (!newVehicle) {
+      throw new Error('Failed to create default vehicle');
+    }
+
+    return newVehicle;
+  } catch (error) {
+    console.error('Error in getAvailableVehicle:', error);
     throw error;
   }
-
-  return newVehicle;
 };
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
