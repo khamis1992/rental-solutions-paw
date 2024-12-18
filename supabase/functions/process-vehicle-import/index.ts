@@ -104,7 +104,7 @@ serve(async (req) => {
           license_plate: values[headers.indexOf('license_plate')],
           vin: values[headers.indexOf('vin')],
           mileage: headers.includes('mileage') ? parseInt(values[headers.indexOf('mileage')]) || 0 : 0,
-          status: headers.includes('status') ? values[headers.indexOf('status')] : 'available'
+          status: headers.includes('status') ? values[headers.indexOf('status')].toLowerCase() : 'available'
         }
 
         // Validate required fields for each row
@@ -122,7 +122,7 @@ serve(async (req) => {
         }
 
         // Validate status if provided
-        if (headers.includes('status') && !VALID_STATUSES.includes(vehicleData.status.toLowerCase())) {
+        if (headers.includes('status') && !VALID_STATUSES.includes(vehicleData.status)) {
           throw new Error(`Invalid status value: ${vehicleData.status}. Valid values are: ${VALID_STATUSES.join(', ')}`)
         }
 
