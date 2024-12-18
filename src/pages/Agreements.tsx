@@ -16,8 +16,12 @@ const Agreements = () => {
   useEffect(() => {
     const deleteAllAgreements = async () => {
       try {
+        console.log('Calling delete-all-agreements function...');
         const { data, error } = await supabase.functions.invoke('delete-all-agreements', {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
         
         if (error) {
@@ -26,6 +30,7 @@ const Agreements = () => {
           return;
         }
         
+        console.log('Delete operation response:', data);
         toast.success("All agreements have been deleted successfully");
         // Refresh the page to show updated data
         window.location.reload();

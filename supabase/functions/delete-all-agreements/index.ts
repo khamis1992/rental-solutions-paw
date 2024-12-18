@@ -14,20 +14,31 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting deletion of all agreements and related data...')
 
-    // Delete records from dependent tables first
-    const deleteOperations = [
-      supabase.from('payment_history').delete().neq('id', ''),
-      supabase.from('payment_schedules').delete().neq('id', ''),
-      supabase.from('payments').delete().neq('id', ''),
-      supabase.from('penalties').delete().neq('id', ''),
-      supabase.from('applied_discounts').delete().neq('id', ''),
-      supabase.from('security_deposits').delete().neq('id', ''),
-      supabase.from('damages').delete().neq('id', ''),
-      supabase.from('leases').delete().neq('id', '')
-    ]
-
-    // Execute all delete operations
-    await Promise.all(deleteOperations)
+    // Delete records from dependent tables first in sequence to maintain referential integrity
+    await supabase.from('payment_history').delete().neq('id', '')
+    console.log('Deleted payment history records')
+    
+    await supabase.from('payment_schedules').delete().neq('id', '')
+    console.log('Deleted payment schedules')
+    
+    await supabase.from('payments').delete().neq('id', '')
+    console.log('Deleted payments')
+    
+    await supabase.from('penalties').delete().neq('id', '')
+    console.log('Deleted penalties')
+    
+    await supabase.from('applied_discounts').delete().neq('id', '')
+    console.log('Deleted applied discounts')
+    
+    await supabase.from('security_deposits').delete().neq('id', '')
+    console.log('Deleted security deposits')
+    
+    await supabase.from('damages').delete().neq('id', '')
+    console.log('Deleted damages')
+    
+    // Finally, delete the agreements
+    await supabase.from('leases').delete().neq('id', '')
+    console.log('Deleted leases')
 
     console.log('Successfully deleted all agreements and related data')
 
