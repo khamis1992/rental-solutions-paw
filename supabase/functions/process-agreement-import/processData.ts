@@ -10,6 +10,8 @@ export const processImportData = async (
   let successCount = 0;
   let errorCount = 0;
   const errors: any[] = [];
+  const batchSize = 50; // Process 50 records at a time
+  const agreements = [];
 
   // Get first available vehicle for testing
   const { data: vehicle } = await supabase
@@ -21,6 +23,7 @@ export const processImportData = async (
 
   const defaultVehicleId = vehicle?.id;
 
+  // Process rows in batches
   for (let i = 1; i < rows.length; i++) {
     if (!rows[i].trim()) continue;
 
@@ -29,8 +32,22 @@ export const processImportData = async (
       const currentRowValues = rows[i].split(',').map(v => v.trim());
       const rowData = extractRowData(currentRowValues, headers);
       
+      // Prepare agreement data
+      const agreementData = {
+        agreement_number: rowData.agreementNumber,
+        license_no: rowData.licenseNo,
+        license_number: rowData.licenseNumber,
+        checkout_date: rowData.checkoutDate || new Date().toISOString(),
+        checkin_date: rowData.checkinDate || new Date().toISOString(),
+        return_date: rowData.returnDate || new Date().toISOString(),
+        status: rowData.status?.toLowerCase() || 'pending',
+        customer_id: null as string | null,
+        vehicle_id: defaultVehicleId,
+        total_amount: 0,
+        initial_mileage: 0
+      };
+
       // Get or create customer profile
-      let customerId;
       try {
         const { data: customerData } = await supabase
           .from('profiles')
@@ -39,23 +56,22 @@ export const processImportData = async (
           .single();
 
         if (customerData) {
-          customerId = customerData.id;
+          agreementData.customer_id = customerData.id;
         } else {
-          // Create a placeholder profile
           const { data: newCustomer } = await supabase
             .from('profiles')
             .insert({
-              full_name: rowData.fullName,
+              full_name: rowData.fullName || `Unknown Customer ${Date.now()}`,
               role: 'customer'
             })
             .select()
             .single();
           
-          customerId = newCustomer?.id;
+          agreementData.customer_id = newCustomer?.id || null;
         }
       } catch (error) {
-        console.error('Error with customer profile, creating new one:', error);
-        // Force create a new profile
+        console.error('Error with customer profile:', error);
+        // Create a placeholder profile
         const { data: newCustomer } = await supabase
           .from('profiles')
           .insert({
@@ -65,58 +81,42 @@ export const processImportData = async (
           .select()
           .single();
         
-        customerId = newCustomer?.id;
+        agreementData.customer_id = newCustomer?.id;
       }
 
-      console.log('Customer ID:', customerId);
-      console.log('Parsed dates:', {
-        checkout: rowData.checkoutDate,
-        checkin: rowData.checkinDate,
-        return: rowData.returnDate
-      });
+      agreements.push(agreementData);
+      
+      // Process in batches
+      if (agreements.length === batchSize || i === rows.length - 1) {
+        try {
+          const { error: batchError } = await supabase
+            .from('leases')
+            .upsert(agreements, {
+              onConflict: 'agreement_number',
+              ignoreDuplicates: false
+            });
 
-      // Try to insert lease record, if it fails, log the error but continue processing
-      try {
-        const { error: leaseError } = await supabase
-          .from('leases')
-          .upsert({
-            agreement_number: rowData.agreementNumber,
-            customer_id: customerId,
-            vehicle_id: defaultVehicleId,
-            license_no: rowData.licenseNo,
-            license_number: rowData.licenseNumber,
-            checkout_date: rowData.checkoutDate,
-            checkin_date: rowData.checkinDate,
-            return_date: rowData.returnDate,
-            status: rowData.status || 'pending',
-            total_amount: 0,
-            initial_mileage: 0,
-          }, {
-            onConflict: 'agreement_number',
-            ignoreDuplicates: false
-          });
-
-        if (leaseError) {
-          console.error(`Row ${i + 1} insert error:`, leaseError);
-          // Log the error but don't throw it - continue processing
+          if (batchError) {
+            console.error(`Batch insert error:`, batchError);
+            errorCount += agreements.length;
+            errors.push({
+              rows: `${i - agreements.length + 1} to ${i}`,
+              error: batchError.message
+            });
+          } else {
+            successCount += agreements.length;
+          }
+        } catch (batchError) {
+          console.error(`Failed to insert batch:`, batchError);
+          errorCount += agreements.length;
           errors.push({
-            row: i + 1,
-            error: leaseError.message,
-            data: rows[i]
+            rows: `${i - agreements.length + 1} to ${i}`,
+            error: batchError.message
           });
-          errorCount++;
-        } else {
-          successCount++;
-          console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
         }
-      } catch (insertError) {
-        console.error(`Failed to insert lease for row ${i + 1}:`, insertError);
-        errors.push({
-          row: i + 1,
-          error: insertError.message,
-          data: rows[i]
-        });
-        errorCount++;
+        
+        // Clear the batch array
+        agreements.length = 0;
       }
     } catch (error) {
       console.error(`Error processing row ${i + 1}:`, error);
