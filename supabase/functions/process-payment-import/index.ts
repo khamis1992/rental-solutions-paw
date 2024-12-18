@@ -4,9 +4,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -25,16 +27,17 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
+    // Download the file from storage
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
       .download(fileName);
 
     if (downloadError) {
-      console.error('Download error:', downloadError);
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
+    // Convert the file to text and parse CSV
     const text = await fileData.text();
     const rows = text.split('\n');
     const headers = rows[0].split(',').map(h => h.trim());
@@ -44,23 +47,24 @@ serve(async (req) => {
     let errorCount = 0;
     let errors = [];
 
+    // Update import log status to processing
     await supabase
       .from('import_logs')
       .update({ status: 'processing' })
       .eq('file_name', fileName);
 
+    // Process each row
     for (let i = 1; i < rows.length; i++) {
       if (!rows[i].trim()) continue;
 
       const values = rows[i].split(',').map(v => v.trim());
-      console.log(`Processing row ${i}:`, values);
-      
       if (values.length === headers.length) {
         try {
           const customerName = values[headers.indexOf('Customer Name')];
           const amount = parseFloat(values[headers.indexOf('Amount')]);
+          const licensePlate = values[headers.indexOf('License Plate')];
           const paymentDate = values[headers.indexOf('Payment_Date')];
-          const paymentMethodValue = values[headers.indexOf('Payment_Method')];
+          const paymentMethod = values[headers.indexOf('Payment_Method')];
           const status = values[headers.indexOf('status')];
           const paymentNumber = values[headers.indexOf('Payment_Number')];
 
@@ -68,36 +72,35 @@ serve(async (req) => {
             throw new Error('Customer Name is missing');
           }
 
-          console.log('Looking up customer:', customerName);
+          // Get customer ID from name
           const { data: customerData, error: customerError } = await supabase
             .from('profiles')
             .select('id')
-            .ilike('full_name', customerName.trim())
+            .eq('full_name', customerName.trim())
             .single();
 
           if (customerError || !customerData) {
             throw new Error(`Customer "${customerName}" not found in the system`);
           }
 
-          console.log('Found customer:', customerData.id);
-          const { data: activeLease, error: leaseError } = await supabase
+          // Find active lease for customer and vehicle
+          const { data: activeLease } = await supabase
             .from('leases')
-            .select('id')
+            .select('id, vehicle:vehicles(license_plate)')
             .eq('customer_id', customerData.id)
-            .in('status', ['active', 'pending_payment'])
-            .order('created_at', { ascending: false })
-            .limit(1)
+            .eq('status', 'active')
+            .eq('vehicles.license_plate', licensePlate)
             .single();
 
-          if (leaseError || !activeLease) {
-            throw new Error(`No active lease found for customer "${customerName}"`);
+          if (!activeLease) {
+            throw new Error(`No active lease found for customer "${customerName}" with vehicle "${licensePlate}"`);
           }
 
-          console.log('Found lease:', activeLease.id);
+          // Convert date from DD-MM-YYYY to ISO format
           const [day, month, year] = paymentDate.split('-');
           const isoDate = `${year}-${month}-${day}`;
 
-          console.log('Creating payment record...');
+          // Create payment record
           const { error: paymentError } = await supabase
             .from('payments')
             .insert({
@@ -105,7 +108,7 @@ serve(async (req) => {
               amount,
               status,
               payment_date: new Date(isoDate).toISOString(),
-              payment_method: paymentMethodValue,
+              payment_method,
               transaction_id: paymentNumber,
             });
 
@@ -127,6 +130,7 @@ serve(async (req) => {
       }
     }
 
+    // Update import log with final status
     await supabase
       .from('import_logs')
       .update({
