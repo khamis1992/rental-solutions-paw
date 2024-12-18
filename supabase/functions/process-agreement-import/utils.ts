@@ -3,48 +3,11 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const isValidDate = (day: number, month: number, year: number): boolean => {
-  // Check if month is between 1 and 12
-  if (month < 1 || month > 12) return false;
-  
-  // Get the last day of the month for the given year/month
-  const daysInMonth = new Date(year, month, 0).getDate();
-  
-  // Check if day is valid for the given month
-  if (day < 1 || day > daysInMonth) return false;
-  
-  return true;
-};
-
 const parseDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
-  // Clean the input string and split by either '/' or '-'
-  const cleanDateStr = dateStr.trim();
-  const parts = cleanDateStr.split(/[-/]/);
-  
-  if (parts.length === 3) {
-    let day: number, month: number, year: number;
-
-    // Assume DD/MM/YYYY format
-    day = parseInt(parts[0], 10);
-    month = parseInt(parts[1], 10);
-    year = parseInt(parts[2], 10);
-
-    // Validate the parsed numbers
-    if (isNaN(day) || isNaN(month) || isNaN(year)) {
-      throw new Error(`Invalid date parts in: ${dateStr}. All parts must be valid numbers.`);
-    }
-
-    if (!isValidDate(day, month, year)) {
-      throw new Error(`Invalid date: ${dateStr}. Day or month is out of range.`);
-    }
-
-    // Convert to YYYY-MM-DD format for PostgreSQL
-    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-  }
-  
-  throw new Error(`Invalid date format: ${dateStr}. Please use DD/MM/YYYY format.`);
+  // Just return the date string as is, without validation
+  return dateStr.trim();
 };
 
 export const validateRowData = (rowData: any, headers: string[]) => {
