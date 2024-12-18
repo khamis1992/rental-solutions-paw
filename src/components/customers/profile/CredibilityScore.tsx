@@ -16,7 +16,7 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
         .from("risk_assessments")
         .select("*")
         .eq("customer_id", customerId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -86,8 +86,10 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
             )}
           </div>
         ) : (
-          <div className="text-center text-muted-foreground">
-            No risk assessment available
+          <div className="text-center py-6 text-muted-foreground">
+            <ShieldAlert className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+            <p>No risk assessment available for this customer yet.</p>
+            <p className="text-sm mt-1">Assessment will be generated after their first payment.</p>
           </div>
         )}
       </CardContent>
