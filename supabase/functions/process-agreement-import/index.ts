@@ -30,16 +30,17 @@ serve(async (req) => {
       const text = await req.text();
       console.log('Raw request body:', text);
       body = JSON.parse(text || '{}');
+      console.log('Parsed request body:', body);
     } catch (parseError) {
       console.error('Error parsing request body:', parseError);
       throw new Error(`Invalid JSON in request body: ${parseError.message}`);
     }
     
-    console.log('Parsed request body:', body);
-
     const { fileName } = body;
-    if (!fileName) {
-      throw new Error('fileName is required');
+    console.log('Extracted fileName:', fileName);
+
+    if (!fileName || typeof fileName !== 'string' || !fileName.trim()) {
+      throw new Error('fileName is required and must be a non-empty string');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
