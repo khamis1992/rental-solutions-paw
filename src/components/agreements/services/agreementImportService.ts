@@ -58,7 +58,7 @@ export const getOrCreateCustomer = async (fullName: string) => {
       .from('profiles')
       .select('id, full_name')
       .eq('full_name', fullName)
-      .single();
+      .maybeSingle();
 
     if (existingCustomer) {
       console.log('Found existing customer:', existingCustomer);
@@ -96,7 +96,7 @@ export const getOrCreateVehicle = async (carNo: string) => {
       .from('vehicles')
       .select('id, license_plate')
       .eq('license_plate', carNo)
-      .single();
+      .maybeSingle();
 
     if (existingVehicle) {
       console.log('Found existing vehicle:', existingVehicle);
