@@ -71,8 +71,8 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
         {[1, 2, 3].map((i) => (
           <Card key={i}>
             <CardContent className="p-6">
-              <Skeleton className="h-4 w-24 mb-2 mx-auto" />
-              <Skeleton className="h-8 w-16 mx-auto" />
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-8 w-16" />
             </CardContent>
           </Card>
         ))}
@@ -85,15 +85,15 @@ export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
       {mainStats.map((stat) => (
         <Card key={stat.title}>
           <CardContent className="p-6">
-            <div className="flex flex-col items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground mb-3 text-center">
-                {stat.title}
-              </p>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  {stat.title}
+                </p>
                 <p className="text-2xl font-bold">{stat.value}</p>
-                <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
+              </div>
+              <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
               </div>
             </div>
           </CardContent>

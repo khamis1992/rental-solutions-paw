@@ -28,39 +28,19 @@ interface VehicleListProps {
 }
 
 export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleListProps) => {
-  // Helper function to determine badge variant and color based on status
-  const getStatusStyles = (status: string) => {
+  // Helper function to determine badge variant based on status
+  const getBadgeVariant = (status: string) => {
     switch (status) {
       case 'available':
-        return {
-          variant: 'default' as const,
-          className: 'bg-emerald-500 hover:bg-emerald-600'
-        };
+        return 'default';
       case 'rented':
-        return {
-          variant: 'secondary' as const,
-          className: 'bg-blue-500 hover:bg-blue-600 text-white'
-        };
+        return 'secondary';
       case 'maintenance':
-        return {
-          variant: 'secondary' as const,
-          className: 'bg-amber-500 hover:bg-amber-600 text-white'
-        };
       case 'accident':
-        return {
-          variant: 'destructive' as const,
-          className: 'bg-rose-500 hover:bg-rose-600'
-        };
       case 'police_station':
-        return {
-          variant: 'secondary' as const,
-          className: 'bg-purple-500 hover:bg-purple-600 text-white'
-        };
+        return 'destructive';
       default:
-        return {
-          variant: 'secondary' as const,
-          className: 'bg-slate-500 hover:bg-slate-600 text-white'
-        };
+        return 'secondary';
     }
   };
 
@@ -135,10 +115,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </TableCell>
               <TableCell>
-                <Badge 
-                  variant={getStatusStyles(vehicle.status).variant}
-                  className={getStatusStyles(vehicle.status).className}
-                >
+                <Badge variant={getBadgeVariant(vehicle.status)}>
                   {formatStatus(vehicle.status)}
                 </Badge>
               </TableCell>
