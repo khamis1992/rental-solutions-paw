@@ -12,11 +12,16 @@ import { toast } from "sonner";
 const Agreements = () => {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
   const [showAgreementImport, setShowAgreementImport] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const deleteAllAgreements = async () => {
+      if (isDeleting) return; // Prevent multiple simultaneous deletion attempts
+      
       try {
+        setIsDeleting(true);
         console.log('Calling delete-all-agreements function...');
+        
         const { data, error } = await supabase.functions.invoke('delete-all-agreements', {
           method: 'POST',
           headers: {
@@ -32,17 +37,17 @@ const Agreements = () => {
         
         console.log('Delete operation response:', data);
         toast.success("All agreements have been deleted successfully");
-        // Refresh the page to show updated data
         window.location.reload();
       } catch (error) {
         console.error('Error deleting agreements:', error);
         toast.error("Failed to delete agreements");
+      } finally {
+        setIsDeleting(false);
       }
     };
 
-    // Call the function immediately when the component mounts
     deleteAllAgreements();
-  }, []); // Empty dependency array means this runs once when component mounts
+  }, []);
 
   return (
     <DashboardLayout>

@@ -12,51 +12,59 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log('Starting deletion of all agreements and related data...')
+    console.log('Starting deletion process...')
 
-    // Delete records from dependent tables first in sequence to maintain referential integrity
-    await supabase.from('payment_history').delete().neq('id', '')
-    console.log('Deleted payment history records')
-    
-    await supabase.from('payment_schedules').delete().neq('id', '')
-    console.log('Deleted payment schedules')
-    
-    await supabase.from('payments').delete().neq('id', '')
-    console.log('Deleted payments')
-    
-    await supabase.from('penalties').delete().neq('id', '')
-    console.log('Deleted penalties')
-    
-    await supabase.from('applied_discounts').delete().neq('id', '')
-    console.log('Deleted applied discounts')
-    
-    await supabase.from('security_deposits').delete().neq('id', '')
-    console.log('Deleted security deposits')
-    
-    await supabase.from('damages').delete().neq('id', '')
-    console.log('Deleted damages')
-    
-    // Finally, delete the agreements
-    await supabase.from('leases').delete().neq('id', '')
-    console.log('Deleted leases')
+    // Delete records from dependent tables first in sequence
+    const tables = [
+      'payment_history',
+      'payment_schedules',
+      'payments',
+      'penalties',
+      'applied_discounts',
+      'security_deposits',
+      'damages',
+      'leases'
+    ]
 
-    console.log('Successfully deleted all agreements and related data')
+    for (const table of tables) {
+      console.log(`Deleting records from ${table}...`)
+      const { error } = await supabase.from(table).delete().neq('id', '')
+      
+      if (error) {
+        console.error(`Error deleting from ${table}:`, error)
+        throw error
+      }
+      
+      console.log(`Successfully deleted records from ${table}`)
+    }
 
     return new Response(
-      JSON.stringify({ message: 'All agreements and related data deleted successfully' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      JSON.stringify({ 
+        success: true, 
+        message: 'All agreements and related data deleted successfully' 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        },
+        status: 200 
+      }
     )
   } catch (error) {
-    console.error('Error deleting agreements:', error)
+    console.error('Error in delete-all-agreements function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      },
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        },
+        status: 400 
+      }
     )
   }
 })
