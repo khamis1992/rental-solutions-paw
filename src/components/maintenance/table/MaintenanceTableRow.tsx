@@ -38,7 +38,10 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
       // Update maintenance status
       const { error: maintenanceError } = await supabase
         .from('maintenance')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          completed_date: newStatus === 'completed' ? new Date().toISOString() : null
+        })
         .eq('id', record.id);
 
       if (maintenanceError) throw maintenanceError;
@@ -51,12 +54,22 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
           .eq('id', record.vehicle_id);
 
         if (vehicleError) throw vehicleError;
+      } else if (newStatus === 'in_progress') {
+        // If status is in_progress, ensure vehicle is marked as in maintenance
+        const { error: vehicleError } = await supabase
+          .from('vehicles')
+          .update({ status: 'maintenance' })
+          .eq('id', record.vehicle_id);
+
+        if (vehicleError) throw vehicleError;
       }
 
-      // Invalidate and refetch queries
-      await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
-      await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      await queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] });
+      // Invalidate and refetch queries to update UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
+        queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
+        queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
+      ]);
       
       toast.success('Status updated successfully');
     } catch (error: any) {
@@ -81,6 +94,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
           <Select
             defaultValue={record.status}
             onValueChange={handleStatusChange}
+            value={record.status}
           >
             <SelectTrigger className="w-[130px]">
               <SelectValue />
