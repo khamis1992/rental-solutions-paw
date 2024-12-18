@@ -31,29 +31,39 @@ export const processImportData = async (
       
       // Get or create customer profile
       let customerId;
-      const { data: customerData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('full_name', rowData.fullName)
-        .single();
+      try {
+        const { data: customerData } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('full_name', rowData.fullName)
+          .single();
 
-      if (customerData) {
-        customerId = customerData.id;
-      } else {
-        // Create a placeholder profile
-        const { data: newCustomer, error: customerError } = await supabase
+        if (customerData) {
+          customerId = customerData.id;
+        } else {
+          // Create a placeholder profile
+          const { data: newCustomer } = await supabase
+            .from('profiles')
+            .insert({
+              full_name: rowData.fullName,
+              role: 'customer'
+            })
+            .select()
+            .single();
+          
+          customerId = newCustomer?.id;
+        }
+      } catch (error) {
+        console.error('Error with customer profile, creating new one:', error);
+        // Force create a new profile
+        const { data: newCustomer } = await supabase
           .from('profiles')
           .insert({
-            full_name: rowData.fullName,
+            full_name: `Unknown Customer ${Date.now()}`,
             role: 'customer'
           })
           .select()
           .single();
-
-        if (customerError) {
-          console.error('Error creating customer:', customerError);
-          throw customerError;
-        }
         
         customerId = newCustomer?.id;
       }
@@ -65,43 +75,72 @@ export const processImportData = async (
         return: rowData.returnDate
       });
 
-      // Insert lease record with available data
-      const { error: leaseError } = await supabase
-        .from('leases')
-        .upsert({
-          agreement_number: rowData.agreementNumber,
-          customer_id: customerId,
-          vehicle_id: defaultVehicleId,
-          license_no: rowData.licenseNo,
-          license_number: rowData.licenseNumber,
-          checkout_date: rowData.checkoutDate,
-          checkin_date: rowData.checkinDate,
-          return_date: rowData.returnDate,
-          status: rowData.status || 'pending',
-          total_amount: 0,
-          initial_mileage: 0,
-        }, {
-          onConflict: 'agreement_number',
-          ignoreDuplicates: false
+      // Try to insert lease record, if it fails, log the error but continue processing
+      try {
+        const { error: leaseError } = await supabase
+          .from('leases')
+          .upsert({
+            agreement_number: rowData.agreementNumber,
+            customer_id: customerId,
+            vehicle_id: defaultVehicleId,
+            license_no: rowData.licenseNo,
+            license_number: rowData.licenseNumber,
+            checkout_date: rowData.checkoutDate,
+            checkin_date: rowData.checkinDate,
+            return_date: rowData.returnDate,
+            status: rowData.status || 'pending',
+            total_amount: 0,
+            initial_mileage: 0,
+          }, {
+            onConflict: 'agreement_number',
+            ignoreDuplicates: false
+          });
+
+        if (leaseError) {
+          console.error(`Row ${i + 1} insert error:`, leaseError);
+          // Log the error but don't throw it - continue processing
+          errors.push({
+            row: i + 1,
+            error: leaseError.message,
+            data: rows[i]
+          });
+          errorCount++;
+        } else {
+          successCount++;
+          console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
+        }
+      } catch (insertError) {
+        console.error(`Failed to insert lease for row ${i + 1}:`, insertError);
+        errors.push({
+          row: i + 1,
+          error: insertError.message,
+          data: rows[i]
         });
-
-      if (leaseError) {
-        console.error(`Row ${i + 1} insert error:`, leaseError);
-        throw leaseError;
+        errorCount++;
       }
-
-      successCount++;
-      console.log(`Successfully imported agreement: ${rowData.agreementNumber}`);
-
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error processing row ${i + 1}:`, error);
-      errorCount++;
       errors.push({
         row: i + 1,
         error: error.message,
         data: rows[i]
       });
+      errorCount++;
     }
+  }
+
+  // Update import log with results
+  try {
+    await supabase
+      .from('import_logs')
+      .update({
+        status: 'completed',
+        records_processed: successCount + errorCount,
+        errors: errors.length > 0 ? errors : null
+      })
+      .eq('file_name', fileName);
+  } catch (error) {
+    console.error('Error updating import log:', error);
   }
 
   return { successCount, errorCount, errors };
