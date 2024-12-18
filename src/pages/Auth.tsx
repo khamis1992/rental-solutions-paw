@@ -10,8 +10,17 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/");
+      }
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session);
         if (session) {
           navigate("/");
         }
@@ -83,43 +92,12 @@ const AuthPage = () => {
                     },
                   },
                 },
-                style: {
-                  button: {
-                    border: '1px solid var(--colors-defaultButtonBorder)',
-                    fontWeight: '500',
-                    transition: 'all 0.2s ease',
-                  },
-                  anchor: {
-                    color: 'hsl(var(--primary))',
-                    fontWeight: '500',
-                    transition: 'opacity 0.2s ease',
-                    '&:hover': {
-                      opacity: '0.8',
-                    },
-                  },
-                  label: {
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: 'hsl(var(--foreground))',
-                  },
-                  input: {
-                    fontSize: '14px',
-                    color: 'hsl(var(--foreground))',
-                    backgroundColor: 'white',
-                    border: '1px solid hsl(var(--input))',
-                    '&:focus': {
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px hsl(var(--ring))',
-                      borderColor: 'hsl(var(--ring))',
-                    },
-                  },
-                  message: {
-                    fontSize: '14px',
-                    color: 'hsl(var(--destructive))',
-                  },
-                  container: {
-                    animation: 'fadeIn 0.5s ease',
-                  },
+                className: {
+                  button: 'transition-colors duration-200',
+                  anchor: 'text-primary hover:opacity-80 transition-opacity',
+                  input: 'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors',
+                  label: 'font-medium',
+                  message: 'text-sm',
                 },
               }}
               providers={["google"]}
