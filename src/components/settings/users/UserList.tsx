@@ -17,6 +17,11 @@ interface User {
   email?: string;
 }
 
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 export const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +50,7 @@ export const UserList = () => {
           )
           .map((profile) => ({
             ...profile,
-            email: authUsers.users.find((user) => user.id === profile.id)?.email || "N/A",
+            email: (authUsers.users as AuthUser[]).find((user) => user.id === profile.id)?.email || "N/A",
           }));
 
         setUsers(usersWithEmail);
