@@ -10,6 +10,7 @@ import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import CustomerProfile from "@/pages/CustomerProfile";
 import Legal from "@/pages/Legal";
+import { VehicleDetails } from "@/components/vehicles/VehicleDetails";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Route path="/customers" element={<Customers />} />
       <Route path="/customers/:id" element={<CustomerProfile />} />
       <Route path="/vehicles" element={<Vehicles />} />
+      <Route path="/vehicles/:id" element={<VehicleDetails />} />
       <Route path="/agreements" element={<Agreements />} />
       <Route path="/maintenance" element={<Maintenance />} />
       <Route path="/reports" element={<Reports />} />

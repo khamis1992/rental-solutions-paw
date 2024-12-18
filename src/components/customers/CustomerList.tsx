@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import { CustomerFilters } from "./CustomerFilters";
 
 export const CustomerList = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: customers, isLoading } = useQuery({
@@ -41,6 +42,10 @@ export const CustomerList = () => {
       return data;
     },
   });
+
+  const handleVehicleClick = (vehicleId: string) => {
+    navigate(`/vehicles/${vehicleId}`);
+  };
 
   if (isLoading) {
     return (
@@ -94,7 +99,18 @@ export const CustomerList = () => {
                 </TableCell>
                 <TableCell>{customer.phone_number || 'N/A'}</TableCell>
                 <TableCell>{customer.address || 'N/A'}</TableCell>
-                <TableCell>{customer.driver_license || 'N/A'}</TableCell>
+                <TableCell>
+                  {customer.driver_license ? (
+                    <button
+                      onClick={() => handleVehicleClick(customer.driver_license)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {customer.driver_license}
+                    </button>
+                  ) : (
+                    'N/A'
+                  )}
+                </TableCell>
                 <TableCell className="flex gap-2">
                   {customer.id_document_url && (
                     <FileText className="h-4 w-4 text-green-500" aria-label="ID Document" />
