@@ -25,11 +25,18 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
+      // Validate vehicle_id format (must be a valid UUID)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(formData.vehicle_id)) {
+        throw new Error("Invalid vehicle ID format. Please use a valid UUID.");
+      }
+
       const { error } = await supabase
         .from("maintenance")
         .insert([{
           ...formData,
           cost: formData.cost ? parseFloat(formData.cost) : null,
+          status: "scheduled", // Set default status
         }]);
 
       if (error) throw error;
@@ -44,9 +51,9 @@ export function CreateJobDialog() {
         performed_by: "",
         cost: "",
       });
-    } catch (error) {
-      toast.error("Failed to create job card");
+    } catch (error: any) {
       console.error("Error creating job card:", error);
+      toast.error(error.message || "Failed to create job card");
     } finally {
       setLoading(false);
     }
@@ -71,6 +78,7 @@ export function CreateJobDialog() {
               value={formData.vehicle_id}
               onChange={(e) => setFormData({ ...formData, vehicle_id: e.target.value })}
               required
+              placeholder="Enter valid UUID"
             />
           </div>
           <div className="space-y-2">
