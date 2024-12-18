@@ -8,8 +8,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const menuItems = [
+const baseMenuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
   { icon: Car, label: "Vehicles", href: "/vehicles" },
   { icon: Wrench, label: "Maintenance", href: "/maintenance" },
@@ -17,11 +19,33 @@ const menuItems = [
   { icon: FilePen, label: "Agreements", href: "/agreements" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: Gavel, label: "Legal", href: "/legal" },
-  { icon: Settings, label: "Settings", href: "/settings" },
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
+const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" };
+
 export const DashboardSidebar = () => {
+  const [menuItems, setMenuItems] = useState(baseMenuItems);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profile && profile.role === 'admin') {
+          setMenuItems([...baseMenuItems, settingsMenuItem]);
+        }
+      }
+    };
+
+    checkUserRole();
+  }, []);
+
   return (
     <Sidebar>
       <SidebarContent>
