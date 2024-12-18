@@ -1005,7 +1005,7 @@ export type Database = {
       agreement_type: "lease_to_own" | "short_term"
       discount_type: "percentage" | "fixed_amount"
       import_type: "payments" | "customers" | "agreements"
-      lease_status: "pending" | "active" | "closed" | "cancelled"
+      lease_status: "pending" | "active" | "closed" | "cancelled" | "open"
       maintenance_status:
         | "scheduled"
         | "in_progress"

@@ -68,6 +68,9 @@ export const AgreementImport = () => {
       const { data: functionData, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
           body: { fileName },
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
       if (functionError) {
@@ -93,7 +96,7 @@ export const AgreementImport = () => {
         console.log('Import log status:', importLog);
         pollCount++;
         
-        setProgress(60 + (pollCount * 4)); // Increment progress gradually
+        setProgress(60 + (pollCount * 4));
 
         if (importLog?.status === "completed") {
           window.clearInterval(pollInterval);
@@ -103,7 +106,6 @@ export const AgreementImport = () => {
             description: `Successfully imported ${importLog.records_processed} agreements`,
           });
           
-          // Force refresh the queries
           await queryClient.invalidateQueries({ queryKey: ["agreements"] });
           await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
           
@@ -112,7 +114,7 @@ export const AgreementImport = () => {
           window.clearInterval(pollInterval);
           throw new Error("Import failed or timed out");
         }
-      }, 2000); // Poll every 2 seconds instead of 1
+      }, 2000);
 
       // Set a timeout to stop polling after 30 seconds
       setTimeout(() => {

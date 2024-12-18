@@ -62,7 +62,7 @@ serve(async (req) => {
 
     // Convert the file to text and parse CSV
     const text = await fileData.text();
-    const rows = text.split('\n');
+    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
     const headers = rows[0].split(',').map(h => h.trim());
     console.log('CSV Headers:', headers);
 
@@ -85,7 +85,8 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
-        }
+        },
+        status: 200
       }
     );
 
