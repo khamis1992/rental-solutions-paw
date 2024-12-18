@@ -19,6 +19,20 @@ const normalizeStatus = (status: string): LeaseStatus => {
   return statusMap[status.toLowerCase().trim()] || 'pending_payment';
 };
 
+const formatDateForPostgres = (dateStr: string): string | null => {
+  if (!dateStr) return null;
+  
+  // Parse DD/MM/YYYY format
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    // Convert to YYYY-MM-DD format
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  return null;
+};
+
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
     console.log('Raw CSV data for dates:', {
@@ -31,9 +45,9 @@ export const createAgreement = async (agreement: Record<string, string>, custome
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
       license_number: agreement['License Number'] || 'UNKNOWN',
-      start_date: agreement['Check-out Date'],
-      end_date: agreement['Check-in Date'],
-      return_date: agreement['Return Date'],
+      start_date: formatDateForPostgres(agreement['Check-out Date']),
+      end_date: formatDateForPostgres(agreement['Check-in Date']),
+      return_date: formatDateForPostgres(agreement['Return Date']),
       status: normalizeStatus(agreement['STATUS']),
       customer_id: customerId,
       vehicle_id: vehicleId,
