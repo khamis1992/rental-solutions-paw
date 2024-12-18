@@ -14,50 +14,16 @@ const Maintenance = () => {
     dateRange: "",
   });
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ["maintenance", filters],
-    queryFn: async () => {
-      let query = supabase
-        .from("maintenance")
-        .select(`
-          *,
-          vehicles (
-            make,
-            model,
-            year,
-            license_plate
-          )
-        `);
-
-      if (filters.status !== "all") {
-        query = query.eq("status", filters.status);
-      }
-      
-      if (filters.serviceType) {
-        query = query.ilike("service_type", `%${filters.serviceType}%`);
-      }
-
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching maintenance records:", error);
-        throw error;
-      }
-
-      return data || [];
-    },
-  });
-
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Maintenance</h1>
         <CreateJobDialog />
       </div>
-      <MaintenanceStats records={records} isLoading={isLoading} />
+      <MaintenanceStats />
       <div className="mt-6 space-y-4">
         <MaintenanceFilters filters={filters} setFilters={setFilters} />
-        <MaintenanceList records={records} isLoading={isLoading} />
+        <MaintenanceList />
       </div>
     </DashboardLayout>
   );

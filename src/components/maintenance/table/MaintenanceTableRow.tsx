@@ -33,7 +33,7 @@ interface MaintenanceTableRowProps {
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const queryClient = useQueryClient();
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
       const { error } = await supabase
         .from('maintenance')

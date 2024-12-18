@@ -58,6 +58,7 @@ export const MaintenanceList = () => {
       
       return data.map(vehicle => ({
         id: vehicle.id,
+        vehicle_id: vehicle.id, // Add vehicle_id for accident records
         service_type: "Accident Repair",
         status: "urgent",
         scheduled_date: new Date().toISOString(),
