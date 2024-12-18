@@ -86,7 +86,11 @@ export const UserManagementSettings = () => {
       // Update the user's role in the profiles table
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ role: values.role })
+        .update({ 
+          role: values.role,
+          id: authData.user.id, // Add the id field here
+          full_name: values.full_name // Also update the full_name in profiles
+        })
         .eq("id", authData.user.id);
 
       if (profileError) throw profileError;
