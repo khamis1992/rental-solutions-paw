@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Card,
@@ -35,6 +35,11 @@ export const VehicleStatusSettings = () => {
 
     setStatuses(data);
   };
+
+  // Load statuses when component mounts
+  useEffect(() => {
+    loadStatuses();
+  }, []);
 
   const addStatus = async () => {
     if (!newStatus.trim()) return;
