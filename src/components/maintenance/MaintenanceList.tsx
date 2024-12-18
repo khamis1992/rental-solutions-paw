@@ -8,9 +8,16 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Vehicle {
   make: string;
@@ -21,10 +28,17 @@ interface Vehicle {
 
 interface MaintenanceRecord {
   id: string;
+  vehicle_id: string;
   service_type: string;
-  status: string;
-  scheduled_date: string;
+  description: string | null;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
   cost: number | null;
+  scheduled_date: string;
+  completed_date: string | null;
+  performed_by: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
   vehicles: Vehicle;
 }
 
@@ -32,17 +46,12 @@ const STATUS_COLORS = {
   scheduled: "bg-blue-100 text-blue-800",
   in_progress: "bg-yellow-100 text-yellow-800",
   completed: "bg-green-100 text-green-800",
-  urgent: "bg-red-100 text-red-800",
-  delayed: "bg-purple-100 text-purple-800",
-  cancelled: "bg-gray-100 text-gray-800",
+  cancelled: "bg-red-100 text-red-800",
 } as const;
 
-interface MaintenanceListProps {
-  records: MaintenanceRecord[];
-  isLoading: boolean;
-}
+export const MaintenanceList = () => {
+  const queryClient = useQueryClient();
 
-export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) => {
   // Query to get vehicles in accident status
   const { data: accidentVehicles = [], isLoading: isLoadingAccidents } = useQuery({
     queryKey: ["accident-vehicles"],
@@ -54,7 +63,6 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
 
       if (error) throw error;
       
-      // Transform vehicle data to match maintenance record format
       return data.map(vehicle => ({
         id: vehicle.id,
         service_type: "Accident Repair",
@@ -71,10 +79,51 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
     }
   });
 
-  // Combine regular maintenance records with accident vehicles
-  const allRecords = [...records, ...accidentVehicles];
+  // Query to get maintenance records
+  const { data: maintenanceRecords = [], isLoading: isLoadingMaintenance } = useQuery({
+    queryKey: ["maintenance-records"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance")
+        .select(`
+          *,
+          vehicles (
+            make,
+            model,
+            year,
+            license_plate
+          )
+        `)
+        .order('scheduled_date', { ascending: false });
 
-  if (isLoading || isLoadingAccidents) {
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Combine regular maintenance records with accident vehicles
+  const allRecords = [...maintenanceRecords, ...accidentVehicles];
+
+  const handleStatusChange = async (recordId: string, newStatus: MaintenanceRecord['status']) => {
+    try {
+      const { error } = await supabase
+        .from('maintenance')
+        .update({ status: newStatus })
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      // Invalidate and refetch the maintenance records
+      await queryClient.invalidateQueries({ queryKey: ['maintenance-records'] });
+      
+      toast.success('Status updated successfully');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
+  if (isLoadingMaintenance || isLoadingAccidents) {
     return (
       <div className="rounded-md border">
         <Table>
@@ -118,7 +167,7 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -139,17 +188,36 @@ export const MaintenanceList = ({ records, isLoading }: MaintenanceListProps) =>
               </TableCell>
               <TableCell>{record.service_type}</TableCell>
               <TableCell>
-                <Badge
-                  className={STATUS_COLORS[record.status as keyof typeof STATUS_COLORS] || "bg-gray-100 text-gray-800"}
-                >
-                  {record.status}
-                </Badge>
+                {record.status === 'urgent' ? (
+                  <Badge variant="destructive">Urgent</Badge>
+                ) : (
+                  <Select
+                    defaultValue={record.status}
+                    onValueChange={(value) => 
+                      handleStatusChange(record.id, value as MaintenanceRecord['status'])
+                    }
+                  >
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue>
+                        <Badge className={STATUS_COLORS[record.status]}>
+                          {record.status}
+                        </Badge>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </TableCell>
               <TableCell>
                 {new Date(record.scheduled_date).toLocaleDateString()}
               </TableCell>
               <TableCell className="text-right">
-                {record.cost ? formatCurrency(record.cost) : "-"}
+                {record.cost ? `${record.cost} QAR` : '-'}
               </TableCell>
             </TableRow>
           ))}
