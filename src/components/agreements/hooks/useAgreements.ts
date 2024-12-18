@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface Agreement {
   id: string;
+  agreement_number: string;
   customer: {
     id: string;
     full_name: string;
@@ -26,6 +27,19 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
+      // First, let's verify if we have any agreements
+      const { count, error: countError } = await supabase
+        .from('leases')
+        .select('*', { count: 'exact', head: true });
+      
+      console.log("Total agreements in database:", count);
+      
+      if (countError) {
+        console.error("Error checking agreements count:", countError);
+        throw countError;
+      }
+
+      // Now fetch the full agreement data with relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`
