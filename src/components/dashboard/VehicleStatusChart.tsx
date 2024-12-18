@@ -7,14 +7,14 @@ import { DonutChart } from "./charts/DonutChart";
 import { ChartLegend } from "./charts/ChartLegend";
 
 const STATUS_COLORS = {
-  accident: "#2DD4BF",
-  available: "#4F7BE4",
-  maintenance: "#4FD1C5",
-  police_station: "#2DD4BF",
-  out_of_service: "#CA8A04",
-  stolen: "#EF4444",
-  reserve: "#8B5CF6",
-  on_rent: "#1E40AF"
+  accident: "#F97316",      // Bright Orange
+  available: "#0EA5E9",     // Ocean Blue
+  maintenance: "#4FD1C5",   // Teal
+  police_station: "#D946EF", // Magenta Pink
+  out_of_service: "#CA8A04", // Yellow
+  stolen: "#EF4444",        // Red
+  reserve: "#8B5CF6",       // Vivid Purple
+  on_rent: "#1E40AF"        // Deep Blue
 } as const;
 
 type VehicleStatus = keyof typeof STATUS_COLORS;
