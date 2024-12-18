@@ -28,7 +28,6 @@ export const AgreementImport = () => {
 
     setIsUploading(true);
     setProgress(0);
-    let pollInterval: number;
 
     try {
       console.log('Starting file upload process...', file);
@@ -67,7 +66,7 @@ export const AgreementImport = () => {
       
       const { data: functionData, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
-          body: JSON.stringify({ fileName }),
+          body: { fileName },
           headers: {
             'Content-Type': 'application/json',
           }
@@ -79,63 +78,20 @@ export const AgreementImport = () => {
       }
 
       console.log('Edge Function response:', functionData);
-      setProgress(60);
-
-      // Poll for import completion with increasing intervals
-      let pollCount = 0;
-      const maxPolls = 10;
+      setProgress(100);
       
-      pollInterval = window.setInterval(async () => {
-        console.log('Checking import status...');
-        const { data: importLog } = await supabase
-          .from("import_logs")
-          .select("status, records_processed")
-          .eq("file_name", fileName)
-          .single();
-
-        console.log('Import log status:', importLog);
-        pollCount++;
-        
-        setProgress(60 + (pollCount * 4));
-
-        if (importLog?.status === "completed") {
-          window.clearInterval(pollInterval);
-          setProgress(100);
-          toast({
-            title: "Success",
-            description: `Successfully imported ${importLog.records_processed} agreements`,
-          });
-          
-          await queryClient.invalidateQueries({ queryKey: ["agreements"] });
-          await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
-          
-          setIsUploading(false);
-        } else if (importLog?.status === "error" || pollCount >= maxPolls) {
-          window.clearInterval(pollInterval);
-          throw new Error("Import failed or timed out");
-        }
-      }, 2000);
-
-      // Set a timeout to stop polling after 30 seconds
-      setTimeout(() => {
-        if (pollInterval) {
-          window.clearInterval(pollInterval);
-        }
-        if (isUploading) {
-          setIsUploading(false);
-          toast({
-            title: "Error",
-            description: "Import timed out. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }, 30000);
+      toast({
+        title: "Success",
+        description: "Agreements imported successfully",
+      });
+      
+      await queryClient.invalidateQueries({ queryKey: ["agreements"] });
+      await queryClient.invalidateQueries({ queryKey: ["agreements-stats"] });
+      
+      setIsUploading(false);
 
     } catch (error: any) {
       console.error('Import process error:', error);
-      if (pollInterval) {
-        window.clearInterval(pollInterval);
-      }
       toast({
         title: "Error",
         description: error.message || "Failed to import agreements",
