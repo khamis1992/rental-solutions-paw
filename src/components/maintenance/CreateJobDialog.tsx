@@ -29,7 +29,8 @@ export function CreateJobDialog() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("id, make, model, license_plate");
+        .select("id, make, model, license_plate")
+        .eq('status', 'available');
       
       if (error) throw error;
       return data || [];

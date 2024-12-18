@@ -35,19 +35,31 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
-      const { error } = await supabase
+      // Update maintenance status
+      const { error: maintenanceError } = await supabase
         .from('maintenance')
         .update({ status: newStatus })
         .eq('id', record.id);
 
-      if (error) throw error;
+      if (maintenanceError) throw maintenanceError;
+
+      // If status is completed, update vehicle status to available
+      if (newStatus === 'completed') {
+        const { error: vehicleError } = await supabase
+          .from('vehicles')
+          .update({ status: 'available' })
+          .eq('id', record.vehicle_id);
+
+        if (vehicleError) throw vehicleError;
+      }
 
       // Invalidate and refetch queries
       await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      await queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] });
       
       toast.success('Status updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
     }
