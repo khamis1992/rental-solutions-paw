@@ -26,7 +26,8 @@ export const AgreementTableRow = ({
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
       <TableCell>
         <Badge
-          variant={agreement.status === "active" ? "default" : "secondary"}
+          variant={agreement.status}
+          className="capitalize"
         >
           {agreement.status}
         </Badge>
