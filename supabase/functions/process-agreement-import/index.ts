@@ -24,13 +24,20 @@ serve(async (req) => {
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    // Get the request body
-    const body = await req.json();
-    console.log('Request body:', body);
+    // Get and validate the request body
+    let body;
+    try {
+      const text = await req.text();
+      console.log('Raw request body:', text);
+      body = JSON.parse(text || '{}');
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      throw new Error(`Invalid JSON in request body: ${parseError.message}`);
+    }
+    
+    console.log('Parsed request body:', body);
 
     const { fileName } = body;
-    console.log('Processing file:', fileName);
-
     if (!fileName) {
       throw new Error('fileName is required');
     }
@@ -45,7 +52,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Download the file from storage
-    console.log('Downloading file from storage...');
+    console.log('Downloading file from storage:', fileName);
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -70,7 +77,7 @@ serve(async (req) => {
     );
 
     // Update import log with final status
-    await supabase
+    const { error: updateError } = await supabase
       .from('import_logs')
       .update({
         status: 'completed',
@@ -78,6 +85,11 @@ serve(async (req) => {
         errors: errors.length > 0 ? errors : null
       })
       .eq('file_name', fileName);
+
+    if (updateError) {
+      console.error('Error updating import log:', updateError);
+      throw updateError;
+    }
 
     return new Response(
       JSON.stringify({
@@ -100,6 +112,7 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({
+        success: false,
         error: error.message || 'An unexpected error occurred',
         details: error.toString()
       }),
