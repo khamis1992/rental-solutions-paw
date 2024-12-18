@@ -9,12 +9,12 @@ import { ChartLegend } from "./charts/ChartLegend";
 const STATUS_COLORS = {
   accident: "#F97316",      // Bright Orange
   available: "#0EA5E9",     // Ocean Blue
-  maintenance: "#4FD1C5",   // Teal
+  maintenance: "#800000",   // Maroon
   police_station: "#D946EF", // Magenta Pink
   out_of_service: "#CA8A04", // Yellow
   stolen: "#EF4444",        // Red
   reserve: "#8B5CF6",       // Vivid Purple
-  on_rent: "#1E40AF"        // Deep Blue
+  on_rent: "#22C55E"        // Green
 } as const;
 
 type VehicleStatus = keyof typeof STATUS_COLORS;
