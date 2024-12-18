@@ -21,40 +21,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize the app with session
-const initializeApp = async () => {
-  try {
-    // Get the initial session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Error fetching session:', error);
-      throw error;
-    }
-
-    // Set up auth state change listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session);
-      // Re-render with new session
-      renderApp(session);
-    });
-
-    // Initial render
-    renderApp(session);
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
-  } catch (error) {
-    console.error('Failed to initialize app:', error);
-    // Render without session in case of error
-    renderApp(null);
-  }
-};
-
 // Helper function to render the app
 const renderApp = (session: any) => {
   root.render(
@@ -73,6 +39,43 @@ const renderApp = (session: any) => {
       </SessionContextProvider>
     </React.StrictMode>
   );
+};
+
+// Initialize the app with session
+const initializeApp = async () => {
+  try {
+    // Get the initial session
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error fetching session:', error);
+      // Even if there's an error, render the app with null session
+      renderApp(null);
+      return;
+    }
+
+    // Set up auth state change listener
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session);
+      // Re-render with new session
+      renderApp(session);
+    });
+
+    // Initial render with session
+    renderApp(session);
+
+    // Cleanup subscription on unmount
+    window.addEventListener('unload', () => {
+      subscription.unsubscribe();
+    });
+
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    // Render without session in case of error
+    renderApp(null);
+  }
 };
 
 // Start the application
