@@ -5,6 +5,7 @@ import { toast } from "sonner";
 export interface Agreement {
   id: string;
   agreement_number: string;
+  license_no: string;
   customer: {
     id: string;
     full_name: string;
