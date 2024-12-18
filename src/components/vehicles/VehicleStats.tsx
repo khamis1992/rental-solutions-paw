@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Car, Wrench, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Vehicle {
   id: string;
@@ -13,37 +15,51 @@ interface VehicleStatsProps {
 }
 
 export const VehicleStats = ({ vehicles, isLoading }: VehicleStatsProps) => {
-  const stats = {
-    available: vehicles.filter((v) => v.status === "available").length,
-    maintenance: vehicles.filter((v) => v.status === "maintenance").length,
-    service: vehicles.filter((v) => v.status === "maintenance").length, // In a real app, we'd have a separate status for vehicles due for service
-  };
+  // Fetch vehicle counts directly from Supabase
+  const { data: vehicleCounts, isLoading: isLoadingCounts } = useQuery({
+    queryKey: ["vehicle-counts"],
+    queryFn: async () => {
+      const { data: vehicles, error } = await supabase
+        .from("vehicles")
+        .select("status");
+
+      if (error) throw error;
+
+      const counts = {
+        available: vehicles.filter(v => v.status === 'available').length,
+        maintenance: vehicles.filter(v => v.status === 'maintenance').length,
+        service: vehicles.filter(v => v.status === 'service').length,
+      };
+
+      return counts;
+    },
+  });
 
   const statCards = [
     {
       title: "Available Vehicles",
-      value: stats.available,
+      value: vehicleCounts?.available || 0,
       icon: Car,
       color: "text-green-500",
       bgColor: "bg-green-50",
     },
     {
       title: "In Maintenance",
-      value: stats.maintenance,
+      value: vehicleCounts?.maintenance || 0,
       icon: Wrench,
       color: "text-orange-500",
       bgColor: "bg-orange-50",
     },
     {
       title: "Due for Service",
-      value: stats.service,
+      value: vehicleCounts?.service || 0,
       icon: AlertTriangle,
       color: "text-red-500",
       bgColor: "bg-red-50",
     },
   ];
 
-  if (isLoading) {
+  if (isLoadingCounts) {
     return (
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         {[1, 2, 3].map((i) => (
