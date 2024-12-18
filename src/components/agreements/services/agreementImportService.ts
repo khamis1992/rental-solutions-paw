@@ -118,7 +118,12 @@ export const getAvailableVehicle = async () => {
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
-    // Use the dates directly from the CSV without any modification
+    console.log('Raw CSV data for dates:', {
+      checkoutDate: agreement['Check-out Date'],
+      checkinDate: agreement['Check-in Date'],
+      returnDate: agreement['Return Date']
+    });
+
     const agreementData = {
       agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
       license_no: agreement['License No'] || 'UNKNOWN',
