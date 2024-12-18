@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     vehicle_id: "",
     service_type: "",
@@ -40,7 +41,9 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      // Start a transaction by using multiple operations
+      // 1. Create maintenance record
+      const { error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
           ...formData,
@@ -48,7 +51,20 @@ export function CreateJobDialog() {
           status: "scheduled",
         }]);
 
-      if (error) throw error;
+      if (maintenanceError) throw maintenanceError;
+
+      // 2. Update vehicle status
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "maintenance" })
+        .eq("id", formData.vehicle_id);
+
+      if (vehicleError) throw vehicleError;
+
+      // Invalidate relevant queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] });
 
       toast.success("Job card created successfully");
       setOpen(false);
