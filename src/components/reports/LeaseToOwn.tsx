@@ -21,7 +21,7 @@ export const LeaseToOwn = () => {
   });
 
   const activeLeases = leaseData?.filter(lease => lease.status === 'active').length || 0;
-  const completedLeases = leaseData?.filter(lease => lease.status === 'completed').length || 0;
+  const closedLeases = leaseData?.filter(lease => lease.status === 'closed').length || 0;
   const cancelledLeases = leaseData?.filter(lease => lease.status === 'cancelled').length || 0;
   const totalValue = leaseData?.reduce((sum, lease) => sum + lease.total_amount, 0) || 0;
 
@@ -35,8 +35,8 @@ export const LeaseToOwn = () => {
           className="bg-white"
         />
         <StatsCard
-          title="Completed"
-          value={completedLeases.toString()}
+          title="Closed"
+          value={closedLeases.toString()}
           icon={CheckCircle}
           className="bg-white"
         />
