@@ -6,8 +6,24 @@ export const corsHeaders = {
 const parseDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
-  // Just return the date string as is, without validation
-  return dateStr.trim();
+  try {
+    // Split the date string by either / or -
+    const parts = dateStr.split(/[/-]/);
+    
+    if (parts.length !== 3) return dateStr;
+    
+    // Assuming DD/MM/YYYY format
+    const day = parts[0];
+    const month = parts[1];
+    const year = parts[2];
+    
+    // Convert to YYYY-MM-DD format for PostgreSQL
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  } catch (error) {
+    console.error('Error parsing date:', error);
+    // Return the original date string if parsing fails
+    return dateStr;
+  }
 };
 
 export const validateRowData = (rowData: any, headers: string[]) => {
