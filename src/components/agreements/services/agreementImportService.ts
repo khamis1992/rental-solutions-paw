@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
-import { parseDate } from "../utils/dateUtils";
 
 type LeaseStatus = Database["public"]["Enums"]["lease_status"];
 
@@ -18,78 +17,127 @@ const normalizeStatus = (status: string): LeaseStatus => {
   return statusMap[status.toLowerCase().trim()] || 'pending_payment';
 };
 
-export const createCustomerProfile = async (fullName: string) => {
-  const newCustomerId = crypto.randomUUID();
+const formatDate = (dateStr: string): string | null => {
+  if (!dateStr || dateStr.trim() === '') return null;
+
   try {
-    const { data: customer } = await supabase
+    // Handle DD/MM/YYYY format
+    if (dateStr.includes('/')) {
+      const [day, month, year] = dateStr.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    // Return as-is if it's already in YYYY-MM-DD format
+    return dateStr;
+  } catch (error) {
+    console.error('Date parsing error:', error);
+    return null;
+  }
+};
+
+export const createCustomerProfile = async (fullName: string) => {
+  if (!fullName) {
+    fullName = `Unknown Customer ${Date.now()}`;
+  }
+
+  try {
+    const { data: customer, error } = await supabase
       .from('profiles')
       .insert({
-        id: newCustomerId,
-        full_name: fullName || `Unknown Customer ${Date.now()}`,
+        full_name: fullName,
         role: 'customer'
       })
       .select()
       .single();
 
-    return customer || { id: newCustomerId };
+    if (error) {
+      console.error('Error creating customer profile:', error);
+      // Generate a fallback customer ID that won't conflict with auth.users
+      return { id: `temp-${crypto.randomUUID()}` };
+    }
+
+    return customer;
   } catch (error) {
-    console.error('Error creating customer profile:', error);
-    return { id: newCustomerId };
+    console.error('Error in createCustomerProfile:', error);
+    return { id: `temp-${crypto.randomUUID()}` };
   }
 };
 
 export const getOrCreateCustomer = async (fullName: string) => {
+  if (!fullName) {
+    return createCustomerProfile('');
+  }
+
   try {
-    const { data: existingCustomer } = await supabase
+    const { data: existingCustomer, error } = await supabase
       .from('profiles')
       .select('id')
       .eq('full_name', fullName)
-      .single();
+      .maybeSingle();
 
     if (existingCustomer) {
       return existingCustomer;
     }
-  } catch (error) {
-    console.error('Error finding customer:', error);
-  }
 
-  return createCustomerProfile(fullName);
+    if (error) {
+      console.error('Error finding customer:', error);
+    }
+
+    return createCustomerProfile(fullName);
+  } catch (error) {
+    console.error('Error in getOrCreateCustomer:', error);
+    return createCustomerProfile(fullName);
+  }
 };
 
 export const getAvailableVehicle = async () => {
   try {
-    const { data: vehicle } = await supabase
+    const { data: vehicle, error } = await supabase
       .from('vehicles')
       .select('id')
       .eq('status', 'available')
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    return vehicle || { id: crypto.randomUUID() };
+    if (error || !vehicle) {
+      console.error('Error getting vehicle:', error);
+      // Return a temporary vehicle ID
+      return { id: `temp-${crypto.randomUUID()}` };
+    }
+
+    return vehicle;
   } catch (error) {
-    console.error('Error getting vehicle:', error);
-    return { id: crypto.randomUUID() };
+    console.error('Error in getAvailableVehicle:', error);
+    return { id: `temp-${crypto.randomUUID()}` };
   }
 };
 
 export const createAgreement = async (agreement: Record<string, string>, customerId: string, vehicleId: string) => {
   try {
-    await supabase
+    const checkoutDate = formatDate(agreement['Check-out Date']);
+    const checkinDate = formatDate(agreement['Check-in Date']);
+    const returnDate = formatDate(agreement['Return Date']);
+
+    const { error } = await supabase
       .from('leases')
       .insert({
         agreement_number: agreement['Agreement Number'] || `AGR${Date.now()}`,
         license_no: agreement['License No'],
         license_number: agreement['License Number'],
-        checkout_date: agreement['Check-out Date'],
-        checkin_date: agreement['Check-in Date'],
-        return_date: agreement['Return Date'],
+        checkout_date: checkoutDate,
+        checkin_date: checkinDate,
+        return_date: returnDate,
         status: normalizeStatus(agreement['STATUS']),
         customer_id: customerId,
         vehicle_id: vehicleId,
         total_amount: 0,
         initial_mileage: 0
       });
+
+    if (error) {
+      console.error('Error creating agreement:', error);
+    }
   } catch (error) {
-    console.error('Error creating agreement:', error);
+    console.error('Error in createAgreement:', error);
   }
 };

@@ -23,11 +23,10 @@ export const AgreementImport = () => {
 
     try {
       const content = await file.text();
-      const lines = content.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
       const agreements = parseCSV(content);
       const totalAgreements = agreements.length;
       let processedCount = 0;
+      let errorCount = 0;
 
       const vehicle = await getAvailableVehicle();
 
@@ -36,17 +35,17 @@ export const AgreementImport = () => {
           const customer = await getOrCreateCustomer(agreement['full_name']);
           await createAgreement(agreement, customer.id, vehicle.id);
           processedCount++;
-          setProgress((processedCount / totalAgreements) * 100);
         } catch (error) {
           console.error('Error processing agreement:', error);
-          // Continue with next agreement even if there's an error
-          continue;
+          errorCount++;
+        } finally {
+          setProgress(((processedCount + errorCount) / totalAgreements) * 100);
         }
       }
 
       toast({
-        title: "Success",
-        description: `Processed ${processedCount} agreements`,
+        title: "Import Complete",
+        description: `Processed ${processedCount} agreements (${errorCount} errors)`,
       });
       
       await queryClient.invalidateQueries({ queryKey: ["agreements"] });
@@ -55,8 +54,8 @@ export const AgreementImport = () => {
     } catch (error: any) {
       console.error('Import process error:', error);
       toast({
-        title: "Warning",
-        description: "Import completed with some errors. Check console for details.",
+        title: "Import Completed with Errors",
+        description: "Some agreements may not have been imported correctly. Check console for details.",
       });
     } finally {
       setIsUploading(false);
@@ -66,7 +65,7 @@ export const AgreementImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = "Agreement Number,License No,full_name,License Number,Check-out Date,Check-in Date,Return Date,STATUS\n" +
-                      "AGR001,LIC123,John Doe,DL456,2024-27-03,2024-28-03,2024-29-03,active";
+                      "AGR001,LIC123,John Doe,DL456,2024-03-27,2024-03-28,2024-03-29,active";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
