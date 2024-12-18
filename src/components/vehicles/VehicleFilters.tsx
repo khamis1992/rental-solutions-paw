@@ -17,6 +17,16 @@ interface VehicleFiltersProps {
   setFilters: (filters: VehicleFilters) => void;
 }
 
+// Helper function to format status for display
+const formatStatus = (status: string) => {
+  switch (status) {
+    case 'police_station':
+      return 'Police Station';
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+};
+
 export const VehicleFilters = ({
   filters,
   setFilters,
@@ -38,7 +48,7 @@ export const VehicleFilters = ({
             <SelectItem value="available">Available</SelectItem>
             <SelectItem value="rented">Rented</SelectItem>
             <SelectItem value="maintenance">Maintenance</SelectItem>
-            <SelectItem value="police_station">Police Station</SelectItem>
+            <SelectItem value="police_station">{formatStatus('police_station')}</SelectItem>
             <SelectItem value="accident">Accident</SelectItem>
             <SelectItem value="reserve">Reserve</SelectItem>
             <SelectItem value="stolen">Stolen</SelectItem>

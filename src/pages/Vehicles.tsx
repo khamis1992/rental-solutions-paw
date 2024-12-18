@@ -20,7 +20,9 @@ const Vehicles = () => {
       let query = supabase.from("vehicles").select("*");
 
       if (filters.status !== "all") {
-        query = query.eq("status", filters.status);
+        // Ensure we're using the correct status format for the database query
+        const dbStatus = filters.status.toLowerCase().replace(" ", "_");
+        query = query.eq("status", dbStatus);
       }
 
       if (filters.searchQuery) {
