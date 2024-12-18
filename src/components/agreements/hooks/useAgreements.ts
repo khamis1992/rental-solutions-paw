@@ -26,7 +26,15 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
-      // First, let's do a direct count of all leases
+      // First, let's verify the table exists and has data
+      const { data: tableInfo } = await supabase
+        .from('leases')
+        .select('id')
+        .limit(1);
+        
+      console.log("Table check result:", tableInfo);
+
+      // Get a raw count without any joins
       const { count, error: countError } = await supabase
         .from('leases')
         .select('*', { count: 'exact', head: true });
@@ -39,35 +47,28 @@ export const useAgreements = () => {
         throw countError;
       }
 
-      // Now fetch all lease data with a simpler query first
-      const { data: rawLeases, error: rawError } = await supabase
+      // Fetch basic lease data first
+      const { data: basicLeases, error: basicError } = await supabase
         .from('leases')
-        .select('*');
+        .select('id, status, total_amount, customer_id, vehicle_id');
 
-      if (rawError) {
-        console.error("Error fetching raw leases:", rawError);
-        throw rawError;
+      if (basicError) {
+        console.error("Error fetching basic lease data:", basicError);
+        throw basicError;
       }
 
-      console.log("Raw leases data (simplified query):", rawLeases);
+      console.log("Basic lease data:", basicLeases);
 
       // Now fetch the full data with relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`
-          id,
-          checkout_date,
-          checkin_date,
-          status,
-          total_amount,
-          agreement_number,
-          customer_id,
-          vehicle_id,
-          profiles!leases_customer_id_fkey (
+          *,
+          profiles:customer_id (
             id,
             full_name
           ),
-          vehicles!leases_vehicle_id_fkey (
+          vehicles:vehicle_id (
             id,
             make,
             model,
@@ -97,8 +98,8 @@ export const useAgreements = () => {
             model: lease.vehicles?.model || '',
             year: lease.vehicles?.year || '',
           },
-          start_date: lease.checkout_date || '',
-          end_date: lease.checkin_date || '',
+          start_date: lease.start_date || lease.checkout_date || '',
+          end_date: lease.end_date || lease.checkin_date || '',
           status: lease.status || 'pending',
           total_amount: lease.total_amount || 0,
         };
