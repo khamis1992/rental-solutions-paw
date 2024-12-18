@@ -19,9 +19,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { PaymentImport } from "./PaymentImport";
+import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 interface PaymentHistoryDialogProps {
-  agreementId?: string; // Make optional
+  agreementId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -45,7 +46,6 @@ export function PaymentHistoryDialog({
         `)
         .order("created_at", { ascending: false });
 
-      // Only filter by lease_id if it's provided
       if (agreementId) {
         query.eq("lease_id", agreementId);
       }
@@ -71,6 +71,20 @@ export function PaymentHistoryDialog({
       default:
         return "bg-gray-500/10 text-gray-500";
     }
+  };
+
+  const getAmountDisplay = (amount: number) => {
+    const isNegative = amount < 0;
+    const displayAmount = formatCurrency(Math.abs(amount));
+    const textColorClass = isNegative ? "text-[#ea384c]" : "text-green-600";
+    const Icon = isNegative ? ArrowDownCircle : ArrowUpCircle;
+    
+    return (
+      <div className={`flex items-center gap-2 ${textColorClass}`}>
+        <Icon className="h-4 w-4" />
+        <span>{isNegative ? `-${displayAmount}` : displayAmount}</span>
+      </div>
+    );
   };
 
   const totalPaid = paymentHistory?.reduce((sum, payment) => {
@@ -134,7 +148,9 @@ export function PaymentHistoryDialog({
                     <TableCell>
                       {payment.security_deposits ? "Security Deposit" : "Payment"}
                     </TableCell>
-                    <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                    <TableCell>
+                      {getAmountDisplay(payment.amount)}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
