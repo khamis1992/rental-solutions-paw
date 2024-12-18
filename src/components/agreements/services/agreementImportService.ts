@@ -20,16 +20,19 @@ const normalizeStatus = (status: string): LeaseStatus => {
 };
 
 const formatDateForPostgres = (dateStr: string): string | null => {
-  if (!dateStr) return null;
+  if (!dateStr || dateStr.trim() === '') return null;
   
   // Parse DD/MM/YYYY format
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     const [day, month, year] = parts;
     // Convert to YYYY-MM-DD format
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    console.log('Formatted date:', { original: dateStr, formatted: formattedDate });
+    return formattedDate;
   }
   
+  console.log('Invalid date format:', dateStr);
   return null;
 };
 
