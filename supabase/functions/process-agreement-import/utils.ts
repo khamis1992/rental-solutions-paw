@@ -20,12 +20,12 @@ export const statusMapping: { [key: string]: string } = {
 const parseDate = (dateStr: string): string => {
   if (!dateStr) return '';
   
-  // Parse MM/DD/YYYY to DD/MM/YYYY
+  // Parse MM/DD/YYYY
   const parts = dateStr.split('/');
   if (parts.length === 3) {
-    // Rearrange from MM/DD/YYYY to DD/MM/YYYY
+    // Convert to YYYY-MM-DD format for PostgreSQL
     const [month, day, year] = parts;
-    return `${day}/${month}/${year}`;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
   return dateStr;
 };
