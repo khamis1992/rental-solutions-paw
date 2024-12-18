@@ -63,11 +63,11 @@ export const AgreementImport = () => {
       }
 
       setProgress(40);
-      console.log('Starting import process via Edge Function...');
+      console.log('Starting import process via Edge Function...', { fileName });
       
       const { data: functionData, error: functionError } = await supabase.functions
         .invoke('process-agreement-import', {
-          body: { fileName },
+          body: JSON.stringify({ fileName }), // Ensure fileName is properly stringified
           headers: {
             'Content-Type': 'application/json',
           }
