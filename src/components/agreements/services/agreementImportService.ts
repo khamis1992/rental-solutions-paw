@@ -21,13 +21,31 @@ const formatDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
   try {
-    // Parse DD/MM/YYYY format
-    const [day, month, year] = dateStr.split('/').map(num => parseInt(num.trim(), 10));
+    // First, clean the input string
+    dateStr = dateStr.trim();
+    
+    // Handle different date formats
+    let day: number, month: number, year: number;
+    
+    // Try DD/MM/YYYY format
+    if (dateStr.includes('/')) {
+      [day, month, year] = dateStr.split('/').map(num => parseInt(num.trim(), 10));
+    } 
+    // Try DD-MM-YYYY format
+    else if (dateStr.includes('-')) {
+      [day, month, year] = dateStr.split('-').map(num => parseInt(num.trim(), 10));
+    } else {
+      return null;
+    }
     
     // Validate date parts
     if (!day || !month || !year) return null;
     if (month < 1 || month > 12) return null;
     if (day < 1 || day > 31) return null;
+    
+    // Additional date validation
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return null;
     
     // Format as YYYY-MM-DD for Supabase
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
@@ -133,7 +151,7 @@ export const createAgreement = async (agreement: Record<string, string>, custome
       .from('leases')
       .upsert(agreementData, {
         onConflict: 'agreement_number',
-        ignoreDuplicates: false
+        ignoreDuplicates: true // Changed to true to skip duplicates instead of updating them
       });
 
     if (error) {
