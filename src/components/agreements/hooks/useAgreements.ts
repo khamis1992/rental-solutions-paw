@@ -39,7 +39,7 @@ export const useAgreements = () => {
         throw countError;
       }
 
-      // Fetch all agreements without pagination
+      // Now fetch the full agreement data with relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -61,8 +61,7 @@ export const useAgreements = () => {
             model,
             year
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
       if (error) {
         console.error("Error fetching agreements:", error);
@@ -71,7 +70,6 @@ export const useAgreements = () => {
       }
 
       console.log("Raw agreements data:", data);
-      console.log("Total agreements fetched:", data?.length);
       
       const transformedData = data?.map((lease: any) => ({
         id: lease.id,
@@ -93,7 +91,6 @@ export const useAgreements = () => {
       })) || [];
 
       console.log("Transformed agreements data:", transformedData);
-      console.log("Total transformed agreements:", transformedData.length);
       return transformedData;
     },
   });

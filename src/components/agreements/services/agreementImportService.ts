@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
-import { v4 as uuidv4 } from 'uuid';
 
 type LeaseStatus = Database["public"]["Enums"]["lease_status"];
 
@@ -20,46 +19,32 @@ const normalizeStatus = (status: string): LeaseStatus => {
 
 const formatDate = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
-  return dateStr;
+  return dateStr; // Return date string as-is without validation
 };
 
+// Simplified function that just returns a UUID for customer_id
 export const getOrCreateCustomer = async () => {
-  try {
-    // First try to get an existing default customer
-    const { data: existingCustomer, error: fetchError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('full_name', 'Default Customer')
-      .maybeSingle();
-      
-    if (existingCustomer) {
-      console.log('Using existing default customer:', existingCustomer);
-      return existingCustomer;
-    }
-
-    // If no default customer exists, create one with a UUID
-    const newCustomerId = uuidv4();
-    const { data: newCustomer, error: insertError } = await supabase
-      .from('profiles')
-      .insert({
-        id: newCustomerId,
-        full_name: 'Default Customer',
-        role: 'customer'
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error('Error creating default customer:', insertError);
-      throw insertError;
-    }
-
-    console.log('Created new default customer:', newCustomer);
-    return newCustomer;
-  } catch (error) {
-    console.error('Error in getOrCreateCustomer:', error);
-    throw error;
+  const { data: defaultCustomer } = await supabase
+    .from('profiles')
+    .select('id')
+    .limit(1)
+    .single();
+    
+  if (defaultCustomer) {
+    return defaultCustomer;
   }
+  
+  // Create a default customer if none exists
+  const { data: newCustomer } = await supabase
+    .from('profiles')
+    .insert({
+      full_name: `Default Customer`,
+      role: 'customer'
+    })
+    .select()
+    .single();
+    
+  return newCustomer;
 };
 
 export const getAvailableVehicle = async () => {
