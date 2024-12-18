@@ -24,17 +24,20 @@ const STATUS_COLORS = {
 type VehicleStatus = keyof typeof STATUS_COLORS;
 
 // Convert the colors object to the format expected by ChartConfig
-const config = Object.entries(STATUS_COLORS).reduce((acc, [key, value]) => ({
-  ...acc,
-  [key]: {
-    color: value,
-  },
-}), {
-  theme: {
-    light: "#E2E8F0",
-    dark: "#334155",
-  },
-});
+const config = {
+  ...Object.entries(STATUS_COLORS).reduce((acc, [key, value]) => ({
+    ...acc,
+    [key]: {
+      color: value,
+    },
+  }), {}),
+  background: {
+    theme: {
+      light: "#E2E8F0",
+      dark: "#334155",
+    }
+  }
+};
 
 export const VehicleStatusChart = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
