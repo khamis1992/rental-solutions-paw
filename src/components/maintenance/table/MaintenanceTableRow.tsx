@@ -9,13 +9,12 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { MaintenanceStatus, VehicleStatus } from "../MaintenanceList";
 
 interface MaintenanceRecord {
   id: string;
   vehicle_id: string;
   service_type: string;
-  status: MaintenanceStatus;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
   cost: number | null;
   scheduled_date: string;
 }
@@ -27,61 +26,50 @@ interface MaintenanceTableRowProps {
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const queryClient = useQueryClient();
 
-  const handleStatusChange = async (newStatus: MaintenanceStatus) => {
+  const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
       console.log('Updating maintenance status to:', newStatus);
       console.log('Current record:', record);
 
-      if (record.status === "urgent") {
-        // For urgent (accident) records, only update the vehicle status
-        const newVehicleStatus: VehicleStatus = newStatus === "completed" || newStatus === "cancelled" 
-          ? "available" 
-          : "maintenance";
+      // Start a transaction by using multiple operations
+      // 1. Update maintenance record
+      const { error: maintenanceError } = await supabase
+        .from('maintenance')
+        .update({ 
+          status: newStatus,
+          completed_date: newStatus === 'completed' ? new Date().toISOString() : null
+        })
+        .eq('id', record.id);
 
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: newVehicleStatus })
-          .eq('id', record.vehicle_id);
-
-        if (vehicleError) {
-          console.error('Error updating vehicle:', vehicleError);
-          throw vehicleError;
-        }
-      } else {
-        // For regular maintenance records, update both maintenance and vehicle status
-        const { error: maintenanceError } = await supabase
-          .from('maintenance')
-          .update({ 
-            status: newStatus,
-            completed_date: newStatus === 'completed' ? new Date().toISOString() : null
-          })
-          .eq('id', record.id);
-
-        if (maintenanceError) {
-          console.error('Error updating maintenance:', maintenanceError);
-          throw maintenanceError;
-        }
-
-        const newVehicleStatus: VehicleStatus = newStatus === "completed" || newStatus === "cancelled" 
-          ? "available" 
-          : "maintenance";
-
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: newVehicleStatus })
-          .eq('id', record.vehicle_id);
-
-        if (vehicleError) {
-          console.error('Error updating vehicle:', vehicleError);
-          throw vehicleError;
-        }
+      if (maintenanceError) {
+        console.error('Error updating maintenance:', maintenanceError);
+        throw maintenanceError;
       }
+
+      // 2. Update vehicle status based on maintenance status
+      let newVehicleStatus = 'maintenance';
+      if (newStatus === 'completed' || newStatus === 'cancelled') {
+        newVehicleStatus = 'available';
+      }
+
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({ status: newVehicleStatus })
+        .eq('id', record.vehicle_id);
+
+      if (vehicleError) {
+        console.error('Error updating vehicle:', vehicleError);
+        throw vehicleError;
+      }
+
+      console.log('Vehicle status updated to:', newVehicleStatus);
 
       // Invalidate and refetch all relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] }),
+        // Add any other relevant queries that need to be invalidated
       ]);
       
       toast.success(`Status updated to ${newStatus}`);

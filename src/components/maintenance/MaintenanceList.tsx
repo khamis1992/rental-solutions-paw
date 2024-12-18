@@ -7,14 +7,13 @@ import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 
-export type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
-export type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen";
+type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
 
 interface MaintenanceRecord {
   id: string;
   vehicle_id: string;
   service_type: string;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  status: MaintenanceStatus;
   scheduled_date: string;
   cost: number | null;
   vehicles: {
@@ -24,23 +23,6 @@ interface MaintenanceRecord {
     license_plate: string;
   };
 }
-
-interface AccidentMaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  status: "urgent";
-  scheduled_date: string;
-  cost: number | null;
-  vehicles: {
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
-type CombinedMaintenanceRecord = MaintenanceRecord | AccidentMaintenanceRecord;
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
@@ -95,7 +77,7 @@ export const MaintenanceList = () => {
         id: vehicle.id,
         vehicle_id: vehicle.id,
         service_type: "Accident Repair",
-        status: "urgent" as const,
+        status: "urgent" as MaintenanceStatus,
         scheduled_date: new Date().toISOString(),
         cost: null,
         vehicles: {
@@ -126,12 +108,12 @@ export const MaintenanceList = () => {
         .order('scheduled_date', { ascending: false });
 
       if (error) throw error;
-      return data as MaintenanceRecord[];
+      return data;
     },
   });
 
   // Combine regular maintenance records with accident vehicles
-  const allRecords: CombinedMaintenanceRecord[] = [...maintenanceRecords, ...accidentVehicles];
+  const allRecords = [...maintenanceRecords, ...accidentVehicles];
 
   if (isLoadingMaintenance || isLoadingAccidents) {
     return (
