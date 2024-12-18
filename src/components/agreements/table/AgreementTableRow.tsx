@@ -52,23 +52,6 @@ export const AgreementTableRow = ({
   onPrintContract,
   onAgreementClick 
 }: Props) => {
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    
-    const date = new Date(dateString);
-    if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
-      // If date is invalid or 1970, return the original string
-      return dateString;
-    }
-    
-    // Format the date as DD/MM/YYYY
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    
-    return `${day}/${month}/${year}`;
-  };
-
   return (
     <TableRow>
       <TableCell>
@@ -90,8 +73,8 @@ export const AgreementTableRow = ({
       <TableCell>
         {`${agreement.vehicle.year} ${agreement.vehicle.make} ${agreement.vehicle.model}`}
       </TableCell>
-      <TableCell>{formatDate(agreement.start_date)}</TableCell>
-      <TableCell>{formatDate(agreement.end_date)}</TableCell>
+      <TableCell>{agreement.start_date}</TableCell>
+      <TableCell>{agreement.end_date}</TableCell>
       <TableCell>
         <Badge
           variant="secondary"
