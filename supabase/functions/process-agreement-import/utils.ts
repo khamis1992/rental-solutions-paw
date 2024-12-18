@@ -17,6 +17,19 @@ export const statusMapping: { [key: string]: string } = {
   'open': 'active'
 };
 
+const parseDate = (dateStr: string): string => {
+  if (!dateStr) return '';
+  
+  // Parse MM/DD/YYYY to DD/MM/YYYY
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    // Rearrange from MM/DD/YYYY to DD/MM/YYYY
+    const [month, day, year] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return dateStr;
+};
+
 export const validateRowData = (rowData: any, headers: string[]) => {
   const missingFields = [];
   if (!rowData.agreementNumber) missingFields.push('Agreement Number');
@@ -41,9 +54,9 @@ export const extractRowData = (currentRowValues: string[], headers: string[]) =>
     licenseNo: currentRowValues[headers.indexOf('License No')]?.trim(),
     fullName: currentRowValues[headers.indexOf('full_name')]?.trim(),
     licenseNumber: currentRowValues[headers.indexOf('License Number')]?.trim(),
-    checkoutDate: currentRowValues[headers.indexOf('Check-out Date')]?.trim(),
-    checkinDate: currentRowValues[headers.indexOf('Check-in Date')]?.trim(),
-    returnDate: currentRowValues[headers.indexOf('Return Date')]?.trim(),
+    checkoutDate: parseDate(currentRowValues[headers.indexOf('Check-out Date')]?.trim()),
+    checkinDate: parseDate(currentRowValues[headers.indexOf('Check-in Date')]?.trim()),
+    returnDate: parseDate(currentRowValues[headers.indexOf('Return Date')]?.trim()),
     status: currentRowValues[headers.indexOf('STATUS')]?.trim()?.toLowerCase(),
   };
 };
