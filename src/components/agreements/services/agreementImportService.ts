@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { v4 as uuidv4 } from 'uuid';
 
 type LeaseStatus = Database["public"]["Enums"]["lease_status"];
 
@@ -22,29 +23,44 @@ const formatDate = (dateStr: string): string | null => {
   return dateStr; // Return date string as-is without validation
 };
 
-// Simplified function that just returns a UUID for customer_id
+// Simplified function that creates a default customer profile
 export const getOrCreateCustomer = async () => {
-  const { data: defaultCustomer } = await supabase
-    .from('profiles')
-    .select('id')
-    .limit(1)
-    .single();
+  try {
+    // First try to get an existing default customer
+    const { data: existingCustomer } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('full_name', 'Default Customer')
+      .single();
+      
+    if (existingCustomer) {
+      console.log('Using existing default customer:', existingCustomer);
+      return existingCustomer;
+    }
     
-  if (defaultCustomer) {
-    return defaultCustomer;
+    // Create a new default customer with a generated UUID
+    const newCustomerId = uuidv4();
+    const { data: newCustomer, error } = await supabase
+      .from('profiles')
+      .insert({
+        id: newCustomerId,
+        full_name: 'Default Customer',
+        role: 'customer'
+      })
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('Error creating default customer:', error);
+      throw error;
+    }
+    
+    console.log('Created new default customer:', newCustomer);
+    return newCustomer;
+  } catch (error) {
+    console.error('Error in getOrCreateCustomer:', error);
+    throw error;
   }
-  
-  // Create a default customer if none exists
-  const { data: newCustomer } = await supabase
-    .from('profiles')
-    .insert({
-      full_name: `Default Customer`,
-      role: 'customer'
-    })
-    .select()
-    .single();
-    
-  return newCustomer;
 };
 
 export const getAvailableVehicle = async () => {
