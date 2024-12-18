@@ -98,7 +98,7 @@ export const VehicleStatusChart = () => {
                 />
                 <YAxis 
                   allowDecimals={false}
-                  tickFormatter={(value) => Math.floor(value)}
+                  tickFormatter={(value) => value.toString()}
                 />
                 <Tooltip
                   content={({ active, payload }) => {
