@@ -46,10 +46,24 @@ const getStatusColor = (status: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString; // Return original if invalid
+  if (!dateString) return 'N/A';
   
+  // Try to parse the date string
+  const date = new Date(dateString);
+  
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    // If the date is in DD/MM/YYYY format, parse it manually
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${day}/${month}/${year}`;
+    }
+    // If we can't parse it, return the original string
+    return dateString;
+  }
+  
+  // Format valid date
   const day = date.getDate().toString().padStart(2, '0');
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
