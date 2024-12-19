@@ -11,56 +11,69 @@ import './index.css';
 const rootElement = document.getElementById('root')!;
 const root = createRoot(rootElement);
 
-// Create a client with optimized configuration
+// Create a client with aggressive optimization
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // Data is considered fresh for 5 minutes
-      gcTime: 1000 * 60 * 10,   // Keep unused data in cache for 10 minutes
-      retry: 1,                  // Only retry failed requests once
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      refetchOnReconnect: 'always', // Always refetch on reconnect
+      staleTime: 1000 * 60 * 15,    // Data stays fresh for 15 minutes
+      gcTime: 1000 * 60 * 30,       // Keep unused data in cache for 30 minutes
+      retry: 1,                      // Only retry failed requests once
+      refetchOnWindowFocus: false,   // Don't refetch on window focus
+      refetchOnReconnect: false,     // Don't refetch on reconnect unless explicitly needed
+      refetchOnMount: false,         // Don't refetch on component mount
+      networkMode: 'offlineFirst',   // Use cached data first, then network
     },
   },
 });
 
-// Initialize the app with session
+// Initialize the app with optimized session handling
 const initializeApp = async () => {
   try {
-    // Get the initial session
+    // Get the initial session with caching
+    const cachedSession = localStorage.getItem('app_session');
+    let initialSession = cachedSession ? JSON.parse(cachedSession) : null;
+
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
       console.error('Error fetching initial session:', error);
-      // If there's an error, try to refresh the session
       const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         console.error('Error refreshing session:', refreshError);
         renderApp(null);
         return;
       }
-      renderApp(refreshedSession);
-      return;
+      initialSession = refreshedSession;
+    } else {
+      initialSession = session;
     }
 
-    console.log('Initial session:', session);
+    // Cache the session
+    if (initialSession) {
+      localStorage.setItem('app_session', JSON.stringify(initialSession));
+    }
 
-    // Set up auth state change listener
+    console.log('Initial session:', initialSession);
+
+    // Set up optimized auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('Auth state changed:', _event);
-      console.log('New session:', session);
       
       if (_event === 'TOKEN_REFRESHED') {
         console.log('Token refreshed successfully');
-        // Invalidate all queries to refetch fresh data with new token
-        queryClient.invalidateQueries();
+        // Only invalidate auth-dependent queries
+        queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'auth-dependent' });
+      } else if (_event === 'SIGNED_OUT') {
+        // Clear cache on sign out
+        queryClient.clear();
+        localStorage.removeItem('app_session');
       }
       
       renderApp(session);
     });
 
     // Initial render with session
-    renderApp(session);
+    renderApp(initialSession);
 
     // Cleanup subscription when the window unloads
     window.addEventListener('unload', () => {
@@ -73,8 +86,10 @@ const initializeApp = async () => {
   }
 };
 
-// Helper function to render the app
+// Helper function to render the app with performance tracking
 const renderApp = (session: any) => {
+  const startRender = performance.now();
+  
   root.render(
     <React.StrictMode>
       <SessionContextProvider 
@@ -91,7 +106,14 @@ const renderApp = (session: any) => {
       </SessionContextProvider>
     </React.StrictMode>
   );
+
+  // Track render performance
+  const renderTime = performance.now() - startRender;
+  console.log(`App rendered in ${renderTime}ms`);
 };
 
-// Start the application
-initializeApp();
+// Start the application with performance monitoring
+console.time('App Initialization');
+initializeApp().finally(() => {
+  console.timeEnd('App Initialization');
+});
