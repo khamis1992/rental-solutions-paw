@@ -49,11 +49,12 @@ export const MaintenanceList = () => {
     };
   }, [queryClient]);
 
-  // Query to get maintenance records
-  const { data: maintenanceRecords = [], isLoading: isLoadingMaintenance } = useQuery({
-    queryKey: ["maintenance"],
+  // Query to get maintenance records and vehicles in accident status
+  const { data: records = [], isLoading } = useQuery({
+    queryKey: ["maintenance-and-accidents"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get all maintenance records
+      const { data: maintenanceRecords, error: maintenanceError } = await supabase
         .from("maintenance")
         .select(`
           *,
@@ -66,17 +67,45 @@ export const MaintenanceList = () => {
         `)
         .order('scheduled_date', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (maintenanceError) throw maintenanceError;
+
+      // Then, get all vehicles in accident status
+      const { data: accidentVehicles, error: vehiclesError } = await supabase
+        .from("vehicles")
+        .select(`
+          id,
+          make,
+          model,
+          year,
+          license_plate
+        `)
+        .eq('status', 'accident');
+
+      if (vehiclesError) throw vehiclesError;
+
+      // Convert accident vehicles to maintenance record format
+      const accidentRecords = accidentVehicles.map(vehicle => ({
+        id: `accident-${vehicle.id}`,
+        vehicle_id: vehicle.id,
+        service_type: 'Accident Repair',
+        status: 'urgent',
+        scheduled_date: new Date().toISOString(),
+        vehicles: vehicle
+      }));
+
+      // Combine both arrays and sort by date
+      return [...maintenanceRecords, ...accidentRecords].sort((a, b) => 
+        new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime()
+      );
     },
   });
 
-  const totalPages = Math.ceil(maintenanceRecords.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentRecords = maintenanceRecords.slice(startIndex, endIndex);
+  const currentRecords = records.slice(startIndex, endIndex);
 
-  if (isLoadingMaintenance) {
+  if (isLoading) {
     return (
       <div className="rounded-md border">
         <Table>
