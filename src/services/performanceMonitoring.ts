@@ -51,6 +51,22 @@ export const performanceMetrics = {
     
     if (error) throw error;
     return data;
+  },
+
+  async trackError(error: { component: string; error: any; timestamp: string }) {
+    const { data, error: dbError } = await supabase
+      .from("performance_metrics")
+      .insert({
+        metric_type: 'error',
+        value: 1,
+        context: error,
+        timestamp: error.timestamp
+      })
+      .select()
+      .single();
+    
+    if (dbError) throw dbError;
+    return data;
   }
 };
 
