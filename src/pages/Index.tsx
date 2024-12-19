@@ -11,44 +11,34 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 
 const Index = () => {
+  // Initialize performance monitoring
   usePerformanceMonitoring();
+  
+  // Initialize real-time subscriptions
   useDashboardSubscriptions();
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-1000">
-        <WelcomeHeader />
-        
-        <div className="grid gap-6">
-          <DashboardStats />
+      <WelcomeHeader />
+      <DashboardStats />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
+        <div className="lg:col-span-4">
+          <UpcomingRentals />
         </div>
-
-        <div className="grid gap-6 lg:grid-cols-7">
-          <div className="lg:col-span-4 space-y-6">
-            <div className="rounded-xl border bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-              <UpcomingRentals />
-            </div>
-            <div className="rounded-xl border bg-gradient-to-br from-orange-50 to-rose-50 p-6">
-              <RecentActivity />
-            </div>
-          </div>
-          
-          <div className="lg:col-span-3 space-y-6">
-            <div className="rounded-xl border bg-gradient-to-br from-purple-50 to-pink-50 p-6">
-              <DashboardAlerts />
-            </div>
-            <div className="rounded-xl border bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
-              <QuickActions />
-            </div>
-            <div className="rounded-xl border bg-gradient-to-br from-yellow-50 to-amber-50 p-6">
-              <IntelligentScheduling />
-            </div>
-          </div>
+        <div className="lg:col-span-3">
+          <DashboardAlerts />
         </div>
-
-        <div className="rounded-xl border bg-gradient-to-br from-cyan-50 to-sky-50 p-6">
-          <AiAnalyticsInsights />
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <RecentActivity />
         </div>
+        <div className="lg:col-span-3">
+          <IntelligentScheduling />
+        </div>
+      </div>
+      <div className="mt-6">
+        <AiAnalyticsInsights />
       </div>
     </DashboardLayout>
   );
