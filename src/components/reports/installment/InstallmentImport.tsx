@@ -55,13 +55,13 @@ export function InstallmentImport() {
 
       console.log('File uploaded, processing...');
       
-      // Process the file with contract name
+      // Process the file with contract name - Now properly sending both required fields
       const { data: processingData, error: processingError } = await supabase
         .functions
         .invoke('process-installment-import', {
           body: { 
-            filePath: fileName,
-            contractName: contractName
+            fileName,
+            contractName
           }
         });
 
@@ -78,11 +78,11 @@ export function InstallmentImport() {
       toast({
         title: "Success",
         description: `Successfully imported ${processingData.processed} installments${
-          processingData.errors.length > 0 ? ` with ${processingData.errors.length} errors` : ''
+          processingData.errors?.length > 0 ? ` with ${processingData.errors.length} errors` : ''
         }`,
       });
 
-      if (processingData.errors.length > 0) {
+      if (processingData.errors?.length > 0) {
         console.error('Import errors:', processingData.errors);
         toast({
           title: "Warning",
