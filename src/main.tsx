@@ -23,44 +23,49 @@ const queryClient = new QueryClient({
 
 // Initialize the app with session
 const initializeApp = async () => {
-  let subscription: { unsubscribe: () => void } | null = null;
-
   try {
     // Get the initial session
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
       console.error('Error fetching initial session:', error);
-      renderApp(null);
+      // If there's an error, try to refresh the session
+      const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('Error refreshing session:', refreshError);
+        renderApp(null);
+        return;
+      }
+      renderApp(refreshedSession);
       return;
     }
 
     console.log('Initial session:', session);
 
     // Set up auth state change listener
-    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('Auth state changed:', _event);
       console.log('New session:', session);
+      
+      if (_event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully');
+      }
+      
       renderApp(session);
     });
 
-    subscription = sub;
-
     // Initial render with session
     renderApp(session);
+
+    // Cleanup subscription when the window unloads
+    window.addEventListener('unload', () => {
+      subscription.unsubscribe();
+    });
 
   } catch (error) {
     console.error('Failed to initialize app:', error);
     renderApp(null);
   }
-
-  // Cleanup subscription when the window unloads
-  window.addEventListener('unload', () => {
-    if (subscription) {
-      console.log('Cleaning up auth subscription');
-      subscription.unsubscribe();
-    }
-  });
 };
 
 // Helper function to render the app
@@ -68,7 +73,7 @@ const renderApp = (session: any) => {
   root.render(
     <React.StrictMode>
       <SessionContextProvider 
-        supabaseClient={supabase} 
+        supabaseClient={supabase}
         initialSession={session}
       >
         <QueryClientProvider client={queryClient}>
