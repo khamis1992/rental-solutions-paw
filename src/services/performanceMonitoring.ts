@@ -99,10 +99,18 @@ export const aiAnalysis = {
   },
 
   async triggerAnalysis() {
-    return supabase.functions.invoke('analyze-performance', {
-      body: { includesDiskMetrics: true },
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const { data, error } = await supabase.functions.invoke(
+      'analyze-performance',
+      {
+        body: { includesDiskMetrics: true },
+      },
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    
+    if (error) throw error;
+    return data;
   },
 
   async markInsightImplemented(insightId: string) {
