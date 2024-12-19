@@ -6,11 +6,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Brain, TrendingUp, CheckCircle } from "lucide-react";
 import { aiAnalysis } from "@/services/performanceMonitoring";
 import { useToast } from "@/components/ui/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type AIInsight = Database["public"]["Tables"]["ai_insights"]["Row"];
 
 export const PerformanceInsights = () => {
   const { toast } = useToast();
   
-  const { data: insights, isLoading, refetch } = useQuery({
+  const { data: insights, isLoading, refetch } = useQuery<AIInsight[]>({
     queryKey: ['ai-insights'],
     queryFn: () => aiAnalysis.getInsights(),
   });
@@ -78,7 +81,7 @@ export const PerformanceInsights = () => {
                       {insight.priority === 1 ? "High Priority" : "Normal Priority"}
                     </Badge>
                     {insight.status === 'implemented' ? (
-                      <Badge variant="success" className="bg-green-500">
+                      <Badge className="bg-green-500">
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Implemented
                       </Badge>

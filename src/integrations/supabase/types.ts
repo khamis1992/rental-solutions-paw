@@ -102,6 +102,42 @@ export type Database = {
           },
         ]
       }
+      ai_insights: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          impact_score: number | null
+          implemented_at: string | null
+          insight: string
+          priority: number
+          recommendation: string
+          status: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          impact_score?: number | null
+          implemented_at?: string | null
+          insight: string
+          priority: number
+          recommendation: string
+          status?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          impact_score?: number | null
+          implemented_at?: string | null
+          insight?: string
+          priority?: number
+          recommendation?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       applied_discounts: {
         Row: {
           created_at: string
@@ -773,6 +809,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      performance_metrics: {
+        Row: {
+          context: Json | null
+          id: string
+          metric_type: string
+          timestamp: string | null
+          value: number
+        }
+        Insert: {
+          context?: Json | null
+          id?: string
+          metric_type: string
+          timestamp?: string | null
+          value: number
+        }
+        Update: {
+          context?: Json | null
+          id?: string
+          metric_type?: string
+          timestamp?: string | null
+          value?: number
+        }
+        Relationships: []
       }
       permissions: {
         Row: {

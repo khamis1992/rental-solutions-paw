@@ -1,45 +1,63 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type PerformanceMetric = Database["public"]["Tables"]["performance_metrics"]["Row"];
+type AIInsight = Database["public"]["Tables"]["ai_insights"]["Row"];
 
 export const performanceMetrics = {
   async trackPageLoad(route: string, loadTime: number) {
-    return supabase
-      .from('performance_metrics')
+    const { data, error } = await supabase
+      .from("performance_metrics")
       .insert({
         metric_type: 'page_load',
         value: loadTime,
-        context: { route }
-      });
+        context: { route },
+        timestamp: new Date().toISOString()
+      } as PerformanceMetric);
+    
+    if (error) throw error;
+    return data;
   },
 
   async trackApiCall(endpoint: string, duration: number, success: boolean) {
-    return supabase
-      .from('performance_metrics')
+    const { data, error } = await supabase
+      .from("performance_metrics")
       .insert({
         metric_type: 'api_call',
         value: duration,
-        context: { endpoint, success }
-      });
+        context: { endpoint, success },
+        timestamp: new Date().toISOString()
+      } as PerformanceMetric);
+    
+    if (error) throw error;
+    return data;
   },
 
   async trackUserInteraction(action: string, duration: number) {
-    return supabase
-      .from('performance_metrics')
+    const { data, error } = await supabase
+      .from("performance_metrics")
       .insert({
         metric_type: 'user_interaction',
         value: duration,
-        context: { action }
-      });
+        context: { action },
+        timestamp: new Date().toISOString()
+      } as PerformanceMetric);
+    
+    if (error) throw error;
+    return data;
   }
 };
 
 export const aiAnalysis = {
   async getInsights() {
-    const { data } = await supabase
-      .from('ai_insights')
+    const { data, error } = await supabase
+      .from("ai_insights")
       .select('*')
       .order('created_at', { ascending: false })
       .limit(10);
-    return data;
+    
+    if (error) throw error;
+    return data as AIInsight[];
   },
 
   async triggerAnalysis() {
@@ -47,12 +65,15 @@ export const aiAnalysis = {
   },
 
   async markInsightImplemented(insightId: string) {
-    return supabase
-      .from('ai_insights')
+    const { data, error } = await supabase
+      .from("ai_insights")
       .update({
         status: 'implemented',
         implemented_at: new Date().toISOString()
       })
       .eq('id', insightId);
+    
+    if (error) throw error;
+    return data;
   }
 };
