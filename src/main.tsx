@@ -11,12 +11,15 @@ import './index.css';
 const rootElement = document.getElementById('root')!;
 const root = createRoot(rootElement);
 
-// Create a client
+// Create a client with optimized configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
+      staleTime: 1000 * 60 * 5, // Data is considered fresh for 5 minutes
+      gcTime: 1000 * 60 * 10,   // Keep unused data in cache for 10 minutes
+      retry: 1,                  // Only retry failed requests once
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnReconnect: 'always', // Always refetch on reconnect
     },
   },
 });
@@ -49,6 +52,8 @@ const initializeApp = async () => {
       
       if (_event === 'TOKEN_REFRESHED') {
         console.log('Token refreshed successfully');
+        // Invalidate all queries to refetch fresh data with new token
+        queryClient.invalidateQueries();
       }
       
       renderApp(session);

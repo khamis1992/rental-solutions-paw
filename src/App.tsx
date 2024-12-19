@@ -18,6 +18,7 @@ import { VehicleInspectionForm } from "@/components/maintenance/inspection/Vehic
 import { useParams } from "react-router-dom";
 import { performanceMetrics } from "@/services/performanceMonitoring";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Wrapper components to handle URL parameters
 const VehicleDetailsWrapper = () => {
@@ -33,6 +34,8 @@ const VehicleInspectionWrapper = () => {
 };
 
 function App() {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     // Track initial page load
     const startTime = performance.now();
@@ -55,9 +58,9 @@ function App() {
 
     observer.observe({ entryTypes: ['navigation'] });
 
-    // Set up real-time error tracking
+    // Set up real-time error tracking and data synchronization
     const channel = supabase
-      .channel('system-errors')
+      .channel('system-status')
       .on(
         'postgres_changes',
         {
@@ -76,15 +79,31 @@ function App() {
             error: payload.new,
             timestamp: new Date().toISOString()
           });
+
+          // Invalidate affected queries
+          queryClient.invalidateQueries();
         }
       )
       .subscribe();
+
+    // Prefetch critical data
+    queryClient.prefetchQuery({
+      queryKey: ['company_settings'],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('company_settings')
+          .select('*')
+          .single();
+        if (error) throw error;
+        return data;
+      },
+    });
 
     return () => {
       observer.disconnect();
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <Routes>
