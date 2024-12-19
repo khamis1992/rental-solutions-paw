@@ -43,7 +43,9 @@ export function PaymentHistoryDialog({
             agreement_number,
             customer_id,
             profiles:customer_id (
-              full_name
+              id,
+              full_name,
+              phone_number
             )
           )
         `)
@@ -60,8 +62,15 @@ export function PaymentHistoryDialog({
         throw error;
       }
 
-      console.log("Fetched payments:", data);
-      return data;
+      // Transform the data to include customer information directly
+      const transformedData = data.map(payment => ({
+        ...payment,
+        customer: payment.leases?.profiles || null,
+        agreement_number: payment.leases?.agreement_number || null
+      }));
+
+      console.log("Fetched payments with customer info:", transformedData);
+      return transformedData;
     },
     enabled: open,
   });
@@ -151,4 +160,4 @@ export function PaymentHistoryDialog({
       </DialogContent>
     </Dialog>
   );
-};
+}
