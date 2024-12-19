@@ -28,6 +28,8 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
+      console.log("Fetching payments for agreement:", agreementId || "all agreements");
+      
       const query = supabase
         .from("payments")
         .select(`
@@ -35,6 +37,13 @@ export function PaymentHistoryDialog({
           security_deposits (
             amount,
             status
+          ),
+          leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              full_name
+            )
           )
         `)
         .order("created_at", { ascending: false });
@@ -45,7 +54,12 @@ export function PaymentHistoryDialog({
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+
+      console.log("Fetched payments:", data);
       return data;
     },
     enabled: open,
