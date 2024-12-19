@@ -1,5 +1,4 @@
 import { useRef, useEffect } from 'react';
-import { toast } from "sonner";
 import { performanceMetrics } from "@/services/performanceMonitoring";
 import type { ExtendedPerformance } from "@/services/performance/types";
 

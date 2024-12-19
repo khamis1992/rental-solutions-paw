@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
-export const performanceMonitoring = {
+export const performanceMetrics = {
   async trackPageLoad(route: string, loadTime: number) {
     try {
       const { data, error } = await supabase
@@ -25,7 +25,7 @@ export const performanceMonitoring = {
 
   async trackError(error: { message: string; stack?: string; context?: any }) {
     try {
-      const { data, err } = await supabase
+      const { data, error } = await supabase
         .from("performance_metrics")
         .insert({
           metric_type: 'error',
@@ -36,10 +36,10 @@ export const performanceMonitoring = {
         .select()
         .single();
       
-      if (err) throw err;
+      if (error) throw error;
       return data;
-    } catch (err) {
-      console.error('Failed to track error:', err);
+    } catch (error) {
+      console.error('Failed to track error:', error);
       return null;
     }
   },
