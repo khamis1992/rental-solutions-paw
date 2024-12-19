@@ -19,29 +19,26 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom duration-1000">
-        <WelcomeHeader />
-        
-        <div className="grid gap-6">
-          <DashboardStats />
+      <WelcomeHeader />
+      <DashboardStats />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
+        <div className="lg:col-span-4">
+          <UpcomingRentals />
         </div>
-
-        <div className="grid gap-6 lg:grid-cols-7">
-          <div className="lg:col-span-4 space-y-6">
-            <UpcomingRentals />
-            <RecentActivity />
-          </div>
-          
-          <div className="lg:col-span-3 space-y-6">
-            <DashboardAlerts />
-            <QuickActions />
-            <IntelligentScheduling />
-          </div>
+        <div className="lg:col-span-3">
+          <DashboardAlerts />
         </div>
-
-        <div className="rounded-lg border bg-card">
-          <AiAnalyticsInsights />
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <RecentActivity />
         </div>
+        <div className="lg:col-span-3">
+          <IntelligentScheduling />
+        </div>
+      </div>
+      <div className="mt-6">
+        <AiAnalyticsInsights />
       </div>
     </DashboardLayout>
   );

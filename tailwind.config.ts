@@ -33,22 +33,12 @@ export default {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: '#9b87f5',
-          light: '#F1F0FB',
-          dark: '#7B6AD8',
+          DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
-          DEFAULT: '#1EAEDB',
-          light: '#E8F7FC',
-          dark: '#1899C0',
+          DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))'
-        },
-        accent: {
-          DEFAULT: '#F97316',
-          light: '#FFF1E7',
-          dark: '#EA580C',
-          foreground: 'hsl(var(--accent-foreground))'
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
@@ -58,6 +48,10 @@ export default {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))'
         },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))'
+        },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))'
@@ -66,6 +60,16 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
         },
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          ring: 'hsl(var(--sidebar-ring))'
+        }
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -74,28 +78,48 @@ export default {
       },
       keyframes: {
         'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' }
+          from: {
+            height: '0'
+          },
+          to: {
+            height: 'var(--radix-accordion-content-height)'
+          }
         },
         'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' }
-        },
-        'fade-in': {
-          from: { opacity: '0' },
-          to: { opacity: '1' }
-        },
-        'slide-in-from-bottom': {
-          from: { transform: 'translateY(10px)' },
-          to: { transform: 'translateY(0)' }
+          from: {
+            height: 'var(--radix-accordion-content-height)'
+          },
+          to: {
+            height: '0'
+          }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'fade-in': 'fade-in 0.5s ease-out',
-        'slide-in-from-bottom': 'slide-in-from-bottom 0.5s ease-out'
-      }
+        'accordion-up': 'accordion-up 0.2s ease-out'
+      },
+      screens: {
+        'print': {'raw': 'print'},
+      },
+      
+      spacing: {
+        'touch': '44px', // Minimum touch target size
+        'touch-lg': '48px',
+      },
+      minHeight: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      minWidth: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      fontSize: {
+        'mobile-h1': ['1.75rem', { lineHeight: '2rem' }],
+        'mobile-h2': ['1.5rem', { lineHeight: '1.75rem' }],
+        'mobile-h3': ['1.25rem', { lineHeight: '1.5rem' }],
+        'mobile-body': ['1rem', { lineHeight: '1.5rem' }],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
