@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { 
-  Users, Car, FileText, Tool, Settings, 
+  Users, Car, FileText, Wrench, Settings, 
   BarChart, HelpCircle, Scale, Wallet, Code 
 } from "lucide-react";
 
@@ -51,7 +51,7 @@ export const DashboardSidebar = () => {
           }`
         }
       >
-        <Tool className="w-5 h-5" />
+        <Wrench className="w-5 h-5" />
         <span>Maintenance</span>
       </NavLink>
 
