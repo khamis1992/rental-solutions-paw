@@ -7,6 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { retryOperation } from "./utils/retryUtils";
 
+interface ImportErrors {
+  skipped: Array<{
+    row: number;
+    data: Record<string, any>;
+    reason: string;
+  }>;
+  failed: Array<{
+    row: number;
+    data?: Record<string, any>;
+    error: string;
+  }>;
+}
+
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -91,16 +104,22 @@ export const PaymentImport = () => {
           if (importLog?.status === "completed") {
             clearInterval(pollInterval);
             
+            // Parse errors object safely
+            let errors: ImportErrors | null = null;
+            if (importLog.errors && typeof importLog.errors === 'object') {
+              errors = importLog.errors as ImportErrors;
+            }
+            
             // Show detailed import results
-            const skippedRecords = importLog.errors?.skipped || [];
-            const failedRecords = importLog.errors?.failed || [];
+            const skippedCount = errors?.skipped?.length ?? 0;
+            const failedCount = errors?.failed?.length ?? 0;
             
             let description = `Successfully processed ${importLog.records_processed} payments.`;
-            if (skippedRecords.length > 0) {
-              description += ` ${skippedRecords.length} records were skipped due to missing data.`;
+            if (skippedCount > 0) {
+              description += ` ${skippedCount} records were skipped due to missing data.`;
             }
-            if (failedRecords.length > 0) {
-              description += ` ${failedRecords.length} records failed to process.`;
+            if (failedCount > 0) {
+              description += ` ${failedCount} records failed to process.`;
             }
 
             toast({
