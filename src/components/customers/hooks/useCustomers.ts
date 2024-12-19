@@ -11,8 +11,7 @@ export const useCustomers = (searchQuery: string, roleFilter: string, statusFilt
         let query = supabase
           .from('profiles')
           .select('*')
-          .eq('role', 'customer')
-          .order('created_at', { ascending: false });
+          .eq('role', 'customer');
 
         if (searchQuery) {
           query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);

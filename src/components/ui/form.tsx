@@ -8,6 +8,7 @@ import {
   FieldValues,
   FormProvider,
   useFormContext,
+  FormState,
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
@@ -42,13 +43,19 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext() || {}
+  const formContext = useFormContext()
 
-  if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>")
+  if (!formContext) {
+    throw new Error("useFormField must be used within a Form")
   }
 
-  const fieldState = getFieldState?.(fieldContext.name, formState || {})
+  const { getFieldState, formState } = formContext
+
+  const fieldState = getFieldState(fieldContext.name, formState as FormState<FieldValues>)
+
+  if (!fieldContext) {
+    throw new Error("useFormField must be used within <FormField>")
+  }
 
   const { id } = itemContext
 
@@ -88,7 +95,7 @@ const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  const { formItemId, error } = useFormField()
+  const { error, formItemId } = useFormField()
 
   return (
     <Label

@@ -1,4 +1,3 @@
-import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -7,53 +6,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dispatch, SetStateAction } from "react";
 
-export interface CustomerFiltersProps {
-  onSearchChange: (value: string) => void;
-  onRoleChange?: (value: string) => void;
-  onStatusChange?: (value: string) => void;
+interface CustomerFiltersProps {
+  onSearchChange: Dispatch<SetStateAction<string>>;
+  onRoleChange: Dispatch<SetStateAction<string>>;
+  onStatusChange: Dispatch<SetStateAction<string>>;
 }
 
-export const CustomerFilters = ({ 
-  onSearchChange, 
-  onRoleChange, 
-  onStatusChange 
+export const CustomerFilters = ({
+  onSearchChange,
+  onRoleChange,
+  onStatusChange,
 }: CustomerFiltersProps) => {
   return (
-    <div className="flex flex-col gap-4 md:flex-row">
+    <div className="flex flex-col sm:flex-row gap-4">
       <div className="flex-1">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search customers..."
-            className="pl-8 md:w-[300px] lg:w-[400px]"
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
+        <Input
+          placeholder="Search customers..."
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="max-w-sm"
+        />
       </div>
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <Select onValueChange={onRoleChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="customer">Customer</SelectItem>
-            <SelectItem value="staff">Staff</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select onValueChange={onStatusChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Select onValueChange={onRoleChange} defaultValue="all">
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by role" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All roles</SelectItem>
+          <SelectItem value="customer">Customer</SelectItem>
+          <SelectItem value="staff">Staff</SelectItem>
+          <SelectItem value="admin">Admin</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select onValueChange={onStatusChange} defaultValue="all">
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="active">Active</SelectItem>
+          <SelectItem value="inactive">Inactive</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 };
