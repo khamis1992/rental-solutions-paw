@@ -5,11 +5,12 @@ import { processPaymentRow } from './paymentUtils.ts';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
 };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders, status: 204 });
   }
 
   try {
@@ -32,7 +33,6 @@ serve(async (req) => {
       }
     );
 
-    // Download file in chunks
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -53,59 +53,41 @@ serve(async (req) => {
     let errors = [];
     let skippedCustomers = [];
 
-    // Update status to processing
     await supabase
       .from('import_logs')
       .update({ status: 'processing' })
       .eq('file_name', fileName);
 
-    // Process in smaller batches
-    const BATCH_SIZE = 10;
-    for (let i = 1; i < rows.length; i += BATCH_SIZE) {
-      const batch = rows.slice(i, i + BATCH_SIZE);
-      const batchPromises = batch.map(async (row) => {
-        if (!row.trim()) return null;
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
 
-        const values = row.split(',').map(v => v.trim());
-        console.log(`Processing row ${i}:`, values);
+      const values = rows[i].split(',').map(v => v.trim());
+      console.log(`Processing row ${i}:`, values);
+      
+      if (values.length === headers.length) {
+        const result = await processPaymentRow(supabase, headers, values);
         
-        if (values.length === headers.length) {
-          try {
-            const result = await processPaymentRow(supabase, headers, values);
-            if (result.success) {
-              successCount++;
-            } else {
-              if (result.error?.includes('No active lease found')) {
-                skippedCustomers.push({
-                  customerName: values[headers.indexOf('Customer Name')],
-                  amount: values[headers.indexOf('Amount')],
-                  paymentDate: values[headers.indexOf('Payment_Date')],
-                  reason: result.error
-                });
-              } else {
-                errorCount++;
-                errors.push({
-                  row: i + 1,
-                  error: result.error
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`Error processing row ${i}:`, error);
+        if (result.success) {
+          successCount++;
+        } else {
+          if (result.error?.includes('No active lease found')) {
+            skippedCustomers.push({
+              customerName: values[headers.indexOf('Customer Name')],
+              amount: values[headers.indexOf('Amount')],
+              paymentDate: values[headers.indexOf('Payment_Date')],
+              reason: result.error
+            });
+          } else {
             errorCount++;
             errors.push({
               row: i + 1,
-              error: error.message
+              error: result.error
             });
           }
         }
-      });
-
-      // Wait for batch to complete
-      await Promise.all(batchPromises);
+      }
     }
 
-    // Update import log with results
     await supabase
       .from('import_logs')
       .update({
