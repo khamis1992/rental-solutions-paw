@@ -109,9 +109,7 @@ export const useSmartAlerts = () => {
 
     return () => {
       channels.forEach(channel => {
-        if (channel.unsubscribe) {
-          channel.unsubscribe();
-        }
+        channel.unsubscribe();
       });
     };
   }, []);

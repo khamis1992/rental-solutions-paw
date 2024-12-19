@@ -75,9 +75,7 @@ export const useDashboardSubscriptions = () => {
 
     return () => {
       channels.forEach(channel => {
-        if (channel.unsubscribe) {
-          channel.unsubscribe();
-        }
+        channel.unsubscribe();
       });
     };
   }, [queryClient]);
