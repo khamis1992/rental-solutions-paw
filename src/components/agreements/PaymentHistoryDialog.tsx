@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PaymentHistoryContent } from "./payments/PaymentHistoryContent";
+import { PaymentAnalysis } from "../payments/PaymentAnalysis";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -131,14 +132,23 @@ export function PaymentHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <PaymentHistoryContent
-          agreementId={agreementId}
-          paymentHistory={paymentHistory || []}
-          isLoading={isLoading}
-          totalPaid={totalPaid}
-          totalRefunded={totalRefunded}
-        />
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="col-span-2">
+            <PaymentHistoryContent
+              agreementId={agreementId}
+              paymentHistory={paymentHistory || []}
+              isLoading={isLoading}
+              totalPaid={totalPaid}
+              totalRefunded={totalRefunded}
+            />
+          </div>
+          <div>
+            {paymentHistory?.[0]?.id && (
+              <PaymentAnalysis paymentId={paymentHistory[0].id} />
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};

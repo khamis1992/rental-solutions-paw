@@ -138,6 +138,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_payment_analysis: {
+        Row: {
+          analysis_type: string
+          anomaly_details: Json | null
+          anomaly_detected: boolean | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          payment_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+          suggested_corrections: Json | null
+        }
+        Insert: {
+          analysis_type: string
+          anomaly_details?: Json | null
+          anomaly_detected?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          payment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          suggested_corrections?: Json | null
+        }
+        Update: {
+          analysis_type?: string
+          anomaly_details?: Json | null
+          anomaly_detected?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          payment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          suggested_corrections?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_payment_analysis_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_payment_analysis_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applied_discounts: {
         Row: {
           created_at: string
@@ -301,6 +358,44 @@ export type Database = {
           {
             foreignKeyName: "credit_assessments_customer_id_fkey"
             columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      csv_import_mappings: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          field_mappings: Json
+          id: string
+          is_active: boolean | null
+          mapping_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          field_mappings: Json
+          id?: string
+          is_active?: boolean | null
+          mapping_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          field_mappings?: Json
+          id?: string
+          is_active?: boolean | null
+          mapping_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "csv_import_mappings_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -655,6 +750,57 @@ export type Database = {
           },
           {
             foreignKeyName: "payment_history_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_reconciliation: {
+        Row: {
+          auto_matched: boolean | null
+          created_at: string | null
+          discrepancy_details: Json | null
+          id: string
+          lease_id: string | null
+          match_confidence: number | null
+          payment_id: string | null
+          reconciliation_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_matched?: boolean | null
+          created_at?: string | null
+          discrepancy_details?: Json | null
+          id?: string
+          lease_id?: string | null
+          match_confidence?: number | null
+          payment_id?: string | null
+          reconciliation_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_matched?: boolean | null
+          created_at?: string | null
+          discrepancy_details?: Json | null
+          id?: string
+          lease_id?: string | null
+          match_confidence?: number | null
+          payment_id?: string | null
+          reconciliation_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_reconciliation_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reconciliation_payment_id_fkey"
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
