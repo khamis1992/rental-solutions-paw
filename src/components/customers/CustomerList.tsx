@@ -52,7 +52,7 @@ export const CustomerList = () => {
           query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
         }
 
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error } = await query;
 
         if (error) {
           console.error("Error fetching customers:", error);
@@ -92,8 +92,8 @@ export const CustomerList = () => {
       <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery} 
-          onRoleChange={setRoleFilter}
-          onStatusChange={setStatusFilter}
+          onRoleFilter={setRoleFilter}
+          onStatusFilter={setStatusFilter}
         />
         <div className="rounded-md border">
           <Table>
@@ -130,8 +130,8 @@ export const CustomerList = () => {
       <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery}
-          onRoleChange={setRoleFilter}
-          onStatusChange={setStatusFilter}
+          onRoleFilter={setRoleFilter}
+          onStatusFilter={setStatusFilter}
         />
         <div className="text-center py-8 text-muted-foreground">
           No customers found
@@ -144,8 +144,8 @@ export const CustomerList = () => {
     <div className="space-y-4">
       <CustomerFilters 
         onSearchChange={setSearchQuery}
-        onRoleChange={setRoleFilter}
-        onStatusChange={setStatusFilter}
+        onRoleFilter={setRoleFilter}
+        onStatusFilter={setStatusFilter}
       />
       <div className="rounded-md border">
         <Table>
