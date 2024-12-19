@@ -208,7 +208,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                  className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                   onClick={(e) => handleDeleteClick(vehicle.id, e)}
                 >
                   <Trash2 className="h-4 w-4" />

@@ -29,12 +29,16 @@ export const DeleteVehicleDialog = ({
 
   const deleteVehicle = useMutation({
     mutationFn: async () => {
+      console.log("Attempting to delete vehicle:", vehicleId);
       const { error } = await supabase
         .from('vehicles')
         .delete()
         .eq('id', vehicleId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
@@ -60,7 +64,7 @@ export const DeleteVehicleDialog = ({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => deleteVehicle.mutate()}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Delete
           </AlertDialogAction>
