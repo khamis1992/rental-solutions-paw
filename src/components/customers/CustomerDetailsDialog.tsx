@@ -47,6 +47,16 @@ export const CustomerDetailsDialog = ({
         });
         throw error;
       }
+      
+      if (!data) {
+        toast({
+          title: "Error",
+          description: "Customer not found",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
       return data;
     },
     enabled: !!customerId && open,

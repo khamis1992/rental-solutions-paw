@@ -2,23 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useCustomers = (searchQuery: string, roleFilter: string) => {
+export const useCustomers = (searchQuery: string) => {
   return useQuery({
-    queryKey: ['customers', searchQuery, roleFilter],
+    queryKey: ['customers', searchQuery],
     queryFn: async () => {
       try {
         console.log("Fetching customers with search:", searchQuery);
         let query = supabase
           .from('profiles')
-          .select('*')
+          .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url')
           .eq('role', 'customer');
 
         if (searchQuery) {
           query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
-        }
-
-        if (roleFilter !== 'all') {
-          query = query.eq('role', roleFilter);
         }
 
         const { data, error } = await query;
