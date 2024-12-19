@@ -18,13 +18,26 @@ import { Badge } from "@/components/ui/badge";
 
 const ITEMS_PER_PAGE = 10;
 
+interface CustomerData {
+  id: string;
+  full_name: string | null;
+  status: string;
+  phone_number: string | null;
+  address: string | null;
+  driver_license: string | null;
+  id_document_url: string | null;
+  license_document_url: string | null;
+  contract_document_url: string | null;
+  created_at: string;
+}
+
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const { data: customers, isLoading } = useQuery({
+  const { data: customers, isLoading } = useQuery<CustomerData[]>({
     queryKey: ["customers", searchQuery],
     queryFn: async () => {
       console.log("Fetching customers with search:", searchQuery);
