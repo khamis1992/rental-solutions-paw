@@ -108,7 +108,11 @@ export const useSmartAlerts = () => {
     });
 
     return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
+      channels.forEach(channel => {
+        if (channel.unsubscribe) {
+          channel.unsubscribe();
+        }
+      });
     };
   }, []);
 
