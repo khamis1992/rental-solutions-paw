@@ -3,10 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { FleetStatus } from "@/components/reports/FleetStatus";
 import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
-import { LeaseToOwn } from "@/components/reports/LeaseToOwn";
 import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
 import { PerformanceInsights } from "@/components/performance/PerformanceInsights";
-import { FileText, ChartBar, Users, FilePen, Calculator, Brain } from "lucide-react";
+import { FileText, ChartBar, Users, Calculator, Brain } from "lucide-react";
 
 const Reports = () => {
   return (
@@ -32,10 +31,6 @@ const Reports = () => {
             <Users className="h-4 w-4" />
             Customer Analytics
           </TabsTrigger>
-          <TabsTrigger value="lease" className="flex items-center gap-2">
-            <FilePen className="h-4 w-4" />
-            Lease-to-Own
-          </TabsTrigger>
           <TabsTrigger value="installment" className="flex items-center gap-2">
             <Calculator className="h-4 w-4" />
             Installment Analysis
@@ -56,10 +51,6 @@ const Reports = () => {
 
         <TabsContent value="customer">
           <CustomerAnalytics />
-        </TabsContent>
-
-        <TabsContent value="lease">
-          <LeaseToOwn />
         </TabsContent>
 
         <TabsContent value="installment">
