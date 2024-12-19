@@ -7,6 +7,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface VehicleTablePaginationProps {
   currentPage: number;
@@ -19,26 +21,38 @@ export const VehicleTablePagination = ({
   totalPages,
   onPageChange,
 }: VehicleTablePaginationProps) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const showEllipsisStart = currentPage > 3;
-  const showEllipsisEnd = currentPage < totalPages - 2;
+  // Generate array of page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5; // Show max 5 page numbers
+    const halfVisible = Math.floor(maxVisiblePages / 2);
 
-  const getVisiblePages = () => {
-    if (totalPages <= 5) return pages;
+    let startPage = Math.max(1, currentPage - halfVisible);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    if (currentPage <= 3) {
-      return [...pages.slice(0, 4), totalPages];
+    // Adjust start if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    if (currentPage >= totalPages - 2) {
-      return [1, ...pages.slice(totalPages - 4)];
+    // Always show first page
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) pages.push("ellipsis");
     }
 
-    return [
-      1,
-      ...pages.slice(currentPage - 2, currentPage + 1),
-      totalPages,
-    ];
+    // Add middle pages
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    // Always show last page
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+
+    return pages;
   };
 
   return (
@@ -47,24 +61,25 @@ export const VehicleTablePagination = ({
         <PaginationItem>
           <PaginationPrevious
             onClick={() => onPageChange(currentPage - 1)}
-            className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            className={cn(
+              "cursor-pointer select-none",
+              currentPage === 1 && "pointer-events-none opacity-50"
+            )}
           />
         </PaginationItem>
 
-        {getVisiblePages().map((page, index, array) => (
-          <PaginationItem key={page}>
-            {showEllipsisStart && index === 1 && page !== 2 && (
+        {getPageNumbers().map((page, index) => (
+          <PaginationItem key={`${page}-${index}`}>
+            {page === "ellipsis" ? (
               <PaginationEllipsis />
-            )}
-            <PaginationLink
-              onClick={() => onPageChange(page)}
-              isActive={currentPage === page}
-              className="cursor-pointer"
-            >
-              {page}
-            </PaginationLink>
-            {showEllipsisEnd && index === array.length - 2 && page !== totalPages - 1 && (
-              <PaginationEllipsis />
+            ) : (
+              <PaginationLink
+                onClick={() => onPageChange(page as number)}
+                isActive={currentPage === page}
+                className="cursor-pointer select-none"
+              >
+                {page}
+              </PaginationLink>
             )}
           </PaginationItem>
         ))}
@@ -72,7 +87,10 @@ export const VehicleTablePagination = ({
         <PaginationItem>
           <PaginationNext
             onClick={() => onPageChange(currentPage + 1)}
-            className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            className={cn(
+              "cursor-pointer select-none",
+              currentPage === totalPages && "pointer-events-none opacity-50"
+            )}
           />
         </PaginationItem>
       </PaginationContent>
