@@ -1,123 +1,154 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { corsHeaders } from '../_shared/cors.ts'
 
-console.log("Hello from Process Installment Import!")
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+}
+
+interface InstallmentRow {
+  'N°cheque': string;
+  'Amount': string;
+  'Date': string;
+  'Drawee Bank': string;
+  'sold': string;
+}
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { filePath, contractName } = await req.json()
+    console.log('Processing file:', filePath, 'for contract:', contractName)
 
-    if (!contractName) {
-      throw new Error('Contract name is required')
+    if (!filePath || !contractName) {
+      throw new Error('File path and contract name are required')
     }
 
     // Initialize Supabase client
-    const supabaseClient = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     // Download the file
-    const { data: fileData, error: downloadError } = await supabaseClient
+    console.log('Downloading file from storage...')
+    const { data: fileData, error: downloadError } = await supabaseAdmin
       .storage
       .from('imports')
       .download(filePath)
 
-    if (downloadError) throw downloadError
+    if (downloadError) {
+      console.error('Download error:', downloadError)
+      throw downloadError
+    }
 
     // Parse CSV content
     const text = await fileData.text()
     const rows = text.split('\n')
-    const headers = rows[0].split(',')
+    const headers = rows[0].split(',').map(h => h.trim())
+    console.log('File headers:', headers)
 
     // Process each row
-    const processedRows = await Promise.all(
-      rows.slice(1).filter(row => row.trim()).map(async (row) => {
-        const values = row.split(',')
-        const rowData = headers.reduce((obj, header, index) => {
-          obj[header.trim()] = values[index]?.trim() ?? '';
-          return obj;
-        }, {} as Record<string, string>);
+    const processedRows = []
+    const errors = []
 
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue // Skip empty rows
+
+      const values = rows[i].split(',').map(v => v.trim())
+      const row = headers.reduce((obj: any, header, index) => {
+        obj[header] = values[index]
+        return obj
+      }, {}) as InstallmentRow
+
+      try {
         // Parse amount - remove 'QAR' and convert to number
-        const amount = parseFloat(rowData['Amount'].replace('QAR', '').replace(/,/g, '').trim());
+        const amount = parseFloat(row['Amount'].replace('QAR', '').replace(/,/g, '').trim())
+        if (isNaN(amount)) {
+          throw new Error(`Invalid amount in row ${i}`)
+        }
         
-        // Parse date - convert from 'Month-YY' format to ISO date
-        const [month, year] = rowData['Date'].split('-');
-        const date = new Date(`20${year}`, getMonthNumber(month), 1);
+        // Parse date - convert from DD/MM/YY format to ISO date
+        const [day, month, year] = row['Date'].split('/')
+        const date = new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day))
+        if (isNaN(date.getTime())) {
+          throw new Error(`Invalid date format in row ${i}`)
+        }
 
-        // Check for 'OK' status
-        const status = rowData['Status']?.toLowerCase().includes('ok') ? 'completed' : 'pending';
-        
-        // Insert payment schedule with contract name and status
-        const { error: insertError } = await supabaseClient
-          .from('payment_schedules')
-          .insert({
-            amount: amount,
-            due_date: date.toISOString(),
-            status: status,
-            contract_name: contractName,
-            metadata: {
-              cheque_number: rowData['N°cheque'],
-              drawee_bank: rowData['Drawee Bank'],
-              original_amount: rowData['Amount'],
-              sold: rowData['sold'],
-              original_status: rowData['Status']
-            }
-          });
+        processedRows.push({
+          amount: amount,
+          due_date: date.toISOString(),
+          status: 'pending',
+          contract_name: contractName,
+          metadata: {
+            cheque_number: row['N°cheque'],
+            drawee_bank: row['Drawee Bank'],
+            original_amount: row['Amount'],
+            sold: row['sold']
+          }
+        })
+      } catch (error) {
+        console.error(`Error processing row ${i}:`, error)
+        errors.push({
+          row: i,
+          error: error.message,
+          data: row
+        })
+      }
+    }
 
-        if (insertError) throw insertError;
+    console.log(`Processed ${processedRows.length} rows with ${errors.length} errors`)
 
-        return rowData;
-      })
-    );
+    // Insert processed rows into payment_schedules table
+    if (processedRows.length > 0) {
+      const { error: insertError } = await supabaseAdmin
+        .from('payment_schedules')
+        .insert(processedRows)
+
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw insertError
+      }
+    }
 
     // Delete the uploaded file
-    await supabaseClient
+    const { error: deleteError } = await supabaseAdmin
       .storage
       .from('imports')
-      .remove([filePath]);
+      .remove([filePath])
+
+    if (deleteError) {
+      console.error('Error deleting file:', deleteError)
+      // Don't throw here, just log the error
+    }
 
     return new Response(
       JSON.stringify({
         message: 'Import completed successfully',
         processed: processedRows.length,
+        errors: errors
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-        status: 200,
-      },
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     )
+
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error processing import:', error)
     return new Response(
       JSON.stringify({
         error: error.message,
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-        status: 400,
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
       }
     )
   }
-});
-
-function getMonthNumber(month: string): number {
-  const months: Record<string, number> = {
-    'January': 0, 'February': 1, 'March': 2, 'April': 3,
-    'May': 4, 'June': 5, 'July': 6, 'August': 7,
-    'September': 8, 'October': 9, 'November': 10, 'December': 11
-  };
-  return months[month] || 0;
-}
+})

@@ -40,6 +40,7 @@ export function InstallmentImport() {
 
     setIsUploading(true);
     try {
+      console.log('Starting file upload...');
       const fileName = `installments/${Date.now()}_${file.name}`;
       
       // Upload file to storage
@@ -47,9 +48,14 @@ export function InstallmentImport() {
         .from('imports')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
-      // Process the file with contract name and check for 'OK' status
+      console.log('File uploaded, processing...');
+      
+      // Process the file with contract name
       const { data: processingData, error: processingError } = await supabase
         .functions
         .invoke('process-installment-import', {
@@ -59,15 +65,31 @@ export function InstallmentImport() {
           }
         });
 
-      if (processingError) throw processingError;
+      if (processingError) {
+        console.error('Processing error:', processingError);
+        throw processingError;
+      }
+
+      console.log('Processing complete:', processingData);
 
       // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ["installment-analysis"] });
 
       toast({
         title: "Success",
-        description: "Installments imported successfully",
+        description: `Successfully imported ${processingData.processed} installments${
+          processingData.errors.length > 0 ? ` with ${processingData.errors.length} errors` : ''
+        }`,
       });
+
+      if (processingData.errors.length > 0) {
+        console.error('Import errors:', processingData.errors);
+        toast({
+          title: "Warning",
+          description: "Some rows could not be imported. Check the console for details.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error('Import error:', error);
       toast({
