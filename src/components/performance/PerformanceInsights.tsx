@@ -20,16 +20,28 @@ export const PerformanceInsights = () => {
 
   const triggerAnalysis = async () => {
     try {
-      await aiAnalysis.triggerAnalysis();
       toast({
         title: "Analysis Started",
-        description: "The AI is analyzing system performance. Check back soon for new insights.",
+        description: "The AI is analyzing system performance. This may take a few moments.",
       });
-      refetch();
+
+      const result = await aiAnalysis.triggerAnalysis();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      await refetch();
+      
+      toast({
+        title: "Analysis Complete",
+        description: "New insights have been generated and are ready for review.",
+      });
     } catch (error) {
+      console.error('Analysis failed:', error);
       toast({
         title: "Analysis Failed",
-        description: "Failed to trigger performance analysis. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to trigger performance analysis. Please try again.",
         variant: "destructive",
       });
     }
@@ -44,6 +56,7 @@ export const PerformanceInsights = () => {
       });
       refetch();
     } catch (error) {
+      console.error('Failed to mark insight as implemented:', error);
       toast({
         title: "Error",
         description: "Failed to update insight status.",
@@ -61,9 +74,9 @@ export const PerformanceInsights = () => {
             AI Performance Insights
           </div>
         </CardTitle>
-        <Button onClick={triggerAnalysis}>
+        <Button onClick={triggerAnalysis} disabled={isLoading}>
           <TrendingUp className="mr-2 h-4 w-4" />
-          Analyze Now
+          {isLoading ? "Analyzing..." : "Analyze Now"}
         </Button>
       </CardHeader>
       <CardContent>
@@ -71,6 +84,10 @@ export const PerformanceInsights = () => {
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            </div>
+          ) : insights?.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No insights available. Click "Analyze Now" to generate new insights.
             </div>
           ) : (
             <div className="space-y-4">

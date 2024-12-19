@@ -23,11 +23,17 @@ serve(async (req) => {
     );
 
     // Fetch recent performance metrics
-    const { data: metrics } = await supabaseClient
+    const { data: metrics, error: metricsError } = await supabaseClient
       .from('performance_metrics')
       .select('*')
       .order('timestamp', { ascending: false })
       .limit(100);
+
+    if (metricsError) {
+      throw new Error(`Failed to fetch metrics: ${metricsError.message}`);
+    }
+
+    console.log('Fetched metrics:', metrics);
 
     // Analyze metrics using Perplexity API
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -41,11 +47,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a performance analysis expert. Analyze the system metrics and provide actionable insights and recommendations.'
+            content: 'You are a performance analysis expert. Analyze the system metrics and provide 3 actionable insights with specific recommendations. Format each insight as a separate object with category, insight, recommendation, and priority (1 for high, 2 for normal).'
           },
           {
             role: 'user',
-            content: `Analyze these system metrics and provide 3 key insights with recommendations: ${JSON.stringify(metrics)}`
+            content: `Analyze these system metrics and provide 3 key insights: ${JSON.stringify(metrics)}`
           }
         ],
         temperature: 0.2,
@@ -53,25 +59,43 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`Perplexity API error: ${response.statusText}`);
+    }
+
     const analysis = await response.json();
-    const insights = analysis.choices[0].message.content;
+    console.log('AI Analysis response:', analysis);
+
+    // Parse the AI response and extract insights
+    const aiMessage = analysis.choices[0].message.content;
+    console.log('AI Message:', aiMessage);
+
+    // Parse the message into structured insights
+    const insights = aiMessage.split('\n\n').slice(0, 3).map((insight, index) => ({
+      category: `Performance Insight ${index + 1}`,
+      insight: insight.split('\nRecommendation:')[0].trim(),
+      recommendation: insight.split('\nRecommendation:')[1]?.trim() || 'No specific recommendation provided',
+      priority: insight.toLowerCase().includes('critical') || insight.toLowerCase().includes('high') ? 1 : 2,
+      status: 'pending'
+    }));
+
+    console.log('Structured insights:', insights);
 
     // Store AI insights
-    await supabaseClient
+    const { error: insertError } = await supabaseClient
       .from('ai_insights')
-      .insert({
-        category: 'performance',
-        insight: insights,
-        recommendation: insights,
-        priority: 1,
-        status: 'pending'
-      });
+      .insert(insights);
+
+    if (insertError) {
+      throw new Error(`Failed to store insights: ${insertError.message}`);
+    }
 
     return new Response(
       JSON.stringify({ success: true, insights }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    console.error('Error in analyze-performance:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
