@@ -131,7 +131,7 @@ export const CustomerList = () => {
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleChange={setRoleFilter}
-          onStatusFilter={setStatusFilter}
+          onStatusChange={setStatusFilter}
         />
         <div className="text-center py-8 text-muted-foreground">
           No customers found

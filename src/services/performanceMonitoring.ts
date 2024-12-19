@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
-export const performanceMetrics = {
+export const performanceMonitoring = {
   async trackPageLoad(route: string, loadTime: number) {
     try {
       const { data, error } = await supabase
@@ -23,20 +23,20 @@ export const performanceMetrics = {
     }
   },
 
-  async trackError(error: { component: string; error: any; timestamp: string }) {
+  async trackError(error: { message: string; stack?: string; context?: any }) {
     try {
-      const { data, error: dbError } = await supabase
+      const { data, err } = await supabase
         .from("performance_metrics")
         .insert({
           metric_type: 'error',
           value: 1,
           context: error,
-          timestamp: error.timestamp
+          timestamp: new Date().toISOString()
         })
         .select()
         .single();
       
-      if (dbError) throw dbError;
+      if (err) throw err;
       return data;
     } catch (err) {
       console.error('Failed to track error:', err);

@@ -8,13 +8,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface CustomerFiltersProps {
+export interface CustomerFiltersProps {
   onSearchChange: (value: string) => void;
   onRoleChange?: (value: string) => void;
-  onStatusChange?: (value: string) => void;
+  onStatusChange?: (value: string) => void;  // Fixed prop name from onStatusFilter
 }
 
-export const CustomerFilters = ({ onSearchChange, onRoleChange, onStatusChange }: CustomerFiltersProps) => {
+export const CustomerFilters = ({ 
+  onSearchChange, 
+  onRoleChange, 
+  onStatusChange 
+}: CustomerFiltersProps) => {
   return (
     <div className="flex flex-col gap-4 md:flex-row">
       <div className="flex-1">
