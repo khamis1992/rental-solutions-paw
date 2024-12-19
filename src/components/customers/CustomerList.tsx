@@ -90,12 +90,7 @@ export const CustomerList = () => {
             {currentCustomers.map((customer) => (
               <CustomerTableRow 
                 key={customer.id}
-                customer={{
-                  ...customer,
-                  address: customer.address || 'N/A',
-                  contract_document_url: customer.contract_document_url || null,
-                  created_at: customer.created_at || new Date().toISOString(),
-                }}
+                customer={customer}
                 onCustomerClick={handleCustomerClick}
               />
             ))}

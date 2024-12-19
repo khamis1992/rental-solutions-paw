@@ -10,7 +10,7 @@ export const useCustomers = (searchQuery: string) => {
         console.log("Fetching customers with search:", searchQuery);
         let query = supabase
           .from('profiles')
-          .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url, role')
+          .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url, role, address, contract_document_url, created_at')
           .eq('role', 'customer');
 
         if (searchQuery) {
