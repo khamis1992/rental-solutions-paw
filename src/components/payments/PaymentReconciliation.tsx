@@ -3,9 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PaymentReconciliationTable } from "./PaymentReconciliationTable";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,19 +32,24 @@ export const PaymentReconciliation = () => {
       const fileExt = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
+      console.log('Uploading file to storage:', fileName);
       const { error: uploadError } = await supabase.storage
         .from("imports")
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // Process the file using our Edge Function
+      console.log('File uploaded successfully, processing payments...');
+      
+      // Process the file using Edge Function
       const { data: functionResponse, error: functionError } = await supabase.functions
         .invoke('process-payment-reconciliation', {
           body: { fileName }
         });
 
       if (functionError) throw functionError;
+
+      console.log('Processing complete:', functionResponse);
 
       toast({
         title: "Success",
@@ -58,7 +62,7 @@ export const PaymentReconciliation = () => {
       console.error('Payment reconciliation error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to process payments",
         variant: "destructive",
       });
     } finally {
@@ -79,9 +83,10 @@ export const PaymentReconciliation = () => {
               accept=".csv"
               onChange={handleFileUpload}
               disabled={isUploading}
+              className="max-w-md"
             />
             {isUploading && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Processing payments...</span>
               </div>

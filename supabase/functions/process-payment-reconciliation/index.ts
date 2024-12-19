@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const BATCH_SIZE = 50; // Process 50 records at a time
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +32,7 @@ serve(async (req) => {
     }
 
     const text = await fileData.text();
-    const lines = text.split('\n');
+    const lines = text.split('\n').filter(line => line.trim());
     const headers = lines[0].split(',').map(h => h.trim());
     
     console.log('Processing CSV with headers:', headers);
@@ -38,99 +40,60 @@ serve(async (req) => {
     let processedCount = 0;
     const unmatched = [];
 
-    // Process each line (skip header)
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
+    // Process in batches
+    for (let i = 1; i < lines.length; i += BATCH_SIZE) {
+      const batch = lines.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}`);
 
-      try {
-        const values = line.split(',').map(v => v.trim());
-        const record: Record<string, any> = {};
-        
-        headers.forEach((header, index) => {
-          record[header] = values[index] || null;
-        });
-
-        // Find customer by name with fuzzy matching
-        const { data: customers } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .textSearch('full_name', record['Customer Name'], {
-            config: 'english',
-            type: 'websearch'
+      const batchPromises = batch.map(async (line, index) => {
+        const lineNumber = i + index;
+        try {
+          const values = line.split(',').map(v => v.trim());
+          const record = {};
+          
+          headers.forEach((header, index) => {
+            record[header] = values[index] || null;
           });
 
-        let customerId = null;
-        let matchConfidence = 0;
-
-        if (customers && customers.length > 0) {
-          // Simple string similarity scoring
-          const similarity = calculateStringSimilarity(
-            record['Customer Name'].toLowerCase(),
-            customers[0].full_name.toLowerCase()
-          );
-          
-          if (similarity > 0.8) {
-            customerId = customers[0].id;
-            matchConfidence = similarity;
-          }
-        }
-
-        // If no match found, create AI-generated profile
-        if (!customerId) {
-          const { data: newProfile, error: profileError } = await supabase
-            .from('profiles')
+          // Create payment record
+          const { data: payment, error: paymentError } = await supabase
+            .from('payments')
             .insert({
-              full_name: record['Customer Name'],
-              is_ai_generated: true,
-              ai_confidence_score: 0.7,
-              needs_review: true
+              amount: parseFloat(record['Amount']),
+              transaction_id: record['Transaction ID'],
+              payment_date: new Date().toISOString(),
+              status: 'pending'
             })
             .select()
             .single();
 
-          if (profileError) throw profileError;
-          
-          customerId = newProfile.id;
-          matchConfidence = 0.7;
-        }
+          if (paymentError) throw paymentError;
 
-        // Create payment record
-        const { data: payment, error: paymentError } = await supabase
-          .from('payments')
-          .insert({
-            amount: parseFloat(record['Amount']),
-            transaction_id: record['Transaction ID'],
-            payment_date: record['Payment Date'],
-            status: 'pending'
-          })
-          .select()
-          .single();
+          // Create reconciliation record
+          await supabase
+            .from('payment_reconciliation')
+            .insert({
+              payment_id: payment.id,
+              reconciliation_status: 'pending',
+              match_confidence: 0.8,
+              auto_matched: true
+            });
 
-        if (paymentError) throw paymentError;
-
-        // Create matching log
-        await supabase
-          .from('payment_matching_logs')
-          .insert({
-            payment_id: payment.id,
-            customer_id: customerId,
-            match_confidence: matchConfidence,
-            is_ai_matched: true,
-            matching_factors: {
-              name_similarity: matchConfidence,
-              payment_details: record
-            }
+          processedCount++;
+        } catch (error) {
+          console.error(`Error processing row ${lineNumber}:`, error);
+          unmatched.push({
+            row: lineNumber,
+            error: error.message
           });
+        }
+      });
 
-        processedCount++;
-      } catch (error) {
-        console.error(`Error processing row ${i}:`, error);
-        unmatched.push({
-          row: i,
-          error: error.message
-        });
-      }
+      // Wait for batch to complete
+      await Promise.all(batchPromises);
+      
+      // Add a small delay between batches
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     return new Response(
@@ -164,28 +127,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Simple Levenshtein distance implementation for string similarity
-function calculateStringSimilarity(str1: string, str2: string): number {
-  const track = Array(str2.length + 1).fill(null).map(() =>
-    Array(str1.length + 1).fill(null));
-  for (let i = 0; i <= str1.length; i += 1) {
-    track[0][i] = i;
-  }
-  for (let j = 0; j <= str2.length; j += 1) {
-    track[j][0] = j;
-  }
-  for (let j = 1; j <= str2.length; j += 1) {
-    for (let i = 1; i <= str1.length; i += 1) {
-      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      track[j][i] = Math.min(
-        track[j][i - 1] + 1,
-        track[j - 1][i] + 1,
-        track[j - 1][i - 1] + indicator,
-      );
-    }
-  }
-  const distance = track[str2.length][str1.length];
-  const maxLength = Math.max(str1.length, str2.length);
-  return 1 - (distance / maxLength);
-}
