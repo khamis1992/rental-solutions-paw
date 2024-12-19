@@ -54,8 +54,8 @@ export default function Auth() {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <div className="w-full max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
+      <div className="flex min-h-screen items-center justify-end bg-background">
+        <div className="w-full max-w-[600px] rounded-lg bg-white p-12 mr-32 shadow-xl">
           <SupabaseAuth
             supabaseClient={supabase}
             appearance={{
