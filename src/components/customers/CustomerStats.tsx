@@ -8,23 +8,52 @@ export const CustomerStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["customer-stats"],
     queryFn: async () => {
+      // Get total customers
       const { count: total } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq('role', 'customer');
 
+      // Get new customers this month
       const { count: newThisMonth } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
+        .eq('role', 'customer')
         .gte(
           "created_at",
           new Date(new Date().setDate(1)).toISOString()
         );
 
+      // Get customers with active agreements
+      const { data: activeCustomers } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          leases!inner (
+            status
+          )
+        `)
+        .eq('role', 'customer')
+        .eq('leases.status', 'active');
+
+      // Get customers with only closed agreements
+      const { data: inactiveCustomers } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          leases!inner (
+            status
+          )
+        `)
+        .eq('role', 'customer')
+        .eq('leases.status', 'closed')
+        .not('id', 'in', (activeCustomers || []).map(c => c.id));
+
       return {
         total: total || 0,
         newThisMonth: newThisMonth || 0,
-        active: total || 0,
-        inactive: 0,
+        active: (activeCustomers || []).length,
+        inactive: (inactiveCustomers || []).length,
       };
     },
   });
