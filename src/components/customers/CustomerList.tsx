@@ -17,14 +17,28 @@ import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 
 const ITEMS_PER_PAGE = 10;
 
+interface Customer {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  address: string;
+  driver_license: string;
+  id_document_url: string | null;
+  license_document_url: string | null;
+  contract_document_url: string | null;
+  created_at: string;
+}
+
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: customers, isLoading } = useQuery({
-    queryKey: ["customers", searchQuery],
+  const { data: customers, isLoading } = useQuery<Customer[]>({
+    queryKey: ["customers", searchQuery, roleFilter, statusFilter],
     queryFn: async () => {
       console.log("Fetching customers with search:", searchQuery);
       let query = supabase
@@ -61,11 +75,36 @@ export const CustomerList = () => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <CustomerFilters onSearchChange={setSearchQuery} />
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
+        <CustomerFilters 
+          onSearchChange={setSearchQuery} 
+          onRoleChange={setRoleFilter}
+          onStatusChange={setStatusFilter}
+        />
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Address</TableHead>
+                <TableHead>Driver License</TableHead>
+                <TableHead>Documents</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
     );
@@ -74,7 +113,11 @@ export const CustomerList = () => {
   if (!customers?.length) {
     return (
       <div className="space-y-4">
-        <CustomerFilters onSearchChange={setSearchQuery} />
+        <CustomerFilters 
+          onSearchChange={setSearchQuery}
+          onRoleChange={setRoleFilter}
+          onStatusChange={setStatusFilter}
+        />
         <div className="text-center py-8 text-muted-foreground">
           No customers found
         </div>
@@ -84,7 +127,11 @@ export const CustomerList = () => {
 
   return (
     <div className="space-y-4">
-      <CustomerFilters onSearchChange={setSearchQuery} />
+      <CustomerFilters 
+        onSearchChange={setSearchQuery}
+        onRoleChange={setRoleFilter}
+        onStatusChange={setStatusFilter}
+      />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
