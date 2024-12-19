@@ -4,6 +4,7 @@ import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters";
 import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
+import { PredictiveMaintenance } from "@/components/maintenance/PredictiveMaintenance";
 
 const Maintenance = () => {
   const [filters, setFilters] = useState({
@@ -19,6 +20,9 @@ const Maintenance = () => {
         <CreateJobDialog />
       </div>
       <MaintenanceStats />
+      <div className="mt-6">
+        <PredictiveMaintenance />
+      </div>
       <div className="mt-6 space-y-4">
         <MaintenanceFilters filters={filters} setFilters={setFilters} />
         <MaintenanceList />

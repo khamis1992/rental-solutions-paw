@@ -694,6 +694,56 @@ export type Database = {
           },
         ]
       }
+      maintenance_predictions: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          estimated_cost: number | null
+          id: string
+          predicted_date: string | null
+          predicted_issues: string[] | null
+          prediction_type: string
+          priority: string | null
+          recommended_services: string[] | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          estimated_cost?: number | null
+          id?: string
+          predicted_date?: string | null
+          predicted_issues?: string[] | null
+          prediction_type: string
+          priority?: string | null
+          recommended_services?: string[] | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          estimated_cost?: number | null
+          id?: string
+          predicted_date?: string | null
+          predicted_issues?: string[] | null
+          prediction_type?: string
+          priority?: string | null
+          recommended_services?: string[] | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_predictions_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_history: {
         Row: {
           actual_payment_date: string | null
@@ -1238,6 +1288,119 @@ export type Database = {
           },
           {
             foreignKeyName: "traffic_fines_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_inspections: {
+        Row: {
+          ai_confidence_score: number | null
+          created_at: string | null
+          damage_severity: string | null
+          detected_damages: Json | null
+          id: string
+          inspection_date: string | null
+          inspection_type: string
+          inspector_notes: string | null
+          lease_id: string | null
+          photos: string[] | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          created_at?: string | null
+          damage_severity?: string | null
+          detected_damages?: Json | null
+          id?: string
+          inspection_date?: string | null
+          inspection_type: string
+          inspector_notes?: string | null
+          lease_id?: string | null
+          photos?: string[] | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          created_at?: string | null
+          damage_severity?: string | null
+          detected_damages?: Json | null
+          id?: string
+          inspection_date?: string | null
+          inspection_type?: string
+          inspector_notes?: string | null
+          lease_id?: string | null
+          photos?: string[] | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_sensor_data: {
+        Row: {
+          battery_health: number | null
+          brake_pad_wear: number | null
+          check_engine_status: boolean | null
+          created_at: string | null
+          engine_temperature: number | null
+          fuel_level: number | null
+          id: string
+          mileage: number | null
+          oil_life_remaining: number | null
+          timestamp: string | null
+          tire_pressure: Json | null
+          vehicle_id: string
+        }
+        Insert: {
+          battery_health?: number | null
+          brake_pad_wear?: number | null
+          check_engine_status?: boolean | null
+          created_at?: string | null
+          engine_temperature?: number | null
+          fuel_level?: number | null
+          id?: string
+          mileage?: number | null
+          oil_life_remaining?: number | null
+          timestamp?: string | null
+          tire_pressure?: Json | null
+          vehicle_id: string
+        }
+        Update: {
+          battery_health?: number | null
+          brake_pad_wear?: number | null
+          check_engine_status?: boolean | null
+          created_at?: string | null
+          engine_temperature?: number | null
+          fuel_level?: number | null
+          id?: string
+          mileage?: number | null
+          oil_life_remaining?: number | null
+          timestamp?: string | null
+          tire_pressure?: Json | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_sensor_data_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
