@@ -21,6 +21,19 @@ interface ExtendedPerformance extends Performance {
   memory?: MemoryInfo;
 }
 
+// Configuration constants for resource monitoring
+const MONITORING_INTERVALS = {
+  CPU: 5000,    // 5 seconds
+  MEMORY: 5000, // 5 seconds
+  DISK: 60000   // 1 minute
+};
+
+const RESOURCE_THRESHOLDS = {
+  CPU: 80,    // 80%
+  MEMORY: 80, // 80%
+  DISK: 90    // 90%
+};
+
 const Index = () => {
   const queryClient = useQueryClient();
   const cpuMonitoringInterval = useRef<NodeJS.Timeout>();
@@ -74,15 +87,14 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // Set up real-time subscriptions for dashboard data
+    // Set up real-time subscriptions for dashboard data with optimized channels
     const channels = [
-      // Vehicle status changes
       supabase
         .channel('vehicle-status-changes')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'vehicles' },
-          async (payload) => {
+          async () => {
             console.log('Vehicle status changed, refreshing stats...');
             await queryClient.invalidateQueries({
               queryKey: ['vehicle-status-counts'],
@@ -94,13 +106,12 @@ const Index = () => {
         )
         .subscribe(),
 
-      // Rental updates
       supabase
         .channel('rental-updates')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'leases' },
-          async (payload) => {
+          async () => {
             console.log('Rental status changed, refreshing upcoming rentals...');
             await queryClient.invalidateQueries({
               queryKey: ['upcoming-rentals'],
@@ -112,7 +123,6 @@ const Index = () => {
         )
         .subscribe(),
 
-      // Alert updates
       supabase
         .channel('alert-updates')
         .on(
@@ -123,7 +133,7 @@ const Index = () => {
             table: 'maintenance',
             filter: "status=in.(scheduled,in_progress)" 
           },
-          async (payload) => {
+          async () => {
             console.log('Maintenance alert changed, refreshing alerts...');
             await queryClient.invalidateQueries({
               queryKey: ['dashboard-alerts'],
@@ -136,16 +146,18 @@ const Index = () => {
         .subscribe()
     ];
 
-    // Start performance monitoring
-    cpuMonitoringInterval.current = setInterval(monitorCPU, 5000); // Every 5 seconds
-    memoryMonitoringInterval.current = setInterval(monitorMemory, 5000); // Every 5 seconds
-    diskMonitoringInterval.current = setInterval(monitorDiskIO, 60000); // Every minute
+    // Start performance monitoring with optimized intervals
+    cpuMonitoringInterval.current = setInterval(monitorCPU, MONITORING_INTERVALS.CPU);
+    memoryMonitoringInterval.current = setInterval(monitorMemory, MONITORING_INTERVALS.MEMORY);
+    diskMonitoringInterval.current = setInterval(monitorDiskIO, MONITORING_INTERVALS.DISK);
 
     // Error handling for real-time subscriptions
     channels.forEach(channel => {
       channel.on('error', (error) => {
         console.error('Realtime subscription error:', error);
-        toast.error('Error in real-time updates. Trying to reconnect...');
+        toast.error('Error in real-time updates. Trying to reconnect...', {
+          duration: 5000,
+        });
       });
     });
 
