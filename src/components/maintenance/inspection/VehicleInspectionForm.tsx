@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,16 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Car, Calendar, User, Gauge, Fuel } from "lucide-react";
 
 interface VehicleInspectionFormProps {
-  vehicleId: string;
-  leaseId?: string;
-  inspectionType: 'check_in' | 'check_out';
+  maintenanceId: string;
 }
 
-export const VehicleInspectionForm = ({ 
-  vehicleId, 
-  leaseId, 
-  inspectionType 
-}: VehicleInspectionFormProps) => {
+export const VehicleInspectionForm = ({ maintenanceId }: VehicleInspectionFormProps) => {
   const { toast } = useToast();
   const [damageMarkers, setDamageMarkers] = useState<any[]>([]);
   const [fuelLevel, setFuelLevel] = useState<number>(100);
@@ -29,17 +23,48 @@ export const VehicleInspectionForm = ({
   const [staffSignature, setStaffSignature] = useState<string>("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [vehicleId, setVehicleId] = useState<string | null>(null);
+  const [inspectionType, setInspectionType] = useState<'check_in' | 'check_out'>('check_in');
+
+  useEffect(() => {
+    // Fetch maintenance record to get vehicle ID
+    const fetchMaintenanceDetails = async () => {
+      const { data, error } = await supabase
+        .from('maintenance')
+        .select('vehicle_id')
+        .eq('id', maintenanceId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching maintenance details:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load maintenance details.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        setVehicleId(data.vehicle_id);
+      }
+    };
+
+    fetchMaintenanceDetails();
+  }, [maintenanceId, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!vehicleId) throw new Error('Vehicle ID not found');
+
       const formData = new FormData(e.target as HTMLFormElement);
       
       const inspectionData = {
         vehicle_id: vehicleId,
-        lease_id: leaseId,
+        maintenance_id: maintenanceId,
         inspection_type: inspectionType,
         odometer_reading: parseInt(formData.get('odometer') as string),
         fuel_level: fuelLevel,
@@ -77,7 +102,7 @@ export const VehicleInspectionForm = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Car className="h-5 w-5" />
-            Vehicle Inspection - {inspectionType === 'check_in' ? 'Check-in' : 'Check-out'}
+            Vehicle Inspection
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
