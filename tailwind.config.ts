@@ -101,7 +101,26 @@ export default {
       screens: {
         'print': {'raw': 'print'},
       },
-    }
+      
+      spacing: {
+        'touch': '44px', // Minimum touch target size
+        'touch-lg': '48px',
+      },
+      minHeight: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      minWidth: {
+        'touch': '44px',
+        'touch-lg': '48px',
+      },
+      fontSize: {
+        'mobile-h1': ['1.75rem', { lineHeight: '2rem' }],
+        'mobile-h2': ['1.5rem', { lineHeight: '1.75rem' }],
+        'mobile-h3': ['1.25rem', { lineHeight: '1.5rem' }],
+        'mobile-body': ['1rem', { lineHeight: '1.5rem' }],
+      },
+    },
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
