@@ -35,6 +35,23 @@
     min-width: 1024px; /* Minimum width for desktop */
     overflow-x: auto;
   }
+
+  /* React Flow Styles */
+  .react-flow__node {
+    @apply bg-background border-none shadow-none;
+  }
+
+  .react-flow__handle {
+    @apply hidden;
+  }
+
+  .react-flow__controls {
+    @apply bg-background border border-border rounded-lg shadow-md;
+  }
+
+  .react-flow__controls-button {
+    @apply border-border hover:bg-accent;
+  }
 }
 
 @layer utilities {
