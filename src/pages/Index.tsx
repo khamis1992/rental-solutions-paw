@@ -11,6 +11,17 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { performanceMetrics } from "@/services/performanceMonitoring";
 
+// Add type definition for Chrome's Memory API
+interface MemoryInfo {
+  jsHeapSizeLimit: number;
+  totalJSHeapSize: number;
+  usedJSHeapSize: number;
+}
+
+interface ExtendedPerformance extends Performance {
+  memory?: MemoryInfo;
+}
+
 const Index = () => {
   const queryClient = useQueryClient();
   const cpuMonitoringInterval = useRef<NodeJS.Timeout>();
@@ -31,18 +42,19 @@ const Index = () => {
   };
 
   const measureCPUUsage = async (): Promise<number> => {
-    if (!window.performance || !window.performance.memory) {
+    const performance = window.performance as ExtendedPerformance;
+    if (!performance || !performance.memory) {
       return 0;
     }
 
     const startTime = performance.now();
-    const startUsage = performance.memory?.usedJSHeapSize || 0;
+    const startUsage = performance.memory.usedJSHeapSize;
     
     // Simulate some work to measure CPU usage
     await new Promise(resolve => setTimeout(resolve, 100));
     
     const endTime = performance.now();
-    const endUsage = performance.memory?.usedJSHeapSize || 0;
+    const endUsage = performance.memory.usedJSHeapSize;
     
     // Calculate a rough CPU usage estimation
     const duration = endTime - startTime;
