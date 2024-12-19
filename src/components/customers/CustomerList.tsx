@@ -20,7 +20,7 @@ export const CustomerList = () => {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  const { data: customers = [], isLoading, error } = useCustomers(searchQuery, roleFilter);
+  const { data: customers = [], isLoading, error } = useCustomers(searchQuery);
 
   const totalPages = Math.ceil((customers?.length || 0) / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -86,7 +86,12 @@ export const CustomerList = () => {
             {currentCustomers.map((customer) => (
               <CustomerTableRow 
                 key={customer.id}
-                customer={customer}
+                customer={{
+                  ...customer,
+                  address: 'N/A',
+                  contract_document_url: null,
+                  created_at: new Date().toISOString(),
+                }}
                 onCustomerClick={handleCustomerClick}
               />
             ))}
