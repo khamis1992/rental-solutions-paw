@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ImportErrors } from "./utils/importTypes";
-import { parseImportErrors } from "./utils/importUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { FileUploadSection } from "./payment-import/FileUploadSection";
+import { AIAnalysisCard } from "./payment-import/AIAnalysisCard";
 import { 
   uploadImportFile, 
   createImportLog, 
   processImport,
   pollImportStatus 
 } from "./services/agreementImportService";
+import { parseImportErrors } from "./utils/importUtils";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -39,7 +38,6 @@ export const PaymentImport = () => {
     setIsAnalyzing(true);
     
     try {
-      // First, analyze the file with AI
       const formData = new FormData();
       formData.append('file', file);
       
@@ -74,15 +72,12 @@ export const PaymentImport = () => {
     try {
       console.log('Starting file upload process...');
       
-      // Upload file to storage
       const fileName = await uploadImportFile(selectedFile);
       console.log('File uploaded successfully:', fileName);
 
-      // Create import log
       await createImportLog(fileName);
       console.log('Import log created');
 
-      // Process the import
       const { data: functionResponse, error: functionError } = await processImport(fileName);
 
       if (functionError) {
@@ -92,7 +87,6 @@ export const PaymentImport = () => {
 
       console.log('Edge Function response:', functionResponse);
 
-      // Poll for import completion
       const pollInterval = setInterval(async () => {
         console.log('Checking import status...');
         try {
@@ -101,10 +95,8 @@ export const PaymentImport = () => {
           if (importLog?.status === "completed") {
             clearInterval(pollInterval);
             
-            // Parse errors object safely
             const errors = importLog.errors ? parseImportErrors(importLog.errors) : null;
             
-            // Show detailed import results
             const skippedCount = errors?.skipped?.length ?? 0;
             const failedCount = errors?.failed?.length ?? 0;
             
@@ -121,11 +113,9 @@ export const PaymentImport = () => {
               description: description,
             });
             
-            // Reset states
             setSelectedFile(null);
             setAnalysisResult(null);
             
-            // Force refresh the queries
             await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
             await queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
             
@@ -144,7 +134,6 @@ export const PaymentImport = () => {
         }
       }, 2000);
 
-      // Set a timeout to stop polling after 30 seconds
       setTimeout(() => {
         clearInterval(pollInterval);
         if (isUploading) {
@@ -186,78 +175,19 @@ export const PaymentImport = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          disabled={isUploading || isAnalyzing}
-        />
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
-          disabled={isUploading || isAnalyzing}
-        >
-          Download Template
-        </Button>
-      </div>
+      <FileUploadSection
+        onFileUpload={handleFileUpload}
+        onDownloadTemplate={downloadTemplate}
+        isUploading={isUploading}
+        isAnalyzing={isAnalyzing}
+      />
       
-      {isAnalyzing && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Analyzing file with AI...
-        </div>
-      )}
-
       {analysisResult && (
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle>AI Analysis Results</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">Summary:</h4>
-              <p>{analysisResult.summary}</p>
-            </div>
-            
-            {analysisResult.warnings?.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-yellow-600">Warnings:</h4>
-                <ul className="list-disc pl-4 space-y-1">
-                  {analysisResult.warnings.map((warning: string, index: number) => (
-                    <li key={index} className="text-sm">{warning}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {analysisResult.suggestions?.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-blue-600">Suggestions:</h4>
-                <ul className="list-disc pl-4 space-y-1">
-                  {analysisResult.suggestions.map((suggestion: string, index: number) => (
-                    <li key={index} className="text-sm">{suggestion}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <Button
-              onClick={handleImplementChanges}
-              disabled={isUploading}
-              className="w-full mt-4"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Implementing Changes...
-                </>
-              ) : (
-                'Implement Changes'
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+        <AIAnalysisCard
+          analysisResult={analysisResult}
+          onImplementChanges={handleImplementChanges}
+          isUploading={isUploading}
+        />
       )}
 
       {isUploading && !analysisResult && (
