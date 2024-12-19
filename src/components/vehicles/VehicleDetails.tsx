@@ -14,7 +14,7 @@ interface VehicleDetailsProps {
   vehicleId: string;
 }
 
-export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
+const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", vehicleId],
     queryFn: async () => {
@@ -126,3 +126,5 @@ export const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
     </div>
   );
 };
+
+export default VehicleDetails;

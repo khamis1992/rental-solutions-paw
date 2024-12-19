@@ -15,7 +15,7 @@ interface VehicleInspectionFormProps {
   maintenanceId: string;
 }
 
-export const VehicleInspectionForm = ({ maintenanceId }: VehicleInspectionFormProps) => {
+const VehicleInspectionForm = ({ maintenanceId }: VehicleInspectionFormProps) => {
   const { toast } = useToast();
   const [damageMarkers, setDamageMarkers] = useState<any[]>([]);
   const [fuelLevel, setFuelLevel] = useState<number>(100);
@@ -196,3 +196,5 @@ export const VehicleInspectionForm = ({ maintenanceId }: VehicleInspectionFormPr
     </form>
   );
 };
+
+export default VehicleInspectionForm;

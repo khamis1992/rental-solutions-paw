@@ -19,8 +19,8 @@ const Help = lazy(() => import("@/pages/Help"));
 const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Finance = lazy(() => import("@/pages/Finance"));
-const { VehicleDetails } = lazy(() => import("@/components/vehicles/VehicleDetails"));
-const { VehicleInspectionForm } = lazy(() => import("@/components/maintenance/inspection/VehicleInspectionForm"));
+const VehicleDetails = lazy(() => import("@/components/vehicles/VehicleDetails"));
+const VehicleInspectionForm = lazy(() => import("@/components/maintenance/inspection/VehicleInspectionForm"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -71,7 +71,7 @@ function App() {
           table: 'performance_metrics',
           filter: "metric_type=eq.'error'"
         },
-        (payload) => {
+        (payload: { new: any }) => {
           console.error('System error detected:', payload);
           toast.error('System error detected. Our team has been notified.');
           
