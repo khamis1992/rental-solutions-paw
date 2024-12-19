@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { PaymentImport } from "../PaymentImport";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +13,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { RefreshCw } from "lucide-react";
+import { usePaymentReconciliation } from "../hooks/usePaymentReconciliation";
 
 interface PaymentHistoryActionsProps {
   agreementId?: string;
@@ -24,6 +25,7 @@ export function PaymentHistoryActions({ agreementId, paymentCount }: PaymentHist
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { isReconciling, reconcilePayments } = usePaymentReconciliation();
 
   const handleDeleteAllPayments = async () => {
     setIsDeleting(true);
@@ -52,10 +54,38 @@ export function PaymentHistoryActions({ agreementId, paymentCount }: PaymentHist
     }
   };
 
+  const handleReconcileAll = async () => {
+    try {
+      const { data: payments, error } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("status", "pending");
+
+      if (error) throw error;
+
+      for (const payment of payments) {
+        await reconcilePayments(payment.id);
+      }
+
+      toast.success("Payment reconciliation completed");
+    } catch (error) {
+      console.error("Error reconciling payments:", error);
+      toast.error("Failed to reconcile payments");
+    }
+  };
+
   return (
     <>
       <div className="flex justify-between items-center">
-        <PaymentImport />
+        <Button 
+          variant="outline"
+          onClick={handleReconcileAll}
+          disabled={isReconciling || !paymentCount}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
+          Reconcile All Payments
+        </Button>
         <Button 
           variant="destructive" 
           onClick={() => setShowDeleteConfirm(true)}
