@@ -700,6 +700,8 @@ export type Database = {
           monthly_payment: number | null
           notes: string | null
           ownership_transferred: boolean | null
+          rent_amount: number | null
+          rent_due_day: number | null
           return_date: string | null
           return_mileage: number | null
           start_date: string | null
@@ -733,6 +735,8 @@ export type Database = {
           monthly_payment?: number | null
           notes?: string | null
           ownership_transferred?: boolean | null
+          rent_amount?: number | null
+          rent_due_day?: number | null
           return_date?: string | null
           return_mileage?: number | null
           start_date?: string | null
@@ -766,6 +770,8 @@ export type Database = {
           monthly_payment?: number | null
           notes?: string | null
           ownership_transferred?: boolean | null
+          rent_amount?: number | null
+          rent_due_day?: number | null
           return_date?: string | null
           return_mileage?: number | null
           start_date?: string | null
