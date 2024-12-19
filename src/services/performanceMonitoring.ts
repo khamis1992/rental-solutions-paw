@@ -67,6 +67,22 @@ export const performanceMetrics = {
     
     if (dbError) throw dbError;
     return data;
+  },
+
+  async trackCPUUtilization(utilization: number) {
+    const { data, error } = await supabase
+      .from("performance_metrics")
+      .insert({
+        metric_type: 'cpu_utilization',
+        value: utilization,
+        cpu_utilization: utilization,
+        timestamp: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 };
 
@@ -83,7 +99,9 @@ export const aiAnalysis = {
   },
 
   async triggerAnalysis() {
-    return supabase.functions.invoke('analyze-performance');
+    return supabase.functions.invoke('analyze-performance', {
+      body: { includesCPUMetrics: true }
+    });
   },
 
   async markInsightImplemented(insightId: string) {

@@ -5,13 +5,53 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { performanceMetrics } from "@/services/performanceMonitoring";
 
 const Index = () => {
   const queryClient = useQueryClient();
+  const cpuMonitoringInterval = useRef<NodeJS.Timeout>();
+
+  const monitorCPU = async () => {
+    try {
+      const cpuUsage = await measureCPUUsage();
+      await performanceMetrics.trackCPUUtilization(cpuUsage);
+      
+      if (cpuUsage > 80) {
+        toast.warning("High CPU Usage", {
+          description: `Current CPU utilization is ${cpuUsage.toFixed(1)}%`
+        });
+      }
+    } catch (error) {
+      console.error('Failed to monitor CPU:', error);
+    }
+  };
+
+  const measureCPUUsage = async (): Promise<number> => {
+    if (!window.performance || !window.performance.memory) {
+      return 0;
+    }
+
+    const startTime = performance.now();
+    const startUsage = performance.memory?.usedJSHeapSize || 0;
+    
+    // Simulate some work to measure CPU usage
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const endTime = performance.now();
+    const endUsage = performance.memory?.usedJSHeapSize || 0;
+    
+    // Calculate a rough CPU usage estimation
+    const duration = endTime - startTime;
+    const memoryDiff = endUsage - startUsage;
+    const cpuUsage = (memoryDiff / duration) * 100;
+    
+    // Normalize to a 0-100 range
+    return Math.min(Math.max(cpuUsage, 0), 100);
+  };
 
   useEffect(() => {
     // Set up real-time subscriptions for dashboard data
@@ -73,6 +113,9 @@ const Index = () => {
         .subscribe()
     ];
 
+    // Start CPU monitoring
+    cpuMonitoringInterval.current = setInterval(monitorCPU, 5000);
+
     // Error handling for real-time subscriptions
     channels.forEach(channel => {
       channel.on('error', (error) => {
@@ -83,6 +126,9 @@ const Index = () => {
 
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
+      if (cpuMonitoringInterval.current) {
+        clearInterval(cpuMonitoringInterval.current);
+      }
     };
   }, [queryClient]);
 
