@@ -530,6 +530,30 @@ export type Database = {
           },
         ]
       }
+      fixed_costs: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       fleet_optimization_recommendations: {
         Row: {
           confidence_score: number | null

@@ -25,7 +25,7 @@ export const FixedCostsManagement = () => {
       const { data, error } = await supabase
         .from("fixed_costs")
         .select("*")
-        .order("created_at", { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data as FixedCost[];
