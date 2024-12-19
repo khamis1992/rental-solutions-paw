@@ -74,9 +74,9 @@ export const useDashboardSubscriptions = () => {
     });
 
     return () => {
-      channels.forEach(channel => {
-        channel.unsubscribe();
-        supabase.removeChannel(channel);
+      channels.forEach(async (channel) => {
+        await channel.unsubscribe();
+        await supabase.removeChannel(channel);
       });
     };
   }, [queryClient]);
