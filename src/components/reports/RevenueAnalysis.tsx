@@ -37,8 +37,8 @@ export const RevenueAnalysis = () => {
   const growth = ((totalRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+    <div className="space-y-8">
+      <div className="grid gap-6 md:grid-cols-3">
         <StatsCard
           title="Total Revenue"
           value={formatCurrency(totalRevenue)}
@@ -62,12 +62,12 @@ export const RevenueAnalysis = () => {
         />
       </div>
 
-      <Card>
+      <Card className="col-span-full">
         <CardHeader>
           <CardTitle>Revenue Trends</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
