@@ -75,9 +75,9 @@ function App() {
           toast.error('System error detected. Our team has been notified.');
           
           performanceMetrics.trackError({
-            component: 'system',
-            error: payload.new,
-            timestamp: new Date().toISOString()
+            message: 'System error detected',
+            stack: JSON.stringify(payload.new),
+            context: payload.new?.context
           });
 
           // Only invalidate affected queries

@@ -12,29 +12,47 @@ export const DashboardAlerts = () => {
     queryFn: async () => {
       const now = new Date().toISOString();
       
-      // Fetch overdue vehicles
-      const { data: overdueVehicles } = await supabase
+      // Fetch overdue vehicles with proper error handling
+      const { data: overdueVehicles = [] } = await supabase
         .from("leases")
-        .select("*, vehicles(id, make, model, year), profiles(full_name)")
+        .select(`
+          id,
+          vehicles (
+            id, make, model, year
+          ),
+          profiles (
+            full_name
+          )
+        `)
         .lt("end_date", now)
-        .eq("status", "active")
-        .limit(5);
+        .eq("status", "active");
 
-      // Fetch overdue payments
-      const { data: overduePayments } = await supabase
+      // Fetch overdue payments with proper error handling
+      const { data: overduePayments = [] } = await supabase
         .from("payment_schedules")
-        .select("*, leases(*, profiles(full_name))")
+        .select(`
+          id,
+          leases (
+            id,
+            profiles (
+              full_name
+            )
+          )
+        `)
         .lt("due_date", now)
-        .eq("status", "pending")
-        .limit(5);
+        .eq("status", "pending");
 
-      // Fetch maintenance alerts
-      const { data: maintenanceAlerts } = await supabase
+      // Fetch maintenance alerts with proper error handling
+      const { data: maintenanceAlerts = [] } = await supabase
         .from("maintenance")
-        .select("*, vehicles(id, make, model, year)")
+        .select(`
+          id,
+          vehicles (
+            id, make, model, year
+          )
+        `)
         .eq("status", "scheduled")
-        .lte("scheduled_date", now)
-        .limit(5);
+        .lte("scheduled_date", now);
 
       return {
         overdueVehicles: overdueVehicles || [],
@@ -64,7 +82,7 @@ export const DashboardAlerts = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {alerts?.overdueVehicles.map((vehicle) => (
+          {alerts?.overdueVehicles?.map((vehicle) => (
             <div
               key={vehicle.id}
               onClick={() => handleLeaseClick(vehicle.id)}
@@ -76,17 +94,17 @@ export const DashboardAlerts = () => {
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-red-700">Overdue Vehicle</h4>
                 <p className="text-sm text-red-600">
-                  {vehicle.vehicles.year} {vehicle.vehicles.make} {vehicle.vehicles.model} - 
-                  {vehicle.profiles.full_name}
+                  {vehicle.vehicles?.year} {vehicle.vehicles?.make} {vehicle.vehicles?.model} - 
+                  {vehicle.profiles?.full_name}
                 </p>
               </div>
             </div>
           ))}
 
-          {alerts?.overduePayments.map((payment) => (
+          {alerts?.overduePayments?.map((payment) => (
             <div
               key={payment.id}
-              onClick={() => handleLeaseClick(payment.lease_id)}
+              onClick={() => handleLeaseClick(payment.leases?.id)}
               className="flex items-center gap-4 p-4 rounded-lg border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors cursor-pointer"
             >
               <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-yellow-100 text-yellow-500">
@@ -95,16 +113,16 @@ export const DashboardAlerts = () => {
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-yellow-700">Overdue Payment</h4>
                 <p className="text-sm text-yellow-600">
-                  {payment.leases.profiles.full_name} - ${payment.amount}
+                  {payment.leases?.profiles?.full_name}
                 </p>
               </div>
             </div>
           ))}
 
-          {alerts?.maintenanceAlerts.map((maintenance) => (
+          {alerts?.maintenanceAlerts?.map((maintenance) => (
             <div
               key={maintenance.id}
-              onClick={() => handleVehicleClick(maintenance.vehicles.id)}
+              onClick={() => handleVehicleClick(maintenance.vehicles?.id)}
               className="flex items-center gap-4 p-4 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
             >
               <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-500">
@@ -113,8 +131,7 @@ export const DashboardAlerts = () => {
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-blue-700">Maintenance Due</h4>
                 <p className="text-sm text-blue-600">
-                  {maintenance.vehicles.year} {maintenance.vehicles.make} {maintenance.vehicles.model} - 
-                  {maintenance.service_type}
+                  {maintenance.vehicles?.year} {maintenance.vehicles?.make} {maintenance.vehicles?.model}
                 </p>
               </div>
             </div>
