@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
@@ -46,6 +46,15 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
     );
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), "dd/MM/yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+
   if (isLoading) {
     return <div>Loading payment history...</div>;
   }
@@ -60,13 +69,14 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
           <TableHead>Status</TableHead>
           <TableHead>Payment Method</TableHead>
           <TableHead>Transaction ID</TableHead>
+          <TableHead>Description</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {paymentHistory?.map((payment) => (
           <TableRow key={payment.id}>
             <TableCell>
-              {format(new Date(payment.created_at), "PP")}
+              {formatDate(payment.created_at)}
             </TableCell>
             <TableCell>
               {payment.security_deposits ? "Security Deposit" : "Payment"}
@@ -93,6 +103,9 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
             </TableCell>
             <TableCell>
               {payment.transaction_id || "N/A"}
+            </TableCell>
+            <TableCell>
+              {payment.description || "No description provided"}
             </TableCell>
           </TableRow>
         ))}

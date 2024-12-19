@@ -1,148 +1,157 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { processPaymentRow } from './paymentUtils.ts';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { corsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-const BATCH_SIZE = 50; // Process 50 records at a time
-const BATCH_DELAY = 1000; // 1 second delay between batches
+interface PaymentRow {
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  status: string;
+  description?: string;
+  transaction_id?: string;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { fileName, batchSize = BATCH_SIZE } = await req.json();
-    console.log('Processing file:', fileName);
+    const formData = await req.formData();
+    const file = formData.get('file');
+    const contractName = formData.get('contractName');
+
+    if (!file || !contractName) {
+      throw new Error('File and contract name are required');
+    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Download file
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('imports')
-      .download(fileName);
+    const content = await file.text();
+    const lines = content.split('\n');
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
-    if (downloadError) {
-      throw new Error(`Failed to download file: ${downloadError.message}`);
+    // Validate required headers
+    const requiredHeaders = ['amount', 'payment_date', 'payment_method', 'status'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+    if (missingHeaders.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: 'Missing required headers',
+          details: missingHeaders
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
-    const text = await fileData.text();
-    const lines = text.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',').map(h => h.trim());
-    
-    console.log('Processing CSV with headers:', headers);
-    
-    let processedCount = 0;
-    const skippedRecords = [];
-    const failedRecords = [];
+    const payments: PaymentRow[] = [];
+    const errors: any[] = [];
 
-    // Process in batches
-    for (let i = 1; i < lines.length; i += batchSize) {
-      const batch = lines.slice(i, i + batchSize);
-      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}`);
+    // Process each row
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const values = line.split(',').map(v => v.trim());
+      const row: any = {};
+
+      headers.forEach((header, index) => {
+        row[header] = values[index];
+      });
 
       try {
-        // Process each line in the batch
-        const batchPromises = batch.map(async (line, index) => {
-          const lineNumber = i + index;
-          try {
-            const values = line.trim().split(',').map(v => v.trim());
-            console.log(`Processing row ${lineNumber}:`, values);
-
-            const result = await processPaymentRow(supabase, headers, values);
-            
-            if (result.success) {
-              processedCount++;
-            } else {
-              console.log(`Row ${lineNumber} skipped:`, result.error);
-              skippedRecords.push({
-                row: lineNumber,
-                data: values,
-                reason: result.error
-              });
-            }
-          } catch (error) {
-            console.error(`Error processing row ${lineNumber}:`, error);
-            failedRecords.push({
-              row: lineNumber,
-              error: error.message
-            });
-          }
-        });
-
-        // Wait for batch to complete
-        await Promise.all(batchPromises);
-
-        // Update import log after each batch
-        await supabase
-          .from('import_logs')
-          .update({
-            status: 'processing',
-            records_processed: processedCount,
-            errors: {
-              skipped: skippedRecords,
-              failed: failedRecords
-            }
-          })
-          .eq('file_name', fileName);
-
-        // Add a delay between batches to prevent resource exhaustion
-        if (i + batchSize < lines.length) {
-          await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+        // Validate and parse date
+        const paymentDate = new Date(row.payment_date);
+        if (isNaN(paymentDate.getTime())) {
+          throw new Error(`Invalid date format in row ${i}`);
         }
-      } catch (batchError) {
-        console.error(`Error processing batch starting at row ${i}:`, batchError);
-        // Continue with next batch even if current batch fails
+
+        // Validate amount
+        const amount = parseFloat(row.amount);
+        if (isNaN(amount)) {
+          throw new Error(`Invalid amount in row ${i}`);
+        }
+
+        payments.push({
+          amount,
+          payment_date: paymentDate.toISOString(),
+          payment_method: row.payment_method,
+          status: row.status,
+          description: row.description || null,
+          transaction_id: row.transaction_id || null
+        });
+      } catch (error) {
+        errors.push({
+          row: i,
+          error: error.message,
+          data: row
+        });
       }
     }
 
-    // Final update to import log
-    await supabase
+    // Create import log
+    const { data: importLog, error: importLogError } = await supabase
       .from('import_logs')
-      .update({
-        status: 'completed',
-        records_processed: processedCount,
-        errors: {
-          skipped: skippedRecords,
-          failed: failedRecords
-        }
+      .insert({
+        file_name: (file as File).name,
+        import_type: 'payment',
+        status: 'processing',
+        records_processed: 0,
+        errors: errors.length > 0 ? { failed: errors } : null
       })
-      .eq('file_name', fileName);
+      .select()
+      .single();
+
+    if (importLogError) throw importLogError;
+
+    // Insert payments
+    if (payments.length > 0) {
+      const { error: paymentsError } = await supabase
+        .from('payments')
+        .insert(payments.map(payment => ({
+          ...payment,
+          created_at: payment.payment_date,
+          metadata: { contract_name: contractName }
+        })));
+
+      if (paymentsError) throw paymentsError;
+
+      // Update import log
+      await supabase
+        .from('import_logs')
+        .update({
+          status: errors.length > 0 ? 'completed_with_errors' : 'completed',
+          records_processed: payments.length
+        })
+        .eq('id', importLog.id);
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        processed: processedCount,
-        skipped: skippedRecords.length,
-        failed: failedRecords.length
+        processed: payments.length,
+        errors: errors.length > 0 ? errors : null
       }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
-
   } catch (error) {
-    console.error('Import process failed:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message
+      JSON.stringify({
+        error: 'Failed to process import',
+        details: error.message
       }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
     );

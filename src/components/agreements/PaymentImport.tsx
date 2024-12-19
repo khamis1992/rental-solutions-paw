@@ -159,8 +159,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Customer Name,Amount,Payment_Date,Payment_Method,status,Payment_Number,Payment_Description\n" +
-                      "John Doe,1000,20-03-2024,credit_card,completed,INV001,Monthly payment";
+    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID\n" +
+                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
