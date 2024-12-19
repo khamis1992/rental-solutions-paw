@@ -9,17 +9,19 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import { CustomerFilters } from "./CustomerFilters";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
+import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 
 const ITEMS_PER_PAGE = 10;
 
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   const { data: customers, isLoading } = useQuery({
     queryKey: ["customers", searchQuery],
@@ -50,6 +52,11 @@ export const CustomerList = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentCustomers = customers?.slice(startIndex, endIndex) || [];
+
+  const handleCustomerClick = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    setShowDetailsDialog(true);
+  };
 
   if (isLoading) {
     return (
@@ -94,12 +101,12 @@ export const CustomerList = () => {
             {currentCustomers.map((customer) => (
               <TableRow key={customer.id}>
                 <TableCell>
-                  <Link
-                    to={`/customers/${customer.id}`}
+                  <button
+                    onClick={() => handleCustomerClick(customer.id)}
                     className="text-blue-600 hover:underline"
                   >
                     {customer.full_name || 'Unnamed Customer'}
-                  </Link>
+                  </button>
                 </TableCell>
                 <TableCell>{customer.phone_number || 'N/A'}</TableCell>
                 <TableCell>{customer.address || 'N/A'}</TableCell>
@@ -131,6 +138,14 @@ export const CustomerList = () => {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      {selectedCustomerId && (
+        <CustomerDetailsDialog
+          customerId={selectedCustomerId}
+          open={showDetailsDialog}
+          onOpenChange={setShowDetailsDialog}
+        />
+      )}
     </div>
   );
 };

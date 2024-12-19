@@ -16,7 +16,6 @@ const Maintenance = lazy(() => import("@/pages/Maintenance"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Help = lazy(() => import("@/pages/Help"));
-const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Finance = lazy(() => import("@/pages/Finance"));
 const VehicleDetails = lazy(() => import("@/components/vehicles/VehicleDetails"));
@@ -130,7 +129,6 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/customers" element={<Customers />} />
-        <Route path="/customers/:id" element={<CustomerProfile />} />
         <Route path="/vehicles" element={<Vehicles />} />
         <Route path="/vehicles/:id" element={<VehicleDetailsWrapper />} />
         <Route path="/agreements" element={<Agreements />} />
