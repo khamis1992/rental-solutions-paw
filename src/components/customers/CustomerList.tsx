@@ -37,7 +37,7 @@ export const CustomerList = () => {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: customers, isLoading } = useQuery<Customer[]>({
+  const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["customers", searchQuery, roleFilter, statusFilter],
     queryFn: async () => {
       console.log("Fetching customers with search:", searchQuery);
