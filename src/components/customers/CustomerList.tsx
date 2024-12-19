@@ -10,6 +10,7 @@ import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 import { CustomerTableHeader } from "./table/CustomerTableHeader";
 import { CustomerTableRow } from "./table/CustomerTableRow";
 import { useCustomers } from "./hooks/useCustomers";
+import type { Customer } from "./types/customer";
 
 const ITEMS_PER_PAGE = 10;
 

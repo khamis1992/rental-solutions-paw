@@ -1,19 +1,10 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { Customer } from "../types/customer";
 
 interface CustomerTableRowProps {
-  customer: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-    driver_license: string | null;
-    id_document_url: string | null;
-    license_document_url: string | null;
-    contract_document_url: string | null;
-    created_at: string;
-  };
+  customer: Customer;
   onCustomerClick: (customerId: string) => void;
 }
 

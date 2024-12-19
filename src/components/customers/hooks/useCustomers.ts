@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Customer } from "../types/customer";
 
 export const useCustomers = (searchQuery: string) => {
   return useQuery({
@@ -26,7 +27,7 @@ export const useCustomers = (searchQuery: string) => {
         }
         
         console.log("Fetched customers:", data?.length || 0, "records");
-        return data || [];
+        return (data || []) as Customer[];
       } catch (err) {
         console.error("Error in customer query:", err);
         toast.error("Failed to fetch customers");
