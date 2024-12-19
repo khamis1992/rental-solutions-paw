@@ -34,6 +34,8 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
+      console.log("Fetching payments for agreement:", agreementId);
+      
       const query = supabase
         .from("payments")
         .select(`
@@ -41,6 +43,12 @@ export function PaymentHistoryDialog({
           security_deposits (
             amount,
             status
+          ),
+          lease:lease_id (
+            agreement_number,
+            customer:customer_id (
+              full_name
+            )
           )
         `)
         .order("created_at", { ascending: false });
@@ -51,7 +59,12 @@ export function PaymentHistoryDialog({
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+
+      console.log("Fetched payments:", data);
       return data;
     },
     enabled: open,
@@ -74,10 +87,8 @@ export function PaymentHistoryDialog({
         async (payload) => {
           console.log('Real-time update received for payment history:', payload);
           
-          // Invalidate and refetch the payment history query
           await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
           
-          // Show a toast notification
           const eventType = payload.eventType;
           toast.info(
             eventType === 'INSERT'
@@ -93,7 +104,6 @@ export function PaymentHistoryDialog({
       )
       .subscribe();
 
-    // Cleanup subscription on unmount or when dialog closes
     return () => {
       supabase.removeChannel(channel);
     };
