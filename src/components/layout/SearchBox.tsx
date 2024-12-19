@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   CommandDialog,
@@ -15,59 +15,65 @@ import { toast } from "sonner";
 import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
 import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
 import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const SearchBox = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300); // 300ms delay
   
   // Dialog states
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [selectedAgreement, setSelectedAgreement] = useState<string | null>(null);
 
-  const { data: searchResults, error } = useQuery({
-    queryKey: ["search", searchQuery],
+  const { data: searchResults, error, isLoading } = useQuery({
+    queryKey: ["search", debouncedSearch],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return { vehicles: [], customers: [], agreements: [] };
+      if (debouncedSearch.length < 2) return { vehicles: [], customers: [], agreements: [] };
 
       try {
-        const [vehiclesResponse, customersResponse, agreementsResponse] = await Promise.all([
+        // Parallel queries for better performance
+        const [vehiclesPromise, customersPromise, agreementsPromise] = await Promise.all([
           supabase
             .from("vehicles")
             .select("id, make, model, year, license_plate")
-            .or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,license_plate.ilike.%${searchQuery}%`)
+            .ilike("make", `%${debouncedSearch}%`)
+            .or(`model.ilike.%${debouncedSearch}%,license_plate.ilike.%${debouncedSearch}%`)
             .limit(5),
+
           supabase
             .from("profiles")
-            .select("id, full_name")
-            .ilike("full_name", `%${searchQuery}%`)
+            .select("id, full_name, phone_number")
+            .ilike("full_name", `%${debouncedSearch}%`)
+            .or(`phone_number.ilike.%${debouncedSearch}%`)
             .limit(5),
+
           supabase
             .from("leases")
-            .select("id, agreement_number")
-            .ilike("agreement_number", `%${searchQuery}%`)
+            .select("id, agreement_number, vehicles(make, model)")
+            .ilike("agreement_number", `%${debouncedSearch}%`)
             .limit(5),
         ]);
 
-        if (vehiclesResponse.error) throw vehiclesResponse.error;
-        if (customersResponse.error) throw customersResponse.error;
-        if (agreementsResponse.error) throw agreementsResponse.error;
-
         return {
-          vehicles: vehiclesResponse.data || [],
-          customers: customersResponse.data || [],
-          agreements: agreementsResponse.data || [],
+          vehicles: vehiclesPromise.data || [],
+          customers: customersPromise.data || [],
+          agreements: agreementsPromise.data || [],
         };
-      } catch (err) {
-        console.error("Search error:", err);
-        toast.error("Error performing search");
-        return { vehicles: [], customers: [], agreements: [] };
+      } catch (error) {
+        console.error("Search error:", error);
+        toast.error("Failed to fetch search results");
+        throw error;
       }
     },
-    enabled: searchQuery.length >= 2,
+    enabled: debouncedSearch.length >= 2,
+    staleTime: 30000, // Cache results for 30 seconds
+    cacheTime: 60000, // Keep cache for 1 minute
+    retry: 1,
   });
 
-  const handleSelect = (type: string, id: string) => {
+  const handleSelect = useCallback((type: string, id: string) => {
     setOpen(false);
     switch (type) {
       case "vehicle":
@@ -80,42 +86,43 @@ export const SearchBox = () => {
         setSelectedAgreement(id);
         break;
     }
-  };
-
-  const hasResults = searchResults && (
-    searchResults.vehicles.length > 0 ||
-    searchResults.customers.length > 0 ||
-    searchResults.agreements.length > 0
-  );
+  }, []);
 
   return (
     <>
-      <div className="relative w-[400px]">
-        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative w-full md:w-80">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          type="search"
           placeholder="Search vehicles, customers, agreements..."
-          className="pl-8 w-full bg-background"
+          className="pl-8"
           onClick={() => setOpen(true)}
         />
       </div>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput 
-          placeholder="Search vehicles, customers, agreements..." 
+          placeholder="Type to search..." 
           value={searchQuery}
           onValueChange={setSearchQuery}
         />
         <CommandList>
-          {searchQuery.length < 2 ? (
-            <CommandEmpty>Type at least 2 characters to search...</CommandEmpty>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
           ) : error ? (
-            <CommandEmpty>Error performing search. Please try again.</CommandEmpty>
-          ) : !hasResults ? (
+            <CommandEmpty>Error loading results. Please try again.</CommandEmpty>
+          ) : !searchQuery ? (
+            <CommandEmpty>Start typing to search...</CommandEmpty>
+          ) : searchQuery.length < 2 ? (
+            <CommandEmpty>Please enter at least 2 characters...</CommandEmpty>
+          ) : !searchResults?.vehicles.length && 
+             !searchResults?.customers.length && 
+             !searchResults?.agreements.length ? (
             <CommandEmpty>No results found.</CommandEmpty>
           ) : (
             <>
-              {searchResults.vehicles.length > 0 && (
+              {searchResults?.vehicles.length > 0 && (
                 <CommandGroup heading="Vehicles">
                   {searchResults.vehicles.map((vehicle) => (
                     <CommandItem
@@ -127,28 +134,28 @@ export const SearchBox = () => {
                   ))}
                 </CommandGroup>
               )}
-              
-              {searchResults.customers.length > 0 && (
+
+              {searchResults?.customers.length > 0 && (
                 <CommandGroup heading="Customers">
                   {searchResults.customers.map((customer) => (
                     <CommandItem
                       key={customer.id}
                       onSelect={() => handleSelect("customer", customer.id)}
                     >
-                      {customer.full_name}
+                      {customer.full_name} - {customer.phone_number}
                     </CommandItem>
                   ))}
                 </CommandGroup>
               )}
-              
-              {searchResults.agreements.length > 0 && (
+
+              {searchResults?.agreements.length > 0 && (
                 <CommandGroup heading="Agreements">
                   {searchResults.agreements.map((agreement) => (
                     <CommandItem
                       key={agreement.id}
                       onSelect={() => handleSelect("agreement", agreement.id)}
                     >
-                      Agreement #{agreement.agreement_number}
+                      Agreement #{agreement.agreement_number} - {agreement.vehicles?.make} {agreement.vehicles?.model}
                     </CommandItem>
                   ))}
                 </CommandGroup>
