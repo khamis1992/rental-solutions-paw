@@ -7,13 +7,10 @@ import {
 } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentImport } from "./PaymentImport";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { PaymentHistoryTable } from "./payments/PaymentHistoryTable";
-import { PaymentSummary } from "./payments/PaymentSummary";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PaymentHistoryContent } from "./payments/PaymentHistoryContent";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -31,6 +28,8 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
+      console.log("Fetching payments for agreement:", agreementId || "all agreements");
+      
       const query = supabase
         .from("payments")
         .select(`
@@ -38,6 +37,13 @@ export function PaymentHistoryDialog({
           security_deposits (
             amount,
             status
+          ),
+          leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              full_name
+            )
           )
         `)
         .order("created_at", { ascending: false });
@@ -48,7 +54,12 @@ export function PaymentHistoryDialog({
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+
+      console.log("Fetched payments:", data);
       return data;
     },
     enabled: open,
@@ -112,7 +123,7 @@ export function PaymentHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[80vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-[90vw] w-[1200px] h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Payment History</DialogTitle>
           <DialogDescription>
@@ -120,15 +131,13 @@ export function PaymentHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full w-full">
-            <div className="space-y-6 px-6">
-              <PaymentImport />
-              <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
-              <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
-            </div>
-          </ScrollArea>
-        </div>
+        <PaymentHistoryContent
+          agreementId={agreementId}
+          paymentHistory={paymentHistory || []}
+          isLoading={isLoading}
+          totalPaid={totalPaid}
+          totalRefunded={totalRefunded}
+        />
       </DialogContent>
     </Dialog>
   );

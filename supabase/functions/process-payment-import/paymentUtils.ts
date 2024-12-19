@@ -51,18 +51,35 @@ export const createPaymentRecord = async (
   leaseId: string,
   paymentData: PaymentData
 ) => {
-  const [day, month, year] = paymentData.paymentDate.split('-');
-  const isoDate = `${year}-${month}-${day}`;
+  let isoDate;
+  
+  try {
+    // Try to parse the date, but use current date if parsing fails
+    if (paymentData.paymentDate) {
+      const [day, month, year] = paymentData.paymentDate.split('-').map(num => num?.trim());
+      if (day && month && year) {
+        isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`;
+      }
+    }
+  } catch (error) {
+    console.error('Date parsing error:', error);
+  }
+
+  // If date parsing failed, use current date
+  if (!isoDate) {
+    isoDate = new Date().toISOString();
+    console.log('Using current date for payment:', isoDate);
+  }
 
   const { error: paymentError } = await supabase
     .from('payments')
     .insert({
       lease_id: leaseId,
-      amount: paymentData.amount,
-      status: paymentData.status,
-      payment_date: new Date(isoDate).toISOString(),
-      payment_method: paymentData.paymentMethod,
-      transaction_id: paymentData.paymentNumber,
+      amount: paymentData.amount || 0,
+      status: paymentData.status || 'pending',
+      payment_date: isoDate,
+      payment_method: paymentData.paymentMethod || 'unknown',
+      transaction_id: paymentData.paymentNumber || crypto.randomUUID(),
     });
 
   if (paymentError) {
@@ -77,17 +94,18 @@ export const processPaymentRow = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const paymentData: PaymentData = {
-      customerName: values[headers.indexOf('Customer Name')],
-      amount: parseFloat(values[headers.indexOf('Amount')]),
-      paymentDate: values[headers.indexOf('Payment_Date')],
-      paymentMethod: values[headers.indexOf('Payment_Method')],
-      status: values[headers.indexOf('status')],
-      paymentNumber: values[headers.indexOf('Payment_Number')],
+      customerName: values[headers.indexOf('Customer Name')] || 'Unknown Customer',
+      amount: parseFloat(values[headers.indexOf('Amount')]) || 0,
+      paymentDate: values[headers.indexOf('Payment_Date')] || new Date().toISOString(),
+      paymentMethod: values[headers.indexOf('Payment_Method')] || 'unknown',
+      status: values[headers.indexOf('status')] || 'pending',
+      paymentNumber: values[headers.indexOf('Payment_Number')] || crypto.randomUUID(),
     };
 
     const customerLease = await findCustomerWithActiveLease(supabase, paymentData.customerName);
     
     if (!customerLease) {
+      console.log('Skipping payment for customer:', paymentData.customerName);
       return {
         success: false,
         error: `No active lease found for customer: ${paymentData.customerName}`
