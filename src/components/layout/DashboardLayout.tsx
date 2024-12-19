@@ -44,7 +44,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           !isMobile && "relative"
         )}
       >
-        <DashboardSidebar onCloseSidebar={() => setSidebarOpen(false)} />
+        <DashboardSidebar />
       </div>
 
       {/* Main content */}

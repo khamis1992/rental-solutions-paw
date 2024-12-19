@@ -1,5 +1,4 @@
-import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CustomerProfileView } from "@/components/customers/CustomerProfileView";
 import { useParams } from "react-router-dom";
 
@@ -11,15 +10,9 @@ const CustomerProfile = () => {
   }
 
   return (
-    <div className="flex h-screen">
-      <DashboardSidebar />
-      <div className="flex-1 flex flex-col">
-        <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-6">
-          <CustomerProfileView customerId={id} />
-        </main>
-      </div>
-    </div>
+    <DashboardLayout>
+      <CustomerProfileView customerId={id} />
+    </DashboardLayout>
   );
 };
 
