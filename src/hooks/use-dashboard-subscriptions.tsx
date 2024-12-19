@@ -75,7 +75,11 @@ export const useDashboardSubscriptions = () => {
 
     return () => {
       channels.forEach(channel => {
-        channel.unsubscribe();
+        supabase.removeChannel(channel).then(() => {
+          console.log('Channel removed successfully');
+        }).catch(error => {
+          console.error('Error removing channel:', error);
+        });
       });
     };
   }, [queryClient]);
