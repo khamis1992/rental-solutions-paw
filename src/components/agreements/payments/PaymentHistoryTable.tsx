@@ -7,9 +7,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
-import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { ArrowUpCircle, ArrowDownCircle, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { usePaymentReconciliation } from "../hooks/usePaymentReconciliation";
 
 interface PaymentHistoryTableProps {
   paymentHistory: any[];
@@ -17,6 +19,8 @@ interface PaymentHistoryTableProps {
 }
 
 export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistoryTableProps) {
+  const { isReconciling, reconcilePayments } = usePaymentReconciliation();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -55,6 +59,14 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
     }
   };
 
+  const handleReconcile = async (paymentId: string) => {
+    try {
+      await reconcilePayments(paymentId);
+    } catch (error) {
+      console.error("Failed to reconcile payment:", error);
+    }
+  };
+
   if (isLoading) {
     return <div>Loading payment history...</div>;
   }
@@ -70,6 +82,7 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
           <TableHead>Payment Method</TableHead>
           <TableHead>Transaction ID</TableHead>
           <TableHead>Description</TableHead>
+          <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -106,6 +119,17 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
             </TableCell>
             <TableCell>
               {payment.description || "No description provided"}
+            </TableCell>
+            <TableCell>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleReconcile(payment.id)}
+                disabled={isReconciling || payment.status === 'completed'}
+              >
+                <RefreshCw className={`h-4 w-4 mr-1 ${isReconciling ? 'animate-spin' : ''}`} />
+                Reconcile
+              </Button>
             </TableCell>
           </TableRow>
         ))}
