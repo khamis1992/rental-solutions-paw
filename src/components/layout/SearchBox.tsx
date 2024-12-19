@@ -69,7 +69,7 @@ export const SearchBox = () => {
     },
     enabled: debouncedSearch.length >= 2,
     staleTime: 30000, // Cache results for 30 seconds
-    cacheTime: 60000, // Keep cache for 1 minute
+    gcTime: 60000, // Keep cache for 1 minute (formerly cacheTime)
     retry: 1,
   });
 
