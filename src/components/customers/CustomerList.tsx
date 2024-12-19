@@ -43,7 +43,7 @@ export const CustomerList = () => {
       console.log("Fetching customers with search:", searchQuery);
       let query = supabase
         .from("profiles")
-        .select("*")
+        .select()
         .eq('role', 'customer');
 
       if (searchQuery) {
@@ -58,7 +58,7 @@ export const CustomerList = () => {
       }
       
       console.log("Fetched customers:", data);
-      return data;
+      return data || [];
     },
   });
 
