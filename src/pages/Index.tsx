@@ -76,11 +76,7 @@ const Index = () => {
           { event: '*', schema: 'public', table: 'vehicles' },
           async () => {
             console.log('Vehicle status changed, refreshing stats...');
-            await queryClient.invalidateQueries({
-              queryKey: ['vehicle-status-counts'],
-              type: 'all',
-              exact: true
-            });
+            await queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] });
           }
         )
         .subscribe(),
@@ -93,11 +89,7 @@ const Index = () => {
           { event: '*', schema: 'public', table: 'leases' },
           async () => {
             console.log('Rental status changed, refreshing upcoming rentals...');
-            await queryClient.invalidateQueries({
-              queryKey: ['upcoming-rentals'],
-              type: 'all',
-              exact: true
-            });
+            await queryClient.invalidateQueries({ queryKey: ['upcoming-rentals'] });
           }
         )
         .subscribe(),
@@ -115,11 +107,7 @@ const Index = () => {
           },
           async () => {
             console.log('Maintenance alert changed, refreshing alerts...');
-            await queryClient.invalidateQueries({
-              queryKey: ['dashboard-alerts'],
-              type: 'all',
-              exact: true
-            });
+            await queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] });
           }
         )
         .subscribe()
