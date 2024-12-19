@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { ImportErrors } from "./utils/importTypes";
-import { parseImportErrors, retryImportOperation } from "./utils/importUtils";
+import { parseImportErrors } from "./utils/importUtils";
+import { 
+  uploadImportFile, 
+  createImportLog, 
+  processImport,
+  pollImportStatus 
+} from "./services/agreementImportService";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -29,49 +34,17 @@ export const PaymentImport = () => {
     setIsUploading(true);
     try {
       console.log('Starting file upload process...');
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
-      console.log('Uploading file to storage:', fileName);
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false
-        });
+      // Upload file to storage
+      const fileName = await uploadImportFile(file);
+      console.log('File uploaded successfully:', fileName);
 
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
-      }
+      // Create import log
+      await createImportLog(fileName);
+      console.log('Import log created');
 
-      // Read and log the CSV content before processing
-      const content = await file.text();
-      const lines = content.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
-      console.log('CSV Headers:', headers);
-      console.log('Total rows to process:', lines.length - 1);
-
-      console.log('File uploaded successfully, creating import log...');
-      const { error: logError } = await supabase
-        .from("import_logs")
-        .insert({
-          file_name: fileName,
-          import_type: "payments",
-          status: "pending",
-        });
-
-      if (logError) {
-        console.error('Import log creation error:', logError);
-        throw logError;
-      }
-
-      console.log('Starting import process via Edge Function...');
-      const { data: functionResponse, error: functionError } = await retryImportOperation(async () => {
-        return supabase.functions.invoke('process-payment-import', {
-          body: { fileName }
-        });
-      });
+      // Process the import
+      const { data: functionResponse, error: functionError } = await processImport(fileName);
 
       if (functionError) {
         console.error('Edge Function error:', functionError);
@@ -84,11 +57,7 @@ export const PaymentImport = () => {
       const pollInterval = setInterval(async () => {
         console.log('Checking import status...');
         try {
-          const { data: importLog } = await supabase
-            .from("import_logs")
-            .select("status, records_processed, errors")
-            .eq("file_name", fileName)
-            .single();
+          const importLog = await pollImportStatus(fileName);
 
           if (importLog?.status === "completed") {
             clearInterval(pollInterval);

@@ -33,8 +33,10 @@ export const retryImportOperation = async <T>(
       console.warn(`Attempt ${attempt} failed:`, error);
       
       if (attempt < maxRetries) {
-        // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        // Exponential backoff with jitter
+        const baseDelay = Math.pow(2, attempt) * 1000;
+        const jitter = Math.random() * 1000;
+        await new Promise(resolve => setTimeout(resolve, baseDelay + jitter));
       }
     }
   }

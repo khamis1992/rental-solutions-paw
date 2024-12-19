@@ -1,3 +1,5 @@
+import { Json } from '@/integrations/supabase/types';
+
 export interface ImportErrors {
   skipped: Array<{
     row: number;
@@ -14,5 +16,5 @@ export interface ImportErrors {
 export interface ImportLog {
   status: string;
   records_processed: number;
-  errors: ImportErrors;
+  errors: Json;
 }
