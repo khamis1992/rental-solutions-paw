@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const PaymentReconciliationTable = () => {
@@ -25,7 +25,7 @@ export const PaymentReconciliationTable = () => {
             payment_date,
             transaction_id
           ),
-          customer:profiles (
+          customer:profiles!customer_id (
             full_name,
             is_ai_generated
           )
@@ -85,16 +85,16 @@ export const PaymentReconciliationTable = () => {
             </TableCell>
             <TableCell>
               <Badge
-                variant={record.match_confidence > 0.8 ? "default" : "warning"}
+                variant={record.match_confidence > 0.8 ? "default" : "secondary"}
               >
                 {Math.round(record.match_confidence * 100)}%
               </Badge>
             </TableCell>
             <TableCell>
               {record.admin_reviewed ? (
-                <Badge variant="success">Approved</Badge>
+                <Badge variant="default">Approved</Badge>
               ) : (
-                <Badge variant="warning">Pending Review</Badge>
+                <Badge variant="secondary">Pending Review</Badge>
               )}
             </TableCell>
             <TableCell>
