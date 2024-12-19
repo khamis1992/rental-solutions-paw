@@ -126,10 +126,13 @@ export function PaymentHistoryDialog({
   const handleDeleteAllPayments = async () => {
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("payments")
-        .delete()
-        .eq(agreementId ? "lease_id" : "id", agreementId || "*");
+      let query = supabase.from("payments").delete();
+      
+      if (agreementId) {
+        query = query.eq("lease_id", agreementId);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
 
