@@ -16,7 +16,6 @@ interface CreateVehicleFormData {
   color: string;
   license_plate: string;
   vin: string;
-  daily_rate: string;
   mileage: string;
   description: string;
 }
@@ -36,7 +35,6 @@ export const CreateVehicleDialog = ({ children }: CreateVehicleDialogProps) => {
       color: "",
       license_plate: "",
       vin: "",
-      daily_rate: "",
       mileage: "",
       description: "",
     },
@@ -51,7 +49,6 @@ export const CreateVehicleDialog = ({ children }: CreateVehicleDialogProps) => {
         color: data.color,
         license_plate: data.license_plate,
         vin: data.vin,
-        daily_rate: parseFloat(data.daily_rate),
         mileage: parseInt(data.mileage),
         description: data.description,
         status: "available",
@@ -158,19 +155,6 @@ export const CreateVehicleDialog = ({ children }: CreateVehicleDialogProps) => {
                     <FormLabel>VIN</FormLabel>
                     <FormControl>
                       <Input placeholder="Vehicle Identification Number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="daily_rate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Daily Rate ($)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 50.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
