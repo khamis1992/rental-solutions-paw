@@ -73,34 +73,14 @@ export const PaymentImport = () => {
       const pollInterval = setInterval(async () => {
         console.log('Checking import status...');
         try {
-          const { data: importLog, error: importLogError } = await supabase
+          const { data: importLog } = await supabase
             .from("import_logs")
             .select("status, records_processed")
             .eq("file_name", fileName)
             .single();
 
-          if (importLogError) {
-            console.error('Error checking import log:', importLogError);
-            throw importLogError;
-          }
-
-          console.log('Import log status:', importLog);
-
           if (importLog?.status === "completed") {
             clearInterval(pollInterval);
-            
-            // Check if any payments were actually created
-            const { data: newPayments, error: paymentCheckError } = await supabase
-              .from("payments")
-              .select("id")
-              .gte('created_at', new Date(Date.now() - 60000).toISOString());
-
-            if (paymentCheckError) {
-              console.error('Error checking new payments:', paymentCheckError);
-            } else {
-              console.log('Recently created payments:', newPayments);
-            }
-
             toast({
               title: "Success",
               description: `Successfully imported ${importLog.records_processed} payments`,

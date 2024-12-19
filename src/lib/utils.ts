@@ -6,11 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-QA', {
+  return new Intl.NumberFormat('ar-QA', {
     style: 'currency',
     currency: 'QAR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-    numberingSystem: 'latn'  // This ensures Western Arabic (Latin) numerals
   }).format(amount);
 }
