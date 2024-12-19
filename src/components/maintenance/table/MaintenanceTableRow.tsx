@@ -24,19 +24,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+interface Vehicle {
+  make: string;
+  model: string;
+  year: number;
+  license_plate: string;
+}
+
 interface MaintenanceRecord {
   id: string;
   vehicle_id: string;
   service_type: string;
+  description?: string | null;
   status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
-  cost: number | null;
+  cost?: number | null;
   scheduled_date: string;
-  vehicles?: {
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
+  completed_date?: string | null;
+  performed_by?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  vehicles?: Vehicle;
 }
 
 interface MaintenanceTableRowProps {
