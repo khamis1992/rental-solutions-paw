@@ -17,8 +17,10 @@ import {
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const InstallmentAnalysis = () => {
   const { toast } = useToast();
@@ -26,7 +28,7 @@ export const InstallmentAnalysis = () => {
   const { data: installmentData, isLoading } = useQuery({
     queryKey: ["installment-analysis"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: paymentData, error: paymentError } = await supabase
         .from("payment_history")
         .select(`
           *,
@@ -40,8 +42,20 @@ export const InstallmentAnalysis = () => {
         .eq("lease.agreement_type", "lease_to_own")
         .order("created_at");
 
-      if (error) throw error;
-      return data;
+      if (paymentError) throw paymentError;
+
+      const { data: analyticsData, error: analyticsError } = await supabase
+        .from("installment_analytics")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (analyticsError) throw analyticsError;
+
+      return {
+        payments: paymentData,
+        analytics: analyticsData?.[0]
+      };
     },
   });
 
@@ -64,7 +78,7 @@ export const InstallmentAnalysis = () => {
     });
   };
 
-  const performanceData = installmentData?.reduce((acc: any, payment) => {
+  const performanceData = installmentData?.payments?.reduce((acc: any, payment) => {
     const month = new Date(payment.created_at).toLocaleString('default', { month: 'short', year: 'numeric' });
     if (!acc[month]) {
       acc[month] = {
@@ -73,8 +87,11 @@ export const InstallmentAnalysis = () => {
         late: 0,
         defaulted: 0,
         earlyPayment: 0,
+        totalAmount: 0,
       };
     }
+
+    acc[month].totalAmount += Number(payment.amount_paid || 0);
 
     if (payment.early_payment_discount > 0) {
       acc[month].earlyPayment++;
@@ -89,8 +106,43 @@ export const InstallmentAnalysis = () => {
     return acc;
   }, {});
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
+  const insights = installmentData?.analytics?.insights;
+  const recommendations = installmentData?.analytics?.recommendations || [];
+
   return (
     <div className="grid gap-6">
+      {insights && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>AI Analysis Insights</AlertTitle>
+          <AlertDescription>{insights}</AlertDescription>
+        </Alert>
+      )}
+
+      {recommendations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recommendations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-4 space-y-2">
+              {recommendations.map((recommendation, index) => (
+                <li key={index}>{recommendation}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Installment Performance Trends</CardTitle>
@@ -107,15 +159,57 @@ export const InstallmentAnalysis = () => {
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={Object.values(performanceData || {})}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="onTime" name="On Time Payments" fill="#4ade80" />
-                <Bar dataKey="late" name="Late Payments" fill="#fbbf24" />
-                <Bar dataKey="defaulted" name="Defaulted" fill="#ef4444" />
-                <Bar dataKey="earlyPayment" name="Early Payments" fill="#60a5fa" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="month" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)"
+                  }}
+                />
+                <Bar dataKey="onTime" name="On Time Payments" fill="#4ade80" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="late" name="Late Payments" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="defaulted" name="Defaulted" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="earlyPayment" name="Early Payments" fill="#60a5fa" radius={[4, 4, 0, 0]} />
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Payment Totals</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={Object.values(performanceData || {})}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="month" className="text-xs" />
+                <YAxis 
+                  className="text-xs"
+                  tickFormatter={(value) => formatCurrency(value)}
+                />
+                <Tooltip 
+                  formatter={(value: any) => formatCurrency(value)}
+                  contentStyle={{ 
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)"
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="totalAmount" 
+                  name="Total Payments"
+                  stroke="#60a5fa"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

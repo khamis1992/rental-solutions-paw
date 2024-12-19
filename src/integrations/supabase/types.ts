@@ -610,6 +610,47 @@ export type Database = {
         }
         Relationships: []
       }
+      installment_analytics: {
+        Row: {
+          analysis_type: string
+          created_at: string | null
+          id: string
+          insights: string | null
+          lease_id: string | null
+          metrics: Json
+          recommendations: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          analysis_type: string
+          created_at?: string | null
+          id?: string
+          insights?: string | null
+          lease_id?: string | null
+          metrics: Json
+          recommendations?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          created_at?: string | null
+          id?: string
+          insights?: string | null
+          lease_id?: string | null
+          metrics?: Json
+          recommendations?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installment_analytics_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leases: {
         Row: {
           agreement_number: string | null
