@@ -7,7 +7,6 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
 import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
-import { FixedCostsManagement } from "@/components/dashboard/FixedCostsManagement";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 
@@ -22,7 +21,6 @@ const Index = () => {
     <DashboardLayout>
       <WelcomeHeader />
       <DashboardStats />
-      <FixedCostsManagement />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
         <div className="lg:col-span-4">
           <UpcomingRentals />

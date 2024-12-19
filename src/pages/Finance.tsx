@@ -5,10 +5,11 @@ import { PaymentReconciliation } from "@/components/payments/PaymentReconciliati
 import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
 import { PaymentHistoryContent } from "@/components/agreements/payments/PaymentHistoryContent";
+import { FixedCostsManagement } from "@/components/dashboard/FixedCostsManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
-import { FileText, ChartBar, Calculator, Brain, CreditCard, History } from "lucide-react";
+import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -68,6 +69,10 @@ const Finance = () => {
               <ChartBar className="h-4 w-4" />
               Overview
             </TabsTrigger>
+            <TabsTrigger value="fixed-costs" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Fixed Costs
+            </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payments
@@ -92,6 +97,10 @@ const Finance = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <RevenueAnalysis />
+          </TabsContent>
+
+          <TabsContent value="fixed-costs" className="space-y-6">
+            <FixedCostsManagement />
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
