@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -9,15 +8,31 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { AssignFineDialog } from "./AssignFineDialog";
+import { formatCurrency } from "@/lib/utils";
+
+interface TrafficFine {
+  id: string;
+  fine_date: string;
+  violation_number: string;
+  fine_location: string;
+  fine_amount: number;
+  fine_type: string;
+  assignment_status: string;
+  assignment_notes: string;
+  vehicle: {
+    license_plate: string;
+  } | null;
+}
 
 export const UnassignedFines = () => {
-  const [selectedFine, setSelectedFine] = useState<string | null>(null);
+  const [selectedFineId, setSelectedFineId] = useState<string | null>(null);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
 
-  const { data: unassignedFines, isLoading } = useQuery({
-    queryKey: ['unassigned-fines'],
+  const { data: unassignedFines, isLoading } = useQuery<TrafficFine[]>({
+    queryKey: ["unassigned-fines"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('traffic_fines')
@@ -28,25 +43,32 @@ export const UnassignedFines = () => {
         .eq('assignment_status', 'pending')
         .order('fine_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching unassigned fines:", error);
+        throw error;
+      }
+
       return data;
     },
   });
+
+  const handleAssignClick = (fineId: string) => {
+    setSelectedFineId(fineId);
+    setShowAssignDialog(true);
+  };
 
   if (isLoading) {
     return <div>Loading unassigned fines...</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Unassigned Fines</h3>
-      
+    <div>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
-            <TableHead>Violation No.</TableHead>
-            <TableHead>Plate Number</TableHead>
+            <TableHead>Violation #</TableHead>
+            <TableHead>License Plate</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Actions</TableHead>
@@ -66,28 +88,23 @@ export const UnassignedFines = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSelectedFine(fine.id)}
+                  onClick={() => handleAssignClick(fine.id)}
                 >
                   Assign
                 </Button>
               </TableCell>
             </TableRow>
           ))}
-          {!unassignedFines?.length && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center">
-                No unassigned fines
-              </TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
 
-      <AssignFineDialog
-        fineId={selectedFine}
-        open={!!selectedFine}
-        onOpenChange={(open) => !open && setSelectedFine(null)}
-      />
+      {selectedFineId && (
+        <AssignFineDialog
+          fineId={selectedFineId}
+          open={showAssignDialog}
+          onOpenChange={setShowAssignDialog}
+        />
+      )}
     </div>
   );
 };
