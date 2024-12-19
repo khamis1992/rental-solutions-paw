@@ -21,7 +21,10 @@ export const UnassignedFines = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('traffic_fines')
-        .select('*')
+        .select(`
+          *,
+          vehicle:vehicles(license_plate)
+        `)
         .eq('assignment_status', 'pending')
         .order('fine_date', { ascending: false });
 
@@ -56,7 +59,7 @@ export const UnassignedFines = () => {
                 {new Date(fine.fine_date).toLocaleDateString()}
               </TableCell>
               <TableCell>{fine.violation_number}</TableCell>
-              <TableCell>{fine.license_plate}</TableCell>
+              <TableCell>{fine.vehicle?.license_plate}</TableCell>
               <TableCell>{fine.fine_location}</TableCell>
               <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>
               <TableCell>
