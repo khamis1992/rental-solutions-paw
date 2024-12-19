@@ -94,7 +94,7 @@ export const processPaymentRow = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const paymentData: PaymentData = {
-      customerName: values[headers.indexOf('Customer Name')] || 'Unknown Customer',
+      customerName: values[headers.indexOf('Customer Name')] || '',
       amount: parseFloat(values[headers.indexOf('Amount')]) || 0,
       paymentDate: values[headers.indexOf('Payment_Date')] || new Date().toISOString(),
       paymentMethod: values[headers.indexOf('Payment_Method')] || 'unknown',
@@ -102,10 +102,23 @@ export const processPaymentRow = async (
       paymentNumber: values[headers.indexOf('Payment_Number')] || crypto.randomUUID(),
     };
 
+    if (!paymentData.customerName) {
+      return {
+        success: false,
+        error: 'Missing customer name'
+      };
+    }
+
+    if (!paymentData.amount || isNaN(paymentData.amount)) {
+      return {
+        success: false,
+        error: 'Invalid payment amount'
+      };
+    }
+
     const customerLease = await findCustomerWithActiveLease(supabase, paymentData.customerName);
     
     if (!customerLease) {
-      console.log('Skipping payment for customer:', paymentData.customerName);
       return {
         success: false,
         error: `No active lease found for customer: ${paymentData.customerName}`

@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { processPaymentRow } from './paymentUtils.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const BATCH_SIZE = 50; // Process 50 records at a time
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,7 +33,7 @@ serve(async (req) => {
     }
 
     const text = await fileData.text();
-    const lines = text.split('\n');
+    const lines = text.split('\n').filter(line => line.trim());
     const headers = lines[0].split(',').map(h => h.trim());
     
     console.log('Processing CSV with headers:', headers);
@@ -39,112 +42,60 @@ serve(async (req) => {
     const skippedRecords = [];
     const failedRecords = [];
 
-    // Process each line (skip header)
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
+    // Process in batches
+    for (let i = 1; i < lines.length; i += BATCH_SIZE) {
+      const batch = lines.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}`);
 
-      try {
-        const values = line.split(',').map(v => v.trim());
-        const record: Record<string, any> = {};
-        
-        headers.forEach((header, index) => {
-          record[header] = values[index] || null;
-        });
+      // Process each line in the batch
+      const batchPromises = batch.map(async (line, index) => {
+        const lineNumber = i + index;
+        try {
+          const values = line.trim().split(',').map(v => v.trim());
+          console.log(`Processing row ${lineNumber}:`, values);
 
-        console.log(`Processing row ${i}:`, record);
-
-        // Parse date (DD-MM-YYYY format)
-        let paymentDate = null;
-        if (record.Payment_Date) {
-          const [day, month, year] = record.Payment_Date.split('-');
-          if (day && month && year) {
-            paymentDate = `${year}-${month}-${day}`;
+          const result = await processPaymentRow(supabase, headers, values);
+          
+          if (result.success) {
+            processedCount++;
+          } else {
+            console.log(`Row ${lineNumber} skipped:`, result.error);
+            skippedRecords.push({
+              row: lineNumber,
+              data: values,
+              reason: result.error
+            });
           }
-        }
-
-        // If essential data is missing, log it but continue processing
-        if (!record['Customer Name'] || !record.Amount) {
-          console.log(`Row ${i}: Missing essential data`, record);
-          skippedRecords.push({
-            row: i,
-            data: record,
-            reason: 'Missing essential data'
-          });
-          continue;
-        }
-
-        // Find customer and active lease
-        const { data: customerData } = await supabase
-          .from('profiles')
-          .select('id')
-          .ilike('full_name', record['Customer Name'])
-          .maybeSingle();
-
-        if (!customerData?.id) {
-          console.log(`Row ${i}: Customer not found`, record['Customer Name']);
-          skippedRecords.push({
-            row: i,
-            data: record,
-            reason: 'Customer not found'
-          });
-          continue;
-        }
-
-        const { data: leaseData } = await supabase
-          .from('leases')
-          .select('id')
-          .eq('customer_id', customerData.id)
-          .in('status', ['active', 'pending_payment'])
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!leaseData?.id) {
-          console.log(`Row ${i}: No active lease found for customer`, record['Customer Name']);
-          skippedRecords.push({
-            row: i,
-            data: record,
-            reason: 'No active lease found'
-          });
-          continue;
-        }
-
-        // Insert payment record
-        const { error: paymentError } = await supabase
-          .from('payments')
-          .insert({
-            lease_id: leaseData.id,
-            amount: parseFloat(record.Amount) || 0,
-            status: record.status || 'completed',
-            payment_date: paymentDate || new Date().toISOString(),
-            payment_method: record.Payment_Method || 'unknown',
-            transaction_id: record.Payment_Number || crypto.randomUUID()
-          });
-
-        if (paymentError) {
-          console.error(`Row ${i}: Payment insertion error`, paymentError);
+        } catch (error) {
+          console.error(`Error processing row ${lineNumber}:`, error);
           failedRecords.push({
-            row: i,
-            data: record,
-            error: paymentError.message
+            row: lineNumber,
+            error: error.message
           });
-          continue;
         }
+      });
 
-        processedCount++;
-        console.log(`Successfully processed payment for row ${i}`);
+      // Wait for batch to complete
+      await Promise.all(batchPromises);
 
-      } catch (error) {
-        console.error(`Error processing row ${i}:`, error);
-        failedRecords.push({
-          row: i,
-          error: error.message
-        });
-      }
+      // Update import log after each batch
+      await supabase
+        .from('import_logs')
+        .update({
+          status: 'processing',
+          records_processed: processedCount,
+          errors: {
+            skipped: skippedRecords,
+            failed: failedRecords
+          }
+        })
+        .eq('file_name', fileName);
+
+      // Add a small delay between batches to prevent resource exhaustion
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Update import log with results
+    // Final update to import log
     await supabase
       .from('import_logs')
       .update({
