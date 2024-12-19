@@ -8,6 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
 };
 
+const BATCH_SIZE = 50; // Process 50 rows at a time
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders, status: 204 });
@@ -33,6 +35,7 @@ serve(async (req) => {
       }
     );
 
+    // Download file
     const { data: fileData, error: downloadError } = await supabase
       .storage
       .from('imports')
@@ -53,24 +56,41 @@ serve(async (req) => {
     let errors = [];
     let skippedCustomers = [];
 
+    // Update import log status to processing
     await supabase
       .from('import_logs')
       .update({ status: 'processing' })
       .eq('file_name', fileName);
 
-    for (let i = 1; i < rows.length; i++) {
-      if (!rows[i].trim()) continue;
+    // Process rows in batches
+    for (let i = 1; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil((rows.length - 1) / BATCH_SIZE)}`);
 
-      const values = rows[i].split(',').map(v => v.trim());
-      console.log(`Processing row ${i}:`, values);
-      
-      if (values.length === headers.length) {
-        const result = await processPaymentRow(supabase, headers, values);
-        
+      const batchResults = await Promise.all(
+        batch.map(async (row, index) => {
+          if (!row.trim()) return null;
+
+          const values = row.split(',').map(v => v.trim());
+          console.log(`Processing row ${i + index}:`, values);
+          
+          if (values.length === headers.length) {
+            return await processPaymentRow(supabase, headers, values);
+          }
+          return null;
+        })
+      );
+
+      // Process batch results
+      batchResults.forEach((result, index) => {
+        if (!result) return;
+
         if (result.success) {
           successCount++;
         } else {
           if (result.error?.includes('No active lease found')) {
+            const rowIndex = i + index;
+            const values = rows[rowIndex].split(',').map(v => v.trim());
             skippedCustomers.push({
               customerName: values[headers.indexOf('Customer Name')],
               amount: values[headers.indexOf('Amount')],
@@ -80,14 +100,18 @@ serve(async (req) => {
           } else {
             errorCount++;
             errors.push({
-              row: i + 1,
+              row: i + index + 1,
               error: result.error
             });
           }
         }
-      }
+      });
+
+      // Give the worker a small break between batches
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
+    // Update import log with final status
     await supabase
       .from('import_logs')
       .update({
