@@ -1,17 +1,10 @@
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Dispatch, SetStateAction } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface CustomerFiltersProps {
-  onSearchChange: Dispatch<SetStateAction<string>>;
-  onRoleChange: Dispatch<SetStateAction<string>>;
-  onStatusChange: Dispatch<SetStateAction<string>>;
+export interface CustomerFiltersProps {
+  onSearchChange: (value: string) => void;
+  onRoleChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
 }
 
 export const CustomerFilters = ({
@@ -20,35 +13,39 @@ export const CustomerFilters = ({
   onStatusChange,
 }: CustomerFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      <div className="flex-1">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+      <div className="w-full md:w-1/3">
         <Input
           placeholder="Search customers..."
           onChange={(e) => onSearchChange(e.target.value)}
-          className="max-w-sm"
+          className="w-full"
         />
       </div>
-      <Select onValueChange={onRoleChange} defaultValue="all">
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Filter by role" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All roles</SelectItem>
-          <SelectItem value="customer">Customer</SelectItem>
-          <SelectItem value="staff">Staff</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select onValueChange={onStatusChange} defaultValue="all">
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Filter by status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          <SelectItem value="active">Active</SelectItem>
-          <SelectItem value="inactive">Inactive</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="w-full md:w-1/4">
+        <Select onValueChange={onRoleChange} defaultValue="all">
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="customer">Customer</SelectItem>
+            <SelectItem value="staff">Staff</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="w-full md:w-1/4">
+        <Select onValueChange={onStatusChange} defaultValue="all">
+          <SelectTrigger>
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };

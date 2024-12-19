@@ -17,6 +17,16 @@ export const useCustomers = (searchQuery: string, roleFilter: string, statusFilt
           query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
         }
 
+        if (roleFilter !== 'all') {
+          query = query.eq('role', roleFilter);
+        }
+
+        if (statusFilter !== 'all') {
+          // You might need to adjust this based on how you determine status
+          const hasActiveAgreements = statusFilter === 'active';
+          query = query.eq('has_active_agreements', hasActiveAgreements);
+        }
+
         const { data, error } = await query;
 
         if (error) {
