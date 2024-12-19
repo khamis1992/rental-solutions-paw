@@ -42,7 +42,7 @@ const AuthPage = () => {
           </div>
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Vehicle Rental Management
+              Rental Solutions
             </h1>
             <p className="text-sm text-muted-foreground">
               Sign in to access your dashboard
@@ -103,7 +103,6 @@ const AuthPage = () => {
                   anchor: { display: 'none' }, // This will hide all anchor links including "Sign Up"
                 },
               }}
-              providers={["google"]}
               redirectTo={window.location.origin}
               view="sign_in"
               showLinks={false}
