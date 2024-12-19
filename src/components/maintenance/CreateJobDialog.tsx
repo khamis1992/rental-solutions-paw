@@ -19,7 +19,6 @@ export function CreateJobDialog() {
     service_type: "",
     description: "",
     scheduled_date: "",
-    performed_by: "",
     cost: "",
   });
 
@@ -74,7 +73,6 @@ export function CreateJobDialog() {
         service_type: "",
         description: "",
         scheduled_date: "",
-        performed_by: "",
         cost: "",
       });
     } catch (error: any) {
@@ -152,14 +150,6 @@ export function CreateJobDialog() {
               placeholder="0.00"
               value={formData.cost}
               onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="performed_by">Assigned To</Label>
-            <Input
-              id="performed_by"
-              value={formData.performed_by}
-              onChange={(e) => setFormData({ ...formData, performed_by: e.target.value })}
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
