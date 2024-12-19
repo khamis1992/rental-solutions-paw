@@ -18,21 +18,31 @@ export const UserProfileMenu = () => {
   const { data: profile } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.log('No authenticated user found');
+          return null;
+        }
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
+        console.log('Fetching profile for user:', user.id);
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return null;
+        }
+
+        console.log('Profile data:', profile);
+        return profile;
+      } catch (error) {
+        console.error('Unexpected error in profile fetch:', error);
         return null;
       }
-
-      return profile;
     },
   });
 
