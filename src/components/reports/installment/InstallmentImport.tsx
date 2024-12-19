@@ -56,8 +56,8 @@ export const InstallmentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Agreement Number,Due Date,Amount,Status\n" +
-                      "AGR001,2024-03-20,1000,pending";
+    const csvContent = "N°cheque,Amount,Date,Drawee Bank,sold\n" +
+                      "12345,QAR 100000.000,July-24,QNB,QAR 100000.000";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

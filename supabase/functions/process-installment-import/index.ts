@@ -42,25 +42,26 @@ serve(async (req) => {
           return obj;
         }, {} as Record<string, string>);
 
-        // Get lease_id from agreement number
-        const { data: lease } = await supabase
-          .from('leases')
-          .select('id')
-          .eq('agreement_number', rowData['Agreement Number'])
-          .single();
-
-        if (!lease) {
-          throw new Error(`Lease not found for agreement number: ${rowData['Agreement Number']}`);
-        }
-
+        // Parse amount - remove 'QAR' and convert to number
+        const amount = parseFloat(rowData['Amount'].replace('QAR', '').replace(/,/g, '').trim());
+        
+        // Parse date - convert from 'Month-YY' format to ISO date
+        const [month, year] = rowData['Date'].split('-');
+        const date = new Date(`20${year}`, getMonthNumber(month), 1);
+        
         // Insert payment schedule
         const { error: insertError } = await supabase
           .from('payment_schedules')
           .insert({
-            lease_id: lease.id,
-            due_date: rowData['Due Date'],
-            amount: parseFloat(rowData['Amount']),
-            status: rowData['Status'].toLowerCase(),
+            amount: amount,
+            due_date: date.toISOString(),
+            status: 'pending',
+            metadata: {
+              cheque_number: rowData['N°cheque'],
+              drawee_bank: rowData['Drawee Bank'],
+              original_amount: rowData['Amount'],
+              sold: rowData['sold']
+            }
           });
 
         if (insertError) throw insertError;
@@ -97,3 +98,12 @@ serve(async (req) => {
     );
   }
 });
+
+function getMonthNumber(month: string): number {
+  const months: Record<string, number> = {
+    'January': 0, 'February': 1, 'March': 2, 'April': 3,
+    'May': 4, 'June': 5, 'July': 6, 'August': 7,
+    'September': 8, 'October': 9, 'November': 10, 'December': 11
+  };
+  return months[month] || 0;
+}
