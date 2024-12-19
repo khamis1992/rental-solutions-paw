@@ -1,12 +1,8 @@
+import { Outlet } from "react-router-dom";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { cn } from "@/lib/utils";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+export const DashboardLayout = () => {
   return (
     <div className="flex min-h-screen w-full bg-background">
       {/* Sidebar - Always visible on desktop */}
@@ -19,7 +15,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <DashboardHeader />
         <main className="flex-1 overflow-auto bg-background p-8">
           <div className="mx-auto max-w-6xl w-full">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>

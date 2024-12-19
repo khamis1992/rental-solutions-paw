@@ -18,22 +18,20 @@ function App() {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
-      <Route element={<DashboardLayout>
-        <Routes>
-          <Route index element={<Index />} />
-          <Route path="customers" element={<Customers />} />
-          <Route path="vehicles" element={<Vehicles />} />
-          <Route path="agreements" element={<Agreements />} />
-          <Route path="maintenance" element={<Maintenance />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="help" element={<Help />} />
-          <Route path="legal" element={<Legal />} />
-          <Route path="finance" element={<Finance />} />
-          <Route path="customer/:id" element={<CustomerProfile />} />
-          <Route path="code-analysis" element={<CodeAnalysisDashboard />} />
-        </Routes>
-      </DashboardLayout>} />
+      <Route path="/" element={<DashboardLayout />}>
+        <Route index element={<Index />} />
+        <Route path="customers" element={<Customers />} />
+        <Route path="vehicles" element={<Vehicles />} />
+        <Route path="agreements" element={<Agreements />} />
+        <Route path="maintenance" element={<Maintenance />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="help" element={<Help />} />
+        <Route path="legal" element={<Legal />} />
+        <Route path="finance" element={<Finance />} />
+        <Route path="customer/:id" element={<CustomerProfile />} />
+        <Route path="code-analysis" element={<CodeAnalysisDashboard />} />
+      </Route>
     </Routes>
   );
 }
