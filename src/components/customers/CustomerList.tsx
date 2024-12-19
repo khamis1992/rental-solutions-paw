@@ -31,6 +31,21 @@ interface CustomerData {
   created_at: string;
 }
 
+interface CustomerQueryResult {
+  id: string;
+  full_name: string | null;
+  status: string;
+  profiles: {
+    phone_number: string | null;
+    address: string | null;
+    driver_license: string | null;
+    id_document_url: string | null;
+    license_document_url: string | null;
+    contract_document_url: string | null;
+    created_at: string;
+  };
+}
+
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,11 +85,19 @@ export const CustomerList = () => {
       }
       
       console.log("Fetched customers:", data);
-      return data.map(item => ({
-        ...item.profiles,
+      
+      // Transform the data to match CustomerData interface
+      return (data as CustomerQueryResult[]).map(item => ({
         id: item.id,
         full_name: item.full_name,
-        status: item.status
+        status: item.status,
+        phone_number: item.profiles.phone_number,
+        address: item.profiles.address,
+        driver_license: item.profiles.driver_license,
+        id_document_url: item.profiles.id_document_url,
+        license_document_url: item.profiles.license_document_url,
+        contract_document_url: item.profiles.contract_document_url,
+        created_at: item.profiles.created_at
       }));
     },
   });
