@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -17,9 +18,11 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
+import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 
 type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen";
 
@@ -54,6 +57,7 @@ interface VehicleListProps {
 export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleListProps) => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,6 +93,12 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
     setShowVehicleDetails(true);
   };
 
+  const handleDeleteClick = (vehicleId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedVehicleId(vehicleId);
+    setShowDeleteDialog(true);
+  };
+
   const handleStatusChange = (vehicleId: string, newStatus: VehicleStatus) => {
     updateVehicleStatus.mutate({ vehicleId, newStatus });
   };
@@ -105,6 +115,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                 <TableHead>Status</TableHead>
                 <TableHead>VIN</TableHead>
                 <TableHead>Mileage</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -115,6 +126,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
                   <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -123,6 +135,8 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
       </div>
     );
   }
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
 
   return (
     <div className="rounded-lg border">
@@ -134,6 +148,7 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
             <TableHead>Status</TableHead>
             <TableHead>VIN</TableHead>
             <TableHead>Mileage</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -189,16 +204,35 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
               </TableCell>
               <TableCell>{vehicle.vin}</TableCell>
               <TableCell>{vehicle.mileage?.toLocaleString() || 0} km</TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                  onClick={(e) => handleDeleteClick(vehicle.id, e)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      {selectedVehicleId && (
+      {selectedVehicleId && showVehicleDetails && (
         <VehicleDetailsDialog
           vehicleId={selectedVehicleId}
           open={showVehicleDetails}
           onOpenChange={setShowVehicleDetails}
+        />
+      )}
+
+      {selectedVehicleId && selectedVehicle && showDeleteDialog && (
+        <DeleteVehicleDialog
+          vehicleId={selectedVehicleId}
+          vehicleName={`${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
         />
       )}
     </div>
