@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { performanceMetrics } from "@/services/performanceMonitoring";
 
-// Add type definition for Chrome's Memory API
 interface MemoryInfo {
   jsHeapSizeLimit: number;
   totalJSHeapSize: number;
@@ -25,6 +24,7 @@ interface ExtendedPerformance extends Performance {
 const Index = () => {
   const queryClient = useQueryClient();
   const cpuMonitoringInterval = useRef<NodeJS.Timeout>();
+  const diskMonitoringInterval = useRef<NodeJS.Timeout>();
 
   const monitorCPU = async () => {
     try {
@@ -41,6 +41,19 @@ const Index = () => {
     }
   };
 
+  const monitorDiskIO = async () => {
+    try {
+      const diskMetrics = await performanceMetrics.trackDiskIO();
+      if (diskMetrics && diskMetrics.value > 80) {
+        toast.warning("High Storage Usage", {
+          description: `Storage usage is at ${diskMetrics.value.toFixed(1)}%`
+        });
+      }
+    } catch (error) {
+      console.error('Failed to monitor disk I/O:', error);
+    }
+  };
+
   const measureCPUUsage = async (): Promise<number> => {
     const performance = window.performance as ExtendedPerformance;
     if (!performance || !performance.memory) {
@@ -50,18 +63,15 @@ const Index = () => {
     const startTime = performance.now();
     const startUsage = performance.memory.usedJSHeapSize;
     
-    // Simulate some work to measure CPU usage
     await new Promise(resolve => setTimeout(resolve, 100));
     
     const endTime = performance.now();
     const endUsage = performance.memory.usedJSHeapSize;
     
-    // Calculate a rough CPU usage estimation
     const duration = endTime - startTime;
     const memoryDiff = endUsage - startUsage;
     const cpuUsage = (memoryDiff / duration) * 100;
     
-    // Normalize to a 0-100 range
     return Math.min(Math.max(cpuUsage, 0), 100);
   };
 
@@ -128,8 +138,9 @@ const Index = () => {
         .subscribe()
     ];
 
-    // Start CPU monitoring
+    // Start CPU and disk monitoring
     cpuMonitoringInterval.current = setInterval(monitorCPU, 5000);
+    diskMonitoringInterval.current = setInterval(monitorDiskIO, 60000); // Check disk usage every minute
 
     // Error handling for real-time subscriptions
     channels.forEach(channel => {
@@ -144,37 +155,28 @@ const Index = () => {
       if (cpuMonitoringInterval.current) {
         clearInterval(cpuMonitoringInterval.current);
       }
+      if (diskMonitoringInterval.current) {
+        clearInterval(diskMonitoringInterval.current);
+      }
     };
   }, [queryClient]);
 
   return (
     <DashboardLayout>
-      {/* Welcome Section */}
       <WelcomeHeader />
-      
-      {/* KPI Cards */}
       <DashboardStats />
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
-        {/* Upcoming Rentals - Spans 4 columns */}
         <div className="lg:col-span-4">
           <UpcomingRentals />
         </div>
-
-        {/* Alerts & Notifications - Spans 3 columns */}
         <div className="lg:col-span-3">
           <DashboardAlerts />
         </div>
       </div>
-
-      {/* Recent Activity and Quick Actions */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Activity - Spans 4 columns */}
         <div className="lg:col-span-4">
           <RecentActivity />
         </div>
-
-        {/* Quick Actions Section */}
         <div className="lg:col-span-3">
           <QuickActions />
         </div>
