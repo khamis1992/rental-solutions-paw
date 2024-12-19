@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Customers from "@/pages/Customers";
@@ -14,6 +15,7 @@ import Legal from "@/pages/Legal";
 import { VehicleDetails } from "@/components/vehicles/VehicleDetails";
 import { useParams } from "react-router-dom";
 import { performanceMetrics } from "@/services/performanceMonitoring";
+import { supabase } from "@/integrations/supabase/client";
 
 // Wrapper component to handle URL parameters
 const VehicleDetailsWrapper = () => {
@@ -45,7 +47,35 @@ function App() {
 
     observer.observe({ entryTypes: ['navigation'] });
 
-    return () => observer.disconnect();
+    // Set up real-time error tracking
+    const channel = supabase
+      .channel('system-errors')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'performance_metrics',
+          filter: "metric_type=eq.'error'"
+        },
+        (payload) => {
+          console.error('System error detected:', payload);
+          toast.error('System error detected. Our team has been notified.');
+          
+          // Log error to performance metrics
+          performanceMetrics.trackError({
+            component: 'system',
+            error: payload.new,
+            timestamp: new Date().toISOString()
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      observer.disconnect();
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (

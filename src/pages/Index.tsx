@@ -5,8 +5,75 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Index = () => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Set up real-time subscriptions for dashboard data
+    const channels = [
+      // Vehicle status changes
+      supabase
+        .channel('vehicle-status-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'vehicles' },
+          async () => {
+            console.log('Vehicle status changed, refreshing stats...');
+            await queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] });
+          }
+        )
+        .subscribe(),
+
+      // Rental updates
+      supabase
+        .channel('rental-updates')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'leases' },
+          async () => {
+            console.log('Rental status changed, refreshing upcoming rentals...');
+            await queryClient.invalidateQueries({ queryKey: ['upcoming-rentals'] });
+          }
+        )
+        .subscribe(),
+
+      // Alert updates
+      supabase
+        .channel('alert-updates')
+        .on(
+          'postgres_changes',
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'maintenance',
+            filter: "status=in.(scheduled,in_progress)" 
+          },
+          async () => {
+            console.log('Maintenance alert changed, refreshing alerts...');
+            await queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] });
+          }
+        )
+        .subscribe()
+    ];
+
+    // Error handling for real-time subscriptions
+    channels.forEach(channel => {
+      channel.on('error', (error) => {
+        console.error('Realtime subscription error:', error);
+        toast.error('Error in real-time updates. Trying to reconnect...');
+      });
+    });
+
+    return () => {
+      channels.forEach(channel => supabase.removeChannel(channel));
+    };
+  }, [queryClient]);
+
   return (
     <DashboardLayout>
       {/* Welcome Section */}
