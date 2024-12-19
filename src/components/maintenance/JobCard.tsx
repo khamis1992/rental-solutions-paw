@@ -1,7 +1,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   Calendar,
@@ -12,8 +13,8 @@ import {
   Package,
   DollarSign,
   FileText,
-  Tag,
   Clipboard,
+  Camera
 } from "lucide-react";
 
 interface Part {
@@ -87,9 +88,14 @@ export const JobCard = ({
   diagnosedIssues,
   technicianNotes,
 }: JobCardProps) => {
+  const navigate = useNavigate();
   const totalPartsCost = parts?.reduce((sum, part) => sum + part.cost * part.quantity, 0) || 0;
   const totalLaborCost = (estimatedHours || 0) * (laborRate || 0);
   const totalCost = totalPartsCost + totalLaborCost;
+
+  const handleInspectionClick = () => {
+    navigate(`/maintenance/${id}/inspection`);
+  };
 
   return (
     <Card className="w-full">
@@ -237,6 +243,17 @@ export const JobCard = ({
           )}
         </div>
       </CardContent>
+
+      <CardFooter className="pt-4">
+        <Button 
+          onClick={handleInspectionClick}
+          className="w-full"
+          variant="outline"
+        >
+          <Camera className="w-4 h-4 mr-2" />
+          Perform Vehicle Inspection
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

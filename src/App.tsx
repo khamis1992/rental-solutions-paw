@@ -13,15 +13,22 @@ import Help from "@/pages/Help";
 import CustomerProfile from "@/pages/CustomerProfile";
 import Legal from "@/pages/Legal";
 import { VehicleDetails } from "@/components/vehicles/VehicleDetails";
+import { VehicleInspectionForm } from "@/components/maintenance/inspection/VehicleInspectionForm";
 import { useParams } from "react-router-dom";
 import { performanceMetrics } from "@/services/performanceMonitoring";
 import { supabase } from "@/integrations/supabase/client";
 
-// Wrapper component to handle URL parameters
+// Wrapper components to handle URL parameters
 const VehicleDetailsWrapper = () => {
   const { id } = useParams();
   if (!id) return <div>Vehicle ID not found</div>;
   return <VehicleDetails vehicleId={id} />;
+};
+
+const VehicleInspectionWrapper = () => {
+  const { id } = useParams();
+  if (!id) return <div>Maintenance ID not found</div>;
+  return <VehicleInspectionForm maintenanceId={id} />;
 };
 
 function App() {
@@ -88,6 +95,7 @@ function App() {
       <Route path="/vehicles/:id" element={<VehicleDetailsWrapper />} />
       <Route path="/agreements" element={<Agreements />} />
       <Route path="/maintenance" element={<Maintenance />} />
+      <Route path="/maintenance/:id/inspection" element={<VehicleInspectionWrapper />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/help" element={<Help />} />
