@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: corsHeaders,
@@ -17,6 +18,11 @@ serve(async (req) => {
   }
 
   try {
+    const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    if (!apiKey) {
+      throw new Error('Perplexity API key not configured');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -39,7 +45,7 @@ serve(async (req) => {
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -60,7 +66,9 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Perplexity API error details:', errorText);
+      throw new Error(`Perplexity API error: ${response.statusText}. Details: ${errorText}`);
     }
 
     const analysis = await response.json();
@@ -96,8 +104,13 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in analyze-performance:', error);
+    
+    // Return a more detailed error response
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
