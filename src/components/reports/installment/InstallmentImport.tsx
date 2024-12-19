@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { ContractNameDialog } from "./ContractNameDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function InstallmentImport() {
   const [isUploading, setIsUploading] = useState(false);
   const [showContractDialog, setShowContractDialog] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleContractSubmit = async (contractName: string) => {
-    // Open file input after contract name is submitted
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
@@ -48,7 +49,7 @@ export function InstallmentImport() {
 
       if (uploadError) throw uploadError;
 
-      // Process the file with contract name
+      // Process the file with contract name and check for 'OK' status
       const { data: processingData, error: processingError } = await supabase
         .functions
         .invoke('process-installment-import', {
@@ -59,6 +60,9 @@ export function InstallmentImport() {
         });
 
       if (processingError) throw processingError;
+
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ["installment-analysis"] });
 
       toast({
         title: "Success",

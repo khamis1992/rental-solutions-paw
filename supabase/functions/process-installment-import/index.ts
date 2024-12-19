@@ -50,20 +50,24 @@ serve(async (req) => {
         // Parse date - convert from 'Month-YY' format to ISO date
         const [month, year] = rowData['Date'].split('-');
         const date = new Date(`20${year}`, getMonthNumber(month), 1);
+
+        // Check for 'OK' status
+        const status = rowData['Status']?.toLowerCase().includes('ok') ? 'completed' : 'pending';
         
-        // Insert payment schedule with contract name
+        // Insert payment schedule with contract name and status
         const { error: insertError } = await supabaseClient
           .from('payment_schedules')
           .insert({
             amount: amount,
             due_date: date.toISOString(),
-            status: 'pending',
+            status: status,
             contract_name: contractName,
             metadata: {
               cheque_number: rowData['N°cheque'],
               drawee_bank: rowData['Drawee Bank'],
               original_amount: rowData['Amount'],
-              sold: rowData['sold']
+              sold: rowData['sold'],
+              original_status: rowData['Status']
             }
           });
 
