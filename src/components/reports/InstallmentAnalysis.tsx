@@ -11,9 +11,6 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +18,7 @@ import { Download, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CurrentInstallmentCard } from "./installment/CurrentInstallmentCard";
 
 export const InstallmentAnalysis = () => {
   const { toast } = useToast();
@@ -120,6 +118,8 @@ export const InstallmentAnalysis = () => {
 
   return (
     <div className="grid gap-6">
+      <CurrentInstallmentCard />
+
       {insights && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
