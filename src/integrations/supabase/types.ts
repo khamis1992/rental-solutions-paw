@@ -1162,7 +1162,13 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
-      payment_method_type: "Card" | "Online" | "Transfer" | "Cash"
+      payment_method_type:
+        | "Invoice"
+        | "Cash"
+        | "WireTransfer"
+        | "Cheque"
+        | "Deposit"
+        | "On_hold"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status:
