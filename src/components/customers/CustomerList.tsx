@@ -14,37 +14,8 @@ import { useState } from "react";
 import { CustomerFilters } from "./CustomerFilters";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
-import { Badge } from "@/components/ui/badge";
 
 const ITEMS_PER_PAGE = 10;
-
-interface CustomerData {
-  id: string;
-  full_name: string | null;
-  status: string;
-  phone_number: string | null;
-  address: string | null;
-  driver_license: string | null;
-  id_document_url: string | null;
-  license_document_url: string | null;
-  contract_document_url: string | null;
-  created_at: string;
-}
-
-interface CustomerQueryResult {
-  id: string;
-  full_name: string | null;
-  status: string;
-  profiles: {
-    phone_number: string | null;
-    address: string | null;
-    driver_license: string | null;
-    id_document_url: string | null;
-    license_document_url: string | null;
-    contract_document_url: string | null;
-    created_at: string;
-  };
-}
 
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,32 +23,20 @@ export const CustomerList = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const { data: customers, isLoading } = useQuery<CustomerData[]>({
+  const { data: customers, isLoading } = useQuery({
     queryKey: ["customers", searchQuery],
     queryFn: async () => {
       console.log("Fetching customers with search:", searchQuery);
       let query = supabase
-        .from("customer_statuses")
-        .select(`
-          id,
-          full_name,
-          status,
-          profiles!inner (
-            phone_number,
-            address,
-            driver_license,
-            id_document_url,
-            license_document_url,
-            contract_document_url,
-            created_at
-          )
-        `);
+        .from("profiles")
+        .select("*")
+        .eq('role', 'customer');
 
       if (searchQuery) {
-        query = query.or(`full_name.ilike.%${searchQuery}%,profiles.phone_number.ilike.%${searchQuery}%,profiles.driver_license.ilike.%${searchQuery}%`);
+        query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query.order("full_name", { ascending: true });
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching customers:", error);
@@ -85,20 +44,7 @@ export const CustomerList = () => {
       }
       
       console.log("Fetched customers:", data);
-      
-      // Transform the data to match CustomerData interface
-      return (data as CustomerQueryResult[]).map(item => ({
-        id: item.id,
-        full_name: item.full_name,
-        status: item.status,
-        phone_number: item.profiles.phone_number,
-        address: item.profiles.address,
-        driver_license: item.profiles.driver_license,
-        id_document_url: item.profiles.id_document_url,
-        license_document_url: item.profiles.license_document_url,
-        contract_document_url: item.profiles.contract_document_url,
-        created_at: item.profiles.created_at
-      }));
+      return data;
     },
   });
 
@@ -148,7 +94,6 @@ export const CustomerList = () => {
               <TableHead>Address</TableHead>
               <TableHead>Driver License</TableHead>
               <TableHead>Documents</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
           </TableHeader>
@@ -176,18 +121,6 @@ export const CustomerList = () => {
                   {customer.contract_document_url && (
                     <FileText className="h-4 w-4 text-orange-500" aria-label="Contract Document" />
                   )}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={customer.status === 'active' ? 'success' : 'secondary'}
-                    className={
-                      customer.status === 'active'
-                        ? 'bg-green-500/10 text-green-500'
-                        : 'bg-gray-500/10 text-gray-500'
-                    }
-                  >
-                    {customer.status}
-                  </Badge>
                 </TableCell>
                 <TableCell>
                   {new Date(customer.created_at).toLocaleDateString()}
