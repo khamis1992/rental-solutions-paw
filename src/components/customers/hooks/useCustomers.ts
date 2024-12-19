@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useCustomers = (searchQuery: string, roleFilter: string, statusFilter: string) => {
+export const useCustomers = (searchQuery: string, roleFilter: string) => {
   return useQuery({
-    queryKey: ['customers', searchQuery, roleFilter, statusFilter],
+    queryKey: ['customers', searchQuery, roleFilter],
     queryFn: async () => {
       try {
         console.log("Fetching customers with search:", searchQuery);
@@ -19,12 +19,6 @@ export const useCustomers = (searchQuery: string, roleFilter: string, statusFilt
 
         if (roleFilter !== 'all') {
           query = query.eq('role', roleFilter);
-        }
-
-        if (statusFilter !== 'all') {
-          // You might need to adjust this based on how you determine status
-          const hasActiveAgreements = statusFilter === 'active';
-          query = query.eq('has_active_agreements', hasActiveAgreements);
         }
 
         const { data, error } = await query;

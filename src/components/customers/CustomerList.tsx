@@ -19,9 +19,8 @@ export const CustomerList = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: customers = [], isLoading, error } = useCustomers(searchQuery, roleFilter, statusFilter);
+  const { data: customers = [], isLoading, error } = useCustomers(searchQuery, roleFilter);
 
   const totalPages = Math.ceil((customers?.length || 0) / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -39,7 +38,6 @@ export const CustomerList = () => {
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleChange={setRoleFilter}
-          onStatusChange={setStatusFilter}
         />
         <div className="rounded-md border">
           <Table>
@@ -50,7 +48,6 @@ export const CustomerList = () => {
                   <td><Skeleton className="h-4 w-[200px]" /></td>
                   <td><Skeleton className="h-4 w-[120px]" /></td>
                   <td><Skeleton className="h-4 w-[250px]" /></td>
-                  <td><Skeleton className="h-4 w-[100px]" /></td>
                   <td><Skeleton className="h-4 w-[100px]" /></td>
                   <td><Skeleton className="h-4 w-[100px]" /></td>
                 </tr>
@@ -68,7 +65,6 @@ export const CustomerList = () => {
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleChange={setRoleFilter}
-          onStatusChange={setStatusFilter}
         />
         <div className="text-center py-8 text-muted-foreground">
           No customers found
@@ -82,7 +78,6 @@ export const CustomerList = () => {
       <CustomerFilters 
         onSearchChange={setSearchQuery}
         onRoleChange={setRoleFilter}
-        onStatusChange={setStatusFilter}
       />
       <div className="rounded-md border">
         <Table>
