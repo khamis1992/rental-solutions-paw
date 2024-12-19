@@ -1,6 +1,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Customer } from "../types/customer";
 
 interface CustomerTableRowProps {
@@ -25,25 +26,49 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
       <TableCell>{customer.driver_license || 'N/A'}</TableCell>
       <TableCell className="flex gap-2">
         {customer.id_document_url && (
-          <FileText 
-            className="h-4 w-4 text-green-500" 
-            aria-label="ID Document"
-            title="ID Document Available"
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FileText 
+                  className="h-4 w-4 text-green-500" 
+                  aria-label="ID Document"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>ID Document Available</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         {customer.license_document_url && (
-          <FileText 
-            className="h-4 w-4 text-blue-500" 
-            aria-label="License Document"
-            title="License Document Available"
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FileText 
+                  className="h-4 w-4 text-blue-500" 
+                  aria-label="License Document"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>License Document Available</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         {customer.contract_document_url && (
-          <FileText 
-            className="h-4 w-4 text-orange-500" 
-            aria-label="Contract Document"
-            title="Contract Document Available"
-          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FileText 
+                  className="h-4 w-4 text-orange-500" 
+                  aria-label="Contract Document"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Contract Document Available</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </TableCell>
       <TableCell>
