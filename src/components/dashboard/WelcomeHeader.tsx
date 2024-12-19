@@ -2,21 +2,50 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const WelcomeHeader = () => {
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.log('No authenticated user found');
+          return null;
+        }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+        console.log('Fetching profile for user:', user.id);
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
 
-      return profile;
+        if (error) {
+          console.error('Error fetching profile:', error);
+          throw error;
+        }
+
+        console.log('Profile data:', profile);
+        return profile;
+      } catch (error) {
+        console.error('Unexpected error in profile fetch:', error);
+        return null;
+      }
     },
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('Error in WelcomeHeader:', error);
+  }
 
   return (
     <div className="flex items-center justify-between mb-6">
