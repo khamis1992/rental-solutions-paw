@@ -135,7 +135,10 @@ export const performanceMetrics = {
     const { data, error } = await supabase.functions.invoke(
       'analyze-performance',
       {
-        body: { includesDiskMetrics: true }
+        body: { includesDiskMetrics: true },
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
     
@@ -160,7 +163,10 @@ export const aiAnalysis = {
     const { data, error } = await supabase.functions.invoke(
       'analyze-performance',
       {
-        body: { includesDiskMetrics: true }
+        body: { includesDiskMetrics: true },
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
     
