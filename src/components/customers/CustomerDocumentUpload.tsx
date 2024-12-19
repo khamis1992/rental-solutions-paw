@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 interface CustomerDocumentUploadProps {
   label: string;
@@ -19,6 +19,7 @@ export const CustomerDocumentUpload = ({
 }: CustomerDocumentUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const form = useForm();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,23 +58,27 @@ export const CustomerDocumentUpload = ({
   };
 
   return (
-    <FormItem>
-      <FormLabel>{label}</FormLabel>
-      <FormControl>
-        <div className="flex items-center gap-2">
-          <Input
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={handleFileUpload}
-            disabled={isUploading}
-            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-          />
-          {isUploading && (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          )}
-        </div>
-      </FormControl>
-      <FormMessage />
-    </FormItem>
+    <Form {...form}>
+      <form>
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+              />
+              {isUploading && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
+            </div>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      </form>
+    </Form>
   );
 };
