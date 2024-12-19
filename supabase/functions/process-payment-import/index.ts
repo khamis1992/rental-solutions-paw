@@ -8,8 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
 };
 
-const BATCH_SIZE = 50; // Process 50 payments at a time
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders, status: 204 });
@@ -60,87 +58,36 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('file_name', fileName);
 
-    // Process rows in batches
-    const dataRows = rows.slice(1); // Skip header row
-    for (let i = 0; i < dataRows.length; i += BATCH_SIZE) {
-      console.log(`Processing batch ${Math.floor(i/BATCH_SIZE) + 1} of ${Math.ceil(dataRows.length/BATCH_SIZE)}`);
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
+
+      const values = rows[i].split(',').map(v => v.trim());
+      console.log(`Processing row ${i}:`, values);
       
-      const batch = dataRows.slice(i, i + BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(async (row, index) => {
-          if (!row.trim()) return null;
-
-          const values = row.split(',').map(v => v.trim());
-          if (values.length !== headers.length) return null;
-
-          try {
-            const result = await processPaymentRow(supabase, headers, values);
-            if (result.success) {
-              return { type: 'success' };
-            } else {
-              if (result.error?.includes('No active lease found')) {
-                return {
-                  type: 'skipped',
-                  data: {
-                    customerName: values[headers.indexOf('Customer Name')],
-                    amount: values[headers.indexOf('Amount')],
-                    paymentDate: values[headers.indexOf('Payment_Date')],
-                    reason: result.error
-                  }
-                };
-              }
-              return {
-                type: 'error',
-                data: {
-                  row: i + index + 2, // +2 for header row and 0-based index
-                  error: result.error
-                }
-              };
-            }
-          } catch (error) {
-            return {
-              type: 'error',
-              data: {
-                row: i + index + 2,
-                error: error.message
-              }
-            };
-          }
-        })
-      );
-
-      // Aggregate batch results
-      batchResults.forEach(result => {
-        if (!result) return;
+      if (values.length === headers.length) {
+        const result = await processPaymentRow(supabase, headers, values);
         
-        switch (result.type) {
-          case 'success':
-            successCount++;
-            break;
-          case 'skipped':
-            skippedCustomers.push(result.data);
-            break;
-          case 'error':
+        if (result.success) {
+          successCount++;
+        } else {
+          if (result.error?.includes('No active lease found')) {
+            skippedCustomers.push({
+              customerName: values[headers.indexOf('Customer Name')],
+              amount: values[headers.indexOf('Amount')],
+              paymentDate: values[headers.indexOf('Payment_Date')],
+              reason: result.error
+            });
+          } else {
             errorCount++;
-            errors.push(result.data);
-            break;
-        }
-      });
-
-      // Update progress after each batch
-      await supabase
-        .from('import_logs')
-        .update({
-          records_processed: successCount,
-          errors: {
-            failed: errors,
-            skipped: skippedCustomers
+            errors.push({
+              row: i + 1,
+              error: result.error
+            });
           }
-        })
-        .eq('file_name', fileName);
+        }
+      }
     }
 
-    // Mark import as completed
     await supabase
       .from('import_logs')
       .update({

@@ -4,7 +4,7 @@ export interface PaymentData {
   customerName: string;
   amount: number;
   paymentDate: string;
-  paymentMethod: 'Card' | 'Online' | 'Transfer' | 'Cash';
+  paymentMethod: string;
   status: string;
   paymentNumber: string;
 }
@@ -54,14 +54,6 @@ export const createPaymentRecord = async (
   const [day, month, year] = paymentData.paymentDate.split('-');
   const isoDate = `${year}-${month}-${day}`;
 
-  // Validate payment method
-  const validPaymentMethods = ['Card', 'Online', 'Transfer', 'Cash'];
-  const paymentMethod = validPaymentMethods.includes(paymentData.paymentMethod)
-    ? paymentData.paymentMethod
-    : 'Cash'; // Default to Cash if invalid method provided
-
-  console.log('Creating payment record with method:', paymentMethod);
-
   const { error: paymentError } = await supabase
     .from('payments')
     .insert({
@@ -69,12 +61,11 @@ export const createPaymentRecord = async (
       amount: paymentData.amount,
       status: paymentData.status,
       payment_date: new Date(isoDate).toISOString(),
-      payment_method: paymentMethod,
+      payment_method: paymentData.paymentMethod,
       transaction_id: paymentData.paymentNumber,
     });
 
   if (paymentError) {
-    console.error('Error creating payment:', paymentError);
     throw paymentError;
   }
 };
@@ -89,12 +80,10 @@ export const processPaymentRow = async (
       customerName: values[headers.indexOf('Customer Name')],
       amount: parseFloat(values[headers.indexOf('Amount')]),
       paymentDate: values[headers.indexOf('Payment_Date')],
-      paymentMethod: values[headers.indexOf('Payment_Method')] as PaymentData['paymentMethod'],
+      paymentMethod: values[headers.indexOf('Payment_Method')],
       status: values[headers.indexOf('status')],
       paymentNumber: values[headers.indexOf('Payment_Number')],
     };
-
-    console.log('Processing payment data:', paymentData);
 
     const customerLease = await findCustomerWithActiveLease(supabase, paymentData.customerName);
     

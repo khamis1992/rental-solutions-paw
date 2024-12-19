@@ -133,10 +133,7 @@ export const PaymentImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = "Customer Name,Amount,Payment_Date,Payment_Method,status,Payment_Number,Payment_Description\n" +
-                      "John Doe,1000,03-20-2024,Card,completed,INV001,Monthly payment\n" +
-                      "Jane Smith,1500,03-21-2024,Online,completed,INV002,Deposit payment\n" +
-                      "Bob Wilson,2000,03-22-2024,Transfer,completed,INV003,Full payment\n" +
-                      "Alice Brown,800,03-23-2024,Cash,completed,INV004,Partial payment";
+                      "John Doe,1000,03-20-2024,credit_card,completed,INV001,Monthly payment";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
