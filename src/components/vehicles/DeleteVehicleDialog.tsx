@@ -29,39 +29,19 @@ export const DeleteVehicleDialog = ({
 
   const deleteVehicle = useMutation({
     mutationFn: async () => {
-      console.log("Starting deletion process for vehicle:", vehicleId);
+      console.log("Starting force deletion process for vehicle:", vehicleId);
       
-      // 1. Delete related maintenance records
-      const { error: maintenanceError } = await supabase
-        .from('maintenance')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-      
-      if (maintenanceError) {
-        console.error("Error deleting maintenance records:", maintenanceError);
-      }
-
-      // 2. Delete vehicle inspections
-      const { error: inspectionError } = await supabase
-        .from('vehicle_inspections')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (inspectionError) {
-        console.error("Error deleting inspections:", inspectionError);
-      }
-
-      // 3. Delete vehicle sensor data
+      // 1. Delete vehicle sensor data
       const { error: sensorError } = await supabase
         .from('vehicle_sensor_data')
         .delete()
         .eq('vehicle_id', vehicleId);
-
+      
       if (sensorError) {
         console.error("Error deleting sensor data:", sensorError);
       }
 
-      // 4. Delete fleet optimization recommendations
+      // 2. Delete fleet optimization recommendations
       const { error: fleetOptError } = await supabase
         .from('fleet_optimization_recommendations')
         .delete()
@@ -71,14 +51,34 @@ export const DeleteVehicleDialog = ({
         console.error("Error deleting fleet optimization records:", fleetOptError);
       }
 
-      // 5. Delete vehicle schedules
-      const { error: scheduleError } = await supabase
-        .from('vehicle_schedules')
+      // 3. Delete maintenance predictions
+      const { error: maintenancePredError } = await supabase
+        .from('maintenance_predictions')
         .delete()
         .eq('vehicle_id', vehicleId);
 
-      if (scheduleError) {
-        console.error("Error deleting vehicle schedules:", scheduleError);
+      if (maintenancePredError) {
+        console.error("Error deleting maintenance predictions:", maintenancePredError);
+      }
+
+      // 4. Delete vehicle inspections
+      const { error: inspectionError } = await supabase
+        .from('vehicle_inspections')
+        .delete()
+        .eq('vehicle_id', vehicleId);
+
+      if (inspectionError) {
+        console.error("Error deleting inspections:", inspectionError);
+      }
+
+      // 5. Delete maintenance records
+      const { error: maintenanceError } = await supabase
+        .from('maintenance')
+        .delete()
+        .eq('vehicle_id', vehicleId);
+
+      if (maintenanceError) {
+        console.error("Error deleting maintenance records:", maintenanceError);
       }
 
       // 6. Delete traffic fines
@@ -101,14 +101,34 @@ export const DeleteVehicleDialog = ({
         console.error("Error deleting agreement documents:", docsError);
       }
 
-      // 8. Check for active leases
-      const { data: leases } = await supabase
-        .from('leases')
-        .select('id')
+      // 8. Delete vehicle schedules
+      const { error: scheduleError } = await supabase
+        .from('vehicle_schedules')
+        .delete()
         .eq('vehicle_id', vehicleId);
 
-      if (leases && leases.length > 0) {
-        throw new Error("Cannot delete vehicle with active leases. Please end all leases first.");
+      if (scheduleError) {
+        console.error("Error deleting vehicle schedules:", scheduleError);
+      }
+
+      // 9. Delete optimized routes
+      const { error: routesError } = await supabase
+        .from('optimized_routes')
+        .delete()
+        .eq('vehicle_id', vehicleId);
+
+      if (routesError) {
+        console.error("Error deleting optimized routes:", routesError);
+      }
+
+      // 10. Delete leases
+      const { error: leaseError } = await supabase
+        .from('leases')
+        .delete()
+        .eq('vehicle_id', vehicleId);
+
+      if (leaseError) {
+        console.error("Error deleting leases:", leaseError);
       }
 
       // Finally, delete the vehicle
@@ -132,7 +152,7 @@ export const DeleteVehicleDialog = ({
     },
     onError: (error) => {
       console.error('Error in delete mutation:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete vehicle. Please try again or contact support.");
+      toast.error("Failed to delete vehicle. Please try again or contact support.");
     },
   });
 
