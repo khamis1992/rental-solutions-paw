@@ -4,6 +4,18 @@ export const createAgreement = async (agreementData: any) => {
   try {
     console.log('Creating agreement with data:', agreementData);
     
+    // Get first available vehicle for testing/development
+    const { data: vehicle } = await supabase
+      .from('vehicles')
+      .select('id')
+      .eq('status', 'available')
+      .limit(1)
+      .single();
+
+    if (!vehicle) {
+      throw new Error('No available vehicle found');
+    }
+    
     const { data, error } = await supabase
       .from('leases')
       .insert({
@@ -16,7 +28,9 @@ export const createAgreement = async (agreementData: any) => {
         return_date: agreementData['Return Date'],
         status: agreementData['STATUS']?.toLowerCase(),
         total_amount: 0, // Default value, should be updated based on your business logic
-        initial_mileage: 0 // Default value, should be updated based on your business logic
+        initial_mileage: 0, // Default value, should be updated based on your business logic
+        vehicle_id: vehicle.id, // Required field
+        agreement_type: 'short_term' // Default value
       })
       .select()
       .single();
