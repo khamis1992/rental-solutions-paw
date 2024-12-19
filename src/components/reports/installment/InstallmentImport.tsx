@@ -1,59 +1,49 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-export const InstallmentImport = () => {
+export function InstallmentImport() {
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: {
+      'text/csv': ['.csv']
+    },
+    maxFiles: 1,
+    onDrop: async (acceptedFiles) => {
+      if (acceptedFiles.length === 0) return;
 
-    if (file.type !== "text/csv") {
-      toast({
-        title: "Error",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
+      setIsUploading(true);
+      const file = acceptedFiles[0];
+
+      try {
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('imports')
+          .upload(`installments/${Date.now()}_${file.name}`, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: processingData, error: processingError } = await supabase
+          .functions
+          .invoke('process-installment-import', {
+            body: { filePath: uploadData.path }
+          });
+
+        if (processingError) throw processingError;
+
+        toast.success("Installments imported successfully");
+      } catch (error) {
+        console.error('Import error:', error);
+        toast.error("Failed to import installments");
+      } finally {
+        setIsUploading(false);
+      }
     }
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const { data, error } = await supabase.functions.invoke('process-installment-import', {
-        body: formData
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Successfully imported ${data.processed} installments`,
-      });
-
-      // Refresh the installments data
-      await queryClient.invalidateQueries({ queryKey: ["current-installments"] });
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to import installments",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  });
 
   const downloadTemplate = () => {
     const csvContent = "N°cheque,Amount,Date,Drawee Bank,sold\n" +
@@ -61,45 +51,39 @@ export const InstallmentImport = () => {
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'installment_import_template.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'installment_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Import Installments</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <Input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            disabled={isUploading}
-          />
-          <Button
-            variant="outline"
+    <Card className="p-6">
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Import Installments</h3>
+          <Button 
+            variant="outline" 
             onClick={downloadTemplate}
-            disabled={isUploading}
           >
-            <Download className="h-4 w-4 mr-2" />
             Download Template
           </Button>
         </div>
-        
-        {isUploading && (
-          <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Importing installments...
-          </div>
-        )}
-      </CardContent>
+
+        <div
+          {...getRootProps()}
+          className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+        >
+          <input {...getInputProps()} />
+          {isUploading ? (
+            <p>Uploading...</p>
+          ) : (
+            <p>Drag and drop a CSV file here, or click to select one</p>
+          )}
+        </div>
+      </div>
     </Card>
   );
-};
+}

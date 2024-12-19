@@ -1140,6 +1140,7 @@ export type Database = {
           id: string
           last_reminder_sent: string | null
           lease_id: string | null
+          metadata: Json | null
           reminder_count: number | null
           status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string
@@ -1151,6 +1152,7 @@ export type Database = {
           id?: string
           last_reminder_sent?: string | null
           lease_id?: string | null
+          metadata?: Json | null
           reminder_count?: number | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string
@@ -1162,6 +1164,7 @@ export type Database = {
           id?: string
           last_reminder_sent?: string | null
           lease_id?: string | null
+          metadata?: Json | null
           reminder_count?: number | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string

@@ -1,44 +1,42 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+console.log("Hello from Process Installment Import!")
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const formData = await req.formData();
-    const file = formData.get('file');
-    
-    if (!file) {
-      throw new Error('No file uploaded');
-    }
+    const { filePath } = await req.json()
 
-    const text = await file.text();
-    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
-    const headers = rows[0].split(',').map(h => h.trim());
-    
-    // Skip header row
-    const dataRows = rows.slice(1);
-
-    const supabase = createClient(
+    // Initialize Supabase client
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    )
 
-    let processedCount = 0;
-    const errors = [];
+    // Download the file
+    const { data: fileData, error: downloadError } = await supabaseClient
+      .storage
+      .from('imports')
+      .download(filePath)
 
-    for (const row of dataRows) {
-      try {
-        const values = row.split(',').map(v => v.trim());
+    if (downloadError) throw downloadError
+
+    // Parse CSV content
+    const text = await fileData.text()
+    const rows = text.split('\n')
+    const headers = rows[0].split(',')
+
+    // Process each row
+    const processedRows = await Promise.all(
+      rows.slice(1).filter(row => row.trim()).map(async (row) => {
+        const values = row.split(',')
         const rowData = headers.reduce((obj, header, index) => {
-          obj[header] = values[index];
+          obj[header.trim()] = values[index]?.trim() ?? '';
           return obj;
         }, {} as Record<string, string>);
 
@@ -50,7 +48,7 @@ serve(async (req) => {
         const date = new Date(`20${year}`, getMonthNumber(month), 1);
         
         // Insert payment schedule
-        const { error: insertError } = await supabase
+        const { error: insertError } = await supabaseClient
           .from('payment_schedules')
           .insert({
             amount: amount,
@@ -65,37 +63,44 @@ serve(async (req) => {
           });
 
         if (insertError) throw insertError;
-        processedCount++;
-      } catch (error) {
-        console.error('Error processing row:', row, error);
-        errors.push({ row, error: error.message });
-      }
-    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        processed: processedCount,
-        errors: errors.length > 0 ? errors : null,
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+        return rowData;
+      })
     );
 
-  } catch (error) {
-    console.error('Import process error:', error);
+    // Delete the uploaded file
+    await supabaseClient
+      .storage
+      .from('imports')
+      .remove([filePath]);
+
     return new Response(
       JSON.stringify({
-        success: false,
+        message: 'Import completed successfully',
+        processed: processedRows.length,
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 200,
+      },
+    )
+  } catch (error) {
+    console.error('Error:', error)
+    return new Response(
+      JSON.stringify({
         error: error.message,
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 400,
       }
-    );
+    )
   }
 });
 
