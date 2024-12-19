@@ -1,11 +1,10 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { FleetStatus } from "@/components/reports/FleetStatus";
 import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
 import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
 import { PerformanceInsights } from "@/components/performance/PerformanceInsights";
-import { FileText, ChartBar, Users, Calculator, Brain } from "lucide-react";
+import { FileText, Users, Calculator, Brain } from "lucide-react";
 
 const Reports = () => {
   return (
@@ -17,12 +16,8 @@ const Reports = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="revenue" className="space-y-6">
+      <Tabs defaultValue="fleet" className="space-y-6">
         <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
-          <TabsTrigger value="revenue" className="flex items-center gap-2">
-            <ChartBar className="h-4 w-4" />
-            Revenue Analysis
-          </TabsTrigger>
           <TabsTrigger value="fleet" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Fleet Status
@@ -40,10 +35,6 @@ const Reports = () => {
             Performance Insights
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="revenue">
-          <RevenueAnalysis />
-        </TabsContent>
 
         <TabsContent value="fleet">
           <FleetStatus />
