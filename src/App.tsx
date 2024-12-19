@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Customers from "@/pages/Customers";
@@ -12,6 +13,7 @@ import CustomerProfile from "@/pages/CustomerProfile";
 import Legal from "@/pages/Legal";
 import { VehicleDetails } from "@/components/vehicles/VehicleDetails";
 import { useParams } from "react-router-dom";
+import { performanceMetrics } from "@/services/performanceMonitoring";
 
 // Wrapper component to handle URL parameters
 const VehicleDetailsWrapper = () => {
@@ -21,6 +23,31 @@ const VehicleDetailsWrapper = () => {
 };
 
 function App() {
+  useEffect(() => {
+    // Track initial page load
+    const startTime = performance.now();
+    window.addEventListener('load', () => {
+      const loadTime = performance.now() - startTime;
+      performanceMetrics.trackPageLoad(window.location.pathname, loadTime);
+    });
+
+    // Track navigation performance
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.entryType === 'navigation') {
+          performanceMetrics.trackPageLoad(
+            window.location.pathname,
+            entry.duration
+          );
+        }
+      }
+    });
+
+    observer.observe({ entryTypes: ['navigation'] });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<Index />} />
