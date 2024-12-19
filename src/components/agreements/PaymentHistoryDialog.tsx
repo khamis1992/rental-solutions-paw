@@ -34,6 +34,17 @@ export function PaymentHistoryDialog({
       console.log("Starting payment history fetch...");
       console.log("Agreement ID:", agreementId);
       
+      // First, let's check the payments table directly
+      const { data: paymentsCheck, error: paymentsCheckError } = await supabase
+        .from("payments")
+        .select("*");
+      
+      console.log("Raw payments in database:", paymentsCheck);
+      
+      if (paymentsCheckError) {
+        console.error("Error checking payments:", paymentsCheckError);
+      }
+      
       let query = supabase
         .from("payments")
         .select(`
@@ -66,6 +77,19 @@ export function PaymentHistoryDialog({
       }
 
       console.log("Fetched payments data:", data);
+      
+      // Log each payment's details
+      data?.forEach((payment, index) => {
+        console.log(`Payment ${index + 1}:`, {
+          id: payment.id,
+          amount: payment.amount,
+          status: payment.status,
+          lease_id: payment.lease_id,
+          customer_name: payment.leases?.profiles?.full_name,
+          agreement_number: payment.leases?.agreement_number
+        });
+      });
+
       return data;
     },
     enabled: open,
