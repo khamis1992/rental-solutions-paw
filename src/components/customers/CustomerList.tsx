@@ -14,6 +14,7 @@ import { useState } from "react";
 import { CustomerFilters } from "./CustomerFilters";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -37,30 +38,44 @@ export const CustomerList = () => {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: customers = [], isLoading } = useQuery<Customer[]>({
+  const { data: customers = [], isLoading, error } = useQuery<Customer[]>({
     queryKey: ['customers', searchQuery, roleFilter, statusFilter],
     queryFn: async () => {
-      console.log("Fetching customers with search:", searchQuery);
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'customer');
+      try {
+        console.log("Fetching customers with search:", searchQuery);
+        let query = supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'customer');
 
-      if (searchQuery) {
-        query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
+        if (searchQuery) {
+          query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching customers:", error);
+          toast.error("Failed to fetch customers");
+          throw error;
+        }
+        
+        console.log("Fetched customers:", data);
+        return data || [];
+      } catch (err) {
+        console.error("Error in customer query:", err);
+        toast.error("Failed to fetch customers");
+        return [];
       }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching customers:", error);
-        throw error;
-      }
-      
-      console.log("Fetched customers:", data);
-      return data || [];
     },
+    retry: 1,
+    staleTime: 30000, // Cache data for 30 seconds
   });
+
+  if (error) {
+    console.error("Query error:", error);
+    toast.error("Error loading customers");
+  }
 
   const totalPages = Math.ceil((customers?.length || 0) / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -116,7 +131,7 @@ export const CustomerList = () => {
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleChange={setRoleFilter}
-          onStatusChange={setStatusFilter}
+          onStatusFilter={setStatusFilter}
         />
         <div className="text-center py-8 text-muted-foreground">
           No customers found
