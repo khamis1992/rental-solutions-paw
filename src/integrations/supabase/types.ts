@@ -1546,15 +1546,20 @@ export type Database = {
           ai_damage_detection: Json | null
           created_at: string | null
           damage_confidence_score: number | null
+          damage_markers: Json | null
           damage_severity: string | null
           detected_damages: Json | null
+          fuel_level: number | null
           id: string
           inspection_date: string | null
           inspection_photos: string[] | null
           inspection_type: string
           inspector_notes: string | null
           lease_id: string | null
+          odometer_reading: number | null
           photos: string[] | null
+          renter_signature: string | null
+          staff_signature: string | null
           updated_at: string | null
           vehicle_id: string
         }
@@ -1563,15 +1568,20 @@ export type Database = {
           ai_damage_detection?: Json | null
           created_at?: string | null
           damage_confidence_score?: number | null
+          damage_markers?: Json | null
           damage_severity?: string | null
           detected_damages?: Json | null
+          fuel_level?: number | null
           id?: string
           inspection_date?: string | null
           inspection_photos?: string[] | null
           inspection_type: string
           inspector_notes?: string | null
           lease_id?: string | null
+          odometer_reading?: number | null
           photos?: string[] | null
+          renter_signature?: string | null
+          staff_signature?: string | null
           updated_at?: string | null
           vehicle_id: string
         }
@@ -1580,15 +1590,20 @@ export type Database = {
           ai_damage_detection?: Json | null
           created_at?: string | null
           damage_confidence_score?: number | null
+          damage_markers?: Json | null
           damage_severity?: string | null
           detected_damages?: Json | null
+          fuel_level?: number | null
           id?: string
           inspection_date?: string | null
           inspection_photos?: string[] | null
           inspection_type?: string
           inspector_notes?: string | null
           lease_id?: string | null
+          odometer_reading?: number | null
           photos?: string[] | null
+          renter_signature?: string | null
+          staff_signature?: string | null
           updated_at?: string | null
           vehicle_id?: string
         }
