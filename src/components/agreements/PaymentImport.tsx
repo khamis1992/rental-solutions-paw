@@ -44,6 +44,13 @@ export const PaymentImport = () => {
         throw uploadError;
       }
 
+      // Read and log the CSV content before processing
+      const content = await file.text();
+      const lines = content.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+      console.log('CSV Headers:', headers);
+      console.log('Total rows to process:', lines.length - 1);
+
       console.log('File uploaded successfully, creating import log...');
       const { error: logError } = await supabase
         .from("import_logs")
@@ -59,7 +66,7 @@ export const PaymentImport = () => {
       }
 
       console.log('Starting import process via Edge Function...');
-      const { error: functionError } = await supabase.functions
+      const { data: functionResponse, error: functionError } = await supabase.functions
         .invoke('process-payment-import', {
           body: { fileName }
         });
@@ -69,21 +76,36 @@ export const PaymentImport = () => {
         throw functionError;
       }
 
+      console.log('Edge Function response:', functionResponse);
+
       // Poll for import completion
       const pollInterval = setInterval(async () => {
         console.log('Checking import status...');
         try {
           const { data: importLog } = await supabase
             .from("import_logs")
-            .select("status, records_processed")
+            .select("status, records_processed, errors")
             .eq("file_name", fileName)
             .single();
 
           if (importLog?.status === "completed") {
             clearInterval(pollInterval);
+            
+            // Show detailed import results
+            const skippedRecords = importLog.errors?.skipped || [];
+            const failedRecords = importLog.errors?.failed || [];
+            
+            let description = `Successfully processed ${importLog.records_processed} payments.`;
+            if (skippedRecords.length > 0) {
+              description += ` ${skippedRecords.length} records were skipped due to missing data.`;
+            }
+            if (failedRecords.length > 0) {
+              description += ` ${failedRecords.length} records failed to process.`;
+            }
+
             toast({
-              title: "Success",
-              description: `Successfully imported ${importLog.records_processed} payments`,
+              title: "Import Complete",
+              description: description,
             });
             
             // Force refresh the queries
@@ -132,9 +154,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    // Update the template to show the correct date format
     const csvContent = "Customer Name,Amount,Payment_Date,Payment_Method,status,Payment_Number,Payment_Description\n" +
-                      "John Doe,1000,03-20-2024,credit_card,completed,INV001,Monthly payment";
+                      "John Doe,1000,20-03-2024,credit_card,completed,INV001,Monthly payment";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
