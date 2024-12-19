@@ -491,6 +491,53 @@ export type Database = {
           },
         ]
       }
+      fleet_optimization_recommendations: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          description: string
+          estimated_impact: number | null
+          id: string
+          implemented_at: string | null
+          priority: string
+          recommendation_type: string
+          status: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          description: string
+          estimated_impact?: number | null
+          id?: string
+          implemented_at?: string | null
+          priority: string
+          recommendation_type: string
+          status?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string
+          estimated_impact?: number | null
+          id?: string
+          implemented_at?: string | null
+          priority?: string
+          recommendation_type?: string
+          status?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_optimization_recommendations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_logs: {
         Row: {
           created_at: string | null
@@ -1374,11 +1421,14 @@ export type Database = {
       vehicle_inspections: {
         Row: {
           ai_confidence_score: number | null
+          ai_damage_detection: Json | null
           created_at: string | null
+          damage_confidence_score: number | null
           damage_severity: string | null
           detected_damages: Json | null
           id: string
           inspection_date: string | null
+          inspection_photos: string[] | null
           inspection_type: string
           inspector_notes: string | null
           lease_id: string | null
@@ -1388,11 +1438,14 @@ export type Database = {
         }
         Insert: {
           ai_confidence_score?: number | null
+          ai_damage_detection?: Json | null
           created_at?: string | null
+          damage_confidence_score?: number | null
           damage_severity?: string | null
           detected_damages?: Json | null
           id?: string
           inspection_date?: string | null
+          inspection_photos?: string[] | null
           inspection_type: string
           inspector_notes?: string | null
           lease_id?: string | null
@@ -1402,11 +1455,14 @@ export type Database = {
         }
         Update: {
           ai_confidence_score?: number | null
+          ai_damage_detection?: Json | null
           created_at?: string | null
+          damage_confidence_score?: number | null
           damage_severity?: string | null
           detected_damages?: Json | null
           id?: string
           inspection_date?: string | null
+          inspection_photos?: string[] | null
           inspection_type?: string
           inspector_notes?: string | null
           lease_id?: string | null
@@ -1602,6 +1658,7 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
+      damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
       import_type: "payments" | "customers" | "agreements"
       lease_status: "pending_payment" | "pending_deposit" | "active" | "closed"
