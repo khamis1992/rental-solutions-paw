@@ -13,9 +13,13 @@ import { Link } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import { CustomerFilters } from "./CustomerFilters";
+import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: customers, isLoading } = useQuery({
     queryKey: ["customers", searchQuery],
@@ -41,6 +45,11 @@ export const CustomerList = () => {
       return data;
     },
   });
+
+  const totalPages = Math.ceil((customers?.length || 0) / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentCustomers = customers?.slice(startIndex, endIndex) || [];
 
   if (isLoading) {
     return (
@@ -82,7 +91,7 @@ export const CustomerList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers?.map((customer) => (
+            {currentCustomers.map((customer) => (
               <TableRow key={customer.id}>
                 <TableCell>
                   <Link
@@ -113,6 +122,14 @@ export const CustomerList = () => {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <VehicleTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

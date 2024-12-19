@@ -11,6 +11,9 @@ import { AgreementTableRow } from "./table/AgreementTableRow";
 import { useAgreements } from "./hooks/useAgreements";
 import type { Agreement } from "./hooks/useAgreements";
 import { AgreementDetailsDialog } from "./AgreementDetailsDialog";
+import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -18,6 +21,7 @@ export const AgreementList = () => {
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
   const [selectedDetailsId, setSelectedDetailsId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: agreements = [], isLoading, error } = useAgreements();
 
@@ -120,6 +124,11 @@ export const AgreementList = () => {
     }
   };
 
+  const totalPages = Math.ceil(agreements.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentAgreements = agreements.slice(startIndex, endIndex);
+
   if (isLoading) {
     return <div className="text-center py-4">Loading agreements...</div>;
   }
@@ -138,7 +147,7 @@ export const AgreementList = () => {
         <Table>
           <AgreementTableHeader />
           <TableBody>
-            {agreements.map((agreement: Agreement) => (
+            {currentAgreements.map((agreement: Agreement) => (
               <AgreementTableRow
                 key={agreement.id}
                 agreement={agreement}
@@ -150,6 +159,14 @@ export const AgreementList = () => {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <VehicleTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
       
       <InvoiceDialog

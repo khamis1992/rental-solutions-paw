@@ -2,30 +2,17 @@ import { Table, TableBody } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
+import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 
-type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
-
-interface MaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  status: MaintenanceStatus;
-  scheduled_date: string;
-  cost: number | null;
-  vehicles: {
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
+const ITEMS_PER_PAGE = 10;
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Set up real-time subscription
   useEffect(() => {
@@ -62,34 +49,6 @@ export const MaintenanceList = () => {
     };
   }, [queryClient]);
 
-  // Query to get vehicles in accident status
-  const { data: accidentVehicles = [], isLoading: isLoadingAccidents } = useQuery({
-    queryKey: ["accident-vehicles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vehicles")
-        .select("id, make, model, year, license_plate, status")
-        .eq("status", "accident");
-
-      if (error) throw error;
-      
-      return data.map(vehicle => ({
-        id: vehicle.id,
-        vehicle_id: vehicle.id,
-        service_type: "Accident Repair",
-        status: "urgent" as MaintenanceStatus,
-        scheduled_date: new Date().toISOString(),
-        cost: null,
-        vehicles: {
-          make: vehicle.make,
-          model: vehicle.model,
-          year: vehicle.year,
-          license_plate: vehicle.license_plate
-        }
-      }));
-    }
-  });
-
   // Query to get maintenance records
   const { data: maintenanceRecords = [], isLoading: isLoadingMaintenance } = useQuery({
     queryKey: ["maintenance"],
@@ -112,10 +71,12 @@ export const MaintenanceList = () => {
     },
   });
 
-  // Combine regular maintenance records with accident vehicles
-  const allRecords = [...maintenanceRecords, ...accidentVehicles];
+  const totalPages = Math.ceil(maintenanceRecords.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentRecords = maintenanceRecords.slice(startIndex, endIndex);
 
-  if (isLoadingMaintenance || isLoadingAccidents) {
+  if (isLoadingMaintenance) {
     return (
       <div className="rounded-md border">
         <Table>
@@ -128,7 +89,6 @@ export const MaintenanceList = () => {
                 <td><Skeleton className="h-4 w-[100px]" /></td>
                 <td><Skeleton className="h-4 w-[100px]" /></td>
                 <td><Skeleton className="h-4 w-[150px]" /></td>
-                <td><Skeleton className="h-4 w-[100px]" /></td>
               </tr>
             ))}
           </TableBody>
@@ -138,15 +98,25 @@ export const MaintenanceList = () => {
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <MaintenanceTableHeader />
-        <TableBody>
-          {allRecords.map((record) => (
-            <MaintenanceTableRow key={record.id} record={record} />
-          ))}
-        </TableBody>
-      </Table>
+    <div className="space-y-4">
+      <div className="rounded-md border">
+        <Table>
+          <MaintenanceTableHeader />
+          <TableBody>
+            {currentRecords.map((record) => (
+              <MaintenanceTableRow key={record.id} record={record} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <VehicleTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
     </div>
   );
 };
