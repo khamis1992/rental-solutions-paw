@@ -195,6 +195,45 @@ export type Database = {
           },
         ]
       }
+      analytics_insights: {
+        Row: {
+          action_taken: boolean | null
+          analyzed_at: string | null
+          category: string
+          confidence_score: number | null
+          created_at: string | null
+          data_points: Json | null
+          id: string
+          insight: string
+          priority: number | null
+          status: string | null
+        }
+        Insert: {
+          action_taken?: boolean | null
+          analyzed_at?: string | null
+          category: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          insight: string
+          priority?: number | null
+          status?: string | null
+        }
+        Update: {
+          action_taken?: boolean | null
+          analyzed_at?: string | null
+          category?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          insight?: string
+          priority?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       applied_discounts: {
         Row: {
           created_at: string
@@ -790,6 +829,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      operational_anomalies: {
+        Row: {
+          affected_records: Json | null
+          description: string
+          detected_at: string | null
+          detection_type: string
+          false_positive: boolean | null
+          id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          severity: string
+        }
+        Insert: {
+          affected_records?: Json | null
+          description: string
+          detected_at?: string | null
+          detection_type: string
+          false_positive?: boolean | null
+          id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity: string
+        }
+        Update: {
+          affected_records?: Json | null
+          description?: string
+          detected_at?: string | null
+          detection_type?: string
+          false_positive?: boolean | null
+          id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity?: string
+        }
+        Relationships: []
       }
       payment_history: {
         Row: {
