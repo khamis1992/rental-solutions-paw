@@ -38,12 +38,17 @@ export const PaymentImport = () => {
     setIsAnalyzing(true);
     
     try {
+      // Create FormData and append file
       const formData = new FormData();
       formData.append('file', file);
       
+      // Call the analyze-payment-import function with proper configuration
       const { data: aiAnalysis, error: analysisError } = await supabase.functions
         .invoke('analyze-payment-import', {
-          body: formData
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
         });
 
       if (analysisError) throw analysisError;

@@ -1,138 +1,123 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204 
+    });
   }
 
   try {
+    console.log('Starting payment analysis...');
+    
+    // Parse the multipart form data
     const formData = await req.formData();
     const file = formData.get('file');
-
-    if (!file) {
-      throw new Error('No file provided');
+    
+    if (!file || !(file instanceof File)) {
+      throw new Error('No file provided or invalid file format');
     }
 
-    const text = await file.text();
-    const lines = text.split('\n');
+    // Read the file content
+    const fileContent = await file.text();
+    const lines = fileContent.split('\n').map(line => line.trim());
+    
+    if (lines.length < 2) {
+      throw new Error('File is empty or contains only headers');
+    }
+
     const headers = lines[0].split(',').map(h => h.trim());
-    
-    const warnings: string[] = [];
-    const suggestions: string[] = [];
-    
-    // Analyze headers
-    const requiredHeaders = ['Customer Name', 'Amount', 'Payment_Date', 'Payment_Method', 'status'];
+    const requiredHeaders = ['Amount', 'Payment_Date', 'Payment_Method', 'Status', 'Lease_ID'];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-    
+
     if (missingHeaders.length > 0) {
-      warnings.push(`Missing required headers: ${missingHeaders.join(', ')}`);
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    // Analyze data rows
-    let validRows = 0;
-    let invalidDates = 0;
-    let invalidAmounts = 0;
-    let unknownCustomers = 0;
+    // Analyze the data
+    const analysis = {
+      totalRows: lines.length - 1,
+      validRows: 0,
+      invalidRows: 0,
+      totalAmount: 0,
+      issues: [],
+      suggestions: []
+    };
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Skip header row
+    // Process each row
     for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = line.split(',').map(v => v.trim());
-      const record: Record<string, string> = {};
+      if (!lines[i].trim()) continue;
       
-      headers.forEach((header, index) => {
-        record[header] = values[index];
-      });
+      const values = lines[i].split(',').map(v => v.trim());
+      const rowData = headers.reduce((obj: any, header, index) => {
+        obj[header] = values[index];
+        return obj;
+      }, {});
 
-      // Validate date format (DD-MM-YYYY)
-      if (record.Payment_Date && !/^\d{2}-\d{2}-\d{4}$/.test(record.Payment_Date)) {
-        invalidDates++;
+      // Validate amount
+      const amount = parseFloat(rowData.Amount);
+      if (isNaN(amount)) {
+        analysis.invalidRows++;
+        analysis.issues.push(`Row ${i}: Invalid amount format`);
+      } else {
+        analysis.totalAmount += amount;
       }
 
-      // Validate amount is a number
-      if (record.Amount && isNaN(parseFloat(record.Amount))) {
-        invalidAmounts++;
+      // Validate date
+      const date = new Date(rowData.Payment_Date);
+      if (isNaN(date.getTime())) {
+        analysis.invalidRows++;
+        analysis.issues.push(`Row ${i}: Invalid date format`);
       }
 
-      // Check if customer exists
-      if (record['Customer Name']) {
-        const { data: customer } = await supabase
-          .from('profiles')
-          .select('id')
-          .ilike('full_name', record['Customer Name'])
-          .maybeSingle();
-
-        if (!customer) {
-          unknownCustomers++;
-        }
+      // Validate Lease_ID
+      if (!rowData.Lease_ID) {
+        analysis.invalidRows++;
+        analysis.issues.push(`Row ${i}: Missing Lease_ID`);
       }
 
-      validRows++;
+      if (!analysis.issues.some(issue => issue.includes(`Row ${i}:`))) {
+        analysis.validRows++;
+      }
     }
 
-    // Generate warnings and suggestions
-    if (invalidDates > 0) {
-      warnings.push(`Found ${invalidDates} rows with invalid date format. Dates should be in DD-MM-YYYY format.`);
+    // Add suggestions based on analysis
+    if (analysis.invalidRows > 0) {
+      analysis.suggestions.push('Please fix the invalid rows before proceeding with the import.');
+    }
+    if (analysis.totalAmount === 0) {
+      analysis.suggestions.push('Warning: Total payment amount is 0. Please verify if this is correct.');
     }
 
-    if (invalidAmounts > 0) {
-      warnings.push(`Found ${invalidAmounts} rows with invalid amount values.`);
-    }
-
-    if (unknownCustomers > 0) {
-      warnings.push(`Found ${unknownCustomers} customers that don't exist in the system.`);
-      suggestions.push('Consider creating customer profiles before importing payments.');
-    }
-
-    const summary = `Analyzed ${validRows} payment records. Found ${warnings.length} potential issues that need attention.`;
+    console.log('Analysis completed:', analysis);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        summary,
-        warnings,
-        suggestions,
-        stats: {
-          totalRows: validRows,
-          invalidDates,
-          invalidAmounts,
-          unknownCustomers,
-        }
-      }),
+      JSON.stringify(analysis),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
       }
     );
 
   } catch (error) {
-    console.error('Error analyzing payment import:', error);
+    console.error('Error processing payment analysis:', error);
+    
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message 
+      JSON.stringify({
+        error: error.message || 'Failed to analyze payment file',
       }),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 500
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
       }
     );
   }
