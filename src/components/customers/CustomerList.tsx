@@ -38,19 +38,19 @@ export const CustomerList = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
-    queryKey: ["customers", searchQuery, roleFilter, statusFilter],
+    queryKey: ['customers', searchQuery, roleFilter, statusFilter],
     queryFn: async () => {
       console.log("Fetching customers with search:", searchQuery);
       let query = supabase
-        .from("profiles")
-        .select()
+        .from('profiles')
+        .select('*')
         .eq('role', 'customer');
 
       if (searchQuery) {
         query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching customers:", error);
