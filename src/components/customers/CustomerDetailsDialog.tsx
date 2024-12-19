@@ -29,14 +29,14 @@ export const CustomerDetailsDialog = ({
   onOpenChange,
 }: CustomerDetailsDialogProps) => {
   const { toast } = useToast();
-  const { data: profile, isLoading, refetch } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ["customer-details", customerId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", customerId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching customer details:", error);
@@ -66,7 +66,6 @@ export const CustomerDetailsDialog = ({
         title: "Success",
         description: `${type === 'id' ? 'ID' : 'License'} document uploaded successfully`,
       });
-      refetch();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -102,7 +101,11 @@ export const CustomerDetailsDialog = ({
                   </div>
                   <div className="col-span-2">
                     <Label>Address</Label>
-                    <p>{profile.address}</p>
+                    <p>{profile.address || 'N/A'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <Label>Driver License</Label>
+                    <p>{profile.driver_license || 'N/A'}</p>
                   </div>
                   
                   {/* Document Upload Section */}
@@ -121,7 +124,6 @@ export const CustomerDetailsDialog = ({
                               href={profile.id_document_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center gap-2"
                             >
                               <Button variant="outline" size="sm">View ID Document</Button>
                             </a>
@@ -140,7 +142,6 @@ export const CustomerDetailsDialog = ({
                               href={profile.license_document_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline flex items-center gap-2"
                             >
                               <Button variant="outline" size="sm">View License Document</Button>
                             </a>
