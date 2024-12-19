@@ -34,10 +34,19 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
+      console.log("Fetching payments for agreement:", agreementId);
+      
       const query = supabase
         .from("payments")
         .select(`
           *,
+          lease:leases (
+            id,
+            agreement_number,
+            customer:profiles (
+              full_name
+            )
+          ),
           security_deposits (
             amount,
             status
@@ -51,7 +60,12 @@ export function PaymentHistoryDialog({
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+
+      console.log("Fetched payments:", data);
       return data;
     },
     enabled: open,
@@ -61,6 +75,8 @@ export function PaymentHistoryDialog({
   useEffect(() => {
     if (!open) return;
 
+    console.log("Setting up real-time subscription for payments");
+    
     const channel = supabase
       .channel('payment-history-changes')
       .on(
@@ -95,6 +111,7 @@ export function PaymentHistoryDialog({
 
     // Cleanup subscription on unmount or when dialog closes
     return () => {
+      console.log("Cleaning up payment history subscription");
       supabase.removeChannel(channel);
     };
   }, [agreementId, open, queryClient]);
@@ -121,6 +138,8 @@ export function PaymentHistoryDialog({
 
     const headers = [
       "Date",
+      "Customer",
+      "Agreement",
       "Amount",
       "Status",
       "Payment Method",
@@ -129,6 +148,8 @@ export function PaymentHistoryDialog({
 
     const csvData = paymentHistory.map(payment => [
       format(new Date(payment.created_at), "PP"),
+      payment.lease?.customer?.full_name || "N/A",
+      payment.lease?.agreement_number || "N/A",
       payment.amount.toString(),
       payment.status,
       payment.payment_method || "N/A",
