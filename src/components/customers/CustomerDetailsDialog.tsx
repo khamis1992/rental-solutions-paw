@@ -38,7 +38,15 @@ export const CustomerDetailsDialog = ({
         .eq("id", customerId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching customer details:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load customer details",
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data;
     },
     enabled: !!customerId && open,

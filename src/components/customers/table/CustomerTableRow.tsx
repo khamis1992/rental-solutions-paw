@@ -1,5 +1,6 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CustomerTableRowProps {
   customer: {
@@ -20,12 +21,13 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
   return (
     <TableRow key={customer.id}>
       <TableCell>
-        <button
+        <Button
+          variant="link"
+          className="p-0 h-auto font-normal hover:text-primary"
           onClick={() => onCustomerClick(customer.id)}
-          className="text-blue-600 hover:underline"
         >
           {customer.full_name || 'Unnamed Customer'}
-        </button>
+        </Button>
       </TableCell>
       <TableCell>{customer.phone_number || 'N/A'}</TableCell>
       <TableCell>{customer.address || 'N/A'}</TableCell>
