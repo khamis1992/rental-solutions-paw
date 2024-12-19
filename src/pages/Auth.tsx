@@ -1,115 +1,70 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Auth } from "@supabase/auth-ui-react";
+import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
 
-const AuthPage = () => {
+export default function Auth() {
   const navigate = useNavigate();
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
-      }
+      setSession(session);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session);
-        if (session) {
-          navigate("/");
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      // Get user profile data
+      const fetchProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id);
+
+          if (error) {
+            console.error("Error fetching profile:", error);
+            return;
+          }
+
+          if (data && data.length > 0) {
+            const userProfile = data[0];
+            console.log("Profile data:", userProfile);
+            console.log("User profile:", { role: userProfile.role });
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Error in profile fetch:", error);
         }
-      }
-    );
+      };
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+      fetchProfile();
+    }
+  }, [session, navigate]);
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
-      <div className="w-full max-w-md space-y-8 relative">
-        {/* Logo and Branding */}
-        <div className="flex flex-col items-center space-y-4">
-          <div className="p-3 bg-primary/10 rounded-xl">
-            <Building2 className="w-10 h-10 text-primary" />
-          </div>
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Rental Solutions
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Sign in to access your dashboard
-            </p>
-          </div>
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="w-full max-w-[400px] px-4">
+          <SupabaseAuth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            providers={[]}
+          />
         </div>
-
-        {/* Auth Card */}
-        <Card className="w-full shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="space-y-1 pb-2">
-            <CardTitle className="text-xl text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center">
-              Enter your credentials to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Auth
-              supabaseClient={supabase}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: 'hsl(var(--primary))',
-                      brandAccent: 'hsl(var(--primary))',
-                      defaultButtonBackground: 'white',
-                      defaultButtonBackgroundHover: 'hsl(var(--primary) / 0.1)',
-                      defaultButtonBorder: 'lightgray',
-                      defaultButtonText: 'gray',
-                      dividerBackground: 'hsl(var(--border))',
-                    },
-                    space: {
-                      labelBottomMargin: '8px',
-                      anchorBottomMargin: '4px',
-                      socialAuthSpacing: '8px',
-                      buttonPadding: '10px 15px',
-                      inputPadding: '10px 15px',
-                    },
-                    borderWidths: {
-                      buttonBorderWidth: '1px',
-                      inputBorderWidth: '1px',
-                    },
-                    radii: {
-                      borderRadiusButton: '8px',
-                      buttonBorderRadius: '8px',
-                      inputBorderRadius: '8px',
-                    },
-                  },
-                },
-                className: {
-                  button: 'transition-colors duration-200',
-                  anchor: 'text-primary hover:opacity-80 transition-opacity',
-                  input: 'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors',
-                  label: 'font-medium',
-                  message: 'text-sm',
-                },
-              }}
-              providers={[]}
-              redirectTo={window.location.origin}
-              view="sign_in"
-              showLinks={false}
-            />
-          </CardContent>
-        </Card>
       </div>
-    </div>
-  );
-};
+    );
+  }
 
-export default AuthPage;
+  return null;
+}
