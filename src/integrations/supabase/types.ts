@@ -807,6 +807,70 @@ export type Database = {
           },
         ]
       }
+      payment_matching_logs: {
+        Row: {
+          admin_reviewed: boolean | null
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
+          created_at: string | null
+          customer_id: string | null
+          id: string
+          is_ai_matched: boolean | null
+          match_confidence: number
+          matching_factors: Json | null
+          payment_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_reviewed?: boolean | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          is_ai_matched?: boolean | null
+          match_confidence: number
+          matching_factors?: Json | null
+          payment_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_reviewed?: boolean | null
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          is_ai_matched?: boolean | null
+          match_confidence?: number
+          matching_factors?: Json | null
+          payment_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_matching_logs_admin_reviewed_by_fkey"
+            columns: ["admin_reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_matching_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_matching_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_reconciliation: {
         Row: {
           auto_matched: boolean | null
@@ -1060,39 +1124,51 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          ai_confidence_score: number | null
+          ai_generated_fields: Json | null
           contract_document_url: string | null
           created_at: string
           driver_license: string | null
           full_name: string | null
           id: string
           id_document_url: string | null
+          is_ai_generated: boolean | null
           license_document_url: string | null
+          needs_review: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          ai_confidence_score?: number | null
+          ai_generated_fields?: Json | null
           contract_document_url?: string | null
           created_at?: string
           driver_license?: string | null
           full_name?: string | null
           id: string
           id_document_url?: string | null
+          is_ai_generated?: boolean | null
           license_document_url?: string | null
+          needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          ai_confidence_score?: number | null
+          ai_generated_fields?: Json | null
           contract_document_url?: string | null
           created_at?: string
           driver_license?: string | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null
+          is_ai_generated?: boolean | null
           license_document_url?: string | null
+          needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
