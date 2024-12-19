@@ -107,18 +107,6 @@ const AuthPage = () => {
             />
           </CardContent>
         </Card>
-
-        {/* Footer - Terms and Privacy only */}
-        <p className="text-center text-sm text-muted-foreground">
-          By signing in, you agree to our{" "}
-          <a href="#" className="font-medium text-primary hover:underline">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="font-medium text-primary hover:underline">
-            Privacy Policy
-          </a>
-        </p>
       </div>
     </div>
   );
