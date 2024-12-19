@@ -51,8 +51,14 @@ export const createPaymentRecord = async (
   leaseId: string,
   paymentData: PaymentData
 ) => {
-  const [day, month, year] = paymentData.paymentDate.split('-');
-  const isoDate = `${year}-${month}-${day}`;
+  // Parse the date in DD-MM-YYYY format
+  const [day, month, year] = paymentData.paymentDate.split('-').map(num => num.trim());
+  if (!day || !month || !year) {
+    throw new Error(`Invalid date format for payment: ${paymentData.paymentDate}`);
+  }
+  
+  // Create a proper ISO date string
+  const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00Z`;
 
   const { error: paymentError } = await supabase
     .from('payments')
@@ -60,7 +66,7 @@ export const createPaymentRecord = async (
       lease_id: leaseId,
       amount: paymentData.amount,
       status: paymentData.status,
-      payment_date: new Date(isoDate).toISOString(),
+      payment_date: isoDate,
       payment_method: paymentData.paymentMethod,
       transaction_id: paymentData.paymentNumber,
     });

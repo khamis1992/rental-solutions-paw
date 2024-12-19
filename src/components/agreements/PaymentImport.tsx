@@ -132,6 +132,7 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
+    // Update the template to show the correct date format
     const csvContent = "Customer Name,Amount,Payment_Date,Payment_Method,status,Payment_Number,Payment_Description\n" +
                       "John Doe,1000,03-20-2024,credit_card,completed,INV001,Monthly payment";
     
