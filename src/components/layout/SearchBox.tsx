@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,11 +12,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
+import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
+import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
 
 export const SearchBox = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const navigate = useNavigate();
+  
+  // Dialog states
+  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [selectedAgreement, setSelectedAgreement] = useState<string | null>(null);
 
   const { data: searchResults, error } = useQuery({
     queryKey: ["search", searchQuery],
@@ -65,13 +71,13 @@ export const SearchBox = () => {
     setOpen(false);
     switch (type) {
       case "vehicle":
-        navigate(`/vehicles/${id}`);
+        setSelectedVehicle(id);
         break;
       case "customer":
-        navigate(`/customers/${id}`);
+        setSelectedCustomer(id);
         break;
       case "agreement":
-        navigate(`/agreements/${id}`);
+        setSelectedAgreement(id);
         break;
     }
   };
@@ -151,6 +157,31 @@ export const SearchBox = () => {
           )}
         </CommandList>
       </CommandDialog>
+
+      {/* Details Dialogs */}
+      {selectedVehicle && (
+        <VehicleDetailsDialog
+          vehicleId={selectedVehicle}
+          open={!!selectedVehicle}
+          onOpenChange={(open) => !open && setSelectedVehicle(null)}
+        />
+      )}
+      
+      {selectedCustomer && (
+        <CustomerDetailsDialog
+          customerId={selectedCustomer}
+          open={!!selectedCustomer}
+          onOpenChange={(open) => !open && setSelectedCustomer(null)}
+        />
+      )}
+      
+      {selectedAgreement && (
+        <AgreementDetailsDialog
+          agreementId={selectedAgreement}
+          open={!!selectedAgreement}
+          onOpenChange={(open) => !open && setSelectedAgreement(null)}
+        />
+      )}
     </>
   );
 };
