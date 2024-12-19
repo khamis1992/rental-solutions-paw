@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 interface MemoryInfo {
@@ -12,8 +11,21 @@ interface ExtendedPerformance extends Performance {
   memory?: MemoryInfo;
 }
 
+const RESPONSE_TIME_THRESHOLD = 3000; // 3 seconds
+const ERROR_RATE_THRESHOLD = 0.05; // 5%
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Initialize cache
+const metricsCache = new Map<string, { data: any; timestamp: number }>();
+
 export const performanceMetrics = {
   async trackPageLoad(route: string, loadTime: number) {
+    if (loadTime > RESPONSE_TIME_THRESHOLD) {
+      toast.warning("Slow page load detected", {
+        description: `Page ${route} took ${(loadTime / 1000).toFixed(1)}s to load`
+      });
+    }
+
     const { data, error } = await supabase
       .from("performance_metrics")
       .insert({
@@ -30,6 +42,16 @@ export const performanceMetrics = {
   },
 
   async trackError(error: { component: string; error: any; timestamp: string }) {
+    // Calculate current error rate
+    const recentErrors = await this.getRecentErrors();
+    const errorRate = recentErrors.length / 100; // Assuming 100 total operations
+
+    if (errorRate > ERROR_RATE_THRESHOLD) {
+      toast.error("High error rate detected", {
+        description: "System is experiencing higher than normal error rates"
+      });
+    }
+
     const { data, error: dbError } = await supabase
       .from("performance_metrics")
       .insert({
@@ -45,6 +67,31 @@ export const performanceMetrics = {
     return data;
   },
 
+  async getRecentErrors() {
+    const cacheKey = 'recent-errors';
+    const cached = metricsCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
+    }
+
+    const { data, error } = await supabase
+      .from("performance_metrics")
+      .select()
+      .eq('metric_type', 'error')
+      .gte('timestamp', new Date(Date.now() - 3600000).toISOString()) // Last hour
+      .order('timestamp', { ascending: false });
+
+    if (error) throw error;
+
+    metricsCache.set(cacheKey, {
+      data: data || [],
+      timestamp: Date.now()
+    });
+
+    return data || [];
+  },
+
   async trackCPUUtilization(cpuUsage: number) {
     const { data, error } = await supabase
       .from("performance_metrics")
@@ -57,7 +104,6 @@ export const performanceMetrics = {
       .select()
       .single();
 
-    // Alert if CPU usage is high
     if (cpuUsage > 80) {
       toast.warning("High CPU Usage", {
         description: `Current CPU utilization is ${cpuUsage.toFixed(1)}%`
@@ -91,7 +137,6 @@ export const performanceMetrics = {
         .select()
         .single();
 
-      // Alert if memory usage is high
       if (memoryUsage > 80) {
         toast.warning("High Memory Usage", {
           description: `Memory utilization is at ${memoryUsage.toFixed(1)}%`
@@ -139,7 +184,8 @@ export const performanceMetrics = {
         headers: {
           'Content-Type': 'application/json'
         }
-      }
+      },
+      { count: 'exact' }
     );
     
     if (error) throw error;
@@ -149,6 +195,13 @@ export const performanceMetrics = {
 
 export const aiAnalysis = {
   async getInsights() {
+    const cacheKey = 'ai-insights';
+    const cached = metricsCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
+    }
+
     const { data, error } = await supabase
       .from("ai_insights")
       .select('*')
@@ -156,6 +209,12 @@ export const aiAnalysis = {
       .limit(10);
     
     if (error) throw error;
+
+    metricsCache.set(cacheKey, {
+      data: data || [],
+      timestamp: Date.now()
+    });
+
     return data;
   },
 
@@ -167,7 +226,8 @@ export const aiAnalysis = {
         headers: {
           'Content-Type': 'application/json'
         }
-      }
+      },
+      { count: 'exact' }
     );
     
     if (error) throw error;
