@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { retryOperation } from "../utils/retryUtils";
 
 export const createAgreement = async (agreementData: any) => {
   try {
@@ -63,6 +64,19 @@ export const uploadImportFile = async (file: File) => {
   return fileName;
 };
 
+export const processImport = async (fileName: string) => {
+  return retryOperation(
+    () => supabase.functions.invoke('process-agreement-import', {
+      body: { fileName },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }),
+    3, // number of retries
+    1000 // initial delay in ms
+  );
+};
+
 export const createImportLog = async (fileName: string) => {
   const { error: logError } = await supabase
     .from("import_logs")
@@ -73,12 +87,6 @@ export const createImportLog = async (fileName: string) => {
     });
 
   if (logError) throw logError;
-};
-
-export const processImport = async (fileName: string) => {
-  return supabase.functions.invoke('process-agreement-import', {
-    body: { fileName }
-  });
 };
 
 export const pollImportStatus = async (fileName: string) => {
