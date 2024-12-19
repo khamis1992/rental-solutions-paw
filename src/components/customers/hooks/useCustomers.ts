@@ -10,8 +10,7 @@ export const useCustomers = (searchQuery: string, roleFilter: string) => {
         console.log("Fetching customers with search:", searchQuery);
         let query = supabase
           .from('profiles')
-          .select('*')
-          .eq('role', 'customer');
+          .select('*');
 
         if (searchQuery) {
           query = query.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
