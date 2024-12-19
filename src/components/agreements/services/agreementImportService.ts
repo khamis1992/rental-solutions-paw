@@ -11,7 +11,8 @@ export const createAgreement = async (agreementData: any) => {
       end_date: agreementData.end_date,
       total_amount: agreementData.total_amount,
       agreement_number: agreementData.agreement_number,
-      status: agreementData.status || 'pending_payment'
+      status: agreementData.status || 'pending_payment',
+      initial_mileage: 0 // Adding the required field with a default value
     })
     .select()
     .single();
