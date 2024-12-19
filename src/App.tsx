@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "@/pages/Index";
 import Customers from "@/pages/Customers";
@@ -16,27 +16,25 @@ import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDas
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route element={<DashboardLayout>
-          <Routes>
-            <Route index element={<Index />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="vehicles" element={<Vehicles />} />
-            <Route path="agreements" element={<Agreements />} />
-            <Route path="maintenance" element={<Maintenance />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="help" element={<Help />} />
-            <Route path="legal" element={<Legal />} />
-            <Route path="finance" element={<Finance />} />
-            <Route path="customer/:id" element={<CustomerProfile />} />
-            <Route path="code-analysis" element={<CodeAnalysisDashboard />} />
-          </Routes>
-        </DashboardLayout>} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/auth" element={<Auth />} />
+      <Route element={<DashboardLayout>
+        <Routes>
+          <Route index element={<Index />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="vehicles" element={<Vehicles />} />
+          <Route path="agreements" element={<Agreements />} />
+          <Route path="maintenance" element={<Maintenance />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="help" element={<Help />} />
+          <Route path="legal" element={<Legal />} />
+          <Route path="finance" element={<Finance />} />
+          <Route path="customer/:id" element={<CustomerProfile />} />
+          <Route path="code-analysis" element={<CodeAnalysisDashboard />} />
+        </Routes>
+      </DashboardLayout>} />
+    </Routes>
   );
 }
 
