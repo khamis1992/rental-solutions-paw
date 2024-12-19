@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Battery, Oil, Brake } from "lucide-react";
+import { AlertTriangle, Battery, Droplet, Disc } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 const getMaintenancePredictions = async () => {
@@ -31,8 +31,8 @@ const priorityColors = {
 };
 
 const predictionIcons = {
-  oil_change: Oil,
-  brake_service: Brake,
+  oil_change: Droplet,
+  brake_service: Disc,
   battery_replacement: Battery,
 };
 
