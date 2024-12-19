@@ -1,5 +1,38 @@
 import { supabase } from "@/integrations/supabase/client";
-import { retryImportOperation } from "../utils/importUtils";
+
+export const createAgreement = async (agreementData: any) => {
+  try {
+    console.log('Creating agreement with data:', agreementData);
+    
+    const { data, error } = await supabase
+      .from('leases')
+      .insert({
+        agreement_number: agreementData['Agreement Number'],
+        license_no: agreementData['License Plate'],
+        customer_id: agreementData['Customer ID'], // This should be mapped to an existing customer
+        license_number: agreementData['License Number'],
+        start_date: agreementData['Start Date'],
+        end_date: agreementData['End Date'],
+        return_date: agreementData['Return Date'],
+        status: agreementData['STATUS']?.toLowerCase(),
+        total_amount: 0, // Default value, should be updated based on your business logic
+        initial_mileage: 0 // Default value, should be updated based on your business logic
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating agreement:', error);
+      throw error;
+    }
+
+    console.log('Agreement created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in createAgreement:', error);
+    throw error;
+  }
+};
 
 export const uploadImportFile = async (file: File) => {
   const fileExt = file.name.split(".").pop();
@@ -21,7 +54,7 @@ export const createImportLog = async (fileName: string) => {
     .from("import_logs")
     .insert({
       file_name: fileName,
-      import_type: "payments",
+      import_type: "agreements",
       status: "pending",
     });
 
@@ -29,10 +62,8 @@ export const createImportLog = async (fileName: string) => {
 };
 
 export const processImport = async (fileName: string) => {
-  return retryImportOperation(async () => {
-    return supabase.functions.invoke('process-payment-import', {
-      body: { fileName }
-    });
+  return supabase.functions.invoke('process-agreement-import', {
+    body: { fileName }
   });
 };
 
