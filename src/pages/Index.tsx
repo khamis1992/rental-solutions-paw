@@ -24,31 +24,29 @@ interface ExtendedPerformance extends Performance {
 const Index = () => {
   const queryClient = useQueryClient();
   const cpuMonitoringInterval = useRef<NodeJS.Timeout>();
+  const memoryMonitoringInterval = useRef<NodeJS.Timeout>();
   const diskMonitoringInterval = useRef<NodeJS.Timeout>();
 
   const monitorCPU = async () => {
     try {
       const cpuUsage = await measureCPUUsage();
       await performanceMetrics.trackCPUUtilization(cpuUsage);
-      
-      if (cpuUsage > 80) {
-        toast.warning("High CPU Usage", {
-          description: `Current CPU utilization is ${cpuUsage.toFixed(1)}%`
-        });
-      }
     } catch (error) {
       console.error('Failed to monitor CPU:', error);
     }
   };
 
+  const monitorMemory = async () => {
+    try {
+      await performanceMetrics.trackMemoryUsage();
+    } catch (error) {
+      console.error('Failed to monitor memory:', error);
+    }
+  };
+
   const monitorDiskIO = async () => {
     try {
-      const diskMetrics = await performanceMetrics.trackDiskIO();
-      if (diskMetrics && diskMetrics.value > 80) {
-        toast.warning("High Storage Usage", {
-          description: `Storage usage is at ${diskMetrics.value.toFixed(1)}%`
-        });
-      }
+      await performanceMetrics.trackDiskIO();
     } catch (error) {
       console.error('Failed to monitor disk I/O:', error);
     }
@@ -138,9 +136,10 @@ const Index = () => {
         .subscribe()
     ];
 
-    // Start CPU and disk monitoring
-    cpuMonitoringInterval.current = setInterval(monitorCPU, 5000);
-    diskMonitoringInterval.current = setInterval(monitorDiskIO, 60000); // Check disk usage every minute
+    // Start performance monitoring
+    cpuMonitoringInterval.current = setInterval(monitorCPU, 5000); // Every 5 seconds
+    memoryMonitoringInterval.current = setInterval(monitorMemory, 5000); // Every 5 seconds
+    diskMonitoringInterval.current = setInterval(monitorDiskIO, 60000); // Every minute
 
     // Error handling for real-time subscriptions
     channels.forEach(channel => {
@@ -154,6 +153,9 @@ const Index = () => {
       channels.forEach(channel => supabase.removeChannel(channel));
       if (cpuMonitoringInterval.current) {
         clearInterval(cpuMonitoringInterval.current);
+      }
+      if (memoryMonitoringInterval.current) {
+        clearInterval(memoryMonitoringInterval.current);
       }
       if (diskMonitoringInterval.current) {
         clearInterval(diskMonitoringInterval.current);
