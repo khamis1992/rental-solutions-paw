@@ -27,17 +27,17 @@ export const WelcomeHeader = () => {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-lg border bg-background p-8">
+    <div className="relative overflow-hidden rounded-xl border bg-gradient-to-r from-violet-50 to-fuchsia-50 p-8">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
             {getCurrentTimeGreeting()}, {profile?.full_name || 'User'}
           </h1>
           <p className="text-muted-foreground">
             Here's what's happening with your rental fleet today.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="flex items-center gap-2 text-muted-foreground bg-white/50 px-4 py-2 rounded-lg backdrop-blur-sm">
           <Clock className="h-4 w-4" />
           <span className="text-sm">
             {new Date().toLocaleDateString('en-US', { 

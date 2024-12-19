@@ -1,11 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
   title: string;
   value: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   description?: React.ReactNode;
+  trend?: "up" | "down";
   className?: string;
 }
 
@@ -14,20 +15,33 @@ export const StatsCard = ({
   value,
   icon: Icon,
   description,
+  trend,
   className,
 }: StatsCardProps) => {
   return (
-    <Card className={cn("", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-center w-full">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-      </CardHeader>
-      <CardContent className="flex flex-col items-center">
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <div className="text-xs text-muted-foreground mt-1 text-center">{description}</div>
-        )}
-      </CardContent>
-    </Card>
+    <div className={cn(
+      "rounded-xl border bg-gradient-to-br from-white to-gray-50/50 p-6 transition-all hover:shadow-lg",
+      className
+    )}>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+          {description && (
+            <p className="text-xs text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </div>
+        <div className={cn(
+          "rounded-lg p-2",
+          trend === "up" ? "bg-emerald-50 text-emerald-600" :
+          trend === "down" ? "bg-rose-50 text-rose-600" :
+          "bg-blue-50 text-blue-600"
+        )}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
   );
 };
