@@ -866,6 +866,53 @@ export type Database = {
         }
         Relationships: []
       }
+      optimized_routes: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          optimization_score: number | null
+          route_order: number[]
+          schedule_ids: string[]
+          total_distance: number | null
+          total_duration: number | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          optimization_score?: number | null
+          route_order: number[]
+          schedule_ids: string[]
+          total_distance?: number | null
+          total_duration?: number | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          optimization_score?: number | null
+          route_order?: number[]
+          schedule_ids?: string[]
+          total_distance?: number | null
+          total_duration?: number | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimized_routes_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_history: {
         Row: {
           actual_payment_date: string | null
@@ -1555,6 +1602,63 @@ export type Database = {
           },
           {
             foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_schedules: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          location_address: string
+          location_coordinates: unknown | null
+          route_optimization_data: Json | null
+          schedule_type: string
+          scheduled_time: string
+          status: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          location_address: string
+          location_coordinates?: unknown | null
+          route_optimization_data?: Json | null
+          schedule_type: string
+          scheduled_time: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          location_address?: string
+          location_coordinates?: unknown | null
+          route_optimization_data?: Json | null
+          schedule_type?: string
+          scheduled_time?: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_schedules_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
