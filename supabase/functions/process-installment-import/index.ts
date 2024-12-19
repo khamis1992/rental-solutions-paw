@@ -7,14 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 }
 
-interface InstallmentRow {
-  'N°cheque': string;
-  'Amount': string;
-  'Date': string;
-  'Drawee Bank': string;
-  'sold': string;
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -64,20 +56,27 @@ serve(async (req) => {
       const row = headers.reduce((obj: any, header, index) => {
         obj[header] = values[index]
         return obj
-      }, {}) as InstallmentRow
+      }, {}) as {
+        'N°cheque': string;
+        'Amount': string;
+        'Date': string;
+        'Drawee Bank': string;
+        'sold': string;
+      }
 
       try {
-        // Parse amount - remove 'QAR' and convert to number
-        const amount = parseFloat(row['Amount'].replace('QAR', '').replace(/,/g, '').trim())
+        // Parse amount - handle the specific format "QAR XX,XXX.XXX"
+        const amountStr = row['Amount'].replace(/['"]/g, '').trim()
+        const amount = parseFloat(amountStr.replace('QAR', '').replace(/,/g, '').trim())
         if (isNaN(amount)) {
-          throw new Error(`Invalid amount in row ${i}`)
+          throw new Error(`Invalid amount format in row ${i}: ${amountStr}`)
         }
-        
-        // Parse date - convert from DD/MM/YY format to ISO date
+
+        // Parse date - handle the specific format "DD/MM/YYYY"
         const [day, month, year] = row['Date'].split('/')
-        const date = new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day))
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
         if (isNaN(date.getTime())) {
-          throw new Error(`Invalid date format in row ${i}`)
+          throw new Error(`Invalid date format in row ${i}: ${row['Date']}`)
         }
 
         processedRows.push({
