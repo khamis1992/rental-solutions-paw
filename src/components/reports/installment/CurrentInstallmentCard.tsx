@@ -5,6 +5,14 @@ import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const CurrentInstallmentCard = () => {
   const { data: currentInstallments, isLoading } = useQuery({
@@ -39,7 +47,7 @@ export const CurrentInstallmentCard = () => {
           <CardTitle>Current Installments</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[100px] w-full" />
+          <Skeleton className="h-[200px] w-full" />
         </CardContent>
       </Card>
     );
@@ -57,32 +65,42 @@ export const CurrentInstallmentCard = () => {
             <AlertDescription>No upcoming installments found.</AlertDescription>
           </Alert>
         ) : (
-          <div className="space-y-4">
-            {currentInstallments?.map((installment) => (
-              <div
-                key={installment.id}
-                className="flex items-center justify-between p-4 rounded-lg border"
-              >
-                <div className="space-y-1">
-                  <p className="font-medium">
-                    Agreement #{installment.lease.agreement_number}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {installment.lease.customer.full_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Due: {new Date(installment.due_date).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">{formatCurrency(installment.amount)}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Status: {installment.status.charAt(0).toUpperCase() + installment.status.slice(1)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Agreement #</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentInstallments?.map((installment) => (
+                <TableRow key={installment.id}>
+                  <TableCell className="font-medium">
+                    {installment.lease.agreement_number}
+                  </TableCell>
+                  <TableCell>{installment.lease.customer.full_name}</TableCell>
+                  <TableCell>
+                    {new Date(installment.due_date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{formatCurrency(installment.amount)}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      installment.status === 'completed' 
+                        ? 'bg-green-100 text-green-800'
+                        : installment.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {installment.status.charAt(0).toUpperCase() + installment.status.slice(1)}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>
