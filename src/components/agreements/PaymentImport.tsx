@@ -5,20 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { retryOperation } from "./utils/retryUtils";
-
-interface ImportErrors {
-  skipped: Array<{
-    row: number;
-    data: Record<string, any>;
-    reason: string;
-  }>;
-  failed: Array<{
-    row: number;
-    data?: Record<string, any>;
-    error: string;
-  }>;
-}
+import { ImportErrors } from "./utils/importTypes";
+import { parseImportErrors, retryImportOperation } from "./utils/importUtils";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -79,10 +67,11 @@ export const PaymentImport = () => {
       }
 
       console.log('Starting import process via Edge Function...');
-      const { data: functionResponse, error: functionError } = await supabase.functions
-        .invoke('process-payment-import', {
+      const { data: functionResponse, error: functionError } = await retryImportOperation(async () => {
+        return supabase.functions.invoke('process-payment-import', {
           body: { fileName }
         });
+      });
 
       if (functionError) {
         console.error('Edge Function error:', functionError);
@@ -105,10 +94,7 @@ export const PaymentImport = () => {
             clearInterval(pollInterval);
             
             // Parse errors object safely
-            let errors: ImportErrors | null = null;
-            if (importLog.errors && typeof importLog.errors === 'object') {
-              errors = importLog.errors as ImportErrors;
-            }
+            const errors = importLog.errors ? parseImportErrors(importLog.errors) : null;
             
             // Show detailed import results
             const skippedCount = errors?.skipped?.length ?? 0;
