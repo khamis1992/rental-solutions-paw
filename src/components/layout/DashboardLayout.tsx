@@ -8,7 +8,7 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-[#F1F0FB]">
       {/* Sidebar - Always visible on desktop */}
       <div className="fixed left-0 top-0 z-40 h-full w-64">
         <DashboardSidebar />
@@ -17,8 +17,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen ml-64">
         <DashboardHeader />
-        <main className="flex-1 overflow-auto bg-background p-8">
-          <div className="mx-auto max-w-6xl w-full">
+        <main className="flex-1 overflow-auto p-8">
+          <div className="mx-auto max-w-7xl w-full">
             {children}
           </div>
         </main>
