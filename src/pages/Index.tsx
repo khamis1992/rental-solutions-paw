@@ -1,125 +1,39 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
+import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { performanceMetrics } from "@/services/performanceMonitoring";
 
-const Index = () => {
-  const queryClient = useQueryClient();
-
+export default function Index() {
   useEffect(() => {
-    // Set up real-time subscriptions for dashboard data
-    const channels = [
-      // Vehicle status changes
-      supabase
-        .channel('vehicle-status-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'vehicles' },
-          async () => {
-            console.log('Vehicle status changed, refreshing stats...');
-            await queryClient.invalidateQueries({
-              queryKey: ['vehicle-status-counts'],
-              type: 'all',
-              exact: true
-            });
-          }
-        )
-        .subscribe(),
-
-      // Rental updates
-      supabase
-        .channel('rental-updates')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'leases' },
-          async () => {
-            console.log('Rental status changed, refreshing upcoming rentals...');
-            await queryClient.invalidateQueries({
-              queryKey: ['upcoming-rentals'],
-              type: 'all',
-              exact: true
-            });
-          }
-        )
-        .subscribe(),
-
-      // Alert updates
-      supabase
-        .channel('alert-updates')
-        .on(
-          'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'maintenance',
-            filter: "status=in.(scheduled,in_progress)" 
-          },
-          async () => {
-            console.log('Maintenance alert changed, refreshing alerts...');
-            await queryClient.invalidateQueries({
-              queryKey: ['dashboard-alerts'],
-              type: 'all',
-              exact: true
-            });
-          }
-        )
-        .subscribe()
-    ];
-
-    // Error handling for real-time subscriptions
-    channels.forEach(channel => {
-      channel.on('error', (error) => {
-        console.error('Realtime subscription error:', error);
-        toast.error('Error in real-time updates. Trying to reconnect...');
-      });
-    });
-
-    return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
-    };
-  }, [queryClient]);
+    // Start CPU monitoring when dashboard loads
+    const stopMonitoring = performanceMetrics.startCPUMonitoring();
+    
+    // Cleanup when component unmounts
+    return () => stopMonitoring();
+  }, []);
 
   return (
-    <DashboardLayout>
-      {/* Welcome Section */}
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <DashboardHeader />
       <WelcomeHeader />
-      
-      {/* KPI Cards */}
-      <DashboardStats />
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
-        {/* Upcoming Rentals - Spans 4 columns */}
-        <div className="lg:col-span-4">
-          <UpcomingRentals />
-        </div>
-
-        {/* Alerts & Notifications - Spans 3 columns */}
-        <div className="lg:col-span-3">
-          <DashboardAlerts />
-        </div>
+      <DashboardAlerts />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <DashboardStats />
       </div>
-
-      {/* Recent Activity and Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent Activity - Spans 4 columns */}
-        <div className="lg:col-span-4">
-          <RecentActivity />
-        </div>
-
-        {/* Quick Actions Section */}
-        <div className="lg:col-span-3">
-          <QuickActions />
-        </div>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
+        <VehicleStatusChart />
+        <QuickActions />
       </div>
-    </DashboardLayout>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+        <UpcomingRentals />
+        <RecentActivity />
+      </div>
+    </div>
   );
-};
-
-export default Index;
+}
