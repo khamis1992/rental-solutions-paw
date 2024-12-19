@@ -4,6 +4,17 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+}
+
+interface PaymentRow {
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  status: string;
+  description?: string;
+  transaction_id?: string;
+  lease_id: string;
 }
 
 serve(async (req) => {
@@ -41,6 +52,7 @@ serve(async (req) => {
       .download(fileName)
 
     if (downloadError) {
+      console.error('Download error:', downloadError)
       throw downloadError
     }
 
@@ -76,7 +88,7 @@ serve(async (req) => {
       const row = headers.reduce((obj: any, header, index) => {
         obj[header] = values[index]
         return obj
-      }, {})
+      }, {}) as PaymentRow
 
       try {
         // Validate lease_id
@@ -102,7 +114,7 @@ serve(async (req) => {
         }
 
         // Validate amount
-        const amount = parseFloat(row.amount)
+        const amount = parseFloat(row.amount.toString())
         if (isNaN(amount)) {
           throw new Error(`Invalid amount in row ${i}`)
         }
@@ -117,9 +129,11 @@ serve(async (req) => {
           lease_id: row.lease_id
         })
       } catch (error) {
+        console.error(`Error processing row ${i}:`, error)
         errors.push({
           row: i,
-          error: error.message
+          error: error.message,
+          data: row
         })
       }
     }
@@ -131,6 +145,7 @@ serve(async (req) => {
         .insert(processedRows)
 
       if (insertError) {
+        console.error('Insert error:', insertError)
         throw insertError
       }
     }
@@ -151,7 +166,10 @@ serve(async (req) => {
         processed: processedRows.length,
         errors
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     )
 
   } catch (error) {
