@@ -52,6 +52,13 @@ export type Database = {
             foreignKeyName: "agreement_documents_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -190,6 +197,13 @@ export type Database = {
             foreignKeyName: "ai_payment_analysis_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_payment_analysis_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -309,6 +323,13 @@ export type Database = {
             foreignKeyName: "audit_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -398,6 +419,13 @@ export type Database = {
             foreignKeyName: "credit_assessments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -432,6 +460,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "csv_import_mappings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "csv_import_mappings_created_by_fkey"
             columns: ["created_by"]
@@ -471,7 +506,21 @@ export type Database = {
             foreignKeyName: "customer_notes_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
             referencedColumns: ["id"]
           },
           {
@@ -786,6 +835,13 @@ export type Database = {
             foreignKeyName: "leases_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1092,7 +1148,21 @@ export type Database = {
             foreignKeyName: "payment_matching_logs_admin_reviewed_by_fkey"
             columns: ["admin_reviewed_by"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_matching_logs_admin_reviewed_by_fkey"
+            columns: ["admin_reviewed_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_matching_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
             referencedColumns: ["id"]
           },
           {
@@ -1555,6 +1625,13 @@ export type Database = {
             foreignKeyName: "risk_assessments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: true
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risk_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1790,6 +1867,13 @@ export type Database = {
             foreignKeyName: "vehicle_schedules_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1929,7 +2013,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      customer_statuses: {
+        Row: {
+          full_name: string | null
+          id: string | null
+          status: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          id?: string | null
+          status?: never
+        }
+        Update: {
+          full_name?: string | null
+          id?: string | null
+          status?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_credit_score: {
@@ -1945,6 +2046,12 @@ export type Database = {
           p_customer_id: string
         }
         Returns: number
+      }
+      has_active_agreements: {
+        Args: {
+          customer_id: string
+        }
+        Returns: boolean
       }
       log_audit_event: {
         Args: {
