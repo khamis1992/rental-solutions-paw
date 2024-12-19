@@ -99,8 +99,9 @@ export const DashboardSidebar = () => {
     return (
       <Sidebar>
         <SidebarContent>
-          <div className="flex h-14 items-center border-b px-6">
-            <span className="font-semibold">Rental Solutions</span>
+          <div className="flex h-14 items-center border-b px-6 flex-col justify-center">
+            <span className="font-bold text-lg">Rental</span>
+            <span className="font-semibold text-sm">Solutions</span>
           </div>
           <div className="p-4">Loading...</div>
         </SidebarContent>
@@ -111,8 +112,9 @@ export const DashboardSidebar = () => {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="flex h-14 items-center border-b px-6">
-          <span className="font-semibold">Rental Solutions</span>
+        <div className="flex h-14 items-center border-b px-6 flex-col justify-center">
+          <span className="font-bold text-lg">Rental</span>
+          <span className="font-semibold text-sm">Solutions</span>
         </div>
         <SidebarGroup>
           <SidebarGroupContent>
