@@ -1,62 +1,79 @@
 import { useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ContractNameDialog } from "./ContractNameDialog";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export function InstallmentImport() {
   const [isUploading, setIsUploading] = useState(false);
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const { toast } = useToast();
 
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: {
-      'text/csv': ['.csv']
-    },
-    maxFiles: 1,
-    onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length === 0) return;
-
-      setIsUploading(true);
-      const file = acceptedFiles[0];
-
-      try {
-        const { data: uploadData, error: uploadError } = await supabase
-          .storage
-          .from('imports')
-          .upload(`installments/${Date.now()}_${file.name}`, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: processingData, error: processingError } = await supabase
-          .functions
-          .invoke('process-installment-import', {
-            body: { filePath: uploadData.path }
-          });
-
-        if (processingError) throw processingError;
-
-        toast.success("Installments imported successfully");
-      } catch (error) {
-        console.error('Import error:', error);
-        toast.error("Failed to import installments");
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  });
-
-  const downloadTemplate = () => {
-    const csvContent = "N°cheque,Amount,Date,Drawee Bank,sold\n" +
-                      "12345,QAR 100000.000,July-24,QNB,QAR 100000.000";
+  const handleContractSubmit = async (contractName: string) => {
+    // Open file input after contract name is submitted
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
     
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'installment_template.csv');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        await handleFileUpload(file, contractName);
+      }
+    };
+    
+    input.click();
+    setShowContractDialog(false);
+  };
+
+  const handleFileUpload = async (file: File, contractName: string) => {
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileName = `installments/${Date.now()}_${file.name}`;
+      
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('imports')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Process the file with contract name
+      const { data: processingData, error: processingError } = await supabase
+        .functions
+        .invoke('process-installment-import', {
+          body: { 
+            filePath: fileName,
+            contractName: contractName
+          }
+        });
+
+      if (processingError) throw processingError;
+
+      toast({
+        title: "Success",
+        description: "Installments imported successfully",
+      });
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import Failed",
+        description: error.message || "Failed to import installments",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -65,24 +82,18 @@ export function InstallmentImport() {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Import Installments</h3>
           <Button 
-            variant="outline" 
-            onClick={downloadTemplate}
+            onClick={() => setShowContractDialog(true)}
+            disabled={isUploading}
           >
-            Download Template
+            {isUploading ? "Uploading..." : "Import CSV"}
           </Button>
         </div>
 
-        <div
-          {...getRootProps()}
-          className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
-        >
-          <input {...getInputProps()} />
-          {isUploading ? (
-            <p>Uploading...</p>
-          ) : (
-            <p>Drag and drop a CSV file here, or click to select one</p>
-          )}
-        </div>
+        <ContractNameDialog
+          open={showContractDialog}
+          onOpenChange={setShowContractDialog}
+          onSubmit={handleContractSubmit}
+        />
       </div>
     </Card>
   );

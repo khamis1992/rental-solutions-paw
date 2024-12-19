@@ -10,7 +10,11 @@ serve(async (req) => {
   }
 
   try {
-    const { filePath } = await req.json()
+    const { filePath, contractName } = await req.json()
+
+    if (!contractName) {
+      throw new Error('Contract name is required')
+    }
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -47,13 +51,14 @@ serve(async (req) => {
         const [month, year] = rowData['Date'].split('-');
         const date = new Date(`20${year}`, getMonthNumber(month), 1);
         
-        // Insert payment schedule
+        // Insert payment schedule with contract name
         const { error: insertError } = await supabaseClient
           .from('payment_schedules')
           .insert({
             amount: amount,
             due_date: date.toISOString(),
             status: 'pending',
+            contract_name: contractName,
             metadata: {
               cheque_number: rowData['N°cheque'],
               drawee_bank: rowData['Drawee Bank'],
