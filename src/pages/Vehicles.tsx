@@ -108,7 +108,7 @@ const Vehicles = () => {
         <div className="flex gap-4">
           <Button
             variant="default"
-            className="bg-[#0A1A3B] hover:bg-[#0A1A3B]/90"
+            className="bg-[#0F172A] hover:bg-[#0F172A]/90 text-white font-medium px-6 py-2.5 rounded-lg"
             onClick={handleExportToExcel}
           >
             <Download className="mr-2 h-4 w-4" />
