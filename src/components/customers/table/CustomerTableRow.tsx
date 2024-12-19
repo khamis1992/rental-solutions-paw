@@ -25,13 +25,25 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
       <TableCell>{customer.driver_license || 'N/A'}</TableCell>
       <TableCell className="flex gap-2">
         {customer.id_document_url && (
-          <FileText className="h-4 w-4 text-green-500" aria-label="ID Document" />
+          <FileText 
+            className="h-4 w-4 text-green-500" 
+            aria-label="ID Document"
+            title="ID Document Available"
+          />
         )}
         {customer.license_document_url && (
-          <FileText className="h-4 w-4 text-blue-500" aria-label="License Document" />
+          <FileText 
+            className="h-4 w-4 text-blue-500" 
+            aria-label="License Document"
+            title="License Document Available"
+          />
         )}
         {customer.contract_document_url && (
-          <FileText className="h-4 w-4 text-orange-500" aria-label="Contract Document" />
+          <FileText 
+            className="h-4 w-4 text-orange-500" 
+            aria-label="Contract Document"
+            title="Contract Document Available"
+          />
         )}
       </TableCell>
       <TableCell>

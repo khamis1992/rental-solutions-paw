@@ -16,26 +16,44 @@ const ITEMS_PER_PAGE = 10;
 
 export const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  const { data: customers = [], isLoading, error } = useCustomers(searchQuery);
+  const { data, isLoading, error } = useCustomers({
+    searchQuery,
+    page: currentPage,
+    pageSize: ITEMS_PER_PAGE
+  });
+
+  const customers = data?.customers || [];
+  const totalCount = data?.totalCount || 0;
 
   const filteredCustomers = customers.filter(customer => 
     roleFilter === "all" || customer.role === roleFilter
   );
 
-  const totalPages = Math.ceil((filteredCustomers?.length || 0) / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentCustomers = filteredCustomers?.slice(startIndex, endIndex) || [];
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const handleCustomerClick = (customerId: string) => {
     setSelectedCustomerId(customerId);
     setShowDetailsDialog(true);
   };
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <CustomerFilters 
+          onSearchChange={setSearchQuery}
+          onRoleFilter={setRoleFilter}
+        />
+        <div className="text-center py-8 text-red-500">
+          Error loading customers. Please try again.
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -88,7 +106,7 @@ export const CustomerList = () => {
         <Table>
           <CustomerTableHeader />
           <TableBody>
-            {currentCustomers.map((customer) => (
+            {filteredCustomers.map((customer) => (
               <CustomerTableRow 
                 key={customer.id}
                 customer={customer}
@@ -101,9 +119,9 @@ export const CustomerList = () => {
 
       <div className="flex justify-center mt-4">
         <VehicleTablePagination
-          currentPage={currentPage}
+          currentPage={currentPage + 1}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={(page) => setCurrentPage(page - 1)}
         />
       </div>
 
