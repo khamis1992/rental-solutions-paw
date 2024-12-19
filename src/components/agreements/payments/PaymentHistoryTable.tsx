@@ -55,6 +55,8 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
+          <TableHead>Customer</TableHead>
+          <TableHead>Agreement</TableHead>
           <TableHead>Type</TableHead>
           <TableHead>Amount</TableHead>
           <TableHead>Status</TableHead>
@@ -67,6 +69,12 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
           <TableRow key={payment.id}>
             <TableCell>
               {format(new Date(payment.created_at), "PP")}
+            </TableCell>
+            <TableCell>
+              {payment.leases?.profiles?.full_name || "N/A"}
+            </TableCell>
+            <TableCell>
+              {payment.leases?.agreement_number || "N/A"}
             </TableCell>
             <TableCell>
               {payment.security_deposits ? "Security Deposit" : "Payment"}

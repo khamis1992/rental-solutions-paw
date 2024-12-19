@@ -31,6 +31,8 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
+      console.log("Fetching payments for agreement:", agreementId);
+      
       const query = supabase
         .from("payments")
         .select(`
@@ -38,6 +40,13 @@ export function PaymentHistoryDialog({
           security_deposits (
             amount,
             status
+          ),
+          leases (
+            agreement_number,
+            customer_id,
+            profiles (
+              full_name
+            )
           )
         `)
         .order("created_at", { ascending: false });
@@ -48,7 +57,12 @@ export function PaymentHistoryDialog({
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+
+      console.log("Fetched payments:", data);
       return data;
     },
     enabled: open,
@@ -58,6 +72,7 @@ export function PaymentHistoryDialog({
   useEffect(() => {
     if (!open) return;
 
+    console.log("Setting up real-time subscription for payments");
     const channel = supabase
       .channel('payment-history-changes')
       .on(
@@ -92,6 +107,7 @@ export function PaymentHistoryDialog({
 
     // Cleanup subscription on unmount or when dialog closes
     return () => {
+      console.log("Cleaning up payment subscription");
       supabase.removeChannel(channel);
     };
   }, [agreementId, open, queryClient]);
