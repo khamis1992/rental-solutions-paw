@@ -813,7 +813,6 @@ export type Database = {
       performance_metrics: {
         Row: {
           context: Json | null
-          cpu_utilization: number | null
           id: string
           metric_type: string
           timestamp: string | null
@@ -821,7 +820,6 @@ export type Database = {
         }
         Insert: {
           context?: Json | null
-          cpu_utilization?: number | null
           id?: string
           metric_type: string
           timestamp?: string | null
@@ -829,7 +827,6 @@ export type Database = {
         }
         Update: {
           context?: Json | null
-          cpu_utilization?: number | null
           id?: string
           metric_type?: string
           timestamp?: string | null
