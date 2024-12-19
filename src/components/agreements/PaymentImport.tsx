@@ -28,7 +28,7 @@ export const PaymentImport = () => {
     if (file.type !== "text/csv") {
       toast({
         title: "Error",
-        description: "Please upload a CSV file",
+        description: "Please upload a CSV file with the following headers: Amount, Payment_Date, Payment_Method, Status, Lease_ID",
         variant: "destructive",
       });
       return;
@@ -57,7 +57,7 @@ export const PaymentImport = () => {
       console.error('Analysis error:', error);
       toast({
         title: "Error",
-        description: "Failed to analyze file",
+        description: "Failed to analyze file. Make sure the CSV includes a Lease_ID column.",
         variant: "destructive",
       });
     } finally {
@@ -159,8 +159,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID\n" +
-                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001";
+    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
+                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

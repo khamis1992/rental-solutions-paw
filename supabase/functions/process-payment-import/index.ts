@@ -9,6 +9,7 @@ interface PaymentRow {
   status: string;
   description?: string;
   transaction_id?: string;
+  lease_id?: string; // Make lease_id optional in the interface
 }
 
 serve(async (req) => {
@@ -35,14 +36,14 @@ serve(async (req) => {
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
     // Validate required headers
-    const requiredHeaders = ['amount', 'payment_date', 'payment_method', 'status'];
+    const requiredHeaders = ['amount', 'payment_date', 'payment_method', 'status', 'lease_id'];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
     if (missingHeaders.length > 0) {
       return new Response(
         JSON.stringify({
           error: 'Missing required headers',
-          details: missingHeaders
+          details: `Missing headers: ${missingHeaders.join(', ')}. The lease_id column is required.`
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -67,6 +68,22 @@ serve(async (req) => {
       });
 
       try {
+        // Validate lease_id
+        if (!row.lease_id) {
+          throw new Error(`Missing lease_id in row ${i}`);
+        }
+
+        // Verify lease exists
+        const { data: leaseExists, error: leaseError } = await supabase
+          .from('leases')
+          .select('id')
+          .eq('id', row.lease_id)
+          .single();
+
+        if (leaseError || !leaseExists) {
+          throw new Error(`Invalid lease_id in row ${i}: ${row.lease_id}`);
+        }
+
         // Validate and parse date
         const paymentDate = new Date(row.payment_date);
         if (isNaN(paymentDate.getTime())) {
@@ -85,7 +102,8 @@ serve(async (req) => {
           payment_method: row.payment_method,
           status: row.status,
           description: row.description || null,
-          transaction_id: row.transaction_id || null
+          transaction_id: row.transaction_id || null,
+          lease_id: row.lease_id
         });
       } catch (error) {
         errors.push({
