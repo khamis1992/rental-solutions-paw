@@ -109,11 +109,8 @@ export const useSmartAlerts = () => {
 
     return () => {
       channels.forEach(channel => {
-        supabase.removeChannel(channel).then(() => {
-          console.log('Alert channel removed successfully');
-        }).catch(error => {
-          console.error('Error removing alert channel:', error);
-        });
+        channel.unsubscribe();
+        supabase.removeChannel(channel, true, true);
       });
     };
   }, []);
