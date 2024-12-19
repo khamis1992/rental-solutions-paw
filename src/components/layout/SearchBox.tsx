@@ -12,42 +12,53 @@ import {
 } from "@/components/ui/command";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const SearchBox = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  const { data: searchResults } = useQuery({
+  const { data: searchResults, error } = useQuery({
     queryKey: ["search", searchQuery],
     queryFn: async () => {
-      if (!searchQuery) return { vehicles: [], customers: [], agreements: [] };
+      if (!searchQuery || searchQuery.length < 2) return { vehicles: [], customers: [], agreements: [] };
 
-      const [vehiclesResponse, customersResponse, agreementsResponse] = await Promise.all([
-        supabase
-          .from("vehicles")
-          .select("id, make, model, year, license_plate")
-          .or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,license_plate.ilike.%${searchQuery}%`)
-          .limit(5),
-        supabase
-          .from("profiles")
-          .select("id, full_name")
-          .ilike("full_name", `%${searchQuery}%`)
-          .limit(5),
-        supabase
-          .from("leases")
-          .select("id, agreement_number")
-          .ilike("agreement_number", `%${searchQuery}%`)
-          .limit(5),
-      ]);
+      try {
+        const [vehiclesResponse, customersResponse, agreementsResponse] = await Promise.all([
+          supabase
+            .from("vehicles")
+            .select("id, make, model, year, license_plate")
+            .or(`make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,license_plate.ilike.%${searchQuery}%`)
+            .limit(5),
+          supabase
+            .from("profiles")
+            .select("id, full_name")
+            .ilike("full_name", `%${searchQuery}%`)
+            .limit(5),
+          supabase
+            .from("leases")
+            .select("id, agreement_number")
+            .ilike("agreement_number", `%${searchQuery}%`)
+            .limit(5),
+        ]);
 
-      return {
-        vehicles: vehiclesResponse.data || [],
-        customers: customersResponse.data || [],
-        agreements: agreementsResponse.data || [],
-      };
+        if (vehiclesResponse.error) throw vehiclesResponse.error;
+        if (customersResponse.error) throw customersResponse.error;
+        if (agreementsResponse.error) throw agreementsResponse.error;
+
+        return {
+          vehicles: vehiclesResponse.data || [],
+          customers: customersResponse.data || [],
+          agreements: agreementsResponse.data || [],
+        };
+      } catch (err) {
+        console.error("Search error:", err);
+        toast.error("Error performing search");
+        return { vehicles: [], customers: [], agreements: [] };
+      }
     },
-    enabled: searchQuery.length > 0,
+    enabled: searchQuery.length >= 2,
   });
 
   const handleSelect = (type: string, id: string) => {
@@ -64,6 +75,12 @@ export const SearchBox = () => {
         break;
     }
   };
+
+  const hasResults = searchResults && (
+    searchResults.vehicles.length > 0 ||
+    searchResults.customers.length > 0 ||
+    searchResults.agreements.length > 0
+  );
 
   return (
     <>
@@ -84,8 +101,13 @@ export const SearchBox = () => {
           onValueChange={setSearchQuery}
         />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {searchResults && (
+          {searchQuery.length < 2 ? (
+            <CommandEmpty>Type at least 2 characters to search...</CommandEmpty>
+          ) : error ? (
+            <CommandEmpty>Error performing search. Please try again.</CommandEmpty>
+          ) : !hasResults ? (
+            <CommandEmpty>No results found.</CommandEmpty>
+          ) : (
             <>
               {searchResults.vehicles.length > 0 && (
                 <CommandGroup heading="Vehicles">
