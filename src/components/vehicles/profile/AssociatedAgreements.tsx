@@ -12,12 +12,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { useState } from "react";
+import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
+import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
 
 interface AssociatedAgreementsProps {
   vehicleId: string;
 }
 
 export const AssociatedAgreements = ({ vehicleId }: AssociatedAgreementsProps) => {
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
+
   const { data: agreements, isLoading } = useQuery({
     queryKey: ["agreements", vehicleId],
     queryFn: async () => {
@@ -26,6 +32,7 @@ export const AssociatedAgreements = ({ vehicleId }: AssociatedAgreementsProps) =
         .select(`
           *,
           profiles:customer_id (
+            id,
             full_name
           )
         `)
@@ -36,6 +43,10 @@ export const AssociatedAgreements = ({ vehicleId }: AssociatedAgreementsProps) =
       return data;
     },
   });
+
+  if (isLoading) {
+    return <div>Loading agreements...</div>;
+  }
 
   return (
     <Card>
@@ -59,8 +70,22 @@ export const AssociatedAgreements = ({ vehicleId }: AssociatedAgreementsProps) =
           <TableBody>
             {agreements?.map((agreement) => (
               <TableRow key={agreement.id}>
-                <TableCell>{agreement.agreement_number}</TableCell>
-                <TableCell>{agreement.profiles?.full_name}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => setSelectedAgreementId(agreement.id)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {agreement.agreement_number}
+                  </button>
+                </TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => setSelectedCustomerId(agreement.customer_id)}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {agreement.profiles?.full_name}
+                  </button>
+                </TableCell>
                 <TableCell>
                   {new Date(agreement.start_date).toLocaleDateString()} -{" "}
                   {new Date(agreement.end_date).toLocaleDateString()}
@@ -83,6 +108,18 @@ export const AssociatedAgreements = ({ vehicleId }: AssociatedAgreementsProps) =
             ))}
           </TableBody>
         </Table>
+
+        <CustomerDetailsDialog
+          customerId={selectedCustomerId || ""}
+          open={!!selectedCustomerId}
+          onOpenChange={(open) => !open && setSelectedCustomerId(null)}
+        />
+
+        <AgreementDetailsDialog
+          agreementId={selectedAgreementId || ""}
+          open={!!selectedAgreementId}
+          onOpenChange={(open) => !open && setSelectedAgreementId(null)}
+        />
       </CardContent>
     </Card>
   );
