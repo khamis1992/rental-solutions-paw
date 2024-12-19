@@ -46,27 +46,47 @@ export const findCustomerWithActiveLease = async (
   };
 };
 
+const parseDate = (dateStr: string): Date => {
+  // Expected format: DD-MM-YYYY
+  const [day, month, year] = dateStr.split('-').map(num => parseInt(num, 10));
+  
+  // Create date using local timezone to avoid UTC conversion issues
+  const date = new Date(year, month - 1, day);
+  
+  // Validate the date
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date format: ${dateStr}. Expected format: DD-MM-YYYY`);
+  }
+  
+  return date;
+};
+
 export const createPaymentRecord = async (
   supabase: any,
   leaseId: string,
   paymentData: PaymentData
 ) => {
-  const [day, month, year] = paymentData.paymentDate.split('-');
-  const isoDate = `${year}-${month}-${day}`;
+  try {
+    const paymentDate = parseDate(paymentData.paymentDate);
+    console.log('Parsed payment date:', paymentDate);
 
-  const { error: paymentError } = await supabase
-    .from('payments')
-    .insert({
-      lease_id: leaseId,
-      amount: paymentData.amount,
-      status: paymentData.status,
-      payment_date: new Date(isoDate).toISOString(),
-      payment_method: paymentData.paymentMethod,
-      transaction_id: paymentData.paymentNumber,
-    });
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        lease_id: leaseId,
+        amount: paymentData.amount,
+        status: paymentData.status,
+        payment_date: paymentDate.toISOString(),
+        payment_method: paymentData.paymentMethod,
+        transaction_id: paymentData.paymentNumber,
+      });
 
-  if (paymentError) {
-    throw paymentError;
+    if (paymentError) {
+      throw paymentError;
+    }
+  } catch (error) {
+    console.error('Error creating payment record:', error);
+    throw error;
   }
 };
 
