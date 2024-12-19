@@ -12,6 +12,7 @@ import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import CustomerProfile from "@/pages/CustomerProfile";
 import Legal from "@/pages/Legal";
+import Finance from "@/pages/Finance";
 import { VehicleDetails } from "@/components/vehicles/VehicleDetails";
 import { VehicleInspectionForm } from "@/components/maintenance/inspection/VehicleInspectionForm";
 import { useParams } from "react-router-dom";
@@ -96,6 +97,7 @@ function App() {
       <Route path="/agreements" element={<Agreements />} />
       <Route path="/maintenance" element={<Maintenance />} />
       <Route path="/maintenance/:id/inspection" element={<VehicleInspectionWrapper />} />
+      <Route path="/finance" element={<Finance />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/help" element={<Help />} />

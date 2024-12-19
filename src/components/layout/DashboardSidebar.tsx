@@ -1,4 +1,4 @@
-import { Home, Car, Users, FileText, Settings, HelpCircle, Wrench, FilePen, BarChart3, Gavel } from "lucide-react";
+import { Home, Car, Users, FileText, Settings, HelpCircle, Wrench, FilePen, BarChart3, Gavel, Wallet } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +20,7 @@ const baseMenuItems = [
   { icon: Wrench, label: "Maintenance", href: "/maintenance" },
   { icon: Users, label: "Customers", href: "/customers" },
   { icon: FilePen, label: "Agreements", href: "/agreements" },
+  { icon: Wallet, label: "Finance", href: "/finance" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: Gavel, label: "Legal", href: "/legal" },
   { icon: HelpCircle, label: "Help", href: "/help" },
