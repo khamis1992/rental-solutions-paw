@@ -10,6 +10,20 @@ interface PaymentAnalysisProps {
   paymentId: string;
 }
 
+interface PaymentAnalysis {
+  id: string;
+  payment_id: string;
+  analysis_type: string;
+  confidence_score: number;
+  anomaly_detected: boolean;
+  anomaly_details: string[];
+  suggested_corrections: Record<string, string | number>;
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  status: string;
+}
+
 export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["payment-analysis", paymentId],
@@ -23,7 +37,7 @@ export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as PaymentAnalysis;
     },
   });
 
@@ -83,7 +97,7 @@ export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
               </div>
             </div>
 
-            {analysis.anomaly_detected && (
+            {analysis.anomaly_detected && analysis.anomaly_details && (
               <div className="space-y-2">
                 <div className="font-medium">Detected Issues:</div>
                 <div className="space-y-1">
@@ -100,7 +114,7 @@ export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
               </div>
             )}
 
-            {Object.keys(analysis.suggested_corrections || {}).length > 0 && (
+            {analysis.suggested_corrections && Object.keys(analysis.suggested_corrections).length > 0 && (
               <div className="space-y-2">
                 <div className="font-medium">Suggested Corrections:</div>
                 <div className="space-y-1">

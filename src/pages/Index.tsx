@@ -74,12 +74,12 @@ const Index = () => {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'vehicles' },
-          async () => {
+          async (payload) => {
             console.log('Vehicle status changed, refreshing stats...');
             await queryClient.invalidateQueries({
               queryKey: ['vehicle-status-counts'],
               exact: true,
-              refetchType: 'all'
+              type: 'all'
             });
           }
         )
@@ -91,12 +91,12 @@ const Index = () => {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'leases' },
-          async () => {
+          async (payload) => {
             console.log('Rental status changed, refreshing upcoming rentals...');
             await queryClient.invalidateQueries({
               queryKey: ['upcoming-rentals'],
               exact: true,
-              refetchType: 'all'
+              type: 'all'
             });
           }
         )
@@ -113,12 +113,12 @@ const Index = () => {
             table: 'maintenance',
             filter: "status=in.(scheduled,in_progress)" 
           },
-          async () => {
+          async (payload) => {
             console.log('Maintenance alert changed, refreshing alerts...');
             await queryClient.invalidateQueries({
               queryKey: ['dashboard-alerts'],
               exact: true,
-              refetchType: 'all'
+              type: 'all'
             });
           }
         )
