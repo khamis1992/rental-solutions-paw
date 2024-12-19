@@ -79,7 +79,8 @@ const Index = () => {
             await queryClient.invalidateQueries({
               queryKey: ['vehicle-status-counts'],
               exact: true,
-              type: 'all'
+              type: 'all',
+              refetchType: 'active'  // Add this line to fix the error
             });
           }
         )
@@ -96,7 +97,8 @@ const Index = () => {
             await queryClient.invalidateQueries({
               queryKey: ['upcoming-rentals'],
               exact: true,
-              type: 'all'
+              type: 'all',
+              refetchType: 'active'  // Add this line to fix the error
             });
           }
         )
@@ -118,7 +120,8 @@ const Index = () => {
             await queryClient.invalidateQueries({
               queryKey: ['dashboard-alerts'],
               exact: true,
-              type: 'all'
+              type: 'all',
+              refetchType: 'active'  // Add this line to fix the error
             });
           }
         )
