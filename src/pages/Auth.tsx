@@ -56,15 +56,6 @@ export default function Auth() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="w-full max-w-[600px] rounded-lg bg-white p-8 shadow-lg">
-          <div className="mb-8 text-center">
-            <img 
-              src="/lovable-uploads/5ff2d160-bf38-4dbe-ab65-223663cc86b2.png" 
-              alt="Rental Solutions Logo" 
-              className="mx-auto mb-4 h-20 w-20"
-            />
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">Rental Solutions</h1>
-            <p className="text-gray-600">Sign in to access your dashboard</p>
-          </div>
           <SupabaseAuth
             supabaseClient={supabase}
             appearance={{
