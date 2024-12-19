@@ -50,6 +50,12 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
     return <div>Loading payment history...</div>;
   }
 
+  if (!paymentHistory || paymentHistory.length === 0) {
+    return <div className="text-center py-4 text-gray-500">No payment records found</div>;
+  }
+
+  console.log("Rendering payment history:", paymentHistory);
+
   return (
     <Table>
       <TableHeader>
@@ -65,45 +71,48 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
         </TableRow>
       </TableHeader>
       <TableBody>
-        {paymentHistory?.map((payment) => (
-          <TableRow key={payment.id}>
-            <TableCell>
-              {format(new Date(payment.created_at), "PP")}
-            </TableCell>
-            <TableCell>
-              {payment.leases?.profiles?.full_name || "N/A"}
-            </TableCell>
-            <TableCell>
-              {payment.leases?.agreement_number || "N/A"}
-            </TableCell>
-            <TableCell>
-              {payment.security_deposits ? "Security Deposit" : "Payment"}
-            </TableCell>
-            <TableCell>
-              {getAmountDisplay(payment.amount)}
-            </TableCell>
-            <TableCell>
-              <Badge
-                variant="secondary"
-                className={getStatusColor(payment.status)}
-              >
-                {payment.status.charAt(0).toUpperCase() +
-                  payment.status.slice(1)}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              {payment.payment_method
-                ? payment.payment_method
-                    .split("_")
-                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")
-                : "N/A"}
-            </TableCell>
-            <TableCell>
-              {payment.transaction_id || "N/A"}
-            </TableCell>
-          </TableRow>
-        ))}
+        {paymentHistory.map((payment) => {
+          console.log("Rendering payment row:", payment);
+          return (
+            <TableRow key={payment.id}>
+              <TableCell>
+                {payment.created_at ? format(new Date(payment.created_at), "PP") : "N/A"}
+              </TableCell>
+              <TableCell>
+                {payment.leases?.profiles?.full_name || "N/A"}
+              </TableCell>
+              <TableCell>
+                {payment.leases?.agreement_number || "N/A"}
+              </TableCell>
+              <TableCell>
+                {payment.security_deposits ? "Security Deposit" : "Payment"}
+              </TableCell>
+              <TableCell>
+                {getAmountDisplay(payment.amount)}
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="secondary"
+                  className={getStatusColor(payment.status)}
+                >
+                  {payment.status.charAt(0).toUpperCase() +
+                    payment.status.slice(1)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {payment.payment_method
+                  ? payment.payment_method
+                      .split("_")
+                      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(" ")
+                  : "N/A"}
+              </TableCell>
+              <TableCell>
+                {payment.transaction_id || "N/A"}
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

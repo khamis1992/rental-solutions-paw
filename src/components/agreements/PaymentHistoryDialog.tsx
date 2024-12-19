@@ -31,9 +31,10 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
-      console.log("Fetching payments for agreement:", agreementId);
+      console.log("Starting payment history fetch...");
+      console.log("Agreement ID:", agreementId);
       
-      const query = supabase
+      let query = supabase
         .from("payments")
         .select(`
           *,
@@ -51,8 +52,10 @@ export function PaymentHistoryDialog({
         `)
         .order("created_at", { ascending: false });
 
+      // Only filter by agreement ID if one is provided
       if (agreementId) {
-        query.eq("lease_id", agreementId);
+        console.log("Filtering by agreement ID:", agreementId);
+        query = query.eq("lease_id", agreementId);
       }
 
       const { data, error } = await query;
@@ -62,7 +65,7 @@ export function PaymentHistoryDialog({
         throw error;
       }
 
-      console.log("Fetched payments:", data);
+      console.log("Fetched payments data:", data);
       return data;
     },
     enabled: open,
@@ -84,7 +87,7 @@ export function PaymentHistoryDialog({
           ...(agreementId ? { filter: `lease_id=eq.${agreementId}` } : {})
         },
         async (payload) => {
-          console.log('Real-time update received for payment history:', payload);
+          console.log('Real-time update received:', payload);
           
           // Invalidate and refetch the payment history query
           await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
