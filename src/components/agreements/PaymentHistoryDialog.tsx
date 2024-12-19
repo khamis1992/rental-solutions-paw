@@ -130,6 +130,9 @@ export function PaymentHistoryDialog({
       
       if (agreementId) {
         query = query.eq("lease_id", agreementId);
+      } else {
+        // Add a condition that will match all records
+        query = query.gte("created_at", '1970-01-01');
       }
 
       const { error } = await query;
