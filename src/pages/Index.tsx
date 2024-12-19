@@ -90,7 +90,7 @@ const Index = () => {
               queryKey: ['vehicle-status-counts'],
               exact: true,
               type: 'all',
-              refetchType: 'active'  // Add this line to fix the error
+              refetchType: 'active'
             });
           }
         )
@@ -108,7 +108,7 @@ const Index = () => {
               queryKey: ['upcoming-rentals'],
               exact: true,
               type: 'all',
-              refetchType: 'active'  // Add this line to fix the error
+              refetchType: 'active'
             });
           }
         )
@@ -131,7 +131,7 @@ const Index = () => {
               queryKey: ['dashboard-alerts'],
               exact: true,
               type: 'all',
-              refetchType: 'active'  // Add this line to fix the error
+              refetchType: 'active'
             });
           }
         )
