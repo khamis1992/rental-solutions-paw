@@ -13,7 +13,9 @@ export const performanceMetrics = {
         value: loadTime,
         context: { route },
         timestamp: new Date().toISOString()
-      } as PerformanceMetric);
+      })
+      .select()
+      .single();
     
     if (error) throw error;
     return data;
@@ -27,7 +29,9 @@ export const performanceMetrics = {
         value: duration,
         context: { endpoint, success },
         timestamp: new Date().toISOString()
-      } as PerformanceMetric);
+      })
+      .select()
+      .single();
     
     if (error) throw error;
     return data;
@@ -41,7 +45,9 @@ export const performanceMetrics = {
         value: duration,
         context: { action },
         timestamp: new Date().toISOString()
-      } as PerformanceMetric);
+      })
+      .select()
+      .single();
     
     if (error) throw error;
     return data;
@@ -71,7 +77,9 @@ export const aiAnalysis = {
         status: 'implemented',
         implemented_at: new Date().toISOString()
       })
-      .eq('id', insightId);
+      .eq('id', insightId)
+      .select()
+      .single();
     
     if (error) throw error;
     return data;
