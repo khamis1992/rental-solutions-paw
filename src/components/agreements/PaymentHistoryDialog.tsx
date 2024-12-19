@@ -8,12 +8,23 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentImport } from "./PaymentImport";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PaymentHistoryTable } from "./payments/PaymentHistoryTable";
 import { PaymentSummary } from "./payments/PaymentSummary";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -27,6 +38,8 @@ export function PaymentHistoryDialog({
   onOpenChange,
 }: PaymentHistoryDialogProps) {
   const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
@@ -110,26 +123,78 @@ export function PaymentHistoryDialog({
     return sum;
   }, 0) || 0;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Payment History</DialogTitle>
-          <DialogDescription>
-            View all payments and transactions
-          </DialogDescription>
-        </DialogHeader>
+  const handleDeleteAllPayments = async () => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("payments")
+        .delete()
+        .if(agreementId ? { lease_id: agreementId } : true);
 
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full w-full">
-            <div className="space-y-6 px-6">
-              <PaymentImport />
-              <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
-              <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
-            </div>
-          </ScrollArea>
-        </div>
-      </DialogContent>
-    </Dialog>
+      if (error) throw error;
+
+      toast.success("All payments have been deleted successfully");
+      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+    } catch (error) {
+      console.error("Error deleting payments:", error);
+      toast.error("Failed to delete payments");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="h-[80vh] flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Payment History</DialogTitle>
+            <DialogDescription>
+              View all payments and transactions
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full w-full">
+              <div className="space-y-6 px-6">
+                <div className="flex justify-between items-center">
+                  <PaymentImport />
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting || !paymentHistory?.length}
+                  >
+                    Delete All Payments
+                  </Button>
+                </div>
+                <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
+                <PaymentHistoryTable paymentHistory={paymentHistory || []} isLoading={isLoading} />
+              </div>
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {agreementId ? "all payments for this agreement" : "all payments in the system"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllPayments}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete All"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
