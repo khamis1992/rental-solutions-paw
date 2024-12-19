@@ -23,14 +23,14 @@ export const performanceMetrics = {
     }
   },
 
-  async trackError(error: { message: string; stack?: string; context?: any }) {
+  async trackError(errorData: { message: string; stack?: string; context?: any }) {
     try {
       const { data, error } = await supabase
         .from("performance_metrics")
         .insert({
           metric_type: 'error',
           value: 1,
-          context: error,
+          context: errorData as Json,
           timestamp: new Date().toISOString()
         })
         .select()
