@@ -4,30 +4,63 @@ import { PaymentImport } from "@/components/payments/PaymentImport";
 import { PaymentReconciliation } from "@/components/payments/PaymentReconciliation";
 import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
-import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDialog";
+import { PaymentHistoryContent } from "@/components/agreements/payments/PaymentHistoryContent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
 import { FileText, ChartBar, Calculator, Brain, CreditCard, History } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Finance = () => {
-  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const { data: paymentHistory, isLoading } = useQuery({
+    queryKey: ["payment-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payments")
+        .select(`
+          *,
+          security_deposits (
+            amount,
+            status
+          ),
+          leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              full_name
+            )
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+
+      return data;
+    },
+  });
+
+  const totalPaid = paymentHistory?.reduce((sum, payment) => {
+    if (payment.status === "completed") {
+      return sum + payment.amount;
+    }
+    return sum;
+  }, 0) || 0;
+
+  const totalRefunded = paymentHistory?.reduce((sum, payment) => {
+    if (payment.status === "refunded") {
+      return sum + payment.amount;
+    }
+    return sum;
+  }, 0) || 0;
 
   return (
     <DashboardLayout>
       <div className="container mx-auto space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-bold tracking-tight">Financial Management</h1>
-          <Button 
-            onClick={() => setShowPaymentHistory(true)}
-            className="flex items-center gap-2"
-          >
-            <History className="h-4 w-4" />
-            View Payment History
-          </Button>
-        </div>
+        <h1 className="text-4xl font-bold tracking-tight">Financial Management</h1>
         
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
@@ -42,6 +75,10 @@ const Finance = () => {
             <TabsTrigger value="installments" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
               Installments
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Payment History
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -83,6 +120,15 @@ const Finance = () => {
             <InstallmentAnalysis />
           </TabsContent>
 
+          <TabsContent value="history" className="space-y-6">
+            <PaymentHistoryContent
+              paymentHistory={paymentHistory || []}
+              isLoading={isLoading}
+              totalPaid={totalPaid}
+              totalRefunded={totalRefunded}
+            />
+          </TabsContent>
+
           <TabsContent value="reports" className="space-y-6">
             <FinancialReports />
           </TabsContent>
@@ -91,11 +137,6 @@ const Finance = () => {
             <AiAnalyticsInsights />
           </TabsContent>
         </Tabs>
-
-        <PaymentHistoryDialog 
-          open={showPaymentHistory} 
-          onOpenChange={setShowPaymentHistory}
-        />
       </div>
     </DashboardLayout>
   );

@@ -1159,6 +1159,7 @@ export type Database = {
       payment_schedules: {
         Row: {
           amount: number
+          contract_name: string | null
           created_at: string
           due_date: string
           id: string
@@ -1171,6 +1172,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          contract_name?: string | null
           created_at?: string
           due_date: string
           id?: string
@@ -1183,6 +1185,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          contract_name?: string | null
           created_at?: string
           due_date?: string
           id?: string
