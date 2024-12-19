@@ -6,12 +6,16 @@ import { VehicleStats } from "@/components/vehicles/VehicleStats";
 import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
 import { CreateVehicleDialog } from "@/components/vehicles/CreateVehicleDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Vehicles = () => {
   const [filters, setFilters] = useState({
     status: "all",
     searchQuery: "",
   });
+  const { toast } = useToast();
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles", filters],
@@ -45,13 +49,73 @@ const Vehicles = () => {
     },
   });
 
+  const handleExportToExcel = async () => {
+    try {
+      if (!vehicles.length) {
+        toast({
+          title: "No data to export",
+          description: "There are no vehicles to export to Excel.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Convert vehicles data to CSV format
+      const headers = ["Make", "Model", "Year", "License Plate", "VIN", "Status", "Mileage"];
+      const csvContent = [
+        headers.join(","),
+        ...vehicles.map(vehicle => [
+          vehicle.make,
+          vehicle.model,
+          vehicle.year,
+          vehicle.license_plate,
+          vehicle.vin,
+          vehicle.status,
+          vehicle.mileage
+        ].join(","))
+      ].join("\n");
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "vehicles.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export successful",
+        description: "The vehicles data has been exported to Excel format.",
+      });
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the vehicles data.",
+        variant: "destructive",
+      });
+    }
+  };
+
   console.log("Vehicles being rendered:", vehicles);
 
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Vehicles</h1>
-        <CreateVehicleDialog />
+        <div className="flex gap-4">
+          <Button
+            variant="default"
+            className="bg-[#0A1A3B] hover:bg-[#0A1A3B]/90"
+            onClick={handleExportToExcel}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export To Excel
+          </Button>
+          <CreateVehicleDialog />
+        </div>
       </div>
       <VehicleStats vehicles={vehicles} isLoading={isLoading} />
       <div className="mt-6 space-y-4">
