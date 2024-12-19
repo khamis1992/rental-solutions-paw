@@ -77,7 +77,7 @@ function App() {
           performanceMetrics.trackError({
             message: 'System error detected',
             stack: JSON.stringify(payload.new),
-            context: payload.new?.context
+            context: payload.new?.context || {}
           });
 
           // Only invalidate affected queries

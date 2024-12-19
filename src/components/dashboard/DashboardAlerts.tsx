@@ -17,10 +17,10 @@ export const DashboardAlerts = () => {
         .from("leases")
         .select(`
           id,
-          vehicles (
+          vehicles:vehicle_id (
             id, make, model, year
           ),
-          profiles (
+          customer:customer_id (
             full_name
           )
         `)
@@ -32,9 +32,9 @@ export const DashboardAlerts = () => {
         .from("payment_schedules")
         .select(`
           id,
-          leases (
+          lease:lease_id (
             id,
-            profiles (
+            customer:customer_id (
               full_name
             )
           )
@@ -47,7 +47,7 @@ export const DashboardAlerts = () => {
         .from("maintenance")
         .select(`
           id,
-          vehicles (
+          vehicle:vehicle_id (
             id, make, model, year
           )
         `)
@@ -95,7 +95,7 @@ export const DashboardAlerts = () => {
                 <h4 className="text-sm font-medium text-red-700">Overdue Vehicle</h4>
                 <p className="text-sm text-red-600">
                   {vehicle.vehicles?.year} {vehicle.vehicles?.make} {vehicle.vehicles?.model} - 
-                  {vehicle.profiles?.full_name}
+                  {vehicle.customer?.full_name}
                 </p>
               </div>
             </div>
@@ -104,7 +104,7 @@ export const DashboardAlerts = () => {
           {alerts?.overduePayments?.map((payment) => (
             <div
               key={payment.id}
-              onClick={() => handleLeaseClick(payment.leases?.id)}
+              onClick={() => handleLeaseClick(payment.lease?.id)}
               className="flex items-center gap-4 p-4 rounded-lg border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors cursor-pointer"
             >
               <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-yellow-100 text-yellow-500">
@@ -113,7 +113,7 @@ export const DashboardAlerts = () => {
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-yellow-700">Overdue Payment</h4>
                 <p className="text-sm text-yellow-600">
-                  {payment.leases?.profiles?.full_name}
+                  {payment.lease?.customer?.full_name}
                 </p>
               </div>
             </div>
@@ -122,7 +122,7 @@ export const DashboardAlerts = () => {
           {alerts?.maintenanceAlerts?.map((maintenance) => (
             <div
               key={maintenance.id}
-              onClick={() => handleVehicleClick(maintenance.vehicles?.id)}
+              onClick={() => handleVehicleClick(maintenance.vehicle?.id)}
               className="flex items-center gap-4 p-4 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
             >
               <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-500">
@@ -131,7 +131,7 @@ export const DashboardAlerts = () => {
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-blue-700">Maintenance Due</h4>
                 <p className="text-sm text-blue-600">
-                  {maintenance.vehicles?.year} {maintenance.vehicles?.make} {maintenance.vehicles?.model}
+                  {maintenance.vehicle?.year} {maintenance.vehicle?.make} {maintenance.vehicle?.model}
                 </p>
               </div>
             </div>
