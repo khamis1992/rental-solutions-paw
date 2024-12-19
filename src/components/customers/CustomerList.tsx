@@ -22,10 +22,14 @@ export const CustomerList = () => {
 
   const { data: customers = [], isLoading, error } = useCustomers(searchQuery);
 
-  const totalPages = Math.ceil((customers?.length || 0) / ITEMS_PER_PAGE);
+  const filteredCustomers = customers.filter(customer => 
+    roleFilter === "all" || customer.role === roleFilter
+  );
+
+  const totalPages = Math.ceil((filteredCustomers?.length || 0) / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentCustomers = customers?.slice(startIndex, endIndex) || [];
+  const currentCustomers = filteredCustomers?.slice(startIndex, endIndex) || [];
 
   const handleCustomerClick = (customerId: string) => {
     setSelectedCustomerId(customerId);
@@ -37,7 +41,7 @@ export const CustomerList = () => {
       <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery}
-          onRoleChange={setRoleFilter}
+          onRoleFilter={setRoleFilter}
         />
         <div className="rounded-md border">
           <Table>
@@ -59,12 +63,12 @@ export const CustomerList = () => {
     );
   }
 
-  if (!customers?.length) {
+  if (!filteredCustomers?.length) {
     return (
       <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery}
-          onRoleChange={setRoleFilter}
+          onRoleFilter={setRoleFilter}
         />
         <div className="text-center py-8 text-muted-foreground">
           No customers found
@@ -77,7 +81,7 @@ export const CustomerList = () => {
     <div className="space-y-4">
       <CustomerFilters 
         onSearchChange={setSearchQuery}
-        onRoleChange={setRoleFilter}
+        onRoleFilter={setRoleFilter}
       />
       <div className="rounded-md border">
         <Table>
@@ -88,9 +92,9 @@ export const CustomerList = () => {
                 key={customer.id}
                 customer={{
                   ...customer,
-                  address: 'N/A',
-                  contract_document_url: null,
-                  created_at: new Date().toISOString(),
+                  address: customer.address || 'N/A',
+                  contract_document_url: customer.contract_document_url || null,
+                  created_at: customer.created_at || new Date().toISOString(),
                 }}
                 onCustomerClick={handleCustomerClick}
               />

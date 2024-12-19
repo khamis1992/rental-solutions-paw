@@ -3,12 +3,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export interface CustomerFiltersProps {
   onSearchChange: (value: string) => void;
-  onRoleChange: (value: string) => void;
+  onRoleFilter: (value: string) => void;
 }
 
 export const CustomerFilters = ({
   onSearchChange,
-  onRoleChange,
+  onRoleFilter,
 }: CustomerFiltersProps) => {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -20,7 +20,7 @@ export const CustomerFilters = ({
         />
       </div>
       <div className="w-full md:w-1/4">
-        <Select onValueChange={onRoleChange} defaultValue="all">
+        <Select onValueChange={onRoleFilter} defaultValue="all">
           <SelectTrigger>
             <SelectValue placeholder="Filter by role" />
           </SelectTrigger>

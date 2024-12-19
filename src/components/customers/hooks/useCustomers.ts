@@ -10,7 +10,7 @@ export const useCustomers = (searchQuery: string) => {
         console.log("Fetching customers with search:", searchQuery);
         let query = supabase
           .from('profiles')
-          .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url')
+          .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url, role')
           .eq('role', 'customer');
 
         if (searchQuery) {
@@ -25,7 +25,7 @@ export const useCustomers = (searchQuery: string) => {
           throw error;
         }
         
-        console.log("Fetched customers:", data);
+        console.log("Fetched customers:", data?.length || 0, "records");
         return data || [];
       } catch (err) {
         console.error("Error in customer query:", err);
