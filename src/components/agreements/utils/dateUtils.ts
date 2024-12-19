@@ -2,12 +2,23 @@ export const convertDateFormat = (dateStr: string): string | null => {
   if (!dateStr || dateStr.trim() === '') return null;
   
   try {
-    // Split the date string by '/'
-    const parts = dateStr.split('/');
+    // First check if the value is a number (like 528.000)
+    const numValue = parseFloat(dateStr);
+    if (!isNaN(numValue)) {
+      // Convert Excel serial date number to JavaScript date
+      const date = new Date((numValue - 25569) * 86400 * 1000);
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // If not a number, try parsing as regular date string
+    const parts = dateStr.split(/[/-]/); // Split by either / or -
     if (parts.length !== 3) return null;
     
-    // Parse the parts as numbers (MM/DD/YYYY format)
-    const [month, day, year] = parts.map(part => parseInt(part.trim(), 10));
+    // Parse the parts as numbers (DD/MM/YYYY format)
+    const [day, month, year] = parts.map(part => parseInt(part.trim(), 10));
     
     // Validate month (1-12)
     if (month < 1 || month > 12) {

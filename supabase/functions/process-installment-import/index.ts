@@ -15,6 +15,10 @@ interface InstallmentRow {
   'sold': string;
 }
 
+const convertExcelDate = (serialDate: number): Date => {
+  return new Date((serialDate - 25569) * 86400 * 1000);
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -99,12 +103,17 @@ serve(async (req) => {
           throw new Error(`Invalid amount format in row ${i}: ${amountStr}`)
         }
 
-        // Parse date - handle multiple formats (DD/MM/YYYY or DD-MM-YYYY)
+        // Parse date - handle Excel serial dates or regular date formats
         const dateStr = row['Date'].replace(/['"]/g, '').trim()
         console.log('Processing date:', dateStr);
         
         let date: Date;
-        if (dateStr.includes('/')) {
+        const numDate = parseFloat(dateStr);
+        
+        if (!isNaN(numDate)) {
+          // Handle Excel serial date
+          date = convertExcelDate(numDate);
+        } else if (dateStr.includes('/')) {
           const [day, month, year] = dateStr.split('/')
           date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
         } else if (dateStr.includes('-')) {
@@ -156,12 +165,13 @@ serve(async (req) => {
     // Update import log
     await supabaseClient
       .from('import_logs')
-      .update({
+      .insert({
+        file_name: fileName,
+        import_type: 'installment',
         status: errors.length === 0 ? 'completed' : 'completed_with_errors',
         records_processed: processedRows.length,
         errors: errors.length > 0 ? errors : null
       })
-      .eq('file_name', fileName)
 
     return new Response(
       JSON.stringify({
