@@ -14,9 +14,6 @@ import { toast } from "sonner";
 import { PaymentHistoryTable } from "./payments/PaymentHistoryTable";
 import { PaymentSummary } from "./payments/PaymentSummary";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { format } from "date-fns";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -34,19 +31,10 @@ export function PaymentHistoryDialog({
   const { data: paymentHistory, isLoading } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
-      console.log("Fetching payments for agreement:", agreementId);
-      
       const query = supabase
         .from("payments")
         .select(`
           *,
-          lease:leases (
-            id,
-            agreement_number,
-            customer:profiles (
-              full_name
-            )
-          ),
           security_deposits (
             amount,
             status
@@ -60,12 +48,7 @@ export function PaymentHistoryDialog({
 
       const { data, error } = await query;
 
-      if (error) {
-        console.error("Error fetching payments:", error);
-        throw error;
-      }
-
-      console.log("Fetched payments:", data);
+      if (error) throw error;
       return data;
     },
     enabled: open,
@@ -75,8 +58,6 @@ export function PaymentHistoryDialog({
   useEffect(() => {
     if (!open) return;
 
-    console.log("Setting up real-time subscription for payments");
-    
     const channel = supabase
       .channel('payment-history-changes')
       .on(
@@ -111,7 +92,6 @@ export function PaymentHistoryDialog({
 
     // Cleanup subscription on unmount or when dialog closes
     return () => {
-      console.log("Cleaning up payment history subscription");
       supabase.removeChannel(channel);
     };
   }, [agreementId, open, queryClient]);
@@ -130,67 +110,11 @@ export function PaymentHistoryDialog({
     return sum;
   }, 0) || 0;
 
-  const exportToCSV = () => {
-    if (!paymentHistory?.length) {
-      toast.error("No payment data to export");
-      return;
-    }
-
-    const headers = [
-      "Date",
-      "Customer",
-      "Agreement",
-      "Amount",
-      "Status",
-      "Payment Method",
-      "Transaction ID"
-    ];
-
-    const csvData = paymentHistory.map(payment => [
-      format(new Date(payment.created_at), "PP"),
-      payment.lease?.customer?.full_name || "N/A",
-      payment.lease?.agreement_number || "N/A",
-      payment.amount.toString(),
-      payment.status,
-      payment.payment_method || "N/A",
-      payment.transaction_id || "N/A"
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map(row => row.join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("hidden", "");
-    a.setAttribute("href", url);
-    a.setAttribute("download", `payment_history_${format(new Date(), "yyyy-MM-dd")}.csv`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast.success("Payment history exported successfully");
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle>Payment History</DialogTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportToCSV}
-              disabled={!paymentHistory?.length}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-          </div>
+          <DialogTitle>Payment History</DialogTitle>
           <DialogDescription>
             View all payments and transactions
           </DialogDescription>
