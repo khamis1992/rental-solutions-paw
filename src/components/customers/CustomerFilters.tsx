@@ -11,7 +11,7 @@ import {
 export interface CustomerFiltersProps {
   onSearchChange: (value: string) => void;
   onRoleChange?: (value: string) => void;
-  onStatusChange?: (value: string) => void;  // Fixed prop name from onStatusFilter
+  onStatusChange?: (value: string) => void;
 }
 
 export const CustomerFilters = ({ 
