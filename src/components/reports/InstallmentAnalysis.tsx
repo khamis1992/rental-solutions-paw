@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CurrentInstallmentCard } from "./installment/CurrentInstallmentCard";
+import { InstallmentImport } from "./installment/InstallmentImport";
 
 export const InstallmentAnalysis = () => {
   const { toast } = useToast();
@@ -119,6 +120,8 @@ export const InstallmentAnalysis = () => {
   return (
     <div className="grid gap-6">
       <CurrentInstallmentCard />
+      
+      <InstallmentImport />
 
       {insights && (
         <Alert>
