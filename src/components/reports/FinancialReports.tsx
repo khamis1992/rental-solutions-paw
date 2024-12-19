@@ -1,26 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-} from "recharts";
-import { formatCurrency } from "@/lib/utils";
-import { Loader2, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { RevenueChart } from "./charts/RevenueChart";
+import { ExpenseChart } from "./charts/ExpenseChart";
+import { Loader2 } from "lucide-react";
 
 export const FinancialReports = () => {
   const { toast } = useToast();
 
-  const { data: financialData, isLoading } = useQuery({
+  const { data: financialData, isLoading: isLoadingFinancial } = useQuery({
     queryKey: ["financial-reports"],
     queryFn: async () => {
       const { data: payments, error } = await supabase
@@ -42,7 +30,7 @@ export const FinancialReports = () => {
     },
   });
 
-  const { data: maintenanceData } = useQuery({
+  const { data: maintenanceData, isLoading: isLoadingMaintenance } = useQuery({
     queryKey: ["maintenance-costs"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -117,7 +105,7 @@ export const FinancialReports = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoadingFinancial || isLoadingMaintenance) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -127,84 +115,14 @@ export const FinancialReports = () => {
 
   return (
     <div className="grid gap-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Revenue by Agreement Type</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => exportData(revenueData, "revenue-by-type")}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="shortTerm"
-                  name="Short Term"
-                  stroke="#8884d8"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="leaseToOwn"
-                  name="Lease to Own"
-                  stroke="#82ca9d"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="total"
-                  name="Total Revenue"
-                  stroke="#ff7300"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Monthly Expenses</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => exportData(expenseData, "monthly-expenses")}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={expenseData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                />
-                <Bar
-                  dataKey="maintenance"
-                  name="Maintenance Expenses"
-                  fill="#ff8042"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <RevenueChart 
+        data={revenueData} 
+        onExport={() => exportData(revenueData, "revenue-by-type")} 
+      />
+      <ExpenseChart 
+        data={expenseData} 
+        onExport={() => exportData(expenseData, "monthly-expenses")} 
+      />
     </div>
   );
 };
