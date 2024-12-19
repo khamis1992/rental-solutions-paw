@@ -26,8 +26,7 @@ const Index = () => {
             console.log('Vehicle status changed, refreshing stats...');
             await queryClient.invalidateQueries({
               queryKey: ['vehicle-status-counts'],
-              exact: true,
-              refetchType: 'active'
+              type: 'all'
             });
           }
         )
@@ -43,8 +42,7 @@ const Index = () => {
             console.log('Rental status changed, refreshing upcoming rentals...');
             await queryClient.invalidateQueries({
               queryKey: ['upcoming-rentals'],
-              exact: true,
-              refetchType: 'active'
+              type: 'all'
             });
           }
         )
@@ -65,8 +63,7 @@ const Index = () => {
             console.log('Maintenance alert changed, refreshing alerts...');
             await queryClient.invalidateQueries({
               queryKey: ['dashboard-alerts'],
-              exact: true,
-              refetchType: 'active'
+              type: 'all'
             });
           }
         )
@@ -96,19 +93,27 @@ const Index = () => {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
         {/* Upcoming Rentals - Spans 4 columns */}
-        <UpcomingRentals />
+        <div className="lg:col-span-4">
+          <UpcomingRentals />
+        </div>
 
         {/* Alerts & Notifications - Spans 3 columns */}
-        <DashboardAlerts />
+        <div className="lg:col-span-3">
+          <DashboardAlerts />
+        </div>
       </div>
 
       {/* Recent Activity and Quick Actions */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         {/* Recent Activity - Spans 4 columns */}
-        <RecentActivity />
+        <div className="lg:col-span-4">
+          <RecentActivity />
+        </div>
 
         {/* Quick Actions Section */}
-        <QuickActions />
+        <div className="lg:col-span-3">
+          <QuickActions />
+        </div>
       </div>
     </DashboardLayout>
   );
