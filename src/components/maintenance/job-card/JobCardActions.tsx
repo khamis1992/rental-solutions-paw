@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { CardFooter } from "@/components/ui/card";
-import { Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface JobCardActionsProps {
@@ -19,9 +18,8 @@ export const JobCardActions = ({ id }: JobCardActionsProps) => {
       <Button 
         onClick={handleInspectionClick}
         className="w-full"
-        variant="outline"
+        variant="default"
       >
-        <Camera className="w-4 h-4 mr-2" />
         Perform Vehicle Inspection
       </Button>
     </CardFooter>
