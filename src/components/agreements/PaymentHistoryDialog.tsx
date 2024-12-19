@@ -129,7 +129,7 @@ export function PaymentHistoryDialog({
       const { error } = await supabase
         .from("payments")
         .delete()
-        .if(agreementId ? { lease_id: agreementId } : true);
+        .eq(agreementId ? "lease_id" : "id", agreementId || "*");
 
       if (error) throw error;
 
@@ -147,7 +147,7 @@ export function PaymentHistoryDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="h-[80vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-[90vw] w-[1200px] h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Payment History</DialogTitle>
             <DialogDescription>
