@@ -8,6 +8,37 @@ import { SecurityVulnerabilities } from "./SecurityVulnerabilities";
 import { PerformanceInsights } from "./PerformanceInsights";
 import { RecommendationsList } from "./RecommendationsList";
 
+interface AnalyticsDataPoints {
+  quality_score: number;
+  security_score: number;
+  performance_score: number;
+  total_issues: number;
+  quality_metrics: Array<{ name: string; value: number }>;
+  security_issues: Array<{
+    title: string;
+    severity: string;
+    description: string;
+    location: string;
+  }>;
+  performance_metrics: Array<{
+    timestamp: string;
+    value: number;
+  }>;
+  recommendations: Array<{
+    title: string;
+    priority: string;
+    description: string;
+    example?: string;
+  }>;
+}
+
+interface AnalyticsInsight {
+  id: string;
+  category: string;
+  data_points: AnalyticsDataPoints;
+  created_at: string;
+}
+
 export const CodeAnalysisDashboard = () => {
   const [selectedTab, setSelectedTab] = useState("quality");
 
@@ -25,7 +56,7 @@ export const CodeAnalysisDashboard = () => {
         throw error;
       }
 
-      return data || [];
+      return (data || []) as AnalyticsInsight[];
     }
   });
 
