@@ -26,7 +26,8 @@ const Index = () => {
             console.log('Vehicle status changed, refreshing stats...');
             await queryClient.invalidateQueries({
               queryKey: ['vehicle-status-counts'],
-              type: 'all'
+              type: 'all',
+              exact: true
             });
           }
         )
@@ -42,7 +43,8 @@ const Index = () => {
             console.log('Rental status changed, refreshing upcoming rentals...');
             await queryClient.invalidateQueries({
               queryKey: ['upcoming-rentals'],
-              type: 'all'
+              type: 'all',
+              exact: true
             });
           }
         )
@@ -63,7 +65,8 @@ const Index = () => {
             console.log('Maintenance alert changed, refreshing alerts...');
             await queryClient.invalidateQueries({
               queryKey: ['dashboard-alerts'],
-              type: 'all'
+              type: 'all',
+              exact: true
             });
           }
         )
