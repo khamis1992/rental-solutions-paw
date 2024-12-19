@@ -1,15 +1,16 @@
 export const normalizeStatus = (status: string): string => {
-  if (!status) return 'pending';
+  if (!status) return 'pending_payment';
   
   const statusMap: Record<string, string> = {
-    'open': 'open',
+    'open': 'active',
     'active': 'active',
     'closed': 'closed',
-    'cancelled': 'cancelled',
-    'pending': 'pending',
-    'pending_payment': 'pending'
+    'cancelled': 'closed',
+    'pending': 'pending_payment',
+    'pending_payment': 'pending_payment',
+    'pending_deposit': 'pending_deposit'
   };
 
   const normalizedStatus = status.toLowerCase().trim();
-  return statusMap[normalizedStatus] || 'pending';
+  return statusMap[normalizedStatus] || 'pending_payment';
 };

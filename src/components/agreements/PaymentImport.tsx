@@ -1,17 +1,11 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { ImportErrors } from "./utils/importTypes";
-import { parseImportErrors } from "./utils/importUtils";
-import { 
-  uploadImportFile, 
-  createImportLog, 
-  processImport,
-  pollImportStatus 
-} from "./services/agreementImportService";
+import { retryOperation } from "./utils/retryUtils";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -34,52 +28,62 @@ export const PaymentImport = () => {
     setIsUploading(true);
     try {
       console.log('Starting file upload process...');
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       
-      // Upload file to storage
-      const fileName = await uploadImportFile(file);
-      console.log('File uploaded successfully:', fileName);
+      console.log('Uploading file to storage:', fileName);
+      const { error: uploadError } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false
+        });
 
-      // Create import log
-      await createImportLog(fileName);
-      console.log('Import log created');
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
-      // Process the import
-      const { data: functionResponse, error: functionError } = await processImport(fileName);
+      console.log('File uploaded successfully, creating import log...');
+      const { error: logError } = await supabase
+        .from("import_logs")
+        .insert({
+          file_name: fileName,
+          import_type: "payments",
+          status: "pending",
+        });
+
+      if (logError) {
+        console.error('Import log creation error:', logError);
+        throw logError;
+      }
+
+      console.log('Starting import process via Edge Function...');
+      const { error: functionError } = await supabase.functions
+        .invoke('process-payment-import', {
+          body: { fileName }
+        });
 
       if (functionError) {
         console.error('Edge Function error:', functionError);
         throw functionError;
       }
 
-      console.log('Edge Function response:', functionResponse);
-
       // Poll for import completion
       const pollInterval = setInterval(async () => {
         console.log('Checking import status...');
         try {
-          const importLog = await pollImportStatus(fileName);
+          const { data: importLog } = await supabase
+            .from("import_logs")
+            .select("status, records_processed")
+            .eq("file_name", fileName)
+            .single();
 
           if (importLog?.status === "completed") {
             clearInterval(pollInterval);
-            
-            // Parse errors object safely
-            const errors = importLog.errors ? parseImportErrors(importLog.errors) : null;
-            
-            // Show detailed import results
-            const skippedCount = errors?.skipped?.length ?? 0;
-            const failedCount = errors?.failed?.length ?? 0;
-            
-            let description = `Successfully processed ${importLog.records_processed} payments.`;
-            if (skippedCount > 0) {
-              description += ` ${skippedCount} records were skipped due to missing data.`;
-            }
-            if (failedCount > 0) {
-              description += ` ${failedCount} records failed to process.`;
-            }
-
             toast({
-              title: "Import Complete",
-              description: description,
+              title: "Success",
+              description: `Successfully imported ${importLog.records_processed} payments`,
             });
             
             // Force refresh the queries
@@ -129,7 +133,7 @@ export const PaymentImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = "Customer Name,Amount,Payment_Date,Payment_Method,status,Payment_Number,Payment_Description\n" +
-                      "John Doe,1000,20-03-2024,credit_card,completed,INV001,Monthly payment";
+                      "John Doe,1000,03-20-2024,credit_card,completed,INV001,Monthly payment";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

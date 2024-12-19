@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CustomerList } from "@/components/customers/CustomerList";
 import { CustomerStats } from "@/components/customers/CustomerStats";
@@ -5,13 +6,18 @@ import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialo
 import { ImportExportCustomers } from "@/components/customers/ImportExportCustomers";
 
 const Customers = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Customers</h1>
         <div className="flex gap-2">
           <ImportExportCustomers />
-          <CreateCustomerDialog />
+          <CreateCustomerDialog 
+            open={isDialogOpen} 
+            onOpenChange={setIsDialogOpen}
+          />
         </div>
       </div>
       <CustomerStats />
