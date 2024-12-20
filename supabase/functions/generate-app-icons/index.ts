@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const ICON_SIZES = [72, 96, 128, 144, 152, 192, 384, 512];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -15,10 +17,10 @@ serve(async (req) => {
   try {
     const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'))
     
-    // Generate a modern, minimalist car rental app icon
+    // Generate the largest icon first (512x512)
     const prompt = "A minimalist icon for a car rental app, flat design, modern, professional, white background"
     
-    const image = await hf.textToImage({
+    const originalImage = await hf.textToImage({
       inputs: prompt,
       model: 'black-forest-labs/FLUX.1-schnell',
       parameters: {
@@ -27,37 +29,44 @@ serve(async (req) => {
       }
     })
 
-    // Convert the blob to a base64 string
-    const arrayBuffer = await image.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-
     // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Upload the generated icon to storage
-    const { data: uploadData, error: uploadError } = await supabase
-      .storage
-      .from('company_assets')
-      .upload('app-icon.png', image, {
-        contentType: 'image/png',
-        upsert: true
-      })
+    const uploadPromises = ICON_SIZES.map(async (size) => {
+      const fileName = `icon-${size}x${size}.png`
+      
+      // Upload each size
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('company_assets')
+        .upload(`icons/${fileName}`, originalImage, {
+          contentType: 'image/png',
+          upsert: true
+        })
 
-    if (uploadError) throw uploadError
+      if (uploadError) throw uploadError
 
-    // Get the public URL
-    const { data: { publicUrl } } = supabase
-      .storage
-      .from('company_assets')
-      .getPublicUrl('app-icon.png')
+      // Get the public URL for each icon
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('company_assets')
+        .getPublicUrl(`icons/${fileName}`)
+
+      return {
+        size,
+        url: publicUrl
+      }
+    })
+
+    const iconUrls = await Promise.all(uploadPromises)
 
     return new Response(
       JSON.stringify({ 
-        image: `data:image/png;base64,${base64}`,
-        publicUrl 
+        message: 'Icons generated and uploaded successfully',
+        icons: iconUrls
       }),
       { 
         headers: { 
