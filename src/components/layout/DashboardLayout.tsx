@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Breadcrumbs } from "./Breadcrumbs";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,7 +16,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="flex">
           <DashboardSidebar />
           <main className="flex-1 overflow-x-hidden">
-            {children}
+            <div className="layout-container">
+              <Breadcrumbs />
+              <div className="mt-6">
+                {children}
+              </div>
+            </div>
           </main>
         </div>
       </div>

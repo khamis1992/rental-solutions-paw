@@ -31,9 +31,51 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    min-width: 1024px; /* Minimum width for desktop */
+    @apply bg-background text-foreground antialiased;
+    min-width: 1024px;
     overflow-x: auto;
+  }
+
+  /* Improved Typography */
+  h1 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  /* Interactive Elements */
+  button, 
+  [role="button"] {
+    @apply transition-colors duration-200;
+  }
+
+  /* Improved Focus States */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+}
+
+@layer components {
+  .layout-container {
+    @apply container mx-auto px-4 py-6 max-w-7xl;
+  }
+
+  .card-interactive {
+    @apply rounded-lg border bg-card p-6 shadow-sm transition-all duration-200 hover:shadow-md;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent;
+  }
+
+  .nav-link-active {
+    @apply bg-accent text-accent-foreground;
   }
 }
 
@@ -41,12 +83,9 @@
   .transition-sidebar {
     transition: margin-left 0.2s ease-in-out;
   }
-
-  .print-only {
-    display: none;
-  }
 }
 
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -69,16 +108,13 @@
   }
 }
 
-/* Print-specific styles */
+/* Print Styles */
 @media print {
-  html, body {
-    width: 210mm;
-    height: 297mm;
-    margin: 0;
-    padding: 0;
-  }
-
   .print-only {
     display: block;
+  }
+  
+  .no-print {
+    display: none;
   }
 }

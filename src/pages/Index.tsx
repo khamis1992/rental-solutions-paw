@@ -14,10 +14,14 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <WelcomeHeader />
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <WelcomeHeader />
+          <QuickActions />
+        </div>
+
         <DashboardStats />
-        <QuickActions />
+
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
           <div className="lg:col-span-4">
             <UpcomingRentals />
@@ -26,6 +30,7 @@ const Index = () => {
             <DashboardAlerts />
           </div>
         </div>
+
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
           <div className="lg:col-span-4">
             <RecentActivity />
