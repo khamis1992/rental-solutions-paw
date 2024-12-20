@@ -8,8 +8,9 @@ import { PaymentHistoryContent } from "@/components/agreements/payments/PaymentH
 import { CompanyExpenses } from "@/components/dashboard/CompanyExpenses";
 import { AiAccountantDashboard } from "@/components/finance/ai-accountant/AiAccountantDashboard";
 import { RentManagementSection } from "@/components/finance/rent/RentManagementSection";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, ChartBar, Calculator, CreditCard, History, DollarSign, Bot, Home } from "lucide-react";
+import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign, Bot, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -61,101 +62,99 @@ const Finance = () => {
   return (
     <DashboardLayout>
       <div className="container mx-auto space-y-6 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-4xl font-bold tracking-tight">Financial Dashboard</h1>
-        </div>
+        <h1 className="text-4xl font-bold tracking-tight">Financial Management</h1>
+        
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <ChartBar className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="company-expenses" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Company Expenses
+            </TabsTrigger>
+            <TabsTrigger value="rent" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Rent Management
+            </TabsTrigger>
+            <TabsTrigger value="ai-accountant" className="flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              AI Accountant
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Payments
+            </TabsTrigger>
+            <TabsTrigger value="installments" className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Installments
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Payment History
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Reports
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Overview Section */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalPaid.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Refunds</CardTitle>
-              <History className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalRefunded.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">-4% from last month</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Payments</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{paymentHistory?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">+12 since last hour</p>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="overview" className="space-y-6">
+            <RevenueAnalysis />
+          </TabsContent>
 
-        {/* Main Content Grid */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Revenue Analysis */}
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>Revenue Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RevenueAnalysis />
-            </CardContent>
-          </Card>
+          <TabsContent value="company-expenses" className="space-y-6">
+            <CompanyExpenses />
+          </TabsContent>
 
-          {/* Company Expenses */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Expenses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CompanyExpenses />
-            </CardContent>
-          </Card>
+          <TabsContent value="rent" className="space-y-6">
+            <RentManagementSection />
+          </TabsContent>
 
-          {/* AI Accountant */}
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Accountant</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AiAccountantDashboard />
-            </CardContent>
-          </Card>
+          <TabsContent value="ai-accountant" className="space-y-6">
+            <AiAccountantDashboard />
+          </TabsContent>
 
-          {/* Rent Management */}
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>Rent Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RentManagementSection />
-            </CardContent>
-          </Card>
+          <TabsContent value="payments" className="space-y-6">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Import</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PaymentImport />
+                </CardContent>
+              </Card>
 
-          {/* Payment History */}
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>Payment History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PaymentHistoryContent
-                paymentHistory={paymentHistory || []}
-                isLoading={isLoading}
-                totalPaid={totalPaid}
-                totalRefunded={totalRefunded}
-              />
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Reconciliation</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PaymentReconciliation />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="installments" className="space-y-6">
+            <InstallmentAnalysis />
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-6">
+            <PaymentHistoryContent
+              paymentHistory={paymentHistory || []}
+              isLoading={isLoading}
+              totalPaid={totalPaid}
+              totalRefunded={totalRefunded}
+            />
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6">
+            <FinancialReports />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
