@@ -4,6 +4,7 @@ import { useSessionContext } from "@supabase/auth-helpers-react";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Auth() {
   const { session } = useSessionContext();
@@ -16,28 +17,30 @@ export default function Auth() {
   }, [session, navigate]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-lg">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Rental Solutions</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your account</p>
-        </div>
-        <SupabaseAuth
-          supabaseClient={supabase}
-          appearance={{
-            theme: ThemeSupa,
-            variables: {
-              default: {
-                colors: {
-                  brand: "rgb(var(--primary))",
-                  brandAccent: "rgb(var(--primary))",
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+        <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-lg">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">Rental Solutions</h1>
+            <p className="text-sm text-muted-foreground">Sign in to your account</p>
+          </div>
+          <SupabaseAuth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: "rgb(var(--primary))",
+                    brandAccent: "rgb(var(--primary))",
+                  },
                 },
               },
-            },
-          }}
-          providers={[]}
-        />
+            }}
+            providers={[]}
+          />
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
