@@ -29,13 +29,56 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    min-width: 1024px; /* Minimum width for desktop */
+    overflow-x: auto;
   }
 }
 
 @layer utilities {
   .transition-sidebar {
     transition: margin-left 0.2s ease-in-out;
+  }
+
+  .print-only {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Print-specific styles */
+@media print {
+  html, body {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+  }
+
+  .print-only {
+    display: block;
   }
 }
