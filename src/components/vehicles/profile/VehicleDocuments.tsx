@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { FileText, Upload, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface VehicleDocumentsProps {
   vehicleId: string;
@@ -14,8 +14,9 @@ interface VehicleDocumentsProps {
 
 export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
   const [uploading, setUploading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: documents, refetch } = useQuery({
+  const { data: documents, isLoading } = useQuery({
     queryKey: ["vehicle-documents", vehicleId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,14 +39,15 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
       // Create a unique file path using vehicle ID and timestamp
       const fileExt = file.name.split('.').pop();
       const timestamp = new Date().getTime();
-      const filePath = `${vehicleId}/${timestamp}_${Math.random()}.${fileExt}`;
+      const fileName = `${timestamp}_${file.name}`;
+      const filePath = `${vehicleId}/${fileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('agreement_documents')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) throw uploadError;
@@ -55,7 +57,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
         .from('agreement_documents')
         .getPublicUrl(filePath);
 
-      // Save document reference in the database
+      // Save document reference in database
       const { error: dbError } = await supabase
         .from('agreement_documents')
         .insert({
@@ -66,10 +68,12 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       if (dbError) throw dbError;
 
+      // Invalidate and refetch documents
+      queryClient.invalidateQueries({ queryKey: ["vehicle-documents", vehicleId] });
+      
       toast.success('Document uploaded successfully');
-      refetch();
       event.target.value = '';
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error uploading document:', error);
       toast.error('Failed to upload document');
     } finally {
@@ -117,8 +121,10 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       if (dbError) throw dbError;
 
+      // Invalidate and refetch documents
+      queryClient.invalidateQueries({ queryKey: ["vehicle-documents", vehicleId] });
+      
       toast.success('Document deleted successfully');
-      refetch();
     } catch (error) {
       console.error('Error deleting document:', error);
       toast.error('Failed to delete document');
@@ -145,34 +151,38 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
           />
         </div>
 
-        <div className="space-y-4">
-          {documents?.map((doc) => (
-            <div
-              key={doc.id}
-              className="flex items-center justify-between p-2 border rounded"
-            >
-              <span className="truncate max-w-[200px]">
-                {doc.document_url.split('/').pop()}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownload(doc.document_url)}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(doc.id, doc.document_url)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+        {isLoading ? (
+          <div>Loading documents...</div>
+        ) : (
+          <div className="space-y-4">
+            {documents?.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-2 border rounded"
+              >
+                <span className="truncate max-w-[200px]">
+                  {doc.document_url.split('/').pop()}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownload(doc.document_url)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(doc.id, doc.document_url)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
