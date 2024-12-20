@@ -18,7 +18,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route element={<DashboardLayout />}>
+        <Route element={
+          <DashboardLayout>
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+          </DashboardLayout>
+        }>
           <Route path="/" element={
             <ErrorBoundary>
               <Index />
