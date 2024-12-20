@@ -5,6 +5,7 @@ import { VehicleManagementGuide } from "@/components/help/VehicleManagementGuide
 import { CustomerManagementGuide } from "@/components/help/CustomerManagementGuide";
 import { AgreementManagementGuide } from "@/components/help/AgreementManagementGuide";
 import { SystemFeaturesGuide } from "@/components/help/SystemFeaturesGuide";
+import { TechnicalFeaturesGuide } from "@/components/help/TechnicalFeaturesGuide";
 
 const Help = () => {
   return (
@@ -21,6 +22,7 @@ const Help = () => {
           <TabsList>
             <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
             <TabsTrigger value="system-features">System Features</TabsTrigger>
+            <TabsTrigger value="technical-features">Technical Features</TabsTrigger>
             <TabsTrigger value="vehicles">Vehicle Management</TabsTrigger>
             <TabsTrigger value="customers">Customer Management</TabsTrigger>
             <TabsTrigger value="agreements">Agreements</TabsTrigger>
@@ -32,6 +34,10 @@ const Help = () => {
 
           <TabsContent value="system-features">
             <SystemFeaturesGuide />
+          </TabsContent>
+
+          <TabsContent value="technical-features">
+            <TechnicalFeaturesGuide />
           </TabsContent>
 
           <TabsContent value="vehicles">
