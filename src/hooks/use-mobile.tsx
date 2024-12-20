@@ -3,14 +3,13 @@ import { useState, useEffect } from "react";
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
+  // Default to false for SSR
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Only run on client-side
-    if (typeof window === "undefined") {
-      return;
-    }
-
+    setMounted(true);
+    
     function checkMobile() {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     }
@@ -27,5 +26,6 @@ export function useIsMobile() {
     };
   }, []);
 
-  return isMobile;
+  // Return false during SSR, actual value after mount
+  return mounted ? isMobile : false;
 }
