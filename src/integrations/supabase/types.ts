@@ -2025,7 +2025,6 @@ export type Database = {
           assignment_status: string | null
           created_at: string | null
           fine_amount: number
-          fine_date: string
           fine_location: string | null
           fine_reference: string | null
           fine_type: string
@@ -2037,6 +2036,7 @@ export type Database = {
           updated_at: string | null
           vehicle_id: string | null
           violation_charge: string | null
+          violation_date: string
           violation_number: string | null
           violation_points: number | null
         }
@@ -2045,7 +2045,6 @@ export type Database = {
           assignment_status?: string | null
           created_at?: string | null
           fine_amount: number
-          fine_date: string
           fine_location?: string | null
           fine_reference?: string | null
           fine_type: string
@@ -2057,6 +2056,7 @@ export type Database = {
           updated_at?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
+          violation_date: string
           violation_number?: string | null
           violation_points?: number | null
         }
@@ -2065,7 +2065,6 @@ export type Database = {
           assignment_status?: string | null
           created_at?: string | null
           fine_amount?: number
-          fine_date?: string
           fine_location?: string | null
           fine_reference?: string | null
           fine_type?: string
@@ -2077,6 +2076,7 @@ export type Database = {
           updated_at?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
+          violation_date?: string
           violation_number?: string | null
           violation_points?: number | null
         }

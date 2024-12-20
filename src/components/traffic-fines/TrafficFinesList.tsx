@@ -3,19 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
-import { CustomerSelect } from "../agreements/form/CustomerSelect";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { Wand2 } from "lucide-react";
 import { useState } from "react";
 import { AIAssignmentDialog } from "./AIAssignmentDialog";
+import { TrafficFineTableHeader } from "./table/TrafficFineTableHeader";
+import { TrafficFineTableRow } from "./table/TrafficFineTableRow";
 
 export const TrafficFinesList = () => {
   const { toast } = useToast();
@@ -43,7 +36,7 @@ export const TrafficFinesList = () => {
             license_plate
           )
         `)
-        .order('fine_date', { ascending: false });
+        .order('violation_date', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -82,7 +75,6 @@ export const TrafficFinesList = () => {
 
   const handleAssignCustomer = async (fineId: string, customerId: string) => {
     try {
-      // First get the active lease for this customer
       const { data: leases, error: leaseError } = await supabase
         .from('leases')
         .select('id')
@@ -153,75 +145,23 @@ export const TrafficFinesList = () => {
     <>
       <div className="space-y-4">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+          <TrafficFineTableHeader />
           <TableBody>
             {fines?.map((fine) => (
-              <TableRow key={fine.id}>
-                <TableCell>
-                  {new Date(fine.fine_date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  {fine.vehicle ? `${fine.vehicle.make} ${fine.vehicle.model} (${fine.vehicle.license_plate})` : 'N/A'}
-                </TableCell>
-                <TableCell>{fine.fine_type}</TableCell>
-                <TableCell>{fine.fine_location}</TableCell>
-                <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={fine.payment_status === 'completed' ? 'success' : 'secondary'}
-                  >
-                    {fine.payment_status === 'completed' ? 'Paid' : 'Pending'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {fine.lease?.customer ? (
-                    fine.lease.customer.full_name
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <CustomerSelect
-                        register={() => {}}
-                        onCustomerSelect={(customerId) => handleAssignCustomer(fine.id, customerId)}
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleAiAssignment(fine.id)}
-                      >
-                        <Wand2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {fine.payment_status !== 'completed' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleMarkAsPaid(fine.id)}
-                    >
-                      Mark as Paid
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
+              <TrafficFineTableRow
+                key={fine.id}
+                fine={fine}
+                onAssignCustomer={handleAssignCustomer}
+                onAiAssignment={handleAiAssignment}
+                onMarkAsPaid={handleMarkAsPaid}
+              />
             ))}
             {!fines?.length && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center">
+              <tr>
+                <td colSpan={11} className="text-center py-4">
                   No traffic fines recorded
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             )}
           </TableBody>
         </Table>
