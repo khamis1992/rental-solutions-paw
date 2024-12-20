@@ -2,7 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, TrendingUp } from "lucide-react";
+import { CheckCircle, TrendingUp, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface RecommendationsListProps {
   data: any[];
@@ -10,15 +12,31 @@ interface RecommendationsListProps {
 
 export const RecommendationsList = ({ data }: RecommendationsListProps) => {
   const recommendations = data?.[0]?.data_points?.recommendations || [];
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleImplement = async (recommendationId: string) => {
     try {
-      // Here you would typically update the recommendation status
       console.log('Implementing recommendation:', recommendationId);
-      // You could add a toast notification here
     } catch (error) {
       console.error('Failed to implement recommendation:', error);
     }
+  };
+
+  const generatePrompt = (rec: any) => {
+    return `Please help improve my code based on this recommendation:
+Problem: ${rec.title}
+Description: ${rec.description}
+Priority: ${rec.priority}
+${rec.example ? `Example of the issue:\n${rec.example}` : ''}
+Please provide the necessary code changes to implement this improvement.`;
+  };
+
+  const copyPrompt = (rec: any) => {
+    const prompt = generatePrompt(rec);
+    navigator.clipboard.writeText(prompt);
+    setCopiedId(rec.id);
+    toast.success("Prompt copied to clipboard!");
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -55,6 +73,19 @@ export const RecommendationsList = ({ data }: RecommendationsListProps) => {
                         Mark Implemented
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto"
+                      onClick={() => copyPrompt(rec)}
+                    >
+                      {copiedId === rec.id ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      {copiedId === rec.id ? "Copied!" : "Copy Prompt"}
+                    </Button>
                   </div>
                   <h4 className="font-semibold mt-2">{rec.title}</h4>
                   <p className="text-sm text-muted-foreground">{rec.description}</p>

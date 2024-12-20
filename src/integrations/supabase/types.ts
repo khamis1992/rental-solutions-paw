@@ -672,6 +672,8 @@ export type Database = {
       }
       financial_forecasts: {
         Row: {
+          ai_analysis_details: Json | null
+          ai_model: string | null
           confidence_score: number | null
           created_at: string | null
           end_date: string
@@ -682,6 +684,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_analysis_details?: Json | null
+          ai_model?: string | null
           confidence_score?: number | null
           created_at?: string | null
           end_date: string
@@ -692,6 +696,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_analysis_details?: Json | null
+          ai_model?: string | null
           confidence_score?: number | null
           created_at?: string | null
           end_date?: string
