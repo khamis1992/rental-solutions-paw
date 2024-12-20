@@ -10,7 +10,6 @@ import { AiAccountantDashboard } from "@/components/finance/ai-accountant/AiAcco
 import { RentManagementSection } from "@/components/finance/rent/RentManagementSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
 import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign, Bot, Home } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,10 +98,6 @@ const Finance = () => {
               <FileText className="h-4 w-4" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              AI Insights
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -158,10 +153,6 @@ const Finance = () => {
 
           <TabsContent value="reports" className="space-y-6">
             <FinancialReports />
-          </TabsContent>
-
-          <TabsContent value="insights" className="space-y-6">
-            <AiAnalyticsInsights />
           </TabsContent>
         </Tabs>
       </div>
