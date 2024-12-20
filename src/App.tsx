@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 import { lazy } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
@@ -36,9 +36,6 @@ const routes = [
 export default function App() {
   return (
     <Routes>
-      {/* Redirect /auth to / */}
-      <Route path="/auth" element={<Navigate to="/" replace />} />
-      
       <Route
         element={
           <DashboardLayout>

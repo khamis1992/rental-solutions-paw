@@ -1,8 +1,6 @@
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { Settings, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,42 +13,6 @@ import {
 export const UserProfileMenu = () => {
   const navigate = useNavigate();
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.log('No authenticated user found');
-          return null;
-        }
-
-        console.log('Fetching profile for user:', user.id);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching profile:', error);
-          return null;
-        }
-
-        console.log('Profile data:', profile);
-        return profile;
-      } catch (error) {
-        console.error('Unexpected error in profile fetch:', error);
-        return null;
-      }
-    },
-  });
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,20 +22,14 @@ export const UserProfileMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        {profile && (
-          <DropdownMenuItem className="flex flex-col items-start gap-1">
-            <p className="font-medium">{profile.full_name}</p>
-            <p className="text-xs text-muted-foreground">Role: {profile.role}</p>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem className="flex flex-col items-start gap-1">
+          <p className="font-medium">User</p>
+          <p className="text-xs text-muted-foreground">Role: User</p>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/settings")}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
