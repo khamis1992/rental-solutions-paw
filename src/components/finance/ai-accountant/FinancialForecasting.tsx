@@ -11,6 +11,12 @@ interface ForecastData {
   predicted_expenses: number;
 }
 
+interface JsonForecastData {
+  date: string;
+  predicted_revenue: number | string;
+  predicted_expenses: number | string;
+}
+
 export const FinancialForecasting = () => {
   const { data: forecasts, isLoading } = useQuery({
     queryKey: ["financial-forecasts"],
@@ -30,7 +36,7 @@ export const FinancialForecasting = () => {
       }
 
       // Validate and transform the data
-      return forecastData.map(item => ({
+      return forecastData.map((item: JsonForecastData) => ({
         date: String(item.date || ''),
         predicted_revenue: Number(item.predicted_revenue || 0),
         predicted_expenses: Number(item.predicted_expenses || 0)
