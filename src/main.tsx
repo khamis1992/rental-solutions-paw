@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import App from './App.tsx';
 import './index.css';
 
@@ -63,18 +64,20 @@ const renderApp = (session: any) => {
   
   root.render(
     <React.StrictMode>
-      <SessionContextProvider 
-        supabaseClient={supabase}
-        initialSession={session}
-      >
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <SidebarProvider>
-              <App />
-            </SidebarProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </SessionContextProvider>
+      <ErrorBoundary>
+        <SessionContextProvider 
+          supabaseClient={supabase}
+          initialSession={session}
+        >
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <SidebarProvider>
+                <App />
+              </SidebarProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 
