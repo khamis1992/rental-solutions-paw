@@ -37,22 +37,47 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
         .eq("lease.customer_id", customerId)
         .order("violation_date", { ascending: false });
 
-      if (error) throw error;
-      return data as TrafficFine[];
+      if (error) {
+        console.error('Error fetching customer traffic fines:', error);
+        throw error;
+      }
+
+      return data;
     },
   });
 
-  if (isLoading) return (
-    <Card>
-      <CardContent className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </CardContent>
-    </Card>
-  );
+  const calculateTotalFines = (fines: TrafficFine[] | undefined): number => {
+    return fines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0;
+  };
 
-  const totalFines = fines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0;
-  const unpaidFines = fines?.filter((fine) => fine.payment_status === "pending") || [];
-  const totalUnpaid = unpaidFines.reduce((sum, fine) => sum + fine.fine_amount, 0);
+  const calculateUnpaidFines = (fines: TrafficFine[] | undefined): { count: number; total: number } => {
+    const unpaidFines = fines?.filter((fine) => fine.payment_status === "pending") || [];
+    const total = unpaidFines.reduce((sum, fine) => sum + fine.fine_amount, 0);
+    return { count: unpaidFines.length, total };
+  };
+
+  const getStatusBadgeStyle = (status: string): string => {
+    const styles = {
+      completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      refunded: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+    };
+    return styles[status as keyof typeof styles] || styles.pending;
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const totalFines = calculateTotalFines(fines);
+  const { total: totalUnpaid } = calculateUnpaidFines(fines);
 
   return (
     <Card className="overflow-hidden">
@@ -93,22 +118,8 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
                 </div>
                 <div className="text-right space-y-2">
                   <div className="font-medium">{formatCurrency(fine.fine_amount)}</div>
-                  <Badge
-                    variant="secondary"
-                    className={
-                      fine.payment_status === "completed"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : fine.payment_status === "failed"
-                        ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        : fine.payment_status === "refunded"
-                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                    }
-                  >
-                    {fine.payment_status === "completed" ? "Paid" 
-                      : fine.payment_status === "failed" ? "Failed"
-                      : fine.payment_status === "refunded" ? "Refunded"
-                      : "Pending"}
+                  <Badge variant="secondary" className={getStatusBadgeStyle(fine.payment_status)}>
+                    {fine.payment_status}
                   </Badge>
                 </div>
               </div>

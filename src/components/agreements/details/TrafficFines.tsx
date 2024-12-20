@@ -21,19 +21,51 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('traffic_fines')
-        .select('*')
+        .select(`
+          *,
+          lease:leases(
+            id,
+            customer_id,
+            customer:profiles(
+              id,
+              full_name
+            ),
+            vehicle:vehicles(
+              make,
+              model,
+              year,
+              license_plate
+            )
+          )
+        `)
         .eq('lease_id', agreementId)
         .order('violation_date', { ascending: false });
 
-      if (error) throw error;
-      return data as TrafficFine[];
+      if (error) {
+        console.error('Error fetching traffic fines:', error);
+        throw error;
+      }
+
+      return data;
     },
   });
 
+  const getStatusColor = (status: string): string => {
+    const statusColors = {
+      completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+      refunded: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+    };
+    return statusColors[status as keyof typeof statusColors] || statusColors.pending;
+  };
+
   if (isLoading) {
-    return <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -61,15 +93,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
                 <TableCell>{fine.fine_location}</TableCell>
                 <TableCell className="font-medium">{formatCurrency(fine.fine_amount)}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    fine.payment_status === 'completed' 
-                      ? 'bg-green-100 text-green-800' 
-                      : fine.payment_status === 'failed'
-                      ? 'bg-red-100 text-red-800'
-                      : fine.payment_status === 'refunded'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(fine.payment_status)}`}>
                     {fine.payment_status}
                   </span>
                 </TableCell>
