@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
-import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters";
+import { MaintenanceFilters, type MaintenanceFilters as FilterType } from "@/components/maintenance/MaintenanceFilters";
 import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
 import { PredictiveMaintenance } from "@/components/maintenance/PredictiveMaintenance";
 import { Routes, Route, useParams } from "react-router-dom";
@@ -14,10 +14,10 @@ const MaintenanceInspection = () => {
 };
 
 const Maintenance = () => {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterType>({
     status: "all",
-    date: "all",
-    type: "all"
+    serviceType: "",
+    dateRange: "all"
   });
 
   return (

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-interface MaintenanceFilters {
+export interface MaintenanceFilters {
   status: string;
   serviceType: string;
   dateRange: string;

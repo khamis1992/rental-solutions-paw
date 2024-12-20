@@ -11,10 +11,13 @@ interface ForecastData {
   predicted_expenses: number;
 }
 
+type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
+
 interface JsonForecastData {
   date: string;
   predicted_revenue: number | string;
   predicted_expenses: number | string;
+  [key: string]: JsonValue;
 }
 
 const isJsonForecastData = (item: unknown): item is JsonForecastData => {
@@ -45,7 +48,7 @@ export const FinancialForecasting = () => {
       }
 
       return forecastData
-        .filter((item): item is JsonForecastData => isJsonForecastData(item))
+        .filter(isJsonForecastData)
         .map((item): ForecastData => ({
           date: String(item.date),
           predicted_revenue: Number(item.predicted_revenue) || 0,
