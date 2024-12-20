@@ -18,53 +18,53 @@ Deno.serve(async (req) => {
 
     const testUsers = [
       {
-        email: 'john.smith@example.com',
+        email: 'john.doe@example.com',
         password: 'password123',
         user_metadata: {
-          full_name: 'John Smith',
-          phone_number: '+974 3333 4444',
-          address: 'West Bay, Doha',
-          driver_license: 'DL123456'
+          full_name: 'John Doe',
+          phone_number: '+1234567890',
+          address: '123 Test St',
+          driver_license: 'DL001'
         }
       },
       {
-        email: 'sarah.johnson@example.com',
+        email: 'jane.smith@example.com',
         password: 'password123',
         user_metadata: {
-          full_name: 'Sarah Johnson',
-          phone_number: '+974 5555 6666',
-          address: 'The Pearl, Doha',
-          driver_license: 'DL789012'
+          full_name: 'Jane Smith',
+          phone_number: '+1987654321',
+          address: '456 Test Ave',
+          driver_license: 'DL002'
         }
       },
       {
-        email: 'mohammed.alsayed@example.com',
+        email: 'alex.johnson@example.com',
         password: 'password123',
         user_metadata: {
-          full_name: 'Mohammed Al-Sayed',
-          phone_number: '+974 7777 8888',
-          address: 'Al Sadd, Doha',
-          driver_license: 'DL345678'
+          full_name: 'Alex Johnson',
+          phone_number: '+1122334455',
+          address: '789 Test Rd',
+          driver_license: 'DL003'
         }
       },
       {
-        email: 'fatima.ahmed@example.com',
+        email: 'emily.brown@example.com',
         password: 'password123',
         user_metadata: {
-          full_name: 'Fatima Ahmed',
-          phone_number: '+974 9999 0000',
-          address: 'Lusail City',
-          driver_license: 'DL901234'
+          full_name: 'Emily Brown',
+          phone_number: '+1555666777',
+          address: '321 Test Blvd',
+          driver_license: 'DL004'
         }
       },
       {
-        email: 'david.wilson@example.com',
+        email: 'michael.green@example.com',
         password: 'password123',
         user_metadata: {
-          full_name: 'David Wilson',
-          phone_number: '+974 1111 2222',
-          address: 'Al Wakrah',
-          driver_license: 'DL567890'
+          full_name: 'Michael Green',
+          phone_number: '+1999888777',
+          address: '654 Test Ln',
+          driver_license: 'DL005'
         }
       }
     ]
