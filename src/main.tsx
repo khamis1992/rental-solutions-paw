@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,8 +58,6 @@ const initializeApp = async () => {
 };
 
 const renderApp = (session: any) => {
-  const startRender = performance.now();
-  
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
@@ -69,19 +67,13 @@ const renderApp = (session: any) => {
         >
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/*" element={<App />} />
-              </Routes>
+              {!session ? <Auth /> : <App />}
             </BrowserRouter>
           </QueryClientProvider>
         </SessionContextProvider>
       </ErrorBoundary>
     </React.StrictMode>
   );
-
-  const renderTime = performance.now() - startRender;
-  console.log(`App rendered in ${renderTime}ms`);
 };
 
 console.time('App Initialization');
