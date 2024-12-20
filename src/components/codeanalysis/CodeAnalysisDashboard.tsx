@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CodeQualityMetrics } from "./CodeQualityMetrics";
 import { SecurityVulnerabilities } from "./SecurityVulnerabilities";
 import { PerformanceInsights } from "./PerformanceInsights";
 import { RecommendationsList } from "./RecommendationsList";
+import { toast } from "sonner";
+import { Brain } from "lucide-react";
 
 interface AnalyticsDataPoints {
   quality_score: number;
@@ -47,8 +50,9 @@ interface AnalyticsInsight {
 
 export const CodeAnalysisDashboard = () => {
   const [selectedTab, setSelectedTab] = useState("quality");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const { data: analysisData, isLoading } = useQuery({
+  const { data: analysisData, isLoading, refetch } = useQuery({
     queryKey: ["code-analysis"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -62,13 +66,31 @@ export const CodeAnalysisDashboard = () => {
         throw error;
       }
 
-      // Cast the data to ensure type safety
       return (data || []).map(item => ({
         ...item,
         data_points: item.data_points as unknown as AnalyticsDataPoints
       })) as AnalyticsInsight[];
     }
   });
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-code', {
+        body: { includePerformance: true }
+      });
+
+      if (error) throw error;
+
+      await refetch();
+      toast.success("Code analysis completed successfully");
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      toast.error("Failed to analyze code. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (isLoading) {
     return <div>Loading analysis data...</div>;
@@ -78,6 +100,14 @@ export const CodeAnalysisDashboard = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Code Analysis Dashboard</h1>
+        <Button 
+          onClick={handleAnalyze} 
+          disabled={isAnalyzing}
+          className="flex items-center gap-2"
+        >
+          <Brain className="h-4 w-4" />
+          {isAnalyzing ? "Analyzing..." : "Analyze Now"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
