@@ -17,7 +17,7 @@ export const CustomerReportSection = ({
 }: CustomerReportSectionProps) => {
   return (
     <div className="space-y-6">
-      <CustomerAnalytics />
+      {/* Reports Selection Card - Moved to top */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -39,6 +39,9 @@ export const CustomerReportSection = ({
           <Button className="w-full" onClick={generateReport}>Generate Report</Button>
         </CardContent>
       </Card>
+
+      {/* Analytics Card - Moved to bottom */}
+      <CustomerAnalytics />
     </div>
   );
 };
