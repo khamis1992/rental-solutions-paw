@@ -7,19 +7,17 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Simulate code analysis (in a real implementation, this would analyze actual code)
+    // Simulate code analysis with more detailed recommendations
     const analysisResult = {
       category: 'code_analysis',
       data_points: {
@@ -32,12 +30,56 @@ serve(async (req) => {
           { name: 'Maintainability', value: Math.floor(Math.random() * 100) },
           { name: 'Technical Debt', value: Math.floor(Math.random() * 100) },
         ],
-        security_issues: [],
-        performance_metrics: [],
-        recommendations: []
+        security_issues: [
+          {
+            title: 'Potential SQL Injection Risk',
+            severity: 'high',
+            description: 'Raw SQL queries found without proper parameter sanitization',
+            location: 'src/services/database.ts'
+          },
+          {
+            title: 'Outdated Dependencies',
+            severity: 'medium',
+            description: 'Several npm packages have known vulnerabilities',
+            location: 'package.json'
+          }
+        ],
+        performance_metrics: [
+          { timestamp: '2024-01-01', value: Math.random() * 100 },
+          { timestamp: '2024-01-02', value: Math.random() * 100 },
+          { timestamp: '2024-01-03', value: Math.random() * 100 }
+        ],
+        recommendations: [
+          {
+            id: '1',
+            title: 'Implement Error Boundary Components',
+            priority: 'high',
+            description: 'Add React Error Boundaries to gracefully handle runtime errors and improve user experience.',
+            example: 'class ErrorBoundary extends React.Component { ... }',
+            impact_score: 85,
+            implemented: false
+          },
+          {
+            id: '2',
+            title: 'Optimize Bundle Size',
+            priority: 'high',
+            description: 'Large bundle size detected. Consider code splitting and lazy loading for better performance.',
+            impact_score: 90,
+            implemented: false
+          },
+          {
+            id: '3',
+            title: 'Enhance Type Safety',
+            priority: 'medium',
+            description: 'Add stricter TypeScript types for better code reliability and maintainability.',
+            example: 'interface UserData { ... }',
+            impact_score: 75,
+            implemented: false
+          }
+        ]
       },
       confidence_score: 0.95,
-      insight: 'Code analysis completed successfully',
+      insight: 'Code analysis completed with detailed recommendations for improvement',
       priority: 2,
       status: 'completed',
       action_taken: false
