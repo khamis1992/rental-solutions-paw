@@ -9,6 +9,7 @@ import { useState } from "react";
 import { AIAssignmentDialog } from "./AIAssignmentDialog";
 import { TrafficFineTableHeader } from "./table/TrafficFineTableHeader";
 import { TrafficFineTableRow } from "./table/TrafficFineTableRow";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export const TrafficFinesList = () => {
   const { toast } = useToast();
@@ -142,19 +143,20 @@ export const TrafficFinesList = () => {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <div className="space-y-4">
         <Table>
           <TrafficFineTableHeader />
           <TableBody>
             {fines?.map((fine) => (
-              <TrafficFineTableRow
-                key={fine.id}
-                fine={fine}
-                onAssignCustomer={handleAssignCustomer}
-                onAiAssignment={handleAiAssignment}
-                onMarkAsPaid={handleMarkAsPaid}
-              />
+              <ErrorBoundary key={fine.id}>
+                <TrafficFineTableRow
+                  fine={fine}
+                  onAssignCustomer={handleAssignCustomer}
+                  onAiAssignment={handleAiAssignment}
+                  onMarkAsPaid={handleMarkAsPaid}
+                />
+              </ErrorBoundary>
             ))}
             {!fines?.length && (
               <tr>
@@ -175,6 +177,6 @@ export const TrafficFinesList = () => {
         isAnalyzing={isAnalyzing}
         aiSuggestions={aiSuggestions}
       />
-    </>
+    </ErrorBoundary>
   );
 };
