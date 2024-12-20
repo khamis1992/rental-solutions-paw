@@ -17,6 +17,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
     const { paymentId } = await req.json();
     console.log('Analyzing payment:', paymentId);
 
@@ -39,28 +40,45 @@ serve(async (req) => {
 
     if (paymentError) throw paymentError;
 
-    // Perform AI analysis
-    const analysis = {
-      anomalies: [],
-      confidence_score: 1.0,
-      suggested_corrections: {},
+    // Prepare payment data for analysis
+    const paymentData = {
+      amount: payment.amount,
+      payment_method: payment.payment_method,
+      payment_date: payment.payment_date,
+      lease_total: payment.leases?.total_amount,
+      customer_name: payment.leases?.profiles?.full_name,
     };
 
-    // Check for common anomalies
-    if (!payment.amount || payment.amount <= 0) {
-      analysis.anomalies.push('Invalid payment amount');
-      analysis.confidence_score -= 0.3;
+    // Call Perplexity API for payment analysis
+    const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        messages: [{
+          role: 'system',
+          content: 'You are a payment analysis AI that detects anomalies and validates payment information. Analyze the payment data and provide insights.'
+        }, {
+          role: 'user',
+          content: `Analyze this payment for anomalies and validation: ${JSON.stringify(paymentData)}`
+        }]
+      })
+    });
+
+    if (!perplexityResponse.ok) {
+      throw new Error(`Perplexity API error: ${perplexityResponse.statusText}`);
     }
 
-    if (!payment.payment_date) {
-      analysis.anomalies.push('Missing payment date');
-      analysis.confidence_score -= 0.2;
-    }
+    const aiResponse = await perplexityResponse.json();
+    const analysis = aiResponse.choices[0].message.content;
 
-    if (!payment.payment_method) {
-      analysis.anomalies.push('Missing payment method');
-      analysis.confidence_score -= 0.2;
-    }
+    // Process AI response and extract key information
+    const anomalyDetected = analysis.toLowerCase().includes('anomaly') || analysis.toLowerCase().includes('irregular');
+    const confidenceScore = analysis.toLowerCase().includes('high confidence') ? 0.9 : 
+                           analysis.toLowerCase().includes('medium confidence') ? 0.7 : 0.5;
 
     // Store analysis results
     const { error: analysisError } = await supabase
@@ -68,33 +86,23 @@ serve(async (req) => {
       .insert({
         payment_id: paymentId,
         analysis_type: 'validation',
-        confidence_score: analysis.confidence_score,
-        anomaly_detected: analysis.anomalies.length > 0,
-        anomaly_details: analysis.anomalies,
-        suggested_corrections: analysis.suggested_corrections,
+        confidence_score: confidenceScore,
+        anomaly_detected: anomalyDetected,
+        anomaly_details: anomalyDetected ? [analysis] : [],
+        suggested_corrections: {},
+        status: anomalyDetected ? 'needs_review' : 'validated'
       });
 
     if (analysisError) throw analysisError;
 
-    // Attempt payment reconciliation
-    const { error: reconciliationError } = await supabase
-      .from('payment_reconciliation')
-      .insert({
-        payment_id: paymentId,
-        lease_id: payment.lease_id,
-        reconciliation_status: analysis.anomalies.length > 0 ? 'needs_review' : 'auto_matched',
-        match_confidence: analysis.confidence_score,
-        discrepancy_details: analysis.anomalies.length > 0 ? analysis.anomalies : null,
-        auto_matched: analysis.anomalies.length === 0,
-      });
-
-    if (reconciliationError) throw reconciliationError;
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        analysis,
-        message: 'Payment analyzed successfully' 
+        analysis: {
+          confidence_score: confidenceScore,
+          anomaly_detected: anomalyDetected,
+          details: analysis
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -106,7 +114,7 @@ serve(async (req) => {
         success: false, 
         error: error.message 
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
