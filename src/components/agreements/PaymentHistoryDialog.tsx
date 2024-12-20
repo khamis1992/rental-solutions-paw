@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PaymentHistoryContent } from "./payments/PaymentHistoryContent";
 import { PaymentAnalysis } from "../payments/PaymentAnalysis";
+import { Loader2 } from "lucide-react";
 
 interface PaymentHistoryDialogProps {
   agreementId?: string;
@@ -26,56 +27,61 @@ export function PaymentHistoryDialog({
 }: PaymentHistoryDialogProps) {
   const queryClient = useQueryClient();
 
-  const { data: paymentHistory, isLoading } = useQuery({
+  const { data: paymentHistory, isLoading, error } = useQuery({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
       console.log("Fetching payments for agreement:", agreementId || "all agreements");
       
-      const query = supabase
-        .from("payments")
-        .select(`
-          *,
-          security_deposits (
-            amount,
-            status
-          ),
-          leases (
-            agreement_number,
-            customer_id,
-            profiles:customer_id (
-              id,
-              full_name,
-              phone_number
+      try {
+        const query = supabase
+          .from("payments")
+          .select(`
+            *,
+            security_deposits (
+              amount,
+              status
+            ),
+            leases (
+              agreement_number,
+              customer_id,
+              profiles:customer_id (
+                id,
+                full_name,
+                phone_number
+              )
             )
-          )
-        `)
-        .order("created_at", { ascending: false });
+          `)
+          .order("created_at", { ascending: false });
 
-      if (agreementId) {
-        query.eq("lease_id", agreementId);
+        if (agreementId) {
+          query.eq("lease_id", agreementId);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching payments:", error);
+          throw error;
+        }
+
+        const transformedData = data.map(payment => ({
+          ...payment,
+          customer: payment.leases?.profiles || null,
+          agreement_number: payment.leases?.agreement_number || null
+        }));
+
+        console.log("Fetched payments with customer info:", transformedData);
+        return transformedData;
+      } catch (err) {
+        console.error("Error in payment history query:", err);
+        throw err;
       }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching payments:", error);
-        throw error;
-      }
-
-      // Transform the data to include customer information directly
-      const transformedData = data.map(payment => ({
-        ...payment,
-        customer: payment.leases?.profiles || null,
-        agreement_number: payment.leases?.agreement_number || null
-      }));
-
-      console.log("Fetched payments with customer info:", transformedData);
-      return transformedData;
     },
     enabled: open,
+    retry: 2,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
-  // Set up real-time subscription
   useEffect(() => {
     if (!open) return;
 
@@ -92,17 +98,18 @@ export function PaymentHistoryDialog({
         async (payload) => {
           console.log('Real-time update received for payment history:', payload);
           
-          // Invalidate and refetch the payment history query
-          await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
+          await queryClient.invalidateQueries({ 
+            queryKey: ['payment-history', agreementId] 
+          });
           
-          // Show a toast notification
-          const eventType = payload.eventType;
+          const eventMessages = {
+            INSERT: 'New payment recorded',
+            UPDATE: 'Payment status updated',
+            DELETE: 'Payment record removed'
+          };
+          
           toast.info(
-            eventType === 'INSERT'
-              ? 'New payment recorded'
-              : eventType === 'UPDATE'
-              ? 'Payment status updated'
-              : 'Payment record changed',
+            eventMessages[payload.eventType as keyof typeof eventMessages] || 'Payment record changed',
             {
               description: 'The payment history has been updated.'
             }
@@ -111,7 +118,6 @@ export function PaymentHistoryDialog({
       )
       .subscribe();
 
-    // Cleanup subscription on unmount or when dialog closes
     return () => {
       supabase.removeChannel(channel);
     };
@@ -119,44 +125,63 @@ export function PaymentHistoryDialog({
 
   const totalPaid = paymentHistory?.reduce((sum, payment) => {
     if (payment.status === "completed") {
-      return sum + payment.amount;
+      return sum + (payment.amount || 0);
     }
     return sum;
   }, 0) || 0;
 
   const totalRefunded = paymentHistory?.reduce((sum, payment) => {
     if (payment.status === "refunded") {
-      return sum + payment.amount;
+      return sum + (payment.amount || 0);
     }
     return sum;
   }, 0) || 0;
 
+  if (error) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <div className="flex flex-col items-center justify-center p-4 text-red-500">
+            <p>Error loading payment history</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[90vw] w-[1200px] h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader>
           <DialogTitle>Payment History</DialogTitle>
           <DialogDescription>
             View all payments and transactions
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="col-span-2">
-            <PaymentHistoryContent
-              agreementId={agreementId}
-              paymentHistory={paymentHistory || []}
-              isLoading={isLoading}
-              totalPaid={totalPaid}
-              totalRefunded={totalRefunded}
-            />
+        {isLoading ? (
+          <div className="flex items-center justify-center flex-1">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-          <div>
-            {paymentHistory?.[0]?.id && (
-              <PaymentAnalysis paymentId={paymentHistory[0].id} />
-            )}
+        ) : (
+          <div className="grid grid-cols-3 gap-4 mb-4 overflow-auto">
+            <div className="col-span-2">
+              <PaymentHistoryContent
+                agreementId={agreementId}
+                paymentHistory={paymentHistory || []}
+                isLoading={isLoading}
+                totalPaid={totalPaid}
+                totalRefunded={totalRefunded}
+              />
+            </div>
+            <div>
+              {paymentHistory?.[0]?.id && (
+                <PaymentAnalysis paymentId={paymentHistory[0].id} />
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

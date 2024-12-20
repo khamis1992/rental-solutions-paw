@@ -1,40 +1,21 @@
-import { useLocation } from "react-router-dom";
+import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface DashboardLayoutProps {
-  children?: React.ReactNode;
+  children: ReactNode;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const location = useLocation();
-  
-  // Don't render dashboard layout on auth route
-  if (location.pathname === "/auth") {
-    return <>{children}</>;
-  }
-
+export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen w-full bg-background">
-        <ErrorBoundary>
-          <DashboardSidebar />
-        </ErrorBoundary>
-        
-        <div className="flex flex-col lg:pl-72 transition-all duration-300 ease-in-out">
-          <ErrorBoundary>
-            <DashboardHeader />
-          </ErrorBoundary>
-          
-          <main className="flex-1 py-10">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </main>
-        </div>
+    <div className="min-h-screen bg-background">
+      <DashboardHeader />
+      <div className="flex">
+        <DashboardSidebar />
+        <main className="flex-1 overflow-x-hidden">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
-}
+};

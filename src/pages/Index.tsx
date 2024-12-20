@@ -1,34 +1,44 @@
-import { Container } from "@/components/ui/container"
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader"
-import { DashboardStats } from "@/components/dashboard/DashboardStats"
-import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart"
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts"
-import { QuickActions } from "@/components/dashboard/QuickActions"
-import { RecentActivity } from "@/components/dashboard/RecentActivity"
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
+import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
+import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 
-export default function Index() {
+const Index = () => {
+  // Initialize performance monitoring
+  usePerformanceMonitoring();
+  
+  // Initialize real-time subscriptions
+  useDashboardSubscriptions();
+
   return (
-    <Container>
+    <DashboardLayout>
       <WelcomeHeader />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardStats />
-      </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-4">
-          <VehicleStatusChart />
+      <DashboardStats />
+      <QuickActions />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
+        <div className="lg:col-span-4">
+          <UpcomingRentals />
         </div>
-        <div className="col-span-3">
+        <div className="lg:col-span-3">
           <DashboardAlerts />
         </div>
       </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-3">
-          <QuickActions />
-        </div>
-        <div className="col-span-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
           <RecentActivity />
         </div>
+        <div className="lg:col-span-3">
+          <IntelligentScheduling />
+        </div>
       </div>
-    </Container>
-  )
-}
+    </DashboardLayout>
+  );
+};
+
+export default Index;

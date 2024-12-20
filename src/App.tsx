@@ -1,38 +1,62 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
+import { lazy } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import Index from "@/pages/Index";
-import Agreements from "@/pages/Agreements";
-import CustomerProfile from "@/pages/CustomerProfile";
-import Customers from "@/pages/Customers";
-import Finance from "@/pages/Finance";
-import Help from "@/pages/Help";
-import Legal from "@/pages/Legal";
-import Maintenance from "@/pages/Maintenance";
-import Reports from "@/pages/Reports";
-import Settings from "@/pages/Settings";
-import TrafficFines from "@/pages/TrafficFines";
-import Vehicles from "@/pages/Vehicles";
+import { RouteWrapper } from "@/components/layout/RouteWrapper";
+
+// Lazy load all pages
+const Index = lazy(() => import("@/pages/Index"));
+const Agreements = lazy(() => import("@/pages/Agreements"));
+const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
+const Customers = lazy(() => import("@/pages/Customers"));
+const Finance = lazy(() => import("@/pages/Finance"));
+const Help = lazy(() => import("@/pages/Help"));
+const Legal = lazy(() => import("@/pages/Legal"));
+const Maintenance = lazy(() => import("@/pages/Maintenance"));
+const Reports = lazy(() => import("@/pages/Reports"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
+const Vehicles = lazy(() => import("@/pages/Vehicles"));
+
+// Define routes configuration
+const routes = [
+  { path: "/", component: Index },
+  { path: "/agreements", component: Agreements },
+  { path: "/customers", component: Customers },
+  { path: "/customer/:id", component: CustomerProfile },
+  { path: "/finance", component: Finance },
+  { path: "/help", component: Help },
+  { path: "/legal", component: Legal },
+  { path: "/maintenance", component: Maintenance },
+  { path: "/reports", component: Reports },
+  { path: "/settings", component: Settings },
+  { path: "/traffic-fines", component: TrafficFines },
+  { path: "/vehicles", component: Vehicles },
+];
 
 export default function App() {
   return (
-    <DashboardLayout>
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/agreements" element={<Agreements />} />
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/customer/:id" element={<CustomerProfile />} />
-          <Route path="/finance" element={<Finance />} />
-          <Route path="/help" element={<Help />} />
-          <Route path="/legal" element={<Legal />} />
-          <Route path="/maintenance" element={<Maintenance />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/traffic-fines" element={<TrafficFines />} />
-          <Route path="/vehicles" element={<Vehicles />} />
-        </Routes>
-      </ErrorBoundary>
-    </DashboardLayout>
+    <Routes>
+      <Route
+        element={
+          <DashboardLayout>
+            <RouteWrapper>
+              <Outlet />
+            </RouteWrapper>
+          </DashboardLayout>
+        }
+      >
+        {routes.map(({ path, component: Component }) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <RouteWrapper>
+                <Component />
+              </RouteWrapper>
+            }
+          />
+        ))}
+      </Route>
+    </Routes>
   );
 }
