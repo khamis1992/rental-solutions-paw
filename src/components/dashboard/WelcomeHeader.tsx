@@ -21,7 +21,7 @@ export const WelcomeHeader = () => {
 
         if (error) {
           console.error('Error fetching profile:', error);
-          throw error;
+          return null;
         }
 
         console.log('Profile data:', profile);

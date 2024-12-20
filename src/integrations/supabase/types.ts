@@ -579,6 +579,169 @@ export type Database = {
           },
         ]
       }
+      expense_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_category_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_category_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_category_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_transactions: {
+        Row: {
+          ai_category_suggestion: string | null
+          ai_confidence_score: number | null
+          amount: number
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          receipt_url: string | null
+          status: string | null
+          transaction_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_category_suggestion?: string | null
+          ai_confidence_score?: number | null
+          amount: number
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          receipt_url?: string | null
+          status?: string | null
+          transaction_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_category_suggestion?: string | null
+          ai_confidence_score?: number | null
+          amount?: number
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          receipt_url?: string | null
+          status?: string | null
+          transaction_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_forecasts: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          end_date: string
+          forecast_data: Json
+          forecast_type: string
+          id: string
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          end_date: string
+          forecast_data: Json
+          forecast_type: string
+          id?: string
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          end_date?: string
+          forecast_data?: Json
+          forecast_type?: string
+          id?: string
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      financial_insights: {
+        Row: {
+          action_taken: boolean | null
+          analyzed_at: string | null
+          category: string
+          confidence_score: number | null
+          created_at: string | null
+          data_points: Json | null
+          id: string
+          insight: string
+          priority: number | null
+          status: string | null
+        }
+        Insert: {
+          action_taken?: boolean | null
+          analyzed_at?: string | null
+          category: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          insight: string
+          priority?: number | null
+          status?: string | null
+        }
+        Update: {
+          action_taken?: boolean | null
+          analyzed_at?: string | null
+          category?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          insight?: string
+          priority?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       fixed_costs: {
         Row: {
           amount: number
