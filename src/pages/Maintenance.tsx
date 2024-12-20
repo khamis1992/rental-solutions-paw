@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
+import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceFilters } from "@/components/maintenance/MaintenanceFilters";
 import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
 import { PredictiveMaintenance } from "@/components/maintenance/PredictiveMaintenance";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useParams } from "react-router-dom";
 import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleInspectionForm";
+
+const MaintenanceInspection = () => {
+  const { id } = useParams();
+  return <VehicleInspectionForm maintenanceId={id || ''} />;
+};
 
 const Maintenance = () => {
   const [filters, setFilters] = useState({
     status: "all",
-    serviceType: "",
-    dateRange: "",
+    date: "all",
+    type: "all"
   });
 
   return (
@@ -39,7 +44,7 @@ const Maintenance = () => {
         />
         <Route 
           path="/:id/inspection" 
-          element={<VehicleInspectionForm maintenanceId={params.id} />} 
+          element={<MaintenanceInspection />} 
         />
       </Routes>
     </DashboardLayout>
