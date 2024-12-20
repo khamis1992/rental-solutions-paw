@@ -22,7 +22,19 @@ export const FinancialForecasting = () => {
         .limit(1);
 
       if (error) throw error;
-      return (data[0]?.forecast_data || []) as ForecastData[];
+      
+      // Safely type cast the forecast_data
+      const forecastData = data[0]?.forecast_data;
+      if (!Array.isArray(forecastData)) {
+        return [] as ForecastData[];
+      }
+
+      // Validate and transform the data
+      return forecastData.map(item => ({
+        date: String(item.date || ''),
+        predicted_revenue: Number(item.predicted_revenue || 0),
+        predicted_expenses: Number(item.predicted_expenses || 0)
+      })) as ForecastData[];
     },
   });
 
