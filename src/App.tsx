@@ -59,8 +59,8 @@ function App() {
 
     observer.observe({ entryTypes: ['navigation', 'resource', 'paint'] });
 
-    // Set up real-time error tracking and data synchronization
-    const channel = supabase
+    // Set up comprehensive real-time error tracking and data synchronization
+    const systemChannel = supabase
       .channel('system-status')
       .on(
         'postgres_changes',
@@ -80,13 +80,32 @@ function App() {
             context: payload.new?.context || {}
           });
 
-          // Only invalidate affected queries
+          // Invalidate affected queries
           if (payload.new?.context?.affectedQueries) {
             queryClient.invalidateQueries({
               predicate: (query) => 
                 payload.new.context.affectedQueries.includes(query.queryKey[0])
             });
           }
+        }
+      )
+      .subscribe();
+
+    // Set up global data change listeners
+    const dataChannel = supabase
+      .channel('global-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: '*'
+        },
+        (payload) => {
+          console.log('Database change detected:', payload);
+          // Update relevant queries based on the changed table
+          const table = payload.table;
+          queryClient.invalidateQueries({ queryKey: [table] });
         }
       )
       .subscribe();
@@ -119,7 +138,8 @@ function App() {
 
     return () => {
       observer.disconnect();
-      supabase.removeChannel(channel);
+      supabase.removeChannel(systemChannel);
+      supabase.removeChannel(dataChannel);
     };
   }, [queryClient]);
 

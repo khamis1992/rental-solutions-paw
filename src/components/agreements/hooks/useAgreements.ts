@@ -27,24 +27,21 @@ export interface Agreement {
 export const useAgreements = () => {
   const queryClient = useQueryClient();
 
-  // Set up real-time subscription
+  // Set up real-time subscription for both agreements and payments
   useEffect(() => {
-    const channel = supabase
+    const agreementChannel = supabase
       .channel('agreement-changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'leases'
         },
         async (payload) => {
-          console.log('Real-time update received:', payload);
-          
-          // Invalidate and refetch the agreements query
+          console.log('Agreement update received:', payload);
           await queryClient.invalidateQueries({ queryKey: ['agreements'] });
           
-          // Show a toast notification
           const eventType = payload.eventType;
           const message = eventType === 'INSERT' 
             ? 'New agreement created'
@@ -59,9 +56,34 @@ export const useAgreements = () => {
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
+    // Add payment status subscription
+    const paymentChannel = supabase
+      .channel('payment-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        async (payload) => {
+          console.log('Payment update received:', payload);
+          // Invalidate both agreements and payments queries
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['agreements'] }),
+            queryClient.invalidateQueries({ queryKey: ['payments'] })
+          ]);
+          
+          toast.info('Payment status updated', {
+            description: 'Payment information has been updated.'
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(agreementChannel);
+      supabase.removeChannel(paymentChannel);
     };
   }, [queryClient]);
 
@@ -70,7 +92,6 @@ export const useAgreements = () => {
     queryFn: async () => {
       console.log("Starting to fetch agreements...");
       
-      // First, let's verify if we have any agreements
       const { count, error: countError } = await supabase
         .from('leases')
         .select('*', { count: 'exact', head: true });
@@ -82,7 +103,6 @@ export const useAgreements = () => {
         throw countError;
       }
 
-      // Now fetch the full agreement data with relationships
       const { data, error } = await supabase
         .from('leases')
         .select(`

@@ -17,8 +17,13 @@ export const usePaymentReconciliation = () => {
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      await queryClient.invalidateQueries({ queryKey: ["payment-reconciliation"] });
+      // Invalidate all related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["payment-history"] }),
+        queryClient.invalidateQueries({ queryKey: ["payment-reconciliation"] }),
+        queryClient.invalidateQueries({ queryKey: ["agreements"] }),
+        queryClient.invalidateQueries({ queryKey: ["financial-reports"] })
+      ]);
 
       toast({
         title: "Success",
