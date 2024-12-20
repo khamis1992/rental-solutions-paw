@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,9 @@ export const CompanyExpenses = () => {
   const [newFixedCostAmount, setNewFixedCostAmount] = useState("");
   const [newVariableCostName, setNewVariableCostName] = useState("");
   const [newVariableCostAmount, setNewVariableCostAmount] = useState("");
+  const queryClient = useQueryClient();
 
-  const { data: fixedCosts = [], refetch: refetchFixedCosts } = useQuery<FixedCost[]>({
+  const { data: fixedCosts = [], refetch: refetchFixedCosts } = useQuery({
     queryKey: ["fixed-costs"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,7 +33,7 @@ export const CompanyExpenses = () => {
     },
   });
 
-  const { data: variableCosts = [], refetch: refetchVariableCosts } = useQuery<VariableCost[]>({
+  const { data: variableCosts = [], refetch: refetchVariableCosts } = useQuery({
     queryKey: ["variable-costs"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,6 +45,43 @@ export const CompanyExpenses = () => {
       return data;
     },
   });
+
+  const triggerAIAnalysis = async (costType: 'fixed' | 'variable', amount: number, name: string) => {
+    try {
+      const { data: insights, error } = await supabase.functions.invoke('analyze-financial-data', {
+        body: {
+          type: costType,
+          amount,
+          name,
+          totalFixedCosts,
+          totalVariableCosts
+        },
+      });
+
+      if (error) throw error;
+
+      // Update financial insights
+      await supabase
+        .from('financial_insights')
+        .insert([{
+          category: 'expense_analysis',
+          insight: insights.message,
+          priority: insights.priority,
+          data_points: {
+            costType,
+            amount,
+            name,
+            timestamp: new Date().toISOString()
+          }
+        }]);
+
+      // Invalidate relevant queries to refresh AI Accountant data
+      queryClient.invalidateQueries({ queryKey: ['financial-insights'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-forecasts'] });
+    } catch (error) {
+      console.error('Error triggering AI analysis:', error);
+    }
+  };
 
   const handleAddFixedCost = async () => {
     if (!newFixedCostName || !newFixedCostAmount) {
@@ -70,6 +108,9 @@ export const CompanyExpenses = () => {
     setNewFixedCostName("");
     setNewFixedCostAmount("");
     refetchFixedCosts();
+    
+    // Trigger AI analysis for the new fixed cost
+    await triggerAIAnalysis('fixed', amount, newFixedCostName);
   };
 
   const handleAddVariableCost = async () => {
@@ -97,6 +138,9 @@ export const CompanyExpenses = () => {
     setNewVariableCostName("");
     setNewVariableCostAmount("");
     refetchVariableCosts();
+    
+    // Trigger AI analysis for the new variable cost
+    await triggerAIAnalysis('variable', amount, newVariableCostName);
   };
 
   const totalFixedCosts = fixedCosts.reduce((sum, cost) => sum + cost.amount, 0);
