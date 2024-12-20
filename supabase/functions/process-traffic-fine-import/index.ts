@@ -69,36 +69,62 @@ serve(async (req) => {
     // Process each row (skip header)
     for (let i = 1; i < rows.length; i++) {
       try {
-        // Clean the row data and handle potential quoted values
         const row = rows[i];
-        let values: string[] = [];
-        let currentValue = '';
-        let insideQuotes = false;
-
-        for (let char of row) {
-          if (char === '"') {
-            insideQuotes = !insideQuotes;
-          } else if (char === ',' && !insideQuotes) {
-            values.push(currentValue.trim());
-            currentValue = '';
-          } else {
-            currentValue += char;
-          }
-        }
-        values.push(currentValue.trim()); // Add the last value
-
-        // Skip empty rows
-        if (values.every(v => v === '')) {
+        
+        // Skip if row is empty after trimming
+        if (!row.trim()) {
           console.log(`Skipping empty row ${i}`);
           continue;
         }
 
-        // Validate row structure
+        // Handle quoted values and commas within quotes
+        const values: string[] = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        let quotedValue = false;
+
+        for (let j = 0; j < row.length; j++) {
+          const char = row[j];
+          const nextChar = row[j + 1];
+
+          if (char === '"') {
+            if (!insideQuotes) {
+              insideQuotes = true;
+              quotedValue = true;
+              continue;
+            } else if (nextChar === '"') {
+              // Handle escaped quotes
+              currentValue += '"';
+              j++; // Skip next quote
+              continue;
+            } else {
+              insideQuotes = false;
+              continue;
+            }
+          }
+
+          if (char === ',' && !insideQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+            quotedValue = false;
+            continue;
+          }
+
+          currentValue += char;
+        }
+
+        // Add the last value
+        if (currentValue || values.length < expectedColumns) {
+          values.push(currentValue.trim());
+        }
+
+        // Log problematic rows for debugging
         if (values.length !== expectedColumns) {
-          console.error(`Row ${i} has incorrect number of columns. Expected: ${expectedColumns}, Found: ${values.length}`);
-          console.error('Row content:', rows[i]);
+          console.error(`Row ${i} parsing error:`);
+          console.error('Original row:', row);
           console.error('Parsed values:', values);
-          throw new Error(`Invalid number of columns in row ${i}. Expected ${expectedColumns}, found ${values.length}. This usually means the CSV file is not properly formatted. Please check for missing columns or extra commas in the data.`);
+          console.error(`Number of values: ${values.length}`);
+          throw new Error(`Row ${i} has incorrect number of columns. Expected ${expectedColumns}, found ${values.length}. Please check for missing values or unmatched quotes.`);
         }
 
         // Validate date format
