@@ -3,12 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import App from './App.tsx';
 import Auth from './pages/Auth.tsx';
-import { DashboardLayout } from './components/layout/DashboardLayout';
 import './index.css';
 
 const rootElement = document.getElementById('root')!;
@@ -47,10 +45,8 @@ const initializeApp = async () => {
       renderApp(session);
     });
 
-    // Initial render with session
     renderApp(session);
 
-    // Cleanup subscription
     window.addEventListener('unload', () => {
       subscription.unsubscribe();
     });
@@ -75,9 +71,7 @@ const renderApp = (session: any) => {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
-                <Route element={<DashboardLayout />}>
-                  <Route path="/*" element={<App />} />
-                </Route>
+                <Route path="/*" element={<App />} />
               </Routes>
             </BrowserRouter>
           </QueryClientProvider>

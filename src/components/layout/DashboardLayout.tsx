@@ -1,4 +1,3 @@
-import { Outlet, useLocation } from "react-router-dom";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -9,15 +8,6 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const location = useLocation();
-  const isAuthRoute = location.pathname === '/auth';
-
-  // Return only the children/outlet for auth routes without any layout wrapper
-  if (isAuthRoute) {
-    return <>{children || <Outlet />}</>;
-  }
-
-  // For all other routes, wrap with SidebarProvider and show full layout
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full bg-background">
@@ -32,7 +22,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           
           <main className="flex-1 py-10">
             <ErrorBoundary>
-              {children || <Outlet />}
+              {children}
             </ErrorBoundary>
           </main>
         </div>

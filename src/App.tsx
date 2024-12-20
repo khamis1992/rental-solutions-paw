@@ -16,71 +16,23 @@ import Vehicles from "@/pages/Vehicles";
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <Routes>
-        <Route element={<DashboardLayout />}>
-          <Route path="/" element={
-            <ErrorBoundary>
-              <Index />
-            </ErrorBoundary>
-          } />
-          <Route path="/agreements" element={
-            <ErrorBoundary>
-              <Agreements />
-            </ErrorBoundary>
-          } />
-          <Route path="/customers" element={
-            <ErrorBoundary>
-              <Customers />
-            </ErrorBoundary>
-          } />
-          <Route path="/customer/:id" element={
-            <ErrorBoundary>
-              <CustomerProfile />
-            </ErrorBoundary>
-          } />
-          <Route path="/finance" element={
-            <ErrorBoundary>
-              <Finance />
-            </ErrorBoundary>
-          } />
-          <Route path="/help" element={
-            <ErrorBoundary>
-              <Help />
-            </ErrorBoundary>
-          } />
-          <Route path="/legal" element={
-            <ErrorBoundary>
-              <Legal />
-            </ErrorBoundary>
-          } />
-          <Route path="/maintenance" element={
-            <ErrorBoundary>
-              <Maintenance />
-            </ErrorBoundary>
-          } />
-          <Route path="/reports" element={
-            <ErrorBoundary>
-              <Reports />
-            </ErrorBoundary>
-          } />
-          <Route path="/settings" element={
-            <ErrorBoundary>
-              <Settings />
-            </ErrorBoundary>
-          } />
-          <Route path="/traffic-fines" element={
-            <ErrorBoundary>
-              <TrafficFines />
-            </ErrorBoundary>
-          } />
-          <Route path="/vehicles" element={
-            <ErrorBoundary>
-              <Vehicles />
-            </ErrorBoundary>
-          } />
-        </Route>
-      </Routes>
-    </ErrorBoundary>
+    <DashboardLayout>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/agreements" element={<Agreements />} />
+          <Route path="/customers" element={<Customers />} />
+          <Route path="/customer/:id" element={<CustomerProfile />} />
+          <Route path="/finance" element={<Finance />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/traffic-fines" element={<TrafficFines />} />
+          <Route path="/vehicles" element={<Vehicles />} />
+        </Routes>
+      </ErrorBoundary>
+    </DashboardLayout>
   );
 }
