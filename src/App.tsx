@@ -1,62 +1,86 @@
-import { Routes, Route, Outlet } from "react-router-dom";
-import { lazy } from "react";
+import { Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { RouteWrapper } from "@/components/layout/RouteWrapper";
-
-// Lazy load all pages
-const Index = lazy(() => import("@/pages/Index"));
-const Agreements = lazy(() => import("@/pages/Agreements"));
-const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
-const Customers = lazy(() => import("@/pages/Customers"));
-const Finance = lazy(() => import("@/pages/Finance"));
-const Help = lazy(() => import("@/pages/Help"));
-const Legal = lazy(() => import("@/pages/Legal"));
-const Maintenance = lazy(() => import("@/pages/Maintenance"));
-const Reports = lazy(() => import("@/pages/Reports"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
-const Vehicles = lazy(() => import("@/pages/Vehicles"));
-
-// Define routes configuration
-const routes = [
-  { path: "/", component: Index },
-  { path: "/agreements", component: Agreements },
-  { path: "/customers", component: Customers },
-  { path: "/customer/:id", component: CustomerProfile },
-  { path: "/finance", component: Finance },
-  { path: "/help", component: Help },
-  { path: "/legal", component: Legal },
-  { path: "/maintenance", component: Maintenance },
-  { path: "/reports", component: Reports },
-  { path: "/settings", component: Settings },
-  { path: "/traffic-fines", component: TrafficFines },
-  { path: "/vehicles", component: Vehicles },
-];
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import Index from "@/pages/Index";
+import Agreements from "@/pages/Agreements";
+import CustomerProfile from "@/pages/CustomerProfile";
+import Customers from "@/pages/Customers";
+import Finance from "@/pages/Finance";
+import Help from "@/pages/Help";
+import Legal from "@/pages/Legal";
+import Maintenance from "@/pages/Maintenance";
+import Reports from "@/pages/Reports";
+import Settings from "@/pages/Settings";
+import TrafficFines from "@/pages/TrafficFines";
+import Vehicles from "@/pages/Vehicles";
 
 export default function App() {
   return (
-    <Routes>
-      <Route
-        element={
-          <DashboardLayout>
-            <RouteWrapper>
-              <Outlet />
-            </RouteWrapper>
-          </DashboardLayout>
-        }
-      >
-        {routes.map(({ path, component: Component }) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <RouteWrapper>
-                <Component />
-              </RouteWrapper>
-            }
-          />
-        ))}
-      </Route>
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route element={<DashboardLayout />}>
+          <Route path="/" element={
+            <ErrorBoundary>
+              <Index />
+            </ErrorBoundary>
+          } />
+          <Route path="/agreements" element={
+            <ErrorBoundary>
+              <Agreements />
+            </ErrorBoundary>
+          } />
+          <Route path="/customers" element={
+            <ErrorBoundary>
+              <Customers />
+            </ErrorBoundary>
+          } />
+          <Route path="/customer/:id" element={
+            <ErrorBoundary>
+              <CustomerProfile />
+            </ErrorBoundary>
+          } />
+          <Route path="/finance" element={
+            <ErrorBoundary>
+              <Finance />
+            </ErrorBoundary>
+          } />
+          <Route path="/help" element={
+            <ErrorBoundary>
+              <Help />
+            </ErrorBoundary>
+          } />
+          <Route path="/legal" element={
+            <ErrorBoundary>
+              <Legal />
+            </ErrorBoundary>
+          } />
+          <Route path="/maintenance" element={
+            <ErrorBoundary>
+              <Maintenance />
+            </ErrorBoundary>
+          } />
+          <Route path="/reports" element={
+            <ErrorBoundary>
+              <Reports />
+            </ErrorBoundary>
+          } />
+          <Route path="/settings" element={
+            <ErrorBoundary>
+              <Settings />
+            </ErrorBoundary>
+          } />
+          <Route path="/traffic-fines" element={
+            <ErrorBoundary>
+              <TrafficFines />
+            </ErrorBoundary>
+          } />
+          <Route path="/vehicles" element={
+            <ErrorBoundary>
+              <Vehicles />
+            </ErrorBoundary>
+          } />
+        </Route>
+      </Routes>
+    </ErrorBoundary>
   );
 }
