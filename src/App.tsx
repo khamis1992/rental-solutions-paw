@@ -1,7 +1,8 @@
 import { Routes, Route, Outlet } from "react-router-dom";
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { RouteWrapper } from "@/components/layout/RouteWrapper";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Loader2 } from "lucide-react";
 
 // Lazy load all pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -17,46 +18,112 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
 
-// Define routes configuration
-const routes = [
-  { path: "/", component: Index },
-  { path: "/agreements", component: Agreements },
-  { path: "/customers", component: Customers },
-  { path: "/customer/:id", component: CustomerProfile },
-  { path: "/finance", component: Finance },
-  { path: "/help", component: Help },
-  { path: "/legal", component: Legal },
-  { path: "/maintenance", component: Maintenance },
-  { path: "/reports", component: Reports },
-  { path: "/settings", component: Settings },
-  { path: "/traffic-fines", component: TrafficFines },
-  { path: "/vehicles", component: Vehicles },
-];
+// Loading component for Suspense fallback
+const LoadingSpinner = () => (
+  <div className="flex h-[50vh] w-full items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 export default function App() {
   return (
-    <Routes>
-      <Route
-        element={
+    <ErrorBoundary>
+      <Routes>
+        <Route element={
           <DashboardLayout>
-            <RouteWrapper>
-              <Outlet />
-            </RouteWrapper>
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
           </DashboardLayout>
-        }
-      >
-        {routes.map(({ path, component: Component }) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <RouteWrapper>
-                <Component />
-              </RouteWrapper>
-            }
-          />
-        ))}
-      </Route>
-    </Routes>
+        }>
+          <Route path="/" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Index />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/agreements" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Agreements />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/customers" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Customers />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/customer/:id" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <CustomerProfile />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/finance" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Finance />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/help" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Help />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/legal" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Legal />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/maintenance" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Maintenance />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/reports" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Reports />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/settings" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Settings />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/traffic-fines" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <TrafficFines />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+          <Route path="/vehicles" element={
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Vehicles />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+        </Route>
+      </Routes>
+    </ErrorBoundary>
   );
 }

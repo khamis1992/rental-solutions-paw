@@ -30,8 +30,8 @@ export const AIAssignmentDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader className="space-y-3">
-          <DialogTitle className="text-primary">AI-Powered Fine Assignment</DialogTitle>
+        <DialogHeader>
+          <DialogTitle>AI-Powered Fine Assignment</DialogTitle>
           <DialogDescription>
             Analyzing potential matches for the traffic fine from{" "}
             {selectedFine && new Date(selectedFine.violation_date).toLocaleDateString()}
@@ -47,18 +47,16 @@ export const AIAssignmentDialog = ({
             {aiSuggestions.map((suggestion) => (
               <div
                 key={suggestion.agreement.id}
-                className={`p-4 rounded-lg border transition-all ${
-                  suggestion.isRecommended 
-                    ? "border-primary bg-primary/5 shadow-sm" 
-                    : "hover:border-primary/50"
+                className={`p-4 rounded-lg border ${
+                  suggestion.isRecommended ? "border-primary bg-primary/5" : ""
                 }`}
               >
                 <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <h4 className="font-medium flex items-center gap-2">
+                  <div>
+                    <h4 className="font-medium">
                       {suggestion.agreement.customer.full_name}
                       {suggestion.isRecommended && (
-                        <Badge className="bg-primary hover:bg-primary/90">
+                        <Badge className="ml-2 bg-primary">
                           Recommended ({Math.round(suggestion.confidence * 100)}%
                           match)
                         </Badge>
@@ -83,7 +81,6 @@ export const AIAssignmentDialog = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="hover:border-primary hover:text-primary"
                     onClick={() =>
                       onAssignCustomer(
                         selectedFine!.id,
