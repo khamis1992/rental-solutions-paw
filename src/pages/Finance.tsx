@@ -5,7 +5,7 @@ import { PaymentReconciliation } from "@/components/payments/PaymentReconciliati
 import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
 import { PaymentHistoryContent } from "@/components/agreements/payments/PaymentHistoryContent";
-import { FixedCostsManagement } from "@/components/dashboard/FixedCostsManagement";
+import { CompanyExpenses } from "@/components/dashboard/CompanyExpenses";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
@@ -69,9 +69,9 @@ const Finance = () => {
               <ChartBar className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="fixed-costs" className="flex items-center gap-2">
+            <TabsTrigger value="company-expenses" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
-              Fixed Costs
+              Company Expenses
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
@@ -99,8 +99,8 @@ const Finance = () => {
             <RevenueAnalysis />
           </TabsContent>
 
-          <TabsContent value="fixed-costs" className="space-y-6">
-            <FixedCostsManagement />
+          <TabsContent value="company-expenses" className="space-y-6">
+            <CompanyExpenses />
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
