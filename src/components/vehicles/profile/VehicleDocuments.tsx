@@ -35,6 +35,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
       const file = event.target.files?.[0];
       if (!file) return;
 
+      // Create a unique file path using vehicle ID and random string
       const fileExt = file.name.split('.').pop();
       const filePath = `${vehicleId}/${Math.random()}.${fileExt}`;
 
