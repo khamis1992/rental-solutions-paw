@@ -43,6 +43,7 @@ serve(async (req) => {
 
     // Parse CSV content with improved error handling
     const text = await fileData.text();
+    
     // Split by newline and filter out empty lines and whitespace-only lines
     const rows = text.split('\n')
       .map(row => row.trim())
@@ -68,14 +69,36 @@ serve(async (req) => {
     // Process each row (skip header)
     for (let i = 1; i < rows.length; i++) {
       try {
-        // Split the row and clean each value
-        const values = rows[i].split(',').map(v => v.trim());
-        
+        // Clean the row data and handle potential quoted values
+        const row = rows[i];
+        let values: string[] = [];
+        let currentValue = '';
+        let insideQuotes = false;
+
+        for (let char of row) {
+          if (char === '"') {
+            insideQuotes = !insideQuotes;
+          } else if (char === ',' && !insideQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        values.push(currentValue.trim()); // Add the last value
+
+        // Skip empty rows
+        if (values.every(v => v === '')) {
+          console.log(`Skipping empty row ${i}`);
+          continue;
+        }
+
         // Validate row structure
         if (values.length !== expectedColumns) {
           console.error(`Row ${i} has incorrect number of columns. Expected: ${expectedColumns}, Found: ${values.length}`);
           console.error('Row content:', rows[i]);
-          throw new Error(`Invalid number of columns in row ${i}. Expected ${expectedColumns}, found ${values.length}`);
+          console.error('Parsed values:', values);
+          throw new Error(`Invalid number of columns in row ${i}. Expected ${expectedColumns}, found ${values.length}. This usually means the CSV file is not properly formatted. Please check for missing columns or extra commas in the data.`);
         }
 
         // Validate date format
