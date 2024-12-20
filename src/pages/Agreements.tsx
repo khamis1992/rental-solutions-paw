@@ -74,12 +74,6 @@ const Agreements = () => {
             Import Agreements
           </Button>
           <Button
-            variant="outline"
-            onClick={() => setIsPaymentHistoryOpen(true)}
-          >
-            Import Payments
-          </Button>
-          <Button
             variant="destructive"
             onClick={() => setShowDeleteDialog(true)}
             disabled={isDeleting}
