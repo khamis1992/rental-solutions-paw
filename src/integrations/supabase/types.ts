@@ -579,6 +579,57 @@ export type Database = {
           },
         ]
       }
+      document_analysis_logs: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          document_type: string
+          document_url: string
+          extracted_data: Json | null
+          id: string
+          profile_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          extracted_data?: Json | null
+          id?: string
+          profile_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          extracted_data?: Json | null
+          id?: string
+          profile_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_analysis_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_analysis_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_categories: {
         Row: {
           created_at: string | null
@@ -1617,9 +1668,12 @@ export type Database = {
           address: string | null
           ai_confidence_score: number | null
           ai_generated_fields: Json | null
+          analysis_confidence_score: number | null
           contract_document_url: string | null
           created_at: string
+          document_analysis_status: string | null
           driver_license: string | null
+          extracted_data: Json | null
           full_name: string | null
           id: string
           id_document_url: string | null
@@ -1634,9 +1688,12 @@ export type Database = {
           address?: string | null
           ai_confidence_score?: number | null
           ai_generated_fields?: Json | null
+          analysis_confidence_score?: number | null
           contract_document_url?: string | null
           created_at?: string
+          document_analysis_status?: string | null
           driver_license?: string | null
+          extracted_data?: Json | null
           full_name?: string | null
           id: string
           id_document_url?: string | null
@@ -1651,9 +1708,12 @@ export type Database = {
           address?: string | null
           ai_confidence_score?: number | null
           ai_generated_fields?: Json | null
+          analysis_confidence_score?: number | null
           contract_document_url?: string | null
           created_at?: string
+          document_analysis_status?: string | null
           driver_license?: string | null
+          extracted_data?: Json | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null

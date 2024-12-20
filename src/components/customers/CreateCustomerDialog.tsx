@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CustomerFormFields } from "./CustomerFormFields";
+import { DocumentScanner } from "./DocumentScanner";
 
 interface CreateCustomerDialogProps {
   children?: ReactNode;
@@ -24,6 +25,7 @@ interface CreateCustomerDialogProps {
 export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -38,11 +40,22 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
     },
   });
 
+  const handleScanComplete = (extractedData: any) => {
+    // Update form with extracted data
+    form.setValue('full_name', extractedData.full_name);
+    form.setValue('driver_license', extractedData.id_number);
+    // Add any other extracted fields as needed
+  };
+
   const onSubmit = async (values: any) => {
     setIsLoading(true);
     try {
+      const newCustomerId = crypto.randomUUID();
+      setCustomerId(newCustomerId);
+
       const { error } = await supabase.from("profiles").insert([
         {
+          id: newCustomerId,
           ...values,
           role: "customer",
         },
@@ -57,8 +70,12 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
 
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
-      form.reset();
-      setOpen(false);
+      
+      // Don't reset form or close dialog if we're waiting for document scan
+      if (!customerId) {
+        form.reset();
+        setOpen(false);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -89,6 +106,12 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {customerId && (
+              <DocumentScanner
+                customerId={customerId}
+                onScanComplete={handleScanComplete}
+              />
+            )}
             <CustomerFormFields form={form} />
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
