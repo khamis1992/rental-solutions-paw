@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TrafficFinesDashboard } from "@/components/traffic-fines/TrafficFinesDashboard";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function TrafficFines() {
   return (
@@ -8,7 +9,9 @@ export default function TrafficFines() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Traffic Fines Management</h1>
         </div>
-        <TrafficFinesDashboard />
+        <ErrorBoundary>
+          <TrafficFinesDashboard />
+        </ErrorBoundary>
       </div>
     </DashboardLayout>
   );
