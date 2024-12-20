@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SearchBox } from "@/components/layout/SearchBox";
 
 export const WelcomeHeader = () => {
-  const { data: profile, isLoading, error } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       try {
@@ -12,7 +13,6 @@ export const WelcomeHeader = () => {
           return null;
         }
 
-        console.log('Fetching profile for user:', user.id);
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -24,7 +24,6 @@ export const WelcomeHeader = () => {
           return null;
         }
 
-        console.log('Profile data:', profile);
         return profile;
       } catch (error) {
         console.error('Unexpected error in profile fetch:', error);
@@ -33,29 +32,18 @@ export const WelcomeHeader = () => {
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Loading...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    console.error('Error in WelcomeHeader:', error);
-  }
-
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-2xl font-bold tracking-tight">
           Welcome back, {profile?.full_name || 'User'}
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground">
           Here's what's happening with your rental fleet today.
         </p>
+      </div>
+      <div className="w-full md:w-auto">
+        <SearchBox />
       </div>
     </div>
   );

@@ -74,7 +74,7 @@ export const DashboardStats = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         <StatsCard
           title="Total Vehicles"
           value={stats?.totalVehicles.toString() || "0"}
@@ -85,6 +85,7 @@ export const DashboardStats = () => {
               +{stats?.newVehicles || 0} this month
             </span>
           }
+          className="shadow-sm hover:shadow-md transition-shadow"
         />
         <StatsCard
           title="Active Rentals"
@@ -95,6 +96,7 @@ export const DashboardStats = () => {
               {stats?.pendingReturns || 0} pending returns
             </span>
           }
+          className="shadow-sm hover:shadow-md transition-shadow"
         />
         <StatsCard
           title="Monthly Revenue"
@@ -106,10 +108,10 @@ export const DashboardStats = () => {
               {stats?.revenueGrowth.toFixed(1)}% from last month
             </span>
           }
+          className="shadow-sm hover:shadow-md transition-shadow"
         />
       </div>
       
-      {/* Vehicle Status Analysis Chart */}
       <VehicleStatusChart />
     </div>
   );
