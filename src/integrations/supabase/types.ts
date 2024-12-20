@@ -1078,6 +1078,8 @@ export type Database = {
       }
       maintenance_predictions: {
         Row: {
+          ai_analysis_details: Json | null
+          ai_model: string | null
           confidence_score: number | null
           created_at: string | null
           estimated_cost: number | null
@@ -1091,6 +1093,8 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          ai_analysis_details?: Json | null
+          ai_model?: string | null
           confidence_score?: number | null
           created_at?: string | null
           estimated_cost?: number | null
@@ -1104,6 +1108,8 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          ai_analysis_details?: Json | null
+          ai_model?: string | null
           confidence_score?: number | null
           created_at?: string | null
           estimated_cost?: number | null
