@@ -1,17 +1,14 @@
 import { toast } from "sonner";
 import { FilePlus2, UserPlus2, Car } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const QuickActions = () => {
   const navigate = useNavigate();
 
   return (
     <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-2 hover:border-primary transition-colors cursor-pointer" 
                 onClick={() => navigate("/agreements/new")}>
