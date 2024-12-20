@@ -41,12 +41,26 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
-    // Parse CSV content
+    // Parse CSV content with improved error handling
     const text = await fileData.text();
-    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+    // Split by newline and filter out empty lines and whitespace-only lines
+    const rows = text.split('\n')
+      .map(row => row.trim())
+      .filter(row => row.length > 0);
+
+    if (rows.length < 2) {
+      throw new Error('File is empty or contains only headers');
+    }
+
     const headers = rows[0].toLowerCase().split(',').map(h => h.trim());
+    const expectedColumns = 8; // We expect 8 columns based on our schema
     
     console.log('Processing CSV with headers:', headers);
+    console.log(`Expected columns: ${expectedColumns}, Found: ${headers.length}`);
+
+    if (headers.length !== expectedColumns) {
+      throw new Error(`Invalid header count. Expected ${expectedColumns} columns, found ${headers.length}`);
+    }
 
     let processed = 0;
     const errors = [];
@@ -54,22 +68,43 @@ serve(async (req) => {
     // Process each row (skip header)
     for (let i = 1; i < rows.length; i++) {
       try {
+        // Split the row and clean each value
         const values = rows[i].split(',').map(v => v.trim());
         
-        if (values.length !== headers.length) {
-          throw new Error(`Invalid number of columns in row ${i}`);
+        // Validate row structure
+        if (values.length !== expectedColumns) {
+          console.error(`Row ${i} has incorrect number of columns. Expected: ${expectedColumns}, Found: ${values.length}`);
+          console.error('Row content:', rows[i]);
+          throw new Error(`Invalid number of columns in row ${i}. Expected ${expectedColumns}, found ${values.length}`);
+        }
+
+        // Validate date format
+        const dateValue = new Date(values[2]);
+        if (isNaN(dateValue.getTime())) {
+          throw new Error(`Invalid date format in row ${i}: ${values[2]}`);
+        }
+
+        // Validate numeric values
+        const amount = parseFloat(values[6]);
+        if (isNaN(amount)) {
+          throw new Error(`Invalid amount in row ${i}: ${values[6]}`);
+        }
+
+        const points = parseInt(values[7], 10);
+        if (isNaN(points)) {
+          throw new Error(`Invalid points in row ${i}: ${values[7]}`);
         }
 
         // Map CSV columns to database columns
         const fine = {
           serial_number: values[0],
           violation_number: values[1],
-          violation_date: new Date(values[2]).toISOString(),
+          violation_date: dateValue.toISOString(),
           license_plate: values[3],
           fine_location: values[4],
           violation_charge: values[5],
-          fine_amount: parseFloat(values[6]),
-          violation_points: parseInt(values[7], 10) || 0,
+          fine_amount: amount,
+          violation_points: points,
           assignment_status: 'pending',
           payment_status: 'pending'
         };
