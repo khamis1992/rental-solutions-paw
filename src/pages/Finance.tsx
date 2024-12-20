@@ -10,7 +10,7 @@ import { AiAccountantDashboard } from "@/components/finance/ai-accountant/AiAcco
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
-import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign, Robot } from "lucide-react";
+import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign, Bot } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -75,7 +75,7 @@ const Finance = () => {
               Company Expenses
             </TabsTrigger>
             <TabsTrigger value="ai-accountant" className="flex items-center gap-2">
-              <Robot className="h-4 w-4" />
+              <Bot className="h-4 w-4" />
               AI Accountant
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">

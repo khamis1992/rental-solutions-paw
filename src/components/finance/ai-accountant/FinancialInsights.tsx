@@ -4,6 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 
+interface FinancialInsight {
+  id: string;
+  category: string;
+  insight: string;
+  recommendation: string | null;
+  priority: number;
+  status: string;
+  created_at: string;
+  data_points: any;
+  confidence_score: number;
+  analyzed_at: string;
+  action_taken: boolean;
+}
+
 export const FinancialInsights = () => {
   const { data: insights, isLoading } = useQuery({
     queryKey: ["financial-insights"],
@@ -15,7 +29,7 @@ export const FinancialInsights = () => {
         .limit(5);
 
       if (error) throw error;
-      return data;
+      return data as FinancialInsight[];
     },
   });
 
