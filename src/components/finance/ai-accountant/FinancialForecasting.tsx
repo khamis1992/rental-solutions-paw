@@ -45,8 +45,8 @@ export const FinancialForecasting = () => {
       }
 
       return forecastData
-        .filter(isJsonForecastData)
-        .map((item: JsonForecastData): ForecastData => ({
+        .filter((item): item is JsonForecastData => isJsonForecastData(item))
+        .map((item): ForecastData => ({
           date: String(item.date),
           predicted_revenue: Number(item.predicted_revenue) || 0,
           predicted_expenses: Number(item.predicted_expenses) || 0
