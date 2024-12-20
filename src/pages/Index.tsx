@@ -1,43 +1,48 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
-import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
-import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
+import { Car, DollarSign, Users, FileText } from "lucide-react";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 
 const Index = () => {
-  // Initialize performance monitoring
-  usePerformanceMonitoring();
-  
-  // Initialize real-time subscriptions
-  useDashboardSubscriptions();
-
   return (
-    <DashboardLayout>
-      <WelcomeHeader />
-      <DashboardStats />
-      <QuickActions />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
-        <div className="lg:col-span-4">
-          <UpcomingRentals />
-        </div>
-        <div className="lg:col-span-3">
-          <DashboardAlerts />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <DashboardSidebar />
+        <div className="flex-1">
+          <DashboardHeader />
+          <main className="container py-6">
+            <h1 className="text-3xl font-bold mb-6">Dashboard Overview</h1>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <StatsCard
+                title="Total Vehicles"
+                value="124"
+                icon={Car}
+                description="+2 this month"
+              />
+              <StatsCard
+                title="Active Customers"
+                value="1,429"
+                icon={Users}
+                description="+18.2% from last month"
+              />
+              <StatsCard
+                title="Active Rentals"
+                value="89"
+                icon={FileText}
+                description="23 pending returns"
+              />
+              <StatsCard
+                title="Monthly Revenue"
+                value="$48,574"
+                icon={DollarSign}
+                description="+7.4% from last month"
+              />
+            </div>
+          </main>
         </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-4">
-          <RecentActivity />
-        </div>
-        <div className="lg:col-span-3">
-          <IntelligentScheduling />
-        </div>
-      </div>
-    </DashboardLayout>
+    </SidebarProvider>
   );
 };
 
