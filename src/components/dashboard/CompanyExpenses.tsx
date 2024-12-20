@@ -8,6 +8,10 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { AlertTriangle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Database } from "@/integrations/supabase/types";
+
+type FixedCost = Database["public"]["Tables"]["fixed_costs"]["Row"];
+type VariableCost = Database["public"]["Tables"]["variable_costs"]["Row"];
 
 export const CompanyExpenses = () => {
   const [newFixedCostName, setNewFixedCostName] = useState("");
@@ -15,7 +19,7 @@ export const CompanyExpenses = () => {
   const [newVariableCostName, setNewVariableCostName] = useState("");
   const [newVariableCostAmount, setNewVariableCostAmount] = useState("");
 
-  const { data: fixedCosts = [], refetch: refetchFixedCosts } = useQuery({
+  const { data: fixedCosts = [], refetch: refetchFixedCosts } = useQuery<FixedCost[]>({
     queryKey: ["fixed-costs"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,7 +32,7 @@ export const CompanyExpenses = () => {
     },
   });
 
-  const { data: variableCosts = [], refetch: refetchVariableCosts } = useQuery({
+  const { data: variableCosts = [], refetch: refetchVariableCosts } = useQuery<VariableCost[]>({
     queryKey: ["variable-costs"],
     queryFn: async () => {
       const { data, error } = await supabase

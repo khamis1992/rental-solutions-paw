@@ -1862,6 +1862,30 @@ export type Database = {
           },
         ]
       }
+      variable_costs: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       vehicle_inspections: {
         Row: {
           ai_confidence_score: number | null
