@@ -14,6 +14,7 @@ import { RentDueManagement } from "./profile/RentDueManagement";
 import { TrafficFinesSummary } from "./profile/TrafficFinesSummary";
 import { CredibilityScore } from "./profile/CredibilityScore";
 import { CustomerDocumentUpload } from "./CustomerDocumentUpload";
+import { CustomerDocumentAnalysis } from "./analysis/CustomerDocumentAnalysis";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
@@ -170,6 +171,7 @@ export const CustomerDetailsDialog = ({
                 <TabsTrigger value="payments">Payment History</TabsTrigger>
                 <TabsTrigger value="rentdue">Rent Due</TabsTrigger>
                 <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
+                <TabsTrigger value="documents">Document Analysis</TabsTrigger>
               </TabsList>
               <TabsContent value="credibility">
                 <CredibilityScore customerId={customerId} />
@@ -182,6 +184,9 @@ export const CustomerDetailsDialog = ({
               </TabsContent>
               <TabsContent value="fines">
                 <TrafficFinesSummary customerId={customerId} />
+              </TabsContent>
+              <TabsContent value="documents">
+                <CustomerDocumentAnalysis customerId={customerId} />
               </TabsContent>
             </Tabs>
           </div>
