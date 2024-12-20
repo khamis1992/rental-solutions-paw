@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import Index from "@/pages/Index";
@@ -18,13 +18,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route element={
-          <DashboardLayout>
-            <ErrorBoundary>
-              <Outlet />
-            </ErrorBoundary>
-          </DashboardLayout>
-        }>
+        <Route element={<DashboardLayout />}>
           <Route path="/" element={
             <ErrorBoundary>
               <Index />
