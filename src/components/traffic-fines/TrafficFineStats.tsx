@@ -38,7 +38,7 @@ export const TrafficFineStats = () => {
       // Get all unassigned fines
       const { data: unassignedFines, error: finesError } = await supabase
         .from('traffic_fines')
-        .select('id, fine_date, fine_location, fine_type, fine_amount')
+        .select('id, violation_date, fine_location, fine_type, fine_amount')
         .eq('assignment_status', 'pending');
 
       if (finesError) throw finesError;

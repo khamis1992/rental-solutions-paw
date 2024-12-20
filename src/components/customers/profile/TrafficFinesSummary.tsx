@@ -29,7 +29,7 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
           )
         `)
         .eq("lease.customer_id", customerId)
-        .order("fine_date", { ascending: false });
+        .order("violation_date", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -71,7 +71,7 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
                     {fine.lease.vehicle.year} {fine.lease.vehicle.make} {fine.lease.vehicle.model}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(fine.fine_date), "PP")} - {fine.fine_type}
+                    {format(new Date(fine.violation_date), "PP")} - {fine.fine_type}
                   </div>
                   {fine.fine_location && (
                     <div className="text-sm text-muted-foreground">

@@ -44,7 +44,7 @@ export function NonCompliantCustomers() {
             ),
             traffic_fines (
               id,
-              fine_date,
+              violation_date,
               fine_amount,
               payment_status
             ),
@@ -69,7 +69,7 @@ export function NonCompliantCustomers() {
 
         const hasUnpaidFines = customer.leases?.some(lease =>
           lease.traffic_fines?.some(fine =>
-            fine.payment_status === 'pending' && new Date(fine.fine_date) < new Date(thirtyDaysAgo)
+            fine.payment_status === 'pending' && new Date(fine.violation_date) < new Date(thirtyDaysAgo)
           )
         );
 

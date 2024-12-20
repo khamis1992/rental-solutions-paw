@@ -22,7 +22,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
         .from('traffic_fines')
         .select('*')
         .eq('lease_id', agreementId)
-        .order('fine_date', { ascending: false });
+        .order('violation_date', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -51,7 +51,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
           {fines?.map((fine) => (
             <TableRow key={fine.id}>
               <TableCell>
-                {new Date(fine.fine_date).toLocaleDateString()}
+                {new Date(fine.violation_date).toLocaleDateString()}
               </TableCell>
               <TableCell>{fine.fine_type}</TableCell>
               <TableCell>{fine.fine_location}</TableCell>

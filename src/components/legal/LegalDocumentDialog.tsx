@@ -42,7 +42,7 @@ export function LegalDocumentDialog({
             ),
             traffic_fines (
               id,
-              fine_date,
+              violation_date,
               fine_amount,
               fine_type,
               payment_status
@@ -131,7 +131,7 @@ export function LegalDocumentDialog({
               <ul className="list-disc pl-6 space-y-1">
                 {unpaidFines.map(fine => (
                   <li key={fine.id}>
-                    Date: {format(new Date(fine.fine_date), "PP")} - Type: {fine.fine_type} - Amount: {formatCurrency(fine.fine_amount)}
+                    Date: {format(new Date(fine.violation_date), "PP")} - Type: {fine.fine_type} - Amount: {formatCurrency(fine.fine_amount)}
                   </li>
                 ))}
               </ul>
