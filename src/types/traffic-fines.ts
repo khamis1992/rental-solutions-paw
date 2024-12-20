@@ -2,21 +2,21 @@ export interface TrafficFine {
   id: string;
   lease_id?: string;
   vehicle_id?: string;
-  violation_date: string; // Changed from Date to string to match DB
+  violation_date: string;
   fine_amount: number;
   fine_type: string;
-  fine_location?: string;
-  fine_reference?: string;
-  payment_status: 'pending' | 'completed';
-  serial_number?: string;
-  violation_number?: string;
-  violation_points?: number;
-  violation_charge?: string;
-  import_batch_id?: string;
+  fine_location?: string | null;
+  fine_reference?: string | null;
+  payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
+  serial_number?: string | null;
+  violation_number?: string | null;
+  violation_points?: number | null;
+  violation_charge?: string | null;
+  import_batch_id?: string | null;
   assignment_status: 'pending' | 'assigned';
-  assignment_notes?: string;
-  created_at?: string; // Changed from Date to string to match DB
-  updated_at?: string; // Changed from Date to string to match DB
+  assignment_notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   lease?: {
     customer: {
       id: string;

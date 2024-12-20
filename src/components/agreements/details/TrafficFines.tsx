@@ -26,7 +26,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
         .order('violation_date', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as TrafficFine[];
     },
   });
 
@@ -64,6 +64,10 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     fine.payment_status === 'completed' 
                       ? 'bg-green-100 text-green-800' 
+                      : fine.payment_status === 'failed'
+                      ? 'bg-red-100 text-red-800'
+                      : fine.payment_status === 'refunded'
+                      ? 'bg-blue-100 text-blue-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
                     {fine.payment_status}
