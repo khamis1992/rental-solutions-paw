@@ -4,7 +4,6 @@ import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDialog";
-import { AgreementImport } from "@/components/agreements/AgreementImport";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,7 +20,6 @@ import { toast } from "sonner";
 
 const Agreements = () => {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
-  const [showAgreementImport, setShowAgreementImport] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [password, setPassword] = useState("");
@@ -69,12 +67,6 @@ const Agreements = () => {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => setShowAgreementImport(!showAgreementImport)}
-          >
-            Import Agreements
-          </Button>
-          <Button
-            variant="outline"
             onClick={() => setIsPaymentHistoryOpen(true)}
           >
             Import Payments
@@ -89,13 +81,6 @@ const Agreements = () => {
           <CreateAgreementDialog />
         </div>
       </div>
-      
-      {showAgreementImport && (
-        <div className="mb-6 p-4 border rounded-lg bg-background">
-          <h2 className="text-lg font-semibold mb-4">Import Agreements</h2>
-          <AgreementImport />
-        </div>
-      )}
       
       <AgreementStats />
       <div className="mt-6 space-y-4">
