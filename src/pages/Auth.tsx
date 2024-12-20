@@ -96,25 +96,28 @@ const Auth = () => {
           supabaseClient={supabase}
           appearance={{
             theme: ThemeSupa,
-            style: {
-              button: {
-                background: 'rgb(37 99 235)',
-                color: 'white',
-                borderRadius: '0.375rem',
-                padding: '0.5rem 1rem',
-              },
-              anchor: {
-                color: 'rgb(37 99 235)',
-                textDecoration: 'none',
-              },
-              input: {
-                borderRadius: '0.375rem',
-                padding: '0.5rem 1rem',
-              },
-              message: {
-                color: 'rgb(239 68 68)',
-              },
+            extend: true,
+            className: {
+              container: 'flex flex-col gap-4',
+              button: 'bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors',
+              input: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors',
+              label: 'block text-sm font-medium text-gray-700 mb-1',
+              message: 'text-sm text-red-600 mt-1',
+              anchor: 'text-primary hover:text-primary/80 transition-colors'
             },
+            variables: {
+              default: {
+                colors: {
+                  brand: 'rgb(37 99 235)',
+                  brandAccent: 'rgb(29 78 216)',
+                  inputBackground: 'white',
+                  inputText: 'rgb(17 24 39)',
+                  inputBorder: 'rgb(209 213 219)',
+                  inputBorderHover: 'rgb(37 99 235)',
+                  inputBorderFocus: 'rgb(37 99 235)',
+                }
+              }
+            }
           }}
           providers={['google']}
           redirectTo={window.location.origin}
