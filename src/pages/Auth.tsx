@@ -30,17 +30,17 @@ export default function Auth() {
           const { data, error } = await supabase
             .from("profiles")
             .select("*")
-            .eq("id", session.user.id);
+            .eq("id", session.user.id)
+            .maybeSingle();
 
           if (error) {
             console.error("Error fetching profile:", error);
             return;
           }
 
-          if (data && data.length > 0) {
-            const userProfile = data[0];
-            console.log("Profile data:", userProfile);
-            console.log("User profile:", { role: userProfile.role });
+          if (data) {
+            console.log("Profile data:", data);
+            console.log("User profile:", { role: data.role });
             navigate("/");
           }
         } catch (error) {
@@ -55,7 +55,7 @@ export default function Auth() {
   if (!session) {
     return (
       <div className="flex min-h-screen items-center justify-end bg-background">
-        <div className="w-full max-w-[600px] rounded-lg bg-white p-12 mr-32 shadow-xl">
+        <div className="w-full max-w-[500px] rounded-lg bg-white p-8 mr-32 shadow-xl">
           <SupabaseAuth
             supabaseClient={supabase}
             appearance={{
@@ -64,13 +64,20 @@ export default function Auth() {
                 button: {
                   padding: '12px',
                   fontSize: '16px',
+                  width: '100%',
+                  marginTop: '8px',
                 },
                 input: {
                   padding: '12px',
                   fontSize: '16px',
+                  width: '100%',
                 },
                 label: {
                   fontSize: '16px',
+                  marginBottom: '8px',
+                },
+                container: {
+                  width: '100%',
                 },
               },
             }}
