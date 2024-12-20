@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, TrendingUp, Copy, Check } from "lucide-react";
+import { CheckCircle, TrendingUp, Copy, Check, Code, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ interface RecommendationsListProps {
 export const RecommendationsList = ({ data }: RecommendationsListProps) => {
   const recommendations = data?.[0]?.data_points?.recommendations || [];
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const handleImplement = async (recommendationId: string) => {
     try {
@@ -25,6 +26,7 @@ export const RecommendationsList = ({ data }: RecommendationsListProps) => {
   const generatePrompt = (rec: any) => {
     return `Please help improve my code based on this recommendation:
 Problem: ${rec.title}
+Category: ${rec.category}
 Description: ${rec.description}
 Priority: ${rec.priority}
 ${rec.example ? `Example of the issue:\n${rec.example}` : ''}
@@ -39,15 +41,65 @@ Please provide the necessary code changes to implement this improvement.`;
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const getCategoryIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'quality':
+        return <Code className="h-4 w-4" />;
+      case 'security':
+        return <Shield className="h-4 w-4" />;
+      case 'performance':
+        return <Zap className="h-4 w-4" />;
+      default:
+        return <Code className="h-4 w-4" />;
+    }
+  };
+
+  const filteredRecommendations = selectedCategory === "all" 
+    ? recommendations 
+    : recommendations.filter(rec => rec.category?.toLowerCase() === selectedCategory.toLowerCase());
+
   return (
     <Card className="col-span-4">
       <CardHeader>
         <CardTitle>Improvement Recommendations</CardTitle>
+        <div className="flex gap-2 mt-2">
+          <Button 
+            variant={selectedCategory === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("all")}
+          >
+            All
+          </Button>
+          <Button 
+            variant={selectedCategory === "quality" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("quality")}
+          >
+            <Code className="h-4 w-4 mr-2" />
+            Code Quality
+          </Button>
+          <Button 
+            variant={selectedCategory === "security" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("security")}
+          >
+            <Shield className="h-4 w-4 mr-2" />
+            Security
+          </Button>
+          <Button 
+            variant={selectedCategory === "performance" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("performance")}
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            Performance
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px]">
           <div className="space-y-4">
-            {recommendations.map((rec: any, index: number) => (
+            {filteredRecommendations.map((rec: any, index: number) => (
               <div
                 key={index}
                 className="flex items-start justify-between p-4 border rounded-lg"
@@ -58,6 +110,10 @@ Please provide the necessary code changes to implement this improvement.`;
                       variant={rec.priority === "high" ? "destructive" : "secondary"}
                     >
                       {rec.priority === "high" ? "High Priority" : "Normal Priority"}
+                    </Badge>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      {getCategoryIcon(rec.category)}
+                      {rec.category || "General"}
                     </Badge>
                     {rec.implemented ? (
                       <Badge className="bg-green-500">

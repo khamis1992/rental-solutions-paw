@@ -90,6 +90,7 @@ serve(async (req) => {
           {
             id: '1',
             title: 'Implement Error Boundary Components',
+            category: 'quality',
             priority: 'high',
             description: 'Add React Error Boundaries to gracefully handle runtime errors and improve user experience.',
             example: 'class ErrorBoundary extends React.Component { ... }',
@@ -98,19 +99,49 @@ serve(async (req) => {
           },
           {
             id: '2',
+            title: 'Fix SQL Injection Vulnerabilities',
+            category: 'security',
+            priority: 'high',
+            description: 'Use parameterized queries and proper input sanitization to prevent SQL injection attacks.',
+            example: 'const { data } = await supabase.from("table").select().eq("column", parameterizedValue)',
+            impact_score: 95,
+            implemented: false
+          },
+          {
+            id: '3',
             title: 'Optimize Bundle Size',
+            category: 'performance',
             priority: 'high',
             description: 'Large bundle size detected. Consider code splitting and lazy loading for better performance.',
             impact_score: 90,
             implemented: false
           },
           {
-            id: '3',
+            id: '4',
             title: 'Enhance Type Safety',
+            category: 'quality',
             priority: 'medium',
             description: 'Add stricter TypeScript types for better code reliability and maintainability.',
             example: 'interface UserData { ... }',
             impact_score: 75,
+            implemented: false
+          },
+          {
+            id: '5',
+            title: 'Implement Rate Limiting',
+            category: 'security',
+            priority: 'medium',
+            description: 'Add rate limiting to API endpoints to prevent abuse and DDoS attacks.',
+            impact_score: 80,
+            implemented: false
+          },
+          {
+            id: '6',
+            title: 'Implement Caching Strategy',
+            category: 'performance',
+            priority: 'medium',
+            description: 'Implement proper caching for API responses and static assets to improve load times.',
+            impact_score: 85,
             implemented: false
           }
         ]
