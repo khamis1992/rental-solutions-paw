@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,13 +86,16 @@ export function CreateJobDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" /> Create Job Card
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Job Card</DialogTitle>
+          <DialogDescription>
+            Create a new maintenance job card. After creation, you can perform a vehicle inspection with AI-powered damage detection.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -102,7 +105,7 @@ export function CreateJobDialog() {
               onValueChange={(value) => setFormData({ ...formData, vehicle_id: value })}
               required
             >
-              <SelectTrigger>
+              <SelectTrigger id="vehicle_id" aria-label="Select a vehicle">
                 <SelectValue placeholder="Select a vehicle" />
               </SelectTrigger>
               <SelectContent>
@@ -121,6 +124,7 @@ export function CreateJobDialog() {
               value={formData.service_type}
               onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
               required
+              placeholder="Enter service type"
             />
           </div>
           <div className="space-y-2">
@@ -129,6 +133,7 @@ export function CreateJobDialog() {
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe the maintenance needed"
             />
           </div>
           <div className="space-y-2">
@@ -142,7 +147,7 @@ export function CreateJobDialog() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cost">Cost</Label>
+            <Label htmlFor="cost">Estimated Cost</Label>
             <Input
               id="cost"
               type="number"
