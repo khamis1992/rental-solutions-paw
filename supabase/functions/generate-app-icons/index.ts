@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
@@ -15,25 +14,27 @@ serve(async (req) => {
   }
 
   try {
-    const hf = new HfInference(Deno.env.get('HUGGING_FACE_ACCESS_TOKEN'))
-    
-    // Generate the largest icon first (512x512)
-    const prompt = "A minimalist icon for a car rental app, flat design, modern, professional, white background"
-    
-    const originalImage = await hf.textToImage({
-      inputs: prompt,
-      model: 'black-forest-labs/FLUX.1-schnell',
-      parameters: {
-        width: 512,
-        height: 512
-      }
-    })
-
     // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // Get company logo URL from settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('company_settings')
+      .select('logo_url')
+      .single();
+
+    if (settingsError) throw settingsError;
+    if (!settings?.logo_url) {
+      throw new Error('Company logo not found in settings');
+    }
+
+    // Fetch the logo image
+    const response = await fetch(settings.logo_url);
+    if (!response.ok) throw new Error('Failed to fetch company logo');
+    const logoImage = await response.blob();
 
     const uploadPromises = ICON_SIZES.map(async (size) => {
       const fileName = `icon-${size}x${size}.png`
@@ -42,7 +43,7 @@ serve(async (req) => {
       const { data: uploadData, error: uploadError } = await supabase
         .storage
         .from('company_assets')
-        .upload(`icons/${fileName}`, originalImage, {
+        .upload(`icons/${fileName}`, logoImage, {
           contentType: 'image/png',
           upsert: true
         })
@@ -65,7 +66,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        message: 'Icons generated and uploaded successfully',
+        message: 'Company logo icons generated and uploaded successfully',
         icons: iconUrls
       }),
       { 
