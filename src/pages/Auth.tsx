@@ -96,22 +96,25 @@ const Auth = () => {
           supabaseClient={supabase}
           appearance={{
             theme: ThemeSupa,
-            variables: {
-              default: {
-                colors: {
-                  brand: '#2563eb',
-                  brandAccent: '#1d4ed8',
-                }
-              }
+            style: {
+              button: {
+                background: 'rgb(37 99 235)',
+                color: 'white',
+                borderRadius: '0.375rem',
+                padding: '0.5rem 1rem',
+              },
+              anchor: {
+                color: 'rgb(37 99 235)',
+                textDecoration: 'none',
+              },
+              input: {
+                borderRadius: '0.375rem',
+                padding: '0.5rem 1rem',
+              },
+              message: {
+                color: 'rgb(239 68 68)',
+              },
             },
-            className: {
-              container: 'w-full space-y-4',
-              button: 'w-full px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors',
-              input: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors',
-              label: 'block text-sm font-medium text-gray-700 mb-1',
-              message: 'text-sm text-red-600 mt-1',
-              anchor: 'text-primary hover:text-primary/80 transition-colors'
-            }
           }}
           providers={['google']}
           redirectTo={window.location.origin}
