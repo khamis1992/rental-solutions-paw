@@ -55,6 +55,8 @@ export const TrafficFineImport = () => {
       });
     } finally {
       setIsUploading(false);
+      // Reset the file input
+      event.target.value = '';
     }
   };
 

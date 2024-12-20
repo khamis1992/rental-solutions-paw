@@ -15,32 +15,38 @@ serve(async (req) => {
   try {
     console.log('Starting traffic fine import process...');
     
-    // Get the form data from the request
-    const formData = await req.formData();
-    const file = formData.get('file');
+    // Parse request body
+    const { fileName } = await req.json();
     
-    if (!file || !(file instanceof File)) {
-      throw new Error('No file provided or invalid file format');
+    if (!fileName) {
+      throw new Error('fileName is required');
     }
 
-    console.log('File received:', file.name);
-
-    // Read the file content directly
-    const text = await file.text();
-    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
-    
-    if (rows.length < 2) {
-      throw new Error('File is empty or contains only headers');
-    }
-
-    const headers = rows[0].toLowerCase().split(',').map(h => h.trim());
-    console.log('CSV Headers:', headers);
+    console.log('Processing file:', fileName);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Download the file from storage
+    const { data: fileData, error: downloadError } = await supabaseClient
+      .storage
+      .from('imports')
+      .download(fileName);
+
+    if (downloadError) {
+      console.error('Download error:', downloadError);
+      throw new Error(`Failed to download file: ${downloadError.message}`);
+    }
+
+    // Parse CSV content
+    const text = await fileData.text();
+    const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+    const headers = rows[0].toLowerCase().split(',').map(h => h.trim());
+    
+    console.log('Processing CSV with headers:', headers);
 
     let processed = 0;
     const errors = [];
@@ -49,31 +55,30 @@ serve(async (req) => {
     for (let i = 1; i < rows.length; i++) {
       try {
         const values = rows[i].split(',').map(v => v.trim());
+        
         if (values.length !== headers.length) {
           throw new Error(`Invalid number of columns in row ${i}`);
         }
 
-        const fine = {};
-        headers.forEach((header, index) => {
-          if (header === 'fine_date') {
-            fine[header] = new Date(values[index]).toISOString();
-          } else if (header === 'fine_amount') {
-            fine[header] = parseFloat(values[index]);
-          } else {
-            fine[header] = values[index];
-          }
-        });
+        // Map CSV columns to database columns
+        const fine = {
+          serial_number: values[0],
+          violation_number: values[1],
+          violation_date: new Date(values[2]).toISOString(),
+          license_plate: values[3],
+          fine_location: values[4],
+          violation_charge: values[5],
+          fine_amount: parseFloat(values[6]),
+          violation_points: parseInt(values[7], 10) || 0,
+          assignment_status: 'pending',
+          payment_status: 'pending'
+        };
 
         console.log(`Processing row ${i}:`, fine);
 
-        // Insert the fine record
         const { error: insertError } = await supabaseClient
           .from('traffic_fines')
-          .insert([{
-            ...fine,
-            assignment_status: 'pending',
-            payment_status: 'pending'
-          }]);
+          .insert([fine]);
 
         if (insertError) {
           console.error(`Error inserting row ${i}:`, insertError);
@@ -91,7 +96,7 @@ serve(async (req) => {
     const { error: logError } = await supabaseClient
       .from('traffic_fine_imports')
       .insert([{
-        file_name: file.name,
+        file_name: fileName,
         total_fines: processed,
         unassigned_fines: processed,
         import_errors: errors.length > 0 ? errors : null
