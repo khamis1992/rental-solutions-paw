@@ -57,7 +57,7 @@ export const JobCard = ({
   const totalCost = totalPartsCost + totalLaborCost;
 
   return (
-    <Card className="w-full">
+    <Card className="w-full hover:shadow-lg transition-shadow duration-200">
       <JobCardHeader
         id={id}
         serviceType={serviceType}
