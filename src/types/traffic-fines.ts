@@ -30,7 +30,7 @@ export interface TrafficFine {
       year: number;
       license_plate: string;
     };
-  };
+  } | null;
 }
 
 export interface AISuggestion {
