@@ -27,8 +27,9 @@ export interface Agreement {
 export const useAgreements = () => {
   const queryClient = useQueryClient();
 
-  // Set up real-time subscription for both agreements and payments
+  // Set up comprehensive real-time subscriptions
   useEffect(() => {
+    // Listen for agreement changes
     const agreementChannel = supabase
       .channel('agreement-changes')
       .on(
@@ -56,7 +57,7 @@ export const useAgreements = () => {
       )
       .subscribe();
 
-    // Add payment status subscription
+    // Listen for payment status changes
     const paymentChannel = supabase
       .channel('payment-changes')
       .on(
@@ -81,9 +82,28 @@ export const useAgreements = () => {
       )
       .subscribe();
 
+    // Listen for customer profile changes
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        async (payload) => {
+          console.log('Profile update received:', payload);
+          // Invalidate agreements to refresh customer information
+          await queryClient.invalidateQueries({ queryKey: ['agreements'] });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(agreementChannel);
       supabase.removeChannel(paymentChannel);
+      supabase.removeChannel(profileChannel);
     };
   }, [queryClient]);
 

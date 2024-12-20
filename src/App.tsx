@@ -45,7 +45,7 @@ function App() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Enable performance monitoring
+    // Enable comprehensive performance monitoring
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.entryType === 'navigation') {
@@ -59,9 +59,56 @@ function App() {
 
     observer.observe({ entryTypes: ['navigation', 'resource', 'paint'] });
 
-    // Set up comprehensive real-time error tracking and data synchronization
-    const systemChannel = supabase
-      .channel('system-status')
+    // Set up comprehensive real-time data synchronization
+    const tables = [
+      'profiles',
+      'leases',
+      'vehicles',
+      'payments',
+      'maintenance',
+      'traffic_fines',
+      'expense_transactions',
+      'document_analysis_logs'
+    ];
+
+    const channels = tables.map(table => 
+      supabase
+        .channel(`${table}-changes`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: table
+          },
+          (payload) => {
+            console.log(`${table} change detected:`, payload);
+            
+            // Invalidate affected queries
+            queryClient.invalidateQueries({ queryKey: [table] });
+            
+            // Show notification for important changes
+            if (['payments', 'maintenance', 'traffic_fines'].includes(table)) {
+              const eventType = payload.eventType;
+              const message = `${table.replace('_', ' ')} ${eventType.toLowerCase()}d`;
+              toast.info(message, {
+                description: 'The data has been updated.'
+              });
+            }
+
+            // Track performance impact
+            performanceMetrics.trackPageLoad(
+              window.location.pathname,
+              performance.now()
+            );
+          }
+        )
+        .subscribe()
+    );
+
+    // Set up error tracking
+    const errorChannel = supabase
+      .channel('system-errors')
       .on(
         'postgres_changes',
         {
@@ -79,38 +126,11 @@ function App() {
             stack: JSON.stringify(payload.new),
             context: payload.new?.context || {}
           });
-
-          // Invalidate affected queries
-          if (payload.new?.context?.affectedQueries) {
-            queryClient.invalidateQueries({
-              predicate: (query) => 
-                payload.new.context.affectedQueries.includes(query.queryKey[0])
-            });
-          }
         }
       )
       .subscribe();
 
-    // Set up global data change listeners
-    const dataChannel = supabase
-      .channel('global-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: '*'
-        },
-        (payload) => {
-          console.log('Database change detected:', payload);
-          // Update relevant queries based on the changed table
-          const table = payload.table;
-          queryClient.invalidateQueries({ queryKey: [table] });
-        }
-      )
-      .subscribe();
-
-    // Prefetch critical data in parallel
+    // Prefetch critical data
     Promise.all([
       queryClient.prefetchQuery({
         queryKey: ['company_settings'],
@@ -118,7 +138,7 @@ function App() {
           const { data, error } = await supabase
             .from('company_settings')
             .select('*')
-            .single();
+            .maybeSingle();
           if (error) throw error;
           return data;
         },
@@ -129,7 +149,7 @@ function App() {
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
-            .single();
+            .maybeSingle();
           if (error) throw error;
           return data;
         },
@@ -138,8 +158,8 @@ function App() {
 
     return () => {
       observer.disconnect();
-      supabase.removeChannel(systemChannel);
-      supabase.removeChannel(dataChannel);
+      channels.forEach(channel => supabase.removeChannel(channel));
+      supabase.removeChannel(errorChannel);
     };
   }, [queryClient]);
 
