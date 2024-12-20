@@ -20,6 +20,7 @@ const Index = () => {
     <DashboardLayout>
       <WelcomeHeader />
       <DashboardStats />
+      <QuickActions />
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-6">
         <div className="lg:col-span-4">
           <UpcomingRentals />
