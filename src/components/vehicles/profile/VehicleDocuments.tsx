@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Upload, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface VehicleDocumentsProps {
   vehicleId: string;
@@ -38,18 +38,25 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
       const fileExt = file.name.split('.').pop();
       const filePath = `${vehicleId}/${Math.random()}.${fileExt}`;
 
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('agreement_documents')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('agreement_documents')
+        .getPublicUrl(filePath);
+
+      // Save document reference in the database
       const { error: dbError } = await supabase
         .from('agreement_documents')
         .insert({
           vehicle_id: vehicleId,
           document_type: file.type,
-          document_url: filePath,
+          document_url: publicUrl,
         });
 
       if (dbError) throw dbError;
@@ -57,7 +64,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
       toast.success('Document uploaded successfully');
       refetch();
       event.target.value = '';
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading document:', error);
       toast.error('Failed to upload document');
     } finally {
@@ -67,18 +74,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
   const handleDownload = async (documentUrl: string, fileName: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('agreement_documents')
-        .download(documentUrl);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
+      window.open(documentUrl, '_blank');
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error('Failed to download document');
@@ -87,12 +83,6 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
   const handleDelete = async (documentId: string, documentUrl: string) => {
     try {
-      const { error: storageError } = await supabase.storage
-        .from('agreement_documents')
-        .remove([documentUrl]);
-
-      if (storageError) throw storageError;
-
       const { error: dbError } = await supabase
         .from('agreement_documents')
         .delete()
@@ -111,8 +101,8 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <FileText className="mr-2 h-5 w-5" />
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
           Vehicle Documents
         </CardTitle>
       </CardHeader>
@@ -124,6 +114,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
             type="file"
             onChange={handleFileUpload}
             disabled={uploading}
+            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
           />
         </div>
 
@@ -133,7 +124,9 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
               key={doc.id}
               className="flex items-center justify-between p-2 border rounded"
             >
-              <span className="truncate max-w-[200px]">{doc.document_url.split('/').pop()}</span>
+              <span className="truncate max-w-[200px]">
+                {doc.document_url.split('/').pop()}
+              </span>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
