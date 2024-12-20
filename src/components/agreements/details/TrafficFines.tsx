@@ -9,13 +9,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { TrafficFine } from "@/types/traffic-fines";
 
 interface TrafficFinesProps {
   agreementId: string;
 }
 
 export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
-  const { data: fines, isLoading } = useQuery({
+  const { data: fines, isLoading } = useQuery<TrafficFine[]>({
     queryKey: ["traffic-fines", agreementId],
     queryFn: async () => {
       const { data, error } = await supabase

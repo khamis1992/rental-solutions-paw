@@ -5,13 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { Car } from "lucide-react";
+import { TrafficFine } from "@/types/traffic-fines";
 
 interface TrafficFinesSummaryProps {
   customerId: string;
 }
 
 export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) => {
-  const { data: fines, isLoading } = useQuery({
+  const { data: fines, isLoading } = useQuery<TrafficFine[]>({
     queryKey: ["customer-traffic-fines", customerId],
     queryFn: async () => {
       const { data, error } = await supabase

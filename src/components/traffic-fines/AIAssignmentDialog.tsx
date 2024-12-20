@@ -8,14 +8,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TrafficFine, AISuggestion } from "@/types/traffic-fines";
 
 interface AIAssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedFine: any;
+  selectedFine: TrafficFine | null;
   onAssignCustomer: (fineId: string, customerId: string) => Promise<void>;
   isAnalyzing: boolean;
-  aiSuggestions: any[];
+  aiSuggestions: AISuggestion[];
 }
 
 export const AIAssignmentDialog = ({
@@ -33,7 +34,7 @@ export const AIAssignmentDialog = ({
           <DialogTitle>AI-Powered Fine Assignment</DialogTitle>
           <DialogDescription>
             Analyzing potential matches for the traffic fine from{" "}
-            {selectedFine && new Date(selectedFine.fine_date).toLocaleDateString()}
+            {selectedFine && new Date(selectedFine.violation_date).toLocaleDateString()}
           </DialogDescription>
         </DialogHeader>
 
@@ -43,7 +44,7 @@ export const AIAssignmentDialog = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {aiSuggestions.map((suggestion, index) => (
+            {aiSuggestions.map((suggestion) => (
               <div
                 key={suggestion.agreement.id}
                 className={`p-4 rounded-lg border ${
@@ -67,9 +68,7 @@ export const AIAssignmentDialog = ({
                       {suggestion.agreement.vehicle.license_plate})
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(
-                        suggestion.agreement.start_date
-                      ).toLocaleDateString()}{" "}
+                      {new Date(suggestion.agreement.start_date).toLocaleDateString()}{" "}
                       to{" "}
                       {new Date(suggestion.agreement.end_date).toLocaleDateString()}
                     </p>
@@ -84,7 +83,7 @@ export const AIAssignmentDialog = ({
                     size="sm"
                     onClick={() =>
                       onAssignCustomer(
-                        selectedFine.id,
+                        selectedFine!.id,
                         suggestion.agreement.customer.id
                       )
                     }
