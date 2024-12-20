@@ -7,6 +7,7 @@ interface StatsCardProps {
   icon: React.ComponentType<{ className?: string }>;
   description?: React.ReactNode;
   className?: string;
+  iconClassName?: string;  // Added this prop
 }
 
 export const StatsCard = ({
@@ -15,12 +16,13 @@ export const StatsCard = ({
   icon: Icon,
   description,
   className,
+  iconClassName,  // Added this prop
 }: StatsCardProps) => {
   return (
     <Card className={cn("", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-center w-full">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <Icon className={cn("h-4 w-4 text-muted-foreground shrink-0", iconClassName)} />
       </CardHeader>
       <CardContent className="flex flex-col items-center">
         <div className="text-2xl font-bold">{value}</div>
