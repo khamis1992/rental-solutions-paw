@@ -35,14 +35,18 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
       const file = event.target.files?.[0];
       if (!file) return;
 
-      // Create a unique file path using vehicle ID and random string
+      // Create a unique file path using vehicle ID and timestamp
       const fileExt = file.name.split('.').pop();
-      const filePath = `${vehicleId}/${Math.random()}.${fileExt}`;
+      const timestamp = new Date().getTime();
+      const filePath = `${vehicleId}/${timestamp}_${Math.random()}.${fileExt}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('agreement_documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
@@ -57,7 +61,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
         .insert({
           vehicle_id: vehicleId,
           document_type: file.type,
-          document_url: publicUrl,
+          document_url: filePath,
         });
 
       if (dbError) throw dbError;
@@ -73,9 +77,23 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     }
   };
 
-  const handleDownload = async (documentUrl: string, fileName: string) => {
+  const handleDownload = async (documentUrl: string) => {
     try {
-      window.open(documentUrl, '_blank');
+      const { data, error } = await supabase.storage
+        .from('agreement_documents')
+        .download(documentUrl);
+
+      if (error) throw error;
+
+      // Create a download link
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = documentUrl.split('/').pop() || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error('Failed to download document');
@@ -84,6 +102,14 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
   const handleDelete = async (documentId: string, documentUrl: string) => {
     try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('agreement_documents')
+        .remove([documentUrl]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
       const { error: dbError } = await supabase
         .from('agreement_documents')
         .delete()
@@ -132,7 +158,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDownload(doc.document_url, doc.document_url.split('/').pop()!)}
+                  onClick={() => handleDownload(doc.document_url)}
                 >
                   <Download className="h-4 w-4" />
                 </Button>
