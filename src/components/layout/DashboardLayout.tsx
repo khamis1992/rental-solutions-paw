@@ -12,10 +12,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const isAuthRoute = location.pathname === '/auth';
 
+  // Return only the children/outlet for auth routes without any layout wrapper
   if (isAuthRoute) {
     return <>{children || <Outlet />}</>;
   }
 
+  // For all other routes, wrap with SidebarProvider and show full layout
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full bg-background">
