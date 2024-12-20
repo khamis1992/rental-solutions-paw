@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { parseCSVRow, validateRow, validateDate, validateNumeric } from './csvParser.ts'
+import { insertTrafficFine, logImport } from './dbOperations.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +9,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,7 +16,6 @@ serve(async (req) => {
   try {
     console.log('Starting traffic fine import process...');
     
-    // Parse request body
     const { fileName } = await req.json();
     
     if (!fileName) {
@@ -24,13 +24,11 @@ serve(async (req) => {
 
     console.log('Processing file:', fileName);
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Download the file from storage
     const { data: fileData, error: downloadError } = await supabaseClient
       .storage
       .from('imports')
@@ -41,10 +39,7 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
-    // Parse CSV content with improved error handling
     const text = await fileData.text();
-    
-    // Split by newline and filter out empty lines and whitespace-only lines
     const rows = text.split('\n')
       .map(row => row.trim())
       .filter(row => row.length > 0);
@@ -54,7 +49,7 @@ serve(async (req) => {
     }
 
     const headers = rows[0].toLowerCase().split(',').map(h => h.trim());
-    const expectedColumns = 8; // We expect 8 columns based on our schema
+    const expectedColumns = 8;
     
     console.log('Processing CSV with headers:', headers);
     console.log(`Expected columns: ${expectedColumns}, Found: ${headers.length}`);
@@ -71,124 +66,38 @@ serve(async (req) => {
       try {
         const row = rows[i];
         
-        // Skip if row is empty after trimming
         if (!row.trim()) {
           console.log(`Skipping empty row ${i}`);
           continue;
         }
 
-        // Handle quoted values and commas within quotes
-        const values: string[] = [];
-        let currentValue = '';
-        let insideQuotes = false;
-        let quotedValue = false;
+        const values = parseCSVRow(row);
+        validateRow(i, values, expectedColumns, row);
 
-        for (let j = 0; j < row.length; j++) {
-          const char = row[j];
-          const nextChar = row[j + 1];
+        // Validate date and numeric values
+        const violationDate = validateDate(values[2], i);
+        const amount = validateNumeric(values[6], 'amount', i);
+        const points = validateNumeric(values[7], 'points', i);
 
-          if (char === '"') {
-            if (!insideQuotes) {
-              insideQuotes = true;
-              quotedValue = true;
-              continue;
-            } else if (nextChar === '"') {
-              // Handle escaped quotes
-              currentValue += '"';
-              j++; // Skip next quote
-              continue;
-            } else {
-              insideQuotes = false;
-              continue;
-            }
-          }
-
-          if (char === ',' && !insideQuotes) {
-            values.push(currentValue.trim());
-            currentValue = '';
-            quotedValue = false;
-            continue;
-          }
-
-          currentValue += char;
-        }
-
-        // Add the last value
-        if (currentValue || values.length < expectedColumns) {
-          values.push(currentValue.trim());
-        }
-
-        // Log problematic rows for debugging
-        if (values.length !== expectedColumns) {
-          console.error(`Row ${i} parsing error:`);
-          console.error('Original row:', row);
-          console.error('Parsed values:', values);
-          console.error(`Number of values: ${values.length}`);
-          throw new Error(`Row ${i} has incorrect number of columns. Expected ${expectedColumns}, found ${values.length}. Please check for missing values or unmatched quotes.`);
-        }
-
-        // Validate date format
-        const dateValue = new Date(values[2]);
-        if (isNaN(dateValue.getTime())) {
-          throw new Error(`Invalid date format in row ${i}: ${values[2]}`);
-        }
-
-        // Validate numeric values
-        const amount = parseFloat(values[6]);
-        if (isNaN(amount)) {
-          throw new Error(`Invalid amount in row ${i}: ${values[6]}`);
-        }
-
-        const points = parseInt(values[7], 10);
-        if (isNaN(points)) {
-          throw new Error(`Invalid points in row ${i}: ${values[7]}`);
-        }
-
-        // Map CSV columns to database columns
-        const fine = {
+        await insertTrafficFine(supabaseClient, {
           serial_number: values[0],
           violation_number: values[1],
-          violation_date: dateValue.toISOString(),
+          violation_date: violationDate.toISOString(),
           license_plate: values[3],
           fine_location: values[4],
           violation_charge: values[5],
           fine_amount: amount,
-          violation_points: points,
-          assignment_status: 'pending',
-          payment_status: 'pending'
-        };
+          violation_points: points
+        });
 
-        console.log(`Processing row ${i}:`, fine);
-
-        const { error: insertError } = await supabaseClient
-          .from('traffic_fines')
-          .insert([fine]);
-
-        if (insertError) {
-          console.error(`Error inserting row ${i}:`, insertError);
-          errors.push({ row: i, error: insertError.message });
-        } else {
-          processed++;
-        }
+        processed++;
       } catch (error) {
         console.error(`Error processing row ${i}:`, error);
         errors.push({ row: i, error: error.message });
       }
     }
 
-    // Log import results
-    const { error: logError } = await supabaseClient
-      .from('traffic_fine_imports')
-      .insert([{
-        file_name: fileName,
-        total_fines: processed,
-        unassigned_fines: processed,
-        import_errors: errors.length > 0 ? errors : null
-      }]);
-
-    if (logError) {
-      console.error('Error logging import:', logError);
-    }
+    await logImport(supabaseClient, fileName, processed, errors);
 
     console.log('Import completed:', { processed, errors: errors.length });
 
