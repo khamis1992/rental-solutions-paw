@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import App from './App.tsx';
@@ -45,10 +44,8 @@ const initializeApp = async () => {
       renderApp(session);
     });
 
-    // Initial render with session
     renderApp(session);
 
-    // Cleanup subscription
     window.addEventListener('unload', () => {
       subscription.unsubscribe();
     });
@@ -71,9 +68,7 @@ const renderApp = (session: any) => {
         >
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
-              <SidebarProvider>
-                <App />
-              </SidebarProvider>
+              <App />
             </BrowserRouter>
           </QueryClientProvider>
         </SessionContextProvider>

@@ -1,7 +1,9 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
+import Auth from "@/pages/Auth";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 
 // Lazy load all pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -17,8 +19,8 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
 
-// Define routes configuration
-const routes = [
+// Define protected routes configuration
+const protectedRoutes = [
   { path: "/", component: Index },
   { path: "/agreements", component: Agreements },
   { path: "/customers", component: Customers },
@@ -34,27 +36,45 @@ const routes = [
 ];
 
 export default function App() {
+  const { session, isLoading } = useSessionContext();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
+
   return (
     <Routes>
-      <Route
-        element={
+      {/* Public route */}
+      <Route path="/auth" element={
+        session ? <Navigate to="/" replace /> : <Auth />
+      } />
+
+      {/* Protected routes */}
+      <Route element={
+        session ? (
           <DashboardLayout>
             <RouteWrapper>
-              <Outlet />
+              <Routes>
+                {protectedRoutes.map(({ path, component: Component }) => (
+                  <Route
+                    key={path}
+                    path={path}
+                    element={<Component />}
+                  />
+                ))}
+              </Routes>
             </RouteWrapper>
           </DashboardLayout>
-        }
-      >
-        {routes.map(({ path, component: Component }) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <RouteWrapper>
-                <Component />
-              </RouteWrapper>
-            }
-          />
+        ) : (
+          <Navigate to="/auth" replace />
+        )
+      }>
+        {protectedRoutes.map(({ path }) => (
+          <Route key={path} path={path} element={null} />
         ))}
       </Route>
     </Routes>
