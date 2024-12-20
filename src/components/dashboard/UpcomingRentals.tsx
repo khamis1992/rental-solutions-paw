@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const UpcomingRentals = () => {
-  const { data: upcomingRentals } = useQuery({
+  const { data: upcomingRentals = [] } = useQuery({
     queryKey: ["upcoming-rentals"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -33,26 +33,33 @@ export const UpcomingRentals = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {upcomingRentals?.map((rental) => (
-            <div key={rental.id} className="flex items-center gap-4 p-4 rounded-lg border">
-              <div className="h-12 w-12 rounded-full flex items-center justify-center bg-blue-50 text-blue-500">
-                <CarFront className="h-6 w-6" />
+        {upcomingRentals.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <CarFront className="h-12 w-12 mb-4" />
+            <p>No upcoming rentals scheduled</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {upcomingRentals.map((rental) => (
+              <div key={rental.id} className="flex items-center gap-4 p-4 rounded-lg border hover:shadow-md transition-shadow">
+                <div className="h-12 w-12 rounded-full flex items-center justify-center bg-blue-50 text-blue-500">
+                  <CarFront className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium">
+                    {rental.vehicles.year} {rental.vehicles.make} {rental.vehicles.model}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Reserved by {rental.profiles.full_name}
+                  </p>
+                </div>
+                <Badge variant="secondary" className="whitespace-nowrap">
+                  {new Date(rental.start_date).toLocaleDateString()}
+                </Badge>
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium">
-                  {rental.vehicles.year} {rental.vehicles.make} {rental.vehicles.model}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  Reserved by {rental.profiles.full_name}
-                </p>
-              </div>
-              <Badge variant="secondary" className="whitespace-nowrap">
-                {new Date(rental.start_date).toLocaleDateString()}
-              </Badge>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

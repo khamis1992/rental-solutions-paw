@@ -73,12 +73,14 @@ export const DashboardStats = () => {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <StatsCard
           title="Total Vehicles"
           value={stats?.totalVehicles.toString() || "0"}
           icon={Car}
+          className="shadow-md hover:shadow-lg transition-shadow"
+          iconClassName="h-6 w-6 text-blue-500"
           description={
             <span className="flex items-center text-emerald-600">
               <ArrowUpRight className="mr-1 h-4 w-4" />
@@ -90,6 +92,8 @@ export const DashboardStats = () => {
           title="Active Rentals"
           value={stats?.activeRentals.toString() || "0"}
           icon={FileText}
+          className="shadow-md hover:shadow-lg transition-shadow"
+          iconClassName="h-6 w-6 text-purple-500"
           description={
             <span className="flex items-center text-yellow-600">
               {stats?.pendingReturns || 0} pending returns
@@ -100,6 +104,8 @@ export const DashboardStats = () => {
           title="Monthly Revenue"
           value={formatCurrency(stats?.monthlyRevenue || 0)}
           icon={DollarSign}
+          className="shadow-md hover:shadow-lg transition-shadow"
+          iconClassName="h-6 w-6 text-green-500"
           description={
             <span className="flex items-center text-emerald-600">
               <ArrowUpRight className="mr-1 h-4 w-4" />
@@ -109,7 +115,6 @@ export const DashboardStats = () => {
         />
       </div>
       
-      {/* Vehicle Status Analysis Chart */}
       <VehicleStatusChart />
     </div>
   );
