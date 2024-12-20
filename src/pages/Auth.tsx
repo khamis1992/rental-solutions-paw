@@ -5,7 +5,6 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simply redirect to home page
     navigate('/');
   }, [navigate]);
 
