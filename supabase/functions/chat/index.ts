@@ -1,6 +1,6 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { corsHeaders } from '../_shared/cors.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const systemPrompt = `You are an AI assistant for the Rental Solutions vehicle rental management system. You have deep knowledge of the system's features and capabilities:
 
@@ -21,20 +21,20 @@ The system is built with:
 - Tanstack Query for data management
 - Supabase for backend services
 
-Help users understand and use the system effectively. Be concise but thorough in your responses.`
+Help users understand and use the system effectively. Be concise but thorough in your responses.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json()
+    const { messages } = await req.json();
 
     // Get Perplexity API key from secrets
-    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY')
+    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityKey) {
-      throw new Error('Perplexity API key not configured')
+      throw new Error('Perplexity API key not configured');
     }
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -59,23 +59,29 @@ serve(async (req) => {
         frequency_penalty: 1,
         presence_penalty: 0
       }),
-    })
+    });
 
-    const data = await response.json()
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Perplexity API error:', data);
+      throw new Error(data.error?.message || 'Failed to get response from Perplexity');
+    }
 
     return new Response(
-      JSON.stringify({ message: data.choices[0].text }),
+      JSON.stringify({ message: data.choices[0].message.content }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
-    )
+    );
   } catch (error) {
+    console.error('Chat error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
-    )
+    );
   }
-})
+});
