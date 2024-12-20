@@ -7,6 +7,7 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
+import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
 const Index = () => {
   usePerformanceMonitoring();
@@ -29,6 +30,9 @@ const Index = () => {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
           <div className="lg:col-span-4">
             <RecentActivity />
+          </div>
+          <div className="lg:col-span-3">
+            <SystemChatbot />
           </div>
         </div>
       </div>
