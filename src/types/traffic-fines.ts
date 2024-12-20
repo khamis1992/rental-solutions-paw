@@ -18,7 +18,9 @@ export interface TrafficFine {
   created_at?: string | null;
   updated_at?: string | null;
   lease?: {
-    customer: {
+    id?: string;
+    customer_id?: string;
+    customer?: {
       id: string;
       full_name: string;
     };

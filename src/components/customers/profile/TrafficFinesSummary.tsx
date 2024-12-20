@@ -22,10 +22,15 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
           lease:leases(
             id,
             customer_id,
+            customer:profiles(
+              id,
+              full_name
+            ),
             vehicle:vehicles(
               make,
               model,
-              year
+              year,
+              license_plate
             )
           )
         `)
