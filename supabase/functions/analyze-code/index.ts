@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured')
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY')
+    if (!perplexityApiKey) {
+      throw new Error('Perplexity API key not configured')
     }
 
     // Initialize Supabase client
@@ -24,31 +24,35 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Call OpenAI API for code analysis
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Perplexity API for code analysis
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: 'llama-3.1-sonar-large-128k-online',
         messages: [
           {
-            role: "system",
-            content: "You are a code analysis expert. Analyze the codebase and provide detailed recommendations for improvements in code quality, security, and performance."
+            role: 'system',
+            content: 'You are a code analysis expert. Analyze the codebase and provide detailed recommendations for improvements in code quality, security, and performance. Be precise and concise.'
           },
           {
-            role: "user",
-            content: "Analyze the current codebase and provide recommendations."
+            role: 'user',
+            content: 'Analyze the current codebase and provide recommendations focusing on code quality, security vulnerabilities, and performance optimizations.'
           }
         ],
-        temperature: 0.7,
+        temperature: 0.2,
+        top_p: 0.9,
+        max_tokens: 1000,
+        frequency_penalty: 1,
+        presence_penalty: 0
       }),
     });
 
     const aiResponse = await response.json();
-    console.log('AI Response:', aiResponse);
+    console.log('Perplexity API Response:', aiResponse);
 
     // Process AI response and format recommendations
     const analysisResult = {
