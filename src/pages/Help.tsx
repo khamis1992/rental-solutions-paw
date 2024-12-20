@@ -44,27 +44,33 @@ const Help = () => {
             <TabsTrigger value="agreements">Agreements</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="getting-started">
+          <TabsContent value="getting-started" className="print-section">
+            <h2 className="print-only text-2xl font-bold mb-4">Getting Started</h2>
             <GettingStartedGuide />
           </TabsContent>
 
-          <TabsContent value="system-features">
+          <TabsContent value="system-features" className="print-section">
+            <h2 className="print-only text-2xl font-bold mb-4">System Features</h2>
             <SystemFeaturesGuide />
           </TabsContent>
 
-          <TabsContent value="technical-features">
+          <TabsContent value="technical-features" className="print-section">
+            <h2 className="print-only text-2xl font-bold mb-4">Technical Features</h2>
             <TechnicalFeaturesGuide />
           </TabsContent>
 
-          <TabsContent value="vehicles">
+          <TabsContent value="vehicles" className="print-section">
+            <h2 className="print-only text-2xl font-bold mb-4">Vehicle Management</h2>
             <VehicleManagementGuide />
           </TabsContent>
 
-          <TabsContent value="customers">
+          <TabsContent value="customers" className="print-section">
+            <h2 className="print-only text-2xl font-bold mb-4">Customer Management</h2>
             <CustomerManagementGuide />
           </TabsContent>
 
-          <TabsContent value="agreements">
+          <TabsContent value="agreements" className="print-section">
+            <h2 className="print-only text-2xl font-bold mb-4">Agreements</h2>
             <AgreementManagementGuide />
           </TabsContent>
         </Tabs>
@@ -72,7 +78,7 @@ const Help = () => {
         {/* Print-specific styles */}
         <style type="text/css" media="print">{`
           @page {
-            size: auto;
+            size: A4;
             margin: 20mm;
           }
 
@@ -87,17 +93,54 @@ const Help = () => {
               display: block !important;
               opacity: 1 !important;
               visibility: visible !important;
+              break-inside: avoid;
+              page-break-inside: avoid;
+              margin-bottom: 2rem;
             }
 
-            /* Add section titles for print */
-            [role="tabpanel"]::before {
-              content: attr(aria-label);
-              display: block;
-              font-size: 24px;
-              font-weight: bold;
-              margin-bottom: 16px;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 8px;
+            /* Hide navigation elements */
+            nav, 
+            header, 
+            .print:hidden {
+              display: none !important;
+            }
+
+            /* Show section titles for print */
+            .print-only {
+              display: block !important;
+            }
+
+            /* Ensure proper page breaks */
+            .print-section {
+              break-before: page;
+            }
+
+            /* Adjust typography for print */
+            h1 {
+              font-size: 24pt;
+              margin-bottom: 1rem;
+            }
+
+            h2 {
+              font-size: 20pt;
+              margin-bottom: 0.8rem;
+            }
+
+            h3 {
+              font-size: 16pt;
+              margin-bottom: 0.6rem;
+            }
+
+            p, li {
+              font-size: 11pt;
+              line-height: 1.4;
+            }
+
+            /* Ensure cards break properly */
+            .card {
+              break-inside: avoid;
+              page-break-inside: avoid;
+              margin-bottom: 1rem;
             }
           }
         `}</style>
