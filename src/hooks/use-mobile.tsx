@@ -26,5 +26,7 @@ export function useIsMobile() {
   }, []);
 
   // Return false during SSR or when not mounted
-  return mounted ? isMobile : false;
+  if (!mounted) return false;
+
+  return isMobile;
 }

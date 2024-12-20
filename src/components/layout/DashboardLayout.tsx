@@ -12,21 +12,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const isAuthRoute = location.pathname === '/auth';
 
+  if (isAuthRoute) {
+    return <>{children || <Outlet />}</>;
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full bg-background">
-        {!isAuthRoute && (
-          <ErrorBoundary>
-            <DashboardSidebar />
-          </ErrorBoundary>
-        )}
+        <ErrorBoundary>
+          <DashboardSidebar />
+        </ErrorBoundary>
         
-        <div className={`flex flex-col ${!isAuthRoute ? 'lg:pl-72' : ''}`}>
-          {!isAuthRoute && (
-            <ErrorBoundary>
-              <DashboardHeader />
-            </ErrorBoundary>
-          )}
+        <div className="flex flex-col lg:pl-72">
+          <ErrorBoundary>
+            <DashboardHeader />
+          </ErrorBoundary>
           
           <main className="flex-1 py-10">
             <ErrorBoundary>
