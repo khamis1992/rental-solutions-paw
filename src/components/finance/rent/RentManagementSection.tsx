@@ -123,7 +123,7 @@ export const RentManagementSection = () => {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={payment.status === "completed" ? "success" : "warning"}
+                        variant={payment.status === "completed" ? "success" : "destructive"}
                         className="capitalize"
                       >
                         {payment.status}
