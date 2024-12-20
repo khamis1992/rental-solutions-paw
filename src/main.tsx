@@ -28,12 +28,39 @@ const queryClient = new QueryClient({
   },
 });
 
+const renderApp = (session: any) => {
+  const startRender = performance.now();
+  
+  root.render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <SessionContextProvider 
+            supabaseClient={supabase}
+            initialSession={session}
+          >
+            <QueryClientProvider client={queryClient}>
+              <TooltipProvider>
+                <App />
+              </TooltipProvider>
+            </QueryClientProvider>
+          </SessionContextProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </React.StrictMode>
+  );
+
+  const renderTime = performance.now() - startRender;
+  console.log(`App rendered in ${renderTime}ms`);
+};
+
 const initializeApp = async () => {
   try {
+    console.log('Initializing app...');
     const { data: { session } } = await supabase.auth.getSession();
     console.log('Initial session:', session);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event);
       
       if (_event === 'TOKEN_REFRESHED') {
@@ -57,32 +84,6 @@ const initializeApp = async () => {
     console.error('Failed to initialize app:', error);
     renderApp(null);
   }
-};
-
-const renderApp = (session: any) => {
-  const startRender = performance.now();
-  
-  root.render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        <SessionContextProvider 
-          supabaseClient={supabase}
-          initialSession={session}
-        >
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <BrowserRouter>
-                <App />
-              </BrowserRouter>
-            </TooltipProvider>
-          </QueryClientProvider>
-        </SessionContextProvider>
-      </ErrorBoundary>
-    </React.StrictMode>
-  );
-
-  const renderTime = performance.now() - startRender;
-  console.log(`App rendered in ${renderTime}ms`);
 };
 
 console.time('App Initialization');
