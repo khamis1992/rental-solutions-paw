@@ -1,16 +1,15 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FleetStatus } from "@/components/reports/FleetStatus";
-import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
 import { PerformanceInsights } from "@/components/performance/PerformanceInsights";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { FileText, Users, Brain, Car, FileSpreadsheet, Calendar } from "lucide-react";
+import { Car, Users, Brain, FileSpreadsheet, Code } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { FleetReportSection } from "@/components/reports/sections/FleetReportSection";
+import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
+import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
+import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDashboard";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState("");
@@ -171,94 +170,42 @@ const Reports = () => {
             <Brain className="h-4 w-4" />
             Performance Insights
           </TabsTrigger>
+          <TabsTrigger value="code-analysis" className="flex items-center gap-2">
+            <Code className="h-4 w-4" />
+            Code Analysis
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="fleet">
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Car className="h-5 w-5" />
-                    Vehicle Reports
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Select onValueChange={value => setSelectedReport(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select report type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vehicle-summary">Vehicle Summary Report</SelectItem>
-                      <SelectItem value="vehicle-maintenance">Maintenance History</SelectItem>
-                      <SelectItem value="vehicle-utilization">Vehicle Utilization Report</SelectItem>
-                      <SelectItem value="vehicle-expenses">Vehicle Expense Report</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button className="w-full" onClick={generateReport}>Generate Report</Button>
-                </CardContent>
-              </Card>
-              <FleetStatus />
-            </div>
-          </div>
+          <FleetReportSection
+            selectedReport={selectedReport}
+            setSelectedReport={setSelectedReport}
+            generateReport={generateReport}
+          />
         </TabsContent>
 
         <TabsContent value="customer">
-          <div className="space-y-6">
-            <CustomerAnalytics />
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Customer Reports
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Select onValueChange={value => setSelectedReport(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select report type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="customer-rental">Rental History</SelectItem>
-                    <SelectItem value="customer-payment">Payment History</SelectItem>
-                    <SelectItem value="customer-violations">Traffic Violations</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button className="w-full" onClick={generateReport}>Generate Report</Button>
-              </CardContent>
-            </Card>
-          </div>
+          <CustomerReportSection
+            selectedReport={selectedReport}
+            setSelectedReport={setSelectedReport}
+            generateReport={generateReport}
+          />
         </TabsContent>
 
         <TabsContent value="operational">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Operational Reports
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Select onValueChange={value => setSelectedReport(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select report type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="operational-active">Active Rentals Report</SelectItem>
-                    <SelectItem value="operational-maintenance">Maintenance Schedule</SelectItem>
-                    <SelectItem value="operational-returns">Upcoming Returns</SelectItem>
-                    <SelectItem value="operational-late">Late Returns Report</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button className="w-full" onClick={generateReport}>Generate Report</Button>
-              </CardContent>
-            </Card>
-          </div>
+          <OperationalReportSection
+            selectedReport={selectedReport}
+            setSelectedReport={setSelectedReport}
+            generateReport={generateReport}
+          />
         </TabsContent>
 
         <TabsContent value="performance">
           <PerformanceInsights />
+        </TabsContent>
+
+        <TabsContent value="code-analysis">
+          <CodeAnalysisDashboard />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
