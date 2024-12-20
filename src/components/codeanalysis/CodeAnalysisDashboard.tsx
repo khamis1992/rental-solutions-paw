@@ -37,6 +37,12 @@ interface AnalyticsInsight {
   category: string;
   data_points: AnalyticsDataPoints;
   created_at: string;
+  analyzed_at: string;
+  confidence_score: number;
+  insight: string;
+  priority: number;
+  status: string;
+  action_taken: boolean;
 }
 
 export const CodeAnalysisDashboard = () => {
@@ -56,7 +62,11 @@ export const CodeAnalysisDashboard = () => {
         throw error;
       }
 
-      return (data || []) as AnalyticsInsight[];
+      // Cast the data to ensure type safety
+      return (data || []).map(item => ({
+        ...item,
+        data_points: item.data_points as unknown as AnalyticsDataPoints
+      })) as AnalyticsInsight[];
     }
   });
 
