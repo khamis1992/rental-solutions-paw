@@ -4,6 +4,7 @@ import { GettingStartedGuide } from "@/components/help/GettingStartedGuide";
 import { VehicleManagementGuide } from "@/components/help/VehicleManagementGuide";
 import { CustomerManagementGuide } from "@/components/help/CustomerManagementGuide";
 import { AgreementManagementGuide } from "@/components/help/AgreementManagementGuide";
+import { SystemFeaturesGuide } from "@/components/help/SystemFeaturesGuide";
 
 const Help = () => {
   return (
@@ -12,13 +13,14 @@ const Help = () => {
         <div>
           <h1 className="text-3xl font-bold">Help Center</h1>
           <p className="text-muted-foreground mt-1">
-            Find comprehensive guides and learn how to use AutoRent Pro effectively.
+            Find comprehensive guides and learn how to use Rental Solutions effectively.
           </p>
         </div>
 
         <Tabs defaultValue="getting-started" className="space-y-4">
           <TabsList>
             <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
+            <TabsTrigger value="system-features">System Features</TabsTrigger>
             <TabsTrigger value="vehicles">Vehicle Management</TabsTrigger>
             <TabsTrigger value="customers">Customer Management</TabsTrigger>
             <TabsTrigger value="agreements">Agreements</TabsTrigger>
@@ -26,6 +28,10 @@ const Help = () => {
 
           <TabsContent value="getting-started">
             <GettingStartedGuide />
+          </TabsContent>
+
+          <TabsContent value="system-features">
+            <SystemFeaturesGuide />
           </TabsContent>
 
           <TabsContent value="vehicles">
