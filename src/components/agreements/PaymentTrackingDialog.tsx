@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface PaymentTrackingDialogProps {
   agreementId: string;
@@ -34,22 +35,27 @@ export function PaymentTrackingDialog({
 }: PaymentTrackingDialogProps) {
   const queryClient = useQueryClient();
 
-  const { data: payments, isLoading } = useQuery({
+  const { data: payments, isLoading, error } = useQuery({
     queryKey: ["payment-schedules", agreementId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payment_schedules")
-        .select("*")
-        .eq("lease_id", agreementId)
-        .order("due_date");
+      try {
+        const { data, error } = await supabase
+          .from("payment_schedules")
+          .select("*")
+          .eq("lease_id", agreementId)
+          .order("due_date");
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (err) {
+        console.error("Error fetching payment schedules:", err);
+        throw err;
+      }
     },
-    enabled: open,
+    enabled: open && !!agreementId,
+    retry: 2,
   });
 
-  // Set up real-time subscription
   useEffect(() => {
     if (!agreementId || !open) return;
 
@@ -66,17 +72,18 @@ export function PaymentTrackingDialog({
         async (payload) => {
           console.log('Real-time update received for payment schedule:', payload);
           
-          // Invalidate and refetch the payment schedules query
-          await queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] });
+          await queryClient.invalidateQueries({ 
+            queryKey: ['payment-schedules', agreementId] 
+          });
           
-          // Show a toast notification
-          const eventType = payload.eventType;
+          const eventMessages = {
+            INSERT: 'New payment schedule added',
+            UPDATE: 'Payment schedule updated',
+            DELETE: 'Payment schedule removed'
+          };
+          
           toast.info(
-            eventType === 'INSERT'
-              ? 'New payment schedule added'
-              : eventType === 'UPDATE'
-              ? 'Payment schedule updated'
-              : 'Payment schedule changed',
+            eventMessages[payload.eventType as keyof typeof eventMessages] || 'Payment schedule changed',
             {
               description: 'The payment schedule has been updated.'
             }
@@ -85,7 +92,6 @@ export function PaymentTrackingDialog({
       )
       .subscribe();
 
-    // Cleanup subscription on unmount or when dialog closes
     return () => {
       supabase.removeChannel(channel);
     };
@@ -104,6 +110,19 @@ export function PaymentTrackingDialog({
       : "bg-yellow-500/10 text-yellow-500";
   };
 
+  if (error) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <div className="flex flex-col items-center justify-center p-4 text-red-500">
+            <p>Error loading payment schedules</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -115,7 +134,9 @@ export function PaymentTrackingDialog({
         </DialogHeader>
 
         {isLoading ? (
-          <div>Loading payment schedule...</div>
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
         ) : (
           <Table>
             <TableHeader>
@@ -151,6 +172,13 @@ export function PaymentTrackingDialog({
                   </TableCell>
                 </TableRow>
               ))}
+              {!payments?.length && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    No payment schedules found
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         )}
