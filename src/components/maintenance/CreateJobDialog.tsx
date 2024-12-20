@@ -87,7 +87,7 @@ export function CreateJobDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="w-full md:w-auto">
-          <Plus className="mr-2 h-4 w-4" /> Create Job Card
+          <Plus className="mr-2 h-4 w-4" /> Perform Vehicle Inspection
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
@@ -158,7 +158,7 @@ export function CreateJobDialog() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating..." : "Create Job Card"}
+            {loading ? "Creating..." : "Perform Vehicle Inspection"}
           </Button>
         </form>
       </DialogContent>
