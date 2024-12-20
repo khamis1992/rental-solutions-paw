@@ -121,7 +121,6 @@ const Auth = () => {
               input: 'w-full px-3 py-2 border rounded',
             }
           }}
-          providers={['google']}
           redirectTo={window.location.origin}
         />
       </div>
