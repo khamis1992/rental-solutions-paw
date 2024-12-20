@@ -1,14 +1,16 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Users, Brain, FileSpreadsheet } from "lucide-react";
+import { FleetStatus } from "@/components/reports/FleetStatus";
+import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
+import { PerformanceInsights } from "@/components/performance/PerformanceInsights";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { FileText, Users, Brain, Car, FileSpreadsheet, Calendar } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { FleetSection } from "@/components/reports/sections/FleetSection";
-import { CustomerSection } from "@/components/reports/sections/CustomerSection";
-import { OperationalSection } from "@/components/reports/sections/OperationalSection";
-import { AiPerformanceSection } from "@/components/reports/sections/AiPerformanceSection";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState("");
@@ -111,12 +113,14 @@ const Reports = () => {
     }
 
     if (reportData && reportData.length > 0) {
+      // Convert to CSV
       const headers = Object.keys(reportData[0]);
       const csv = [
         headers.join(','),
         ...reportData.map(row => headers.map(header => row[header]).join(','))
       ].join('\n');
 
+      // Download file
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -163,35 +167,98 @@ const Reports = () => {
             <FileSpreadsheet className="h-4 w-4" />
             Operational Reports
           </TabsTrigger>
-          <TabsTrigger value="ai-insights" className="flex items-center gap-2">
+          <TabsTrigger value="performance" className="flex items-center gap-2">
             <Brain className="h-4 w-4" />
-            AI Insights
+            Performance Insights
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="fleet">
-          <FleetSection 
-            onGenerateReport={generateReport}
-            onReportTypeChange={setSelectedReport}
-          />
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Car className="h-5 w-5" />
+                    Vehicle Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Select onValueChange={value => setSelectedReport(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select report type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vehicle-summary">Vehicle Summary Report</SelectItem>
+                      <SelectItem value="vehicle-maintenance">Maintenance History</SelectItem>
+                      <SelectItem value="vehicle-utilization">Vehicle Utilization Report</SelectItem>
+                      <SelectItem value="vehicle-expenses">Vehicle Expense Report</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button className="w-full" onClick={generateReport}>Generate Report</Button>
+                </CardContent>
+              </Card>
+              <FleetStatus />
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="customer">
-          <CustomerSection 
-            onGenerateReport={generateReport}
-            onReportTypeChange={setSelectedReport}
-          />
+          <div className="space-y-6">
+            <CustomerAnalytics />
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Customer Reports
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select onValueChange={value => setSelectedReport(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="customer-rental">Rental History</SelectItem>
+                    <SelectItem value="customer-payment">Payment History</SelectItem>
+                    <SelectItem value="customer-violations">Traffic Violations</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button className="w-full" onClick={generateReport}>Generate Report</Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="operational">
-          <OperationalSection 
-            onGenerateReport={generateReport}
-            onReportTypeChange={setSelectedReport}
-          />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Operational Reports
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select onValueChange={value => setSelectedReport(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select report type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="operational-active">Active Rentals Report</SelectItem>
+                    <SelectItem value="operational-maintenance">Maintenance Schedule</SelectItem>
+                    <SelectItem value="operational-returns">Upcoming Returns</SelectItem>
+                    <SelectItem value="operational-late">Late Returns Report</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button className="w-full" onClick={generateReport}>Generate Report</Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="ai-insights">
-          <AiPerformanceSection />
+        <TabsContent value="performance">
+          <PerformanceInsights />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
