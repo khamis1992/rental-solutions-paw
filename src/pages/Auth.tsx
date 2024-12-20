@@ -19,7 +19,6 @@ const Auth = () => {
 
     const initializeAuth = async () => {
       try {
-        // Check for existing session
         const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -30,7 +29,6 @@ const Auth = () => {
 
         if (existingSession) {
           console.log("Existing session found");
-          // Fetch or create user profile
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -39,16 +37,13 @@ const Auth = () => {
 
           if (profileError && profileError.code === 'PGRST116') {
             console.log("Creating new profile for user");
-            // Profile doesn't exist, create one
             const { error: createError } = await supabase
               .from('profiles')
-              .insert([
-                { 
-                  id: existingSession.user.id,
-                  full_name: existingSession.user.user_metadata.full_name,
-                  role: 'customer'
-                }
-              ]);
+              .insert([{ 
+                id: existingSession.user.id,
+                full_name: existingSession.user.user_metadata.full_name,
+                role: 'customer'
+              }]);
 
             if (createError) {
               console.error("Failed to create profile:", createError);
@@ -71,14 +66,8 @@ const Auth = () => {
     };
 
     initializeAuth();
-
-    return () => {
-      console.log("Cleaning up Auth component");
-      // Any cleanup needed
-    };
   }, [navigate]);
 
-  // Show loading state
   if (isInitializing || sessionLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -119,6 +108,8 @@ const Auth = () => {
               container: 'w-full',
               button: 'w-full px-4 py-2 rounded',
               input: 'w-full px-3 py-2 border rounded',
+              label: 'text-gray-700',
+              message: 'text-red-600'
             }
           }}
           providers={['google']}
