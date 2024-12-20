@@ -12,7 +12,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <SidebarProvider>
       <div className="min-h-screen bg-background">
         <DashboardHeader />
-        <div className="flex">
+        <div className="flex pt-14"> {/* Added pt-14 to account for fixed header height */}
           <DashboardSidebar />
           <main className="flex-1 overflow-x-hidden">
             {children}
