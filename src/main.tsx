@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import App from './App.tsx';
 import './index.css';
 
@@ -67,9 +68,11 @@ const renderApp = (session: any) => {
           initialSession={session}
         >
           <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
+            <TooltipProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </TooltipProvider>
           </QueryClientProvider>
         </SessionContextProvider>
       </ErrorBoundary>
