@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { injectPrintStyles } from "@/lib/printStyles";
 
 interface LegalDocumentDialogProps {
   customerId: string | null;
@@ -65,7 +66,7 @@ export function LegalDocumentDialog({
   });
 
   const handlePrint = () => {
-    window.print();
+    injectPrintStyles();
   };
 
   if (isLoading || !customerData) {
@@ -96,7 +97,7 @@ export function LegalDocumentDialog({
         <DialogHeader>
           <DialogTitle className="flex justify-between items-center">
             <span>Legal Document - {customerData.full_name}</span>
-            <Button onClick={handlePrint}>
+            <Button onClick={handlePrint} className="print:hidden">
               <Printer className="h-4 w-4 mr-2" />
               Print Document
             </Button>

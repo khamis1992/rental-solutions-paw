@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { injectPrintStyles } from "@/lib/printStyles";
 
 interface InvoiceViewProps {
   data: InvoiceData;
@@ -25,8 +26,15 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     },
   });
 
+  const handlePrint = () => {
+    if (onPrint) {
+      onPrint();
+    }
+    injectPrintStyles();
+  };
+
   return (
-    <Card className="p-8 max-w-3xl mx-auto bg-white shadow-lg">
+    <Card className="p-8 max-w-3xl mx-auto bg-white shadow-lg print:shadow-none print:p-0">
       <div className="flex justify-between items-start mb-8">
         <div className="space-y-4">
           {settings?.logo_url && (
@@ -41,7 +49,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             <p className="text-gray-600">#{data.invoiceNumber}</p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={onPrint}>
+        <Button variant="outline" size="sm" onClick={handlePrint} className="print:hidden">
           <Printer className="h-4 w-4 mr-2" />
           Print Invoice
         </Button>

@@ -9,6 +9,7 @@ import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { injectPrintStyles } from "@/lib/printStyles";
 
 interface VehicleDetailsProps {
   vehicleId: string;
@@ -30,7 +31,7 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
   });
 
   const handlePrint = () => {
-    window.print();
+    injectPrintStyles();
   };
 
   if (isLoading) {

@@ -8,10 +8,11 @@ import { SystemFeaturesGuide } from "@/components/help/SystemFeaturesGuide";
 import { TechnicalFeaturesGuide } from "@/components/help/TechnicalFeaturesGuide";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { injectPrintStyles } from "@/lib/printStyles";
 
 const Help = () => {
   const handlePrint = () => {
-    window.print();
+    injectPrintStyles();
   };
 
   return (
