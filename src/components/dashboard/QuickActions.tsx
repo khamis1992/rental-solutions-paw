@@ -31,6 +31,33 @@ export const QuickActions = () => {
 
   const handleCreateTestAgreements = async () => {
     try {
+      // First check if we have test vehicles and customers
+      const { data: vehicles, error: vehiclesError } = await supabase
+        .from('vehicles')
+        .select('id')
+        .eq('is_test_data', true)
+        .limit(1);
+
+      if (vehiclesError) throw vehiclesError;
+
+      const { data: customers, error: customersError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_ai_generated', true)
+        .limit(1);
+
+      if (customersError) throw customersError;
+
+      if (!vehicles?.length) {
+        toast.error("Please create test vehicles first");
+        return;
+      }
+
+      if (!customers?.length) {
+        toast.error("Please create test customers first");
+        return;
+      }
+
       await createTestAgreements();
       toast.success("Test agreements created successfully");
     } catch (error) {
@@ -94,7 +121,7 @@ export const QuickActions = () => {
             <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-orange-50 text-orange-500">
               <UserPlus2 className="h-5 w-5" />
             </div>
-            <span className="font-medium">Create Test Users</span>
+            <span className="font-medium">1. Create Test Users</span>
           </button>
 
           <button
@@ -104,7 +131,7 @@ export const QuickActions = () => {
             <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-cyan-50 text-cyan-500">
               <Car className="h-5 w-5" />
             </div>
-            <span className="font-medium">Create Test Vehicles</span>
+            <span className="font-medium">2. Create Test Vehicles</span>
           </button>
 
           <button
@@ -114,7 +141,7 @@ export const QuickActions = () => {
             <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-indigo-50 text-indigo-500">
               <FileText className="h-5 w-5" />
             </div>
-            <span className="font-medium">Create Test Agreements</span>
+            <span className="font-medium">3. Create Test Agreements</span>
           </button>
 
           <button
