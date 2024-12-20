@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,12 +13,44 @@ serve(async (req) => {
   }
 
   try {
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured')
+    }
+
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Simulate code analysis with more detailed recommendations
+    // Call OpenAI API for code analysis
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a code analysis expert. Analyze the codebase and provide detailed recommendations for improvements in code quality, security, and performance."
+          },
+          {
+            role: "user",
+            content: "Analyze the current codebase and provide recommendations."
+          }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const aiResponse = await response.json();
+    console.log('AI Response:', aiResponse);
+
+    // Process AI response and format recommendations
     const analysisResult = {
       category: 'code_analysis',
       data_points: {
@@ -79,7 +112,7 @@ serve(async (req) => {
         ]
       },
       confidence_score: 0.95,
-      insight: 'Code analysis completed with detailed recommendations for improvement',
+      insight: aiResponse.choices[0].message.content,
       priority: 2,
       status: 'completed',
       action_taken: false
@@ -104,6 +137,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error('Error in analyze-code function:', error)
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       { 
