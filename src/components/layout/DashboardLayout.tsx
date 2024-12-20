@@ -3,7 +3,11 @@ import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
-export function DashboardLayout() {
+interface DashboardLayoutProps {
+  children?: React.ReactNode
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <ErrorBoundary>
@@ -17,7 +21,7 @@ export function DashboardLayout() {
         
         <main className="flex-1 py-10">
           <ErrorBoundary>
-            <Outlet />
+            {children || <Outlet />}
           </ErrorBoundary>
         </main>
       </div>

@@ -3,10 +3,11 @@ import * as React from "react"
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean>(false)
+  const [isMobile, setIsMobile] = React.useState(false)
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') return
+    // Check if window is defined (client-side)
+    if (typeof window === "undefined") return
 
     const checkMobile = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
@@ -16,10 +17,10 @@ export function useIsMobile() {
     checkMobile()
 
     // Add event listener
-    window.addEventListener('resize', checkMobile)
+    window.addEventListener("resize", checkMobile)
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
   return isMobile

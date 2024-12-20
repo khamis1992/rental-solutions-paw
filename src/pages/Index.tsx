@@ -1,10 +1,10 @@
-import { Container } from "@/components/ui/container";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { Container } from "@/components/ui/container"
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader"
+import { DashboardStats } from "@/components/dashboard/DashboardStats"
+import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart"
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts"
+import { QuickActions } from "@/components/dashboard/QuickActions"
+import { RecentActivity } from "@/components/dashboard/RecentActivity"
 
 export default function Index() {
   return (
@@ -30,5 +30,5 @@ export default function Index() {
         </div>
       </div>
     </Container>
-  );
+  )
 }
