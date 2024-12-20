@@ -42,7 +42,7 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
         throw error;
       }
 
-      return data;
+      return data as TrafficFine[];
     },
   });
 

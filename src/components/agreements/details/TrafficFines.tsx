@@ -46,7 +46,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
         throw error;
       }
 
-      return data;
+      return data as TrafficFine[];
     },
   });
 
