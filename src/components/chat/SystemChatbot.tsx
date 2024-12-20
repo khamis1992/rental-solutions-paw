@@ -31,11 +31,16 @@ export const SystemChatbot = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
+      console.log('Sending message:', message);
       const { data, error } = await supabase.functions.invoke("chat", {
         body: { messages: [...messages, { role: "user", content: message }] },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Chat error:', error);
+        throw error;
+      }
+      console.log('Received response:', data);
       return data.message;
     },
     onSuccess: (response, variables) => {

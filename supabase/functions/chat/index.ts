@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { corsHeaders } from '../_shared/cors.ts';
 
 const systemPrompt = `You are an AI assistant for the Rental Solutions vehicle rental management system. You have deep knowledge of both the system's features and real-time data:
@@ -64,19 +63,23 @@ The system is built with:
 Help users understand and use the system effectively. Be concise but thorough in your responses.`;
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     const { messages } = await req.json();
+    console.log('Received messages:', messages);
 
     // Get Perplexity API key from secrets
     const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityKey) {
+      console.error('Perplexity API key not configured');
       throw new Error('Perplexity API key not configured');
     }
 
+    console.log('Making request to Perplexity API...');
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -84,24 +87,21 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online', // Using the larger model for better comprehension
+        model: 'llama-3.1-sonar-large-128k-online',
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages
         ],
         temperature: 0.2,
-        top_p: 0.9,
         max_tokens: 1000,
-        return_images: false,
-        return_related_questions: false,
-        search_domain_filter: ['perplexity.ai'],
-        search_recency_filter: 'month',
+        top_p: 0.9,
         frequency_penalty: 1,
         presence_penalty: 0
       }),
     });
 
     const data = await response.json();
+    console.log('Perplexity API response:', data);
     
     if (!response.ok) {
       console.error('Perplexity API error:', data);
@@ -119,7 +119,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        status: 400,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
     );
