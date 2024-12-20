@@ -2,7 +2,7 @@ export interface TrafficFine {
   id: string;
   lease_id?: string;
   vehicle_id?: string;
-  violation_date: Date;
+  violation_date: string; // Changed from Date to string to match DB
   fine_amount: number;
   fine_type: string;
   fine_location?: string;
@@ -15,8 +15,8 @@ export interface TrafficFine {
   import_batch_id?: string;
   assignment_status: 'pending' | 'assigned';
   assignment_notes?: string;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at?: string; // Changed from Date to string to match DB
+  updated_at?: string; // Changed from Date to string to match DB
   lease?: {
     customer: {
       id: string;
