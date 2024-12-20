@@ -60,8 +60,6 @@ export const DashboardSidebar = () => {
           return;
         }
 
-        console.log('User profile:', profile); // Debug log
-
         if (profile?.role === 'admin') {
           setMenuItems([...baseMenuItems, settingsMenuItem]);
         } else {
@@ -78,22 +76,7 @@ export const DashboardSidebar = () => {
       }
     };
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/auth');
-      } else if (event === 'SIGNED_IN') {
-        checkSession();
-      }
-    });
-
-    // Initial check
     checkSession();
-
-    // Cleanup subscription
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [session, isLoading, navigate, toast]);
 
   if (isLoading) {
