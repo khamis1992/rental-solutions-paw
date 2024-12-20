@@ -1,7 +1,7 @@
 export interface TrafficFine {
   id: string;
-  lease_id?: string;
-  vehicle_id?: string;
+  lease_id?: string | null;
+  vehicle_id?: string | null;
   violation_date: string;
   fine_amount: number;
   fine_type: string;
