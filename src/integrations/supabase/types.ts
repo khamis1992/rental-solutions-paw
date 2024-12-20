@@ -2353,6 +2353,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          is_test_data: boolean | null
           license_plate: string
           make: string
           mileage: number | null
@@ -2368,6 +2369,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_test_data?: boolean | null
           license_plate: string
           make: string
           mileage?: number | null
@@ -2383,6 +2385,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_test_data?: boolean | null
           license_plate?: string
           make?: string
           mileage?: number | null
@@ -2429,6 +2432,10 @@ export type Database = {
           p_customer_id: string
         }
         Returns: number
+      }
+      delete_all_agreements: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       has_active_agreements: {
         Args: {
