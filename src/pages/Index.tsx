@@ -5,7 +5,6 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
 import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
@@ -36,9 +35,6 @@ const Index = () => {
         <div className="lg:col-span-3">
           <IntelligentScheduling />
         </div>
-      </div>
-      <div className="mt-6">
-        <AiAnalyticsInsights />
       </div>
     </DashboardLayout>
   );
