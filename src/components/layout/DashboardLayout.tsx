@@ -1,22 +1,26 @@
-import { ReactNode } from "react";
 import { Outlet } from "react-router-dom";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
-interface DashboardLayoutProps {
-  children?: ReactNode;
-}
-
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+export function DashboardLayout() {
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      <div className="flex">
+      <ErrorBoundary>
         <DashboardSidebar />
-        <main className="flex-1 p-6">
-          {children || <Outlet />}
+      </ErrorBoundary>
+      
+      <div className="flex flex-col lg:pl-72">
+        <ErrorBoundary>
+          <DashboardHeader />
+        </ErrorBoundary>
+        
+        <main className="flex-1 py-10">
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>
   );
-};
+}
