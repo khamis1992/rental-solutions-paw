@@ -1,8 +1,6 @@
 import { StatsCard } from "@/components/dashboard/StatsCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Users, Star, TrendingUp } from "lucide-react";
 
 export const CustomerAnalytics = () => {
@@ -56,33 +54,6 @@ export const CustomerAnalytics = () => {
           className="bg-white"
         />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer Acquisition</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={customerData?.map(customer => ({
-                date: new Date(customer.created_at).toLocaleDateString(),
-                customers: 1
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="customers" 
-                  stroke="#82ca9d" 
-                  name="New Customers"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
