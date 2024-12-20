@@ -9,11 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     vehicle_id: "",
     service_type: "",
@@ -43,13 +45,15 @@ export function CreateJobDialog() {
     try {
       // Start a transaction by using multiple operations
       // 1. Create maintenance record
-      const { error: maintenanceError } = await supabase
+      const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
           ...formData,
           cost: formData.cost ? parseFloat(formData.cost) : null,
           status: "scheduled",
-        }]);
+        }])
+        .select()
+        .single();
 
       if (maintenanceError) throw maintenanceError;
 
@@ -68,6 +72,10 @@ export function CreateJobDialog() {
 
       toast.success("Job card created successfully");
       setOpen(false);
+      
+      // Navigate to the inspection form
+      navigate(`/maintenance/${maintenanceData.id}/inspection`);
+      
       setFormData({
         vehicle_id: "",
         service_type: "",
@@ -158,7 +166,7 @@ export function CreateJobDialog() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating..." : "Create Job Card"}
+            {loading ? "Creating..." : "Perform Vehicle Inspection"}
           </Button>
         </form>
       </DialogContent>
