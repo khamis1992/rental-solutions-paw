@@ -70,8 +70,8 @@ const Auth = () => {
 
   if (isInitializing || sessionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-sm text-gray-600">Initializing authentication...</p>
         </div>
@@ -80,11 +80,11 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
+        <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Rental Solutions</h1>
-          <p className="text-gray-600 mb-8">Please sign in to continue</p>
+          <p className="text-gray-600">Please sign in to continue</p>
           {loadTime && (
             <p className="text-xs text-gray-400 mt-2">
               Page loaded in {Math.round(loadTime)}ms
