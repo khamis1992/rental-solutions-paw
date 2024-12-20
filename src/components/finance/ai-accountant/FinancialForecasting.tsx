@@ -17,6 +17,16 @@ interface JsonForecastData {
   predicted_expenses: number | string;
 }
 
+const isJsonForecastData = (item: unknown): item is JsonForecastData => {
+  if (typeof item !== 'object' || item === null) return false;
+  const data = item as Record<string, unknown>;
+  return (
+    typeof data.date === 'string' &&
+    (typeof data.predicted_revenue === 'number' || typeof data.predicted_revenue === 'string') &&
+    (typeof data.predicted_expenses === 'number' || typeof data.predicted_expenses === 'string')
+  );
+};
+
 export const FinancialForecasting = () => {
   const { data: forecasts, isLoading } = useQuery({
     queryKey: ["financial-forecasts"],
@@ -29,18 +39,18 @@ export const FinancialForecasting = () => {
 
       if (error) throw error;
       
-      // Safely type cast the forecast_data
       const forecastData = data[0]?.forecast_data;
       if (!Array.isArray(forecastData)) {
         return [] as ForecastData[];
       }
 
-      // Validate and transform the data
-      return forecastData.map((item: JsonForecastData) => ({
-        date: String(item.date || ''),
-        predicted_revenue: Number(item.predicted_revenue || 0),
-        predicted_expenses: Number(item.predicted_expenses || 0)
-      })) as ForecastData[];
+      return forecastData
+        .filter(isJsonForecastData)
+        .map((item) => ({
+          date: String(item.date),
+          predicted_revenue: Number(item.predicted_revenue) || 0,
+          predicted_expenses: Number(item.predicted_expenses) || 0
+        })) as ForecastData[];
     },
   });
 
