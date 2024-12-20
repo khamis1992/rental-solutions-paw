@@ -57,7 +57,7 @@ export default function Agreements() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => navigate("/legal")}
+              onClick={() => navigate("/traffic-fines")}
             >
               <TrafficCone className="h-4 w-4 mr-2" />
               Traffic Fine Tools
