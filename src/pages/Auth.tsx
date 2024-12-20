@@ -70,9 +70,9 @@ const Auth = () => {
 
   if (isInitializing || sessionLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-sm text-gray-600">Initializing authentication...</p>
         </div>
       </div>
@@ -80,11 +80,11 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="m-auto w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold mb-2">Welcome to Rental Solutions</h1>
-          <p className="text-gray-600">Please sign in to continue</p>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white rounded-xl shadow-lg p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Rental Solutions</h1>
+          <p className="text-gray-600 mb-8">Please sign in to continue</p>
           {loadTime && (
             <p className="text-xs text-gray-400 mt-2">
               Page loaded in {Math.round(loadTime)}ms
@@ -105,11 +105,12 @@ const Auth = () => {
               }
             },
             className: {
-              container: 'w-full',
-              button: 'w-full px-4 py-2 rounded',
-              input: 'w-full px-3 py-2 border rounded',
-              label: 'text-gray-700',
-              message: 'text-red-600'
+              container: 'w-full space-y-4',
+              button: 'w-full px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors',
+              input: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors',
+              label: 'block text-sm font-medium text-gray-700 mb-1',
+              message: 'text-sm text-red-600 mt-1',
+              anchor: 'text-primary hover:text-primary/80 transition-colors'
             }
           }}
           providers={['google']}
