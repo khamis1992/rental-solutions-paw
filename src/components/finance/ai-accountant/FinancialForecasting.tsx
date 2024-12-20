@@ -44,13 +44,12 @@ export const FinancialForecasting = () => {
         return [] as ForecastData[];
       }
 
-      return forecastData
-        .filter(isJsonForecastData)
-        .map((item) => ({
-          date: String(item.date),
-          predicted_revenue: Number(item.predicted_revenue) || 0,
-          predicted_expenses: Number(item.predicted_expenses) || 0
-        })) as ForecastData[];
+      const validForecasts = forecastData.filter(isJsonForecastData);
+      return validForecasts.map((item) => ({
+        date: String(item.date),
+        predicted_revenue: Number(item.predicted_revenue) || 0,
+        predicted_expenses: Number(item.predicted_expenses) || 0
+      }));
     },
   });
 
