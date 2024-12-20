@@ -6,10 +6,11 @@ import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
 import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
 import { PaymentHistoryContent } from "@/components/agreements/payments/PaymentHistoryContent";
 import { CompanyExpenses } from "@/components/dashboard/CompanyExpenses";
+import { AiAccountantDashboard } from "@/components/finance/ai-accountant/AiAccountantDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiAnalyticsInsights } from "@/components/analytics/AiAnalyticsInsights";
-import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign } from "lucide-react";
+import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign, Robot } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -73,6 +74,10 @@ const Finance = () => {
               <DollarSign className="h-4 w-4" />
               Company Expenses
             </TabsTrigger>
+            <TabsTrigger value="ai-accountant" className="flex items-center gap-2">
+              <Robot className="h-4 w-4" />
+              AI Accountant
+            </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payments
@@ -101,6 +106,10 @@ const Finance = () => {
 
           <TabsContent value="company-expenses" className="space-y-6">
             <CompanyExpenses />
+          </TabsContent>
+
+          <TabsContent value="ai-accountant" className="space-y-6">
+            <AiAccountantDashboard />
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
