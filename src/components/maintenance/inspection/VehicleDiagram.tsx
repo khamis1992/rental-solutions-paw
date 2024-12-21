@@ -67,8 +67,8 @@ export const VehicleDiagram = ({
   const [currentView, setCurrentView] = useState<string>("front");
 
   const handleViewChange = (view: string) => (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default button behavior
-    e.stopPropagation(); // Stop event propagation
+    e.preventDefault();
+    e.stopPropagation();
     setCurrentView(view);
   };
 
@@ -87,6 +87,23 @@ export const VehicleDiagram = ({
     toast.success(`Added damage marker: ${description}`);
 
     onMarkersChange([...damageMarkers, newMarker]);
+  };
+
+  const getViewImage = (view: string) => {
+    switch (view) {
+      case "front":
+        return "/vehicle-diagrams/front.png";
+      case "rear":
+        return "/vehicle-diagrams/rear.png";
+      case "left":
+        return "/vehicle-diagrams/left.png";
+      case "right":
+        return "/vehicle-diagrams/right.png";
+      case "top":
+        return "/vehicle-diagrams/top.png";
+      default:
+        return "/vehicle-diagrams/front.png";
+    }
   };
 
   return (
@@ -133,6 +150,11 @@ export const VehicleDiagram = ({
         className="relative w-full h-64 border rounded-lg cursor-crosshair bg-gray-50"
         onClick={handleClick}
       >
+        <img
+          src={getViewImage(currentView)}
+          alt={`Vehicle ${currentView} view`}
+          className="w-full h-full object-contain"
+        />
         {damageMarkers
           .filter((marker) => marker.view === currentView)
           .map((marker, index) => (
