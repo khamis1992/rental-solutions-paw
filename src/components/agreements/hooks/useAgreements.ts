@@ -11,8 +11,7 @@ export const useAgreements = () => {
         const { data, error } = await supabase
           .from("leases")
           .select(`
-            id,
-            agreement_number,
+            *,
             customer:customer_id (
               id,
               full_name
@@ -23,12 +22,7 @@ export const useAgreements = () => {
               model,
               year,
               license_plate
-            ),
-            start_date,
-            end_date,
-            status,
-            total_amount,
-            license_no
+            )
           `)
           .order("created_at", { ascending: false });
 
@@ -38,7 +32,39 @@ export const useAgreements = () => {
           throw error;
         }
 
-        return data as AgreementWithRelations[];
+        // Transform the data to match AgreementWithRelations type
+        const transformedData: AgreementWithRelations[] = data.map((item: any) => ({
+          id: item.id,
+          agreement_number: item.agreement_number,
+          agreement_type: item.agreement_type,
+          customer_id: item.customer_id,
+          vehicle_id: item.vehicle_id,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          status: item.status,
+          initial_mileage: item.initial_mileage,
+          return_mileage: item.return_mileage,
+          total_amount: item.total_amount,
+          notes: item.notes,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          down_payment: item.down_payment,
+          monthly_payment: item.monthly_payment,
+          interest_rate: item.interest_rate,
+          lease_duration: item.lease_duration,
+          early_payoff_allowed: item.early_payoff_allowed,
+          ownership_transferred: item.ownership_transferred,
+          trade_in_value: item.trade_in_value,
+          late_fee_rate: item.late_fee_rate,
+          late_fee_grace_period: item.late_fee_grace_period,
+          damage_penalty_rate: item.damage_penalty_rate,
+          fuel_penalty_rate: item.fuel_penalty_rate,
+          late_return_fee: item.late_return_fee,
+          customer: item.customer,
+          vehicle: item.vehicle
+        }));
+
+        return transformedData;
       } catch (err) {
         console.error("Error in agreements query:", err);
         throw err;
