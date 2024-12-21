@@ -16,11 +16,13 @@ import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog
 import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
 import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const SearchBox = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300); // 300ms delay
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const isMobile = useIsMobile();
   
   // Dialog states
   const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
@@ -90,22 +92,27 @@ export const SearchBox = () => {
 
   return (
     <>
-      <div className="relative w-full md:w-80">
+      <div className="relative w-full max-w-[280px] md:w-80">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search vehicles, customers, agreements..."
-          className="pl-8"
+          placeholder={isMobile ? "Search..." : "Search vehicles, customers, agreements..."}
+          className="pl-8 h-9 md:h-10"
           onClick={() => setOpen(true)}
         />
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog 
+        open={open} 
+        onOpenChange={setOpen}
+        className="max-w-[90vw] md:max-w-[640px]"
+      >
         <CommandInput 
           placeholder="Type to search..." 
           value={searchQuery}
           onValueChange={setSearchQuery}
+          className="h-10 md:h-12"
         />
-        <CommandList>
+        <CommandList className="max-h-[50vh] md:max-h-[400px]">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -165,7 +172,6 @@ export const SearchBox = () => {
         </CommandList>
       </CommandDialog>
 
-      {/* Details Dialogs */}
       {selectedVehicle && (
         <VehicleDetailsDialog
           vehicleId={selectedVehicle}

@@ -32,8 +32,32 @@
 
   body {
     @apply bg-background text-foreground;
-    min-width: 1024px; /* Minimum width for desktop */
     overflow-x: auto;
+  }
+
+  /* Improved touch targets for mobile */
+  @media (max-width: 768px) {
+    button, 
+    a,
+    input,
+    select,
+    [role="button"] {
+      @apply min-h-touch min-w-touch;
+    }
+
+    /* Adjust text sizes for mobile */
+    h1 {
+      @apply text-mobile-h1;
+    }
+    h2 {
+      @apply text-mobile-h2;
+    }
+    h3 {
+      @apply text-mobile-h3;
+    }
+    p, span, div {
+      @apply text-mobile-body;
+    }
   }
 }
 
