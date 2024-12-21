@@ -4,7 +4,6 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Lazy load all pages with loading fallback
 const lazyLoad = (Component: React.LazyExoticComponent<React.ComponentType>) => (
@@ -42,37 +41,35 @@ export default function App() {
   }
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <Routes>
-        {/* Public route */}
-        <Route 
-          path="/auth" 
-          element={session ? <Navigate to="/" replace /> : <Auth />} 
-        />
+    <Routes>
+      {/* Public route */}
+      <Route 
+        path="/auth" 
+        element={session ? <Navigate to="/" replace /> : <Auth />} 
+      />
 
-        {/* Protected routes wrapper */}
-        <Route
-          path="/"
-          element={
-            session ? (
-              <DashboardLayout>
-                <RouteWrapper />
-              </DashboardLayout>
-            ) : (
-              <Navigate to="/auth" replace />
-            )
-          }
-        >
-          {/* Define child routes */}
-          {protectedRoutes.map(({ path, component: Component }) => (
-            <Route
-              key={path}
-              path={path}
-              element={lazyLoad(Component)}
-            />
-          ))}
-        </Route>
-      </Routes>
-    </TooltipProvider>
+      {/* Protected routes wrapper */}
+      <Route
+        path="/"
+        element={
+          session ? (
+            <DashboardLayout>
+              <RouteWrapper />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/auth" replace />
+          )
+        }
+      >
+        {/* Define child routes */}
+        {protectedRoutes.map(({ path, component: Component }) => (
+          <Route
+            key={path}
+            path={path}
+            element={lazyLoad(Component)}
+          />
+        ))}
+      </Route>
+    </Routes>
   );
 }
