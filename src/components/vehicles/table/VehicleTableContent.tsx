@@ -76,38 +76,39 @@ export const VehicleTableContent = ({
                 </Button>
               </TableCell>
               <TableCell>
-                <Select
-                  defaultValue={vehicle.status}
-                  onValueChange={(value) => onStatusChange(vehicle.id, value)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue>
-                      <Badge
-                        style={{
-                          backgroundColor: STATUS_COLORS[vehicle.status],
-                          color: 'white',
-                        }}
-                      >
-                        {vehicle.status}
-                      </Badge>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(STATUS_COLORS).map((status) => (
-                      <SelectItem key={status} value={status}>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    defaultValue={vehicle.status}
+                    onValueChange={(value) => onStatusChange(vehicle.id, value)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue>
                         <Badge
                           style={{
-                            backgroundColor: STATUS_COLORS[status],
+                            backgroundColor: STATUS_COLORS[vehicle.status],
                             color: 'white',
                           }}
                         >
-                          {status}
+                          {vehicle.status}
                         </Badge>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(STATUS_COLORS).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <Badge
+                            style={{
+                              backgroundColor: STATUS_COLORS[status],
+                              color: 'white',
+                            }}
+                          >
+                            {status}
+                          </Badge>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </TableCell>
               <TableCell>{insurance?.provider || 'N/A'}</TableCell>
               <TableCell>{insurance?.policy_number || 'N/A'}</TableCell>
