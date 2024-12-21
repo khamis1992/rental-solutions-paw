@@ -1076,6 +1076,7 @@ export type Database = {
       }
       maintenance: {
         Row: {
+          category_id: string | null
           completed_date: string | null
           cost: number | null
           created_at: string
@@ -1090,6 +1091,7 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          category_id?: string | null
           completed_date?: string | null
           cost?: number | null
           created_at?: string
@@ -1104,6 +1106,7 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          category_id?: string | null
           completed_date?: string | null
           cost?: number | null
           created_at?: string
@@ -1119,6 +1122,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "maintenance_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "maintenance_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
@@ -1126,6 +1136,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      maintenance_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       maintenance_predictions: {
         Row: {

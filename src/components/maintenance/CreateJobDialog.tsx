@@ -19,6 +19,7 @@ export function CreateJobDialog() {
   const [maintenanceId, setMaintenanceId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     vehicle_id: "",
+    category_id: "",
     service_type: "",
     description: "",
     scheduled_date: "",
@@ -33,6 +34,20 @@ export function CreateJobDialog() {
         .from("vehicles")
         .select("id, make, model, license_plate")
         .eq('status', 'available');
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch maintenance categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["maintenance-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance_categories")
+        .select("*")
+        .eq('is_active', true);
       
       if (error) throw error;
       return data || [];
@@ -89,6 +104,7 @@ export function CreateJobDialog() {
     setOpen(false);
     setFormData({
       vehicle_id: "",
+      category_id: "",
       service_type: "",
       description: "",
       scheduled_date: "",
@@ -126,6 +142,25 @@ export function CreateJobDialog() {
                   {vehicles.map((vehicle) => (
                     <SelectItem key={vehicle.id} value={vehicle.id}>
                       {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category_id">Maintenance Category</Label>
+              <Select
+                value={formData.category_id}
+                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                required
+              >
+                <SelectTrigger id="category_id" aria-label="Select a category">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
