@@ -80,7 +80,7 @@ export const DashboardStats = () => {
         />
         <StatsCard
           title="Monthly Revenue"
-          value={`QAR ${formatCurrency(stats?.monthlyRevenue || 0, false)}`}
+          value={`QAR ${formatCurrency(stats?.monthlyRevenue || 0)}`}
           icon={DollarSign}
           className="bg-white"
           iconClassName="h-6 w-6 text-green-500"

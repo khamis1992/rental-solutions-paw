@@ -7,7 +7,7 @@ interface StatsCardProps {
   icon: React.ComponentType<{ className?: string }>;
   description?: React.ReactNode;
   className?: string;
-  iconClassName?: string;  // Added this prop
+  iconClassName?: string;
 }
 
 export const StatsCard = ({
@@ -16,18 +16,18 @@ export const StatsCard = ({
   icon: Icon,
   description,
   className,
-  iconClassName,  // Added this prop
+  iconClassName,
 }: StatsCardProps) => {
   return (
     <Card className={cn("", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-center w-full">{title}</CardTitle>
-        <Icon className={cn("h-4 w-4 text-muted-foreground shrink-0", iconClassName)} />
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <Icon className={cn("h-4 w-4", iconClassName)} />
       </CardHeader>
-      <CardContent className="flex flex-col items-center">
+      <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {description && (
-          <div className="text-xs text-muted-foreground mt-1 text-center">{description}</div>
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}
       </CardContent>
     </Card>
