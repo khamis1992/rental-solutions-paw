@@ -92,7 +92,7 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
       // Process damage records to include source information
       const processedDamageData = damageData.map(damage => ({
         ...damage,
-        source: damage.leases?.agreement_type === 'maintenance' ? 'Maintenance Inspection' : 'Rental Agreement',
+        source: damage.leases?.agreement_type === 'short_term' ? 'Rental Agreement' : 'Lease to Own Agreement',
         customer_name: damage.leases?.profiles?.full_name || 'System Inspection'
       }));
 
