@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { Bell, BellRing, MessageCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -21,7 +21,8 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
           iconClass: 'text-emerald-500',
           textClass: 'text-gray-700',
           descriptionClass: 'text-gray-500',
-          label: 'Driving'
+          label: 'Driving',
+          icon: Bell
         };
       case 'payment':
         return {
@@ -29,7 +30,8 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
           iconClass: 'text-amber-500',
           textClass: 'text-gray-700',
           descriptionClass: 'text-gray-500',
-          label: 'Parked'
+          label: 'Parked',
+          icon: BellRing
         };
       case 'maintenance':
         return {
@@ -37,7 +39,8 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
           iconClass: 'text-orange-400',
           textClass: 'text-gray-700',
           descriptionClass: 'text-gray-500',
-          label: 'Idling'
+          label: 'Idling',
+          icon: MessageCircle
         };
       default:
         return {
@@ -45,12 +48,14 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
           iconClass: 'text-red-500',
           textClass: 'text-gray-700',
           descriptionClass: 'text-gray-500',
-          label: 'Broken'
+          label: 'Broken',
+          icon: Bell
         };
     }
   };
 
   const style = getAlertStyle(alert.type);
+  const IconComponent = style.icon;
 
   return (
     <div
@@ -59,7 +64,7 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
     >
       <div className="flex items-center gap-3">
         <div className={`${style.iconClass}`}>
-          <MapPin className="h-5 w-5" />
+          <IconComponent className="h-5 w-5" />
         </div>
         <span className={`text-sm font-medium ${style.textClass}`}>
           {style.label}
