@@ -30,7 +30,7 @@ export const submitInspection = async ({
     // First, get the vehicle_id from the maintenance record
     const { data: maintenanceData, error: maintenanceError } = await supabase
       .from('maintenance')
-      .select('vehicle_id')
+      .select('vehicle_id, id')
       .eq('id', maintenanceId)
       .single();
 
@@ -59,7 +59,7 @@ export const submitInspection = async ({
       inspection_type: 'check_in',
       odometer_reading: parseInt(formData.get('odometer') as string),
       fuel_level: fuelLevel,
-      damage_markers: damageMarkers,
+      damage_markers: JSON.stringify(damageMarkers), // Convert to JSON string for database
       renter_signature: renterSignature,
       staff_signature: staffSignature,
       inspection_date: new Date().toISOString(),
@@ -74,20 +74,24 @@ export const submitInspection = async ({
     if (inspectionError) throw inspectionError;
 
     // Create damage records for each marker
-    const damageRecords = damageMarkers.map(marker => ({
-      vehicle_id: maintenanceData.vehicle_id,
-      description: marker.description,
-      reported_date: new Date().toISOString(),
-      images: uploadedPhotos,
-      status: 'reported',
-      damage_location: `${marker.view} - X:${marker.x}% Y:${marker.y}%`
-    }));
+    if (damageMarkers.length > 0) {
+      const damageRecords = damageMarkers.map(marker => ({
+        lease_id: null, // Since this is from maintenance inspection
+        vehicle_id: maintenanceData.vehicle_id,
+        description: marker.description,
+        reported_date: new Date().toISOString(),
+        images: uploadedPhotos,
+        status: 'reported',
+        damage_location: `${marker.view} - X:${marker.x}% Y:${marker.y}%`,
+        notes: `Damage reported during maintenance inspection ${maintenanceId}`
+      }));
 
-    const { error: damagesError } = await supabase
-      .from('damages')
-      .insert(damageRecords);
+      const { error: damagesError } = await supabase
+        .from('damages')
+        .insert(damageRecords);
 
-    if (damagesError) throw damagesError;
+      if (damagesError) throw damagesError;
+    }
 
     // Update maintenance status
     const { error: maintenanceUpdateError } = await supabase
