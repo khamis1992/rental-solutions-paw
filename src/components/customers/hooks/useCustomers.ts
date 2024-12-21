@@ -25,8 +25,7 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
         // First get total count for pagination
         const countQuery = supabase
           .from('profiles')
-          .select('id', { count: 'exact' })
-          .eq('role', 'customer');
+          .select('id', { count: 'exact' });
 
         if (searchQuery) {
           countQuery.or(`full_name.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,driver_license.ilike.%${searchQuery}%`);
@@ -43,7 +42,6 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
         let query = supabase
           .from('profiles')
           .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url, role, address, contract_document_url, created_at')
-          .eq('role', 'customer')
           .range(page * pageSize, (page + 1) * pageSize - 1)
           .order('created_at', { ascending: false });
 
