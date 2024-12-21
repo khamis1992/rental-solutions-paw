@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
   CardContent,
@@ -11,12 +13,33 @@ import { UserList } from "./users/UserList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const UserManagementSettings = () => {
+  // Fetch current user's role to determine permissions
+  const { data: currentUserProfile } = useQuery({
+    queryKey: ['current-user-profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      return profile;
+    }
+  });
+
+  const isAdmin = currentUserProfile?.role === 'admin';
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>User Management</CardTitle>
         <CardDescription>
-          Create new user accounts and manage roles
+          {isAdmin 
+            ? "Manage staff and customer accounts" 
+            : "View users and manage customer accounts"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -26,10 +49,10 @@ export const UserManagementSettings = () => {
             <TabsTrigger value="create">Create User</TabsTrigger>
           </TabsList>
           <TabsContent value="list">
-            <UserList />
+            <UserList isAdmin={isAdmin} />
           </TabsContent>
           <TabsContent value="create">
-            <CreateUserForm />
+            <CreateUserForm isAdmin={isAdmin} />
           </TabsContent>
         </Tabs>
       </CardContent>

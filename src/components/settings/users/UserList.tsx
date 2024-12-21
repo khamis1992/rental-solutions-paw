@@ -99,7 +99,7 @@ export const UserList = ({ isAdmin }: UserListProps) => {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={user.status === 'active' ? 'success' : 'warning'}>
+                <Badge variant={user.status === 'active' ? 'success' : 'default'}>
                   {user.status || 'pending'}
                 </Badge>
               </TableCell>
