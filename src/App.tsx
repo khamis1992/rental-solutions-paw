@@ -4,13 +4,18 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
+import { Loader2 } from "lucide-react";
 
 // Define route component type
 type RouteComponent = React.LazyExoticComponent<React.ComponentType>;
 
 // Lazy load all pages with loading fallback
 const lazyLoad = (Component: RouteComponent) => (
-  <Suspense fallback={<div>Loading...</div>}>
+  <Suspense fallback={
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  }>
     <Component />
   </Suspense>
 );
@@ -46,20 +51,29 @@ export default function App() {
   const { session, isLoading } = useSessionContext();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <Routes>
-      {/* Public route */}
+      {/* Public routes */}
       <Route 
         path="/auth" 
-        element={session ? <Navigate to="/" replace /> : <Auth />} 
+        element={
+          session ? (
+            <Navigate to="/" replace />
+          ) : (
+            <Auth />
+          )
+        } 
       />
 
       {/* Protected routes wrapper */}
       <Route
-        path="/"
         element={
           session ? (
             <DashboardLayout>
@@ -79,6 +93,9 @@ export default function App() {
           />
         ))}
       </Route>
+
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
