@@ -21,9 +21,9 @@ interface DonutChartProps {
 export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => {
   return (
     <div className="relative flex-1">
-      {/* Single solid background circle without gradient/reflection */}
+      {/* Simple flat background circle */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[200px] h-[200px] rounded-full bg-gray-50/80" />
+        <div className="w-[200px] h-[200px] rounded-full bg-gray-50" />
       </div>
       
       {/* Center text */}
