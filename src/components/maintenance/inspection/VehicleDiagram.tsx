@@ -98,17 +98,17 @@ export const VehicleDiagram = ({
   const getImageStyle = () => {
     switch (currentView) {
       case "front":
-        return { objectPosition: "0% 33%" }; // Show front view (left side of diagram)
+        return { objectPosition: "0% 33%", objectFit: "cover" as const };
       case "rear":
-        return { objectPosition: "100% 33%" }; // Show rear view (right side of diagram)
+        return { objectPosition: "100% 33%", objectFit: "cover" as const };
       case "left":
-        return { objectPosition: "0% 66%" }; // Show left view (bottom left)
+        return { objectPosition: "0% 66%", objectFit: "cover" as const };
       case "right":
-        return { objectPosition: "100% 66%" }; // Show right view (bottom right)
+        return { objectPosition: "100% 66%", objectFit: "cover" as const };
       case "top":
-        return { objectPosition: "50% 0%" }; // Show top view (center top)
+        return { objectPosition: "50% 0%", objectFit: "cover" as const };
       default:
-        return { objectPosition: "0% 33%" }; // Default to front view
+        return { objectPosition: "0% 33%", objectFit: "cover" as const };
     }
   };
 
@@ -153,13 +153,13 @@ export const VehicleDiagram = ({
       </div>
 
       <div
-        className="relative w-full h-64 border rounded-lg cursor-crosshair bg-gray-50"
+        className="relative w-full aspect-[3/2] border rounded-lg cursor-crosshair bg-gray-50 overflow-hidden"
         onClick={handleClick}
       >
         <img
           src={getViewImage(currentView)}
           alt={`Vehicle ${currentView} view`}
-          className="w-full h-full object-cover"
+          className="w-full h-full"
           style={getImageStyle()}
         />
         {damageMarkers
