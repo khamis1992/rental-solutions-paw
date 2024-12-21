@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Wrench, Plus } from "lucide-react";
 import {
@@ -19,25 +18,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { DamageAssessment } from "@/components/agreements/details/DamageAssessment";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DamageHistoryProps {
   vehicleId: string;
 }
 
-interface DamageFormData {
-  description: string;
-  repair_cost: number;
-  notes?: string;
-}
-
 export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: damages, isLoading } = useQuery({
     queryKey: ["damages", vehicleId],
@@ -67,51 +57,21 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
     },
   });
 
-  const addDamageMutation = useMutation({
-    mutationFn: async (data: DamageFormData) => {
-      const { error } = await supabase
-        .from("damages")
-        .insert([
-          {
-            vehicle_id: vehicleId,
-            description: data.description,
-            repair_cost: data.repair_cost,
-            notes: data.notes,
-            status: 'reported',
-            lease_id: null // Add a null lease_id since it's required by the schema
-          }
-        ]);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["damages", vehicleId] });
-      toast({
-        title: "Success",
-        description: "Damage report added successfully",
-      });
-      setIsDialogOpen(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add damage report",
-        variant: "destructive",
-      });
-      console.error("Error adding damage:", error);
+  // Get the active lease for this vehicle
+  const { data: activeLease } = useQuery({
+    queryKey: ["active-lease", vehicleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leases")
+        .select("id")
+        .eq("vehicle_id", vehicleId)
+        .eq("status", "active")
+        .single();
+
+      if (error) return null;
+      return data;
     },
   });
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    addDamageMutation.mutate({
-      description: formData.get("description") as string,
-      repair_cost: Number(formData.get("repair_cost")),
-      notes: formData.get("notes") as string,
-    });
-  };
 
   return (
     <Card>
@@ -132,46 +92,16 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
               <DialogHeader>
                 <DialogTitle>Add Damage Report</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="description" className="text-sm font-medium">
-                    Description
-                  </label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    placeholder="Describe the damage"
-                    required
-                  />
+              {activeLease ? (
+                <DamageAssessment 
+                  agreementId={activeLease.id} 
+                  onSuccess={() => setIsDialogOpen(false)}
+                />
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  No active lease found for this vehicle. A damage report can only be created for vehicles with active leases.
                 </div>
-                <div>
-                  <label htmlFor="repair_cost" className="text-sm font-medium">
-                    Repair Cost
-                  </label>
-                  <Input
-                    id="repair_cost"
-                    name="repair_cost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Enter repair cost"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="notes" className="text-sm font-medium">
-                    Notes
-                  </label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    placeholder="Additional notes"
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Submit Report
-                </Button>
-              </form>
+              )}
             </DialogContent>
           </Dialog>
         </div>
