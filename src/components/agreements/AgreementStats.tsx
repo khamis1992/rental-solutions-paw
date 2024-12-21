@@ -2,6 +2,9 @@ import { FileCheck, FileClock, FileX, FileText } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+type LeaseStatus = Database['public']['Enums']['lease_status'];
 
 export const AgreementStats = () => {
   const { data: stats } = useQuery({
@@ -9,7 +12,8 @@ export const AgreementStats = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leases')
-        .select('status', { count: 'exact' });
+        .select('status, count', { count: 'exact', head: true })
+        .in('status', ['active', 'closed', 'pending_deposit', 'pending_payment']);
 
       if (error) throw error;
 
@@ -20,23 +24,15 @@ export const AgreementStats = () => {
         total: 0
       };
 
-      if (data) {
-        data.forEach((item) => {
-          counts.total++;
-          switch (item.status) {
-            case 'active':
-              counts.active++;
-              break;
-            case 'closed':
-              counts.closed++;
-              break;
-            case 'pending_deposit':
-            case 'pending_payment':
-              counts.pending++;
-              break;
-          }
-        });
-      }
+      data?.forEach((item: any) => {
+        const status = item.status?.toLowerCase();
+        if (status === 'active') counts.active++;
+        else if (status === 'closed') counts.closed++;
+        else if (status === 'pending_deposit' || status === 'pending_payment') {
+          counts.pending++;
+        }
+        counts.total++;
+      });
 
       return counts;
     },
