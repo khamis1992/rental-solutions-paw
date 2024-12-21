@@ -8,12 +8,10 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+      }
     };
 
     // Initial check
@@ -23,7 +21,9 @@ export function useIsMobile() {
     window.addEventListener('resize', checkMobile);
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   return isMobile;
