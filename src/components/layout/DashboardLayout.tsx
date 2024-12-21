@@ -1,5 +1,3 @@
-'use client';
-
 import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -15,7 +13,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SidebarProvider defaultOpen={!isMobile}>
+      <SidebarProvider>
         <DashboardHeader />
         <div className="flex pt-[var(--header-height,56px)]">
           <DashboardSidebar />

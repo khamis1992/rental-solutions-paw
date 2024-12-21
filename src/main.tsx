@@ -15,13 +15,13 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Configure query client with optimized caching settings
+// Configure query client with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 15, // Data remains fresh for 15 minutes
-      gcTime: 1000 * 60 * 30, // Cache is garbage collected after 30 minutes
-      retry: 1, // Only retry failed requests once
+      staleTime: 1000 * 60 * 15, // 15 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
@@ -30,18 +30,51 @@ const queryClient = new QueryClient({
   },
 });
 
-root.render(
+// Create a memoized app wrapper component
+const AppWrapper = ({ session }: { session: any }) => (
   <React.StrictMode>
-    <BrowserRouter>
-      <SessionContextProvider supabaseClient={supabase}>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <ErrorBoundary>
-              <App />
-            </ErrorBoundary>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </SessionContextProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <SessionContextProvider 
+          supabaseClient={supabase}
+          initialSession={session}
+        >
+          <QueryClientProvider client={queryClient}>
+            <React.Fragment>
+              <TooltipProvider>
+                <App />
+              </TooltipProvider>
+            </React.Fragment>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );
+
+AppWrapper.displayName = 'AppWrapper';
+
+// Initialize app with better error handling and cleanup
+const initializeApp = async () => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      root.render(<AppWrapper session={session} />);
+    });
+
+    // Initial render
+    root.render(<AppWrapper session={session} />);
+
+    // Cleanup subscription on unload
+    window.addEventListener('unload', () => {
+      subscription?.unsubscribe();
+    });
+
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    root.render(<AppWrapper session={null} />);
+  }
+};
+
+initializeApp();

@@ -12,8 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
-import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,13 +53,13 @@ interface MaintenanceTableRowProps {
 
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const queryClient = useQueryClient();
-  const [showVehicleDetails, setShowVehicleDetails] = useState(false);
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
       console.log("Current record:", record);
       console.log("Updating maintenance status to:", newStatus);
 
+      // Update maintenance record
       const { error: maintenanceError } = await supabase
         .from('maintenance')
         .update({ 
@@ -72,6 +70,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (maintenanceError) throw maintenanceError;
 
+      // Update vehicle status based on maintenance status
       const newVehicleStatus = (newStatus === 'completed' || newStatus === 'cancelled') 
         ? 'available' 
         : 'maintenance';
@@ -85,6 +84,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (vehicleError) throw vehicleError;
 
+      // Invalidate and refetch queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
@@ -107,6 +107,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (error) throw error;
 
+      // If the maintenance was active, set the vehicle back to available
       if (record.status === 'scheduled' || record.status === 'in_progress') {
         const { error: vehicleError } = await supabase
           .from('vehicles')
@@ -130,80 +131,63 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   };
 
   return (
-    <>
-      <TableRow>
-        <TableCell>
-          <button
-            onClick={() => setShowVehicleDetails(true)}
-            className="text-primary hover:underline focus:outline-none"
+    <TableRow>
+      <TableCell>{record.vehicles?.license_plate || 'N/A'}</TableCell>
+      <TableCell>
+        {record.vehicles 
+          ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
+          : 'Vehicle details unavailable'}
+      </TableCell>
+      <TableCell>{record.service_type}</TableCell>
+      <TableCell>
+        {record.status === 'urgent' ? (
+          <Badge variant="destructive">Urgent</Badge>
+        ) : (
+          <Select
+            value={record.status}
+            onValueChange={handleStatusChange}
           >
-            {record.vehicles?.license_plate || 'N/A'}
-          </button>
-        </TableCell>
-        <TableCell>
-          {record.vehicles 
-            ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
-            : 'Vehicle details unavailable'}
-        </TableCell>
-        <TableCell>{record.service_type}</TableCell>
-        <TableCell>
-          {record.status === 'urgent' ? (
-            <Badge variant="destructive">Urgent</Badge>
-          ) : (
-            <Select
-              value={record.status}
-              onValueChange={handleStatusChange}
-            >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </TableCell>
-        <TableCell>
-          {new Date(record.scheduled_date).toLocaleDateString()}
-        </TableCell>
-        <TableCell className="text-right">
-          {record.cost ? `${record.cost} QAR` : '-'}
-        </TableCell>
-        <TableCell>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Maintenance Record</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this maintenance record? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </TableCell>
-      </TableRow>
-
-      {showVehicleDetails && record.vehicle_id && (
-        <VehicleDetailsDialog
-          vehicleId={record.vehicle_id}
-          open={showVehicleDetails}
-          onOpenChange={setShowVehicleDetails}
-        />
-      )}
-    </>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </TableCell>
+      <TableCell>
+        {new Date(record.scheduled_date).toLocaleDateString()}
+      </TableCell>
+      <TableCell className="text-right">
+        {record.cost ? `${record.cost} QAR` : '-'}
+      </TableCell>
+      <TableCell>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Maintenance Record</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this maintenance record? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TableCell>
+    </TableRow>
   );
 };

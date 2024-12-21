@@ -1076,7 +1076,6 @@ export type Database = {
       }
       maintenance: {
         Row: {
-          category_id: string | null
           completed_date: string | null
           cost: number | null
           created_at: string
@@ -1091,7 +1090,6 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
-          category_id?: string | null
           completed_date?: string | null
           cost?: number | null
           created_at?: string
@@ -1106,7 +1104,6 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
-          category_id?: string | null
           completed_date?: string | null
           cost?: number | null
           created_at?: string
@@ -1122,110 +1119,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "maintenance_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "maintenance_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      maintenance_categories: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      maintenance_documents: {
-        Row: {
-          created_at: string | null
-          document_type: string
-          document_url: string
-          id: string
-          maintenance_id: string | null
-          updated_at: string | null
-          uploaded_by: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          document_type: string
-          document_url: string
-          id?: string
-          maintenance_id?: string | null
-          updated_at?: string | null
-          uploaded_by?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          document_type?: string
-          document_url?: string
-          id?: string
-          maintenance_id?: string | null
-          updated_at?: string | null
-          uploaded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_documents_maintenance_id_fkey"
-            columns: ["maintenance_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1785,9 +1682,6 @@ export type Database = {
           needs_review: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"] | null
-          status: Database["public"]["Enums"]["customer_status_type"] | null
-          status_notes: string | null
-          status_updated_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1808,9 +1702,6 @@ export type Database = {
           needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
-          status?: Database["public"]["Enums"]["customer_status_type"] | null
-          status_notes?: string | null
-          status_updated_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1831,9 +1722,6 @@ export type Database = {
           needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
-          status?: Database["public"]["Enums"]["customer_status_type"] | null
-          status_notes?: string | null
-          status_updated_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2233,64 +2121,6 @@ export type Database = {
         }
         Relationships: []
       }
-      vehicle_documents: {
-        Row: {
-          created_at: string | null
-          document_type: string
-          document_url: string
-          expiry_date: string | null
-          id: string
-          is_verified: boolean | null
-          updated_at: string | null
-          uploaded_by: string | null
-          vehicle_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          document_type: string
-          document_url: string
-          expiry_date?: string | null
-          id?: string
-          is_verified?: boolean | null
-          updated_at?: string | null
-          uploaded_by?: string | null
-          vehicle_id: string
-        }
-        Update: {
-          created_at?: string | null
-          document_type?: string
-          document_url?: string
-          expiry_date?: string | null
-          id?: string
-          is_verified?: boolean | null
-          updated_at?: string | null
-          uploaded_by?: string | null
-          vehicle_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vehicle_documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vehicle_documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       vehicle_inspections: {
         Row: {
           ai_confidence_score: number | null
@@ -2368,116 +2198,6 @@ export type Database = {
           },
           {
             foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vehicle_insurance: {
-        Row: {
-          coverage_amount: number
-          coverage_type: string
-          created_at: string | null
-          end_date: string
-          id: string
-          policy_number: string
-          premium_amount: number
-          provider: string
-          start_date: string
-          status: string | null
-          updated_at: string | null
-          vehicle_id: string
-        }
-        Insert: {
-          coverage_amount: number
-          coverage_type: string
-          created_at?: string | null
-          end_date: string
-          id?: string
-          policy_number: string
-          premium_amount: number
-          provider: string
-          start_date: string
-          status?: string | null
-          updated_at?: string | null
-          vehicle_id: string
-        }
-        Update: {
-          coverage_amount?: number
-          coverage_type?: string
-          created_at?: string | null
-          end_date?: string
-          id?: string
-          policy_number?: string
-          premium_amount?: number
-          provider?: string
-          start_date?: string
-          status?: string | null
-          updated_at?: string | null
-          vehicle_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vehicle_insurance_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vehicle_parts: {
-        Row: {
-          created_at: string | null
-          id: string
-          maintenance_id: string | null
-          part_name: string
-          part_number: string | null
-          quantity: number
-          status: string | null
-          supplier: string | null
-          unit_cost: number | null
-          updated_at: string | null
-          vehicle_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          maintenance_id?: string | null
-          part_name: string
-          part_number?: string | null
-          quantity?: number
-          status?: string | null
-          supplier?: string | null
-          unit_cost?: number | null
-          updated_at?: string | null
-          vehicle_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          maintenance_id?: string | null
-          part_name?: string
-          part_number?: string | null
-          quantity?: number
-          status?: string | null
-          supplier?: string | null
-          unit_cost?: number | null
-          updated_at?: string | null
-          vehicle_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vehicle_parts_maintenance_id_fkey"
-            columns: ["maintenance_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vehicle_parts_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
@@ -2750,12 +2470,6 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
-      customer_status_type:
-        | "active"
-        | "inactive"
-        | "suspended"
-        | "pending_review"
-        | "blacklisted"
       damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
       import_type: "payments" | "customers" | "agreements"

@@ -1,7 +1,6 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Customer } from "../types/customer";
 
@@ -11,32 +10,16 @@ interface CustomerTableRowProps {
 }
 
 export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRowProps) => {
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'staff':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
     <TableRow key={customer.id}>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal hover:text-primary"
-            onClick={() => onCustomerClick(customer.id)}
-          >
-            {customer.full_name || 'Unnamed User'}
-          </Button>
-          <Badge variant={getRoleBadgeVariant(customer.role)}>
-            {customer.role}
-          </Badge>
-        </div>
+        <Button
+          variant="link"
+          className="p-0 h-auto font-normal hover:text-primary"
+          onClick={() => onCustomerClick(customer.id)}
+        >
+          {customer.full_name || 'Unnamed Customer'}
+        </Button>
       </TableCell>
       <TableCell>{customer.phone_number || 'N/A'}</TableCell>
       <TableCell>{customer.address || 'N/A'}</TableCell>

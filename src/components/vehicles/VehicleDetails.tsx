@@ -7,8 +7,6 @@ import { MaintenanceHistory } from "./profile/MaintenanceHistory";
 import { DamageHistory } from "./profile/DamageHistory";
 import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
-import { VehicleInsurance } from "./profile/VehicleInsurance";
-import { VehicleParts } from "./profile/VehicleParts"; // Added this import
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
@@ -56,7 +54,11 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Vehicle Details</h1>
-        <Button onClick={handlePrint} variant="outline" className="print:hidden">
+        <Button
+          onClick={handlePrint}
+          variant="outline"
+          className="print:hidden"
+        >
           <Printer className="mr-2 h-4 w-4" />
           Print Details
         </Button>
@@ -79,22 +81,16 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
       {/* Vehicle Information Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-7 print:hidden">
+        <TabsList className="grid w-full grid-cols-5 print:hidden">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="insurance">Insurance</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="damages">Damages</TabsTrigger>
           <TabsTrigger value="agreements">Agreements</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="parts">Parts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
           <VehicleOverview vehicle={vehicle} />
-        </TabsContent>
-
-        <TabsContent value="insurance" className="mt-6">
-          <VehicleInsurance vehicleId={vehicleId} />
         </TabsContent>
 
         <TabsContent value="maintenance" className="mt-6 print:hidden">
@@ -111,10 +107,6 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
         <TabsContent value="documents" className="mt-6 print:hidden">
           <VehicleDocuments vehicleId={vehicleId} />
-        </TabsContent>
-
-        <TabsContent value="parts" className="mt-6 print:hidden">
-          <VehicleParts vehicleId={vehicleId} />
         </TabsContent>
       </Tabs>
 

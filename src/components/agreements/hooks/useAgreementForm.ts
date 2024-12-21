@@ -3,10 +3,9 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateMonthlyPayment } from "../utils/paymentCalculations";
-import { Agreement, AgreementType } from "@/types/database/agreement.types";
 
-export interface AgreementFormData {
-  agreementType: AgreementType;
+export type AgreementFormData = {
+  agreementType: "lease_to_own" | "short_term";
   customerId: string;
   vehicleId: string;
   startDate: string;
@@ -23,7 +22,7 @@ export interface AgreementFormData {
   damagePenaltyRate?: number;
   fuelPenaltyRate?: number;
   lateReturnFee?: number;
-}
+};
 
 export const useAgreementForm = (onSuccess: () => void) => {
   const [open, setOpen] = useState(false);

@@ -51,12 +51,16 @@ I can help users by:
 3. Troubleshooting issues
 4. Suggesting best practices
 5. Guiding through complex processes
-`;
 
-interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+The system is built with:
+- React + Vite for the frontend
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Shadcn/UI components
+- Tanstack Query for data management
+- Supabase for backend services
+
+Help users understand and use the system effectively. Be concise but thorough in your responses.`;
 
 serve(async (req) => {
   // Handle CORS
@@ -72,78 +76,48 @@ serve(async (req) => {
     const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityKey) {
       console.error('Perplexity API key not configured');
-      throw new Error('Chat service is not properly configured');
+      throw new Error('Perplexity API key not configured');
     }
 
-    // Format messages with proper typing
-    const formattedMessages: ChatMessage[] = [
-      { role: "system", content: systemPrompt }
-    ];
+    console.log('Making request to Perplexity API...');
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        temperature: 0.2,
+        max_tokens: 1000,
+        top_p: 0.9,
+        frequency_penalty: 1,
+        presence_penalty: 0
+      }),
+    });
 
-    // Add messages ensuring alternating roles and proper typing
-    if (Array.isArray(messages)) {
-      messages.forEach((msg: ChatMessage, index: number) => {
-        if (
-          index === 0 || 
-          (messages[index - 1] && msg.role !== messages[index - 1].role)
-        ) {
-          formattedMessages.push({
-            role: msg.role,
-            content: msg.content
-          });
-        }
-      });
-    }
-
-    console.log('Making request to Perplexity API with formatted messages:', formattedMessages);
+    const data = await response.json();
+    console.log('Perplexity API response:', data);
     
-    try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${perplexityKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'llama-3.1-sonar-large-128k-online',
-          messages: formattedMessages,
-          temperature: 0.2,
-          max_tokens: 1000,
-          top_p: 0.9,
-          frequency_penalty: 1,
-          presence_penalty: 0
-        }),
-      });
-
-      const data = await response.json();
-      console.log('Perplexity API response:', data);
-      
-      if (!response.ok) {
-        console.error('Perplexity API error:', data);
-        throw new Error(data.error?.message || 'Failed to get response from Perplexity');
-      }
-
-      if (!data.choices?.[0]?.message?.content) {
-        console.error('Invalid response format:', data);
-        throw new Error('Invalid response format from chat service');
-      }
-
-      return new Response(
-        JSON.stringify({ message: data.choices[0].message.content }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
-    } catch (apiError) {
-      console.error('API request error:', apiError);
-      throw new Error(`Failed to communicate with Perplexity API: ${apiError.message}`);
+    if (!response.ok) {
+      console.error('Perplexity API error:', data);
+      throw new Error(data.error?.message || 'Failed to get response from Perplexity');
     }
+
+    return new Response(
+      JSON.stringify({ message: data.choices[0].message.content }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
   } catch (error) {
     console.error('Chat error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      }),
+      JSON.stringify({ error: error.message }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

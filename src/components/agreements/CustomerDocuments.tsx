@@ -17,21 +17,7 @@ export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
         .single();
       
       if (error) throw error;
-
-      // Get public URLs for both documents if they exist
-      const idDocumentUrl = data.id_document_url 
-        ? supabase.storage.from('customer_documents').getPublicUrl(data.id_document_url).data.publicUrl
-        : null;
-      
-      const licenseDocumentUrl = data.license_document_url
-        ? supabase.storage.from('customer_documents').getPublicUrl(data.license_document_url).data.publicUrl
-        : null;
-
-      return {
-        ...data,
-        id_document_url: idDocumentUrl,
-        license_document_url: licenseDocumentUrl
-      };
+      return data;
     },
     enabled: !!customerId,
   });
