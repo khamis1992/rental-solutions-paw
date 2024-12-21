@@ -90,13 +90,14 @@ export const VehicleDiagram = ({
       <Card>
         <CardContent className="p-4">
           <div
-            className="relative w-full h-[400px] border rounded-lg bg-gray-100"
+            className="relative w-full h-[400px] border rounded-lg bg-white"
             onClick={handleClick}
           >
-            {/* Placeholder for vehicle diagram */}
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-              {activeView.charAt(0).toUpperCase() + activeView.slice(1)} View
-            </div>
+            <img 
+              src="/lovable-uploads/3902a0a3-bb90-442e-b11d-4a21abda0543.png"
+              alt="Vehicle diagram"
+              className="w-full h-full object-contain"
+            />
 
             {/* Damage Markers */}
             {damageMarkers
