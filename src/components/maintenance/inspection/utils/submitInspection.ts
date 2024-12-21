@@ -53,13 +53,13 @@ export const submitInspection = async ({
       })
     );
 
-    // Create the inspection record
+    // Create the inspection record - IMPORTANT: damageMarkers is passed directly, no stringify needed
     const inspectionData = {
       vehicle_id: maintenanceData.vehicle_id,
       inspection_type: 'check_in',
       odometer_reading: parseInt(formData.get('odometer') as string),
       fuel_level: fuelLevel,
-      damage_markers: JSON.stringify(damageMarkers), // Convert to JSON string for database
+      damage_markers: damageMarkers, // Pass the array directly, Supabase will handle the JSON conversion
       renter_signature: renterSignature,
       staff_signature: staffSignature,
       inspection_date: new Date().toISOString(),
