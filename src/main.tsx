@@ -58,8 +58,8 @@ const initializeApp = async () => {
 const renderApp = (session: any) => {
   root.render(
     <BrowserRouter>
-      <React.StrictMode>
-        <ErrorBoundary>
+      <ErrorBoundary>
+        <React.StrictMode>
           <SessionContextProvider 
             supabaseClient={supabase}
             initialSession={session}
@@ -70,8 +70,8 @@ const renderApp = (session: any) => {
               </TooltipProvider>
             </QueryClientProvider>
           </SessionContextProvider>
-        </ErrorBoundary>
-      </React.StrictMode>
+        </React.StrictMode>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 };
