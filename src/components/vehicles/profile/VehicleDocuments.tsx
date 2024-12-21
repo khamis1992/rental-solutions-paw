@@ -20,7 +20,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     queryKey: ["vehicle-documents", vehicleId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("agreement_documents")
+        .from("vehicle_documents")
         .select("*")
         .eq("vehicle_id", vehicleId)
         .order("created_at", { ascending: false });
@@ -44,7 +44,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from('agreement_documents')
+        .from('vehicle_documents')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
@@ -54,12 +54,12 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('agreement_documents')
+        .from('vehicle_documents')
         .getPublicUrl(filePath);
 
       // Save document reference in database
       const { error: dbError } = await supabase
-        .from('agreement_documents')
+        .from('vehicle_documents')
         .insert({
           vehicle_id: vehicleId,
           document_type: file.type,
@@ -84,7 +84,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
   const handleDownload = async (documentUrl: string) => {
     try {
       const { data, error } = await supabase.storage
-        .from('agreement_documents')
+        .from('vehicle_documents')
         .download(documentUrl);
 
       if (error) throw error;
@@ -108,14 +108,14 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     try {
       // Delete from storage
       const { error: storageError } = await supabase.storage
-        .from('agreement_documents')
+        .from('vehicle_documents')
         .remove([documentUrl]);
 
       if (storageError) throw storageError;
 
       // Delete from database
       const { error: dbError } = await supabase
-        .from('agreement_documents')
+        .from('vehicle_documents')
         .delete()
         .eq('id', documentId);
 

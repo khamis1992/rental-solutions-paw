@@ -2121,6 +2121,64 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          document_url: string
+          expiry_date: string | null
+          id: string
+          is_verified: boolean | null
+          updated_at: string | null
+          uploaded_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          expiry_date?: string | null
+          id?: string
+          is_verified?: boolean | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          expiry_date?: string | null
+          id?: string
+          is_verified?: boolean | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_inspections: {
         Row: {
           ai_confidence_score: number | null
@@ -2251,6 +2309,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vehicle_insurance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_parts: {
+        Row: {
+          created_at: string | null
+          id: string
+          maintenance_id: string | null
+          part_name: string
+          part_number: string | null
+          quantity: number
+          status: string | null
+          supplier: string | null
+          unit_cost: number | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          maintenance_id?: string | null
+          part_name: string
+          part_number?: string | null
+          quantity?: number
+          status?: string | null
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          maintenance_id?: string | null
+          part_name?: string
+          part_number?: string | null
+          quantity?: number
+          status?: string | null
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_parts_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_parts_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"

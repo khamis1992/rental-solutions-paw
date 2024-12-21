@@ -78,13 +78,14 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
       {/* Vehicle Information Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 print:hidden">
+        <TabsList className="grid w-full grid-cols-7 print:hidden">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="insurance">Insurance</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="damages">Damages</TabsTrigger>
           <TabsTrigger value="agreements">Agreements</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="parts">Parts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -109,6 +110,10 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
         <TabsContent value="documents" className="mt-6 print:hidden">
           <VehicleDocuments vehicleId={vehicleId} />
+        </TabsContent>
+
+        <TabsContent value="parts" className="mt-6 print:hidden">
+          <VehicleParts vehicleId={vehicleId} />
         </TabsContent>
       </Tabs>
 
