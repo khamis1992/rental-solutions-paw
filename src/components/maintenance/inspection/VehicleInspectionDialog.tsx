@@ -40,8 +40,18 @@ const VehicleInspectionDialog = ({
     try {
       const formData = new FormData(e.target as HTMLFormElement);
       
+      // First, get the vehicle_id from the maintenance record
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from('maintenance')
+        .select('vehicle_id')
+        .eq('id', maintenanceId)
+        .single();
+
+      if (maintenanceError) throw maintenanceError;
+      if (!maintenanceData?.vehicle_id) throw new Error('Vehicle ID not found');
+
       const inspectionData = {
-        maintenance_id: maintenanceId,
+        vehicle_id: maintenanceData.vehicle_id,
         inspection_type: 'check_in',
         odometer_reading: parseInt(formData.get('odometer') as string),
         fuel_level: fuelLevel,
@@ -49,11 +59,12 @@ const VehicleInspectionDialog = ({
         renter_signature: renterSignature,
         staff_signature: staffSignature,
         inspection_date: new Date().toISOString(),
+        maintenance_id: maintenanceId
       };
 
       const { error } = await supabase
         .from('vehicle_inspections')
-        .insert([inspectionData]);
+        .insert(inspectionData);
 
       if (error) throw error;
 
