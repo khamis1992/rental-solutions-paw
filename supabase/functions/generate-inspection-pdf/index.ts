@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import * as pdf from 'https://deno.land/x/pdfkit@v0.3.0/mod.ts';
+import { PDFDocument, rgb, StandardFonts } from 'https://cdn.skypack.dev/pdf-lib'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,58 +38,140 @@ serve(async (req) => {
 
     if (maintenanceError) throw maintenanceError
 
-    // Generate PDF
-    const doc = new pdf.default()
-    const chunks: Uint8Array[] = []
-
-    doc.on('data', (chunk: Uint8Array) => chunks.push(chunk))
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create()
+    const page = pdfDoc.addPage()
+    const { height, width } = page.getSize()
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const fontSize = 12
 
     // Add content to PDF
-    doc.fontSize(20).text('Vehicle Inspection Report', { align: 'center' })
-    doc.moveDown()
-    
+    let yPosition = height - 50
+
+    // Title
+    page.drawText('Vehicle Inspection Report', {
+      x: 50,
+      y: yPosition,
+      size: 20,
+      font,
+      color: rgb(0, 0, 0),
+    })
+    yPosition -= 40
+
     // Vehicle Information
-    doc.fontSize(16).text('Vehicle Information')
-    doc.fontSize(12)
-      .text(`Make: ${maintenance.vehicle.make}`)
-      .text(`Model: ${maintenance.vehicle.model}`)
-      .text(`Year: ${maintenance.vehicle.year}`)
-      .text(`License Plate: ${maintenance.vehicle.license_plate}`)
-    doc.moveDown()
+    page.drawText('Vehicle Information', {
+      x: 50,
+      y: yPosition,
+      size: 16,
+      font,
+      color: rgb(0, 0, 0),
+    })
+    yPosition -= 25
+
+    const vehicleInfo = [
+      `Make: ${maintenance.vehicle.make}`,
+      `Model: ${maintenance.vehicle.model}`,
+      `Year: ${maintenance.vehicle.year}`,
+      `License Plate: ${maintenance.vehicle.license_plate}`,
+    ]
+
+    for (const info of vehicleInfo) {
+      page.drawText(info, {
+        x: 50,
+        y: yPosition,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      })
+      yPosition -= 20
+    }
+    yPosition -= 20
 
     // Inspection Details
     if (maintenance.inspection && maintenance.inspection.length > 0) {
       const inspection = maintenance.inspection[0]
-      doc.fontSize(16).text('Inspection Details')
-      doc.fontSize(12)
-        .text(`Date: ${new Date(inspection.inspection_date).toLocaleDateString()}`)
-        .text(`Odometer Reading: ${inspection.odometer_reading} km`)
-        .text(`Fuel Level: ${inspection.fuel_level}%`)
       
+      page.drawText('Inspection Details', {
+        x: 50,
+        y: yPosition,
+        size: 16,
+        font,
+        color: rgb(0, 0, 0),
+      })
+      yPosition -= 25
+
+      const inspectionInfo = [
+        `Date: ${new Date(inspection.inspection_date).toLocaleDateString()}`,
+        `Odometer Reading: ${inspection.odometer_reading} km`,
+        `Fuel Level: ${inspection.fuel_level}%`,
+      ]
+
+      for (const info of inspectionInfo) {
+        page.drawText(info, {
+          x: 50,
+          y: yPosition,
+          size: fontSize,
+          font,
+          color: rgb(0, 0, 0),
+        })
+        yPosition -= 20
+      }
+
       if (inspection.damage_markers) {
-        doc.moveDown()
-        doc.fontSize(14).text('Damage Report')
+        yPosition -= 20
+        page.drawText('Damage Report', {
+          x: 50,
+          y: yPosition,
+          size: 14,
+          font,
+          color: rgb(0, 0, 0),
+        })
+        yPosition -= 20
+
         inspection.damage_markers.forEach((marker: any) => {
-          doc.fontSize(12).text(`- ${marker.description} (${marker.view} view)`)
+          page.drawText(`- ${marker.description} (${marker.view} view)`, {
+            x: 50,
+            y: yPosition,
+            size: fontSize,
+            font,
+            color: rgb(0, 0, 0),
+          })
+          yPosition -= 20
         })
       }
     }
 
-    doc.moveDown()
-    
     // Maintenance Details
-    doc.fontSize(16).text('Maintenance Details')
-    doc.fontSize(12)
-      .text(`Service Type: ${maintenance.service_type}`)
-      .text(`Description: ${maintenance.description}`)
-      .text(`Status: ${maintenance.status}`)
-      .text(`Scheduled Date: ${new Date(maintenance.scheduled_date).toLocaleDateString()}`)
+    yPosition -= 20
+    page.drawText('Maintenance Details', {
+      x: 50,
+      y: yPosition,
+      size: 16,
+      font,
+      color: rgb(0, 0, 0),
+    })
+    yPosition -= 25
 
-    // Finalize PDF
-    doc.end()
+    const maintenanceInfo = [
+      `Service Type: ${maintenance.service_type}`,
+      `Description: ${maintenance.description}`,
+      `Status: ${maintenance.status}`,
+      `Scheduled Date: ${new Date(maintenance.scheduled_date).toLocaleDateString()}`,
+    ]
 
-    // Combine chunks into a single Uint8Array
-    const pdfBytes = new Uint8Array(chunks.reduce((acc, chunk) => [...acc, ...chunk], []))
+    for (const info of maintenanceInfo) {
+      page.drawText(info, {
+        x: 50,
+        y: yPosition,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      })
+      yPosition -= 20
+    }
+
+    // Generate PDF bytes
+    const pdfBytes = await pdfDoc.save()
 
     // Save PDF to storage
     const fileName = `inspection_${maintenanceId}_${Date.now()}.pdf`
@@ -124,6 +206,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    console.error('Error generating PDF:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
