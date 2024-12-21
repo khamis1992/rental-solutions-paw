@@ -42,7 +42,7 @@ export default function App() {
   }
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={0}>
       <Routes>
         {/* Public route */}
         <Route 
