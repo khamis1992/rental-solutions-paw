@@ -1,49 +1,26 @@
 import { useRef, useEffect } from 'react';
 import { performanceMetrics } from "@/services/performanceMonitoring";
+import { toast } from "sonner";
 import type { ExtendedPerformance } from "@/services/performance/types";
 
-// Configuration constants
 const MONITORING_INTERVALS = {
-  CPU: 5000,    // 5 seconds
-  MEMORY: 5000, // 5 seconds
-  DISK: 60000   // 1 minute
-};
+  CPU: 10000,    // 10 seconds
+  MEMORY: 15000, // 15 seconds
+  DISK: 60000    // 1 minute
+} as const;
+
+const PERFORMANCE_THRESHOLDS = {
+  CPU: 80,    // 80% CPU usage
+  MEMORY: 90, // 90% memory usage
+  DISK: 90    // 90% disk usage
+} as const;
 
 export const usePerformanceMonitoring = () => {
-  const cpuMonitoringInterval = useRef<NodeJS.Timeout>();
-  const memoryMonitoringInterval = useRef<NodeJS.Timeout>();
-  const diskMonitoringInterval = useRef<NodeJS.Timeout>();
-
-  const monitorCPU = async () => {
-    try {
-      const cpuUsage = await measureCPUUsage();
-      await performanceMetrics.trackCPUUtilization(cpuUsage);
-    } catch (error) {
-      console.error('Failed to monitor CPU:', error);
-    }
-  };
-
-  const monitorMemory = async () => {
-    try {
-      await performanceMetrics.trackMemoryUsage();
-    } catch (error) {
-      console.error('Failed to monitor memory:', error);
-    }
-  };
-
-  const monitorDiskIO = async () => {
-    try {
-      await performanceMetrics.trackDiskIO();
-    } catch (error) {
-      console.error('Failed to monitor disk I/O:', error);
-    }
-  };
+  const intervals = useRef<Array<NodeJS.Timeout>>([]);
 
   const measureCPUUsage = async (): Promise<number> => {
     const performance = window.performance as ExtendedPerformance;
-    if (!performance || !performance.memory) {
-      return 0;
-    }
+    if (!performance?.memory) return 0;
 
     const startTime = performance.now();
     const startUsage = performance.memory.usedJSHeapSize;
@@ -60,22 +37,68 @@ export const usePerformanceMonitoring = () => {
     return Math.min(Math.max(cpuUsage, 0), 100);
   };
 
-  useEffect(() => {
-    // Start performance monitoring with optimized intervals
-    cpuMonitoringInterval.current = setInterval(monitorCPU, MONITORING_INTERVALS.CPU);
-    memoryMonitoringInterval.current = setInterval(monitorMemory, MONITORING_INTERVALS.MEMORY);
-    diskMonitoringInterval.current = setInterval(monitorDiskIO, MONITORING_INTERVALS.DISK);
+  const monitorPerformance = async () => {
+    try {
+      // Monitor CPU
+      const monitorCPU = async () => {
+        const cpuUsage = await measureCPUUsage();
+        if (cpuUsage > PERFORMANCE_THRESHOLDS.CPU) {
+          toast.warning("High CPU Usage", {
+            description: `Current CPU utilization is ${cpuUsage.toFixed(1)}%`
+          });
+        }
+        await performanceMetrics.trackCPUUtilization(cpuUsage);
+      };
 
+      // Monitor Memory
+      const monitorMemory = async () => {
+        const performance = window.performance as ExtendedPerformance;
+        if (performance?.memory) {
+          const usedMemory = performance.memory.usedJSHeapSize;
+          const totalMemory = performance.memory.totalJSHeapSize;
+          const memoryUsage = (usedMemory / totalMemory) * 100;
+
+          if (memoryUsage > PERFORMANCE_THRESHOLDS.MEMORY) {
+            toast.warning("High Memory Usage", {
+              description: `Memory utilization is at ${memoryUsage.toFixed(1)}%`
+            });
+          }
+          await performanceMetrics.trackMemoryUsage();
+        }
+      };
+
+      // Monitor Disk
+      const monitorDisk = async () => {
+        if ('storage' in navigator && 'estimate' in navigator.storage) {
+          const { quota = 0, usage = 0 } = await navigator.storage.estimate();
+          const usagePercentage = (usage / quota) * 100;
+
+          if (usagePercentage > PERFORMANCE_THRESHOLDS.DISK) {
+            toast.warning("High Disk Usage", {
+              description: `Storage utilization is at ${usagePercentage.toFixed(1)}%`
+            });
+          }
+          await performanceMetrics.trackDiskIO();
+        }
+      };
+
+      // Set up monitoring intervals
+      intervals.current.push(
+        setInterval(monitorCPU, MONITORING_INTERVALS.CPU),
+        setInterval(monitorMemory, MONITORING_INTERVALS.MEMORY),
+        setInterval(monitorDisk, MONITORING_INTERVALS.DISK)
+      );
+
+    } catch (error) {
+      console.error('Performance monitoring error:', error);
+    }
+  };
+
+  useEffect(() => {
+    monitorPerformance();
     return () => {
-      if (cpuMonitoringInterval.current) {
-        clearInterval(cpuMonitoringInterval.current);
-      }
-      if (memoryMonitoringInterval.current) {
-        clearInterval(memoryMonitoringInterval.current);
-      }
-      if (diskMonitoringInterval.current) {
-        clearInterval(diskMonitoringInterval.current);
-      }
+      intervals.current.forEach(clearInterval);
+      intervals.current = [];
     };
   }, []);
 };
