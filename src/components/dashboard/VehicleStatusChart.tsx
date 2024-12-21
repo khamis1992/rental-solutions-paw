@@ -6,9 +6,9 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const STATUS_COLORS = {
-  on_route: "#F97316",    // Orange
+  rented: "#F97316",    // Orange
   available: "#0EA5E9",   // Blue
-  out_of_service: "#EF4444", // Red
+  maintenance: "#EF4444", // Red
 } as const;
 
 export const VehicleStatusChart = () => {
@@ -27,9 +27,9 @@ export const VehicleStatusChart = () => {
       }
 
       const counts = {
-        on_route: vehicles.filter(v => v.status === 'on_rent').length,
+        rented: vehicles.filter(v => v.status === 'rented').length,
         available: vehicles.filter(v => v.status === 'available').length,
-        out_of_service: vehicles.filter(v => v.status === 'out_of_service').length,
+        maintenance: vehicles.filter(v => v.status === 'maintenance').length,
       };
 
       return counts;
@@ -92,9 +92,9 @@ export const VehicleStatusChart = () => {
               
               {/* Progress segments */}
               {vehicleCounts && [
-                { key: 'on_route', offset: 0 },
-                { key: 'available', offset: calculateStrokeDash(vehicleCounts.on_route) },
-                { key: 'out_of_service', offset: calculateStrokeDash(vehicleCounts.on_route + vehicleCounts.available) }
+                { key: 'rented', offset: 0 },
+                { key: 'available', offset: calculateStrokeDash(vehicleCounts.rented) },
+                { key: 'maintenance', offset: calculateStrokeDash(vehicleCounts.rented + vehicleCounts.available) }
               ].map(({ key, offset }) => (
                 <circle
                   key={key}
@@ -115,9 +115,9 @@ export const VehicleStatusChart = () => {
           {/* Legend */}
           <div className="space-y-4">
             {vehicleCounts && [
-              { label: 'On Route', value: vehicleCounts.on_route, color: STATUS_COLORS.on_route },
+              { label: 'On Route', value: vehicleCounts.rented, color: STATUS_COLORS.rented },
               { label: 'Available', value: vehicleCounts.available, color: STATUS_COLORS.available },
-              { label: 'Out of Service', value: vehicleCounts.out_of_service, color: STATUS_COLORS.out_of_service }
+              { label: 'Out of Service', value: vehicleCounts.maintenance, color: STATUS_COLORS.maintenance }
             ].map(({ label, value, color }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
