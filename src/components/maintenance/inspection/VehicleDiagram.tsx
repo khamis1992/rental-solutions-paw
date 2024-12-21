@@ -90,19 +90,25 @@ export const VehicleDiagram = ({
   };
 
   const getViewImage = (view: string) => {
-    switch (view) {
+    const basePath = "/lovable-uploads/40fc6606-d650-4614-9d15-11d1791e8c28.png";
+    return basePath;
+  };
+
+  // Calculate the image position based on the current view
+  const getImageStyle = () => {
+    switch (currentView) {
       case "front":
-        return "/vehicle-diagrams/front.png";
+        return { objectPosition: "0% 33%" }; // Show front view (left side of diagram)
       case "rear":
-        return "/vehicle-diagrams/rear.png";
+        return { objectPosition: "100% 33%" }; // Show rear view (right side of diagram)
       case "left":
-        return "/vehicle-diagrams/left.png";
+        return { objectPosition: "0% 66%" }; // Show left view (bottom left)
       case "right":
-        return "/vehicle-diagrams/right.png";
+        return { objectPosition: "100% 66%" }; // Show right view (bottom right)
       case "top":
-        return "/vehicle-diagrams/top.png";
+        return { objectPosition: "50% 0%" }; // Show top view (center top)
       default:
-        return "/vehicle-diagrams/front.png";
+        return { objectPosition: "0% 33%" }; // Default to front view
     }
   };
 
@@ -153,7 +159,8 @@ export const VehicleDiagram = ({
         <img
           src={getViewImage(currentView)}
           alt={`Vehicle ${currentView} view`}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
+          style={getImageStyle()}
         />
         {damageMarkers
           .filter((marker) => marker.view === currentView)
