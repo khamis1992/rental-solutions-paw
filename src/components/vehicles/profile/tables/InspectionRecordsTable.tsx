@@ -9,6 +9,7 @@ interface InspectionRecord {
   inspection_type: string;
   damage_markers: Json;
   inspection_photos: string[];
+  photos: string[]; // For backward compatibility
 }
 
 interface InspectionRecordsTableProps {
@@ -39,14 +40,14 @@ export const InspectionRecordsTable = ({ records, onViewImages }: InspectionReco
               : "No damages"}
           </TableCell>
           <TableCell>
-            {inspection.inspection_photos && inspection.inspection_photos.length > 0 && (
+            {(inspection.inspection_photos?.length > 0 || inspection.photos?.length > 0) && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onViewImages(inspection.inspection_photos)}
+                onClick={() => onViewImages(inspection.inspection_photos || inspection.photos)}
               >
                 <ImageIcon className="h-4 w-4 mr-2" />
-                View Photos ({inspection.inspection_photos.length})
+                View Photos ({inspection.inspection_photos?.length || inspection.photos?.length})
               </Button>
             )}
           </TableCell>

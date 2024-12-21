@@ -29,8 +29,7 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
           table: 'vehicle_inspections',
           filter: `vehicle_id=eq.${vehicleId}`
         },
-        async (payload) => {
-          console.log('Inspection update received:', payload);
+        async () => {
           await queryClient.invalidateQueries({ queryKey: ['damages-and-inspections', vehicleId] });
           toast.info('Vehicle inspection records updated');
         }
@@ -47,8 +46,7 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
           table: 'damages',
           filter: `vehicle_id=eq.${vehicleId}`
         },
-        async (payload) => {
-          console.log('Damage update received:', payload);
+        async () => {
           await queryClient.invalidateQueries({ queryKey: ['damages-and-inspections', vehicleId] });
           toast.info('Damage records updated');
         }
