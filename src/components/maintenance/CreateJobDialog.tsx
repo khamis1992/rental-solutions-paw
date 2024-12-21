@@ -71,11 +71,11 @@ export function CreateJobDialog() {
       queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] });
 
       toast.success("Job card created successfully");
+      
+      // First close the dialog
       setOpen(false);
       
-      // Navigate to the inspection form
-      navigate(`/maintenance/${maintenanceData.id}/inspection`);
-      
+      // Reset form data
       setFormData({
         vehicle_id: "",
         service_type: "",
@@ -83,6 +83,12 @@ export function CreateJobDialog() {
         scheduled_date: "",
         cost: "",
       });
+
+      // Then navigate after a short delay to ensure dialog is closed
+      setTimeout(() => {
+        navigate(`/maintenance/${maintenanceData.id}/inspection`);
+      }, 100);
+      
     } catch (error: any) {
       console.error("Error creating job card:", error);
       toast.error(error.message || "Failed to create job card");
