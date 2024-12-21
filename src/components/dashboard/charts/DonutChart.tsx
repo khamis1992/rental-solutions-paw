@@ -21,10 +21,21 @@ interface DonutChartProps {
 export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => {
   return (
     <div className="relative flex-1">
-      <div className="absolute inset-0 flex items-center justify-center flex-col">
-        <span className="text-4xl font-bold">{primaryStatus?.value}</span>
-        <span className="text-xl">{primaryStatus?.name}</span>
+      {/* Background circles for depth effect */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-[280px] h-[280px] rounded-full bg-gray-50" />
       </div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-[260px] h-[260px] rounded-full bg-gray-100" />
+      </div>
+      
+      {/* Center text */}
+      <div className="absolute inset-0 flex items-center justify-center flex-col z-10">
+        <span className="text-4xl font-bold text-gray-900">{primaryStatus?.value}</span>
+        <span className="text-base text-gray-600 mt-1">{primaryStatus?.name}</span>
+      </div>
+
+      {/* Chart */}
       <ChartContainer config={config}>
         <ResponsiveContainer width="100%" height={400}>
           <PieChart>
@@ -32,13 +43,19 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={80}
-              outerRadius={120}
+              innerRadius={100}
+              outerRadius={130}
               paddingAngle={2}
               dataKey="value"
+              startAngle={180}
+              endAngle={-180}
             >
               {data?.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.color}
+                  className="transition-all duration-200 hover:opacity-80"
+                />
               ))}
             </Pie>
             <Tooltip
@@ -46,7 +63,7 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
                 if (!active || !payload?.length) return null;
                 return (
                   <ChartTooltipContent
-                    className="bg-background border-border"
+                    className="bg-white border border-gray-200 shadow-lg"
                     payload={payload}
                   />
                 );
