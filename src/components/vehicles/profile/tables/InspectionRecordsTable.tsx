@@ -10,6 +10,8 @@ interface InspectionRecord {
   damage_markers: Json;
   inspection_photos: string[];
   photos: string[]; // For backward compatibility
+  odometer_reading: number;
+  fuel_level: number;
 }
 
 interface InspectionRecordsTableProps {
@@ -23,6 +25,8 @@ export const InspectionRecordsTable = ({ records, onViewImages }: InspectionReco
       <TableRow>
         <TableHead>Date</TableHead>
         <TableHead>Type</TableHead>
+        <TableHead>Odometer</TableHead>
+        <TableHead>Fuel Level</TableHead>
         <TableHead>Damage Markers</TableHead>
         <TableHead>Photos</TableHead>
       </TableRow>
@@ -34,6 +38,8 @@ export const InspectionRecordsTable = ({ records, onViewImages }: InspectionReco
             {new Date(inspection.inspection_date).toLocaleDateString()}
           </TableCell>
           <TableCell>{inspection.inspection_type}</TableCell>
+          <TableCell>{inspection.odometer_reading?.toLocaleString()} km</TableCell>
+          <TableCell>{inspection.fuel_level}%</TableCell>
           <TableCell>
             {inspection.damage_markers ? 
               (Array.isArray(inspection.damage_markers) ? inspection.damage_markers.length : 0) + " damages marked"

@@ -52,7 +52,6 @@ export const submitInspection = async ({
 
         if (uploadError) throw uploadError;
 
-        // Get the public URL
         const { data: { publicUrl } } = supabase.storage
           .from('inspection_photos')
           .getPublicUrl(filePath);
@@ -61,17 +60,26 @@ export const submitInspection = async ({
       })
     );
 
-    // Create the inspection record with properly typed damage markers
+    // Update vehicle mileage
+    const odometerReading = parseInt(formData.get('odometer') as string);
+    const { error: vehicleError } = await supabase
+      .from('vehicles')
+      .update({ mileage: odometerReading })
+      .eq('id', maintenanceData.vehicle_id);
+
+    if (vehicleError) throw vehicleError;
+
+    // Create the inspection record with properly typed data
     const inspectionData = {
       vehicle_id: maintenanceData.vehicle_id,
+      maintenance_id: maintenanceId,
       inspection_type: 'check_in',
-      odometer_reading: parseInt(formData.get('odometer') as string),
+      odometer_reading: odometerReading,
       fuel_level: fuelLevel,
       damage_markers: damageMarkers as unknown as Json,
       renter_signature: renterSignature,
       staff_signature: staffSignature,
       inspection_date: new Date().toISOString(),
-      maintenance_id: maintenanceId,
       inspection_photos: uploadedPhotos,
       photos: uploadedPhotos // For backward compatibility
     };
@@ -85,7 +93,6 @@ export const submitInspection = async ({
     // Create damage records for each marker
     if (damageMarkers.length > 0) {
       const damageRecords = damageMarkers.map(marker => ({
-        lease_id: null, // Since this is from maintenance inspection
         vehicle_id: maintenanceData.vehicle_id,
         description: marker.description,
         reported_date: new Date().toISOString(),
@@ -108,7 +115,6 @@ export const submitInspection = async ({
       .update({ 
         status: 'in_progress',
         description: 'Inspection completed. Job card ready.',
-        scheduled_date: new Date().toISOString()
       })
       .eq('id', maintenanceId);
 
