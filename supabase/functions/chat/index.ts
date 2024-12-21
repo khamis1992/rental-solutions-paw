@@ -51,16 +51,7 @@ I can help users by:
 3. Troubleshooting issues
 4. Suggesting best practices
 5. Guiding through complex processes
-
-The system is built with:
-- React + Vite for the frontend
-- TypeScript for type safety
-- Tailwind CSS for styling
-- Shadcn/UI components
-- Tanstack Query for data management
-- Supabase for backend services
-
-Help users understand and use the system effectively. Be concise but thorough in your responses.`;
+`;
 
 serve(async (req) => {
   // Handle CORS
@@ -76,7 +67,7 @@ serve(async (req) => {
     const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityKey) {
       console.error('Perplexity API key not configured');
-      throw new Error('Perplexity API key not configured');
+      throw new Error('Chat service is not properly configured');
     }
 
     console.log('Making request to Perplexity API...');
@@ -108,6 +99,11 @@ serve(async (req) => {
       throw new Error(data.error?.message || 'Failed to get response from Perplexity');
     }
 
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid response format:', data);
+      throw new Error('Invalid response format from chat service');
+    }
+
     return new Response(
       JSON.stringify({ message: data.choices[0].message.content }),
       {
@@ -117,7 +113,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Chat error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
