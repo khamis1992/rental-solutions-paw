@@ -40,6 +40,11 @@ export const CreateUserForm = ({ isAdmin, onSuccess }: CreateUserFormProps) => {
   const onSubmit = async (values: any) => {
     setIsLoading(true);
     try {
+      // Only allow admin to create staff/admin users
+      if (!isAdmin && (values.role === 'admin' || values.role === 'staff')) {
+        throw new Error('Only admins can create staff or admin users');
+      }
+
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
