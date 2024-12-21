@@ -35,46 +35,13 @@ const initializeApp = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      root.render(
-        <React.StrictMode>
-          <ErrorBoundary>
-            <BrowserRouter>
-              <SessionContextProvider 
-                supabaseClient={supabase}
-                initialSession={session}
-              >
-                <QueryClientProvider client={queryClient}>
-                  <TooltipProvider>
-                    <App />
-                  </TooltipProvider>
-                </QueryClientProvider>
-              </SessionContextProvider>
-            </BrowserRouter>
-          </ErrorBoundary>
-        </React.StrictMode>
-      );
+      renderApp(session);
     });
 
     // Initial render
-    root.render(
-      <React.StrictMode>
-        <ErrorBoundary>
-          <BrowserRouter>
-            <SessionContextProvider 
-              supabaseClient={supabase}
-              initialSession={session}
-            >
-              <QueryClientProvider client={queryClient}>
-                <TooltipProvider>
-                  <App />
-                </TooltipProvider>
-              </QueryClientProvider>
-            </SessionContextProvider>
-          </BrowserRouter>
-        </ErrorBoundary>
-      </React.StrictMode>
-    );
+    renderApp(session);
 
     // Cleanup subscription on unload
     window.addEventListener('unload', () => {
@@ -83,25 +50,30 @@ const initializeApp = async () => {
 
   } catch (error) {
     console.error('Failed to initialize app:', error);
-    root.render(
-      <React.StrictMode>
-        <ErrorBoundary>
-          <BrowserRouter>
-            <SessionContextProvider 
-              supabaseClient={supabase}
-              initialSession={null}
-            >
-              <QueryClientProvider client={queryClient}>
-                <TooltipProvider>
-                  <App />
-                </TooltipProvider>
-              </QueryClientProvider>
-            </SessionContextProvider>
-          </BrowserRouter>
-        </ErrorBoundary>
-      </React.StrictMode>
-    );
+    renderApp(null);
   }
+};
+
+// Separate render function to maintain consistency
+const renderApp = (session: any) => {
+  root.render(
+    <BrowserRouter>
+      <SessionContextProvider 
+        supabaseClient={supabase}
+        initialSession={session}
+      >
+        <QueryClientProvider client={queryClient}>
+          <React.StrictMode>
+            <ErrorBoundary>
+              <TooltipProvider>
+                <App />
+              </TooltipProvider>
+            </ErrorBoundary>
+          </React.StrictMode>
+        </QueryClientProvider>
+      </SessionContextProvider>
+    </BrowserRouter>
+  );
 };
 
 initializeApp();
