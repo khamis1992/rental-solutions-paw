@@ -51,9 +51,15 @@ const VehicleInspectionDialog = ({
       });
 
       if (result.success) {
-        toast.success("Inspection completed successfully");
+        // Show success message
+        toast.success("Job card created successfully", {
+          duration: 3000,
+        });
+        
+        // Close all dialogs and navigate
         onComplete();
-        navigate(`/maintenance`);
+        onOpenChange(false);
+        navigate('/maintenance');
       }
     } finally {
       setLoading(false);
