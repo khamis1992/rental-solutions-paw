@@ -40,11 +40,9 @@ const AppWrapper = ({ session }: { session: any }) => (
           initialSession={session}
         >
           <QueryClientProvider client={queryClient}>
-            <React.Fragment>
-              <TooltipProvider>
-                <App />
-              </TooltipProvider>
-            </React.Fragment>
+            <TooltipProvider>
+              <App />
+            </TooltipProvider>
           </QueryClientProvider>
         </SessionContextProvider>
       </BrowserRouter>
