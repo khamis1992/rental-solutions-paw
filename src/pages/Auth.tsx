@@ -6,6 +6,7 @@ import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { performanceMetrics } from "@/services/performanceMonitoring";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -74,7 +75,6 @@ const Auth = () => {
 
     return () => {
       console.log("Cleaning up Auth component");
-      // Any cleanup needed
     };
   }, [navigate]);
 
@@ -91,40 +91,42 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="m-auto w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold mb-2">Welcome to Rental Solutions</h1>
-          <p className="text-gray-600">Please sign in to continue</p>
-          {loadTime && (
-            <p className="text-xs text-gray-400 mt-2">
-              Page loaded in {Math.round(loadTime)}ms
-            </p>
-          )}
-        </div>
-        
-        <SupabaseAuth
-          supabaseClient={supabase}
-          appearance={{
-            theme: ThemeSupa,
-            variables: {
-              default: {
-                colors: {
-                  brand: '#2563eb',
-                  brandAccent: '#1d4ed8',
+    <TooltipProvider>
+      <div className="flex min-h-screen bg-gray-50">
+        <div className="m-auto w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+          <div className="mb-8 text-center">
+            <h1 className="text-2xl font-bold mb-2">Welcome to Rental Solutions</h1>
+            <p className="text-gray-600">Please sign in to continue</p>
+            {loadTime && (
+              <p className="text-xs text-gray-400 mt-2">
+                Page loaded in {Math.round(loadTime)}ms
+              </p>
+            )}
+          </div>
+          
+          <SupabaseAuth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#2563eb',
+                    brandAccent: '#1d4ed8',
+                  }
                 }
+              },
+              className: {
+                container: 'w-full',
+                button: 'w-full px-4 py-2 rounded',
+                input: 'w-full px-3 py-2 border rounded',
               }
-            },
-            className: {
-              container: 'w-full',
-              button: 'w-full px-4 py-2 rounded',
-              input: 'w-full px-3 py-2 border rounded',
-            }
-          }}
-          redirectTo={window.location.origin}
-        />
+            }}
+            redirectTo={window.location.origin}
+          />
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

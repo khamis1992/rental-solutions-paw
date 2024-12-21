@@ -1,109 +1,86 @@
-import { AlertCircle, Car, CreditCard, WrenchIcon } from "lucide-react";
-import { AlertDetails } from "./types/alert-types";
+import { Bell, Calendar, CarFront } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AlertDetails } from "./types/alert-types";
+import React from 'react';
 
 interface AlertItemProps {
   alert: AlertDetails;
   onClick: () => void;
-  count?: number;
 }
 
-export function AlertItem({ alert, onClick, count }: AlertItemProps) {
+export function AlertItem({ alert, onClick }: AlertItemProps) {
   const getAlertStyle = (type: AlertDetails['type']) => {
     switch (type) {
       case 'vehicle':
         return {
-          bgClass: 'bg-blue-50',
-          textClass: 'text-blue-700',
-          icon: Car,
+          containerClass: 'border-red-200 bg-red-50 hover:bg-red-100',
+          iconClass: 'bg-red-100 text-red-500',
+          textClass: 'text-red-700',
+          descriptionClass: 'text-red-600',
+          Icon: CarFront
         };
       case 'payment':
         return {
-          bgClass: 'bg-red-50',
-          textClass: 'text-red-700',
-          icon: CreditCard,
+          containerClass: 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100',
+          iconClass: 'bg-yellow-100 text-yellow-500',
+          textClass: 'text-yellow-700',
+          descriptionClass: 'text-yellow-600',
+          Icon: Bell
         };
       case 'maintenance':
         return {
-          bgClass: 'bg-yellow-50',
-          textClass: 'text-yellow-700',
-          icon: WrenchIcon,
-        };
-      default:
-        return {
-          bgClass: 'bg-gray-50',
-          textClass: 'text-gray-700',
-          icon: AlertCircle,
+          containerClass: 'border-blue-200 bg-blue-50 hover:bg-blue-100',
+          iconClass: 'bg-blue-100 text-blue-500',
+          textClass: 'text-blue-700',
+          descriptionClass: 'text-blue-600',
+          Icon: Calendar
         };
     }
   };
 
   const style = getAlertStyle(alert.type);
-  const Icon = style.icon;
+  const { Icon } = style;
 
-  const getAlertText = (alert: AlertDetails) => {
+  const getAlertText = () => {
     switch (alert.type) {
       case 'vehicle':
         return {
-          title: 'Vehicle Return Due',
-          description: `${alert.vehicle?.make} ${alert.vehicle?.model} (${alert.vehicle?.license_plate})`,
+          title: 'Overdue Vehicle',
+          description: `${alert.vehicle?.year} ${alert.vehicle?.make} ${alert.vehicle?.model} - ${alert.customer?.full_name}`
         };
       case 'payment':
         return {
-          title: 'Payment Overdue',
-          description: alert.customer?.full_name || 'Unknown Customer',
+          title: 'Overdue Payment',
+          description: alert.customer?.full_name
         };
       case 'maintenance':
         return {
-          title: 'Maintenance Required',
-          description: `${alert.vehicle?.make} ${alert.vehicle?.model} (${alert.vehicle?.license_plate})`,
-        };
-      default:
-        return {
-          title: 'Alert',
-          description: 'Unknown alert type',
+          title: 'Maintenance Due',
+          description: `${alert.vehicle?.year} ${alert.vehicle?.make} ${alert.vehicle?.model}`
         };
     }
   };
 
-  const alertText = getAlertText(alert);
+  const alertText = getAlertText();
 
   return (
     <div
-      className="flex items-center space-x-4 rounded-lg border p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
       onClick={onClick}
+      className={`flex items-center gap-3 p-3 rounded-lg border ${style.containerClass} transition-colors cursor-pointer`}
     >
-      <div className={`rounded-lg p-2 ${style.bgClass}`}>
+      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${style.iconClass} flex-shrink-0`}>
         <Icon className="h-4 w-4" />
       </div>
-      <div className="min-w-0 flex-1 text-center">
-        <div className="flex items-center justify-center">
-          <h4 className={`text-sm font-medium ${style.textClass} mb-0.5`}>
-            {alertText.title}
-            {count && count > 1 && (
-              <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-                {count}
-              </span>
-            )}
-          </h4>
+      <div className="min-w-0 flex-1">
+        <h4 className={`text-sm font-medium ${style.textClass} mb-0.5`}>{alertText.title}</h4>
+        <div className="text-xs truncate">
+          <span className={style.descriptionClass}>{alertText.description}</span>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="truncate text-sm text-muted-foreground">
-                {alertText.description}
-              </p>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{alertText.description}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
     </div>
   );

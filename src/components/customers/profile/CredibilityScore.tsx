@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Shield, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Shield, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CredibilityScoreProps {
   customerId: string;
@@ -37,13 +38,26 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
     return ShieldAlert;
   };
 
+  const getRiskDescription = (level: string) => {
+    switch (level) {
+      case 'low':
+        return "This customer has a strong payment history and presents minimal risk.";
+      case 'medium':
+        return "Some caution advised. Consider additional verification or deposit.";
+      case 'high':
+        return "High risk level. Additional guarantees or deposits may be required.";
+      default:
+        return "Risk level assessment pending.";
+    }
+  };
+
   const ScoreIcon = assessment ? getScoreIcon(assessment.payment_score) : Shield;
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ScoreIcon className="h-5 w-5" />
+          <ScoreIcon className={`h-5 w-5 ${assessment ? getScoreColor(assessment.payment_score) : ''}`} />
           Credibility Score
         </CardTitle>
       </CardHeader>
@@ -63,6 +77,13 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
               </div>
             </div>
 
+            <Alert variant={assessment.risk_level === 'high' ? 'destructive' : 'default'}>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {getRiskDescription(assessment.risk_level)}
+              </AlertDescription>
+            </Alert>
+
             <Progress
               value={assessment.payment_score}
               className="h-2"
@@ -79,9 +100,17 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
               </div>
             </div>
 
+            {assessment.total_penalties > 0 && (
+              <div className="mt-4 p-4 rounded-lg border border-yellow-200 bg-yellow-50">
+                <div className="text-sm font-medium text-yellow-800">Total Penalties</div>
+                <div className="text-xl text-yellow-900">${assessment.total_penalties.toFixed(2)}</div>
+              </div>
+            )}
+
             {assessment.notes && (
-              <div className="text-sm text-muted-foreground">
-                Notes: {assessment.notes}
+              <div className="text-sm text-muted-foreground mt-4 p-4 bg-muted rounded-lg">
+                <div className="font-medium mb-1">Assessment Notes</div>
+                {assessment.notes}
               </div>
             )}
           </div>

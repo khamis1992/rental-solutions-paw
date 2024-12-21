@@ -5,15 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DamageAssessmentProps {
   agreementId: string;
+  onSuccess?: () => void;
 }
 
-export const DamageAssessment = ({ agreementId }: DamageAssessmentProps) => {
+export const DamageAssessment = ({ agreementId, onSuccess }: DamageAssessmentProps) => {
   const [description, setDescription] = useState("");
   const [repairCost, setRepairCost] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +34,12 @@ export const DamageAssessment = ({ agreementId }: DamageAssessmentProps) => {
       if (error) throw error;
 
       toast.success('Damage report submitted successfully');
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['damages'] });
+      
       setDescription("");
       setRepairCost("");
+      onSuccess?.();
     } catch (error) {
       console.error('Error submitting damage report:', error);
       toast.error('Failed to submit damage report');

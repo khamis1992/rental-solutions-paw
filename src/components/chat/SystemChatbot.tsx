@@ -6,6 +6,7 @@ import { ChatInput } from "./ChatInput";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface Message {
   role: "assistant" | "user";
@@ -20,26 +21,50 @@ export const SystemChatbot = () => {
     },
   ]);
 
-  const { isLoading: isLoadingKey } = useQuery({
-    queryKey: ["openai-api-key"],
+  // Check if Perplexity API key is configured
+  const { isLoading: isCheckingKey, isError: isKeyError } = useQuery({
+    queryKey: ["perplexity-api-key"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("check-openai-key");
-      if (error) throw error;
+      if (error) {
+        console.error('API key check error:', error);
+        throw error;
+      }
       return data;
     },
+    retry: false
   });
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      console.log('Sending message:', message);
+      // Ensure messages alternate between user and assistant
+      const recentMessages = messages
+        .slice(-4) // Take last 4 messages for context
+        .filter((msg, index, arr) => {
+          // Keep message if it's the first one or if its role differs from the previous one
+          return index === 0 || msg.role !== arr[index - 1].role;
+        });
+
+      const apiMessages = [
+        ...recentMessages,
+        { role: "user" as const, content: message }
+      ];
+
+      console.log('Sending messages:', apiMessages);
+      
       const { data, error } = await supabase.functions.invoke("chat", {
-        body: { messages: [...messages, { role: "user", content: message }] },
+        body: { messages: apiMessages },
       });
       
       if (error) {
         console.error('Chat error:', error);
         throw error;
       }
+      
+      if (!data?.message) {
+        throw new Error('Invalid response from chat service');
+      }
+      
       console.log('Received response:', data);
       return data.message;
     },
@@ -50,15 +75,41 @@ export const SystemChatbot = () => {
         { role: "assistant", content: response },
       ]);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Chat error:", error);
-      toast.error("Failed to get response. Please try again.");
+      toast.error(error.message || "Failed to get response. Please try again.");
     },
   });
 
   const handleSendMessage = (message: string) => {
+    if (isKeyError) {
+      toast.error("Chat service is not properly configured. Please try again later.");
+      return;
+    }
     chatMutation.mutate(message);
   };
+
+  if (isCheckingKey) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="flex items-center justify-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isKeyError) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="py-10">
+          <p className="text-center text-muted-foreground">
+            Chat service is currently unavailable. Please try again later.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -76,11 +127,16 @@ export const SystemChatbot = () => {
               role={message.role}
             />
           ))}
+          {chatMutation.isPending && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          )}
         </ScrollArea>
 
         <ChatInput
           onSend={handleSendMessage}
-          disabled={chatMutation.isPending || isLoadingKey}
+          disabled={chatMutation.isPending || isCheckingKey}
         />
       </CardContent>
     </Card>
