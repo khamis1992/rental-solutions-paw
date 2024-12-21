@@ -9,7 +9,7 @@ export const DashboardStats = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse] = await Promise.all([
+      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse, pendingReturnsResponse] = await Promise.all([
         // Get vehicles stats
         supabase.from("vehicles")
           .select('status', { count: 'exact' })
@@ -37,7 +37,13 @@ export const DashboardStats = () => {
         supabase.from("vehicles")
           .select('id', { count: 'exact' })
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('is_test_data', false)
+          .eq('is_test_data', false),
+
+        // Get pending returns (leases that are active and past their end date)
+        supabase.from("leases")
+          .select('id', { count: 'exact' })
+          .eq('status', 'active')
+          .lt('end_date', new Date().toISOString())
       ]);
 
       if (vehiclesResponse.error) throw vehiclesResponse.error;
@@ -45,6 +51,7 @@ export const DashboardStats = () => {
       if (paymentsResponse.error) throw paymentsResponse.error;
       if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
       if (newVehiclesResponse.error) throw newVehiclesResponse.error;
+      if (pendingReturnsResponse.error) throw pendingReturnsResponse.error;
 
       const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
@@ -59,7 +66,7 @@ export const DashboardStats = () => {
 
       const totalVehicles = vehiclesResponse.count || 0;
       const newVehicles = newVehiclesResponse.count || 0;
-      const pendingReturns = 2; // This would need to be calculated from actual data
+      const pendingReturns = pendingReturnsResponse.count || 0;
 
       return {
         totalVehicles,
