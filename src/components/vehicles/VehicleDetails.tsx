@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,7 +7,6 @@ import { MaintenanceHistory } from "./profile/MaintenanceHistory";
 import { DamageHistory } from "./profile/DamageHistory";
 import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
-import { InsuranceDetails } from "./profile/InsuranceDetails";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
@@ -21,25 +19,14 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", vehicleId],
     queryFn: async () => {
-      const [vehicleResponse, insuranceResponse] = await Promise.all([
-        supabase
-          .from("vehicles")
-          .select("*")
-          .eq("id", vehicleId)
-          .single(),
-        supabase
-          .from("vehicle_insurance")
-          .select("*")
-          .eq("vehicle_id", vehicleId)
-          .single()
-      ]);
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("id", vehicleId)
+        .single();
 
-      if (vehicleResponse.error) throw vehicleResponse.error;
-      
-      return {
-        ...vehicleResponse.data,
-        insurance: insuranceResponse.data
-      };
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -94,9 +81,8 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
       {/* Vehicle Information Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 print:hidden">
+        <TabsList className="grid w-full grid-cols-5 print:hidden">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="insurance">Insurance</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="damages">Damages</TabsTrigger>
           <TabsTrigger value="agreements">Agreements</TabsTrigger>
@@ -105,10 +91,6 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
 
         <TabsContent value="overview" className="mt-6">
           <VehicleOverview vehicle={vehicle} />
-        </TabsContent>
-
-        <TabsContent value="insurance" className="mt-6">
-          <InsuranceDetails vehicleId={vehicleId} insurance={vehicle.insurance} />
         </TabsContent>
 
         <TabsContent value="maintenance" className="mt-6 print:hidden">
