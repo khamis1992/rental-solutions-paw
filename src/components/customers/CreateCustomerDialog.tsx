@@ -46,27 +46,37 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   };
 
   const onSubmit = async (values: any) => {
+    console.log('Starting customer creation with values:', values);
     setIsLoading(true);
     try {
       // Generate a new UUID for the customer
       const newCustomerId = crypto.randomUUID();
+      console.log('Generated new customer ID:', newCustomerId);
+
+      const customerData = {
+        id: newCustomerId,
+        ...values,
+        role: "customer",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: "pending_review",
+      };
+
+      console.log('Attempting to insert customer with data:', customerData);
 
       // Insert the new customer into the profiles table
-      const { error: insertError } = await supabase
+      const { data, error: insertError } = await supabase
         .from("profiles")
-        .insert({
-          id: newCustomerId,
-          ...values,
-          role: "customer",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: "active",
-        });
+        .insert(customerData)
+        .select()
+        .single();
 
       if (insertError) {
         console.error('Error creating customer:', insertError);
         throw insertError;
       }
+
+      console.log('Customer created successfully:', data);
 
       // Show success message
       toast({
@@ -75,8 +85,10 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
       });
 
       // Invalidate queries to refresh the customer list
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      await queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+      
+      console.log('Queries invalidated, resetting form and closing dialog');
       
       // Reset form and close dialog
       form.reset();
