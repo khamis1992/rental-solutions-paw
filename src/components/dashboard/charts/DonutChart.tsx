@@ -21,12 +21,9 @@ interface DonutChartProps {
 export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => {
   return (
     <div className="relative flex-1">
-      {/* Background circles for depth effect - reduced sizes */}
+      {/* Single solid background circle without gradient/reflection */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[220px] h-[220px] rounded-full bg-gray-50" />
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[200px] h-[200px] rounded-full bg-gray-100" />
+        <div className="w-[200px] h-[200px] rounded-full bg-gray-50/80" />
       </div>
       
       {/* Center text */}
@@ -35,7 +32,7 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
         <span className="text-sm text-gray-600 mt-1">{primaryStatus?.name}</span>
       </div>
 
-      {/* Chart - adjusted height and radius */}
+      {/* Chart */}
       <ChartContainer config={config}>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
