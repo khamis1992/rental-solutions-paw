@@ -1,12 +1,13 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
+import { Json } from "@/integrations/supabase/types";
 
 interface InspectionRecord {
   id: string;
   inspection_date: string;
   inspection_type: string;
-  damage_markers: string;
+  damage_markers: Json;
   inspection_photos: string[];
 }
 
@@ -34,7 +35,7 @@ export const InspectionRecordsTable = ({ records, onViewImages }: InspectionReco
           <TableCell>{inspection.inspection_type}</TableCell>
           <TableCell>
             {inspection.damage_markers ? 
-              JSON.parse(inspection.damage_markers).length + " damages marked"
+              (Array.isArray(inspection.damage_markers) ? inspection.damage_markers.length : 0) + " damages marked"
               : "No damages"}
           </TableCell>
           <TableCell>
