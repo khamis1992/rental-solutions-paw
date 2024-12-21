@@ -9,67 +9,48 @@ export const DashboardStats = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      // Get total vehicles
-      const { count: totalVehicles } = await supabase
-        .from("vehicles")
-        .select("*", { count: "exact", head: true });
+      const [vehiclesResponse, rentalsResponse, paymentsResponse] = await Promise.all([
+        // Get vehicles stats
+        supabase.from("vehicles")
+          .select('status', { count: 'exact' })
+          .in('status', ['available', 'maintenance', 'on_rent']),
 
-      // Get vehicles added this month
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      const { count: newVehicles } = await supabase
-        .from("vehicles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startOfMonth.toISOString());
+        // Get active rentals
+        supabase.from("leases")
+          .select('status', { count: 'exact' })
+          .eq("status", "active"),
 
-      // Get active rentals
-      const { count: activeRentals } = await supabase
-        .from("leases")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active");
+        // Calculate monthly revenue
+        supabase.from("payments")
+          .select('amount')
+          .gte('created_at', new Date(new Date().setDate(1)).toISOString())
+          .eq("status", "completed")
+      ]);
 
-      // Get pending returns
-      const { count: pendingReturns } = await supabase
-        .from("leases")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active")
-        .lt("end_date", new Date().toISOString());
+      if (vehiclesResponse.error) throw vehiclesResponse.error;
+      if (rentalsResponse.error) throw rentalsResponse.error;
+      if (paymentsResponse.error) throw paymentsResponse.error;
 
-      // Calculate monthly revenue
-      const { data: monthlyPayments } = await supabase
-        .from("payments")
-        .select("amount")
-        .gte("created_at", startOfMonth.toISOString())
-        .eq("status", "completed");
+      const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
+        sum + (payment.amount || 0), 0) || 0;
 
-      const monthlyRevenue = monthlyPayments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
-
-      // Get last month's revenue for comparison
-      const lastMonth = new Date(startOfMonth);
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      
-      const { data: lastMonthPayments } = await supabase
-        .from("payments")
-        .select("amount")
-        .gte("created_at", lastMonth.toISOString())
-        .lt("created_at", startOfMonth.toISOString())
-        .eq("status", "completed");
-
-      const lastMonthRevenue = lastMonthPayments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
-
-      const revenueGrowth = lastMonthRevenue ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
+      const vehicleCounts = {
+        total: vehiclesResponse.count || 0,
+        available: vehiclesResponse.data?.filter(v => v.status === 'available').length || 0,
+        maintenance: vehiclesResponse.data?.filter(v => v.status === 'maintenance').length || 0,
+        onRent: vehiclesResponse.data?.filter(v => v.status === 'on_rent').length || 0
+      };
 
       return {
-        totalVehicles: totalVehicles || 0,
-        newVehicles: newVehicles || 0,
-        activeRentals: activeRentals || 0,
-        pendingReturns: pendingReturns || 0,
+        totalVehicles: vehicleCounts.total,
+        availableVehicles: vehicleCounts.available,
+        activeRentals: rentalsResponse.count || 0,
         monthlyRevenue,
-        revenueGrowth
+        revenueGrowth: 0 // Calculate if needed
       };
     },
+    staleTime: 60000, // Cache for 1 minute
+    cacheTime: 300000, // Keep in cache for 5 minutes
   });
 
   return (
@@ -84,7 +65,7 @@ export const DashboardStats = () => {
           description={
             <span className="flex items-center text-emerald-600">
               <ArrowUpRight className="mr-1 h-4 w-4" />
-              +{stats?.newVehicles || 0} this month
+              {stats?.availableVehicles || 0} available
             </span>
           }
         />
@@ -94,11 +75,6 @@ export const DashboardStats = () => {
           icon={FileText}
           className="shadow-md hover:shadow-lg transition-shadow"
           iconClassName="h-6 w-6 text-purple-500"
-          description={
-            <span className="flex items-center text-yellow-600">
-              {stats?.pendingReturns || 0} pending returns
-            </span>
-          }
         />
         <StatsCard
           title="Monthly Revenue"
@@ -107,10 +83,12 @@ export const DashboardStats = () => {
           className="shadow-md hover:shadow-lg transition-shadow"
           iconClassName="h-6 w-6 text-green-500"
           description={
-            <span className="flex items-center text-emerald-600">
-              <ArrowUpRight className="mr-1 h-4 w-4" />
-              {stats?.revenueGrowth.toFixed(1)}% from last month
-            </span>
+            stats?.revenueGrowth ? (
+              <span className="flex items-center text-emerald-600">
+                <ArrowUpRight className="mr-1 h-4 w-4" />
+                {stats.revenueGrowth.toFixed(1)}% from last month
+              </span>
+            ) : null
           }
         />
       </div>
@@ -119,3 +97,5 @@ export const DashboardStats = () => {
     </div>
   );
 };
+
+export default DashboardStats;

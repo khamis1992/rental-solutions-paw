@@ -5,16 +5,14 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Lazy load components
-const DashboardStats = lazy(() => import("@/components/dashboard/DashboardStats"));
-const UpcomingRentals = lazy(() => import("@/components/dashboard/UpcomingRentals"));
-const DashboardAlerts = lazy(() => import("@/components/dashboard/DashboardAlerts"));
-const QuickActions = lazy(() => import("@/components/dashboard/QuickActions"));
-const WelcomeHeader = lazy(() => import("@/components/dashboard/WelcomeHeader"));
-const RecentActivity = lazy(() => import("@/components/dashboard/RecentActivity"));
-const SystemChatbot = lazy(() => import("@/components/chat/SystemChatbot"));
+const DashboardStats = lazy(() => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })));
+const UpcomingRentals = lazy(() => import("@/components/dashboard/UpcomingRentals").then(module => ({ default: module.UpcomingRentals })));
+const DashboardAlerts = lazy(() => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })));
+const QuickActions = lazy(() => import("@/components/dashboard/QuickActions").then(module => ({ default: module.QuickActions })));
+const WelcomeHeader = lazy(() => import("@/components/dashboard/WelcomeHeader").then(module => ({ default: module.WelcomeHeader })));
+const RecentActivity = lazy(() => import("@/components/dashboard/RecentActivity").then(module => ({ default: module.RecentActivity })));
+const SystemChatbot = lazy(() => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })));
 
-// Loading fallback component
 const ComponentLoader = () => (
   <div className="w-full h-[200px] flex items-center justify-center">
     <Skeleton className="w-full h-full rounded-lg" />

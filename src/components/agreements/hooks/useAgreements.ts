@@ -27,10 +27,8 @@ export interface Agreement {
 export const useAgreements = () => {
   const queryClient = useQueryClient();
 
-  // Set up comprehensive real-time subscriptions
   useEffect(() => {
-    // Listen for agreement changes
-    const agreementChannel = supabase
+    const channel = supabase
       .channel('agreement-changes')
       .on(
         'postgres_changes',
@@ -57,72 +55,15 @@ export const useAgreements = () => {
       )
       .subscribe();
 
-    // Listen for payment status changes
-    const paymentChannel = supabase
-      .channel('payment-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'payments'
-        },
-        async (payload) => {
-          console.log('Payment update received:', payload);
-          // Invalidate both agreements and payments queries
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['agreements'] }),
-            queryClient.invalidateQueries({ queryKey: ['payments'] })
-          ]);
-          
-          toast.info('Payment status updated', {
-            description: 'Payment information has been updated.'
-          });
-        }
-      )
-      .subscribe();
-
-    // Listen for customer profile changes
-    const profileChannel = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        async (payload) => {
-          console.log('Profile update received:', payload);
-          // Invalidate agreements to refresh customer information
-          await queryClient.invalidateQueries({ queryKey: ['agreements'] });
-        }
-      )
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(agreementChannel);
-      supabase.removeChannel(paymentChannel);
-      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(channel);
     };
   }, [queryClient]);
 
   return useQuery({
     queryKey: ['agreements'],
     queryFn: async () => {
-      console.log("Starting to fetch agreements...");
-      
-      const { count, error: countError } = await supabase
-        .from('leases')
-        .select('*', { count: 'exact', head: true });
-      
-      console.log("Total agreements in database:", count);
-      
-      if (countError) {
-        console.error("Error checking agreements count:", countError);
-        throw countError;
-      }
-
+      // Optimize the query by selecting only needed fields
       const { data, error } = await supabase
         .from('leases')
         .select(`
@@ -132,20 +73,19 @@ export const useAgreements = () => {
           total_amount,
           start_date,
           end_date,
-          customer_id,
-          vehicle_id,
-          profiles:customer_id (
+          profiles!inner (
             id,
             full_name
           ),
-          vehicles:vehicle_id (
+          vehicles!inner (
             id,
             make,
             model,
             year,
             license_plate
           )
-        `);
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching agreements:", error);
@@ -153,30 +93,25 @@ export const useAgreements = () => {
         throw error;
       }
 
-      console.log("Raw agreements data:", data);
-      
-      const transformedData = data?.map((lease: any) => ({
+      return data?.map(lease => ({
         id: lease.id,
         agreement_number: lease.agreement_number,
         customer: {
-          id: lease.profiles?.id || lease.customer_id,
-          full_name: lease.profiles?.full_name || 'Unknown Customer',
+          id: lease.profiles.id,
+          full_name: lease.profiles.full_name,
         },
         vehicle: {
-          id: lease.vehicles?.id || lease.vehicle_id,
-          make: lease.vehicles?.make || '',
-          model: lease.vehicles?.model || '',
-          year: lease.vehicles?.year || '',
-          license_plate: lease.vehicles?.license_plate || 'N/A',
+          id: lease.vehicles.id,
+          make: lease.vehicles.make,
+          model: lease.vehicles.model,
+          year: lease.vehicles.year,
+          license_plate: lease.vehicles.license_plate,
         },
-        start_date: lease.start_date || '',
-        end_date: lease.end_date || '',
-        status: lease.status || 'pending',
-        total_amount: lease.total_amount || 0,
+        start_date: lease.start_date,
+        end_date: lease.end_date,
+        status: lease.status,
+        total_amount: lease.total_amount,
       })) || [];
-
-      console.log("Transformed agreements data:", transformedData);
-      return transformedData;
     },
   });
 };
