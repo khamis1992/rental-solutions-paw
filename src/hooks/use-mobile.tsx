@@ -5,11 +5,14 @@ import { useState, useEffect } from "react";
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
-  // Initialize with null to indicate loading state
-  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  // Initialize with false as default to avoid hydration mismatch
+  const [isMobile, setIsMobile] = useState(false);
+  // Track if component is mounted
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Function to check if window width is mobile
+    setMounted(true);
+    
     const checkMobile = () => {
       if (typeof window !== 'undefined') {
         setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
@@ -28,6 +31,8 @@ export function useIsMobile() {
     };
   }, []);
 
-  // Return false as default if isMobile is null (during SSR or initial load)
-  return isMobile ?? false;
+  // Return false during SSR and initial mount
+  if (!mounted) return false;
+  
+  return isMobile;
 }
