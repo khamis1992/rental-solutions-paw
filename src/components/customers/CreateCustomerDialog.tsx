@@ -25,7 +25,6 @@ interface CreateCustomerDialogProps {
 export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [customerId, setCustomerId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
@@ -41,8 +40,12 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   });
 
   const handleScanComplete = (extractedData: any) => {
-    form.setValue('full_name', extractedData.full_name);
-    form.setValue('driver_license', extractedData.id_number);
+    if (extractedData?.full_name) {
+      form.setValue('full_name', extractedData.full_name);
+    }
+    if (extractedData?.id_number) {
+      form.setValue('driver_license', extractedData.id_number);
+    }
   };
 
   const onSubmit = async (values: any) => {
@@ -79,7 +82,7 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
 
       console.log('Customer created successfully:', newCustomer);
 
-      // Invalidate and refetch customers query
+      // Invalidate and refetch customers query to update the list
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
       
       // Force a refetch of customer stats
@@ -95,7 +98,6 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
       // Reset form and close dialog
       form.reset();
       setOpen(false);
-      setCustomerId(null);
 
     } catch (error: any) {
       console.error('Error in customer creation:', error);
@@ -128,12 +130,10 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {customerId && (
-              <DocumentScanner
-                customerId={customerId}
-                onScanComplete={handleScanComplete}
-              />
-            )}
+            <DocumentScanner
+              customerId={crypto.randomUUID()}
+              onScanComplete={handleScanComplete}
+            />
             <CustomerFormFields form={form} />
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
