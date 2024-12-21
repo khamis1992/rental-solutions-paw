@@ -37,6 +37,10 @@ const VehicleInspectionDialog = ({
     e.preventDefault();
     setLoading(true);
 
+    // Close dialogs immediately
+    onComplete();
+    onOpenChange(false);
+    
     try {
       const formData = new FormData(e.target as HTMLFormElement);
       
@@ -56,9 +60,7 @@ const VehicleInspectionDialog = ({
           duration: 3000,
         });
         
-        // Close all dialogs and navigate
-        onComplete();
-        onOpenChange(false);
+        // Navigate to maintenance page
         navigate('/maintenance');
       }
     } finally {
