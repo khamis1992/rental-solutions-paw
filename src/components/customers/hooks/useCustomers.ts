@@ -20,7 +20,7 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
     queryKey: ['customers', searchQuery, page, pageSize],
     queryFn: async (): Promise<UseCustomersResult> => {
       try {
-        console.log("Fetching customers with search:", searchQuery, "page:", page, "pageSize:", pageSize);
+        console.log("Fetching customers with search:", searchQuery);
         
         // First get total count for pagination
         const countQuery = supabase
@@ -39,12 +39,10 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
           throw countError;
         }
 
-        console.log("Total customer count:", count);
-
         // Then fetch paginated data
         let query = supabase
           .from('profiles')
-          .select('*')
+          .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url, role, address, contract_document_url, created_at')
           .eq('role', 'customer')
           .range(page * pageSize, (page + 1) * pageSize - 1)
           .order('created_at', { ascending: false });
@@ -62,8 +60,6 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
         }
         
         console.log("Fetched customers:", data?.length || 0, "records");
-        console.log("Customer data:", data);
-
         return {
           customers: (data || []) as Customer[],
           totalCount: count || 0,
@@ -79,6 +75,7 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
         };
       }
     },
-    staleTime: 0, // Disable cache temporarily for debugging
+    retry: 1,
+    staleTime: 30000,
   });
 };
