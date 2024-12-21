@@ -31,81 +31,50 @@ const queryClient = new QueryClient({
 });
 
 // Create a memoized app wrapper component
-const AppWrapper = React.memo(({ session }: { session: any }) => {
-  const startRender = performance.now();
-  
-  React.useEffect(() => {
-    // Log render time in development only
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`App rendered in ${performance.now() - startRender}ms`);
-    }
-  }, [startRender]);
-
-  return (
-    <React.StrictMode>
-      <ErrorBoundary>
-        <BrowserRouter>
-          <SessionContextProvider 
-            supabaseClient={supabase}
-            initialSession={session}
-          >
-            <QueryClientProvider client={queryClient}>
+const AppWrapper = ({ session }: { session: any }) => (
+  <React.StrictMode>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <SessionContextProvider 
+          supabaseClient={supabase}
+          initialSession={session}
+        >
+          <QueryClientProvider client={queryClient}>
+            <React.Fragment>
               <TooltipProvider>
                 <App />
               </TooltipProvider>
-            </QueryClientProvider>
-          </SessionContextProvider>
-        </BrowserRouter>
-      </ErrorBoundary>
-    </React.StrictMode>
-  );
-});
+            </React.Fragment>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  </React.StrictMode>
+);
 
 AppWrapper.displayName = 'AppWrapper';
 
 // Initialize app with better error handling and cleanup
 const initializeApp = async () => {
-  if (process.env.NODE_ENV === 'development') {
-    console.time('App Initialization');
-  }
-  
-  let authSubscription: { unsubscribe: () => void } | null = null;
-
   try {
     const { data: { session } } = await supabase.auth.getSession();
-
-    // Set up auth state change listener with cleanup
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (_event === 'TOKEN_REFRESHED') {
-        // Invalidate auth-dependent queries when token is refreshed
-        queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'auth-dependent' });
-      } else if (_event === 'SIGNED_OUT') {
-        // Clear cache and local storage on sign out
-        queryClient.clear();
-        localStorage.clear();
-      }
-      
       root.render(<AppWrapper session={session} />);
     });
 
-    authSubscription = subscription;
-    
     // Initial render
     root.render(<AppWrapper session={session} />);
+
+    // Cleanup subscription on unload
+    window.addEventListener('unload', () => {
+      subscription?.unsubscribe();
+    });
 
   } catch (error) {
     console.error('Failed to initialize app:', error);
     root.render(<AppWrapper session={null} />);
-  } finally {
-    if (process.env.NODE_ENV === 'development') {
-      console.timeEnd('App Initialization');
-    }
   }
-
-  // Cleanup subscription on unload
-  window.addEventListener('unload', () => {
-    authSubscription?.unsubscribe();
-  });
 };
 
 initializeApp();
