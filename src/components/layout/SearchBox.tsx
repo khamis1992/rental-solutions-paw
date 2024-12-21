@@ -17,6 +17,7 @@ import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDia
 import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 export const SearchBox = () => {
   const [open, setOpen] = useState(false);
@@ -70,8 +71,8 @@ export const SearchBox = () => {
       }
     },
     enabled: debouncedSearch.length >= 2,
-    staleTime: 30000, // Cache results for 30 seconds
-    gcTime: 60000, // Keep cache for 1 minute (formerly cacheTime)
+    staleTime: 30000,
+    gcTime: 60000,
     retry: 1,
   });
 
@@ -104,72 +105,74 @@ export const SearchBox = () => {
       <CommandDialog 
         open={open} 
         onOpenChange={setOpen}
-        className="max-w-[90vw] md:max-w-[640px]"
+        shouldFilter={false} // Add this prop to fix the typing issue
       >
-        <CommandInput 
-          placeholder="Type to search..." 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-          className="h-10 md:h-12"
-        />
-        <CommandList className="max-h-[50vh] md:max-h-[400px]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : error ? (
-            <CommandEmpty>Error loading results. Please try again.</CommandEmpty>
-          ) : !searchQuery ? (
-            <CommandEmpty>Start typing to search...</CommandEmpty>
-          ) : searchQuery.length < 2 ? (
-            <CommandEmpty>Please enter at least 2 characters...</CommandEmpty>
-          ) : !searchResults?.vehicles.length && 
-             !searchResults?.customers.length && 
-             !searchResults?.agreements.length ? (
-            <CommandEmpty>No results found.</CommandEmpty>
-          ) : (
-            <>
-              {searchResults?.vehicles.length > 0 && (
-                <CommandGroup heading="Vehicles">
-                  {searchResults.vehicles.map((vehicle) => (
-                    <CommandItem
-                      key={vehicle.id}
-                      onSelect={() => handleSelect("vehicle", vehicle.id)}
-                    >
-                      {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
+        <div className={cn("max-w-[90vw] md:max-w-[640px]")}>
+          <CommandInput 
+            placeholder="Type to search..." 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            className="h-10 md:h-12"
+          />
+          <CommandList className="max-h-[50vh] md:max-h-[400px]">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : error ? (
+              <CommandEmpty>Error loading results. Please try again.</CommandEmpty>
+            ) : !searchQuery ? (
+              <CommandEmpty>Start typing to search...</CommandEmpty>
+            ) : searchQuery.length < 2 ? (
+              <CommandEmpty>Please enter at least 2 characters...</CommandEmpty>
+            ) : !searchResults?.vehicles.length && 
+               !searchResults?.customers.length && 
+               !searchResults?.agreements.length ? (
+              <CommandEmpty>No results found.</CommandEmpty>
+            ) : (
+              <>
+                {searchResults?.vehicles.length > 0 && (
+                  <CommandGroup heading="Vehicles">
+                    {searchResults.vehicles.map((vehicle) => (
+                      <CommandItem
+                        key={vehicle.id}
+                        onSelect={() => handleSelect("vehicle", vehicle.id)}
+                      >
+                        {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
 
-              {searchResults?.customers.length > 0 && (
-                <CommandGroup heading="Customers">
-                  {searchResults.customers.map((customer) => (
-                    <CommandItem
-                      key={customer.id}
-                      onSelect={() => handleSelect("customer", customer.id)}
-                    >
-                      {customer.full_name} - {customer.phone_number}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
+                {searchResults?.customers.length > 0 && (
+                  <CommandGroup heading="Customers">
+                    {searchResults.customers.map((customer) => (
+                      <CommandItem
+                        key={customer.id}
+                        onSelect={() => handleSelect("customer", customer.id)}
+                      >
+                        {customer.full_name} - {customer.phone_number}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
 
-              {searchResults?.agreements.length > 0 && (
-                <CommandGroup heading="Agreements">
-                  {searchResults.agreements.map((agreement) => (
-                    <CommandItem
-                      key={agreement.id}
-                      onSelect={() => handleSelect("agreement", agreement.id)}
-                    >
-                      Agreement #{agreement.agreement_number} - {agreement.vehicles?.make} {agreement.vehicles?.model}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </>
-          )}
-        </CommandList>
+                {searchResults?.agreements.length > 0 && (
+                  <CommandGroup heading="Agreements">
+                    {searchResults.agreements.map((agreement) => (
+                      <CommandItem
+                        key={agreement.id}
+                        onSelect={() => handleSelect("agreement", agreement.id)}
+                      >
+                        Agreement #{agreement.agreement_number} - {agreement.vehicles?.make} {agreement.vehicles?.model}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </>
+            )}
+          </CommandList>
+        </div>
       </CommandDialog>
 
       {selectedVehicle && (

@@ -12,8 +12,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <SidebarProvider defaultCollapsed={isMobile}>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
+      <SidebarProvider>
         <DashboardHeader />
         <div className="flex pt-[var(--header-height,56px)]">
           <DashboardSidebar />
@@ -21,7 +21,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {children}
           </main>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </div>
   );
 };
