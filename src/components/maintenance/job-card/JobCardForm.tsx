@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StaffSelect } from "./StaffSelect";
 
 interface JobCardFormProps {
   formData: {
@@ -14,7 +12,6 @@ interface JobCardFormProps {
     description: string;
     scheduled_date: string;
     cost: string;
-    performed_by: string;
   };
   vehicles: any[];
   categories: any[];
@@ -97,11 +94,6 @@ export function JobCardForm({
           placeholder="Describe the maintenance needed"
         />
       </div>
-
-      <StaffSelect
-        value={formData.performed_by}
-        onValueChange={(value) => handleChange("performed_by", value)}
-      />
 
       <div className="space-y-2">
         <Label htmlFor="scheduled_date">Scheduled Date</Label>

@@ -22,10 +22,8 @@ export function CreateJobDialog() {
     description: "",
     scheduled_date: "",
     cost: "",
-    performed_by: "",
   });
 
-  // Fetch available vehicles
   const { data: vehicles = [] } = useQuery({
     queryKey: ["vehicles"],
     queryFn: async () => {
@@ -108,7 +106,6 @@ export function CreateJobDialog() {
       description: "",
       scheduled_date: "",
       cost: "",
-      performed_by: "",
     });
   };
 
