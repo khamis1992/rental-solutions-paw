@@ -22,10 +22,6 @@ const DashboardStats = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
   "DashboardStats"
 );
-const UpcomingRentals = lazyLoadComponent(
-  () => import("@/components/dashboard/UpcomingRentals").then(module => ({ default: module.UpcomingRentals })),
-  "UpcomingRentals"
-);
 const DashboardAlerts = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })),
   "DashboardAlerts"
@@ -88,14 +84,7 @@ const Index = () => {
         </ErrorBoundary>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 lg:gap-8">
-          <div className="lg:col-span-4">
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Upcoming Rentals" />}>
-                <UpcomingRentals />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-7">
             <ErrorBoundary>
               <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
                 <DashboardAlerts />
