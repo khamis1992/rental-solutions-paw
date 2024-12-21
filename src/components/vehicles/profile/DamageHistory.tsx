@@ -71,18 +71,34 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
 
       if (inspectionError) throw inspectionError;
 
-      // Get damage records
+      // Get ALL damage records for this vehicle, including maintenance-related ones
       const { data: damageData, error: damageError } = await supabase
         .from("damages")
-        .select("*, leases(customer_id, profiles(full_name))")
+        .select(`
+          *,
+          leases:lease_id (
+            customer_id,
+            agreement_type,
+            profiles:customer_id (
+              full_name
+            )
+          )
+        `)
         .eq("vehicle_id", vehicleId)
         .order("reported_date", { ascending: false });
 
       if (damageError) throw damageError;
 
+      // Process damage records to include source information
+      const processedDamageData = damageData.map(damage => ({
+        ...damage,
+        source: damage.leases?.agreement_type === 'maintenance' ? 'Maintenance Inspection' : 'Rental Agreement',
+        customer_name: damage.leases?.profiles?.full_name || 'System Inspection'
+      }));
+
       return {
         inspections: inspectionData || [],
-        damages: damageData || [],
+        damages: processedDamageData || [],
       };
     },
   });

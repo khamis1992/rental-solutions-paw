@@ -1,17 +1,15 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface DamageRecord {
   id: string;
   reported_date: string;
   description: string;
   notes: string;
-  leases: {
-    profiles?: {
-      full_name: string;
-    };
-  };
+  source: string;
+  customer_name: string;
   images: string[];
   status: string;
 }
@@ -28,7 +26,8 @@ export const DamageReportsTable = ({ records, onViewImages }: DamageReportsTable
         <TableHead>Date</TableHead>
         <TableHead>Description</TableHead>
         <TableHead>Location</TableHead>
-        <TableHead>Customer</TableHead>
+        <TableHead>Source</TableHead>
+        <TableHead>Reporter</TableHead>
         <TableHead>Photos</TableHead>
         <TableHead>Status</TableHead>
       </TableRow>
@@ -42,8 +41,11 @@ export const DamageReportsTable = ({ records, onViewImages }: DamageReportsTable
           <TableCell>{damage.description}</TableCell>
           <TableCell>{damage.notes}</TableCell>
           <TableCell>
-            {damage.leases?.profiles?.full_name || "N/A"}
+            <Badge variant={damage.source === 'Maintenance Inspection' ? 'secondary' : 'default'}>
+              {damage.source}
+            </Badge>
           </TableCell>
+          <TableCell>{damage.customer_name}</TableCell>
           <TableCell>
             {damage.images && damage.images.length > 0 && (
               <Button
