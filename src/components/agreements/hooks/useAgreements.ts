@@ -1,27 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-export interface Agreement {
-  id: string;
-  agreement_number: string;
-  customer: {
-    id: string;
-    full_name: string;
-  };
-  vehicle: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-  start_date: string;
-  end_date: string;
-  status: "pending_payment" | "active" | "closed";
-  total_amount: number;
-  license_no?: string; // Added missing property
-}
+import { AgreementWithRelations } from "@/types/database/agreement.types";
 
 export const useAgreements = () => {
   return useQuery({
@@ -58,7 +38,7 @@ export const useAgreements = () => {
           throw error;
         }
 
-        return data as Agreement[];
+        return data as AgreementWithRelations[];
       } catch (err) {
         console.error("Error in agreements query:", err);
         throw err;
