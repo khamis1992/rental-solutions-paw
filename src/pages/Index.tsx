@@ -64,7 +64,7 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto space-y-6 px-4 py-6 md:space-y-8 md:px-6 md:py-8">
+      <div className="pl-4 pr-6 py-6 md:py-8 space-y-6 md:space-y-8">
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
             <WelcomeHeader />

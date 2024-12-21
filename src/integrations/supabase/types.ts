@@ -2205,6 +2205,59 @@ export type Database = {
           },
         ]
       }
+      vehicle_insurance: {
+        Row: {
+          coverage_amount: number
+          coverage_type: string
+          created_at: string | null
+          end_date: string
+          id: string
+          policy_number: string
+          premium_amount: number
+          provider: string
+          start_date: string
+          status: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          coverage_amount: number
+          coverage_type: string
+          created_at?: string | null
+          end_date: string
+          id?: string
+          policy_number: string
+          premium_amount: number
+          provider: string
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          coverage_amount?: number
+          coverage_type?: string
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          policy_number?: string
+          premium_amount?: number
+          provider?: string
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_insurance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_schedules: {
         Row: {
           created_at: string | null
