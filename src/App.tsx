@@ -5,8 +5,11 @@ import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 
+// Define route component type
+type RouteComponent = React.LazyExoticComponent<React.ComponentType>;
+
 // Lazy load all pages with loading fallback
-const lazyLoad = (Component: React.LazyExoticComponent<React.ComponentType>) => (
+const lazyLoad = (Component: RouteComponent) => (
   <Suspense fallback={<div>Loading...</div>}>
     <Component />
   </Suspense>
@@ -22,7 +25,13 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
 const Reports = lazy(() => import("@/pages/Reports"));
 
-const protectedRoutes = [
+// Define protected route type
+interface ProtectedRoute {
+  path: string;
+  component: RouteComponent;
+}
+
+const protectedRoutes: ProtectedRoute[] = [
   { path: "/", component: Dashboard },
   { path: "/vehicles", component: Vehicles },
   { path: "/agreements", component: Agreements },
