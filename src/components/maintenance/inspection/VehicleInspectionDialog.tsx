@@ -69,10 +69,14 @@ const VehicleInspectionDialog = ({
 
       if (inspectionError) throw inspectionError;
 
-      // Update maintenance status to in_progress
+      // Update maintenance status to in_progress and make it visible in the list
       const { error: maintenanceUpdateError } = await supabase
         .from('maintenance')
-        .update({ status: 'in_progress' })
+        .update({ 
+          status: 'in_progress',
+          description: 'Inspection completed. Job card ready.',
+          scheduled_date: new Date().toISOString() // Set to current date to make it appear in the list
+        })
         .eq('id', maintenanceId);
 
       if (maintenanceUpdateError) throw maintenanceUpdateError;
