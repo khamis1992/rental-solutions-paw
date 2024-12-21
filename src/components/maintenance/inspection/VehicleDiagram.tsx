@@ -20,46 +20,50 @@ interface VehicleDiagramProps {
 }
 
 const generateDescription = (marker: DamageMarker): string => {
-  // Define zones for different parts of the vehicle based on view
-  const getZone = (x: number, y: number, view: string) => {
-    // Convert percentages to a 0-100 scale for easier reading
-    const xPos = x;
-    const yPos = y;
-    
-    if (view === "front") {
-      if (yPos < 33) return "upper front";
-      if (yPos < 66) return "middle front";
-      return "lower front";
-    }
-    
-    if (view === "rear") {
-      if (yPos < 33) return "upper rear";
-      if (yPos < 66) return "middle rear";
-      return "lower rear";
+  // Convert percentages to a 0-100 scale for easier reading
+  const xPos = marker.x;
+  const yPos = marker.y;
+  
+  // Define specific zones based on view
+  const getSpecificZone = (x: number, y: number, view: string) => {
+    if (view === "front" || view === "rear") {
+      const verticalZone = y < 33 ? "upper" : y < 66 ? "middle" : "lower";
+      const horizontalZone = x < 33 ? "left" : x < 66 ? "center" : "right";
+      return `${verticalZone} ${horizontalZone}`;
     }
     
     if (view === "left" || view === "right") {
-      if (xPos < 25) return "front";
-      if (xPos < 50) return "front-middle";
-      if (xPos < 75) return "rear-middle";
-      return "rear";
+      const verticalZone = y < 33 ? "roof line" : y < 66 ? "door level" : "lower panel";
+      let horizontalZone = "";
+      if (x < 25) horizontalZone = "front quarter";
+      else if (x < 50) horizontalZone = "front door area";
+      else if (x < 75) horizontalZone = "rear door area";
+      else horizontalZone = "rear quarter";
+      return `${horizontalZone} at ${verticalZone}`;
     }
     
     if (view === "top") {
-      if (yPos < 33) return "front";
-      if (yPos < 66) return "middle";
-      return "rear";
+      const lengthZone = y < 33 ? "front" : y < 66 ? "middle" : "rear";
+      const widthZone = x < 33 ? "left" : x < 66 ? "center" : "right";
+      return `${lengthZone} ${widthZone}`;
     }
     
     return "unspecified area";
   };
 
-  const zone = getZone(marker.x, marker.y, marker.view);
-  const side = marker.view === "left" || marker.view === "right" 
+  // Get the specific zone
+  const specificZone = getSpecificZone(xPos, yPos, marker.view);
+  
+  // Generate appropriate preposition based on view
+  const preposition = marker.view === "top" ? "on" : "in";
+  
+  // Format the view description
+  const viewDescription = marker.view === "left" || marker.view === "right" 
     ? `${marker.view} side` 
     : marker.view;
 
-  return `Damage detected in the ${zone} section of the vehicle's ${side}`;
+  // Generate the full description
+  return `Damage detected ${preposition} the ${specificZone} section of the vehicle's ${viewDescription}`;
 };
 
 export const VehicleDiagram = ({ 
