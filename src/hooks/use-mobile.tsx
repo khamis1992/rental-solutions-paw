@@ -1,22 +1,18 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import React from 'react';
 
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
-  // Initialize with false as default to avoid hydration mismatch
-  const [isMobile, setIsMobile] = useState(false);
-  // Track if component is mounted
-  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     setMounted(true);
     
     const checkMobile = () => {
-      if (typeof window !== 'undefined') {
-        setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-      }
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
 
     // Initial check
