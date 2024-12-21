@@ -3,46 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AgreementWithRelations } from "@/types/database/agreement.types";
 
-export interface Agreement {
-  id: string;
-  agreement_number: string | null;
-  agreement_type: string;
-  customer_id: string;
-  vehicle_id: string;
-  start_date: string | null;
-  end_date: string | null;
-  status: string;
-  initial_mileage: number;
-  return_mileage: number | null;
-  total_amount: number;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  down_payment: number | null;
-  monthly_payment: number | null;
-  interest_rate: number | null;
-  lease_duration: string | null;
-  early_payoff_allowed: boolean | null;
-  ownership_transferred: boolean | null;
-  trade_in_value: number | null;
-  late_fee_rate: number | null;
-  late_fee_grace_period: string | null;
-  damage_penalty_rate: number | null;
-  fuel_penalty_rate: number | null;
-  late_return_fee: number | null;
-  customer?: {
-    id: string;
-    full_name: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
 export const useAgreements = () => {
   return useQuery({
     queryKey: ["agreements"],
@@ -72,8 +32,8 @@ export const useAgreements = () => {
           throw error;
         }
 
-        // Transform the data to match Agreement type
-        const transformedData: Agreement[] = data.map((item: any) => ({
+        // Transform the data to match AgreementWithRelations type
+        const transformedData: AgreementWithRelations[] = data.map((item: any) => ({
           id: item.id,
           agreement_number: item.agreement_number,
           agreement_type: item.agreement_type,
