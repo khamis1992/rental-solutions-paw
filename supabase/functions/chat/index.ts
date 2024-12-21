@@ -70,6 +70,12 @@ serve(async (req) => {
       throw new Error('Chat service is not properly configured');
     }
 
+    // Ensure proper message format with system message first
+    const formattedMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages
+    ];
+
     console.log('Making request to Perplexity API...');
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -79,10 +85,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'llama-3.1-sonar-large-128k-online',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
+        messages: formattedMessages,
         temperature: 0.2,
         max_tokens: 1000,
         top_p: 0.9,

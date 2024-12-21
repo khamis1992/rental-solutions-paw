@@ -37,9 +37,17 @@ export const SystemChatbot = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      console.log('Sending message:', message);
+      // Create a new array with only the messages needed for the API
+      const chatHistory = messages.slice(-4); // Take last 4 messages to maintain context
+      const apiMessages = [
+        ...chatHistory,
+        { role: "user" as const, content: message }
+      ];
+
+      console.log('Sending messages:', apiMessages);
+      
       const { data, error } = await supabase.functions.invoke("chat", {
-        body: { messages: [...messages, { role: "user", content: message }] },
+        body: { messages: apiMessages },
       });
       
       if (error) {
