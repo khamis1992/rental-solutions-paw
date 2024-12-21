@@ -12,7 +12,6 @@ export const JobCardActions = ({ id }: JobCardActionsProps) => {
   const navigate = useNavigate();
 
   const handleInspectionClick = () => {
-    toast.info("Opening vehicle inspection form with AI-powered damage detection");
     navigate(`/maintenance/${id}/inspection`);
   };
 

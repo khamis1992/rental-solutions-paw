@@ -9,13 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     vehicle_id: "",
     service_type: "",
@@ -71,8 +69,6 @@ export function CreateJobDialog() {
       queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] });
 
       toast.success("Job card created successfully");
-      
-      // First close the dialog
       setOpen(false);
       
       // Reset form data
@@ -83,11 +79,6 @@ export function CreateJobDialog() {
         scheduled_date: "",
         cost: "",
       });
-
-      // Then navigate after a short delay to ensure dialog is closed
-      setTimeout(() => {
-        navigate(`/maintenance/${maintenanceData.id}/inspection`);
-      }, 100);
       
     } catch (error: any) {
       console.error("Error creating job card:", error);
@@ -108,7 +99,7 @@ export function CreateJobDialog() {
         <DialogHeader>
           <DialogTitle>Create New Job Card</DialogTitle>
           <DialogDescription>
-            Create a new maintenance job card. After creation, you can perform a vehicle inspection with AI-powered damage detection.
+            Create a new maintenance job card for vehicle maintenance tracking.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -172,7 +163,7 @@ export function CreateJobDialog() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating..." : "Perform Vehicle Inspection"}
+            {loading ? "Creating..." : "Create Job Card"}
           </Button>
         </form>
       </DialogContent>
