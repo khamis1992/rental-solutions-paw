@@ -62,16 +62,25 @@ const VehicleInspectionDialog = ({
         maintenance_id: maintenanceId
       };
 
-      const { error } = await supabase
+      // Create the inspection record
+      const { error: inspectionError } = await supabase
         .from('vehicle_inspections')
         .insert(inspectionData);
 
-      if (error) throw error;
+      if (inspectionError) throw inspectionError;
+
+      // Update maintenance status to in_progress
+      const { error: maintenanceUpdateError } = await supabase
+        .from('maintenance')
+        .update({ status: 'in_progress' })
+        .eq('id', maintenanceId);
+
+      if (maintenanceUpdateError) throw maintenanceUpdateError;
 
       toast.success("Inspection completed successfully");
       onComplete();
       navigate(`/maintenance`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving inspection:', error);
       toast.error("Failed to save inspection. Please try again.");
     } finally {
