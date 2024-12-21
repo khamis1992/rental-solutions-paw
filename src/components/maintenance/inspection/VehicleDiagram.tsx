@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Json } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 interface DamageMarker {
   id: string;
@@ -10,6 +11,7 @@ interface DamageMarker {
   y: number;
   view: string;
   description: string;
+  photoUrl?: string;
 }
 
 interface VehicleDiagramProps {
@@ -115,7 +117,7 @@ export const VehicleDiagram = ({
               .map(marker => (
                 <div
                   key={marker.id}
-                  className="absolute w-4 h-4 bg-red-500 rounded-full -translate-x-2 -translate-y-2 cursor-pointer"
+                  className="absolute w-4 h-4 bg-red-500 rounded-full -translate-x-2 -translate-y-2 cursor-pointer hover:ring-2 hover:ring-red-300"
                   style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
                   onClick={(e) => {
                     e.stopPropagation();

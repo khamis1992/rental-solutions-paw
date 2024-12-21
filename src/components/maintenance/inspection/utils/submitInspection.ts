@@ -8,6 +8,7 @@ interface DamageMarker {
   y: number;
   view: string;
   description: string;
+  photoUrl?: string;
 }
 
 export const submitInspection = async ({
@@ -45,27 +46,34 @@ export const submitInspection = async ({
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${maintenanceData.vehicle_id}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data } = await supabase.storage
           .from('inspection_photos')
           .upload(filePath, photo);
 
         if (uploadError) throw uploadError;
-        return filePath;
+
+        // Get the public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('inspection_photos')
+          .getPublicUrl(filePath);
+
+        return publicUrl;
       })
     );
 
-    // Create the inspection record - Convert damageMarkers to Json type
+    // Create the inspection record with properly typed damage markers
     const inspectionData = {
       vehicle_id: maintenanceData.vehicle_id,
       inspection_type: 'check_in',
       odometer_reading: parseInt(formData.get('odometer') as string),
       fuel_level: fuelLevel,
-      damage_markers: damageMarkers as unknown as Json, // Type assertion to match Supabase's Json type
+      damage_markers: damageMarkers as unknown as Json,
       renter_signature: renterSignature,
       staff_signature: staffSignature,
       inspection_date: new Date().toISOString(),
       maintenance_id: maintenanceId,
-      inspection_photos: uploadedPhotos
+      inspection_photos: uploadedPhotos,
+      photos: uploadedPhotos // For backward compatibility
     };
 
     const { error: inspectionError } = await supabase
@@ -106,6 +114,7 @@ export const submitInspection = async ({
 
     if (maintenanceUpdateError) throw maintenanceUpdateError;
 
+    toast.success("Inspection saved successfully");
     return { success: true };
   } catch (error: any) {
     console.error('Error saving inspection:', error);
