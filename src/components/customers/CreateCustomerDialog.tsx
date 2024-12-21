@@ -69,7 +69,12 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
 
       if (insertError) {
         console.error('Error creating customer:', insertError);
-        throw insertError;
+        toast({
+          title: "Error",
+          description: `Failed to create customer: ${insertError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log('Customer created successfully:', newCustomer);
