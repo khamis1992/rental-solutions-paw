@@ -22,20 +22,22 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
   return (
     <div className="relative flex-1">
       <div className="absolute inset-0 flex items-center justify-center flex-col">
-        <span className="text-4xl font-bold">{primaryStatus?.value}</span>
-        <span className="text-xl">{primaryStatus?.name}</span>
+        <span className="text-2xl font-semibold">{primaryStatus?.value}</span>
+        <span className="text-sm text-muted-foreground">{primaryStatus?.name}</span>
       </div>
       <ChartContainer config={config}>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={80}
-              outerRadius={120}
-              paddingAngle={2}
+              innerRadius={60}
+              outerRadius={90}
+              paddingAngle={1}
               dataKey="value"
+              startAngle={90}
+              endAngle={-270}
             >
               {data?.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
