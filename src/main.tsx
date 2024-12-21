@@ -58,20 +58,20 @@ const initializeApp = async () => {
 const renderApp = (session: any) => {
   root.render(
     <BrowserRouter>
-      <ErrorBoundary>
-        <React.StrictMode>
-          <SessionContextProvider 
-            supabaseClient={supabase}
-            initialSession={session}
-          >
-            <QueryClientProvider client={queryClient}>
-              <TooltipProvider>
+      <React.StrictMode>
+        <SessionContextProvider 
+          supabaseClient={supabase}
+          initialSession={session}
+        >
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <ErrorBoundary>
                 <App />
-              </TooltipProvider>
-            </QueryClientProvider>
-          </SessionContextProvider>
-        </React.StrictMode>
-      </ErrorBoundary>
+              </ErrorBoundary>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </React.StrictMode>
     </BrowserRouter>
   );
 };
