@@ -53,6 +53,11 @@ I can help users by:
 5. Guiding through complex processes
 `;
 
+interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -70,55 +75,69 @@ serve(async (req) => {
       throw new Error('Chat service is not properly configured');
     }
 
-    // Ensure proper message format with system message first and alternating roles
-    const formattedMessages = [
+    // Format messages with proper typing
+    const formattedMessages: ChatMessage[] = [
       { role: "system", content: systemPrompt }
     ];
 
-    // Add messages ensuring alternating roles
-    messages.forEach((msg: { role: string; content: string }, index: number) => {
-      if (index === 0 || msg.role !== messages[index - 1].role) {
-        formattedMessages.push(msg);
-      }
-    });
+    // Add messages ensuring alternating roles and proper typing
+    if (Array.isArray(messages)) {
+      messages.forEach((msg: ChatMessage, index: number) => {
+        if (
+          index === 0 || 
+          (messages[index - 1] && msg.role !== messages[index - 1].role)
+        ) {
+          formattedMessages.push({
+            role: msg.role,
+            content: msg.content
+          });
+        }
+      });
+    }
 
     console.log('Making request to Perplexity API with formatted messages:', formattedMessages);
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        messages: formattedMessages,
-        temperature: 0.2,
-        max_tokens: 1000,
-        top_p: 0.9,
-        frequency_penalty: 1,
-        presence_penalty: 0
-      }),
-    });
-
-    const data = await response.json();
-    console.log('Perplexity API response:', data);
     
-    if (!response.ok) {
-      console.error('Perplexity API error:', data);
-      throw new Error(data.error?.message || 'Failed to get response from Perplexity');
-    }
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${perplexityKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-large-128k-online',
+          messages: formattedMessages,
+          temperature: 0.2,
+          max_tokens: 1000,
+          top_p: 0.9,
+          frequency_penalty: 1,
+          presence_penalty: 0
+        }),
+      });
 
-    if (!data.choices?.[0]?.message?.content) {
-      console.error('Invalid response format:', data);
-      throw new Error('Invalid response format from chat service');
-    }
+      const data = await response.json();
+      console.log('Perplexity API response:', data);
+      
+      if (!response.ok) {
+        console.error('Perplexity API error:', data);
+        throw new Error(data.error?.message || 'Failed to get response from Perplexity');
+      }
 
-    return new Response(
-      JSON.stringify({ message: data.choices[0].message.content }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+      if (!data.choices?.[0]?.message?.content) {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from chat service');
+      }
+
+      return new Response(
+        JSON.stringify({ message: data.choices[0].message.content }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    } catch (apiError) {
+      console.error('API request error:', apiError);
+      throw new Error(`Failed to communicate with Perplexity API: ${apiError.message}`);
+    }
   } catch (error) {
     console.error('Chat error:', error);
     return new Response(
