@@ -53,10 +53,7 @@ export const UserList = ({ isAdmin }: UserListProps) => {
 
   const handleDelete = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      const { error } = await supabase.auth.admin.deleteUser(userId);
 
       if (error) throw error;
 

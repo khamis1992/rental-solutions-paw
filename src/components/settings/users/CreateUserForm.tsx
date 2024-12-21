@@ -1,5 +1,5 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,15 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateUserFormProps {
   isAdmin: boolean;
+  onSuccess?: () => void;
 }
 
-export const CreateUserForm = ({ isAdmin }: CreateUserFormProps) => {
+export const CreateUserForm = ({ isAdmin, onSuccess }: CreateUserFormProps) => {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const form = useForm({
     defaultValues: {
       email: "",
@@ -37,6 +38,7 @@ export const CreateUserForm = ({ isAdmin }: CreateUserFormProps) => {
   });
 
   const onSubmit = async (values: any) => {
+    setIsLoading(true);
     try {
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -67,14 +69,16 @@ export const CreateUserForm = ({ isAdmin }: CreateUserFormProps) => {
         description: "User created successfully",
       });
 
-      queryClient.invalidateQueries({ queryKey: ['users'] });
       form.reset();
+      onSuccess?.();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -149,7 +153,9 @@ export const CreateUserForm = ({ isAdmin }: CreateUserFormProps) => {
             </FormItem>
           )}
         />
-        <Button type="submit">Create User</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Creating..." : "Create User"}
+        </Button>
       </form>
     </Form>
   );

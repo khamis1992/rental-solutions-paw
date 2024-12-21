@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { performanceMetrics } from "@/services/performanceMonitoring";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const Auth = () => {
                 { 
                   id: existingSession.user.id,
                   full_name: existingSession.user.user_metadata.full_name,
-                  role: 'customer'
+                  role: 'customer' // Default role
                 }
               ]);
 
@@ -57,7 +58,13 @@ const Auth = () => {
             }
           }
 
-          navigate('/');
+          // Check if user is staff or admin before allowing access
+          if (profile?.role === 'admin' || profile?.role === 'staff') {
+            navigate('/');
+          } else {
+            toast.error("Access denied. Only staff and admin users can access this system.");
+            await supabase.auth.signOut();
+          }
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
@@ -73,7 +80,26 @@ const Auth = () => {
 
     initializeAuth();
 
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.role === 'admin' || profile?.role === 'staff') {
+          navigate('/');
+        } else {
+          toast.error("Access denied. Only staff and admin users can access this system.");
+          await supabase.auth.signOut();
+        }
+      }
+    });
+
     return () => {
+      subscription.unsubscribe();
       console.log("Cleaning up Auth component");
     };
   }, [navigate]);
@@ -93,37 +119,40 @@ const Auth = () => {
   return (
     <TooltipProvider>
       <div className="flex min-h-screen bg-gray-50">
-        <div className="m-auto w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold mb-2">Welcome to Rental Solutions</h1>
-            <p className="text-gray-600">Please sign in to continue</p>
-            {loadTime && (
-              <p className="text-xs text-gray-400 mt-2">
-                Page loaded in {Math.round(loadTime)}ms
-              </p>
-            )}
-          </div>
-          
-          <SupabaseAuth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#2563eb',
-                    brandAccent: '#1d4ed8',
+        <div className="m-auto w-full max-w-md">
+          <Card className="p-8">
+            <div className="mb-8 text-center">
+              <h1 className="text-2xl font-bold mb-2">Welcome to Rental Solutions</h1>
+              <p className="text-gray-600">Please sign in to continue</p>
+              {loadTime && (
+                <p className="text-xs text-gray-400 mt-2">
+                  Page loaded in {Math.round(loadTime)}ms
+                </p>
+              )}
+            </div>
+            
+            <SupabaseAuth
+              supabaseClient={supabase}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: '#2563eb',
+                      brandAccent: '#1d4ed8',
+                    }
                   }
+                },
+                className: {
+                  container: 'w-full',
+                  button: 'w-full px-4 py-2 rounded',
+                  input: 'w-full px-3 py-2 border rounded',
                 }
-              },
-              className: {
-                container: 'w-full',
-                button: 'w-full px-4 py-2 rounded',
-                input: 'w-full px-3 py-2 border rounded',
-              }
-            }}
-            redirectTo={window.location.origin}
-          />
+              }}
+              providers={[]}
+              redirectTo={window.location.origin}
+            />
+          </Card>
         </div>
       </div>
     </TooltipProvider>
