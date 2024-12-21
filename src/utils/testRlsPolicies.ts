@@ -1,8 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+// Create a type for valid table names
+type TableNames = keyof Database['public']['Tables'] | keyof Database['public']['Views'];
 
 interface TestResult {
-  table: string;
+  table: TableNames;
   operation: 'select' | 'insert' | 'update' | 'delete';
   success: boolean;
   error?: string;
@@ -11,8 +15,8 @@ interface TestResult {
 export const testRlsPolicies = async (): Promise<TestResult[]> => {
   const results: TestResult[] = [];
   
-  // Test tables with RLS
-  const tablesToTest = [
+  // Test tables with RLS - now properly typed
+  const tablesToTest: TableNames[] = [
     'ai_payment_analysis',
     'csv_import_mappings',
     'document_analysis_logs',
