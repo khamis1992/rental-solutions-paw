@@ -15,17 +15,17 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Configure query client with optimized settings
+// Configure query client with optimized caching settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 15, // 15 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
-      networkMode: 'offlineFirst',
+      staleTime: 1000 * 60 * 15, // Data remains fresh for 15 minutes
+      gcTime: 1000 * 60 * 30, // Cache is garbage collected after 30 minutes
+      retry: 1, // Only retry failed requests once
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnReconnect: false, // Don't refetch on reconnect
+      refetchOnMount: false, // Don't refetch on component mount
+      networkMode: 'offlineFirst', // Prefer cached data when offline
     },
   },
 });
