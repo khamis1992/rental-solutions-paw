@@ -38,7 +38,7 @@ export const useCustomers = ({ searchQuery, page, pageSize }: UseCustomersOption
           throw countError;
         }
 
-        // Then fetch paginated data
+        // Then fetch paginated data - note we're not filtering by role here
         let query = supabase
           .from('profiles')
           .select('id, full_name, phone_number, driver_license, id_document_url, license_document_url, role, address, contract_document_url, created_at')
