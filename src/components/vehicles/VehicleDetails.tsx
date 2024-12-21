@@ -8,6 +8,7 @@ import { DamageHistory } from "./profile/DamageHistory";
 import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
 import { VehicleInsurance } from "./profile/VehicleInsurance";
+import { VehicleParts } from "./profile/VehicleParts"; // Added this import
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
