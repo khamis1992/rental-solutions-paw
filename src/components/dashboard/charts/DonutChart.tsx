@@ -22,20 +22,8 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
   return (
     <div className="relative flex-1">
       <div className="absolute inset-0 flex items-center justify-center flex-col">
-        <span className="text-4xl font-bold text-gray-900">{primaryStatus?.value}</span>
-        <span className="text-sm text-gray-500 mt-1">{primaryStatus?.name}</span>
-      </div>
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute inset-0 rounded-full border border-gray-100"
-            style={{
-              transform: `scale(${0.85 - i * 0.1})`,
-              opacity: 0.5 - i * 0.1
-            }}
-          />
-        ))}
+        <span className="text-4xl font-bold">{primaryStatus?.value}</span>
+        <span className="text-xl">{primaryStatus?.name}</span>
       </div>
       <ChartContainer config={config}>
         <ResponsiveContainer width="100%" height={400}>
@@ -48,14 +36,9 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
               outerRadius={120}
               paddingAngle={2}
               dataKey="value"
-              strokeWidth={0}
             >
               {data?.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.color}
-                  className="transition-all duration-200 hover:opacity-80"
-                />
+                <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
             <Tooltip
@@ -63,7 +46,7 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
                 if (!active || !payload?.length) return null;
                 return (
                   <ChartTooltipContent
-                    className="bg-white border-gray-200 shadow-lg"
+                    className="bg-background border-border"
                     payload={payload}
                   />
                 );
