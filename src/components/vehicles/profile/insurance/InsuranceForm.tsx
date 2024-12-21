@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { InsuranceFormData } from "./types";
 
 interface InsuranceFormProps {
@@ -12,7 +12,7 @@ export const InsuranceForm = ({ formData, setFormData, isEditing }: InsuranceFor
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Policy Number</label>
+        <Label>Policy Number</Label>
         {isEditing ? (
           <Input
             value={formData.policy_number}
@@ -26,7 +26,7 @@ export const InsuranceForm = ({ formData, setFormData, isEditing }: InsuranceFor
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Provider</label>
+        <Label>Provider</Label>
         {isEditing ? (
           <Input
             value={formData.provider}
@@ -40,7 +40,7 @@ export const InsuranceForm = ({ formData, setFormData, isEditing }: InsuranceFor
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Coverage Type</label>
+        <Label>Coverage Type</Label>
         {isEditing ? (
           <Input
             value={formData.coverage_type}
@@ -54,45 +54,45 @@ export const InsuranceForm = ({ formData, setFormData, isEditing }: InsuranceFor
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Coverage Amount</label>
+        <Label>Coverage Amount</Label>
         {isEditing ? (
           <Input
             type="number"
             value={formData.coverage_amount}
             onChange={(e) =>
-              setFormData({ ...formData, coverage_amount: e.target.value })
+              setFormData({ ...formData, coverage_amount: Number(e.target.value) })
             }
           />
         ) : (
           <p className="text-sm">
             {formData.coverage_amount
-              ? `$${parseFloat(formData.coverage_amount).toLocaleString()}`
+              ? `$${formData.coverage_amount.toLocaleString()}`
               : "N/A"}
           </p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Premium Amount</label>
+        <Label>Premium Amount</Label>
         {isEditing ? (
           <Input
             type="number"
             value={formData.premium_amount}
             onChange={(e) =>
-              setFormData({ ...formData, premium_amount: e.target.value })
+              setFormData({ ...formData, premium_amount: Number(e.target.value) })
             }
           />
         ) : (
           <p className="text-sm">
             {formData.premium_amount
-              ? `$${parseFloat(formData.premium_amount).toLocaleString()}`
+              ? `$${formData.premium_amount.toLocaleString()}`
               : "N/A"}
           </p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Start Date</label>
+        <Label>Start Date</Label>
         {isEditing ? (
           <Input
             type="date"
@@ -111,7 +111,7 @@ export const InsuranceForm = ({ formData, setFormData, isEditing }: InsuranceFor
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">End Date</label>
+        <Label>End Date</Label>
         {isEditing ? (
           <Input
             type="date"

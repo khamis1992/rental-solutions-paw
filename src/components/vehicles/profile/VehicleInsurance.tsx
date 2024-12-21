@@ -1,6 +1,6 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { Shield, Edit2, Save } from "lucide-react";
 import { InsuranceForm } from "./insurance/InsuranceForm";
 import { useInsurance } from "./insurance/useInsurance";
@@ -13,31 +13,26 @@ interface VehicleInsuranceProps {
 export const VehicleInsurance = ({ vehicleId }: VehicleInsuranceProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<InsuranceFormData>({
+    vehicle_id: vehicleId,
     policy_number: "",
     provider: "",
     coverage_type: "",
-    coverage_amount: "",
-    premium_amount: "",
+    coverage_amount: 0,
+    premium_amount: 0,
     start_date: "",
     end_date: "",
   });
 
   const { insurance, saveMutation } = useInsurance(vehicleId);
 
-  // Initialize form data when insurance data is loaded
   useEffect(() => {
     if (insurance) {
       setFormData({
-        policy_number: insurance.policy_number,
-        provider: insurance.provider,
-        coverage_type: insurance.coverage_type,
-        coverage_amount: insurance.coverage_amount.toString(),
-        premium_amount: insurance.premium_amount.toString(),
-        start_date: insurance.start_date,
-        end_date: insurance.end_date,
+        ...insurance,
+        vehicle_id: vehicleId,
       });
     }
-  }, [insurance]);
+  }, [insurance, vehicleId]);
 
   const handleSave = async () => {
     await saveMutation.mutateAsync(formData);

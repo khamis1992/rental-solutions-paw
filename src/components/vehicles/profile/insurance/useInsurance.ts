@@ -1,19 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { InsuranceFormData } from "./types";
 import { toast } from "sonner";
-import { Insurance } from "./types";
 
 export const useInsurance = (vehicleId: string) => {
   const queryClient = useQueryClient();
 
-  const { data: insurance, refetch } = useQuery({
+  const { data: insurance, isLoading } = useQuery({
     queryKey: ["vehicle-insurance", vehicleId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicle_insurance")
         .select("*")
         .eq("vehicle_id", vehicleId)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
@@ -21,40 +21,28 @@ export const useInsurance = (vehicleId: string) => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (formData: Partial<Insurance>) => {
-      const { error } = insurance
-        ? await supabase
-            .from("vehicle_insurance")
-            .update({
-              ...formData,
-              coverage_amount: parseFloat(formData.coverage_amount as string),
-              premium_amount: parseFloat(formData.premium_amount as string),
-            })
-            .eq("vehicle_id", vehicleId)
-        : await supabase.from("vehicle_insurance").insert([
-            {
-              vehicle_id: vehicleId,
-              ...formData,
-              coverage_amount: parseFloat(formData.coverage_amount as string),
-              premium_amount: parseFloat(formData.premium_amount as string),
-            },
-          ]);
+    mutationFn: async (formData: InsuranceFormData) => {
+      const { error } = await supabase
+        .from("vehicle_insurance")
+        .upsert({
+          ...formData,
+          vehicle_id: vehicleId,
+        });
 
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicle-insurance", vehicleId] });
       toast.success("Insurance information saved successfully");
-      queryClient.invalidateQueries({ queryKey: ["vehicle-insurance"] });
     },
-    onError: (error) => {
-      console.error("Error saving insurance information:", error);
-      toast.error("Failed to save insurance information");
+    onError: (error: Error) => {
+      toast.error(`Failed to save insurance information: ${error.message}`);
     },
   });
 
   return {
     insurance,
-    refetch,
+    isLoading,
     saveMutation,
   };
 };
