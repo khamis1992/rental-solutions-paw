@@ -5,7 +5,6 @@ import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { Loader2 } from "lucide-react";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Define route component type
 type RouteComponent = React.LazyExoticComponent<React.ComponentType>;
@@ -60,45 +59,43 @@ export default function App() {
   }
 
   return (
-    <TooltipProvider>
-      <Routes>
-        {/* Public routes */}
-        <Route 
-          path="/auth" 
-          element={
-            session ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Auth />
-            )
-          } 
-        />
+    <Routes>
+      {/* Public routes */}
+      <Route 
+        path="/auth" 
+        element={
+          session ? (
+            <Navigate to="/" replace />
+          ) : (
+            <Auth />
+          )
+        } 
+      />
 
-        {/* Protected routes wrapper */}
-        <Route
-          element={
-            session ? (
-              <DashboardLayout>
-                <RouteWrapper />
-              </DashboardLayout>
-            ) : (
-              <Navigate to="/auth" replace />
-            )
-          }
-        >
-          {/* Define child routes */}
-          {protectedRoutes.map(({ path, component: Component }) => (
-            <Route
-              key={path}
-              path={path}
-              element={lazyLoad(Component)}
-            />
-          ))}
-        </Route>
+      {/* Protected routes wrapper */}
+      <Route
+        element={
+          session ? (
+            <DashboardLayout>
+              <RouteWrapper />
+            </DashboardLayout>
+          ) : (
+            <Navigate to="/auth" replace />
+          )
+        }
+      >
+        {/* Define child routes */}
+        {protectedRoutes.map(({ path, component: Component }) => (
+          <Route
+            key={path}
+            path={path}
+            element={lazyLoad(Component)}
+          />
+        ))}
+      </Route>
 
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </TooltipProvider>
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
