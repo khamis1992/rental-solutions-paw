@@ -17,7 +17,7 @@ import {
 export function DashboardAlerts() {
   const [selectedAlert, setSelectedAlert] = useState<AlertDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const { data: alerts } = useQuery({
     queryKey: ["dashboard-alerts"],
@@ -107,24 +107,27 @@ export function DashboardAlerts() {
     <>
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
-          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {renderAlertGroup("Vehicle Returns", alerts.overdueVehicles?.map(vehicle => ({
+            type: 'vehicle',
+            title: 'Overdue Vehicle Details',
+            vehicle: vehicle.vehicle,
+            customer: vehicle.customer,
+            id: vehicle.id
+          })) || [])}
+
+          <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full flex items-center justify-between">
-                <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
-                <ChevronDown className={`h-4 w-4 transition-transform ${dropdownOpen ? 'transform rotate-180' : ''}`} />
+                <span className="text-sm font-medium text-muted-foreground">Notifications</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${notificationsOpen ? 'transform rotate-180' : ''}`} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-full" style={{ width: 'calc(100% - 32px)' }}>
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-6 p-4">
-                  {renderAlertGroup("Vehicle Returns", alerts.overdueVehicles?.map(vehicle => ({
-                    type: 'vehicle',
-                    title: 'Overdue Vehicle Details',
-                    vehicle: vehicle.vehicle,
-                    customer: vehicle.customer,
-                    id: vehicle.id
-                  })) || [])}
-
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-4 p-4">
                   {renderAlertGroup("Payment Alerts", alerts.overduePayments?.map(payment => ({
                     type: 'payment',
                     title: 'Overdue Payment Details',
@@ -142,7 +145,7 @@ export function DashboardAlerts() {
               </ScrollArea>
             </DropdownMenuContent>
           </DropdownMenu>
-        </CardHeader>
+        </CardContent>
       </Card>
 
       <AlertDetailsDialog
