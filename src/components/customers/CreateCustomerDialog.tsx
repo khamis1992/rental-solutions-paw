@@ -52,14 +52,28 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
     console.log('Starting customer creation with values:', values);
     setIsLoading(true);
     try {
-      // Generate a UUID for the new customer
-      const newCustomerId = crypto.randomUUID();
-      
+      const { data: existingCustomer, error: checkError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("phone_number", values.phone_number)
+        .single();
+
+      if (existingCustomer) {
+        toast({
+          title: "Error",
+          description: "A customer with this phone number already exists",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const customerData = {
-        id: newCustomerId,
         ...values,
         role: "customer",
         status: "pending_review",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       console.log('Attempting to insert customer with data:', customerData);
@@ -67,14 +81,14 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
       const { data: newCustomer, error: insertError } = await supabase
         .from("profiles")
         .insert(customerData)
-        .select('*')
+        .select()
         .single();
 
       if (insertError) {
         console.error('Error creating customer:', insertError);
         toast({
           title: "Error",
-          description: `Failed to create customer: ${insertError.message}`,
+          description: insertError.message,
           variant: "destructive",
         });
         return;
@@ -85,11 +99,6 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
       // Invalidate and refetch customers query to update the list
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
       
-      // Force a refetch of customer stats
-      await queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
-      
-      console.log('Queries invalidated, checking customer list refresh');
-
       toast({
         title: "Success",
         description: "Customer created successfully",
