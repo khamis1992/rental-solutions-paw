@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,20 +77,39 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
         </Button>
       </div>
 
-      {/* Vehicle Overview */}
-      <VehicleOverview vehicle={vehicle} />
-
-      {/* Insurance Details */}
-      <InsuranceDetails vehicleId={vehicleId} insurance={vehicle.insurance} />
+      {/* Vehicle Image */}
+      <div className="relative h-[300px] w-full overflow-hidden rounded-lg bg-muted">
+        {vehicle.image_url ? (
+          <img
+            src={vehicle.image_url}
+            alt={`${vehicle.make} ${vehicle.model}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            No image available
+          </div>
+        )}
+      </div>
 
       {/* Vehicle Information Tabs */}
-      <Tabs defaultValue="maintenance" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 print:hidden">
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-6 print:hidden">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="insurance">Insurance</TabsTrigger>
           <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="damages">Damages</TabsTrigger>
           <TabsTrigger value="agreements">Agreements</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview" className="mt-6">
+          <VehicleOverview vehicle={vehicle} />
+        </TabsContent>
+
+        <TabsContent value="insurance" className="mt-6">
+          <InsuranceDetails vehicleId={vehicleId} insurance={vehicle.insurance} />
+        </TabsContent>
 
         <TabsContent value="maintenance" className="mt-6 print:hidden">
           <MaintenanceHistory vehicleId={vehicleId} />
@@ -110,21 +129,19 @@ const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
       </Tabs>
 
       {/* Print-only content */}
-      <style type="text/css" media="print">
-        {`
-          @page {
-            size: auto;
-            margin: 20mm;
+      <style type="text/css" media="print">{`
+        @page {
+          size: auto;
+          margin: 20mm;
+        }
+        
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
-          
-          @media print {
-            body {
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-          }
-        `}
-      </style>
+        }
+      `}</style>
     </div>
   );
 };

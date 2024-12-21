@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Car, Shield } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { InsuranceForm } from "./insurance/InsuranceForm";
-import { InsuranceDisplay } from "./insurance/InsuranceDisplay";
 
 interface InsuranceDetailsProps {
   vehicleId: string;
@@ -41,6 +41,7 @@ export const InsuranceDetails = ({ vehicleId, insurance }: InsuranceDetailsProps
     e.preventDefault();
     try {
       if (insurance?.id) {
+        // Update existing insurance
         const { error } = await supabase
           .from('vehicle_insurance')
           .update(formData)
@@ -48,6 +49,7 @@ export const InsuranceDetails = ({ vehicleId, insurance }: InsuranceDetailsProps
         
         if (error) throw error;
       } else {
+        // Create new insurance
         const { error } = await supabase
           .from('vehicle_insurance')
           .insert([{ vehicle_id: vehicleId, ...formData }]);
@@ -89,13 +91,114 @@ export const InsuranceDetails = ({ vehicleId, insurance }: InsuranceDetailsProps
       <CardContent>
         {isEditing ? (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <InsuranceForm formData={formData} setFormData={setFormData} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="policy_number">Policy Number</Label>
+                <Input
+                  id="policy_number"
+                  value={formData.policy_number}
+                  onChange={(e) => setFormData(prev => ({ ...prev, policy_number: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="provider">Provider</Label>
+                <Input
+                  id="provider"
+                  value={formData.provider}
+                  onChange={(e) => setFormData(prev => ({ ...prev, provider: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="coverage_type">Coverage Type</Label>
+                <Input
+                  id="coverage_type"
+                  value={formData.coverage_type}
+                  onChange={(e) => setFormData(prev => ({ ...prev, coverage_type: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="coverage_amount">Coverage Amount</Label>
+                <Input
+                  id="coverage_amount"
+                  type="number"
+                  value={formData.coverage_amount}
+                  onChange={(e) => setFormData(prev => ({ ...prev, coverage_amount: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="premium_amount">Premium Amount</Label>
+                <Input
+                  id="premium_amount"
+                  type="number"
+                  value={formData.premium_amount}
+                  onChange={(e) => setFormData(prev => ({ ...prev, premium_amount: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+            </div>
             <div className="flex justify-end">
               <Button type="submit">Save Changes</Button>
             </div>
           </form>
         ) : (
-          <InsuranceDisplay insurance={insurance} />
+          <dl className="grid grid-cols-2 gap-4">
+            <div>
+              <dt className="font-medium">Policy Number</dt>
+              <dd>{insurance?.policy_number || "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Provider</dt>
+              <dd>{insurance?.provider || "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Start Date</dt>
+              <dd>{insurance?.start_date || "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">End Date</dt>
+              <dd>{insurance?.end_date || "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Coverage Type</dt>
+              <dd>{insurance?.coverage_type || "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Coverage Amount</dt>
+              <dd>{insurance?.coverage_amount ? `${insurance.coverage_amount} QAR` : "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Premium Amount</dt>
+              <dd>{insurance?.premium_amount ? `${insurance.premium_amount} QAR` : "Not set"}</dd>
+            </div>
+            <div>
+              <dt className="font-medium">Status</dt>
+              <dd className="capitalize">{insurance?.status || "Not set"}</dd>
+            </div>
+          </dl>
         )}
       </CardContent>
     </Card>
