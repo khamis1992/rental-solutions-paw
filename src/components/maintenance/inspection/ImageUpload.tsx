@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera } from "lucide-react";
@@ -12,12 +12,7 @@ export const ImageUpload = ({
   onImagesSelected, 
   maxFiles = 5 
 }: ImageUploadProps) => {
-  const [previews, setPreviews] = useState<string[]>([]);
-
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Create preview URLs for the images
-    const urls = acceptedFiles.map(file => URL.createObjectURL(file));
-    setPreviews(prev => [...prev, ...urls]);
     onImagesSelected(acceptedFiles);
   }, [onImagesSelected]);
 
@@ -50,23 +45,6 @@ export const ImageUpload = ({
             Maximum {maxFiles} files. JPEG or PNG only.
           </p>
         </div>
-
-        {previews.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {previews.map((preview, index) => (
-              <div 
-                key={index} 
-                className="relative aspect-square rounded-lg overflow-hidden border border-gray-200"
-              >
-                <img
-                  src={preview}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

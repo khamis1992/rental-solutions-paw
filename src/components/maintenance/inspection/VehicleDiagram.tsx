@@ -52,15 +52,6 @@ export const VehicleDiagram = ({
     onMarkersChange(updatedMarkers);
   };
 
-  const getViewImage = (view: string) => {
-    switch (view) {
-      case "front":
-        return "/lovable-uploads/fffa25ce-6a81-4f9a-813b-f3a5fab6bc77.png";
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex space-x-2">
@@ -102,17 +93,10 @@ export const VehicleDiagram = ({
             className="relative w-full h-[400px] border rounded-lg bg-gray-100"
             onClick={handleClick}
           >
-            {getViewImage(activeView) ? (
-              <img
-                src={getViewImage(activeView)}
-                alt={`${activeView} view`}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                {activeView.charAt(0).toUpperCase() + activeView.slice(1)} View
-              </div>
-            )}
+            {/* Placeholder for vehicle diagram */}
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              {activeView.charAt(0).toUpperCase() + activeView.slice(1)} View
+            </div>
 
             {/* Damage Markers */}
             {damageMarkers

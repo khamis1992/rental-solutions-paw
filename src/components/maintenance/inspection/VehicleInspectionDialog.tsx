@@ -16,7 +16,6 @@ interface VehicleInspectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   maintenanceId: string;
-  vehicleId: string;
   onComplete: () => void;
 }
 
@@ -24,7 +23,6 @@ const VehicleInspectionDialog = ({
   open,
   onOpenChange,
   maintenanceId,
-  vehicleId,
   onComplete
 }: VehicleInspectionDialogProps) => {
   const navigate = useNavigate();
@@ -42,30 +40,7 @@ const VehicleInspectionDialog = ({
     try {
       const formData = new FormData(e.target as HTMLFormElement);
       
-      // Upload photos to storage if any
-      const uploadedPhotos: string[] = [];
-      if (photos.length > 0) {
-        for (const photo of photos) {
-          const fileExt = photo.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
-          const filePath = `vehicle-inspections/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('inspection_photos')
-            .upload(filePath, photo);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('inspection_photos')
-            .getPublicUrl(filePath);
-
-          uploadedPhotos.push(publicUrl);
-        }
-      }
-
       const inspectionData = {
-        vehicle_id: vehicleId,
         maintenance_id: maintenanceId,
         inspection_type: 'check_in',
         odometer_reading: parseInt(formData.get('odometer') as string),
@@ -74,7 +49,6 @@ const VehicleInspectionDialog = ({
         renter_signature: renterSignature,
         staff_signature: staffSignature,
         inspection_date: new Date().toISOString(),
-        photos: uploadedPhotos,
       };
 
       const { error } = await supabase
