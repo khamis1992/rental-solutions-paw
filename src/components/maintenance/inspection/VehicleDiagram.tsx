@@ -19,6 +19,49 @@ interface VehicleDiagramProps {
   onMarkersChange: (markers: DamageMarker[]) => void;
 }
 
+const generateDescription = (marker: DamageMarker): string => {
+  // Define zones for different parts of the vehicle based on view
+  const getZone = (x: number, y: number, view: string) => {
+    // Convert percentages to a 0-100 scale for easier reading
+    const xPos = x;
+    const yPos = y;
+    
+    if (view === "front") {
+      if (yPos < 33) return "upper front";
+      if (yPos < 66) return "middle front";
+      return "lower front";
+    }
+    
+    if (view === "rear") {
+      if (yPos < 33) return "upper rear";
+      if (yPos < 66) return "middle rear";
+      return "lower rear";
+    }
+    
+    if (view === "left" || view === "right") {
+      if (xPos < 25) return "front";
+      if (xPos < 50) return "front-middle";
+      if (xPos < 75) return "rear-middle";
+      return "rear";
+    }
+    
+    if (view === "top") {
+      if (yPos < 33) return "front";
+      if (yPos < 66) return "middle";
+      return "rear";
+    }
+    
+    return "unspecified area";
+  };
+
+  const zone = getZone(marker.x, marker.y, marker.view);
+  const side = marker.view === "left" || marker.view === "right" 
+    ? `${marker.view} side` 
+    : marker.view;
+
+  return `Damage detected in the ${zone} section of the vehicle's ${side}`;
+};
+
 export const VehicleDiagram = ({ 
   damageMarkers, 
   onMarkersChange 
@@ -39,29 +82,30 @@ export const VehicleDiagram = ({
       description: "",
     };
 
+    // Generate automatic description
+    newMarker.description = generateDescription(newMarker);
+
     const updatedMarkers = [...damageMarkers, newMarker];
     onMarkersChange(updatedMarkers);
     setSelectedMarker(newMarker);
+
+    // Show toast notification
+    toast.info("Damage marker added with automatic description");
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!selectedMarker) return;
 
-    // Create a new marker with updated description
     const updatedSelectedMarker = {
       ...selectedMarker,
       description: e.target.value
     };
 
-    // Update the markers array with the new description
     const updatedMarkers = damageMarkers.map(marker =>
       marker.id === selectedMarker.id ? updatedSelectedMarker : marker
     );
 
-    // Update parent component state
     onMarkersChange(updatedMarkers);
-    
-    // Update local state
     setSelectedMarker(updatedSelectedMarker);
   };
 
