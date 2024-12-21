@@ -8,9 +8,9 @@ import { ImageUpload } from "./ImageUpload";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Car, Calendar, User, Gauge, Fuel } from "lucide-react";
+import { submitInspection } from "./utils/submitInspection";
 
 interface VehicleInspectionDialogProps {
   open: boolean;
@@ -40,53 +40,21 @@ const VehicleInspectionDialog = ({
     try {
       const formData = new FormData(e.target as HTMLFormElement);
       
-      // First, get the vehicle_id from the maintenance record
-      const { data: maintenanceData, error: maintenanceError } = await supabase
-        .from('maintenance')
-        .select('vehicle_id')
-        .eq('id', maintenanceId)
-        .single();
+      const result = await submitInspection({
+        maintenanceId,
+        damageMarkers,
+        photos,
+        renterSignature,
+        staffSignature,
+        fuelLevel,
+        formData
+      });
 
-      if (maintenanceError) throw maintenanceError;
-      if (!maintenanceData?.vehicle_id) throw new Error('Vehicle ID not found');
-
-      const inspectionData = {
-        vehicle_id: maintenanceData.vehicle_id,
-        inspection_type: 'check_in',
-        odometer_reading: parseInt(formData.get('odometer') as string),
-        fuel_level: fuelLevel,
-        damage_markers: damageMarkers,
-        renter_signature: renterSignature,
-        staff_signature: staffSignature,
-        inspection_date: new Date().toISOString(),
-        maintenance_id: maintenanceId
-      };
-
-      // Create the inspection record
-      const { error: inspectionError } = await supabase
-        .from('vehicle_inspections')
-        .insert(inspectionData);
-
-      if (inspectionError) throw inspectionError;
-
-      // Update maintenance status to in_progress and make it visible in the list
-      const { error: maintenanceUpdateError } = await supabase
-        .from('maintenance')
-        .update({ 
-          status: 'in_progress',
-          description: 'Inspection completed. Job card ready.',
-          scheduled_date: new Date().toISOString() // Set to current date to make it appear in the list
-        })
-        .eq('id', maintenanceId);
-
-      if (maintenanceUpdateError) throw maintenanceUpdateError;
-
-      toast.success("Inspection completed successfully");
-      onComplete();
-      navigate(`/maintenance`);
-    } catch (error: any) {
-      console.error('Error saving inspection:', error);
-      toast.error("Failed to save inspection. Please try again.");
+      if (result.success) {
+        toast.success("Inspection completed successfully");
+        onComplete();
+        navigate(`/maintenance`);
+      }
     } finally {
       setLoading(false);
     }
