@@ -30,11 +30,15 @@ const queryClient = new QueryClient({
   },
 });
 
-// Memoize the app render function
-const renderApp = React.memo((session: any) => {
+// Create a memoized app wrapper component
+const AppWrapper = React.memo(({ session }: { session: any }) => {
   const startRender = performance.now();
   
-  root.render(
+  React.useEffect(() => {
+    console.log(`App rendered in ${performance.now() - startRender}ms`);
+  }, [startRender]);
+
+  return (
     <React.StrictMode>
       <ErrorBoundary>
         <BrowserRouter>
@@ -52,9 +56,9 @@ const renderApp = React.memo((session: any) => {
       </ErrorBoundary>
     </React.StrictMode>
   );
-
-  console.log(`App rendered in ${performance.now() - startRender}ms`);
 });
+
+AppWrapper.displayName = 'AppWrapper';
 
 // Initialize app with better error handling and cleanup
 const initializeApp = async () => {
@@ -77,11 +81,11 @@ const initializeApp = async () => {
         localStorage.removeItem('app_session');
       }
       
-      renderApp(session);
+      root.render(<AppWrapper session={session} />);
     });
 
     // Initial render
-    renderApp(session);
+    root.render(<AppWrapper session={session} />);
 
     // Cleanup subscription on unload
     window.addEventListener('unload', () => {
@@ -90,7 +94,7 @@ const initializeApp = async () => {
 
   } catch (error) {
     console.error('Failed to initialize app:', error);
-    renderApp(null);
+    root.render(<AppWrapper session={null} />);
   } finally {
     console.timeEnd('App Initialization');
   }
