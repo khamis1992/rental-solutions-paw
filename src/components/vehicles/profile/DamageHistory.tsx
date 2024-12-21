@@ -1,136 +1,16 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Image as ImageIcon } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PhotosDialog } from "./dialogs/PhotosDialog";
+import { InspectionRecordsTable } from "./tables/InspectionRecordsTable";
+import { DamageReportsTable } from "./tables/DamageReportsTable";
 
 interface DamageHistoryProps {
   vehicleId: string;
 }
-
-// Split into smaller components for better maintainability
-const PhotosDialog = ({ images, open, onOpenChange }: { 
-  images: string[], 
-  open: boolean, 
-  onOpenChange: (open: boolean) => void 
-}) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-4xl">
-      <DialogHeader>
-        <DialogTitle>Inspection Photos</DialogTitle>
-      </DialogHeader>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
-        {images.map((url, index) => (
-          <div key={index} className="relative aspect-square">
-            <img
-              src={url}
-              alt={`Inspection photo ${index + 1}`}
-              className="w-full h-full object-cover rounded-lg"
-            />
-          </div>
-        ))}
-      </div>
-    </DialogContent>
-  </Dialog>
-);
-
-const InspectionRecordsTable = ({ records }: { records: any[] }) => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Date</TableHead>
-        <TableHead>Type</TableHead>
-        <TableHead>Damage Markers</TableHead>
-        <TableHead>Photos</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {records.map((inspection) => (
-        <TableRow key={inspection.id}>
-          <TableCell>
-            {new Date(inspection.inspection_date).toLocaleDateString()}
-          </TableCell>
-          <TableCell>{inspection.inspection_type}</TableCell>
-          <TableCell>
-            {inspection.damage_markers ? 
-              JSON.parse(inspection.damage_markers).length + " damages marked"
-              : "No damages"}
-          </TableCell>
-          <TableCell>
-            {inspection.inspection_photos && inspection.inspection_photos.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleViewImages(inspection.inspection_photos)}
-              >
-                <ImageIcon className="h-4 w-4 mr-2" />
-                View Photos ({inspection.inspection_photos.length})
-              </Button>
-            )}
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
-
-const DamageReportsTable = ({ records }: { records: any[] }) => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Date</TableHead>
-        <TableHead>Description</TableHead>
-        <TableHead>Location</TableHead>
-        <TableHead>Customer</TableHead>
-        <TableHead>Photos</TableHead>
-        <TableHead>Status</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {records.map((damage) => (
-        <TableRow key={damage.id}>
-          <TableCell>
-            {new Date(damage.reported_date).toLocaleDateString()}
-          </TableCell>
-          <TableCell>{damage.description}</TableCell>
-          <TableCell>{damage.notes}</TableCell>
-          <TableCell>
-            {(damage.leases as any)?.profiles?.full_name || "N/A"}
-          </TableCell>
-          <TableCell>
-            {damage.images && damage.images.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleViewImages(damage.images)}
-              >
-                <ImageIcon className="h-4 w-4 mr-2" />
-                View Photos ({damage.images.length})
-              </Button>
-            )}
-          </TableCell>
-          <TableCell className="capitalize">{damage.status}</TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
 
 export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -233,13 +113,19 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
           {/* Inspection Records */}
           <div>
             <h3 className="text-sm font-medium mb-3">Inspection Records</h3>
-            <InspectionRecordsTable records={records?.inspections || []} />
+            <InspectionRecordsTable 
+              records={records?.inspections || []} 
+              onViewImages={handleViewImages}
+            />
           </div>
 
           {/* Damage Records */}
           <div>
             <h3 className="text-sm font-medium mb-3">Damage Reports</h3>
-            <DamageReportsTable records={records?.damages || []} />
+            <DamageReportsTable 
+              records={records?.damages || []} 
+              onViewImages={handleViewImages}
+            />
           </div>
         </div>
       </CardContent>
