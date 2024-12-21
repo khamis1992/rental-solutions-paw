@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
@@ -8,54 +8,52 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Lazy load all pages with loading fallback
 const lazyLoad = (Component: React.LazyExoticComponent<() => JSX.Element>) => (
-  <Suspense fallback={
-    <div className="flex h-screen items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-    </div>
-  }>
+  <Suspense fallback={<div>Loading...</div>}>
     <Component />
   </Suspense>
 );
 
-// Lazy load all pages
-const Index = lazy(() => import("@/pages/Index"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Vehicles = lazy(() => import("@/pages/Vehicles"));
+const VehicleDetails = lazy(() => import("@/pages/VehicleDetails"));
 const Agreements = lazy(() => import("@/pages/Agreements"));
-const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
+const AgreementDetails = lazy(() => import("@/pages/AgreementDetails"));
 const Customers = lazy(() => import("@/pages/Customers"));
-const Finance = lazy(() => import("@/pages/Finance"));
-const Help = lazy(() => import("@/pages/Help"));
-const Legal = lazy(() => import("@/pages/Legal"));
+const CustomerDetails = lazy(() => import("@/pages/CustomerDetails"));
 const Maintenance = lazy(() => import("@/pages/Maintenance"));
-const Reports = lazy(() => import("@/pages/Reports"));
+const MaintenanceDetails = lazy(() => import("@/pages/MaintenanceDetails"));
+const VehicleInspection = lazy(() => import("@/pages/VehicleInspection"));
+const Payments = lazy(() => import("@/pages/Payments"));
+const PaymentDetails = lazy(() => import("@/pages/PaymentDetails"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
-const Vehicles = lazy(() => import("@/pages/Vehicles"));
+const TrafficFineDetails = lazy(() => import("@/pages/TrafficFineDetails"));
+const Reports = lazy(() => import("@/pages/Reports"));
 
-// Define protected routes configuration
 const protectedRoutes = [
-  { path: "/", component: Index },
+  { path: "/", component: Dashboard },
+  { path: "/vehicles", component: Vehicles },
+  { path: "/vehicles/:id", component: VehicleDetails },
   { path: "/agreements", component: Agreements },
+  { path: "/agreements/:id", component: AgreementDetails },
   { path: "/customers", component: Customers },
-  { path: "/customer/:id", component: CustomerProfile },
-  { path: "/finance", component: Finance },
-  { path: "/help", component: Help },
-  { path: "/legal", component: Legal },
+  { path: "/customers/:id", component: CustomerDetails },
   { path: "/maintenance", component: Maintenance },
-  { path: "/reports", component: Reports },
+  { path: "/maintenance/:id", component: MaintenanceDetails },
+  { path: "/maintenance/:id/inspection", component: VehicleInspection },
+  { path: "/payments", component: Payments },
+  { path: "/payments/:id", component: PaymentDetails },
   { path: "/settings", component: Settings },
   { path: "/traffic-fines", component: TrafficFines },
-  { path: "/vehicles", component: Vehicles },
+  { path: "/traffic-fines/:id", component: TrafficFineDetails },
+  { path: "/reports", component: Reports },
 ];
 
 export default function App() {
   const { session, isLoading } = useSessionContext();
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
@@ -67,30 +65,26 @@ export default function App() {
           element={session ? <Navigate to="/" replace /> : <Auth />} 
         />
 
-        {/* Protected routes */}
+        {/* Protected routes wrapper */}
         <Route
+          path="/"
           element={
             session ? (
               <DashboardLayout>
-                <RouteWrapper>
-                  <Routes>
-                    {protectedRoutes.map(({ path, component: Component }) => (
-                      <Route
-                        key={path}
-                        path={path}
-                        element={lazyLoad(Component)}
-                      />
-                    ))}
-                  </Routes>
-                </RouteWrapper>
+                <RouteWrapper />
               </DashboardLayout>
             ) : (
               <Navigate to="/auth" replace />
             )
           }
         >
-          {protectedRoutes.map(({ path }) => (
-            <Route key={path} path={path} element={null} />
+          {/* Define child routes */}
+          {protectedRoutes.map(({ path, component: Component }) => (
+            <Route
+              key={path}
+              path={path}
+              element={lazyLoad(Component)}
+            />
           ))}
         </Route>
       </Routes>
