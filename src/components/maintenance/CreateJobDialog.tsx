@@ -183,6 +183,7 @@ export function CreateJobDialog() {
           open={showInspection}
           onOpenChange={setShowInspection}
           maintenanceId={maintenanceId}
+          vehicleId={formData.vehicle_id}
           onComplete={handleInspectionComplete}
         />
       )}
