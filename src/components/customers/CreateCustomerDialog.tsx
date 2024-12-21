@@ -57,10 +57,10 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
 
       console.log('Attempting to insert customer with data:', customerData);
 
-      const { data, error: insertError } = await supabase
+      const { data: newCustomer, error: insertError } = await supabase
         .from("profiles")
         .insert(customerData)
-        .select()
+        .select('*')
         .single();
 
       if (insertError) {
@@ -68,18 +68,20 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
         throw insertError;
       }
 
-      console.log('Customer created successfully:', data);
+      console.log('Customer created successfully:', newCustomer);
+
+      // Invalidate and refetch customers query
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      
+      // Force a refetch of customer stats
+      await queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+      
+      console.log('Queries invalidated, checking customer list refresh');
 
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
-
-      // Invalidate queries to refresh the customer list
-      await queryClient.invalidateQueries({ queryKey: ["customers"] });
-      await queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
-      
-      console.log('Queries invalidated, resetting form and closing dialog');
       
       // Reset form and close dialog
       form.reset();
