@@ -45,14 +45,22 @@ export const VehicleDiagram = ({
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!selectedMarker) return;
 
+    // Create a new marker with updated description
+    const updatedSelectedMarker = {
+      ...selectedMarker,
+      description: e.target.value
+    };
+
+    // Update the markers array with the new description
     const updatedMarkers = damageMarkers.map(marker =>
-      marker.id === selectedMarker.id
-        ? { ...marker, description: e.target.value }
-        : marker
+      marker.id === selectedMarker.id ? updatedSelectedMarker : marker
     );
 
+    // Update parent component state
     onMarkersChange(updatedMarkers);
-    setSelectedMarker({ ...selectedMarker, description: e.target.value });
+    
+    // Update local state
+    setSelectedMarker(updatedSelectedMarker);
   };
 
   return (
