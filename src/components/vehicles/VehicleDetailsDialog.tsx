@@ -13,7 +13,6 @@ import { MaintenanceHistory } from "./profile/MaintenanceHistory";
 import { DamageHistory } from "./profile/DamageHistory";
 import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
-import { VehicleInsurance } from "./profile/VehicleInsurance";
 
 interface VehicleDetailsDialogProps {
   vehicleId: string;
@@ -101,7 +100,6 @@ export const VehicleDetailsDialog = ({
                 <TabsTrigger value="damages">Damages</TabsTrigger>
                 <TabsTrigger value="agreements">Agreements</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="insurance">Insurance</TabsTrigger>
               </TabsList>
               <TabsContent value="maintenance">
                 <MaintenanceHistory vehicleId={vehicleId} />
@@ -114,9 +112,6 @@ export const VehicleDetailsDialog = ({
               </TabsContent>
               <TabsContent value="documents">
                 <VehicleDocuments vehicleId={vehicleId} />
-              </TabsContent>
-              <TabsContent value="insurance">
-                <VehicleInsurance vehicleId={vehicleId} />
               </TabsContent>
             </Tabs>
           </div>

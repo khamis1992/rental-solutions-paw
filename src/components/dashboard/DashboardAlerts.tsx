@@ -6,18 +6,10 @@ import { useState } from "react";
 import { AlertItem } from "./AlertItem";
 import { AlertDetailsDialog } from "./AlertDetailsDialog";
 import { AlertDetails } from "./types/alert-types";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function DashboardAlerts() {
   const [selectedAlert, setSelectedAlert] = useState<AlertDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const { data: alerts } = useQuery({
     queryKey: ["dashboard-alerts"],
@@ -85,66 +77,55 @@ export function DashboardAlerts() {
     return null;
   }
 
-  const renderAlertGroup = (title: string, alertsArray: AlertDetails[]) => {
-    if (!alertsArray.length) return null;
-    
-    const firstAlert = alertsArray[0];
+  const renderAlertGroup = (title: string, alerts: AlertDetails[]) => {
+    if (!alerts.length) return null;
     
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2 text-center">{title}</h3>
-        <AlertItem
-          key={firstAlert.id}
-          alert={firstAlert}
-          onClick={() => handleAlertClick(firstAlert)}
-          count={alertsArray.length}
-        />
+        <h3 className="text-sm font-medium text-muted-foreground mb-2">{title}</h3>
+        {alerts.map((alert) => (
+          <AlertItem
+            key={alert.id}
+            alert={alert}
+            onClick={() => handleAlertClick(alert)}
+          />
+        ))}
       </div>
     );
   };
 
   return (
     <>
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader className="text-center">
+      <Card>
+        <CardHeader>
           <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {renderAlertGroup("Vehicle Returns", alerts.overdueVehicles?.map(vehicle => ({
-            type: 'vehicle',
-            title: 'Overdue Vehicle Details',
-            vehicle: vehicle.vehicle,
-            customer: vehicle.customer,
-            id: vehicle.id
-          })) || [])}
+        <CardContent>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-6">
+              {renderAlertGroup("Vehicle Returns", alerts.overdueVehicles?.map(vehicle => ({
+                type: 'vehicle',
+                title: 'Overdue Vehicle Details',
+                vehicle: vehicle.vehicle,
+                customer: vehicle.customer,
+                id: vehicle.id
+              })) || [])}
 
-          <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Notifications</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${notificationsOpen ? 'transform rotate-180' : ''}`} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full" style={{ width: 'calc(100% - 32px)' }}>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-4 p-4">
-                  {renderAlertGroup("Payment Alerts", alerts.overduePayments?.map(payment => ({
-                    type: 'payment',
-                    title: 'Overdue Payment Details',
-                    customer: payment.lease?.customer,
-                    id: payment.id
-                  })) || [])}
+              {renderAlertGroup("Payment Alerts", alerts.overduePayments?.map(payment => ({
+                type: 'payment',
+                title: 'Overdue Payment Details',
+                customer: payment.lease?.customer,
+                id: payment.id
+              })) || [])}
 
-                  {renderAlertGroup("Maintenance Alerts", alerts.maintenanceAlerts?.map(maintenance => ({
-                    type: 'maintenance',
-                    title: 'Maintenance Alert Details',
-                    vehicle: maintenance.vehicle,
-                    id: maintenance.id
-                  })) || [])}
-                </div>
-              </ScrollArea>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              {renderAlertGroup("Maintenance Alerts", alerts.maintenanceAlerts?.map(maintenance => ({
+                type: 'maintenance',
+                title: 'Maintenance Alert Details',
+                vehicle: maintenance.vehicle,
+                id: maintenance.id
+              })) || [])}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
