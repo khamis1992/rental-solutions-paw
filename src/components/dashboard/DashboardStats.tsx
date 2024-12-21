@@ -12,12 +12,12 @@ export const DashboardStats = () => {
       const [vehiclesResponse, rentalsResponse, paymentsResponse] = await Promise.all([
         // Get vehicles stats
         supabase.from("vehicles")
-          .select('status', { count: 'exact' })
-          .in('status', ['available', 'maintenance', 'on_rent']),
+          .select('status', { count: 'exact', head: true })
+          .in('status', ['available', 'maintenance', 'rented']),
 
         // Get active rentals
         supabase.from("leases")
-          .select('status', { count: 'exact' })
+          .select('status', { count: 'exact', head: true })
           .eq("status", "active"),
 
         // Calculate monthly revenue
@@ -38,7 +38,7 @@ export const DashboardStats = () => {
         total: vehiclesResponse.count || 0,
         available: vehiclesResponse.data?.filter(v => v.status === 'available').length || 0,
         maintenance: vehiclesResponse.data?.filter(v => v.status === 'maintenance').length || 0,
-        onRent: vehiclesResponse.data?.filter(v => v.status === 'on_rent').length || 0
+        onRent: vehiclesResponse.data?.filter(v => v.status === 'rented').length || 0
       };
 
       return {
@@ -50,7 +50,6 @@ export const DashboardStats = () => {
       };
     },
     staleTime: 60000, // Cache for 1 minute
-    cacheTime: 300000, // Keep in cache for 5 minutes
   });
 
   return (

@@ -37,7 +37,6 @@ export const AgreementStats = () => {
       return counts;
     },
     staleTime: 30000, // Cache for 30 seconds
-    cacheTime: 60000, // Keep in cache for 1 minute
   });
 
   return (
