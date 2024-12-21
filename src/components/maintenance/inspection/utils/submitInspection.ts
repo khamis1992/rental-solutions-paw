@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 interface DamageMarker {
   id: string;
@@ -53,13 +54,13 @@ export const submitInspection = async ({
       })
     );
 
-    // Create the inspection record - IMPORTANT: damageMarkers is passed directly, no stringify needed
+    // Create the inspection record - Convert damageMarkers to Json type
     const inspectionData = {
       vehicle_id: maintenanceData.vehicle_id,
       inspection_type: 'check_in',
       odometer_reading: parseInt(formData.get('odometer') as string),
       fuel_level: fuelLevel,
-      damage_markers: damageMarkers, // Pass the array directly, Supabase will handle the JSON conversion
+      damage_markers: damageMarkers as unknown as Json, // Type assertion to match Supabase's Json type
       renter_signature: renterSignature,
       staff_signature: staffSignature,
       inspection_date: new Date().toISOString(),
