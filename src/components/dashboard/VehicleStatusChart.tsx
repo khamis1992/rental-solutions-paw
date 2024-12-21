@@ -7,14 +7,13 @@ import { DonutChart } from "./charts/DonutChart";
 import { ChartLegend } from "./charts/ChartLegend";
 
 const STATUS_COLORS = {
-  accident: "#F97316",      // Bright Orange
-  available: "#0EA5E9",     // Ocean Blue
+  accident: "#F97316",      // Orange
+  available: "#0EA5E9",     // Blue
   maintenance: "#800000",   // Maroon
-  police_station: "#D946EF", // Magenta Pink
-  out_of_service: "#CA8A04", // Yellow
+  police_station: "#D946EF", // Magenta
+  rented: "#94A3B8",        // Gray
   stolen: "#EF4444",        // Red
-  reserve: "#8B5CF6",       // Vivid Purple
-  on_rent: "#22C55E"        // Green
+  reserve: "#8B5CF6",       // Purple
 } as const;
 
 type VehicleStatus = keyof typeof STATUS_COLORS;
@@ -69,7 +68,7 @@ export const VehicleStatusChart = () => {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="bg-white">
         <CardContent className="h-[400px] flex items-center justify-center">
           <div className="animate-pulse w-full h-full bg-muted rounded-md" />
         </CardContent>
@@ -85,14 +84,8 @@ export const VehicleStatusChart = () => {
 
   const totalVehicles = vehicleCounts?.reduce((sum, item) => sum + item.value, 0) || 0;
 
-  const primaryStatus = selectedStatus === "all"
-    ? { value: totalVehicles, name: "Total Vehicles" }
-    : filteredData?.reduce((prev, current) => 
-        (prev.value > current.value) ? prev : current
-      );
-
   return (
-    <Card>
+    <Card className="bg-white">
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold">Vehicle Status</h3>
@@ -107,7 +100,8 @@ export const VehicleStatusChart = () => {
           <DonutChart
             data={filteredData || []}
             config={config}
-            primaryStatus={primaryStatus}
+            primaryValue={totalVehicles}
+            primaryLabel="Total Vehicles"
           />
           <ChartLegend
             data={vehicleCounts || []}

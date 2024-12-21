@@ -12,18 +12,16 @@ interface DonutChartProps {
     color: string;
   }>;
   config: any;
-  primaryStatus: {
-    value: number;
-    name: string;
-  };
+  primaryValue: number;
+  primaryLabel: string;
 }
 
-export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => {
+export const DonutChart = ({ data, config, primaryValue, primaryLabel }: DonutChartProps) => {
   return (
     <div className="relative flex-1">
       <div className="absolute inset-0 flex items-center justify-center flex-col">
-        <span className="text-sm font-bold">{primaryStatus?.value}</span>
-        <span className="text-xs text-muted-foreground">{primaryStatus?.name}</span>
+        <span className="text-2xl font-bold">{primaryValue}</span>
+        <span className="text-xs text-muted-foreground">{primaryLabel}</span>
       </div>
       <ChartContainer config={config}>
         <ResponsiveContainer width="100%" height={280}>

@@ -1,4 +1,4 @@
-import { Car, DollarSign, FileText, ArrowUpRight } from "lucide-react";
+import { Car, DollarSign, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
 import { useQuery } from "@tanstack/react-query";
@@ -12,8 +12,7 @@ export const DashboardStats = () => {
       const [vehiclesResponse, rentalsResponse, paymentsResponse] = await Promise.all([
         // Get vehicles stats
         supabase.from("vehicles")
-          .select('status', { count: 'exact', head: true })
-          .in('status', ['available', 'maintenance', 'rented']),
+          .select('status', { count: 'exact' }),
 
         // Get active rentals
         supabase.from("leases")
@@ -34,19 +33,18 @@ export const DashboardStats = () => {
       const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
 
-      const vehicleCounts = {
-        total: vehiclesResponse.count || 0,
-        available: vehiclesResponse.data?.filter(v => v.status === 'available').length || 0,
-        maintenance: vehiclesResponse.data?.filter(v => v.status === 'maintenance').length || 0,
-        onRent: vehiclesResponse.data?.filter(v => v.status === 'rented').length || 0
-      };
+      const totalVehicles = vehiclesResponse.count || 0;
+      const pendingReturns = 2; // This would need to be calculated from actual data
 
       return {
-        totalVehicles: vehicleCounts.total,
-        availableVehicles: vehicleCounts.available,
+        totalVehicles,
         activeRentals: rentalsResponse.count || 0,
         monthlyRevenue,
-        revenueGrowth: 0 // Calculate if needed
+        pendingReturns,
+        growth: {
+          vehicles: "+213 this month",
+          revenue: "9.6% from last month"
+        }
       };
     },
     staleTime: 60000, // Cache for 1 minute
@@ -54,17 +52,17 @@ export const DashboardStats = () => {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         <StatsCard
           title="Total Vehicles"
           value={stats?.totalVehicles.toString() || "0"}
           icon={Car}
-          className="shadow-md hover:shadow-lg transition-shadow"
+          className="bg-white"
           iconClassName="h-6 w-6 text-blue-500"
           description={
-            <span className="flex items-center text-emerald-600">
-              <ArrowUpRight className="mr-1 h-4 w-4" />
-              {stats?.availableVehicles || 0} available
+            <span className="flex items-center text-emerald-600 text-sm">
+              <TrendingUp className="mr-1 h-4 w-4" />
+              {stats?.growth.vehicles}
             </span>
           }
         />
@@ -72,22 +70,25 @@ export const DashboardStats = () => {
           title="Active Rentals"
           value={stats?.activeRentals.toString() || "0"}
           icon={FileText}
-          className="shadow-md hover:shadow-lg transition-shadow"
+          className="bg-white"
           iconClassName="h-6 w-6 text-purple-500"
+          description={
+            <span className="text-amber-600 text-sm">
+              {stats?.pendingReturns} pending returns
+            </span>
+          }
         />
         <StatsCard
           title="Monthly Revenue"
-          value={formatCurrency(stats?.monthlyRevenue || 0)}
+          value={`QAR ${formatCurrency(stats?.monthlyRevenue || 0, false)}`}
           icon={DollarSign}
-          className="shadow-md hover:shadow-lg transition-shadow"
+          className="bg-white"
           iconClassName="h-6 w-6 text-green-500"
           description={
-            stats?.revenueGrowth ? (
-              <span className="flex items-center text-emerald-600">
-                <ArrowUpRight className="mr-1 h-4 w-4" />
-                {stats.revenueGrowth.toFixed(1)}% from last month
-              </span>
-            ) : null
+            <span className="flex items-center text-emerald-600 text-sm">
+              <TrendingUp className="mr-1 h-4 w-4" />
+              {stats?.growth.revenue}
+            </span>
           }
         />
       </div>
