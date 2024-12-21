@@ -21,30 +21,30 @@ interface DonutChartProps {
 export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => {
   return (
     <div className="relative flex-1">
-      {/* Background circles for depth effect */}
+      {/* Background circles for depth effect - reduced sizes */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[280px] h-[280px] rounded-full bg-gray-50" />
+        <div className="w-[220px] h-[220px] rounded-full bg-gray-50" />
       </div>
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[260px] h-[260px] rounded-full bg-gray-100" />
+        <div className="w-[200px] h-[200px] rounded-full bg-gray-100" />
       </div>
       
       {/* Center text */}
       <div className="absolute inset-0 flex items-center justify-center flex-col z-10">
-        <span className="text-4xl font-bold text-gray-900">{primaryStatus?.value}</span>
-        <span className="text-base text-gray-600 mt-1">{primaryStatus?.name}</span>
+        <span className="text-3xl font-bold text-gray-900">{primaryStatus?.value}</span>
+        <span className="text-sm text-gray-600 mt-1">{primaryStatus?.name}</span>
       </div>
 
-      {/* Chart */}
+      {/* Chart - adjusted height and radius */}
       <ChartContainer config={config}>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={100}
-              outerRadius={130}
+              innerRadius={70}
+              outerRadius={100}
               paddingAngle={2}
               dataKey="value"
               startAngle={180}
