@@ -42,8 +42,8 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
       <TableCell>{customer.address || 'N/A'}</TableCell>
       <TableCell>{customer.driver_license || 'N/A'}</TableCell>
       <TableCell className="flex gap-2">
-        {customer.id_document_url && (
-          <TooltipProvider>
+        <TooltipProvider>
+          {customer.id_document_url && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <FileText 
@@ -55,10 +55,11 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
                 <p>ID Document Available</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        )}
-        {customer.license_document_url && (
-          <TooltipProvider>
+          )}
+        </TooltipProvider>
+
+        <TooltipProvider>
+          {customer.license_document_url && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <FileText 
@@ -70,10 +71,11 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
                 <p>License Document Available</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        )}
-        {customer.contract_document_url && (
-          <TooltipProvider>
+          )}
+        </TooltipProvider>
+
+        <TooltipProvider>
+          {customer.contract_document_url && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <FileText 
@@ -85,8 +87,8 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
                 <p>Contract Document Available</p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-        )}
+          )}
+        </TooltipProvider>
       </TableCell>
       <TableCell>
         {new Date(customer.created_at).toLocaleDateString()}
