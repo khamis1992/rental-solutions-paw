@@ -35,7 +35,10 @@ const AppWrapper = React.memo(({ session }: { session: any }) => {
   const startRender = performance.now();
   
   React.useEffect(() => {
-    console.log(`App rendered in ${performance.now() - startRender}ms`);
+    // Log render time in development only
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`App rendered in ${performance.now() - startRender}ms`);
+    }
   }, [startRender]);
 
   return (
@@ -62,42 +65,47 @@ AppWrapper.displayName = 'AppWrapper';
 
 // Initialize app with better error handling and cleanup
 const initializeApp = async () => {
-  console.time('App Initialization');
+  if (process.env.NODE_ENV === 'development') {
+    console.time('App Initialization');
+  }
   
+  let authSubscription: { unsubscribe: () => void } | null = null;
+
   try {
-    console.log('Initializing app...');
     const { data: { session } } = await supabase.auth.getSession();
-    console.log('Initial session:', session);
 
     // Set up auth state change listener with cleanup
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event);
-      
       if (_event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed successfully');
+        // Invalidate auth-dependent queries when token is refreshed
         queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'auth-dependent' });
       } else if (_event === 'SIGNED_OUT') {
+        // Clear cache and local storage on sign out
         queryClient.clear();
-        localStorage.removeItem('app_session');
+        localStorage.clear();
       }
       
       root.render(<AppWrapper session={session} />);
     });
 
+    authSubscription = subscription;
+    
     // Initial render
     root.render(<AppWrapper session={session} />);
-
-    // Cleanup subscription on unload
-    window.addEventListener('unload', () => {
-      subscription.unsubscribe();
-    });
 
   } catch (error) {
     console.error('Failed to initialize app:', error);
     root.render(<AppWrapper session={null} />);
   } finally {
-    console.timeEnd('App Initialization');
+    if (process.env.NODE_ENV === 'development') {
+      console.timeEnd('App Initialization');
+    }
   }
+
+  // Cleanup subscription on unload
+  window.addEventListener('unload', () => {
+    authSubscription?.unsubscribe();
+  });
 };
 
 initializeApp();
