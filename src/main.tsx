@@ -9,16 +9,18 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import App from './App.tsx';
 import './index.css';
 
+// Create root element once
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
+// Configure query client with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 15,
-      gcTime: 1000 * 60 * 30,
+      staleTime: 1000 * 60 * 15, // 15 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
       retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -28,7 +30,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderApp = (session: any) => {
+// Memoize the app render function
+const renderApp = React.memo((session: any) => {
   const startRender = performance.now();
   
   root.render(
@@ -50,16 +53,19 @@ const renderApp = (session: any) => {
     </React.StrictMode>
   );
 
-  const renderTime = performance.now() - startRender;
-  console.log(`App rendered in ${renderTime}ms`);
-};
+  console.log(`App rendered in ${performance.now() - startRender}ms`);
+});
 
+// Initialize app with better error handling and cleanup
 const initializeApp = async () => {
+  console.time('App Initialization');
+  
   try {
     console.log('Initializing app...');
     const { data: { session } } = await supabase.auth.getSession();
     console.log('Initial session:', session);
 
+    // Set up auth state change listener with cleanup
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event);
       
@@ -74,8 +80,10 @@ const initializeApp = async () => {
       renderApp(session);
     });
 
+    // Initial render
     renderApp(session);
 
+    // Cleanup subscription on unload
     window.addEventListener('unload', () => {
       subscription.unsubscribe();
     });
@@ -83,10 +91,9 @@ const initializeApp = async () => {
   } catch (error) {
     console.error('Failed to initialize app:', error);
     renderApp(null);
+  } finally {
+    console.timeEnd('App Initialization');
   }
 };
 
-console.time('App Initialization');
-initializeApp().finally(() => {
-  console.timeEnd('App Initialization');
-});
+initializeApp();
