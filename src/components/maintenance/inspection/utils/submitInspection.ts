@@ -90,10 +90,27 @@ export const submitInspection = async ({
 
     if (inspectionError) throw inspectionError;
 
+    // Create a dummy lease for maintenance-related damages
+    const { data: dummyLease, error: dummyLeaseError } = await supabase
+      .from('leases')
+      .insert({
+        vehicle_id: maintenanceData.vehicle_id,
+        customer_id: (await supabase.auth.getUser()).data.user?.id,
+        total_amount: 0,
+        initial_mileage: odometerReading,
+        agreement_type: 'short_term',
+        status: 'pending_payment'
+      })
+      .select()
+      .single();
+
+    if (dummyLeaseError) throw dummyLeaseError;
+
     // Create damage records for each marker
     if (damageMarkers.length > 0) {
       const damageRecords = damageMarkers.map(marker => ({
         vehicle_id: maintenanceData.vehicle_id,
+        lease_id: dummyLease.id, // Use the dummy lease ID
         description: marker.description,
         reported_date: new Date().toISOString(),
         images: uploadedPhotos,
