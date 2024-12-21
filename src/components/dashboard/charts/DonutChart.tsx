@@ -63,7 +63,7 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
                 if (!active || !payload?.length) return null;
                 return (
                   <ChartTooltipContent
-                    className="bg-white border border-gray-200 shadow-lg"
+                    className="bg-white border border-gray-200"
                     payload={payload}
                   />
                 );
