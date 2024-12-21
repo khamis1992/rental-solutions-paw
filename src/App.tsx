@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Lazy load all pages with loading fallback
 const lazyLoad = (Component: React.LazyExoticComponent<() => JSX.Element>) => (
@@ -58,39 +59,41 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      {/* Public route */}
-      <Route 
-        path="/auth" 
-        element={session ? <Navigate to="/" replace /> : <Auth />} 
-      />
+    <TooltipProvider>
+      <Routes>
+        {/* Public route */}
+        <Route 
+          path="/auth" 
+          element={session ? <Navigate to="/" replace /> : <Auth />} 
+        />
 
-      {/* Protected routes */}
-      <Route
-        element={
-          session ? (
-            <DashboardLayout>
-              <RouteWrapper>
-                <Routes>
-                  {protectedRoutes.map(({ path, component: Component }) => (
-                    <Route
-                      key={path}
-                      path={path}
-                      element={lazyLoad(Component)}
-                    />
-                  ))}
-                </Routes>
-              </RouteWrapper>
-            </DashboardLayout>
-          ) : (
-            <Navigate to="/auth" replace />
-          )
-        }
-      >
-        {protectedRoutes.map(({ path }) => (
-          <Route key={path} path={path} element={null} />
-        ))}
-      </Route>
-    </Routes>
+        {/* Protected routes */}
+        <Route
+          element={
+            session ? (
+              <DashboardLayout>
+                <RouteWrapper>
+                  <Routes>
+                    {protectedRoutes.map(({ path, component: Component }) => (
+                      <Route
+                        key={path}
+                        path={path}
+                        element={lazyLoad(Component)}
+                      />
+                    ))}
+                  </Routes>
+                </RouteWrapper>
+              </DashboardLayout>
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        >
+          {protectedRoutes.map(({ path }) => (
+            <Route key={path} path={path} element={null} />
+          ))}
+        </Route>
+      </Routes>
+    </TooltipProvider>
   );
 }
