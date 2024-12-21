@@ -9,7 +9,7 @@ export const DashboardStats = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [vehiclesResponse, rentalsResponse, paymentsResponse] = await Promise.all([
+      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse] = await Promise.all([
         // Get vehicles stats
         supabase.from("vehicles")
           .select('status', { count: 'exact' }),
@@ -19,19 +19,35 @@ export const DashboardStats = () => {
           .select('status', { count: 'exact', head: true })
           .eq("status", "active"),
 
-        // Calculate monthly revenue
+        // Calculate current month revenue
         supabase.from("payments")
           .select('amount')
-          .gte('created_at', new Date(new Date().setDate(1)).toISOString())
-          .eq("status", "completed")
+          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+          .eq('status', 'completed'),
+
+        // Calculate last month revenue for comparison
+        supabase.from("payments")
+          .select('amount')
+          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString())
+          .lt('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+          .eq('status', 'completed')
       ]);
 
       if (vehiclesResponse.error) throw vehiclesResponse.error;
       if (rentalsResponse.error) throw rentalsResponse.error;
       if (paymentsResponse.error) throw paymentsResponse.error;
+      if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
 
       const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
+
+      const lastMonthRevenue = lastMonthPaymentsResponse.data?.reduce((sum, payment) => 
+        sum + (payment.amount || 0), 0) || 0;
+
+      // Calculate growth percentage
+      const growth = lastMonthRevenue > 0 
+        ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+        : 0;
 
       const totalVehicles = vehiclesResponse.count || 0;
       const pendingReturns = 2; // This would need to be calculated from actual data
@@ -43,7 +59,7 @@ export const DashboardStats = () => {
         pendingReturns,
         growth: {
           vehicles: "+213 this month",
-          revenue: "9.6% from last month"
+          revenue: `${growth.toFixed(1)}% from last month`
         }
       };
     },
@@ -80,7 +96,7 @@ export const DashboardStats = () => {
         />
         <StatsCard
           title="Monthly Revenue"
-          value={`QAR ${formatCurrency(stats?.monthlyRevenue || 0)}`}
+          value={formatCurrency(stats?.monthlyRevenue || 0)}
           icon={DollarSign}
           className="bg-white"
           iconClassName="h-6 w-6 text-green-500"
