@@ -7,10 +7,13 @@ import { AlertItem } from "./AlertItem";
 import { AlertDetailsDialog } from "./AlertDetailsDialog";
 import { AlertDetails } from "./types/alert-types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export function DashboardAlerts() {
   const [selectedAlert, setSelectedAlert] = useState<AlertDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const { data: alerts } = useQuery({
     queryKey: ["dashboard-alerts"],
@@ -71,6 +74,14 @@ export function DashboardAlerts() {
     setDialogOpen(true);
   };
 
+  const toggleGroupExpansion = (groupType: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupType) 
+        ? prev.filter(type => type !== groupType)
+        : [...prev, groupType]
+    );
+  };
+
   if (!alerts || 
       (!alerts.overdueVehicles?.length && 
        !alerts.overduePayments?.length && 
@@ -78,27 +89,45 @@ export function DashboardAlerts() {
     return null;
   }
 
-  const renderAlertGroup = (title: string, alerts: AlertDetails[], count: number) => {
+  const renderAlertGroup = (title: string, alerts: AlertDetails[], count: number, groupType: string) => {
     if (!alerts.length) return null;
     
-    // Show only the first alert as a preview
-    const previewAlert = alerts[0];
+    const isExpanded = expandedGroups.includes(groupType);
+    const displayAlerts = isExpanded ? alerts : [alerts[0]];
     
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
           {count > 1 && (
-            <Badge variant="secondary" className="text-xs">
-              +{count - 1} more
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge 
+                variant="secondary" 
+                className="text-xs cursor-pointer hover:bg-secondary/80"
+                onClick={() => toggleGroupExpansion(groupType)}
+              >
+                {isExpanded ? (
+                  <span className="flex items-center gap-1">
+                    Show less <ChevronUp className="h-3 w-3" />
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    +{count - 1} more <ChevronDown className="h-3 w-3" />
+                  </span>
+                )}
+              </Badge>
+            </div>
           )}
         </div>
-        <AlertItem
-          key={previewAlert.id}
-          alert={previewAlert}
-          onClick={() => handleAlertClick(previewAlert)}
-        />
+        <div className="space-y-2">
+          {displayAlerts.map((alert) => (
+            <AlertItem
+              key={alert.id}
+              alert={alert}
+              onClick={() => handleAlertClick(alert)}
+            />
+          ))}
+        </div>
       </div>
     );
   };
@@ -121,7 +150,8 @@ export function DashboardAlerts() {
                   customer: vehicle.customer,
                   id: vehicle.id
                 })) || [],
-                alerts.overdueVehicles?.length || 0
+                alerts.overdueVehicles?.length || 0,
+                'vehicles'
               )}
 
               {renderAlertGroup(
@@ -132,7 +162,8 @@ export function DashboardAlerts() {
                   customer: payment.lease?.customer,
                   id: payment.id
                 })) || [],
-                alerts.overduePayments?.length || 0
+                alerts.overduePayments?.length || 0,
+                'payments'
               )}
 
               {renderAlertGroup(
@@ -143,7 +174,8 @@ export function DashboardAlerts() {
                   vehicle: maintenance.vehicle,
                   id: maintenance.id
                 })) || [],
-                alerts.maintenanceAlerts?.length || 0
+                alerts.maintenanceAlerts?.length || 0,
+                'maintenance'
               )}
             </div>
           </ScrollArea>
