@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AlertItem } from "./AlertItem";
 import { AlertDetailsDialog } from "./AlertDetailsDialog";
 import { AlertDetails } from "./types/alert-types";
+import { Badge } from "@/components/ui/badge";
 
 export function DashboardAlerts() {
   const [selectedAlert, setSelectedAlert] = useState<AlertDetails | null>(null);
@@ -77,19 +78,27 @@ export function DashboardAlerts() {
     return null;
   }
 
-  const renderAlertGroup = (title: string, alerts: AlertDetails[]) => {
+  const renderAlertGroup = (title: string, alerts: AlertDetails[], count: number) => {
     if (!alerts.length) return null;
+    
+    // Show only the first alert as a preview
+    const previewAlert = alerts[0];
     
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">{title}</h3>
-        {alerts.map((alert) => (
-          <AlertItem
-            key={alert.id}
-            alert={alert}
-            onClick={() => handleAlertClick(alert)}
-          />
-        ))}
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+          {count > 1 && (
+            <Badge variant="secondary" className="text-xs">
+              +{count - 1} more
+            </Badge>
+          )}
+        </div>
+        <AlertItem
+          key={previewAlert.id}
+          alert={previewAlert}
+          onClick={() => handleAlertClick(previewAlert)}
+        />
       </div>
     );
   };
@@ -101,29 +110,41 @@ export function DashboardAlerts() {
           <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-6">
-              {renderAlertGroup("Vehicle Returns", alerts.overdueVehicles?.map(vehicle => ({
-                type: 'vehicle',
-                title: 'Overdue Vehicle Details',
-                vehicle: vehicle.vehicle,
-                customer: vehicle.customer,
-                id: vehicle.id
-              })) || [])}
+          <ScrollArea className="h-[300px] pr-4">
+            <div className="space-y-4">
+              {renderAlertGroup(
+                "Vehicle Returns", 
+                alerts.overdueVehicles?.map(vehicle => ({
+                  type: 'vehicle',
+                  title: 'Overdue Vehicle Details',
+                  vehicle: vehicle.vehicle,
+                  customer: vehicle.customer,
+                  id: vehicle.id
+                })) || [],
+                alerts.overdueVehicles?.length || 0
+              )}
 
-              {renderAlertGroup("Payment Alerts", alerts.overduePayments?.map(payment => ({
-                type: 'payment',
-                title: 'Overdue Payment Details',
-                customer: payment.lease?.customer,
-                id: payment.id
-              })) || [])}
+              {renderAlertGroup(
+                "Payment Alerts", 
+                alerts.overduePayments?.map(payment => ({
+                  type: 'payment',
+                  title: 'Overdue Payment Details',
+                  customer: payment.lease?.customer,
+                  id: payment.id
+                })) || [],
+                alerts.overduePayments?.length || 0
+              )}
 
-              {renderAlertGroup("Maintenance Alerts", alerts.maintenanceAlerts?.map(maintenance => ({
-                type: 'maintenance',
-                title: 'Maintenance Alert Details',
-                vehicle: maintenance.vehicle,
-                id: maintenance.id
-              })) || [])}
+              {renderAlertGroup(
+                "Maintenance Alerts", 
+                alerts.maintenanceAlerts?.map(maintenance => ({
+                  type: 'maintenance',
+                  title: 'Maintenance Alert Details',
+                  vehicle: maintenance.vehicle,
+                  id: maintenance.id
+                })) || [],
+                alerts.maintenanceAlerts?.length || 0
+              )}
             </div>
           </ScrollArea>
         </CardContent>
