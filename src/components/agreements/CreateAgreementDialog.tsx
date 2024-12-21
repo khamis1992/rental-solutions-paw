@@ -53,7 +53,7 @@ export function CreateAgreementDialog() {
           <span className="font-medium">New Agreement</span>
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Agreement</DialogTitle>
           <DialogDescription>
@@ -114,7 +114,7 @@ export function CreateAgreementDialog() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-4">
             <Button
               type="button"
               variant="outline"
