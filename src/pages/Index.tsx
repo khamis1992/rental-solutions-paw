@@ -4,18 +4,61 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
-const DashboardStats = lazy(() => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })));
-const UpcomingRentals = lazy(() => import("@/components/dashboard/UpcomingRentals").then(module => ({ default: module.UpcomingRentals })));
-const DashboardAlerts = lazy(() => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })));
-const QuickActions = lazy(() => import("@/components/dashboard/QuickActions").then(module => ({ default: module.QuickActions })));
-const WelcomeHeader = lazy(() => import("@/components/dashboard/WelcomeHeader").then(module => ({ default: module.WelcomeHeader })));
-const RecentActivity = lazy(() => import("@/components/dashboard/RecentActivity").then(module => ({ default: module.RecentActivity })));
-const SystemChatbot = lazy(() => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })));
+// Improved lazy loading with better error handling
+const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
+  return lazy(() => 
+    importFn().catch(error => {
+      console.error(`Error loading ${componentName}:`, error);
+      toast.error(`Failed to load ${componentName}. Please refresh the page.`);
+      return Promise.reject(error);
+    })
+  );
+};
 
-const ComponentLoader = () => (
-  <div className="w-full h-[200px] flex items-center justify-center">
-    <Skeleton className="w-full h-full rounded-lg" />
+// Lazy load components with improved error handling
+const DashboardStats = lazyLoadComponent(
+  () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
+  "DashboardStats"
+);
+const UpcomingRentals = lazyLoadComponent(
+  () => import("@/components/dashboard/UpcomingRentals").then(module => ({ default: module.UpcomingRentals })),
+  "UpcomingRentals"
+);
+const DashboardAlerts = lazyLoadComponent(
+  () => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })),
+  "DashboardAlerts"
+);
+const QuickActions = lazyLoadComponent(
+  () => import("@/components/dashboard/QuickActions").then(module => ({ default: module.QuickActions })),
+  "QuickActions"
+);
+const WelcomeHeader = lazyLoadComponent(
+  () => import("@/components/dashboard/WelcomeHeader").then(module => ({ default: module.WelcomeHeader })),
+  "WelcomeHeader"
+);
+const RecentActivity = lazyLoadComponent(
+  () => import("@/components/dashboard/RecentActivity").then(module => ({ default: module.RecentActivity })),
+  "RecentActivity"
+);
+const SystemChatbot = lazyLoadComponent(
+  () => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })),
+  "SystemChatbot"
+);
+
+// Improved loading component with better visual feedback
+const ComponentLoader = ({ componentName }: { componentName: string }) => (
+  <div className="w-full h-[200px] space-y-4 p-4">
+    <div className="h-4 w-1/4">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="h-[160px]">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="text-sm text-muted-foreground text-center">
+      Loading {componentName}...
+    </div>
   </div>
 );
 
@@ -27,19 +70,19 @@ const Index = () => {
     <DashboardLayout>
       <div className="container mx-auto space-y-6 px-4 py-6 md:space-y-8 md:px-6 md:py-8">
         <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader />}>
+          <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
             <WelcomeHeader />
           </Suspense>
         </ErrorBoundary>
 
         <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader />}>
+          <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
             <DashboardStats />
           </Suspense>
         </ErrorBoundary>
 
         <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader />}>
+          <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
             <QuickActions />
           </Suspense>
         </ErrorBoundary>
@@ -47,14 +90,14 @@ const Index = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 lg:gap-8">
           <div className="lg:col-span-4">
             <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader />}>
+              <Suspense fallback={<ComponentLoader componentName="Upcoming Rentals" />}>
                 <UpcomingRentals />
               </Suspense>
             </ErrorBoundary>
           </div>
           <div className="lg:col-span-3">
             <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader />}>
+              <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
                 <DashboardAlerts />
               </Suspense>
             </ErrorBoundary>
@@ -64,14 +107,14 @@ const Index = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 lg:gap-8">
           <div className="lg:col-span-4">
             <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader />}>
+              <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
                 <RecentActivity />
               </Suspense>
             </ErrorBoundary>
           </div>
           <div className="lg:col-span-3">
             <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader />}>
+              <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
                 <SystemChatbot />
               </Suspense>
             </ErrorBoundary>
