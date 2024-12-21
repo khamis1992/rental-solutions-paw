@@ -37,7 +37,7 @@ const VehicleInspectionDialog = ({
     e.preventDefault();
     setLoading(true);
 
-    // Close dialogs immediately for better UX
+    // Close dialogs immediately for better UX, but only on form submission
     onComplete();
     onOpenChange(false);
     
@@ -75,7 +75,15 @@ const VehicleInspectionDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Only allow immediate close if not loading
+        if (!loading || !newOpen) {
+          onOpenChange(newOpen);
+        }
+      }}
+    >
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
