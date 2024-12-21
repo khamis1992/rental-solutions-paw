@@ -7,13 +7,14 @@ import { DonutChart } from "./charts/DonutChart";
 import { ChartLegend } from "./charts/ChartLegend";
 
 const STATUS_COLORS = {
-  maintenance: "#8B0000",     // Dark Red for Maintenance
-  rented: "#E5E7EB",         // Light Gray for Rented
-  available: "#0EA5E9",      // Sky Blue for Available
-  accident: "#F97316",       // Orange for Accident
-  reserve: "#8B5CF6",        // Purple for Reserve
-  stolen: "#EF4444",         // Red for Stolen
-  police_station: "#EC4899",  // Pink for Police Station
+  accident: "#F97316",      // Bright Orange
+  available: "#0EA5E9",     // Ocean Blue
+  maintenance: "#800000",   // Maroon
+  police_station: "#D946EF", // Magenta Pink
+  out_of_service: "#CA8A04", // Yellow
+  stolen: "#EF4444",        // Red
+  reserve: "#8B5CF6",       // Vivid Purple
+  on_rent: "#22C55E"        // Green
 } as const;
 
 type VehicleStatus = keyof typeof STATUS_COLORS;
@@ -91,7 +92,7 @@ export const VehicleStatusChart = () => {
       );
 
   return (
-    <Card className="bg-white shadow-md">
+    <Card>
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold">Vehicle Status</h3>
