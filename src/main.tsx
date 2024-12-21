@@ -57,8 +57,8 @@ const initializeApp = async () => {
 // Separate render function to maintain consistency
 const renderApp = (session: any) => {
   root.render(
-    <React.StrictMode>
-      <BrowserRouter>
+    <BrowserRouter>
+      <React.StrictMode>
         <ErrorBoundary>
           <SessionContextProvider 
             supabaseClient={supabase}
@@ -71,8 +71,8 @@ const renderApp = (session: any) => {
             </QueryClientProvider>
           </SessionContextProvider>
         </ErrorBoundary>
-      </BrowserRouter>
-    </React.StrictMode>
+      </React.StrictMode>
+    </BrowserRouter>
   );
 };
 
