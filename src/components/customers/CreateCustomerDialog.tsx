@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -49,22 +49,14 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
     console.log('Starting customer creation with values:', values);
     setIsLoading(true);
     try {
-      // Generate a new UUID for the customer
-      const newCustomerId = crypto.randomUUID();
-      console.log('Generated new customer ID:', newCustomerId);
-
       const customerData = {
-        id: newCustomerId,
         ...values,
         role: "customer",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
         status: "pending_review",
       };
 
       console.log('Attempting to insert customer with data:', customerData);
 
-      // Insert the new customer into the profiles table
       const { data, error: insertError } = await supabase
         .from("profiles")
         .insert(customerData)
@@ -78,7 +70,6 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
 
       console.log('Customer created successfully:', data);
 
-      // Show success message
       toast({
         title: "Success",
         description: "Customer created successfully",
