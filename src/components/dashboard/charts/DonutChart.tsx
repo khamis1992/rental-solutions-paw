@@ -23,29 +23,29 @@ export const DonutChart = ({ data, config, primaryStatus }: DonutChartProps) => 
     <div className="relative flex-1">
       {/* Pure white background circle */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[200px] h-[200px] rounded-full bg-white" />
+        <div className="w-[240px] h-[240px] rounded-full bg-white" />
       </div>
       
-      {/* Center text - updated styling for better match */}
+      {/* Center text - matched to design */}
       <div className="absolute inset-0 flex items-center justify-center flex-col z-10">
-        <span className="text-4xl font-bold text-gray-900">{primaryStatus?.value}</span>
-        <span className="text-sm text-gray-600">{primaryStatus?.name}</span>
+        <span className="text-[48px] font-bold text-gray-900 leading-none">{primaryStatus?.value}</span>
+        <span className="text-[16px] text-gray-600 mt-1">{primaryStatus?.name}</span>
       </div>
 
-      {/* Chart - adjusted dimensions and angles for better proportions */}
+      {/* Chart - adjusted to match design proportions */}
       <ChartContainer config={config}>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={320}>
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={80}
-              outerRadius={100}
+              innerRadius={95}
+              outerRadius={120}
               paddingAngle={1}
               dataKey="value"
-              startAngle={90}
-              endAngle={-270}
+              startAngle={180}
+              endAngle={-180}
             >
               {data?.map((entry, index) => (
                 <Cell 
