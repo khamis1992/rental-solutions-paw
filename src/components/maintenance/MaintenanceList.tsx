@@ -7,9 +7,6 @@ import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Clipboard } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -40,7 +37,6 @@ interface MaintenanceRecord {
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const channel = supabase
@@ -112,7 +108,7 @@ export const MaintenanceList = () => {
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',
-        status: 'urgent' as const,
+        status: 'urgent',
         scheduled_date: new Date().toISOString(),
         cost: null,
         description: 'Vehicle reported in accident status',
@@ -130,10 +126,6 @@ export const MaintenanceList = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentRecords = records.slice(startIndex, endIndex);
-
-  const handleNewInspection = () => {
-    navigate(`/maintenance/new/inspection`);
-  };
 
   if (isLoading) {
     return (
@@ -158,15 +150,6 @@ export const MaintenanceList = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-4">
-        <Button 
-          onClick={handleNewInspection}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Clipboard className="mr-2 h-4 w-4" />
-          New Vehicle Inspection
-        </Button>
-      </div>
       <div className="rounded-md border">
         <Table>
           <MaintenanceTableHeader />
