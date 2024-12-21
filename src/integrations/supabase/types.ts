@@ -1785,6 +1785,9 @@ export type Database = {
           needs_review: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"] | null
+          status: Database["public"]["Enums"]["customer_status_type"] | null
+          status_notes: string | null
+          status_updated_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1805,6 +1808,9 @@ export type Database = {
           needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["customer_status_type"] | null
+          status_notes?: string | null
+          status_updated_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1825,6 +1831,9 @@ export type Database = {
           needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          status?: Database["public"]["Enums"]["customer_status_type"] | null
+          status_notes?: string | null
+          status_updated_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2741,6 +2750,12 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
+      customer_status_type:
+        | "active"
+        | "inactive"
+        | "suspended"
+        | "pending_review"
+        | "blacklisted"
       damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
       import_type: "payments" | "customers" | "agreements"
