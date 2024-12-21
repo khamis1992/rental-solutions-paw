@@ -36,20 +36,22 @@ export const VehicleDiagram = ({
       description: "",
     };
 
+    const updatedMarkers = [...damageMarkers, newMarker];
+    onMarkersChange(updatedMarkers);
     setSelectedMarker(newMarker);
-    onMarkersChange([...damageMarkers, newMarker]);
   };
 
-  const handleDescriptionChange = (description: string) => {
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!selectedMarker) return;
 
     const updatedMarkers = damageMarkers.map(marker =>
       marker.id === selectedMarker.id
-        ? { ...marker, description }
+        ? { ...marker, description: e.target.value }
         : marker
     );
 
     onMarkersChange(updatedMarkers);
+    setSelectedMarker({ ...selectedMarker, description: e.target.value });
   };
 
   return (
@@ -122,8 +124,9 @@ export const VehicleDiagram = ({
           <h4 className="font-medium">Damage Description</h4>
           <Textarea
             value={selectedMarker.description}
-            onChange={(e) => handleDescriptionChange(e.target.value)}
+            onChange={handleDescriptionChange}
             placeholder="Describe the damage..."
+            className="min-h-[100px]"
           />
         </div>
       )}
