@@ -37,10 +37,16 @@ export const SystemChatbot = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      // Create a new array with only the messages needed for the API
-      const chatHistory = messages.slice(-4); // Take last 4 messages to maintain context
+      // Ensure messages alternate between user and assistant
+      const recentMessages = messages
+        .slice(-4) // Take last 4 messages for context
+        .filter((msg, index, arr) => {
+          // Keep message if it's the first one or if its role differs from the previous one
+          return index === 0 || msg.role !== arr[index - 1].role;
+        });
+
       const apiMessages = [
-        ...chatHistory,
+        ...recentMessages,
         { role: "user" as const, content: message }
       ];
 

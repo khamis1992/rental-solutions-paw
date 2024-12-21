@@ -70,13 +70,19 @@ serve(async (req) => {
       throw new Error('Chat service is not properly configured');
     }
 
-    // Ensure proper message format with system message first
+    // Ensure proper message format with system message first and alternating roles
     const formattedMessages = [
-      { role: "system", content: systemPrompt },
-      ...messages
+      { role: "system", content: systemPrompt }
     ];
 
-    console.log('Making request to Perplexity API...');
+    // Add messages ensuring alternating roles
+    messages.forEach((msg: { role: string; content: string }, index: number) => {
+      if (index === 0 || msg.role !== messages[index - 1].role) {
+        formattedMessages.push(msg);
+      }
+    });
+
+    console.log('Making request to Perplexity API with formatted messages:', formattedMessages);
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
