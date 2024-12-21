@@ -37,7 +37,7 @@ const VehicleInspectionDialog = ({
     e.preventDefault();
     setLoading(true);
 
-    // Close dialogs immediately
+    // Close dialogs immediately for better UX
     onComplete();
     onOpenChange(false);
     
@@ -63,6 +63,12 @@ const VehicleInspectionDialog = ({
         // Navigate to maintenance page
         navigate('/maintenance');
       }
+    } catch (error) {
+      // Show error toast even after dialog is closed
+      toast.error("Failed to save inspection. Please check the maintenance page for status.", {
+        duration: 5000,
+      });
+      console.error('Error saving inspection:', error);
     } finally {
       setLoading(false);
     }
@@ -166,7 +172,7 @@ const VehicleInspectionDialog = ({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Complete Inspection & Open Job Card"}
+              Complete Inspection & Open Job Card
             </Button>
           </div>
         </form>
