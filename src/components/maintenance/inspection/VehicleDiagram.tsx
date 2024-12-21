@@ -1,17 +1,11 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
 interface DamageMarker {
-  id: string;
   x: number;
   y: number;
   view: string;
-  description: string;
-  photoUrl?: string;
 }
 
 interface VehicleDiagramProps {
@@ -66,128 +60,101 @@ const generateDescription = (marker: DamageMarker): string => {
   return `Damage detected ${preposition} the ${specificZone} section of the vehicle's ${viewDescription}`;
 };
 
-export const VehicleDiagram = ({ 
-  damageMarkers, 
-  onMarkersChange 
+export const VehicleDiagram = ({
+  damageMarkers,
+  onMarkersChange,
 }: VehicleDiagramProps) => {
-  const [activeView, setActiveView] = useState<string>("front");
-  const [selectedMarker, setSelectedMarker] = useState<DamageMarker | null>(null);
+  const [currentView, setCurrentView] = useState<string>("front");
+
+  const handleViewChange = (view: string) => (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default button behavior
+    e.stopPropagation(); // Stop event propagation
+    setCurrentView(view);
+  };
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    const newMarker: DamageMarker = {
-      id: Date.now().toString(),
+    const newMarker = {
       x,
       y,
-      view: activeView,
-      description: "",
+      view: currentView,
     };
 
-    // Generate automatic description
-    newMarker.description = generateDescription(newMarker);
+    const description = generateDescription(newMarker);
+    toast.success(`Added damage marker: ${description}`);
 
-    const updatedMarkers = [...damageMarkers, newMarker];
-    onMarkersChange(updatedMarkers);
-    setSelectedMarker(newMarker);
-
-    // Show toast notification
-    toast.info("Damage marker added with automatic description");
-  };
-
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!selectedMarker) return;
-
-    const updatedSelectedMarker = {
-      ...selectedMarker,
-      description: e.target.value
-    };
-
-    const updatedMarkers = damageMarkers.map(marker =>
-      marker.id === selectedMarker.id ? updatedSelectedMarker : marker
-    );
-
-    onMarkersChange(updatedMarkers);
-    setSelectedMarker(updatedSelectedMarker);
+    onMarkersChange([...damageMarkers, newMarker]);
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap gap-2">
         <Button
-          variant={activeView === "front" ? "default" : "outline"}
-          onClick={() => setActiveView("front")}
+          type="button"
+          variant={currentView === "front" ? "default" : "outline"}
+          onClick={handleViewChange("front")}
         >
           Front
         </Button>
         <Button
-          variant={activeView === "rear" ? "default" : "outline"}
-          onClick={() => setActiveView("rear")}
+          type="button"
+          variant={currentView === "rear" ? "default" : "outline"}
+          onClick={handleViewChange("rear")}
         >
           Rear
         </Button>
         <Button
-          variant={activeView === "left" ? "default" : "outline"}
-          onClick={() => setActiveView("left")}
+          type="button"
+          variant={currentView === "left" ? "default" : "outline"}
+          onClick={handleViewChange("left")}
         >
           Left Side
         </Button>
         <Button
-          variant={activeView === "right" ? "default" : "outline"}
-          onClick={() => setActiveView("right")}
+          type="button"
+          variant={currentView === "right" ? "default" : "outline"}
+          onClick={handleViewChange("right")}
         >
           Right Side
         </Button>
         <Button
-          variant={activeView === "top" ? "default" : "outline"}
-          onClick={() => setActiveView("top")}
+          type="button"
+          variant={currentView === "top" ? "default" : "outline"}
+          onClick={handleViewChange("top")}
         >
           Top
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-4">
-          <div
-            className="relative w-full h-[400px] border rounded-lg bg-white"
-            onClick={handleClick}
-          >
-            <img 
-              src="/lovable-uploads/3902a0a3-bb90-442e-b11d-4a21abda0543.png"
-              alt="Vehicle diagram"
-              className="w-full h-full object-contain"
+      <div
+        className="relative w-full h-64 border rounded-lg cursor-crosshair bg-gray-50"
+        onClick={handleClick}
+      >
+        {damageMarkers
+          .filter((marker) => marker.view === currentView)
+          .map((marker, index) => (
+            <div
+              key={index}
+              className="absolute w-3 h-3 bg-red-500 rounded-full -translate-x-1/2 -translate-y-1/2"
+              style={{
+                left: `${marker.x}%`,
+                top: `${marker.y}%`,
+              }}
             />
+          ))}
+      </div>
 
-            {damageMarkers
-              .filter(marker => marker.view === activeView)
-              .map(marker => (
-                <div
-                  key={marker.id}
-                  className="absolute w-4 h-4 bg-red-500 rounded-full -translate-x-2 -translate-y-2 cursor-pointer hover:ring-2 hover:ring-red-300"
-                  style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedMarker(marker);
-                  }}
-                />
-              ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {selectedMarker && (
-        <div className="space-y-2">
-          <h4 className="font-medium">Damage Description</h4>
-          <Textarea
-            value={selectedMarker.description}
-            onChange={handleDescriptionChange}
-            placeholder="Describe the damage..."
-            className="min-h-[100px]"
-          />
-        </div>
-      )}
+      <div className="space-y-2">
+        <h4 className="font-medium">Damage Markers:</h4>
+        <ul className="space-y-1 text-sm">
+          {damageMarkers.map((marker, index) => (
+            <li key={index}>{generateDescription(marker)}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
