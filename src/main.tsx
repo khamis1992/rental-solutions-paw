@@ -30,39 +30,51 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create a memoized app wrapper component
-const AppWrapper = ({ session }: { session: any }) => (
-  <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter>
-        <SessionContextProvider 
-          supabaseClient={supabase}
-          initialSession={session}
-        >
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              <App />
-            </TooltipProvider>
-          </QueryClientProvider>
-        </SessionContextProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
-  </React.StrictMode>
-);
-
-AppWrapper.displayName = 'AppWrapper';
-
 // Initialize app with better error handling and cleanup
 const initializeApp = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      root.render(<AppWrapper session={session} />);
+      root.render(
+        <React.StrictMode>
+          <ErrorBoundary>
+            <BrowserRouter>
+              <SessionContextProvider 
+                supabaseClient={supabase}
+                initialSession={session}
+              >
+                <QueryClientProvider client={queryClient}>
+                  <TooltipProvider>
+                    <App />
+                  </TooltipProvider>
+                </QueryClientProvider>
+              </SessionContextProvider>
+            </BrowserRouter>
+          </ErrorBoundary>
+        </React.StrictMode>
+      );
     });
 
     // Initial render
-    root.render(<AppWrapper session={session} />);
+    root.render(
+      <React.StrictMode>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <SessionContextProvider 
+              supabaseClient={supabase}
+              initialSession={session}
+            >
+              <QueryClientProvider client={queryClient}>
+                <TooltipProvider>
+                  <App />
+                </TooltipProvider>
+              </QueryClientProvider>
+            </SessionContextProvider>
+          </BrowserRouter>
+        </ErrorBoundary>
+      </React.StrictMode>
+    );
 
     // Cleanup subscription on unload
     window.addEventListener('unload', () => {
@@ -71,7 +83,24 @@ const initializeApp = async () => {
 
   } catch (error) {
     console.error('Failed to initialize app:', error);
-    root.render(<AppWrapper session={null} />);
+    root.render(
+      <React.StrictMode>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <SessionContextProvider 
+              supabaseClient={supabase}
+              initialSession={null}
+            >
+              <QueryClientProvider client={queryClient}>
+                <TooltipProvider>
+                  <App />
+                </TooltipProvider>
+              </QueryClientProvider>
+            </SessionContextProvider>
+          </BrowserRouter>
+        </ErrorBoundary>
+      </React.StrictMode>
+    );
   }
 };
 
