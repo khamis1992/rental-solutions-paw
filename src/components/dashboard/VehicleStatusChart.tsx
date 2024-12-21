@@ -28,7 +28,7 @@ const config = {
   }), {}),
   background: {
     theme: {
-      light: "#E2E8F0",
+      light: "#F1F5F9",
       dark: "#334155",
     }
   }
@@ -92,10 +92,10 @@ export const VehicleStatusChart = () => {
       );
 
   return (
-    <Card>
+    <Card className="bg-white shadow-sm">
       <CardContent className="pt-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Vehicle Status</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Vehicle Status</h3>
           <ChartStatusSelect
             selectedStatus={selectedStatus}
             onStatusChange={setSelectedStatus}
@@ -106,7 +106,18 @@ export const VehicleStatusChart = () => {
         <div className="flex gap-8">
           <DonutChart
             data={filteredData || []}
-            config={config}
+            config={{
+              ...config,
+              chart: {
+                background: '#FFFFFF',
+                foreground: '#1F2937',
+                fontFamily: 'Inter, sans-serif',
+              },
+              rings: {
+                strokeWidth: 20,
+                gap: 2,
+              }
+            }}
             primaryStatus={primaryStatus}
           />
           <ChartLegend

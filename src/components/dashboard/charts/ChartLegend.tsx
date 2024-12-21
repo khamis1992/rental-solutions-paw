@@ -15,17 +15,17 @@ export const ChartLegend = ({ data, onStatusSelect }: ChartLegendProps) => {
       {data?.map((status, index) => (
         <div 
           key={index} 
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-3 cursor-pointer group transition-colors duration-200 hover:bg-gray-50 p-2 rounded-md"
           onClick={() => onStatusSelect(status.name.toLowerCase())}
         >
           <div 
-            className="w-3 h-3 rounded-full" 
+            className="w-3 h-3 rounded-full transition-transform duration-200 group-hover:scale-110" 
             style={{ backgroundColor: status.color }}
           />
-          <span className="flex-1">
+          <span className="flex-1 text-sm text-gray-600 group-hover:text-gray-900">
             {status.name}
           </span>
-          <span className="font-semibold">
+          <span className="font-semibold text-sm text-gray-900">
             {status.value}
           </span>
         </div>
