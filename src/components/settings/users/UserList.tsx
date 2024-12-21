@@ -28,13 +28,14 @@ export const UserList = () => {
       try {
         const { data: profiles, error } = await supabase
           .from("profiles")
-          .select("id, full_name, role");
+          .select("id, full_name, role")
+          .in('role', ['admin', 'staff']); // Only fetch admin and staff users
 
         if (error) throw error;
 
         // Type assertion to ensure profiles match User interface
         const typedUsers = profiles.filter((profile): profile is User => 
-          profile.role === "admin" || profile.role === "staff" || profile.role === "customer"
+          profile.role === "admin" || profile.role === "staff"
         );
 
         setUsers(typedUsers);
