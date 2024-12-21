@@ -49,7 +49,11 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
     console.log('Starting customer creation with values:', values);
     setIsLoading(true);
     try {
+      // Generate a UUID for the new customer
+      const newCustomerId = crypto.randomUUID();
+      
       const customerData = {
+        id: newCustomerId,
         ...values,
         role: "customer",
         status: "pending_review",
