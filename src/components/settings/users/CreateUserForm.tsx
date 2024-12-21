@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,32 +17,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
-interface CreateUserForm {
-  email: string;
-  password: string;
-  full_name: string;
-  role: "admin" | "staff";
+interface CreateUserFormProps {
+  isAdmin: boolean;
 }
 
-export const CreateUserForm = () => {
-  const [isLoading, setIsLoading] = useState(false);
+export const CreateUserForm = ({ isAdmin }: CreateUserFormProps) => {
   const { toast } = useToast();
-  const form = useForm<CreateUserForm>({
+  const queryClient = useQueryClient();
+  const form = useForm({
     defaultValues: {
       email: "",
       password: "",
       full_name: "",
-      role: "staff",
+      role: "customer",
     },
   });
 
-  const onSubmit = async (values: CreateUserForm) => {
-    setIsLoading(true);
+  const onSubmit = async (values: any) => {
     try {
-      // Create the user in Supabase Auth
+      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -55,36 +51,30 @@ export const CreateUserForm = () => {
 
       if (authError) throw authError;
 
-      if (!authData.user) {
-        throw new Error("Failed to create user");
-      }
-
-      // Update the user's role in the profiles table
+      // Update profile with role
       const { error: profileError } = await supabase
-        .from("profiles")
+        .from('profiles')
         .update({ 
           role: values.role,
-          full_name: values.full_name
+          full_name: values.full_name,
         })
-        .eq("id", authData.user.id);
+        .eq('id', authData.user!.id);
 
       if (profileError) throw profileError;
 
       toast({
         title: "Success",
-        description: "User account created successfully",
+        description: "User created successfully",
       });
 
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       form.reset();
     } catch (error: any) {
-      console.error("Error creating user:", error);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -93,16 +83,25 @@ export const CreateUserForm = () => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
+          name="full_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder="John Doe" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input
-                  type="email"
-                  placeholder="user@example.com"
-                  {...field}
-                />
+                <Input type="email" placeholder="john@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -115,24 +114,7 @@ export const CreateUserForm = () => {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="full_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -154,17 +136,20 @@ export const CreateUserForm = () => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
+                  <SelectItem value="customer">Customer</SelectItem>
+                  {isAdmin && (
+                    <>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : "Create User"}
-        </Button>
+        <Button type="submit">Create User</Button>
       </form>
     </Form>
   );

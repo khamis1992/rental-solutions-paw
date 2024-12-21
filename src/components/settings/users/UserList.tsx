@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -7,66 +8,72 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
-interface User {
-  id: string;
-  full_name: string | null;
-  role: "admin" | "staff" | "customer";
-  email?: string;
+interface UserListProps {
+  isAdmin: boolean;
 }
 
-export const UserList = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const UserList = ({ isAdmin }: UserListProps) => {
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data: profiles, error } = await supabase
-          .from("profiles")
-          .select("id, full_name, role")
-          .in('role', ['admin', 'staff']); // Only fetch admin and staff users
+  const { data: users, isLoading, refetch } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      let query = supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
+      // If not admin, filter out admin users
+      if (!isAdmin) {
+        query = query.neq('role', 'admin');
+      }
 
-        // Type assertion to ensure profiles match User interface
-        const typedUsers = profiles.filter((profile): profile is User => 
-          profile.role === "admin" || profile.role === "staff"
-        );
+      const { data, error } = await query;
 
-        setUsers(typedUsers);
-      } catch (error: any) {
-        console.error("Error fetching users:", error);
+      if (error) {
         toast({
           title: "Error",
-          description: error.message,
+          description: "Failed to fetch users",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
+        throw error;
       }
-    };
 
-    fetchUsers();
-  }, [toast]);
+      return data;
+    },
+  });
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'staff':
-        return 'default';
-      default:
-        return 'secondary';
+  const handleDelete = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center p-4">Loading users...</div>;
+    return <div>Loading users...</div>;
   }
 
   return (
@@ -75,17 +82,42 @@ export const UserList = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => (
+          {users?.map((user) => (
             <TableRow key={user.id}>
-              <TableCell>{user.full_name || "N/A"}</TableCell>
+              <TableCell>{user.full_name}</TableCell>
+              <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Badge variant={getRoleBadgeVariant(user.role)}>
+                <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'staff' ? 'default' : 'secondary'}>
                   {user.role}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant={user.status === 'active' ? 'success' : 'warning'}>
+                  {user.status || 'pending'}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="icon">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}
