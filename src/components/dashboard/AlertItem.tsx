@@ -10,9 +10,10 @@ import { AlertDetails } from "./types/alert-types";
 interface AlertItemProps {
   alert: AlertDetails;
   onClick: () => void;
+  count?: number;
 }
 
-export function AlertItem({ alert, onClick }: AlertItemProps) {
+export function AlertItem({ alert, onClick, count }: AlertItemProps) {
   const getAlertStyle = (type: AlertDetails['type']) => {
     switch (type) {
       case 'vehicle':
@@ -76,7 +77,16 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <h4 className={`text-sm font-medium ${style.textClass} mb-0.5`}>{alertText.title}</h4>
+        <div className="flex items-center justify-between">
+          <h4 className={`text-sm font-medium ${style.textClass} mb-0.5`}>
+            {alertText.title}
+            {count && count > 1 && (
+              <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full">
+                {count}
+              </span>
+            )}
+          </h4>
+        </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
