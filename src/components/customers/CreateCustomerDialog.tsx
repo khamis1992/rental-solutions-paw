@@ -41,45 +41,53 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   });
 
   const handleScanComplete = (extractedData: any) => {
-    // Update form with extracted data
     form.setValue('full_name', extractedData.full_name);
     form.setValue('driver_license', extractedData.id_number);
-    // Add any other extracted fields as needed
   };
 
   const onSubmit = async (values: any) => {
     setIsLoading(true);
     try {
+      // Generate a new UUID for the customer
       const newCustomerId = crypto.randomUUID();
-      setCustomerId(newCustomerId);
 
-      const { error } = await supabase.from("profiles").insert([
-        {
+      // Insert the new customer into the profiles table
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({
           id: newCustomerId,
           ...values,
           role: "customer",
-        },
-      ]);
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: "active",
+        });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('Error creating customer:', insertError);
+        throw insertError;
+      }
 
+      // Show success message
       toast({
         title: "Success",
         description: "Customer created successfully",
       });
 
+      // Invalidate queries to refresh the customer list
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
       
-      // Don't reset form or close dialog if we're waiting for document scan
-      if (!customerId) {
-        form.reset();
-        setOpen(false);
-      }
+      // Reset form and close dialog
+      form.reset();
+      setOpen(false);
+      setCustomerId(null);
+
     } catch (error: any) {
+      console.error('Error in customer creation:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create customer",
         variant: "destructive",
       });
     } finally {
