@@ -108,11 +108,11 @@ export const MaintenanceList = () => {
       if (vehiclesError) throw vehiclesError;
 
       // Convert accident vehicles to maintenance record format
-      const accidentRecords = accidentVehicles.map(vehicle => ({
+      const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',
-        status: 'urgent',
+        status: 'urgent' as const,
         scheduled_date: new Date().toISOString(),
         cost: null,
         description: 'Vehicle reported in accident status',
