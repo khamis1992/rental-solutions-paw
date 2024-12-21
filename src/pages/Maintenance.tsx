@@ -10,10 +10,11 @@ import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleIn
 
 const MaintenanceInspection = () => {
   const { id } = useParams();
-  return <VehicleInspectionForm maintenanceId={id || ''} />;
+  if (!id) return <div>Invalid maintenance ID</div>;
+  return <VehicleInspectionForm maintenanceId={id} />;
 };
 
-const Maintenance = () => {
+const MaintenanceContent = () => {
   const [filters, setFilters] = useState<FilterType>({
     status: "all",
     serviceType: "",
@@ -21,33 +22,31 @@ const Maintenance = () => {
   });
 
   return (
-    <DashboardLayout>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Maintenance</h1>
-                <CreateJobDialog />
-              </div>
-              <MaintenanceStats />
-              <div className="mt-6">
-                <PredictiveMaintenance />
-              </div>
-              <div className="mt-6 space-y-4">
-                <MaintenanceFilters filters={filters} setFilters={setFilters} />
-                <MaintenanceList />
-              </div>
-            </>
-          }
-        />
-        <Route 
-          path="/:id/inspection" 
-          element={<MaintenanceInspection />} 
-        />
-      </Routes>
-    </DashboardLayout>
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Maintenance</h1>
+        <CreateJobDialog />
+      </div>
+      <MaintenanceStats />
+      <div className="mt-6">
+        <PredictiveMaintenance />
+      </div>
+      <div className="mt-6 space-y-4">
+        <MaintenanceFilters filters={filters} setFilters={setFilters} />
+        <MaintenanceList />
+      </div>
+    </>
+  );
+};
+
+const Maintenance = () => {
+  const { id } = useParams();
+
+  return (
+    <Routes>
+      <Route path="/" element={<MaintenanceContent />} />
+      <Route path="/:id/inspection" element={<MaintenanceInspection />} />
+    </Routes>
   );
 };
 

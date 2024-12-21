@@ -7,7 +7,7 @@ import { useSessionContext } from "@supabase/auth-helpers-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Lazy load all pages with loading fallback
-const lazyLoad = (Component: React.LazyExoticComponent<React.ComponentType>) => (
+const lazyLoad = (Component: React.LazyExoticComponent<() => JSX.Element>) => (
   <Suspense fallback={<div>Loading...</div>}>
     <Component />
   </Suspense>
@@ -29,6 +29,7 @@ const protectedRoutes = [
   { path: "/agreements", component: Agreements },
   { path: "/customers", component: Customers },
   { path: "/maintenance", component: Maintenance },
+  { path: "/maintenance/:id/inspection", component: Maintenance },
   { path: "/settings", component: Settings },
   { path: "/traffic-fines", component: TrafficFines },
   { path: "/reports", component: Reports },
