@@ -9,11 +9,12 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface User {
   id: string;
   full_name: string | null;
-  role: "admin" | "staff";
+  role: "admin" | "staff" | "customer";
   email?: string;
 }
 
@@ -27,14 +28,13 @@ export const UserList = () => {
       try {
         const { data: profiles, error } = await supabase
           .from("profiles")
-          .select("id, full_name, role")
-          .in("role", ["admin", "staff"]);
+          .select("id, full_name, role");
 
         if (error) throw error;
 
         // Type assertion to ensure profiles match User interface
         const typedUsers = profiles.filter((profile): profile is User => 
-          profile.role === "admin" || profile.role === "staff"
+          profile.role === "admin" || profile.role === "staff" || profile.role === "customer"
         );
 
         setUsers(typedUsers);
@@ -53,28 +53,43 @@ export const UserList = () => {
     fetchUsers();
   }, [toast]);
 
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'destructive';
+      case 'staff':
+        return 'default';
+      default:
+        return 'secondary';
+    }
+  };
+
   if (isLoading) {
-    return <div>Loading users...</div>;
+    return <div className="flex items-center justify-center p-4">Loading users...</div>;
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell>{user.full_name || "N/A"}</TableCell>
-            <TableCell>N/A</TableCell>
-            <TableCell className="capitalize">{user.role}</TableCell>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Role</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.full_name || "N/A"}</TableCell>
+              <TableCell>
+                <Badge variant={getRoleBadgeVariant(user.role)}>
+                  {user.role}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
