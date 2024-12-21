@@ -2,8 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
-// Create a type for valid table names
-type TableNames = keyof Database['public']['Tables'] | keyof Database['public']['Views'];
+// Create a type for valid table names, excluding views
+type TableNames = keyof Database['public']['Tables'];
 
 interface TestResult {
   table: TableNames;
