@@ -77,6 +77,23 @@ export function DashboardAlerts() {
     return null;
   }
 
+  const renderAlertGroup = (title: string, alerts: AlertDetails[]) => {
+    if (!alerts.length) return null;
+    
+    return (
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-muted-foreground mb-2">{title}</h3>
+        {alerts.map((alert) => (
+          <AlertItem
+            key={alert.id}
+            alert={alert}
+            onClick={() => handleAlertClick(alert)}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <Card>
@@ -85,62 +102,28 @@ export function DashboardAlerts() {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-2">
-              {alerts.overdueVehicles?.map((vehicle) => (
-                <AlertItem
-                  key={vehicle.id}
-                  alert={{
-                    type: 'vehicle',
-                    title: 'Overdue Vehicle Details',
-                    vehicle: vehicle.vehicle,
-                    customer: vehicle.customer,
-                    id: vehicle.id
-                  }}
-                  onClick={() => handleAlertClick({
-                    type: 'vehicle',
-                    title: 'Overdue Vehicle Details',
-                    vehicle: vehicle.vehicle,
-                    customer: vehicle.customer,
-                    id: vehicle.id
-                  })}
-                />
-              ))}
+            <div className="space-y-6">
+              {renderAlertGroup("Vehicle Returns", alerts.overdueVehicles?.map(vehicle => ({
+                type: 'vehicle',
+                title: 'Overdue Vehicle Details',
+                vehicle: vehicle.vehicle,
+                customer: vehicle.customer,
+                id: vehicle.id
+              })) || [])}
 
-              {alerts.overduePayments?.map((payment) => (
-                <AlertItem
-                  key={payment.id}
-                  alert={{
-                    type: 'payment',
-                    title: 'Overdue Payment Details',
-                    customer: payment.lease?.customer,
-                    id: payment.id
-                  }}
-                  onClick={() => handleAlertClick({
-                    type: 'payment',
-                    title: 'Overdue Payment Details',
-                    customer: payment.lease?.customer,
-                    id: payment.id
-                  })}
-                />
-              ))}
+              {renderAlertGroup("Payment Alerts", alerts.overduePayments?.map(payment => ({
+                type: 'payment',
+                title: 'Overdue Payment Details',
+                customer: payment.lease?.customer,
+                id: payment.id
+              })) || [])}
 
-              {alerts.maintenanceAlerts?.map((maintenance) => (
-                <AlertItem
-                  key={maintenance.id}
-                  alert={{
-                    type: 'maintenance',
-                    title: 'Maintenance Alert Details',
-                    vehicle: maintenance.vehicle,
-                    id: maintenance.id
-                  }}
-                  onClick={() => handleAlertClick({
-                    type: 'maintenance',
-                    title: 'Maintenance Alert Details',
-                    vehicle: maintenance.vehicle,
-                    id: maintenance.id
-                  })}
-                />
-              ))}
+              {renderAlertGroup("Maintenance Alerts", alerts.maintenanceAlerts?.map(maintenance => ({
+                type: 'maintenance',
+                title: 'Maintenance Alert Details',
+                vehicle: maintenance.vehicle,
+                id: maintenance.id
+              })) || [])}
             </div>
           </ScrollArea>
         </CardContent>
