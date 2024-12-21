@@ -1,32 +1,24 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 
 const MOBILE_BREAKPOINT = 768;
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
+export const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+  );
 
-  React.useEffect(() => {
-    setMounted(true);
-    
-    const checkMobile = () => {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
 
-    // Initial check
-    checkMobile();
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
 
-    // Add event listener
-    window.addEventListener('resize', checkMobile);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Return false during SSR and initial mount
-  if (!mounted) return false;
-  
   return isMobile;
-}
+};

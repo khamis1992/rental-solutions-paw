@@ -32,16 +32,16 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <TooltipProvider>
-      <BrowserRouter>
-        <SessionContextProvider supabaseClient={supabase}>
-          <QueryClientProvider client={queryClient}>
+    <SessionContextProvider supabaseClient={supabase}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <TooltipProvider>
             <ErrorBoundary>
               <App />
             </ErrorBoundary>
-          </QueryClientProvider>
-        </SessionContextProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+          </TooltipProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </SessionContextProvider>
   </React.StrictMode>
 );
