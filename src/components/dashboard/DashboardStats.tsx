@@ -9,10 +9,11 @@ export const DashboardStats = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse] = await Promise.all([
+      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse] = await Promise.all([
         // Get vehicles stats
         supabase.from("vehicles")
-          .select('status', { count: 'exact' }),
+          .select('status', { count: 'exact' })
+          .eq('is_test_data', false),
 
         // Get active rentals
         supabase.from("leases")
@@ -30,13 +31,20 @@ export const DashboardStats = () => {
           .select('amount')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString())
           .lt('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('status', 'completed')
+          .eq('status', 'completed'),
+
+        // Get new vehicles added this month
+        supabase.from("vehicles")
+          .select('id', { count: 'exact' })
+          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+          .eq('is_test_data', false)
       ]);
 
       if (vehiclesResponse.error) throw vehiclesResponse.error;
       if (rentalsResponse.error) throw rentalsResponse.error;
       if (paymentsResponse.error) throw paymentsResponse.error;
       if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
+      if (newVehiclesResponse.error) throw newVehiclesResponse.error;
 
       const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
@@ -50,6 +58,7 @@ export const DashboardStats = () => {
         : 0;
 
       const totalVehicles = vehiclesResponse.count || 0;
+      const newVehicles = newVehiclesResponse.count || 0;
       const pendingReturns = 2; // This would need to be calculated from actual data
 
       return {
@@ -58,7 +67,7 @@ export const DashboardStats = () => {
         monthlyRevenue,
         pendingReturns,
         growth: {
-          vehicles: "+213 this month",
+          vehicles: `+${newVehicles} this month`,
           revenue: `${growth.toFixed(1)}% from last month`
         }
       };
