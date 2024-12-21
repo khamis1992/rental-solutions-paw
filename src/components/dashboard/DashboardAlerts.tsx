@@ -80,12 +80,11 @@ export function DashboardAlerts() {
   const renderAlertGroup = (title: string, alertsArray: AlertDetails[]) => {
     if (!alertsArray.length) return null;
     
-    // Only show the first alert from each group, but include the total count
     const firstAlert = alertsArray[0];
     
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">{title}</h3>
+        <h3 className="text-sm font-medium text-muted-foreground mb-2 text-center">{title}</h3>
         <AlertItem
           key={firstAlert.id}
           alert={firstAlert}
@@ -98,8 +97,8 @@ export function DashboardAlerts() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="text-center">
           <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
         </CardHeader>
         <CardContent>
