@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { AlertDetails } from "./types/alert-types";
+import React from 'react';
 
 interface AlertItemProps {
   alert: AlertDetails;
@@ -77,18 +78,9 @@ export function AlertItem({ alert, onClick }: AlertItemProps) {
       </div>
       <div className="min-w-0 flex-1">
         <h4 className={`text-sm font-medium ${style.textClass} mb-0.5`}>{alertText.title}</h4>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className={`text-xs ${style.descriptionClass} truncate`}>
-                {alertText.description}
-              </p>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{alertText.description}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="text-xs truncate">
+          <span className={style.descriptionClass}>{alertText.description}</span>
+        </div>
       </div>
     </div>
   );
