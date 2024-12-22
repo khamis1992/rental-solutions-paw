@@ -108,7 +108,6 @@ export const useAgreementForm = (onSuccess: () => void) => {
         title: "Success",
         description: "Agreement created successfully",
       });
-      setOpen(false);
       reset();
       onSuccess();
     } catch (error: any) {
