@@ -19,3 +19,11 @@ export interface YearOverYearData {
     expenses: number;
   };
 }
+
+export interface ProfitMarginData {
+  period: string;
+  revenue: number;
+  costs: number;
+  profitMargin: number;
+  profitAmount: number;
+}
