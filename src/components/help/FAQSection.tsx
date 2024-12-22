@@ -30,7 +30,7 @@ const faqs = [
 
 export const FAQSection = () => {
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-6">
       <h2 className="text-3xl font-semibold mb-6 text-left">Frequently Asked Questions</h2>
       <Accordion type="single" collapsible className="w-full space-y-4">
         {faqs.map((faq, index) => (

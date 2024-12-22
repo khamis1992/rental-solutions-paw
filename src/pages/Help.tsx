@@ -29,9 +29,9 @@ const Help = () => {
   return (
     <DashboardLayout>
       <div className="min-h-[calc(100vh-4rem)] w-full py-8">
-        <div className="container mx-auto px-4 space-y-8">
+        <div className="container mx-auto space-y-8">
           <div className="flex justify-between items-center">
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-3xl">
               <h1 className="text-4xl font-bold">Help Center</h1>
               <p className="text-xl text-muted-foreground">
                 Find comprehensive guides, documentation, and support for using the Rental Solutions system.
@@ -48,33 +48,33 @@ const Help = () => {
           </div>
 
           <Tabs defaultValue="overview" className="w-full space-y-8">
-            <TabsList className="w-full justify-start print:hidden">
-              <TabsTrigger value="overview" className="text-lg px-6 py-3">Overview</TabsTrigger>
-              <TabsTrigger value="guides" className="text-lg px-6 py-3">Step-by-Step Guides</TabsTrigger>
-              <TabsTrigger value="faq" className="text-lg px-6 py-3">FAQ</TabsTrigger>
+            <TabsList className="w-full justify-start border-b print:hidden">
+              <TabsTrigger value="overview" className="text-lg px-8 py-4">Overview</TabsTrigger>
+              <TabsTrigger value="guides" className="text-lg px-8 py-4">Step-by-Step Guides</TabsTrigger>
+              <TabsTrigger value="faq" className="text-lg px-8 py-4">FAQ</TabsTrigger>
             </TabsList>
 
             <ScrollArea className="h-[calc(100vh-300px)] w-full print:h-auto">
-              <div className="print-content space-y-8">
-                <TabsContent value="overview">
+              <div className="print-content space-y-8 pb-8">
+                <TabsContent value="overview" className="mt-0">
                   <Card className="border-2">
-                    <CardContent className="pt-8 px-8">
+                    <CardContent className="pt-8">
                       <SystemOverview />
                     </CardContent>
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="guides">
+                <TabsContent value="guides" className="mt-0">
                   <Card className="border-2">
-                    <CardContent className="pt-8 px-8">
+                    <CardContent className="pt-8">
                       <StepByStepGuides />
                     </CardContent>
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="faq">
+                <TabsContent value="faq" className="mt-0">
                   <Card className="border-2">
-                    <CardContent className="pt-8 px-8">
+                    <CardContent className="pt-8">
                       <FAQSection />
                     </CardContent>
                   </Card>
