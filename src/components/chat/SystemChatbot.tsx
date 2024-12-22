@@ -14,6 +14,9 @@ interface Message {
   content: string;
 }
 
+// Get the current origin for postMessage security
+const TRUSTED_ORIGIN = window.location.origin;
+
 export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -27,7 +30,12 @@ export const SystemChatbot = () => {
     queryKey: ["perplexity-api-key"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("check-perplexity-key");
+        // Add origin to request headers
+        const { data, error } = await supabase.functions.invoke("check-perplexity-key", {
+          headers: {
+            'Origin': TRUSTED_ORIGIN
+          }
+        });
         if (error) throw error;
         return data;
       } catch (error) {
@@ -71,11 +79,15 @@ export const SystemChatbot = () => {
 
       console.log('Sending messages to AI:', apiMessages);
       
+      // Add origin to request headers
       const { data, error } = await supabase.functions.invoke("chat", {
         body: { 
           messages: apiMessages,
           dbResponse: null // No database response, use AI
         },
+        headers: {
+          'Origin': TRUSTED_ORIGIN
+        }
       });
       
       if (error) throw error;
