@@ -2,16 +2,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 export const FeatureGuides = () => {
   return (
-    <div className="space-y-8">
-      <h2 className="text-3xl font-semibold">Feature Documentation</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold">Feature Documentation</h2>
       
-      <Accordion type="single" collapsible className="w-full space-y-4">
-        <AccordionItem value="dashboard" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Dashboard Overview</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Navigating the Dashboard</h3>
-            <p className="text-base">The dashboard provides a comprehensive overview of your rental operations:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+      <Accordion type="single" collapsible className="w-full space-y-2">
+        <AccordionItem value="dashboard" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Dashboard Overview</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Navigating the Dashboard</h3>
+            <p className="text-sm">The dashboard provides a comprehensive overview of your rental operations:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Real-time metrics showing active rentals, revenue, and fleet status</li>
               <li>Quick access to recent activities and pending tasks</li>
               <li>Interactive charts displaying key performance indicators</li>
@@ -21,12 +21,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="customers" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Customer Management</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Managing Customer Information</h3>
-            <p className="text-base">Comprehensive tools for customer relationship management:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="customers" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Customer Management</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Managing Customer Information</h3>
+            <p className="text-sm">Comprehensive tools for customer relationship management:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Create and maintain detailed customer profiles</li>
               <li>Document management for licenses and identification</li>
               <li>Track rental history and payment records</li>
@@ -37,12 +37,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="agreements" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Rental Agreements</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Agreement Management</h3>
-            <p className="text-base">Complete rental agreement lifecycle management:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="agreements" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Rental Agreements</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Agreement Management</h3>
+            <p className="text-sm">Complete rental agreement lifecycle management:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Create new agreements with flexible terms</li>
               <li>Multiple agreement types (short-term, lease-to-own)</li>
               <li>Automated payment scheduling</li>
@@ -53,12 +53,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="finance" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Finance Module</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Financial Management</h3>
-            <p className="text-base">Comprehensive financial tools and tracking:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="finance" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Finance Module</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Financial Management</h3>
+            <p className="text-sm">Comprehensive financial tools and tracking:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Revenue tracking and forecasting</li>
               <li>Expense management (Fixed vs Variable Costs)</li>
               <li>Payment processing and reconciliation</li>
@@ -69,12 +69,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="vehicles" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Vehicle Management</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Fleet Operations</h3>
-            <p className="text-base">Complete vehicle fleet management system:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="vehicles" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Vehicle Management</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Fleet Operations</h3>
+            <p className="text-sm">Complete vehicle fleet management system:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Vehicle inventory tracking</li>
               <li>Maintenance scheduling and history</li>
               <li>Document management (registration, insurance)</li>
@@ -85,12 +85,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="legal" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Legal Management</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Legal Operations</h3>
-            <p className="text-base">Tools for managing legal aspects of rental operations:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="legal" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Legal Management</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Legal Operations</h3>
+            <p className="text-sm">Tools for managing legal aspects of rental operations:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Compliance monitoring and tracking</li>
               <li>Legal document management</li>
               <li>Case management for disputes</li>
@@ -101,12 +101,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="reports" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">Reports & Analytics</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">Business Intelligence</h3>
-            <p className="text-base">Comprehensive reporting and analysis tools:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="reports" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">Reports & Analytics</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">Business Intelligence</h3>
+            <p className="text-sm">Comprehensive reporting and analysis tools:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>Custom report generation</li>
               <li>Performance analytics and KPIs</li>
               <li>Financial analysis and forecasting</li>
@@ -117,12 +117,12 @@ export const FeatureGuides = () => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="settings" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-left text-lg py-6">System Settings</AccordionTrigger>
-          <AccordionContent className="space-y-6 pt-2 pb-6">
-            <h3 className="text-xl font-medium">System Configuration</h3>
-            <p className="text-base">Customize and configure system settings:</p>
-            <ul className="list-disc pl-8 space-y-3 text-base">
+        <AccordionItem value="settings" className="border rounded-lg px-4">
+          <AccordionTrigger className="text-left text-base py-4">System Settings</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2 pb-4">
+            <h3 className="text-lg font-medium">System Configuration</h3>
+            <p className="text-sm">Customize and configure system settings:</p>
+            <ul className="list-disc pl-6 space-y-2 text-sm">
               <li>User management and access control</li>
               <li>Company information settings</li>
               <li>Notification preferences</li>
