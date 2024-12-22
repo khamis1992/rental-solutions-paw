@@ -11,7 +11,6 @@ export const ContactSupport = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the support request to your backend
     toast.success("Support request submitted successfully!");
     setSubject("");
     setMessage("");
@@ -19,20 +18,31 @@ export const ContactSupport = () => {
 
   return (
     <div className="grid md:grid-cols-2 gap-8">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Contact Information</h3>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <span>+1 (555) 123-4567</span>
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span>+1 (555) 123-4567</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span>support@rentalsolutions.com</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <span>Live chat available 24/7</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <span>support@rentalsolutions.com</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            <span>Live chat available 24/7</span>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Support Hours</h3>
+          <div className="space-y-2">
+            <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+            <p>Saturday: 10:00 AM - 4:00 PM</p>
+            <p>Sunday: Closed</p>
           </div>
         </div>
       </div>
@@ -43,6 +53,7 @@ export const ContactSupport = () => {
             placeholder="Subject"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
+            required
           />
         </div>
         <div className="space-y-2">
@@ -50,7 +61,8 @@ export const ContactSupport = () => {
             placeholder="How can we help you?"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            rows={4}
+            rows={6}
+            required
           />
         </div>
         <Button type="submit" className="w-full">Send Message</Button>
