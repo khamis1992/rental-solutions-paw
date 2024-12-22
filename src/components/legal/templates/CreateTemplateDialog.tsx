@@ -26,13 +26,23 @@ interface CreateTemplateDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Define the allowed language types to match the database enum
+type DocumentLanguage = "english" | "spanish" | "french" | "arabic";
+
+interface TemplateFormData {
+  name: string;
+  description: string;
+  content: string;
+  language: DocumentLanguage;
+}
+
 export const CreateTemplateDialog = ({
   open,
   onOpenChange,
 }: CreateTemplateDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TemplateFormData>({
     name: "",
     description: "",
     content: "",
@@ -46,7 +56,7 @@ export const CreateTemplateDialog = ({
     try {
       const { error } = await supabase
         .from("legal_document_templates")
-        .insert([formData]);
+        .insert(formData);
 
       if (error) throw error;
 
@@ -98,7 +108,7 @@ export const CreateTemplateDialog = ({
             <Label htmlFor="language">Language</Label>
             <Select
               value={formData.language}
-              onValueChange={(value) =>
+              onValueChange={(value: DocumentLanguage) =>
                 setFormData({ ...formData, language: value })
               }
             >
