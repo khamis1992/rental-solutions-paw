@@ -8,9 +8,21 @@ import { CustomerReportSection } from "@/components/reports/sections/CustomerRep
 import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
 import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDashboard";
+import { toast } from "sonner";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState("");
+
+  const generateReport = () => {
+    if (!selectedReport) {
+      toast.error("Please select a report type first");
+      return;
+    }
+    
+    toast.success(`Generating ${selectedReport} report...`);
+    // Here you can add the actual report generation logic
+    console.log("Generating report:", selectedReport);
+  };
 
   return (
     <DashboardLayout>
@@ -53,6 +65,7 @@ const Reports = () => {
           <FleetReportSection
             selectedReport={selectedReport}
             setSelectedReport={setSelectedReport}
+            generateReport={generateReport}
           />
         </TabsContent>
 
@@ -60,6 +73,7 @@ const Reports = () => {
           <CustomerReportSection
             selectedReport={selectedReport}
             setSelectedReport={setSelectedReport}
+            generateReport={generateReport}
           />
         </TabsContent>
 
@@ -67,6 +81,7 @@ const Reports = () => {
           <OperationalReportSection
             selectedReport={selectedReport}
             setSelectedReport={setSelectedReport}
+            generateReport={generateReport}
           />
         </TabsContent>
 
