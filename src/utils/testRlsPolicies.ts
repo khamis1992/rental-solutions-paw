@@ -1,9 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
 
-// Create a type for valid table names, excluding views
-type TableNames = keyof Database['public']['Tables'];
+// Define a simpler, explicit type for table names
+type TableNames = 
+  | 'ai_payment_analysis'
+  | 'csv_import_mappings'
+  | 'document_analysis_logs'
+  | 'expense_categories'
+  | 'expense_transactions'
+  | 'financial_forecasts'
+  | 'financial_insights'
+  | 'fixed_costs'
+  | 'installment_analytics'
+  | 'payment_reconciliation'
+  | 'rent_payments'
+  | 'traffic_fine_audit_logs'
+  | 'traffic_fine_imports'
+  | 'traffic_fines'
+  | 'variable_costs';
 
 interface TestResult {
   table: TableNames;
@@ -15,7 +29,7 @@ interface TestResult {
 export const testRlsPolicies = async (): Promise<TestResult[]> => {
   const results: TestResult[] = [];
   
-  // Test tables with RLS - now properly typed
+  // Test tables with RLS
   const tablesToTest: TableNames[] = [
     'ai_payment_analysis',
     'csv_import_mappings',
@@ -67,7 +81,6 @@ export const testRlsPolicies = async (): Promise<TestResult[]> => {
     try {
       // Create a minimal test record
       const testRecord = {
-        // Add required fields based on table schema
         name: 'Test Record',
         amount: 100,
         created_at: new Date().toISOString()
