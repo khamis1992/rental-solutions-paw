@@ -1,7 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { SearchBar } from "@/components/help/SearchBar";
 import { FAQSection } from "@/components/help/FAQSection";
-import { ContactSupport } from "@/components/help/ContactSupport";
 import { FeatureGuides } from "@/components/help/FeatureGuides";
 import { SystemOverview } from "@/components/help/SystemOverview";
 import { StepByStepGuides } from "@/components/help/StepByStepGuides";
@@ -20,15 +18,12 @@ const Help = () => {
           </p>
         </div>
 
-        <SearchBar onSearch={(query) => console.log('Searching:', query)} />
-
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
             <TabsTrigger value="guides">Step-by-Step Guides</TabsTrigger>
             <TabsTrigger value="faq">FAQ</TabsTrigger>
-            <TabsTrigger value="contact">Contact Support</TabsTrigger>
           </TabsList>
 
           <ScrollArea className="h-[calc(100vh-300px)]">
@@ -60,14 +55,6 @@ const Help = () => {
               <Card>
                 <CardContent className="pt-6">
                   <FAQSection />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="contact">
-              <Card>
-                <CardContent className="pt-6">
-                  <ContactSupport />
                 </CardContent>
               </Card>
             </TabsContent>
