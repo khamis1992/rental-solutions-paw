@@ -1801,7 +1801,7 @@ export type Database = {
           driver_license?: string | null
           extracted_data?: Json | null
           full_name?: string | null
-          id: string
+          id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
           license_document_url?: string | null

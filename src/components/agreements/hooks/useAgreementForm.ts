@@ -54,24 +54,29 @@ export const useAgreementForm = (onSuccess: () => void) => {
         updateMonthlyPayment();
       }
 
+      // Convert empty strings to null or 0 for numeric fields
+      const numericFields = {
+        total_amount: data.totalAmount || 0,
+        initial_mileage: data.initialMileage || 0,
+        down_payment: data.downPayment || null,
+        monthly_payment: data.monthlyPayment || null,
+        interest_rate: data.interestRate || null,
+        late_fee_rate: data.lateFeeRate || 0,
+        damage_penalty_rate: data.damagePenaltyRate || 0,
+        fuel_penalty_rate: data.fuelPenaltyRate || 0,
+        late_return_fee: data.lateReturnFee || 0,
+      };
+
       const { error } = await supabase.from("leases").insert({
         agreement_type: data.agreementType,
         customer_id: data.customerId,
         vehicle_id: data.vehicleId,
         start_date: data.startDate,
         end_date: data.endDate,
-        total_amount: data.totalAmount,
-        initial_mileage: data.initialMileage,
-        down_payment: data.downPayment,
-        monthly_payment: data.monthlyPayment,
-        interest_rate: data.interestRate,
-        lease_duration: data.leaseDuration,
-        notes: data.notes,
-        late_fee_rate: data.lateFeeRate,
-        late_fee_grace_period: `${data.lateFeeGracePeriod} days`,
-        damage_penalty_rate: data.damagePenaltyRate,
-        fuel_penalty_rate: data.fuelPenaltyRate,
-        late_return_fee: data.lateReturnFee,
+        ...numericFields,
+        lease_duration: data.leaseDuration ? `${data.leaseDuration} months` : null,
+        late_fee_grace_period: data.lateFeeGracePeriod ? `${data.lateFeeGracePeriod} days` : null,
+        notes: data.notes || null,
       });
 
       if (error) throw error;
