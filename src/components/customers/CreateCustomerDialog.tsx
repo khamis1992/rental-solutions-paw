@@ -1,6 +1,5 @@
 import { useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +16,7 @@ import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CustomerFormFields } from "./CustomerFormFields";
 import { DocumentScanner } from "./DocumentScanner";
+import { EnhancedButton } from "@/components/ui/enhanced-button";
 
 interface CreateCustomerDialogProps {
   children?: ReactNode;
@@ -24,6 +24,8 @@ interface CreateCustomerDialogProps {
 
 export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -49,6 +51,8 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   const onSubmit = async (values: any) => {
     console.log("Submitting form with values:", values);
     setIsLoading(true);
+    setSuccess(false);
+    setError(false);
     
     try {
       // Generate a new UUID for the customer if not already set
@@ -66,28 +70,28 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
 
       console.log("Inserting customer with data:", customerData);
 
-      const { error } = await supabase
+      const { error: supabaseError } = await supabase
         .from("profiles")
         .insert(customerData);
 
-      if (error) {
-        console.error("Error creating customer:", error);
-        throw error;
-      }
+      if (supabaseError) throw supabaseError;
 
-      // Show success message
+      setSuccess(true);
       toast.success("Customer created successfully");
       
       // Invalidate and refetch customers query
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
       
-      // Reset form and close dialog
-      form.reset();
-      setOpen(false);
-      setCustomerId(null);
+      // Reset form and close dialog after success animation
+      setTimeout(() => {
+        form.reset();
+        setOpen(false);
+        setCustomerId(null);
+      }, 1500);
       
     } catch (error: any) {
       console.error("Error in onSubmit:", error);
+      setError(true);
       toast.error(error.message || "Failed to create customer");
     } finally {
       setIsLoading(false);
@@ -98,10 +102,10 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button>
+          <EnhancedButton>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Customer
-          </Button>
+          </EnhancedButton>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
@@ -121,9 +125,17 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
             )}
             <CustomerFormFields form={form} />
             <DialogFooter>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Customer"}
-              </Button>
+              <EnhancedButton
+                type="submit"
+                loading={isLoading}
+                success={success}
+                error={error}
+                loadingText="Creating..."
+                successText="Customer Created!"
+                errorText="Failed to Create"
+              >
+                Create Customer
+              </EnhancedButton>
             </DialogFooter>
           </form>
         </Form>
