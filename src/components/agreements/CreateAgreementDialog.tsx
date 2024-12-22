@@ -63,6 +63,7 @@ export function CreateAgreementDialog() {
             errors={errors}
             selectedCustomerId={selectedCustomerId}
             onCustomerSelect={setSelectedCustomerId}
+            setValue={setValue}
           />
 
           <VehicleAgreementDetails 

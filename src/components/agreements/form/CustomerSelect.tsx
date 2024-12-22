@@ -8,7 +8,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText } from "lucide-react";
 import { useEffect } from "react";
 
 interface CustomerSelectProps {
@@ -17,7 +16,7 @@ interface CustomerSelectProps {
 }
 
 export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectProps) => {
-  const { data: customers, isLoading } = useQuery({
+  const { data: customers, isLoading, refetch } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -52,7 +51,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refetch]);
 
   const handleValueChange = (value: string) => {
     register("customerId").onChange({ target: { value } });
