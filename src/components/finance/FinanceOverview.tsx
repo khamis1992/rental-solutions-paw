@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2, DollarSign, CreditCard, TrendingUp } from "lucide-react";
 
@@ -93,60 +92,28 @@ export const FinanceOverview = () => {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentTransactions.map((transaction, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {transaction.date.toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className={`font-medium ${transaction.type === 'expense' ? 'text-red-600' : 'text-green-600'}`}>
-                    {formatCurrency(transaction.amount)}
-                  </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentTransactions.map((transaction, index) => (
+              <div key={index} className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium">{transaction.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {transaction.date.toLocaleDateString()}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={financialData?.revenue}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="created_at"
-                    tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                  />
-                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#8884d8" 
-                    name="Revenue"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <div className={`font-medium ${transaction.type === 'expense' ? 'text-red-600' : 'text-green-600'}`}>
+                  {formatCurrency(transaction.amount)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
