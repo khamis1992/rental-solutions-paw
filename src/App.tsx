@@ -1,10 +1,12 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 // Define route component type
 type RouteComponent = React.LazyExoticComponent<React.ComponentType>;
@@ -49,7 +51,13 @@ const protectedRoutes: ProtectedRoute[] = [
 
 export default function App() {
   const { session, isLoading } = useSessionContext();
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    console.log("Session state:", { session, isLoading });
+  }, [session, isLoading]);
+
+  // Show loading state while checking authentication
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
