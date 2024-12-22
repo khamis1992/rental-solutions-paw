@@ -4,6 +4,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const StepByStepGuides = () => {
   const guides = {
+    dashboard: [
+      {
+        title: "Using the Dashboard",
+        steps: [
+          "Navigate to the Dashboard from the main menu",
+          "View key metrics and statistics at the top",
+          "Check recent activities in the activity feed",
+          "Monitor alerts and notifications",
+          "Access quick actions for common tasks"
+        ]
+      },
+      {
+        title: "Customizing Dashboard Views",
+        steps: [
+          "Click on the customize button in the top right",
+          "Select which widgets to display",
+          "Arrange widgets by dragging and dropping",
+          "Save your customized layout",
+          "Reset to default layout if needed"
+        ]
+      }
+    ],
     customers: [
       {
         title: "Creating a New Customer",
@@ -23,6 +45,16 @@ export const StepByStepGuides = () => {
           "Click 'Upload Document' for ID or license",
           "Select the file from your computer",
           "Wait for upload confirmation"
+        ]
+      },
+      {
+        title: "Updating Customer Status",
+        steps: [
+          "Open the customer's profile",
+          "Click on the status dropdown",
+          "Select the new status",
+          "Add any relevant notes",
+          "Save the changes"
         ]
       }
     ],
@@ -47,6 +79,16 @@ export const StepByStepGuides = () => {
           "Click 'Record Payment'",
           "Enter payment amount and method",
           "Save the payment record"
+        ]
+      },
+      {
+        title: "Handling Agreement Extensions",
+        steps: [
+          "Open the agreement details",
+          "Click 'Extend Agreement'",
+          "Set new end date",
+          "Adjust payment terms if needed",
+          "Save the extension"
         ]
       }
     ],
@@ -74,6 +116,16 @@ export const StepByStepGuides = () => {
           "Click 'Generate Report'",
           "Download or print the report"
         ]
+      },
+      {
+        title: "Managing Fixed Costs",
+        steps: [
+          "Access the Finance module",
+          "Go to Fixed Costs section",
+          "Add or edit fixed cost items",
+          "Set cost amount and frequency",
+          "Save the changes"
+        ]
       }
     ],
     vehicles: [
@@ -100,6 +152,16 @@ export const StepByStepGuides = () => {
           "Add service details",
           "Confirm scheduling"
         ]
+      },
+      {
+        title: "Managing Vehicle Documents",
+        steps: [
+          "Open vehicle details",
+          "Go to Documents tab",
+          "Upload required documents",
+          "Set document expiry dates",
+          "Save document information"
+        ]
       }
     ],
     legal: [
@@ -123,6 +185,39 @@ export const StepByStepGuides = () => {
           "Record communication attempts",
           "Update compliance status"
         ]
+      },
+      {
+        title: "Managing Legal Cases",
+        steps: [
+          "Create new legal case",
+          "Associate relevant documents",
+          "Track case progress",
+          "Update case status",
+          "Record resolution details"
+        ]
+      }
+    ],
+    reports: [
+      {
+        title: "Creating Custom Reports",
+        steps: [
+          "Navigate to Reports section",
+          "Select 'Custom Report'",
+          "Choose data points to include",
+          "Set filters and parameters",
+          "Generate and preview report",
+          "Save report template if needed"
+        ]
+      },
+      {
+        title: "Analyzing Business Metrics",
+        steps: [
+          "Access Analytics dashboard",
+          "Select time period",
+          "Review key performance indicators",
+          "Export data for further analysis",
+          "Save custom views"
+        ]
       }
     ]
   };
@@ -130,13 +225,15 @@ export const StepByStepGuides = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold">Step-by-Step Guides</h2>
-      <Tabs defaultValue="customers" className="space-y-6">
+      <Tabs defaultValue="dashboard" className="space-y-6">
         <TabsList className="w-full justify-start">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="customers">Customers</TabsTrigger>
           <TabsTrigger value="agreements">Agreements</TabsTrigger>
           <TabsTrigger value="finance">Finance</TabsTrigger>
           <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
           <TabsTrigger value="legal">Legal</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
         {Object.entries(guides).map(([category, categoryGuides]) => (
