@@ -64,24 +64,28 @@ serve(async (req) => {
       throw new Error('Chat service is not properly configured');
     }
 
-    // Format messages with proper typing
+    // Format messages ensuring proper alternation
     const formattedMessages: ChatMessage[] = [
       { role: "system", content: systemPrompt }
     ];
 
-    // Add messages ensuring alternating roles and proper typing
+    // Add user messages while ensuring proper alternation
     if (Array.isArray(messages)) {
-      messages.forEach((msg: ChatMessage, index: number) => {
-        if (
-          index === 0 || 
-          (messages[index - 1] && msg.role !== messages[index - 1].role)
-        ) {
+      messages.forEach((msg: ChatMessage) => {
+        // Only add the message if it's different from the last added message's role
+        if (formattedMessages.length === 1 || // First message after system
+            (formattedMessages[formattedMessages.length - 1].role !== msg.role)) {
           formattedMessages.push({
             role: msg.role,
             content: msg.content
           });
         }
       });
+    }
+
+    // Ensure the last message is from the user
+    if (formattedMessages[formattedMessages.length - 1].role !== 'user') {
+      throw new Error('Last message must be from user');
     }
 
     console.log('Making request to Perplexity API with formatted messages:', formattedMessages);
