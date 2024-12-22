@@ -27,6 +27,7 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  
   const form = useForm({
     defaultValues: {
       full_name: "",
@@ -40,6 +41,7 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   });
 
   const handleScanComplete = (extractedData: any) => {
+    console.log("Scan complete with data:", extractedData);
     form.setValue('full_name', extractedData.full_name);
     form.setValue('driver_license', extractedData.id_number);
   };
@@ -47,33 +49,43 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   const onSubmit = async (values: any) => {
     console.log("Submitting form with values:", values);
     setIsLoading(true);
+    
     try {
-      const newCustomerId = crypto.randomUUID();
-      setCustomerId(newCustomerId);
+      // Generate a new UUID for the customer if not already set
+      const newCustomerId = customerId || crypto.randomUUID();
+      
+      // Prepare the customer data
+      const customerData = {
+        id: newCustomerId,
+        ...values,
+        role: "customer",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'pending_review',
+      };
+
+      console.log("Inserting customer with data:", customerData);
 
       const { error } = await supabase
         .from("profiles")
-        .insert({
-          id: newCustomerId,
-          ...values,
-          role: "customer",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        .insert(customerData);
 
       if (error) {
         console.error("Error creating customer:", error);
         throw error;
       }
 
+      // Show success message
       toast.success("Customer created successfully");
+      
+      // Invalidate and refetch customers query
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
       
-      // Reset form and close dialog if we're not waiting for document scan
-      if (!customerId) {
-        form.reset();
-        setOpen(false);
-      }
+      // Reset form and close dialog
+      form.reset();
+      setOpen(false);
+      setCustomerId(null);
+      
     } catch (error: any) {
       console.error("Error in onSubmit:", error);
       toast.error(error.message || "Failed to create customer");
@@ -101,9 +113,9 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {customerId && (
+            {!customerId && (
               <DocumentScanner
-                customerId={customerId}
+                customerId={crypto.randomUUID()}
                 onScanComplete={handleScanComplete}
               />
             )}
