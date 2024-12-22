@@ -15,24 +15,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-
-interface TransactionFormData {
-  type: 'income' | 'expense';
-  amount: number;
-  category_id: string;
-  description: string;
-  transaction_date: string;
-  receipt?: File;
-  cost_type?: 'fixed' | 'variable';
-  is_recurring?: boolean;
-}
+import { CostTypeSelect } from "./components/CostTypeSelect";
+import { saveTransaction, uploadReceipt } from "./utils/transactionUtils";
+import { TransactionFormData } from "./types/transaction.types";
 
 export function TransactionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, watch } = useForm<TransactionFormData>();
   const transactionType = watch('type');
-  const costType = watch('cost_type');
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["accounting-categories"],
@@ -53,66 +44,10 @@ export function TransactionForm() {
       let receiptUrl = null;
 
       if (data.receipt && data.receipt[0]) {
-        const file = data.receipt[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('accounting_receipts')
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('accounting_receipts')
-          .getPublicUrl(fileName);
-
-        receiptUrl = publicUrl;
+        receiptUrl = await uploadReceipt(data.receipt[0]);
       }
 
-      // Prepare transaction data
-      const transactionData = {
-        type: data.type,
-        amount: data.amount,
-        category_id: data.category_id,
-        description: data.description,
-        transaction_date: data.transaction_date,
-        receipt_url: receiptUrl,
-        cost_type: data.cost_type,
-        is_recurring: data.cost_type === 'fixed',
-        recurrence_interval: data.cost_type === 'fixed' ? '1 month'::interval : null,
-      };
-
-      // Insert into accounting_transactions
-      const { error: transactionError } = await supabase
-        .from("accounting_transactions")
-        .insert(transactionData);
-
-      if (transactionError) throw transactionError;
-
-      // If it's a fixed cost, also add to fixed_costs table
-      if (data.cost_type === 'fixed') {
-        const { error: fixedCostError } = await supabase
-          .from("fixed_costs")
-          .insert({
-            name: data.description,
-            amount: data.amount,
-          });
-
-        if (fixedCostError) throw fixedCostError;
-      }
-
-      // If it's a variable cost, add to variable_costs table
-      if (data.cost_type === 'variable') {
-        const { error: variableCostError } = await supabase
-          .from("variable_costs")
-          .insert({
-            name: data.description,
-            amount: data.amount,
-          });
-
-        if (variableCostError) throw variableCostError;
-      }
+      await saveTransaction(data, receiptUrl);
 
       toast.success("Transaction added successfully");
       reset();
@@ -162,18 +97,7 @@ export function TransactionForm() {
         </div>
 
         {transactionType === 'expense' && (
-          <div className="space-y-2">
-            <Label htmlFor="cost_type">Cost Type</Label>
-            <Select {...register("cost_type")} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select cost type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fixed">Fixed Cost (Monthly Recurring)</SelectItem>
-                <SelectItem value="variable">Variable Cost (One-time)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <CostTypeSelect register={register} />
         )}
 
         <div className="space-y-2">
