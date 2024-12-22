@@ -28,10 +28,10 @@ const Help = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-[calc(100vh-4rem)] w-full py-8">
-        <div className="container mx-auto space-y-8">
-          <div className="flex justify-between items-center">
-            <div className="space-y-4 max-w-3xl">
+      <div className="flex flex-col h-[calc(100vh-56px)] w-full">
+        <div className="flex-shrink-0 w-full px-6 py-6 bg-background border-b">
+          <div className="container mx-auto flex justify-between items-center">
+            <div className="space-y-2 max-w-3xl">
               <h1 className="text-4xl font-bold">Help Center</h1>
               <p className="text-xl text-muted-foreground">
                 Find comprehensive guides, documentation, and support for using the Rental Solutions system.
@@ -46,42 +46,48 @@ const Help = () => {
               Print Documentation
             </Button>
           </div>
+        </div>
 
-          <Tabs defaultValue="overview" className="w-full space-y-8">
-            <TabsList className="w-full justify-start border-b print:hidden">
-              <TabsTrigger value="overview" className="text-lg px-8 py-4">Overview</TabsTrigger>
-              <TabsTrigger value="guides" className="text-lg px-8 py-4">Step-by-Step Guides</TabsTrigger>
-              <TabsTrigger value="faq" className="text-lg px-8 py-4">FAQ</TabsTrigger>
-            </TabsList>
+        <div className="flex-grow overflow-hidden">
+          <div className="container h-full mx-auto py-6">
+            <Tabs defaultValue="overview" className="h-full flex flex-col">
+              <TabsList className="w-full justify-start border-b print:hidden mb-6">
+                <TabsTrigger value="overview" className="text-lg px-8 py-4">Overview</TabsTrigger>
+                <TabsTrigger value="guides" className="text-lg px-8 py-4">Step-by-Step Guides</TabsTrigger>
+                <TabsTrigger value="faq" className="text-lg px-8 py-4">FAQ</TabsTrigger>
+              </TabsList>
 
-            <ScrollArea className="h-[calc(100vh-300px)] w-full print:h-auto">
-              <div className="print-content space-y-8 pb-8">
-                <TabsContent value="overview" className="mt-0">
-                  <Card className="border-2">
-                    <CardContent className="pt-8">
-                      <SystemOverview />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+              <div className="flex-grow overflow-hidden">
+                <ScrollArea className="h-[calc(100vh-280px)] w-full print:h-auto">
+                  <div className="print-content space-y-6 pb-8">
+                    <TabsContent value="overview" className="mt-0">
+                      <Card className="border">
+                        <CardContent className="pt-6">
+                          <SystemOverview />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
 
-                <TabsContent value="guides" className="mt-0">
-                  <Card className="border-2">
-                    <CardContent className="pt-8">
-                      <StepByStepGuides />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                    <TabsContent value="guides" className="mt-0">
+                      <Card className="border">
+                        <CardContent className="pt-6">
+                          <StepByStepGuides />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
 
-                <TabsContent value="faq" className="mt-0">
-                  <Card className="border-2">
-                    <CardContent className="pt-8">
-                      <FAQSection />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                    <TabsContent value="faq" className="mt-0">
+                      <Card className="border">
+                        <CardContent className="pt-6">
+                          <FAQSection />
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
-          </Tabs>
+            </Tabs>
+          </div>
         </div>
       </div>
     </DashboardLayout>
