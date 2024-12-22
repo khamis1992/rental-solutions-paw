@@ -35,33 +35,41 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers', searchQuery],
     queryFn: async () => {
-      const trimmedQuery = searchQuery.trim().toLowerCase();
-      console.log("Fetching customers with search:", trimmedQuery);
-      
-      let query = supabase
-        .from('profiles')
-        .select('id, full_name, email, phone_number')
-        .eq('role', 'customer')
-        .limit(10); // Limit results for better performance
+      try {
+        const trimmedQuery = searchQuery.trim();
+        console.log("Fetching customers with search query:", trimmedQuery);
+        
+        let query = supabase
+          .from('profiles')
+          .select('id, full_name, email, phone_number')
+          .eq('role', 'customer')
+          .limit(10);
 
-      if (trimmedQuery) {
-        // Use ilike for case-insensitive partial matches
-        query = query.or(
-          `full_name.ilike.%${trimmedQuery}%,email.ilike.%${trimmedQuery}%,phone_number.ilike.%${trimmedQuery}%`
-        );
+        if (trimmedQuery) {
+          // Use ilike for case-insensitive partial matches on multiple fields
+          query = query.or(
+            `full_name.ilike.%${trimmedQuery}%,` +
+            `email.ilike.%${trimmedQuery}%,` +
+            `phone_number.ilike.%${trimmedQuery}%`
+          );
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching customers:", error);
+          throw error;
+        }
+
+        console.log("Found customers:", data?.length || 0, "matching query:", trimmedQuery);
+        return data || [];
+      } catch (err) {
+        console.error("Error in customer search:", err);
+        return [];
       }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching customers:", error);
-        throw error;
-      }
-
-      console.log("Found customers:", data?.length || 0);
-      return data || [];
     },
     staleTime: 30000, // Consider data fresh for 30 seconds
+    retry: 1,
   });
 
   const handleSelect = (customer: { id: string; full_name: string }) => {
@@ -101,11 +109,11 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
             <CommandList>
               <CommandEmpty>
                 {isLoading ? (
-                  "Loading..."
+                  "Loading customers..."
                 ) : customers.length === 0 ? (
                   searchQuery.trim() ? 
-                    `No customers found matching "${searchQuery}"` : 
-                    "No customers available"
+                    `No customers found matching "${searchQuery.trim()}"` : 
+                    "Start typing to search customers"
                 ) : null}
               </CommandEmpty>
               <CommandGroup>
