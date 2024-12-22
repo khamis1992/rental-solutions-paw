@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 interface RentPayment {
   id: string;
@@ -22,7 +23,7 @@ interface RentPayment {
   };
 }
 
-export const RentManagementSection = () => {
+export const RentManagement = () => {
   const { data: rentPayments, isLoading } = useQuery({
     queryKey: ["rent-payments"],
     queryFn: async () => {
@@ -61,6 +62,14 @@ export const RentManagementSection = () => {
   const totalFines = rentPayments?.reduce((sum, payment) => {
     return sum + (payment.fine_amount || 0);
   }, 0) || 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -103,11 +112,7 @@ export const RentManagementSection = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">Loading rent payments...</TableCell>
-                </TableRow>
-              ) : rentPayments?.length === 0 ? (
+              {rentPayments?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center">No rent payments found</TableCell>
                 </TableRow>
