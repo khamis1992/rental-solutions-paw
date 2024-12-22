@@ -25,7 +25,7 @@ export const useCustomerSearch = (searchQuery: string) => {
         
         let query = supabase
           .from('profiles')
-          .select('id, full_name, email, phone_number', { count: 'exact' })
+          .select('*', { count: 'exact' })
           .eq('role', 'customer')
           .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
 
@@ -45,11 +45,9 @@ export const useCustomerSearch = (searchQuery: string) => {
           throw error;
         }
 
-        const nextPageParam = customers?.length === PAGE_SIZE ? (pageParam as number) + 1 : undefined;
-
         return {
           customers: customers || [],
-          nextPage: nextPageParam,
+          nextPage: customers?.length === PAGE_SIZE ? pageParam + 1 : undefined,
           totalCount: count
         };
       } catch (err) {
