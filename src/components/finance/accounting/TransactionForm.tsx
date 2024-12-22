@@ -23,6 +23,8 @@ interface TransactionFormData {
   description: string;
   transaction_date: string;
   receipt?: File;
+  cost_type?: 'fixed' | 'variable';
+  is_recurring?: boolean;
 }
 
 export function TransactionForm() {
@@ -30,6 +32,7 @@ export function TransactionForm() {
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, watch } = useForm<TransactionFormData>();
   const transactionType = watch('type');
+  const costType = watch('cost_type');
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["accounting-categories"],
@@ -67,18 +70,49 @@ export function TransactionForm() {
         receiptUrl = publicUrl;
       }
 
-      const { error } = await supabase
-        .from("accounting_transactions")
-        .insert({
-          type: data.type,
-          amount: data.amount,
-          category_id: data.category_id,
-          description: data.description,
-          transaction_date: data.transaction_date,
-          receipt_url: receiptUrl,
-        });
+      // Prepare transaction data
+      const transactionData = {
+        type: data.type,
+        amount: data.amount,
+        category_id: data.category_id,
+        description: data.description,
+        transaction_date: data.transaction_date,
+        receipt_url: receiptUrl,
+        cost_type: data.cost_type,
+        is_recurring: data.cost_type === 'fixed',
+        recurrence_interval: data.cost_type === 'fixed' ? '1 month'::interval : null,
+      };
 
-      if (error) throw error;
+      // Insert into accounting_transactions
+      const { error: transactionError } = await supabase
+        .from("accounting_transactions")
+        .insert(transactionData);
+
+      if (transactionError) throw transactionError;
+
+      // If it's a fixed cost, also add to fixed_costs table
+      if (data.cost_type === 'fixed') {
+        const { error: fixedCostError } = await supabase
+          .from("fixed_costs")
+          .insert({
+            name: data.description,
+            amount: data.amount,
+          });
+
+        if (fixedCostError) throw fixedCostError;
+      }
+
+      // If it's a variable cost, add to variable_costs table
+      if (data.cost_type === 'variable') {
+        const { error: variableCostError } = await supabase
+          .from("variable_costs")
+          .insert({
+            name: data.description,
+            amount: data.amount,
+          });
+
+        if (variableCostError) throw variableCostError;
+      }
 
       toast.success("Transaction added successfully");
       reset();
@@ -126,6 +160,21 @@ export function TransactionForm() {
             {...register("amount", { required: true, min: 0 })}
           />
         </div>
+
+        {transactionType === 'expense' && (
+          <div className="space-y-2">
+            <Label htmlFor="cost_type">Cost Type</Label>
+            <Select {...register("cost_type")} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select cost type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixed">Fixed Cost (Monthly Recurring)</SelectItem>
+                <SelectItem value="variable">Variable Cost (One-time)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
