@@ -162,10 +162,13 @@ export type Database = {
         Row: {
           amount: number
           category_id: string | null
+          cost_type: string | null
           created_at: string
           description: string | null
           id: string
+          is_recurring: boolean | null
           receipt_url: string | null
+          recurrence_interval: unknown | null
           recurring_schedule: Json | null
           reference_id: string | null
           reference_type: string | null
@@ -177,10 +180,13 @@ export type Database = {
         Insert: {
           amount: number
           category_id?: string | null
+          cost_type?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          is_recurring?: boolean | null
           receipt_url?: string | null
+          recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
           reference_id?: string | null
           reference_type?: string | null
@@ -192,10 +198,13 @@ export type Database = {
         Update: {
           amount?: number
           category_id?: string | null
+          cost_type?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          is_recurring?: boolean | null
           receipt_url?: string | null
+          recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
           reference_id?: string | null
           reference_type?: string | null
@@ -2946,6 +2955,10 @@ export type Database = {
           p_changes: Json
           p_ip_address: string
         }
+        Returns: undefined
+      }
+      process_recurring_transactions: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       update_payment_schedule: {
