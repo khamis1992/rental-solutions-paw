@@ -93,17 +93,33 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
               <CommandList className="max-h-[300px] overflow-y-auto" onScroll={handleScroll}>
                 <CommandEmpty>
                   {isLoading ? (
-                    "Loading customers..."
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      Loading customers...
+                    </div>
                   ) : error ? (
-                    "Error loading customers"
-                  ) : (
-                    <div className="py-6 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        No customers found
+                    <div className="p-4 text-center text-sm text-red-500">
+                      Error loading customers. Please try again.
+                    </div>
+                  ) : searchQuery ? (
+                    <div className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        No customers found matching "{searchQuery}"
                       </p>
                       <Button
                         variant="outline"
-                        className="mt-4"
+                        onClick={handleCreateNewCustomer}
+                      >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Create New Customer
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Start typing to search customers
+                      </p>
+                      <Button
+                        variant="outline"
                         onClick={handleCreateNewCustomer}
                       >
                         <UserPlus className="mr-2 h-4 w-4" />
@@ -118,6 +134,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
                       key={customer.id}
                       value={customer.id}
                       onSelect={() => handleSelect(customer)}
+                      className="cursor-pointer"
                     >
                       <Check
                         className={cn(

@@ -26,16 +26,22 @@ export const useCustomerSearch = (searchQuery: string) => {
         let query = supabase
           .from('profiles')
           .select('*', { count: 'exact' })
-          .eq('role', 'customer')
-          .range(Number(pageParam) * PAGE_SIZE, (Number(pageParam) + 1) * PAGE_SIZE - 1);
+          .eq('role', 'customer');
 
         if (trimmedQuery) {
           query = query.or(
             `full_name.ilike.%${trimmedQuery}%,` +
             `email.ilike.%${trimmedQuery}%,` +
-            `phone_number.ilike.%${trimmedQuery}%`
+            `phone_number.ilike.%${trimmedQuery}%,` +
+            `driver_license.ilike.%${trimmedQuery}%`
           );
         }
+
+        // Add pagination
+        query = query.range(
+          Number(pageParam) * PAGE_SIZE, 
+          (Number(pageParam) + 1) * PAGE_SIZE - 1
+        ).order('created_at', { ascending: false });
 
         const { data: customers, count, error } = await query;
 
@@ -58,7 +64,7 @@ export const useCustomerSearch = (searchQuery: string) => {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    staleTime: 30000,
+    staleTime: 30000, // Consider data fresh for 30 seconds
     retry: 1,
   });
 
