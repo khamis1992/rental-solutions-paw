@@ -47,7 +47,40 @@ interface ChatMessage {
   content: string;
 }
 
+function validateAndProcessMessages(messages: ChatMessage[]): ChatMessage[] {
+  // Start with system message
+  const processedMessages: ChatMessage[] = [
+    { role: "system", content: systemPrompt }
+  ];
+
+  let lastRole: "system" | "user" | "assistant" = "system";
+  
+  // Process each message to ensure alternation
+  for (const msg of messages) {
+    // Skip messages that would create consecutive same roles
+    if (msg.role === lastRole) {
+      console.log(`Skipping message due to consecutive ${msg.role} roles`);
+      continue;
+    }
+    
+    processedMessages.push({
+      role: msg.role,
+      content: msg.content
+    });
+    
+    lastRole = msg.role;
+  }
+
+  // Ensure the last message is from user
+  if (processedMessages[processedMessages.length - 1].role !== 'user') {
+    throw new Error('Last message must be from user');
+  }
+
+  return processedMessages;
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -71,32 +104,10 @@ serve(async (req) => {
       throw new Error('Chat service is not properly configured');
     }
 
-    // Start with system message
-    const formattedMessages: ChatMessage[] = [
-      { role: "system", content: systemPrompt }
-    ];
+    // Process and validate messages
+    const formattedMessages = validateAndProcessMessages(messages);
+    console.log('Processed messages for Perplexity API:', formattedMessages);
 
-    // Process messages to ensure alternation
-    if (Array.isArray(messages)) {
-      let lastRole: "system" | "user" | "assistant" | null = "system";
-      
-      for (const msg of messages) {
-        if (msg.role === lastRole) continue;
-        formattedMessages.push({
-          role: msg.role,
-          content: msg.content
-        });
-        lastRole = msg.role;
-      }
-    }
-
-    // Ensure the last message is from user
-    if (formattedMessages[formattedMessages.length - 1].role !== 'user') {
-      throw new Error('Last message must be from user');
-    }
-
-    console.log('Making request to Perplexity API with formatted messages:', formattedMessages);
-    
     try {
       const response = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -115,13 +126,14 @@ serve(async (req) => {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Perplexity API error:', errorData);
+        throw new Error(`Perplexity API error: ${errorData.error?.message || 'Unknown error'}`);
+      }
+
       const data = await response.json();
       console.log('Perplexity API response:', data);
-      
-      if (!response.ok) {
-        console.error('Perplexity API error:', data);
-        throw new Error(data.error?.message || 'Failed to get response from Perplexity');
-      }
 
       if (!data.choices?.[0]?.message?.content) {
         throw new Error('Invalid response format from chat service');
