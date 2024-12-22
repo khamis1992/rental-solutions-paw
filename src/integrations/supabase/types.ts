@@ -1291,6 +1291,317 @@ export type Database = {
           },
         ]
       }
+      legal_case_history: {
+        Row: {
+          action: string
+          case_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          case_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          case_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_case_history_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_case_history_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_case_history_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_cases: {
+        Row: {
+          amount_owed: number | null
+          assigned_to: string | null
+          case_type: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          escalation_date: string | null
+          id: string
+          last_reminder_sent: string | null
+          priority: string | null
+          reminder_count: number | null
+          resolution_date: string | null
+          resolution_notes: string | null
+          status: Database["public"]["Enums"]["legal_case_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          amount_owed?: number | null
+          assigned_to?: string | null
+          case_type: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          escalation_date?: string | null
+          id?: string
+          last_reminder_sent?: string | null
+          priority?: string | null
+          reminder_count?: number | null
+          resolution_date?: string | null
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["legal_case_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          amount_owed?: number | null
+          assigned_to?: string | null
+          case_type?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          escalation_date?: string | null
+          id?: string
+          last_reminder_sent?: string | null
+          priority?: string | null
+          reminder_count?: number | null
+          resolution_date?: string | null
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["legal_case_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_cases_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_cases_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_document_templates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          language: Database["public"]["Enums"]["document_language"] | null
+          name: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: Database["public"]["Enums"]["document_language"] | null
+          name: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: Database["public"]["Enums"]["document_language"] | null
+          name?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_document_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_document_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_documents: {
+        Row: {
+          case_id: string | null
+          content: string
+          created_at: string
+          expiry_date: string | null
+          generated_by: string | null
+          id: string
+          language: Database["public"]["Enums"]["document_language"] | null
+          status: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          content: string
+          created_at?: string
+          expiry_date?: string | null
+          generated_by?: string | null
+          id?: string
+          language?: Database["public"]["Enums"]["document_language"] | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          content?: string
+          created_at?: string
+          expiry_date?: string | null
+          generated_by?: string | null
+          id?: string
+          language?: Database["public"]["Enums"]["document_language"] | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_documents_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_documents_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_documents_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "legal_document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_notification_templates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          language: Database["public"]["Enums"]["document_language"] | null
+          name: string
+          subject: string | null
+          type: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: Database["public"]["Enums"]["document_language"] | null
+          name: string
+          subject?: string | null
+          type: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: Database["public"]["Enums"]["document_language"] | null
+          name?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_notification_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_notification_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance: {
         Row: {
           category_id: string | null
@@ -2985,8 +3296,10 @@ export type Database = {
         | "blacklisted"
       damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
+      document_language: "english" | "spanish" | "french" | "arabic"
       import_type: "payments" | "customers" | "agreements"
       lease_status: "pending_payment" | "pending_deposit" | "active" | "closed"
+      legal_case_status: "pending_reminder" | "in_legal_process" | "resolved"
       maintenance_status:
         | "scheduled"
         | "in_progress"
