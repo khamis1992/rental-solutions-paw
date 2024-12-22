@@ -27,7 +27,7 @@ export const SystemChatbot = () => {
     queryKey: ["perplexity-api-key"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("check-openai-key");
+        const { data, error } = await supabase.functions.invoke("check-perplexity-key");
         if (error) throw error;
         return data;
       } catch (error) {
