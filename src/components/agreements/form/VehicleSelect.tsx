@@ -77,12 +77,15 @@ export const VehicleSelect = ({ register, onVehicleSelect }: VehicleSelectProps)
         </SelectTrigger>
         <SelectContent>
           {vehicles.length === 0 ? (
-            <SelectItem value="" disabled>
+            <SelectItem value="no-vehicles" disabled>
               No available vehicles
             </SelectItem>
           ) : (
             vehicles.map((vehicle) => (
-              <SelectItem key={vehicle.id} value={vehicle.id}>
+              <SelectItem 
+                key={vehicle.id} 
+                value={vehicle.id || 'undefined-id'} // Ensure we never pass an empty string
+              >
                 {vehicle.year} {vehicle.make} {vehicle.model} ({vehicle.license_plate})
               </SelectItem>
             ))
