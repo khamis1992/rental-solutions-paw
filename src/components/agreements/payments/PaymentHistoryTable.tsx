@@ -2,8 +2,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface PaymentHistoryTableProps {
   paymentHistory: any[];
@@ -21,11 +19,6 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
     );
   }
 
-  const handleViewInvoice = (invoiceId: string) => {
-    // Open invoice in new tab or modal
-    window.open(`/invoices/${invoiceId}`, '_blank');
-  };
-
   return (
     <Table>
       <TableHeader>
@@ -37,7 +30,6 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
           <TableHead>Amount</TableHead>
           <TableHead>Method</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Invoice</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -69,21 +61,6 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
               >
                 {payment.status}
               </Badge>
-            </TableCell>
-            <TableCell>
-              {payment.invoice ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleViewInvoice(payment.invoice.id)}
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  {payment.invoice.invoice_number}
-                </Button>
-              ) : (
-                <span className="text-muted-foreground text-sm">No invoice</span>
-              )}
             </TableCell>
           </TableRow>
         ))}

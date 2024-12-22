@@ -49,13 +49,6 @@ export function PaymentHistoryDialog({
                 full_name,
                 phone_number
               )
-            ),
-            accounting_invoices (
-              id,
-              invoice_number,
-              status,
-              issued_date,
-              paid_date
             )
           `)
           .order("created_at", { ascending: false });
@@ -74,11 +67,10 @@ export function PaymentHistoryDialog({
         const transformedData = data.map(payment => ({
           ...payment,
           customer: payment.leases?.profiles || null,
-          agreement_number: payment.leases?.agreement_number || null,
-          invoice: payment.accounting_invoices?.[0] || null
+          agreement_number: payment.leases?.agreement_number || null
         }));
 
-        console.log("Fetched payments with customer and invoice info:", transformedData);
+        console.log("Fetched payments with customer info:", transformedData);
         return transformedData;
       } catch (err) {
         console.error("Error in payment history query:", err);
@@ -87,7 +79,7 @@ export function PaymentHistoryDialog({
     },
     enabled: open,
     retry: 2,
-    staleTime: 30000,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   useEffect(() => {
