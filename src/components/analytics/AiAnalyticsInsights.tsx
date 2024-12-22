@@ -25,7 +25,7 @@ export const AiAnalyticsInsights = () => {
       const { data, error } = await supabase
         .from("operational_anomalies")
         .select("*")
-        .is("resolved_at", null) // Changed from eq.null to is null
+        .is("resolved_at", null)
         .order("detected_at", { ascending: false })
         .limit(5);
 

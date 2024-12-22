@@ -19,13 +19,11 @@ export const FinanceAIAssistant = () => {
 
       if (error) throw error;
       
-      // Type assertion after validation
-      const forecastArray = data?.[0]?.forecast_data as unknown as ForecastData[];
-      if (!Array.isArray(forecastArray)) {
-        throw new Error("Invalid forecast data format");
+      if (!data?.[0]?.forecast_data || !Array.isArray(data[0].forecast_data)) {
+        return [] as ForecastData[];
       }
       
-      return forecastArray;
+      return data[0].forecast_data as ForecastData[];
     },
   });
 
