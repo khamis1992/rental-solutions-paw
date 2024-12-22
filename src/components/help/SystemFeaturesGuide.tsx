@@ -59,9 +59,29 @@ export const SystemFeaturesGuide = () => {
           <Card>
             <CardContent className="pt-6">
               <ul className="space-y-2 list-disc pl-4">
-                <li>AI-powered accounting system for expense tracking</li>
-                <li>Automated payment reconciliation</li>
-                <li>Financial forecasting and reporting</li>
+                <li>AI-powered financial analysis and insights</li>
+                <li>Real-time cost impact assessment</li>
+                <li>Industry comparison and benchmarking</li>
+                <li>Predictive financial trends and forecasting</li>
+                <li>Automated expense categorization and tracking</li>
+                <li>Cost optimization recommendations</li>
+                <li>Comprehensive financial reporting</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section>
+          <h3 className="text-xl font-semibold mb-3">5. AI and Automation</h3>
+          <Card>
+            <CardContent className="pt-6">
+              <ul className="space-y-2 list-disc pl-4">
+                <li>Perplexity AI integration for advanced analytics</li>
+                <li>Automated financial health monitoring</li>
+                <li>Smart cost optimization suggestions</li>
+                <li>Predictive maintenance scheduling</li>
+                <li>Document analysis and data extraction</li>
+                <li>Natural language query processing</li>
               </ul>
             </CardContent>
           </Card>
