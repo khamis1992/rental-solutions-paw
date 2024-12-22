@@ -64,7 +64,7 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-8 px-2 py-6 w-full max-w-[1920px] mx-auto">
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
             <WelcomeHeader />
@@ -83,7 +83,7 @@ const Index = () => {
           </Suspense>
         </ErrorBoundary>
         
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 lg:gap-8">
+        <div className="grid gap-8 lg:grid-cols-7">
           <div className="lg:col-span-7">
             <ErrorBoundary>
               <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
@@ -93,7 +93,7 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 lg:gap-8">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
           <div className="lg:col-span-4">
             <ErrorBoundary>
               <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
