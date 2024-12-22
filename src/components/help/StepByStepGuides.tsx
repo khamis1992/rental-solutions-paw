@@ -5,10 +5,10 @@ import { guides } from "./guides/guidesData";
 
 export const StepByStepGuides = () => {
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="w-full space-y-6">
       <h2 className="text-2xl font-semibold text-left">Step-by-Step Guides</h2>
-      <Tabs defaultValue="dashboard" className="space-y-6">
-        <div className="overflow-x-auto pb-2">
+      <Tabs defaultValue="dashboard" className="w-full space-y-6">
+        <div className="overflow-x-auto pb-2 w-full">
           <TabsList className="w-full justify-start inline-flex">
             <TabsTrigger value="dashboard" className="min-w-[120px]">Dashboard</TabsTrigger>
             <TabsTrigger value="customers" className="min-w-[120px]">Customers</TabsTrigger>
@@ -24,7 +24,7 @@ export const StepByStepGuides = () => {
           <TabsContent 
             key={category} 
             value={category} 
-            className="space-y-6 focus-visible:outline-none focus-visible:ring-0"
+            className="space-y-6 focus-visible:outline-none focus-visible:ring-0 w-full"
           >
             <GuidesSection guides={categoryGuides} />
           </TabsContent>
