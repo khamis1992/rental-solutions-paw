@@ -1,55 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
-
-interface ForecastData {
-  date: string;
-  predicted_revenue: number;
-  predicted_expenses: number;
-}
-
-interface FinancialInsight {
-  id: string;
-  insight: string;
-}
+import { ForecastData } from "@/types/finance.types";
 
 export const FinanceAIAssistant = () => {
-  const { data: forecastData, isLoading: isLoadingForecast } = useQuery({
+  const { data: forecastData, isLoading } = useQuery({
     queryKey: ["financial-forecasts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_forecasts")
-        .select("*")
-        .order('created_at', { ascending: false })
+        .select("forecast_data")
+        .eq("forecast_type", "monthly")
+        .order("created_at", { ascending: false })
         .limit(1);
 
       if (error) throw error;
       
-      // Safely type cast the forecast data
-      const forecast = data[0]?.forecast_data as ForecastData[] || [];
-      return forecast;
+      // Type assertion after validation
+      const forecastArray = data?.[0]?.forecast_data as unknown as ForecastData[];
+      if (!Array.isArray(forecastArray)) {
+        throw new Error("Invalid forecast data format");
+      }
+      
+      return forecastArray;
     },
   });
 
-  const { data: insights, isLoading: isLoadingInsights } = useQuery({
-    queryKey: ["financial-insights"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("financial_insights")
-        .select("*")
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-      return data as FinancialInsight[];
-    },
-  });
-
-  if (isLoadingForecast || isLoadingInsights) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -58,57 +38,39 @@ export const FinanceAIAssistant = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Financial Forecasting</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={forecastData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="predicted_revenue" 
-                  stroke="#8884d8" 
-                  name="Predicted Revenue"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="predicted_expenses" 
-                  stroke="#82ca9d" 
-                  name="Predicted Expenses"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Financial Insights</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {insights?.map((insight) => (
-            <Alert key={insight.id}>
-              <AlertDescription>
-                {insight.insight}
-              </AlertDescription>
-            </Alert>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Financial Forecast</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={forecastData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis tickFormatter={(value) => formatCurrency(value)} />
+              <Tooltip
+                formatter={(value: number) => formatCurrency(value)}
+                labelFormatter={(label) => label}
+              />
+              <Line
+                type="monotone"
+                dataKey="predicted_revenue"
+                name="Predicted Revenue"
+                stroke="#4ade80"
+                strokeWidth={2}
+              />
+              <Line
+                type="monotone"
+                dataKey="predicted_expenses"
+                name="Predicted Expenses"
+                stroke="#f43f5e"
+                strokeWidth={2}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
