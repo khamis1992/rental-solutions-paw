@@ -8,8 +8,13 @@ import { FileText, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { TaxFilingList } from "./TaxFilingList";
 import { TaxFilingForm } from "./TaxFilingForm";
 
+type TaxFilingStatus = {
+  status: string;
+  count: number;
+};
+
 export function TaxFilingDashboard() {
-  const { data: taxStats = [] } = useQuery({
+  const { data: taxStats = [] } = useQuery<TaxFilingStatus[]>({
     queryKey: ["tax-filing-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
