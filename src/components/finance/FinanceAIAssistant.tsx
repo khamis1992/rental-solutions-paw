@@ -22,8 +22,29 @@ export const FinanceAIAssistant = () => {
       if (!data?.[0]?.forecast_data || !Array.isArray(data[0].forecast_data)) {
         return [] as ForecastData[];
       }
-      
-      return data[0].forecast_data as ForecastData[];
+
+      // Validate and transform the data
+      const forecasts = data[0].forecast_data.map(item => {
+        // Ensure the item has the required properties and correct types
+        if (
+          typeof item === 'object' && 
+          item !== null &&
+          'date' in item &&
+          'predicted_revenue' in item &&
+          'predicted_expenses' in item &&
+          typeof item.predicted_revenue === 'number' &&
+          typeof item.predicted_expenses === 'number'
+        ) {
+          return {
+            date: String(item.date),
+            predicted_revenue: Number(item.predicted_revenue),
+            predicted_expenses: Number(item.predicted_expenses)
+          } as ForecastData;
+        }
+        return null;
+      }).filter((item): item is ForecastData => item !== null);
+
+      return forecasts;
     },
   });
 
