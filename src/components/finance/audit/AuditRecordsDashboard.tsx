@@ -14,12 +14,23 @@ export function AuditRecordsDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_records")
-        .select("status, count(*)")
         .select("status")
-        .count("status", { groupBy: "status" });
+        .then(result => {
+          // Count occurrences of each status
+          const counts = result.data?.reduce((acc, record) => {
+            acc[record.status] = (acc[record.status] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+          
+          // Convert to array format expected by the component
+          return Object.entries(counts || {}).map(([status, count]) => ({
+            status,
+            count
+          }));
+        });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
