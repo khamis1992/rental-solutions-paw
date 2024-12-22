@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText } from "lucide-react";
+import { useEffect } from "react";
 
 interface CustomerSelectProps {
   register: any;
@@ -21,13 +22,37 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, id_document_url, license_document_url')
+        .select('*')
         .eq('role', 'customer');
       
       if (error) throw error;
       return data;
     }
   });
+
+  // Subscribe to real-time changes in the profiles table
+  useEffect(() => {
+    const channel = supabase
+      .channel('customer-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: 'role=eq.customer'
+        },
+        () => {
+          // Refetch customers when there's any change
+          void refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleValueChange = (value: string) => {
     register("customerId").onChange({ target: { value } });

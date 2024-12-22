@@ -1,24 +1,58 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { UseFormRegister, FieldErrors } from "react-hook-form";
+import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
 import { AgreementFormData } from "../hooks/useAgreementForm";
 import { CustomerSelect } from "./CustomerSelect";
 import { CustomerDocuments } from "../CustomerDocuments";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 interface CustomerInformationProps {
   register: UseFormRegister<AgreementFormData>;
   errors: FieldErrors<AgreementFormData>;
   selectedCustomerId: string;
   onCustomerSelect: (id: string) => void;
+  setValue: UseFormSetValue<AgreementFormData>;
 }
 
 export const CustomerInformation = ({ 
   register, 
   errors, 
   selectedCustomerId,
-  onCustomerSelect 
+  onCustomerSelect,
+  setValue 
 }: CustomerInformationProps) => {
+  // Fetch customer details when a customer is selected
+  const { data: customerDetails } = useQuery({
+    queryKey: ['customer-details', selectedCustomerId],
+    queryFn: async () => {
+      if (!selectedCustomerId) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', selectedCustomerId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCustomerId
+  });
+
+  // Auto-fill form fields when customer details are loaded
+  useEffect(() => {
+    if (customerDetails) {
+      setValue('nationality', customerDetails.nationality || '');
+      setValue('drivingLicense', customerDetails.driver_license || '');
+      setValue('phoneNumber', customerDetails.phone_number || '');
+      setValue('email', customerDetails.email || '');
+      setValue('address', customerDetails.address || '');
+    }
+  }, [customerDetails, setValue]);
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Customer Information</h3>

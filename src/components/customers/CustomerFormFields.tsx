@@ -1,7 +1,6 @@
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CustomerDocumentUpload } from "./CustomerDocumentUpload";
-import { ContractDocumentUpload } from "./ContractDocumentUpload";
+import { Textarea } from "@/components/ui/textarea";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 
 interface CustomerFormFieldsProps {
@@ -10,7 +9,7 @@ interface CustomerFormFieldsProps {
 
 export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={form.control}
         name="full_name"
@@ -19,40 +18,28 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
           <FormItem>
             <FormLabel>Full Name</FormLabel>
             <FormControl>
-              <Input placeholder="John Doe" {...field} />
+              <Input placeholder="Enter full name" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
-        name="phone_number"
-        rules={{ required: "Phone number is required" }}
+        name="nationality"
+        rules={{ required: "Nationality is required" }}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Phone Number</FormLabel>
+            <FormLabel>Nationality</FormLabel>
             <FormControl>
-              <Input placeholder="+1 234 567 890" {...field} />
+              <Input placeholder="Enter nationality" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="address"
-        rules={{ required: "Address is required" }}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Address</FormLabel>
-            <FormControl>
-              <Input placeholder="123 Main St" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+
       <FormField
         control={form.control}
         name="driver_license"
@@ -61,45 +48,69 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
           <FormItem>
             <FormLabel>Driver License</FormLabel>
             <FormControl>
-              <Input placeholder="DL12345678" {...field} />
+              <Input placeholder="Enter driver license number" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
-        name="id_document_url"
+        name="email"
+        rules={{ 
+          required: "Email is required",
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: "Invalid email address"
+          }
+        }}
         render={({ field }) => (
-          <CustomerDocumentUpload
-            label="ID Document"
-            fieldName="id_document_url"
-            onUploadComplete={field.onChange}
-          />
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input type="email" placeholder="Enter email address" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
-        name="license_document_url"
+        name="phone_number"
+        rules={{ 
+          required: "Phone number is required",
+          pattern: {
+            value: /^[0-9+\-\s()]*$/,
+            message: "Invalid phone number format"
+          }
+        }}
         render={({ field }) => (
-          <CustomerDocumentUpload
-            label="Driver License Document"
-            fieldName="license_document_url"
-            onUploadComplete={field.onChange}
-          />
+          <FormItem>
+            <FormLabel>Phone Number</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter phone number" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
-        name="contract_document_url"
+        name="address"
+        rules={{ required: "Address is required" }}
         render={({ field }) => (
-          <ContractDocumentUpload
-            label="Contract Document"
-            fieldName="contract_document_url"
-            onUploadComplete={field.onChange}
-          />
+          <FormItem>
+            <FormLabel>Address</FormLabel>
+            <FormControl>
+              <Textarea placeholder="Enter full address" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
       />
-    </>
+    </div>
   );
 };
