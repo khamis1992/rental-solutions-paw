@@ -39,7 +39,11 @@ export const SystemChatbot = () => {
       }
     },
     retry: 1,
-    retryDelay: 1000
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('Error checking API key:', error);
+      toast.error('Chat service is currently unavailable');
+    }
   });
 
   const chatMutation = useMutation({
