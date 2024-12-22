@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from '../_shared/cors.ts';
 
+interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
 const systemPrompt = `You are an AI assistant for the Rental Solutions vehicle rental management system. You have deep knowledge of both the system's features and real-time data:
 
 Key Features & Data Access:
@@ -34,17 +39,6 @@ Key Features & Data Access:
    - Payment tracking
    - Violation history
 
-Database Structure:
-- Access to 50+ interconnected tables
-- Real-time data updates through Supabase
-- Comprehensive audit logging
-- Document storage and analysis
-
-Security & Compliance:
-- Role-based access control
-- Document verification workflows
-- Audit trails for all major actions
-
 I can help users by:
 1. Explaining any system feature or workflow
 2. Providing real-time data insights
@@ -53,13 +47,8 @@ I can help users by:
 5. Guiding through complex processes
 `;
 
-interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
