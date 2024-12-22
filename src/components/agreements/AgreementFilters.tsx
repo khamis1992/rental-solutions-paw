@@ -8,7 +8,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const AgreementFilters = () => {
+interface AgreementFiltersProps {
+  onSearchChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  onSortChange: (value: string) => void;
+}
+
+export const AgreementFilters = ({
+  onSearchChange,
+  onStatusChange,
+  onSortChange,
+}: AgreementFiltersProps) => {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center">
       <div className="relative flex-1">
@@ -16,10 +26,11 @@ export const AgreementFilters = () => {
         <Input
           placeholder="Search agreements..."
           className="pl-8 md:w-[300px] lg:w-[400px]"
+          onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
       <div className="flex gap-2">
-        <Select defaultValue="all">
+        <Select defaultValue="all" onValueChange={onStatusChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -31,7 +42,7 @@ export const AgreementFilters = () => {
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="newest">
+        <Select defaultValue="newest" onValueChange={onSortChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>

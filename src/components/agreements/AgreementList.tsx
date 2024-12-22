@@ -12,6 +12,7 @@ import { useAgreements } from "./hooks/useAgreements";
 import type { Agreement } from "./hooks/useAgreements";
 import { AgreementDetailsDialog } from "./AgreementDetailsDialog";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
+import { AgreementFilters } from "./AgreementFilters";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -22,6 +23,9 @@ export const AgreementList = () => {
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
   const [selectedDetailsId, setSelectedDetailsId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   const { data: agreements = [], isLoading, error } = useAgreements();
 
@@ -124,10 +128,37 @@ export const AgreementList = () => {
     }
   };
 
-  const totalPages = Math.ceil(agreements.length / ITEMS_PER_PAGE);
+  // Filter and sort agreements
+  const filteredAgreements = agreements.filter((agreement) => {
+    const matchesSearch =
+      !searchQuery ||
+      agreement.agreement_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agreement.customer?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agreement.vehicle?.license_plate?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" || agreement.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // Sort agreements
+  const sortedAgreements = [...filteredAgreements].sort((a, b) => {
+    switch (sortOrder) {
+      case "oldest":
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "amount-high":
+        return b.total_amount - a.total_amount;
+      case "amount-low":
+        return a.total_amount - b.total_amount;
+      default: // newest
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  });
+
+  const totalPages = Math.ceil(sortedAgreements.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentAgreements = agreements.slice(startIndex, endIndex);
+  const currentAgreements = sortedAgreements.slice(startIndex, endIndex);
 
   if (isLoading) {
     return <div className="text-center py-4">Loading agreements...</div>;
@@ -142,7 +173,13 @@ export const AgreementList = () => {
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <AgreementFilters
+        onSearchChange={setSearchQuery}
+        onStatusChange={setStatusFilter}
+        onSortChange={setSortOrder}
+      />
+      
       <div className="rounded-md border">
         <Table>
           <AgreementTableHeader />
@@ -192,6 +229,6 @@ export const AgreementList = () => {
         open={!!selectedDetailsId}
         onOpenChange={(open) => !open && setSelectedDetailsId(null)}
       />
-    </>
+    </div>
   );
 };
