@@ -74,7 +74,10 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
         .from("profiles")
         .insert(customerData);
 
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        console.error("Supabase error:", supabaseError);
+        throw supabaseError;
+      }
 
       setSuccess(true);
       toast.success("Customer created successfully");

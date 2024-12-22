@@ -14,6 +14,7 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
       <FormField
         control={form.control}
         name="full_name"
+        rules={{ required: "Full name is required" }}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Full Name</FormLabel>
@@ -27,6 +28,7 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
       <FormField
         control={form.control}
         name="phone_number"
+        rules={{ required: "Phone number is required" }}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Phone Number</FormLabel>
@@ -40,6 +42,7 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
       <FormField
         control={form.control}
         name="address"
+        rules={{ required: "Address is required" }}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Address</FormLabel>
@@ -53,6 +56,7 @@ export const CustomerFormFields = ({ form }: CustomerFormFieldsProps) => {
       <FormField
         control={form.control}
         name="driver_license"
+        rules={{ required: "Driver license is required" }}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Driver License</FormLabel>
