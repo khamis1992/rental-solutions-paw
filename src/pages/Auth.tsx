@@ -15,8 +15,12 @@ const Auth = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Debug: Log initial auth state
+        // Debug: Log initial auth state and localStorage
         console.log("Initializing auth state...");
+        console.log("LocalStorage state:", {
+          accessToken: localStorage.getItem('sb-vqdlsidkucrownbfuouq-auth-token'),
+          refreshToken: localStorage.getItem('sb-vqdlsidkucrownbfuouq-auth-refresh-token')
+        });
         
         // Check for existing session
         const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
@@ -27,13 +31,30 @@ const Auth = () => {
           return;
         }
 
-        // Debug: Log session state
-        console.log("Current session state:", existingSession);
+        // Debug: Log detailed session state
+        console.log("Current session state:", {
+          session: existingSession,
+          hasSession: !!existingSession,
+          userId: existingSession?.user?.id,
+          tokenExpiry: existingSession?.expires_at
+        });
 
         if (existingSession) {
-          console.log("Existing session found, checking profile...");
+          console.log("Existing session found, validating session...");
           
-          // Fetch user profile
+          // Validate session token
+          const { data: { user }, error: tokenError } = await supabase.auth.getUser();
+          
+          if (tokenError) {
+            console.error("Token validation failed:", tokenError);
+            await supabase.auth.signOut();
+            toast.error("Session expired. Please login again.");
+            return;
+          }
+
+          console.log("Session validated, checking profile...");
+          
+          // Fetch user profile with detailed error handling
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -41,29 +62,44 @@ const Auth = () => {
             .single();
 
           // Debug: Log profile check results
-          console.log("Profile check result:", { profile, profileError });
+          console.log("Profile check result:", { 
+            profile, 
+            profileError,
+            errorCode: profileError?.code,
+            errorMessage: profileError?.message 
+          });
 
-          if (profileError && profileError.code === 'PGRST116') {
-            console.log("Creating new profile for user");
-            // Profile doesn't exist, create one
-            const { error: createError } = await supabase
-              .from('profiles')
-              .insert([
-                { 
-                  id: existingSession.user.id,
-                  full_name: existingSession.user.user_metadata.full_name,
-                  role: 'customer' // Default role
-                }
-              ]);
+          if (profileError) {
+            if (profileError.code === 'PGRST116') {
+              console.log("Profile not found, creating new profile...");
+              // Create new profile for user
+              const { error: createError } = await supabase
+                .from('profiles')
+                .insert([
+                  { 
+                    id: existingSession.user.id,
+                    full_name: existingSession.user.user_metadata.full_name,
+                    role: 'customer' // Default role
+                  }
+                ]);
 
-            if (createError) {
-              console.error("Failed to create profile:", createError);
-              toast.error("Failed to create user profile");
+              if (createError) {
+                console.error("Failed to create profile:", createError);
+                toast.error("Failed to create user profile");
+                await supabase.auth.signOut();
+                return;
+              }
+              
+              console.log("New profile created successfully");
+            } else {
+              console.error("Profile fetch error:", profileError);
+              toast.error("Failed to load user profile");
+              await supabase.auth.signOut();
               return;
             }
           }
 
-          // Check if user is staff or admin before allowing access
+          // Validate user role
           if (profile?.role === 'admin' || profile?.role === 'staff') {
             console.log("Valid role found, redirecting to dashboard");
             navigate('/');
@@ -72,6 +108,8 @@ const Auth = () => {
             toast.error("Access denied. Only staff and admin users can access this system.");
             await supabase.auth.signOut();
           }
+        } else {
+          console.log("No existing session found");
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
@@ -83,27 +121,39 @@ const Auth = () => {
 
     initializeAuth();
 
-    // Listen for auth state changes
+    // Listen for auth state changes with enhanced debugging
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", { event, session });
+      console.log("Auth state changed:", { 
+        event, 
+        session,
+        userId: session?.user?.id,
+        tokenExpiry: session?.expires_at
+      });
       
       if (event === 'SIGNED_IN' && session) {
-        const { data: profile } = await supabase
+        console.log("Sign in detected, validating profile and role...");
+        
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-        console.log("Profile check on auth change:", profile);
+        console.log("Profile validation result:", { profile, profileError });
 
         if (profile?.role === 'admin' || profile?.role === 'staff') {
+          console.log("Valid role confirmed, redirecting to dashboard");
           navigate('/');
         } else {
+          console.log("Invalid role detected, signing out");
           toast.error("Access denied. Only staff and admin users can access this system.");
           await supabase.auth.signOut();
         }
       } else if (event === 'SIGNED_OUT') {
-        console.log("User signed out");
+        console.log("User signed out, clearing session data");
+        // Clear any additional session data if needed
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
       }
     });
 
