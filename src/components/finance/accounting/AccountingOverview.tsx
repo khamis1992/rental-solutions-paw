@@ -23,7 +23,12 @@ export function AccountingOverview() {
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Ensure the type field is correctly typed
+      return data.map(transaction => ({
+        ...transaction,
+        type: transaction.type as 'income' | 'expense'
+      }));
     },
   });
 

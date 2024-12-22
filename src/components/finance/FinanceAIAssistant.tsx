@@ -28,7 +28,10 @@ export const FinanceAIAssistant = () => {
         .limit(1);
 
       if (error) throw error;
-      return (data[0]?.forecast_data || []) as ForecastData[];
+      
+      // Safely type cast the forecast data
+      const forecast = data[0]?.forecast_data as ForecastData[] || [];
+      return forecast;
     },
   });
 
