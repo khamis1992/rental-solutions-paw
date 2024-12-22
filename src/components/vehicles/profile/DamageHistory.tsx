@@ -19,6 +19,8 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
 
   // Set up real-time listeners
   useEffect(() => {
+    console.log('Setting up damage history listeners for vehicle:', vehicleId);
+    
     const inspectionChannel = supabase
       .channel('inspection-changes')
       .on(
@@ -29,7 +31,8 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
           table: 'vehicle_inspections',
           filter: `vehicle_id=eq.${vehicleId}`
         },
-        async () => {
+        async (payload) => {
+          console.log('Inspection change detected:', payload);
           await queryClient.invalidateQueries({ queryKey: ['damages-and-inspections', vehicleId] });
           toast.info('Vehicle inspection records updated');
         }
@@ -46,7 +49,8 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
           table: 'damages',
           filter: `vehicle_id=eq.${vehicleId}`
         },
-        async () => {
+        async (payload) => {
+          console.log('Damage record change detected:', payload);
           await queryClient.invalidateQueries({ queryKey: ['damages-and-inspections', vehicleId] });
           toast.info('Damage records updated');
         }
@@ -62,6 +66,8 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
   const { data: records, isLoading } = useQuery({
     queryKey: ["damages-and-inspections", vehicleId],
     queryFn: async () => {
+      console.log('Fetching damage and inspection records for vehicle:', vehicleId);
+      
       // Get inspection records
       const { data: inspectionData, error: inspectionError } = await supabase
         .from("vehicle_inspections")
@@ -89,10 +95,14 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
 
       if (damageError) throw damageError;
 
+      console.log('Retrieved inspection records:', inspectionData?.length);
+      console.log('Retrieved damage records:', damageData?.length);
+
       // Process damage records to include source information
       const processedDamageData = damageData.map(damage => ({
         ...damage,
-        source: damage.leases?.agreement_type === 'short_term' ? 'Rental Agreement' : 'Lease to Own Agreement',
+        source: damage.leases?.agreement_type === 'short_term' ? 'Rental Agreement' : 
+               damage.lease_id ? 'Lease to Own Agreement' : 'Maintenance Inspection',
         customer_name: damage.leases?.profiles?.full_name || 'System Inspection'
       }));
 
@@ -104,6 +114,7 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
   });
 
   const handleViewImages = (images: string[]) => {
+    console.log('Opening images dialog with:', images);
     setSelectedImages(images);
     setShowImagesDialog(true);
   };

@@ -37,6 +37,8 @@ export const submitInspection = async ({
     if (maintenanceError) throw maintenanceError;
     if (!maintenanceData?.vehicle_id) throw new Error('Vehicle ID not found');
 
+    console.log('Starting inspection submission for vehicle:', maintenanceData.vehicle_id);
+
     // Upload inspection photos
     const uploadedPhotos = await Promise.all(
       photos.map(async (photo) => {
@@ -57,6 +59,8 @@ export const submitInspection = async ({
         return publicUrl;
       })
     );
+
+    console.log('Photos uploaded successfully:', uploadedPhotos);
 
     // Create the inspection record
     const inspectionData = {
@@ -81,6 +85,8 @@ export const submitInspection = async ({
 
     if (inspectionError) throw inspectionError;
 
+    console.log('Inspection record created:', inspectionRecord);
+
     // Create damage records for each marker
     if (damageMarkers.length > 0) {
       const damageRecords = damageMarkers.map(marker => ({
@@ -98,7 +104,12 @@ export const submitInspection = async ({
         .from('damages')
         .insert(damageRecords);
 
-      if (damagesError) throw damagesError;
+      if (damagesError) {
+        console.error('Error creating damage records:', damagesError);
+        throw damagesError;
+      }
+
+      console.log('Damage records created:', damageRecords.length);
     }
 
     // Update maintenance status
@@ -123,6 +134,7 @@ export const submitInspection = async ({
 
     if (vehicleUpdateError) throw vehicleUpdateError;
 
+    console.log('Inspection workflow completed successfully');
     toast.success("Inspection and damage records saved successfully");
     return { success: true };
   } catch (error: any) {

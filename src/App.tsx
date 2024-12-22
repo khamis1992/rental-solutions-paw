@@ -1,33 +1,22 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { lazy, Suspense, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/sonner";
+import { useToast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
-import Auth from "@/pages/Auth";
-import { useSessionContext } from "@supabase/auth-helpers-react";
-import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
-// Define route component type
-type RouteComponent = React.LazyExoticComponent<React.ComponentType>;
-
-// Lazy load all pages with loading fallback
-const lazyLoad = (Component: RouteComponent) => (
-  <Suspense fallback={
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin" />
-    </div>
-  }>
-    <Component />
-  </Suspense>
-);
-
-// Import existing pages
+// Lazy load components
+const Auth = lazy(() => import("@/pages/Auth"));
 const Dashboard = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
-const Agreements = lazy(() => import("@/pages/Agreements"));
+const VehicleDetails = lazy(() => import("@/components/vehicles/VehicleDetails"));
 const Customers = lazy(() => import("@/pages/Customers"));
-const Maintenance = lazy(() => import("@/pages/Maintenance"));
+const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
+const Agreements = lazy(() => import("@/pages/Agreements"));
 const Settings = lazy(() => import("@/pages/Settings"));
+const Maintenance = lazy(() => import("@/pages/Maintenance"));
 const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Finance = lazy(() => import("@/pages/Finance"));
@@ -35,13 +24,21 @@ const Help = lazy(() => import("@/pages/Help"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Audit = lazy(() => import("@/pages/Audit"));
 
+// Define protected route type
+interface ProtectedRoute {
+  path: string;
+  component: React.ComponentType;
+}
+
 const protectedRoutes: ProtectedRoute[] = [
   { path: "/", component: Dashboard },
   { path: "/vehicles", component: Vehicles },
-  { path: "/agreements", component: Agreements },
+  { path: "/vehicles/:id", component: VehicleDetails },
   { path: "/customers", component: Customers },
-  { path: "/maintenance", component: Maintenance },
+  { path: "/customers/:id", component: CustomerProfile },
+  { path: "/agreements", component: Agreements },
   { path: "/settings", component: Settings },
+  { path: "/maintenance/*", component: Maintenance },
   { path: "/traffic-fines", component: TrafficFines },
   { path: "/reports", component: Reports },
   { path: "/finance", component: Finance },
@@ -51,59 +48,59 @@ const protectedRoutes: ProtectedRoute[] = [
 ];
 
 export default function App() {
-  const { session, isLoading } = useSessionContext();
-  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { data: session, isLoading: loadingSession } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return data.session;
+    },
+  });
 
   useEffect(() => {
-    console.log("Session state:", { session, isLoading });
-  }, [session, isLoading]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        toast.success("Welcome back!");
+      } else if (event === "SIGNED_OUT") {
+        toast.info("You have been logged out.");
+      }
+    });
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
+
+  if (loadingSession) {
+    return <Skeleton className="h-screen w-screen" />;
   }
 
   return (
     <Routes>
-      {/* Public routes */}
-      <Route 
-        path="/auth" 
+      <Route
+        path="/auth"
         element={
-          session ? (
-            <Navigate to="/" replace />
-          ) : (
+          <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
             <Auth />
-          )
-        } 
+          </Suspense>
+        }
       />
 
-      {/* Protected routes wrapper */}
-      <Route
-        element={
-          session ? (
-            <DashboardLayout>
-              <RouteWrapper />
-            </DashboardLayout>
-          ) : (
-            <Navigate to="/auth" replace />
-          )
-        }
-      >
-        {/* Define child routes */}
-        {protectedRoutes.map(({ path, component: Component }) => (
-          <Route
-            key={path}
-            path={path}
-            element={lazyLoad(Component)}
-          />
-        ))}
-      </Route>
+      {protectedRoutes.map(({ path, component: Component }) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+              <RouteWrapper>
+                <Component />
+              </RouteWrapper>
+            </Suspense>
+          }
+        />
+      ))}
 
-      {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
