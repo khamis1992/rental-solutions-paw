@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,7 +26,6 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm({
     defaultValues: {
@@ -41,47 +40,43 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   });
 
   const handleScanComplete = (extractedData: any) => {
-    // Update form with extracted data
     form.setValue('full_name', extractedData.full_name);
     form.setValue('driver_license', extractedData.id_number);
-    // Add any other extracted fields as needed
   };
 
   const onSubmit = async (values: any) => {
+    console.log("Submitting form with values:", values);
     setIsLoading(true);
     try {
       const newCustomerId = crypto.randomUUID();
       setCustomerId(newCustomerId);
 
-      const { error } = await supabase.from("profiles").insert([
-        {
+      const { error } = await supabase
+        .from("profiles")
+        .insert({
           id: newCustomerId,
           ...values,
           role: "customer",
-        },
-      ]);
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating customer:", error);
+        throw error;
+      }
 
-      toast({
-        title: "Success",
-        description: "Customer created successfully",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["customer-stats"] });
+      toast.success("Customer created successfully");
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
       
-      // Don't reset form or close dialog if we're waiting for document scan
+      // Reset form and close dialog if we're not waiting for document scan
       if (!customerId) {
         form.reset();
         setOpen(false);
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Error in onSubmit:", error);
+      toast.error(error.message || "Failed to create customer");
     } finally {
       setIsLoading(false);
     }
