@@ -24,13 +24,13 @@ const Help = lazy(() => import("@/pages/Help"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Audit = lazy(() => import("@/pages/Audit"));
 
-// Define protected route type
-interface ProtectedRoute {
+// Define protected route interface
+interface ProtectedRouteConfig {
   path: string;
   component: React.ComponentType;
 }
 
-const protectedRoutes: ProtectedRoute[] = [
+const protectedRoutes: ProtectedRouteConfig[] = [
   { path: "/", component: Dashboard },
   { path: "/vehicles", component: Vehicles },
   { path: "/vehicles/:id", component: VehicleDetails },
@@ -61,9 +61,15 @@ export default function App() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN") {
-        toast.success("Welcome back!");
+        toast({
+          title: "Welcome back!",
+          variant: "default",
+        });
       } else if (event === "SIGNED_OUT") {
-        toast.info("You have been logged out.");
+        toast({
+          title: "You have been logged out.",
+          variant: "default",
+        });
       }
     });
 
