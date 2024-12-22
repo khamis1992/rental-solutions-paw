@@ -6,7 +6,6 @@ import Auth from "@/pages/Auth";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 // Define route component type
 type RouteComponent = React.LazyExoticComponent<React.ComponentType>;
@@ -31,6 +30,7 @@ const Maintenance = lazy(() => import("@/pages/Maintenance"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
 const Reports = lazy(() => import("@/pages/Reports"));
+const Finance = lazy(() => import("@/pages/Finance"));
 
 // Define protected route type
 interface ProtectedRoute {
@@ -47,6 +47,7 @@ const protectedRoutes: ProtectedRoute[] = [
   { path: "/settings", component: Settings },
   { path: "/traffic-fines", component: TrafficFines },
   { path: "/reports", component: Reports },
+  { path: "/finance", component: Finance },
 ];
 
 export default function App() {

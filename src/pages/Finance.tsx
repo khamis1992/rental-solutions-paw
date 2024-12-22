@@ -1,158 +1,182 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { FinancialReports } from "@/components/reports/FinancialReports";
-import { PaymentImport } from "@/components/payments/PaymentImport";
-import { PaymentReconciliation } from "@/components/payments/PaymentReconciliation";
-import { RevenueAnalysis } from "@/components/reports/RevenueAnalysis";
-import { InstallmentAnalysis } from "@/components/reports/InstallmentAnalysis";
-import { PaymentHistoryContent } from "@/components/agreements/payments/PaymentHistoryContent";
-import { CompanyExpenses } from "@/components/dashboard/CompanyExpenses";
-import { AiAccountantDashboard } from "@/components/finance/ai-accountant/AiAccountantDashboard";
-import { RentManagementSection } from "@/components/finance/rent/RentManagementSection";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, ChartBar, Calculator, Brain, CreditCard, History, DollarSign, Bot, Home } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { AiAccountantDashboard } from "@/components/finance/ai-accountant/AiAccountantDashboard";
+import { RentManagementSection } from "@/components/finance/rent/RentManagementSection";
 
 const Finance = () => {
-  const { data: paymentHistory, isLoading } = useQuery({
-    queryKey: ["payment-history"],
+  const { data: financialData, isLoading: isLoadingFinancial } = useQuery({
+    queryKey: ["financial-data"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select(`
-          *,
-          security_deposits (
-            amount,
-            status
-          ),
-          leases (
-            agreement_number,
-            customer_id,
-            profiles:customer_id (
-              full_name
-            )
-          )
-        `)
+      const { data: expenseData, error: expenseError } = await supabase
+        .from("expense_transactions")
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching payments:", error);
-        throw error;
+      if (expenseError) {
+        console.error("Error fetching expense data:", expenseError);
+        throw expenseError;
       }
 
-      return data;
-    },
+      const { data: revenueData, error: revenueError } = await supabase
+        .from("payments")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (revenueError) {
+        console.error("Error fetching revenue data:", revenueError);
+        throw revenueError;
+      }
+
+      return {
+        expenses: expenseData || [],
+        revenue: revenueData || []
+      };
+    }
   });
 
-  const totalPaid = paymentHistory?.reduce((sum, payment) => {
+  if (isLoadingFinancial) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const totalRevenue = financialData?.revenue.reduce((sum, payment) => {
     if (payment.status === "completed") {
-      return sum + payment.amount;
+      return sum + (payment.amount || 0);
     }
     return sum;
   }, 0) || 0;
 
-  const totalRefunded = paymentHistory?.reduce((sum, payment) => {
-    if (payment.status === "refunded") {
-      return sum + payment.amount;
-    }
-    return sum;
+  const totalExpenses = financialData?.expenses.reduce((sum, expense) => {
+    return sum + (expense.amount || 0);
   }, 0) || 0;
 
   return (
     <DashboardLayout>
       <div className="container mx-auto space-y-6 p-6">
         <h1 className="text-4xl font-bold tracking-tight">Financial Management</h1>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD'
+                }).format(totalRevenue)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD'
+                }).format(totalExpenses)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Income</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD'
+                }).format(totalRevenue - totalExpenses)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <ChartBar className="h-4 w-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="company-expenses" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Company Expenses
-            </TabsTrigger>
-            <TabsTrigger value="rent" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              Rent Management
-            </TabsTrigger>
-            <TabsTrigger value="ai-accountant" className="flex items-center gap-2">
-              <Bot className="h-4 w-4" />
-              AI Accountant
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Payments
-            </TabsTrigger>
-            <TabsTrigger value="installments" className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              Installments
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              Payment History
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Reports
-            </TabsTrigger>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="rent">Rent Management</TabsTrigger>
+            <TabsTrigger value="ai-accountant">AI Accountant</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <RevenueAnalysis />
-          </TabsContent>
-
-          <TabsContent value="company-expenses" className="space-y-6">
-            <CompanyExpenses />
-          </TabsContent>
-
-          <TabsContent value="rent" className="space-y-6">
-            <RentManagementSection />
-          </TabsContent>
-
-          <TabsContent value="ai-accountant" className="space-y-6">
-            <AiAccountantDashboard />
-          </TabsContent>
-
-          <TabsContent value="payments" className="space-y-6">
-            <div className="grid gap-6">
+          <TabsContent value="overview">
+            <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment Import</CardTitle>
+                  <CardTitle>Recent Expenses</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PaymentImport />
+                  <div className="space-y-4">
+                    {financialData?.expenses.slice(0, 5).map((expense) => (
+                      <div key={expense.id} className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{expense.description || 'Unnamed Expense'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(expense.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="font-medium">
+                          {new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'USD'
+                          }).format(expense.amount)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment Reconciliation</CardTitle>
+                  <CardTitle>Recent Payments</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <PaymentReconciliation />
+                  <div className="space-y-4">
+                    {financialData?.revenue.slice(0, 5).map((payment) => (
+                      <div key={payment.id} className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">Payment {payment.transaction_id || payment.id}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(payment.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="font-medium">
+                          {new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'USD'
+                          }).format(payment.amount)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="installments" className="space-y-6">
-            <InstallmentAnalysis />
+          <TabsContent value="rent">
+            <RentManagementSection />
           </TabsContent>
 
-          <TabsContent value="history" className="space-y-6">
-            <PaymentHistoryContent
-              paymentHistory={paymentHistory || []}
-              isLoading={isLoading}
-              totalPaid={totalPaid}
-              totalRefunded={totalRefunded}
-            />
-          </TabsContent>
-
-          <TabsContent value="reports" className="space-y-6">
-            <FinancialReports />
+          <TabsContent value="ai-accountant">
+            <AiAccountantDashboard />
           </TabsContent>
         </Tabs>
       </div>
