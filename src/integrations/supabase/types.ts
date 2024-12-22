@@ -9,6 +9,211 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accounting_audit_trail: {
+        Row: {
+          action: string
+          changes: Json
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_at: string
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          changes: Json
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_at?: string
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_at?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_audit_trail_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_audit_trail_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_categories: {
+        Row: {
+          budget_limit: number | null
+          budget_period: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          budget_limit?: number | null
+          budget_period?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          budget_limit?: number | null
+          budget_period?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string | null
+          due_date: string
+          id: string
+          invoice_number: string
+          issued_date: string
+          items: Json
+          notes: string | null
+          paid_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id?: string | null
+          due_date: string
+          id?: string
+          invoice_number: string
+          issued_date: string
+          items: Json
+          notes?: string | null
+          paid_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issued_date?: string
+          items?: Json
+          notes?: string | null
+          paid_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_transactions: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          receipt_url: string | null
+          recurring_schedule: Json | null
+          reference_id: string | null
+          reference_type: string | null
+          status: string | null
+          transaction_date: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          receipt_url?: string | null
+          recurring_schedule?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          transaction_date: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          receipt_url?: string | null
+          recurring_schedule?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          transaction_date?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agreement_documents: {
         Row: {
           created_at: string | null
