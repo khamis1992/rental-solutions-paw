@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import { FileText, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle, Clock, Download } from "lucide-react";
 import { AuditRecordsList } from "./AuditRecordsList";
 import { AuditRecordForm } from "./AuditRecordForm";
+import { toast } from "sonner";
 
 export function AuditRecordsDashboard() {
   const { data: auditStats } = useQuery({
@@ -14,23 +15,21 @@ export function AuditRecordsDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_records")
-        .select("status")
-        .then(result => {
-          // Count occurrences of each status
-          const counts = result.data?.reduce((acc, record) => {
-            acc[record.status] = (acc[record.status] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          
-          // Convert to array format expected by the component
-          return Object.entries(counts || {}).map(([status, count]) => ({
-            status,
-            count
-          }));
-        });
+        .select("status");
 
       if (error) throw error;
-      return data || [];
+
+      // Count occurrences of each status
+      const counts = data.reduce((acc, record) => {
+        acc[record.status] = (acc[record.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Convert to array format expected by the component
+      return Object.entries(counts).map(([status, count]) => ({
+        status,
+        count
+      }));
     },
   });
 
@@ -49,10 +48,54 @@ export function AuditRecordsDashboard() {
     },
   });
 
+  const handleExport = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("audit_records")
+        .select("*")
+        .order("submission_deadline", { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data for CSV
+      const csvData = data.map(record => ({
+        Year: record.audit_year,
+        Status: record.status,
+        'Submission Deadline': format(new Date(record.submission_deadline), "MMM d, yyyy"),
+        'Submitted Date': record.submitted_date ? format(new Date(record.submitted_date), "MMM d, yyyy") : '-',
+        'Auditor Name': record.auditor_name || '-',
+        'License Number': record.auditor_license_number || '-'
+      }));
+
+      // Convert to CSV
+      const headers = Object.keys(csvData[0]);
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `audit_records_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      link.click();
+      
+      toast.success("Audit records exported successfully");
+    } catch (error) {
+      console.error("Error exporting audit records:", error);
+      toast.error("Failed to export audit records");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Audit Records Management</h2>
+        <Button onClick={handleExport} className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export Records
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
