@@ -6,6 +6,17 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { formatCurrency } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
+interface ForecastData {
+  date: string;
+  predicted_revenue: number;
+  predicted_expenses: number;
+}
+
+interface FinancialInsight {
+  id: string;
+  insight: string;
+}
+
 export const FinanceAIAssistant = () => {
   const { data: forecastData, isLoading: isLoadingForecast } = useQuery({
     queryKey: ["financial-forecasts"],
@@ -17,7 +28,7 @@ export const FinanceAIAssistant = () => {
         .limit(1);
 
       if (error) throw error;
-      return data[0]?.forecast_data || [];
+      return (data[0]?.forecast_data || []) as ForecastData[];
     },
   });
 
@@ -31,7 +42,7 @@ export const FinanceAIAssistant = () => {
         .limit(5);
 
       if (error) throw error;
-      return data || [];
+      return data as FinancialInsight[];
     },
   });
 
