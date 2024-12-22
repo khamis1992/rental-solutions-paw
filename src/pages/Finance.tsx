@@ -1,7 +1,7 @@
 import { AccountingOverview } from "@/components/finance/accounting/AccountingOverview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RecentTransactions } from "@/components/finance/RecentTransactions";
+import { TransactionForm } from "@/components/finance/accounting/TransactionForm";
 
 export default function Finance() {
   return (
@@ -13,34 +13,34 @@ export default function Finance() {
         </p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Accounting Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AccountingOverview />
-            </CardContent>
-          </Card>
-        </TabsContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Accounting Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AccountingOverview />
+        </CardContent>
+      </Card>
 
-        <TabsContent value="transactions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentTransactions />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>New Transaction</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TransactionForm />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecentTransactions />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
