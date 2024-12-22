@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from '../_shared/cors.ts'
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -9,6 +10,12 @@ serve(async (req) => {
   try {
     const { type, amount, name, totalFixedCosts, totalVariableCosts } = await req.json()
     const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY')
+
+    if (!perplexityApiKey) {
+      throw new Error('Perplexity API key not configured')
+    }
+
+    console.log('Analyzing financial data:', { type, amount, name })
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
