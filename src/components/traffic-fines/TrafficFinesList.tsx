@@ -10,6 +10,7 @@ import { AIAssignmentDialog } from "./AIAssignmentDialog";
 import { TrafficFineTableHeader } from "./table/TrafficFineTableHeader";
 import { TrafficFineTableRow } from "./table/TrafficFineTableRow";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Loader2 } from "lucide-react";
 
 export const TrafficFinesList = () => {
   const { toast } = useToast();
@@ -18,9 +19,10 @@ export const TrafficFinesList = () => {
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const { data: fines, isLoading } = useQuery({
+  const { data: fines, isLoading, error } = useQuery({
     queryKey: ["traffic-fines"],
     queryFn: async () => {
+      console.log('Fetching traffic fines...');
       const { data, error } = await supabase
         .from('traffic_fines')
         .select(`
@@ -39,17 +41,22 @@ export const TrafficFinesList = () => {
         `)
         .order('violation_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching traffic fines:', error);
+        throw error;
+      }
+      
+      console.log('Fetched traffic fines:', data);
       return data;
     },
   });
 
   const handleAiAssignment = async (fineId: string) => {
-    setIsAnalyzing(true);
-    setSelectedFine(fines?.find(f => f.id === fineId));
-    setAiDialogOpen(true);
-
     try {
+      setIsAnalyzing(true);
+      setSelectedFine(fines?.find(f => f.id === fineId));
+      setAiDialogOpen(true);
+
       const response = await fetch('/functions/v1/analyze-traffic-fine', {
         method: 'POST',
         headers: {
@@ -96,7 +103,10 @@ export const TrafficFinesList = () => {
 
       const { error } = await supabase
         .from('traffic_fines')
-        .update({ lease_id: leases[0].id })
+        .update({ 
+          lease_id: leases[0].id,
+          assignment_status: 'assigned'
+        })
         .eq('id', fineId);
 
       if (error) throw error;
@@ -138,8 +148,20 @@ export const TrafficFinesList = () => {
     }
   };
 
+  if (error) {
+    return (
+      <div className="p-4 text-red-500">
+        Error loading traffic fines: {error.message}
+      </div>
+    );
+  }
+
   if (isLoading) {
-    return <div>Loading fines...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -160,7 +182,7 @@ export const TrafficFinesList = () => {
             ))}
             {!fines?.length && (
               <tr>
-                <td colSpan={11} className="text-center py-4">
+                <td colSpan={11} className="text-center py-8 text-muted-foreground">
                   No traffic fines recorded
                 </td>
               </tr>
