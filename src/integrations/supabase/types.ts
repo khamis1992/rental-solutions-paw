@@ -3485,6 +3485,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      delete_all_transactions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       has_active_agreements: {
         Args: {
           customer_id: string

@@ -1,19 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { Loader2, DollarSign, CreditCard, TrendingUp, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FinancialCards } from "./components/FinancialCards";
+import { RecentTransactionsList } from "./components/RecentTransactionsList";
+import { DeleteTransactionsDialog } from "./components/DeleteTransactionsDialog";
 
 export const FinanceOverview = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -80,13 +73,13 @@ export const FinanceOverview = () => {
 
   const recentTransactions = [
     ...(financialData?.expenses.slice(0, 5).map(expense => ({
-      type: 'expense',
+      type: 'expense' as const,
       amount: -expense.amount,
       description: expense.description || 'Unnamed Expense',
       date: new Date(expense.created_at)
     })) || []),
     ...(financialData?.revenue.slice(0, 5).map(payment => ({
-      type: 'revenue',
+      type: 'revenue' as const,
       amount: payment.amount,
       description: `Payment ${payment.transaction_id || payment.id}`,
       date: new Date(payment.created_at)
@@ -107,98 +100,19 @@ export const FinanceOverview = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-          </CardContent>
-        </Card>
+      <FinancialCards 
+        totalRevenue={totalRevenue}
+        totalExpenses={totalExpenses}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
-          </CardContent>
-        </Card>
+      <RecentTransactionsList transactions={recentTransactions} />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Income</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue - totalExpenses)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((transaction, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{transaction.description}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {transaction.date.toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className={`font-medium ${transaction.type === 'expense' ? 'text-red-600' : 'text-green-600'}`}>
-                    {formatCurrency(transaction.amount)}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground">No transactions found</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete All Transactions</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete all transactions? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAllTransactions}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete All'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteTransactionsDialog
+        isOpen={isDeleteDialogOpen}
+        isDeleting={isDeleting}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteAllTransactions}
+      />
     </div>
   );
 };
