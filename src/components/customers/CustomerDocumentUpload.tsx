@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -18,23 +18,57 @@ export const CustomerDocumentUpload = ({
   onUploadComplete,
 }: CustomerDocumentUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
   const form = useForm();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Please upload a PDF, JPEG, or PNG file.');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast.error('File is too large. Maximum size is 5MB.');
+      return;
+    }
+
     setIsUploading(true);
     try {
+      // Check if bucket exists before uploading
+      const { data: buckets } = await supabase
+        .storage
+        .listBuckets();
+
+      const customerDocumentsBucketExists = buckets?.some(
+        bucket => bucket.name === 'customer_documents'
+      );
+
+      if (!customerDocumentsBucketExists) {
+        console.error('Customer documents bucket not found');
+        toast.error('Storage configuration error. Please contact support.');
+        return;
+      }
+
       const fileExt = file.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("customer_documents")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(uploadError.message);
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from("customer_documents")
@@ -42,16 +76,11 @@ export const CustomerDocumentUpload = ({
 
       onUploadComplete(publicUrl);
 
-      toast({
-        title: "Success",
-        description: "Document uploaded successfully",
-      });
+      toast.success('Document uploaded successfully');
+      event.target.value = ''; // Reset input
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error('Error uploading document:', error);
+      toast.error(error.message || 'Failed to upload document');
     } finally {
       setIsUploading(false);
     }
