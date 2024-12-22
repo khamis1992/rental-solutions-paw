@@ -35,7 +35,8 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers', searchQuery],
     queryFn: async () => {
-      console.log("Fetching customers with search:", searchQuery);
+      const trimmedQuery = searchQuery.trim().toLowerCase();
+      console.log("Fetching customers with search:", trimmedQuery);
       
       let query = supabase
         .from('profiles')
@@ -43,9 +44,10 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
         .eq('role', 'customer')
         .limit(10); // Limit results for better performance
 
-      if (searchQuery) {
+      if (trimmedQuery) {
+        // Use ilike for case-insensitive partial matches
         query = query.or(
-          `full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%`
+          `full_name.ilike.%${trimmedQuery}%,email.ilike.%${trimmedQuery}%,phone_number.ilike.%${trimmedQuery}%`
         );
       }
 
@@ -56,6 +58,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
         throw error;
       }
 
+      console.log("Found customers:", data?.length || 0);
       return data || [];
     },
     staleTime: 30000, // Consider data fresh for 30 seconds
@@ -90,11 +93,20 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
             <CommandInput 
               placeholder="Search customers..." 
               value={searchQuery}
-              onValueChange={setSearchQuery}
+              onValueChange={(value) => {
+                console.log("Search value changed:", value);
+                setSearchQuery(value);
+              }}
             />
             <CommandList>
               <CommandEmpty>
-                {isLoading ? "Loading..." : "No customers found."}
+                {isLoading ? (
+                  "Loading..."
+                ) : customers.length === 0 ? (
+                  searchQuery.trim() ? 
+                    `No customers found matching "${searchQuery}"` : 
+                    "No customers available"
+                ) : null}
               </CommandEmpty>
               <CommandGroup>
                 {customers.map((customer) => (
