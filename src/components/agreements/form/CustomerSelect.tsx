@@ -18,6 +18,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface CustomerSelectProps {
   register: any;
@@ -32,7 +33,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
     full_name: string;
   } | null>(null);
 
-  const { data: customers = [], isLoading } = useQuery({
+  const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ['customers', searchQuery],
     queryFn: async () => {
       try {
@@ -42,8 +43,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
         let query = supabase
           .from('profiles')
           .select('id, full_name, email, phone_number')
-          .eq('role', 'customer')
-          .limit(10);
+          .eq('role', 'customer');
 
         if (trimmedQuery) {
           // Use ilike for case-insensitive partial matches on multiple fields
@@ -54,17 +54,25 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
           );
         }
 
-        const { data, error } = await query;
+        const { data: fetchedData, error } = await query.limit(10);
 
         if (error) {
           console.error("Error fetching customers:", error);
+          toast.error("Failed to fetch customers");
           throw error;
         }
 
-        console.log("Found customers:", data?.length || 0, "matching query:", trimmedQuery);
-        return data || [];
+        // Log the fetched data for debugging
+        console.log("Fetched customers:", {
+          query: trimmedQuery,
+          count: fetchedData?.length || 0,
+          results: fetchedData
+        });
+
+        return fetchedData || [];
       } catch (err) {
         console.error("Error in customer search:", err);
+        toast.error("Failed to search customers");
         return [];
       }
     },
@@ -73,6 +81,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
   });
 
   const handleSelect = (customer: { id: string; full_name: string }) => {
+    console.log("Selected customer:", customer);
     setSelectedCustomer(customer);
     register("customerId").onChange({ target: { value: customer.id } });
     if (onCustomerSelect) {
@@ -110,6 +119,8 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
               <CommandEmpty>
                 {isLoading ? (
                   "Loading customers..."
+                ) : error ? (
+                  "Error loading customers"
                 ) : customers.length === 0 ? (
                   searchQuery.trim() ? 
                     `No customers found matching "${searchQuery.trim()}"` : 
