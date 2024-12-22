@@ -15,6 +15,9 @@ const Auth = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // Debug: Log initial auth state
+        console.log("Initializing auth state...");
+        
         // Check for existing session
         const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
         
@@ -24,14 +27,21 @@ const Auth = () => {
           return;
         }
 
+        // Debug: Log session state
+        console.log("Current session state:", existingSession);
+
         if (existingSession) {
-          console.log("Existing session found");
+          console.log("Existing session found, checking profile...");
+          
           // Fetch user profile
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', existingSession.user.id)
             .single();
+
+          // Debug: Log profile check results
+          console.log("Profile check result:", { profile, profileError });
 
           if (profileError && profileError.code === 'PGRST116') {
             console.log("Creating new profile for user");
@@ -49,13 +59,16 @@ const Auth = () => {
             if (createError) {
               console.error("Failed to create profile:", createError);
               toast.error("Failed to create user profile");
+              return;
             }
           }
 
           // Check if user is staff or admin before allowing access
           if (profile?.role === 'admin' || profile?.role === 'staff') {
+            console.log("Valid role found, redirecting to dashboard");
             navigate('/');
           } else {
+            console.log("Invalid role, signing out");
             toast.error("Access denied. Only staff and admin users can access this system.");
             await supabase.auth.signOut();
           }
@@ -72,7 +85,7 @@ const Auth = () => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session);
+      console.log("Auth state changed:", { event, session });
       
       if (event === 'SIGNED_IN' && session) {
         const { data: profile } = await supabase
@@ -81,16 +94,22 @@ const Auth = () => {
           .eq('id', session.user.id)
           .single();
 
+        console.log("Profile check on auth change:", profile);
+
         if (profile?.role === 'admin' || profile?.role === 'staff') {
           navigate('/');
         } else {
           toast.error("Access denied. Only staff and admin users can access this system.");
           await supabase.auth.signOut();
         }
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out");
       }
     });
 
+    // Cleanup subscription on unmount
     return () => {
+      console.log("Cleaning up auth subscriptions");
       subscription.unsubscribe();
     };
   }, [navigate]);
