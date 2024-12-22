@@ -37,19 +37,16 @@ export const SystemChatbot = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      // Get the last few messages to maintain context, ensuring alternating roles
-      const recentMessages = messages
-        .slice(-6) // Take last 6 messages for context
-        .reduce((acc: Message[], curr, index, array) => {
-          // Only add message if it's the first one or if its role is different from the previous one
-          if (index === 0 || curr.role !== array[index - 1].role) {
-            acc.push(curr);
-          }
-          return acc;
-        }, []);
+      // Process messages to ensure alternation
+      const processedMessages = messages.reduce((acc: Message[], curr, index) => {
+        if (index === 0 || curr.role !== acc[acc.length - 1].role) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []).slice(-6); // Keep last 6 alternating messages for context
 
       const apiMessages = [
-        ...recentMessages,
+        ...processedMessages,
         { role: "user" as const, content: message }
       ];
 

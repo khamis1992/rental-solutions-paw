@@ -64,26 +64,29 @@ serve(async (req) => {
       throw new Error('Chat service is not properly configured');
     }
 
-    // Format messages ensuring proper alternation
+    // Start with system message
     const formattedMessages: ChatMessage[] = [
       { role: "system", content: systemPrompt }
     ];
 
-    // Add user messages while ensuring proper alternation
+    // Process messages to ensure alternation
     if (Array.isArray(messages)) {
-      messages.forEach((msg: ChatMessage) => {
-        // Only add the message if it's different from the last added message's role
-        if (formattedMessages.length === 1 || // First message after system
-            (formattedMessages[formattedMessages.length - 1].role !== msg.role)) {
-          formattedMessages.push({
-            role: msg.role,
-            content: msg.content
-          });
-        }
-      });
+      let lastRole: "system" | "user" | "assistant" | null = "system";
+      
+      for (const msg of messages) {
+        // Skip if same role as last message
+        if (msg.role === lastRole) continue;
+        
+        // Add message and update lastRole
+        formattedMessages.push({
+          role: msg.role,
+          content: msg.content
+        });
+        lastRole = msg.role;
+      }
     }
 
-    // Ensure the last message is from the user
+    // Ensure the last message is from user
     if (formattedMessages[formattedMessages.length - 1].role !== 'user') {
       throw new Error('Last message must be from user');
     }
