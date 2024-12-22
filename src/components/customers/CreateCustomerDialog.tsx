@@ -20,13 +20,14 @@ import { EnhancedButton } from "@/components/ui/enhanced-button";
 
 interface CreateCustomerDialogProps {
   children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) => {
+export const CreateCustomerDialog = ({ children, open, onOpenChange }: CreateCustomerDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
-  const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   
@@ -88,7 +89,7 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
       // Reset form and close dialog after success animation
       setTimeout(() => {
         form.reset();
-        setOpen(false);
+        onOpenChange?.(false);
         setCustomerId(null);
       }, 1500);
       
@@ -102,7 +103,7 @@ export const CreateCustomerDialog = ({ children }: CreateCustomerDialogProps) =>
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {children || (
           <EnhancedButton>

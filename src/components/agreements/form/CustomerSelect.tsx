@@ -15,87 +15,29 @@ import { Button } from "@/components/ui/button";
 import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialog";
-
-interface CustomerSelectProps {
-  register: any;
-  onCustomerSelect?: (customerId: string) => void;
-}
-
-const PAGE_SIZE = 10;
+import { useCustomerSearch } from "./hooks/useCustomerSearch";
+import { CustomerSelectProps } from "./types/customerSelect.types";
 
 export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<{
     id: string;
     full_name: string;
   } | null>(null);
 
-  // Use infinite query for pagination
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    error
-  } = useInfiniteQuery({
-    queryKey: ['customers', searchQuery],
-    queryFn: async ({ pageParam = 0 }) => {
-      try {
-        const trimmedQuery = searchQuery.trim();
-        console.log("Fetching customers page", pageParam, "with query:", trimmedQuery);
-        
-        let query = supabase
-          .from('profiles')
-          .select('id, full_name, email, phone_number', { count: 'exact' })
-          .eq('role', 'customer')
-          .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
-
-        if (trimmedQuery) {
-          query = query.or(
-            `full_name.ilike.%${trimmedQuery}%,` +
-            `email.ilike.%${trimmedQuery}%,` +
-            `phone_number.ilike.%${trimmedQuery}%`
-          );
-        }
-
-        const { data: customers, count, error } = await query;
-
-        if (error) {
-          console.error("Error fetching customers:", error);
-          toast.error("Failed to fetch customers");
-          throw error;
-        }
-
-        console.log("Fetched customers:", {
-          page: pageParam,
-          count: customers?.length || 0,
-          totalCount: count,
-          query: trimmedQuery
-        });
-
-        return {
-          customers: customers || [],
-          nextPage: customers?.length === PAGE_SIZE ? pageParam + 1 : undefined,
-          totalCount: count
-        };
-      } catch (err) {
-        console.error("Error in customer search:", err);
-        toast.error("Failed to search customers");
-        throw err;
-      }
-    },
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    staleTime: 30000,
-    retry: 1,
-  });
+    error,
+    showCreateCustomer,
+    setShowCreateCustomer
+  } = useCustomerSearch(searchQuery);
 
   const handleSelect = (customer: { id: string; full_name: string }) => {
     console.log("Selected customer:", customer);
