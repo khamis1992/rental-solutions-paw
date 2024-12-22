@@ -32,7 +32,14 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Analyze this new ${type} cost: Name: ${name}, Amount: ${amount}. Current total fixed costs: ${totalFixedCosts}, total variable costs: ${totalVariableCosts}. Provide insights and recommendations.`
+            content: `Analyze this new ${type} cost: Name: ${name}, Amount: ${amount}. 
+                     Current total fixed costs: ${totalFixedCosts}, total variable costs: ${totalVariableCosts}.
+                     Consider the following in your analysis:
+                     1. Impact on overall financial health
+                     2. Cost optimization opportunities
+                     3. Comparison with industry standards
+                     4. Future implications and trends
+                     Provide specific, actionable insights and recommendations.`
           }
         ],
         temperature: 0.2,
