@@ -41,7 +41,7 @@ export const InvoiceList = ({ agreementId }: InvoiceListProps) => {
             <FileText className="h-4 w-4 mr-2" />
             Generate Invoice
           </Button>
-          <Button onClick={() => setShowBatchGeneration()}>
+          <Button onClick={() => setShowBatchGeneration(true)}>
             <Files className="h-4 w-4 mr-2" />
             Batch Generate
           </Button>
