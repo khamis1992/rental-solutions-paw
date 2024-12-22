@@ -549,6 +549,66 @@ export type Database = {
           },
         ]
       }
+      audit_records: {
+        Row: {
+          ai_analysis_results: Json | null
+          audit_year: number
+          auditor_license_number: string | null
+          auditor_name: string | null
+          company_id: string | null
+          created_at: string | null
+          findings: Json | null
+          id: string
+          status: string
+          submission_deadline: string
+          submitted_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_analysis_results?: Json | null
+          audit_year: number
+          auditor_license_number?: string | null
+          auditor_name?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          findings?: Json | null
+          id?: string
+          status: string
+          submission_deadline: string
+          submitted_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_analysis_results?: Json | null
+          audit_year?: number
+          auditor_license_number?: string | null
+          auditor_name?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          findings?: Json | null
+          id?: string
+          status?: string
+          submission_deadline?: string
+          submitted_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           address: string | null
@@ -587,6 +647,111 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      compliance_alerts: {
+        Row: {
+          alert_type: string
+          company_id: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          message: string
+          resolved_at: string | null
+          severity: string
+          updated_at: string | null
+        }
+        Insert: {
+          alert_type: string
+          company_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          message: string
+          resolved_at?: string | null
+          severity: string
+          updated_at?: string | null
+        }
+        Update: {
+          alert_type?: string
+          company_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_documents: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          document_type: string
+          document_url: string
+          expiry_date: string | null
+          id: string
+          metadata: Json | null
+          retention_period: unknown | null
+          tax_period: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          expiry_date?: string | null
+          id?: string
+          metadata?: Json | null
+          retention_period?: unknown | null
+          tax_period?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          expiry_date?: string | null
+          id?: string
+          metadata?: Json | null
+          retention_period?: unknown | null
+          tax_period?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_assessments: {
         Row: {
@@ -2562,6 +2727,75 @@ export type Database = {
           },
         ]
       }
+      tax_filings: {
+        Row: {
+          ai_validation_notes: Json | null
+          ai_validation_status: string | null
+          company_id: string | null
+          created_at: string | null
+          due_date: string
+          filing_type: string
+          id: string
+          interest_amount: number | null
+          penalties_amount: number | null
+          status: Database["public"]["Enums"]["tax_filing_status"] | null
+          submission_date: string | null
+          tax_period_end: string
+          tax_period_start: string
+          total_tax_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_validation_notes?: Json | null
+          ai_validation_status?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          due_date: string
+          filing_type: string
+          id?: string
+          interest_amount?: number | null
+          penalties_amount?: number | null
+          status?: Database["public"]["Enums"]["tax_filing_status"] | null
+          submission_date?: string | null
+          tax_period_end: string
+          tax_period_start: string
+          total_tax_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_validation_notes?: Json | null
+          ai_validation_status?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          due_date?: string
+          filing_type?: string
+          id?: string
+          interest_amount?: number | null
+          penalties_amount?: number | null
+          status?: Database["public"]["Enums"]["tax_filing_status"] | null
+          submission_date?: string | null
+          tax_period_end?: string
+          tax_period_start?: string
+          total_tax_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_filings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_filings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       traffic_fine_audit_logs: {
         Row: {
           action: string
@@ -3313,6 +3547,12 @@ export type Database = {
         | "Deposit"
         | "On_hold"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      tax_filing_status:
+        | "pending"
+        | "in_progress"
+        | "submitted"
+        | "accepted"
+        | "rejected"
       user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status:
         | "available"
