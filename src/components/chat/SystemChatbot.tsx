@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { getDatabaseResponse } from "@/utils/chatDatabaseQueries";
 
 interface Message {
   role: "assistant" | "user";
@@ -37,23 +38,38 @@ export const SystemChatbot = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
+      // First try to get response from database
+      try {
+        const dbResponse = await getDatabaseResponse(message);
+        if (dbResponse) {
+          console.log('Using database response:', dbResponse);
+          return dbResponse;
+        }
+      } catch (error) {
+        console.error('Database query error:', error);
+        // Continue to AI if database query fails
+      }
+
       // Process messages to ensure alternation
       const processedMessages = messages.reduce((acc: Message[], curr, index) => {
         if (index === 0 || curr.role !== acc[acc.length - 1].role) {
           acc.push(curr);
         }
         return acc;
-      }, []).slice(-6); // Keep last 6 alternating messages for context
+      }, []).slice(-6);
 
       const apiMessages = [
         ...processedMessages,
         { role: "user" as const, content: message }
       ];
 
-      console.log('Sending messages:', apiMessages);
+      console.log('Sending messages to AI:', apiMessages);
       
       const { data, error } = await supabase.functions.invoke("chat", {
-        body: { messages: apiMessages },
+        body: { 
+          messages: apiMessages,
+          dbResponse: null // No database response, use AI
+        },
       });
       
       if (error) {
@@ -65,7 +81,6 @@ export const SystemChatbot = () => {
         throw new Error('Invalid response from chat service');
       }
       
-      console.log('Received response:', data);
       return data.message;
     },
     onSuccess: (response, variables) => {

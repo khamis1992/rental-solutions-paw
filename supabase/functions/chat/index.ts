@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from '../_shared/cors.ts';
 
-interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
 const systemPrompt = `You are an AI assistant for the Rental Solutions vehicle rental management system. You have deep knowledge of both the system's features and real-time data:
 
 Key Features & Data Access:
@@ -47,20 +42,32 @@ I can help users by:
 5. Guiding through complex processes
 `;
 
+interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, dbResponse } = await req.json();
     console.log('Received messages:', messages);
+    console.log('Database response:', dbResponse);
+
+    // If we have a database response, use it instead of calling Perplexity
+    if (dbResponse) {
+      return new Response(
+        JSON.stringify({ message: dbResponse }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get Perplexity API key from secrets
     const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityKey) {
-      console.error('Perplexity API key not configured');
       throw new Error('Chat service is not properly configured');
     }
 
@@ -74,10 +81,7 @@ serve(async (req) => {
       let lastRole: "system" | "user" | "assistant" | null = "system";
       
       for (const msg of messages) {
-        // Skip if same role as last message
         if (msg.role === lastRole) continue;
-        
-        // Add message and update lastRole
         formattedMessages.push({
           role: msg.role,
           content: msg.content
@@ -120,15 +124,12 @@ serve(async (req) => {
       }
 
       if (!data.choices?.[0]?.message?.content) {
-        console.error('Invalid response format:', data);
         throw new Error('Invalid response format from chat service');
       }
 
       return new Response(
         JSON.stringify({ message: data.choices[0].message.content }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     } catch (apiError) {
       console.error('API request error:', apiError);
