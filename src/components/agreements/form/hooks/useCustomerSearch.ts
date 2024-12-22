@@ -27,7 +27,7 @@ export const useCustomerSearch = (searchQuery: string) => {
           .from('profiles')
           .select('*', { count: 'exact' })
           .eq('role', 'customer')
-          .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+          .range(Number(pageParam) * PAGE_SIZE, (Number(pageParam) + 1) * PAGE_SIZE - 1);
 
         if (trimmedQuery) {
           query = query.or(
@@ -47,7 +47,7 @@ export const useCustomerSearch = (searchQuery: string) => {
 
         return {
           customers: customers || [],
-          nextPage: customers?.length === PAGE_SIZE ? pageParam + 1 : undefined,
+          nextPage: customers?.length === PAGE_SIZE ? Number(pageParam) + 1 : undefined,
           totalCount: count
         };
       } catch (err) {
