@@ -33,12 +33,7 @@ const Reports = lazy(() => import("@/pages/Reports"));
 const Finance = lazy(() => import("@/pages/Finance"));
 const Help = lazy(() => import("@/pages/Help"));
 const Legal = lazy(() => import("@/pages/Legal"));
-
-// Define protected route type
-interface ProtectedRoute {
-  path: string;
-  component: RouteComponent;
-}
+const Audit = lazy(() => import("@/pages/Audit"));
 
 const protectedRoutes: ProtectedRoute[] = [
   { path: "/", component: Dashboard },
@@ -52,6 +47,7 @@ const protectedRoutes: ProtectedRoute[] = [
   { path: "/finance", component: Finance },
   { path: "/help", component: Help },
   { path: "/legal", component: Legal },
+  { path: "/audit", component: Audit },
 ];
 
 export default function App() {
