@@ -1,16 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { Download } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
 
 interface RevenueChartProps {
@@ -31,60 +31,35 @@ export const RevenueChart = ({ data, onExport }: RevenueChartProps) => {
       <CardContent>
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={data}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="month"
-                stroke="#6b7280"
-                tick={{ fill: '#6b7280' }}
-                tickLine={{ stroke: '#6b7280' }}
-              />
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="month" className="text-xs" />
               <YAxis
+                className="text-xs"
                 tickFormatter={(value) => formatCurrency(value)}
-                stroke="#6b7280"
-                tick={{ fill: '#6b7280' }}
-                tickLine={{ stroke: '#6b7280' }}
               />
               <Tooltip
                 formatter={(value: number) => formatCurrency(value)}
                 contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '6px',
+                  backgroundColor: "hsl(var(--background))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
                 }}
               />
               <Legend />
-              <Line
-                type="monotone"
+              <Bar
                 dataKey="shortTerm"
                 name="Short Term"
-                stroke="#8b5cf6"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                fill="#4ade80"
+                radius={[4, 4, 0, 0]}
               />
-              <Line
-                type="monotone"
+              <Bar
                 dataKey="leaseToOwn"
                 name="Lease to Own"
-                stroke="#10b981"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                fill="#60a5fa"
+                radius={[4, 4, 0, 0]}
               />
-              <Line
-                type="monotone"
-                dataKey="total"
-                name="Total Revenue"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
