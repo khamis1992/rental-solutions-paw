@@ -6,6 +6,7 @@ interface DamageMarker {
   x: number;
   y: number;
   view: string;
+  description: string;
 }
 
 interface VehicleDiagramProps {
@@ -81,10 +82,10 @@ export const VehicleDiagram = ({
       x,
       y,
       view: currentView,
+      description: generateDescription({ x, y, view: currentView, description: "" }),
     };
 
-    const description = generateDescription(newMarker);
-    toast.success(`Added damage marker: ${description}`);
+    toast.success(`Added damage marker: ${newMarker.description}`);
 
     onMarkersChange([...damageMarkers, newMarker]);
   };
