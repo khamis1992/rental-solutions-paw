@@ -115,34 +115,6 @@ serve(async (req) => {
             description: 'Large bundle size detected. Consider code splitting and lazy loading for better performance.',
             impact_score: 90,
             implemented: false
-          },
-          {
-            id: '4',
-            title: 'Enhance Type Safety',
-            category: 'quality',
-            priority: 'medium',
-            description: 'Add stricter TypeScript types for better code reliability and maintainability.',
-            example: 'interface UserData { ... }',
-            impact_score: 75,
-            implemented: false
-          },
-          {
-            id: '5',
-            title: 'Implement Rate Limiting',
-            category: 'security',
-            priority: 'medium',
-            description: 'Add rate limiting to API endpoints to prevent abuse and DDoS attacks.',
-            impact_score: 80,
-            implemented: false
-          },
-          {
-            id: '6',
-            title: 'Implement Caching Strategy',
-            category: 'performance',
-            priority: 'medium',
-            description: 'Implement proper caching for API responses and static assets to improve load times.',
-            impact_score: 85,
-            implemented: false
           }
         ]
       },
