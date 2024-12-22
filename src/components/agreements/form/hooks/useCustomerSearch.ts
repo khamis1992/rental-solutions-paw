@@ -45,9 +45,11 @@ export const useCustomerSearch = (searchQuery: string) => {
           throw error;
         }
 
+        const nextPageParam = customers?.length === PAGE_SIZE ? (pageParam as number) + 1 : undefined;
+
         return {
           customers: customers || [],
-          nextPage: customers?.length === PAGE_SIZE ? pageParam + 1 : undefined,
+          nextPage: nextPageParam,
           totalCount: count
         };
       } catch (err) {
