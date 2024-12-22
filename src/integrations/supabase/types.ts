@@ -2977,6 +2977,107 @@ export type Database = {
           },
         ]
       }
+      transaction_import_items: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          id: string
+          import_id: string | null
+          row_number: number | null
+          status: string | null
+          transaction_date: string
+          validation_errors: Json | null
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          import_id?: string | null
+          row_number?: number | null
+          status?: string | null
+          transaction_date: string
+          validation_errors?: Json | null
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          import_id?: string | null
+          row_number?: number | null
+          status?: string | null
+          transaction_date?: string
+          validation_errors?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_import_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_import_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_import_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_import_items_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_imports: {
+        Row: {
+          created_at: string | null
+          errors: Json | null
+          file_name: string
+          id: string
+          records_processed: number | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          errors?: Json | null
+          file_name: string
+          id?: string
+          records_processed?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          errors?: Json | null
+          file_name?: string
+          id?: string
+          records_processed?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       variable_costs: {
         Row: {
           amount: number
