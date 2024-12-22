@@ -1,5 +1,10 @@
-import { Outlet } from "react-router-dom";
+import { ReactNode } from "react";
+import { DashboardLayout } from "./DashboardLayout";
 
-export const RouteWrapper = () => {
-  return <Outlet />;
+interface RouteWrapperProps {
+  children: ReactNode;
+}
+
+export const RouteWrapper = ({ children }: RouteWrapperProps) => {
+  return <DashboardLayout>{children}</DashboardLayout>;
 };
