@@ -26,14 +26,20 @@ export const SystemChatbot = () => {
   const { isLoading: isCheckingKey, isError: isKeyError } = useQuery({
     queryKey: ["perplexity-api-key"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("check-openai-key");
-      if (error) {
-        console.error('API key check error:', error);
+      try {
+        const { data, error } = await supabase.functions.invoke("check-openai-key");
+        if (error) {
+          console.error('API key check error:', error);
+          throw error;
+        }
+        return data;
+      } catch (error) {
+        console.error('Failed to check API key:', error);
         throw error;
       }
-      return data;
     },
-    retry: false
+    retry: 1,
+    retryDelay: 1000
   });
 
   const chatMutation = useMutation({
