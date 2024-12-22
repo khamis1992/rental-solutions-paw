@@ -947,6 +947,7 @@ export type Database = {
       leases: {
         Row: {
           agreement_number: string | null
+          agreement_sequence: number
           agreement_type: Database["public"]["Enums"]["agreement_type"]
           checkin_date: string | null
           checkout_date: string | null
@@ -982,6 +983,7 @@ export type Database = {
         }
         Insert: {
           agreement_number?: string | null
+          agreement_sequence?: number
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
           checkin_date?: string | null
           checkout_date?: string | null
@@ -1017,6 +1019,7 @@ export type Database = {
         }
         Update: {
           agreement_number?: string | null
+          agreement_sequence?: number
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
           checkin_date?: string | null
           checkout_date?: string | null
@@ -1776,12 +1779,14 @@ export type Database = {
           created_at: string
           document_analysis_status: string | null
           driver_license: string | null
+          email: string | null
           extracted_data: Json | null
           full_name: string | null
           id: string
           id_document_url: string | null
           is_ai_generated: boolean | null
           license_document_url: string | null
+          nationality: string | null
           needs_review: boolean | null
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"] | null
@@ -1799,12 +1804,14 @@ export type Database = {
           created_at?: string
           document_analysis_status?: string | null
           driver_license?: string | null
+          email?: string | null
           extracted_data?: Json | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
           license_document_url?: string | null
+          nationality?: string | null
           needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
@@ -1822,12 +1829,14 @@ export type Database = {
           created_at?: string
           document_analysis_status?: string | null
           driver_license?: string | null
+          email?: string | null
           extracted_data?: Json | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
           license_document_url?: string | null
+          nationality?: string | null
           needs_review?: boolean | null
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null

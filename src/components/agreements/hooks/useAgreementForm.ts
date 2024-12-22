@@ -7,10 +7,18 @@ import { Agreement, AgreementType } from "@/types/database/agreement.types";
 
 export interface AgreementFormData {
   agreementType: AgreementType;
+  agreementNumber: string;
   customerId: string;
   vehicleId: string;
+  nationality: string;
+  drivingLicense: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
   startDate: string;
   endDate: string;
+  agreementDuration: number;
+  rentAmount: number;
   totalAmount: number;
   initialMileage: number;
   downPayment?: number;
@@ -28,7 +36,7 @@ export interface AgreementFormData {
 export const useAgreementForm = (onSuccess: () => void) => {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
-  const { register, handleSubmit, watch, reset, setValue } = useForm<AgreementFormData>();
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<AgreementFormData>();
   
   const agreementType = watch("agreementType");
   const totalAmount = watch("totalAmount");
@@ -54,6 +62,20 @@ export const useAgreementForm = (onSuccess: () => void) => {
         updateMonthlyPayment();
       }
 
+      // First, update customer profile with any new information
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          nationality: data.nationality,
+          phone_number: data.phoneNumber,
+          email: data.email,
+          address: data.address,
+          driver_license: data.drivingLicense
+        })
+        .eq("id", data.customerId);
+
+      if (profileError) throw profileError;
+
       // Convert empty strings to null or 0 for numeric fields
       const numericFields = {
         total_amount: data.totalAmount || 0,
@@ -65,9 +87,10 @@ export const useAgreementForm = (onSuccess: () => void) => {
         damage_penalty_rate: data.damagePenaltyRate || 0,
         fuel_penalty_rate: data.fuelPenaltyRate || 0,
         late_return_fee: data.lateReturnFee || 0,
+        rent_amount: data.rentAmount || 0,
       };
 
-      const { error } = await supabase.from("leases").insert({
+      const { error: leaseError } = await supabase.from("leases").insert({
         agreement_type: data.agreementType,
         customer_id: data.customerId,
         vehicle_id: data.vehicleId,
@@ -79,7 +102,7 @@ export const useAgreementForm = (onSuccess: () => void) => {
         notes: data.notes || null,
       });
 
-      if (error) throw error;
+      if (leaseError) throw leaseError;
 
       toast({
         title: "Success",
@@ -88,7 +111,7 @@ export const useAgreementForm = (onSuccess: () => void) => {
       setOpen(false);
       reset();
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating agreement:", error);
       toast({
         title: "Error",
@@ -108,5 +131,6 @@ export const useAgreementForm = (onSuccess: () => void) => {
     updateMonthlyPayment,
     watch,
     setValue,
+    errors,
   };
 };

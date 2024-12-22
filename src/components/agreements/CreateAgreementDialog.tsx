@@ -33,14 +33,13 @@ export function CreateAgreementDialog() {
     updateMonthlyPayment,
     watch,
     setValue,
+    errors,
   } = useAgreementForm(() => {
     // Callback after successful creation
   });
 
   const handleVehicleSelect = (vehicleId: string) => {
-    // Set a default total amount when vehicle is selected
-    // This can be adjusted by the user later
-    setValue('totalAmount', 3000); // Default value, can be modified
+    setValue('vehicleId', vehicleId);
   };
 
   return (
@@ -62,35 +61,159 @@ export function CreateAgreementDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <AgreementTypeSelect register={register} />
-            <CustomerSelect 
-              register={register} 
-              onCustomerSelect={setSelectedCustomerId}
-            />
-            {selectedCustomerId && <CustomerDocuments customerId={selectedCustomerId} />}
-            <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
-
+            {/* Agreement Number - Read Only */}
             <div className="space-y-2">
-              <Label htmlFor="initialMileage">Initial Mileage</Label>
+              <Label htmlFor="agreementNumber">Agreement No.</Label>
               <Input
-                type="number"
-                {...register("initialMileage")}
-                placeholder="Enter initial mileage"
+                id="agreementNumber"
+                {...register("agreementNumber")}
+                readOnly
+                className="bg-gray-100"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="totalAmount">Total Amount</Label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                {...register("totalAmount")}
-                onChange={(e) => {
-                  register("totalAmount").onChange(e);
-                  updateMonthlyPayment();
-                }}
-              />
+            <AgreementTypeSelect register={register} />
+
+            {/* Customer Information Section */}
+            <div className="col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Customer Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <CustomerSelect 
+                  register={register} 
+                  onCustomerSelect={setSelectedCustomerId}
+                />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="nationality">Nationality</Label>
+                  <Input
+                    {...register("nationality", { required: "Nationality is required" })}
+                    placeholder="Enter nationality"
+                  />
+                  {errors.nationality && (
+                    <span className="text-sm text-red-500">{errors.nationality.message}</span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="drivingLicense">Driving License No.</Label>
+                  <Input
+                    {...register("drivingLicense", { required: "Driving license is required" })}
+                    placeholder="Enter driving license number"
+                  />
+                  {errors.drivingLicense && (
+                    <span className="text-sm text-red-500">{errors.drivingLicense.message}</span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone No.</Label>
+                  <Input
+                    {...register("phoneNumber", {
+                      required: "Phone number is required",
+                      pattern: {
+                        value: /^[0-9+\-\s()]*$/,
+                        message: "Invalid phone number format"
+                      }
+                    })}
+                    placeholder="Enter phone number"
+                  />
+                  {errors.phoneNumber && (
+                    <span className="text-sm text-red-500">{errors.phoneNumber.message}</span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    type="email"
+                    {...register("email", {
+                      required: "Email is required",
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Invalid email address"
+                      }
+                    })}
+                    placeholder="Enter email address"
+                  />
+                  {errors.email && (
+                    <span className="text-sm text-red-500">{errors.email.message}</span>
+                  )}
+                </div>
+
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea
+                    {...register("address", { required: "Address is required" })}
+                    placeholder="Enter full address"
+                  />
+                  {errors.address && (
+                    <span className="text-sm text-red-500">{errors.address.message}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {selectedCustomerId && <CustomerDocuments customerId={selectedCustomerId} />}
+
+            {/* Vehicle and Agreement Details Section */}
+            <div className="col-span-2">
+              <h3 className="text-lg font-semibold mb-4">Vehicle & Agreement Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
+
+                <div className="space-y-2">
+                  <Label htmlFor="agreementDuration">Agreement Duration (months)</Label>
+                  <Input
+                    type="number"
+                    {...register("agreementDuration", {
+                      required: "Duration is required",
+                      min: { value: 1, message: "Duration must be at least 1 month" }
+                    })}
+                    placeholder="Enter duration in months"
+                  />
+                  {errors.agreementDuration && (
+                    <span className="text-sm text-red-500">{errors.agreementDuration.message}</span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="rentAmount">Rent Amount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...register("rentAmount", {
+                      required: "Rent amount is required",
+                      min: { value: 0, message: "Rent amount must be positive" }
+                    })}
+                    placeholder="Enter rent amount"
+                  />
+                  {errors.rentAmount && (
+                    <span className="text-sm text-red-500">{errors.rentAmount.message}</span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="downPayment">Down Payment</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...register("downPayment")}
+                    placeholder="Enter down payment amount"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="initialMileage">Initial Mileage</Label>
+                  <Input
+                    type="number"
+                    {...register("initialMileage", { required: "Initial mileage is required" })}
+                    placeholder="Enter initial mileage"
+                  />
+                  {errors.initialMileage && (
+                    <span className="text-sm text-red-500">{errors.initialMileage.message}</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {agreementType === "lease_to_own" && (
