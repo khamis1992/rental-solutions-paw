@@ -18,9 +18,11 @@ import { CustomerInformation } from "./form/CustomerInformation";
 import { VehicleAgreementDetails } from "./form/VehicleAgreementDetails";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export function CreateAgreementDialog() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     open,
     setOpen,
@@ -36,7 +38,21 @@ export function CreateAgreementDialog() {
     // Callback after successful creation
     setOpen(false);
     setSelectedCustomerId("");
+    toast.success("Agreement created successfully");
   });
+
+  const handleFormSubmit = async (data: any) => {
+    try {
+      console.log("Form submission started with data:", data);
+      setIsSubmitting(true);
+      await onSubmit(data);
+    } catch (error) {
+      console.error("Error creating agreement:", error);
+      toast.error("Failed to create agreement. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -55,7 +71,7 @@ export function CreateAgreementDialog() {
             Create a new lease-to-own or short-term rental agreement.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <AgreementBasicInfo register={register} errors={errors} />
           
           <CustomerInformation 
@@ -98,10 +114,26 @@ export function CreateAgreementDialog() {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit">Create Agreement</Button>
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+              className="relative"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="opacity-0">Create Agreement</span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                </>
+              ) : (
+                "Create Agreement"
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

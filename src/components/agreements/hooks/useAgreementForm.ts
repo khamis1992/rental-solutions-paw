@@ -57,11 +57,9 @@ export const useAgreementForm = (onSuccess: () => void) => {
   };
 
   const onSubmit = async (data: AgreementFormData) => {
+    console.log("Submitting agreement data:", data);
+    
     try {
-      if (data.agreementType === "lease_to_own") {
-        updateMonthlyPayment();
-      }
-
       // First, update customer profile with any new information
       const { error: profileError } = await supabase
         .from("profiles")
@@ -74,7 +72,10 @@ export const useAgreementForm = (onSuccess: () => void) => {
         })
         .eq("id", data.customerId);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        throw profileError;
+      }
 
       // Convert empty strings to null or 0 for numeric fields
       const numericFields = {
@@ -90,33 +91,42 @@ export const useAgreementForm = (onSuccess: () => void) => {
         rent_amount: data.rentAmount || 0,
       };
 
-      const { error: leaseError } = await supabase.from("leases").insert({
-        agreement_type: data.agreementType,
-        customer_id: data.customerId,
-        vehicle_id: data.vehicleId,
-        start_date: data.startDate,
-        end_date: data.endDate,
-        ...numericFields,
-        lease_duration: data.leaseDuration ? `${data.leaseDuration} months` : null,
-        late_fee_grace_period: data.lateFeeGracePeriod ? `${data.lateFeeGracePeriod} days` : null,
-        notes: data.notes || null,
-      });
+      // Create the lease record
+      const { error: leaseError } = await supabase
+        .from("leases")
+        .insert({
+          agreement_type: data.agreementType,
+          customer_id: data.customerId,
+          vehicle_id: data.vehicleId,
+          start_date: data.startDate,
+          end_date: data.endDate,
+          ...numericFields,
+          lease_duration: data.leaseDuration ? `${data.leaseDuration} months` : null,
+          late_fee_grace_period: data.lateFeeGracePeriod ? `${data.lateFeeGracePeriod} days` : null,
+          notes: data.notes || null,
+        });
 
-      if (leaseError) throw leaseError;
+      if (leaseError) {
+        console.error("Error creating lease:", leaseError);
+        throw leaseError;
+      }
 
-      toast({
-        title: "Success",
-        description: "Agreement created successfully",
-      });
+      // Update vehicle status to 'rented'
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "rented" })
+        .eq("id", data.vehicleId);
+
+      if (vehicleError) {
+        console.error("Error updating vehicle status:", vehicleError);
+        throw vehicleError;
+      }
+
       reset();
       onSuccess();
     } catch (error: any) {
-      console.error("Error creating agreement:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create agreement",
-        variant: "destructive",
-      });
+      console.error("Error in agreement creation:", error);
+      throw new Error(error.message || "Failed to create agreement");
     }
   };
 
