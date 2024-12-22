@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const baseMenuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
@@ -33,6 +34,7 @@ export const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -59,8 +61,6 @@ export const DashboardSidebar = () => {
           });
           return;
         }
-
-        console.log('User profile:', profile); // Debug log
 
         if (profile?.role === 'admin') {
           setMenuItems([...baseMenuItems, settingsMenuItem]);
