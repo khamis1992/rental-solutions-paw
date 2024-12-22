@@ -1,5 +1,7 @@
 import { AccountingOverview } from "@/components/finance/accounting/AccountingOverview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RecentTransactions } from "@/components/finance/RecentTransactions";
 
 export default function Finance() {
   return (
@@ -11,14 +13,34 @@ export default function Finance() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Accounting Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AccountingOverview />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+              <CardTitle>Accounting Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AccountingOverview />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="transactions">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Transactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RecentTransactions />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
