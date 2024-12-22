@@ -28,10 +28,7 @@ export const SystemChatbot = () => {
     queryFn: async () => {
       try {
         const { data, error } = await supabase.functions.invoke("check-openai-key");
-        if (error) {
-          console.error('API key check error:', error);
-          throw error;
-        }
+        if (error) throw error;
         return data;
       } catch (error) {
         console.error('Failed to check API key:', error);
@@ -40,9 +37,8 @@ export const SystemChatbot = () => {
     },
     retry: 1,
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Error checking API key:', error);
-      toast.error('Chat service is currently unavailable');
+    meta: {
+      errorMessage: 'Chat service is currently unavailable'
     }
   });
 
@@ -82,10 +78,7 @@ export const SystemChatbot = () => {
         },
       });
       
-      if (error) {
-        console.error('Chat error:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       if (!data?.message) {
         throw new Error('Invalid response from chat service');
