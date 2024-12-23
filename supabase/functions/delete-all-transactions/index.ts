@@ -23,20 +23,22 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Delete expense transactions
+    // Delete expense transactions with explicit WHERE clause
     const { error: expenseError } = await supabaseClient
       .from('expense_transactions')
-      .delete();
+      .delete()
+      .neq('id', null); // This ensures we delete all rows while satisfying the WHERE clause requirement
 
     if (expenseError) {
       console.error("Error deleting expense transactions:", expenseError);
       throw expenseError;
     }
 
-    // Delete accounting transactions
+    // Delete accounting transactions with explicit WHERE clause
     const { error: accountingError } = await supabaseClient
       .from('accounting_transactions')
-      .delete();
+      .delete()
+      .neq('id', null); // This ensures we delete all rows while satisfying the WHERE clause requirement
 
     if (accountingError) {
       console.error("Error deleting accounting transactions:", accountingError);
