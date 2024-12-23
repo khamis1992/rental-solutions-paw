@@ -9,6 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
 import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
 import { PaymentMethodType } from "@/types/database/agreement.types";
@@ -21,6 +28,7 @@ interface TransactionFormData {
   payment_method?: PaymentMethodType;
   intervalValue?: string;
   intervalUnit?: string;
+  category_id?: string;
 }
 
 export function TransactionForm() {
@@ -45,7 +53,7 @@ export function TransactionForm() {
           next_payment_date: isRecurring ? 
             new Date(Date.now() + getIntervalInMilliseconds(Number(data.intervalValue), data.intervalUnit!)).toISOString() : 
             null,
-          lease_id: null // Now allowed since we made lease_id nullable
+          lease_id: null
         };
 
         console.log("Payment data to be inserted:", paymentData);
@@ -60,6 +68,7 @@ export function TransactionForm() {
       } else {
         // Regular transaction handling
         const transactionData = {
+          type: data.type,
           amount: data.amount,
           description: data.description,
           transaction_date: data.transaction_date,
@@ -163,7 +172,7 @@ export function TransactionForm() {
         {transactionType !== 'payment' && (
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select {...register("category_id")} required>
+            <Select onValueChange={(value) => setValue('category_id', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
