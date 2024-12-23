@@ -1,42 +1,50 @@
-import { type FC } from 'react';
-import { type SearchFiltersProps } from '../types/search.types';
+import { type SearchFiltersProps, type SearchFilters } from '../types/search.types';
 
-export const SearchFilters: FC<SearchFiltersProps> = ({
-  vehicles,
-  customers,
-  agreements,
-  onVehicleSelect,
-  onCustomerSelect,
-  onAgreementSelect,
-}) => {
+export const SearchFilters = ({ onFilterChange, filters }: SearchFiltersProps) => {
+  const handleDateRangeChange = (dateRange: { from: Date; to: Date } | null) => {
+    onFilterChange({ ...filters, dateRange });
+  };
+
+  const handleStatusChange = (status: string[]) => {
+    onFilterChange({ ...filters, status });
+  };
+
+  const handleTypeChange = (type: string[]) => {
+    onFilterChange({ ...filters, type });
+  };
+
   return (
     <div className="flex flex-col space-y-4">
-      <div className="flex space-x-4">
-        <select onChange={(e) => onVehicleSelect(e.target.value)} className="border p-2">
-          <option value="">Select Vehicle</option>
-          {vehicles.map(vehicle => (
-            <option key={vehicle.id} value={vehicle.id}>
-              {vehicle.make} {vehicle.model} ({vehicle.year})
-            </option>
-          ))}
-        </select>
+      {/* Date Range Filter */}
+      <div>
+        <label>Date Range</label>
+        <input
+          type="date"
+          onChange={(e) => handleDateRangeChange({ from: new Date(e.target.value), to: filters.dateRange?.to || null })}
+        />
+        <input
+          type="date"
+          onChange={(e) => handleDateRangeChange({ from: filters.dateRange?.from || null, to: new Date(e.target.value) })}
+        />
+      </div>
 
-        <select onChange={(e) => onCustomerSelect(e.target.value)} className="border p-2">
-          <option value="">Select Customer</option>
-          {customers.map(customer => (
-            <option key={customer.id} value={customer.id}>
-              {customer.full_name}
-            </option>
-          ))}
+      {/* Status Filter */}
+      <div>
+        <label>Status</label>
+        <select multiple onChange={(e) => handleStatusChange(Array.from(e.target.selectedOptions, option => option.value))}>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="pending">Pending</option>
         </select>
+      </div>
 
-        <select onChange={(e) => onAgreementSelect(e.target.value)} className="border p-2">
-          <option value="">Select Agreement</option>
-          {agreements.map(agreement => (
-            <option key={agreement.id} value={agreement.id}>
-              {agreement.agreement_number}
-            </option>
-          ))}
+      {/* Type Filter */}
+      <div>
+        <label>Type</label>
+        <select multiple onChange={(e) => handleTypeChange(Array.from(e.target.selectedOptions, option => option.value))}>
+          <option value="type1">Type 1</option>
+          <option value="type2">Type 2</option>
+          <option value="type3">Type 3</option>
         </select>
       </div>
     </div>

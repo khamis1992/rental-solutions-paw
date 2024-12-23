@@ -1,21 +1,12 @@
-import { useState, useCallback } from "react";
-import { Search } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-} from "@/components/ui/command";
-import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
-import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
-import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import { SearchResults } from "@/components/search/SearchResults";
-import { useSearch } from "@/components/search/useSearch";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-interface SearchResults {
+interface SearchResult {
   vehicles: Array<{
     id: string;
     make: string;
@@ -36,97 +27,160 @@ interface SearchResults {
 }
 
 export const SearchBox = () => {
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300);
-  const isMobile = useIsMobile();
-  
-  // Dialog states
-  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
-  const [selectedAgreement, setSelectedAgreement] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult>({
+    vehicles: [],
+    customers: [],
+    agreements: [],
+  });
+  const [isSearching, setIsSearching] = useState(false);
+  const navigate = useNavigate();
 
-  const { data: searchResults, error, isLoading } = useSearch(debouncedSearch);
-  
-  const formattedResults: SearchResults = {
-    vehicles: searchResults?.vehicles || [],
-    customers: searchResults?.customers || [],
-    agreements: searchResults?.agreements.map(agreement => ({
+  const transformAgreements = (agreements: any[]) => {
+    return agreements.map(agreement => ({
       id: agreement.id,
       agreement_number: agreement.agreement_number,
       customer_name: agreement.customer?.full_name || 'Unknown Customer'
-    })) || []
+    }));
   };
 
-  const handleSelect = useCallback((type: string, id: string) => {
-    setOpen(false);
+  const handleSearch = async (query: string) => {
+    if (!query) {
+      setSearchResults({ vehicles: [], customers: [], agreements: [] });
+      return;
+    }
+
+    try {
+      const [vehiclesRes, customersRes, agreementsRes] = await Promise.all([
+        supabase
+          .from('vehicles')
+          .select('id, make, model, year, license_plate')
+          .or(`make.ilike.%${query}%,model.ilike.%${query}%,license_plate.ilike.%${query}%`)
+          .limit(5),
+        supabase
+          .from('profiles')
+          .select('id, full_name, phone_number')
+          .or(`full_name.ilike.%${query}%,phone_number.ilike.%${query}%`)
+          .limit(5),
+        supabase
+          .from('leases')
+          .select(`
+            id,
+            agreement_number,
+            customer:profiles(full_name)
+          `)
+          .or(`agreement_number.ilike.%${query}%`)
+          .limit(5),
+      ]);
+
+      setSearchResults({
+        vehicles: vehiclesRes.data || [],
+        customers: customersRes.data || [],
+        agreements: transformAgreements(agreementsRes.data || []),
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Failed to perform search');
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    handleSearch(value);
+  };
+
+  const handleResultClick = (type: string, id: string) => {
     switch (type) {
-      case "vehicle":
-        setSelectedVehicle(id);
+      case 'vehicle':
+        navigate(`/vehicles/${id}`);
         break;
-      case "customer":
-        setSelectedCustomer(id);
+      case 'customer':
+        navigate(`/customers/${id}`);
         break;
-      case "agreement":
-        setSelectedAgreement(id);
+      case 'agreement':
+        navigate(`/agreements/${id}`);
         break;
     }
-  }, []);
+    setQuery("");
+    setSearchResults({ vehicles: [], customers: [], agreements: [] });
+  };
 
   return (
-    <>
-      <div className="relative w-full max-w-[280px] md:w-80">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={isMobile ? "Search..." : "Search vehicles, customers, agreements..."}
-          className="pl-8 h-9 md:h-10"
-          onClick={() => setOpen(true)}
-        />
+    <div className="relative">
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={query}
+            onChange={handleInputChange}
+            className="pl-8"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={isSearching}
+          onClick={() => handleSearch(query)}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className={cn("max-w-[90vw] md:max-w-[640px]")}>
-          <CommandInput 
-            placeholder="Type to search..." 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            className="h-10 md:h-12"
-          />
-          <CommandList className="max-h-[50vh] md:max-h-[400px]">
-            <SearchResults
-              isLoading={isLoading}
-              error={error}
-              searchQuery={searchQuery}
-              searchResults={formattedResults}
-              handleSelect={handleSelect}
-            />
-          </CommandList>
-        </div>
-      </CommandDialog>
+      {(searchResults.vehicles.length > 0 ||
+        searchResults.customers.length > 0 ||
+        searchResults.agreements.length > 0) && (
+        <div className="absolute top-full mt-2 w-full rounded-md border bg-background shadow-lg">
+          {searchResults.vehicles.length > 0 && (
+            <div className="p-2">
+              <h3 className="mb-2 text-sm font-medium">Vehicles</h3>
+              {searchResults.vehicles.map((vehicle) => (
+                <Button
+                  key={vehicle.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left"
+                  onClick={() => handleResultClick('vehicle', vehicle.id)}
+                >
+                  {vehicle.make} {vehicle.model} ({vehicle.year}) - {vehicle.license_plate}
+                </Button>
+              ))}
+            </div>
+          )}
 
-      {selectedVehicle && (
-        <VehicleDetailsDialog
-          vehicleId={selectedVehicle}
-          open={!!selectedVehicle}
-          onOpenChange={(open) => !open && setSelectedVehicle(null)}
-        />
+          {searchResults.customers.length > 0 && (
+            <div className="p-2">
+              <h3 className="mb-2 text-sm font-medium">Customers</h3>
+              {searchResults.customers.map((customer) => (
+                <Button
+                  key={customer.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left"
+                  onClick={() => handleResultClick('customer', customer.id)}
+                >
+                  {customer.full_name} - {customer.phone_number}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          {searchResults.agreements.length > 0 && (
+            <div className="p-2">
+              <h3 className="mb-2 text-sm font-medium">Agreements</h3>
+              {searchResults.agreements.map((agreement) => (
+                <Button
+                  key={agreement.id}
+                  variant="ghost"
+                  className="w-full justify-start text-left"
+                  onClick={() => handleResultClick('agreement', agreement.id)}
+                >
+                  {agreement.agreement_number} - {agreement.customer_name}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
-      
-      {selectedCustomer && (
-        <CustomerDetailsDialog
-          customerId={selectedCustomer}
-          open={!!selectedCustomer}
-          onOpenChange={(open) => !open && setSelectedCustomer(null)}
-        />
-      )}
-      
-      {selectedAgreement && (
-        <AgreementDetailsDialog
-          agreementId={selectedAgreement}
-          open={!!selectedAgreement}
-          onOpenChange={(open) => !open && setSelectedAgreement(null)}
-        />
-      )}
-    </>
+    </div>
   );
 };

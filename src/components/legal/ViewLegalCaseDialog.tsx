@@ -1,126 +1,96 @@
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
-type LegalCaseStatus = "pending_reminder" | "in_legal_process" | "resolved";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ViewLegalCaseDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  caseId: string;
-  currentStatus: LegalCaseStatus;
-  notes: string;
-  onStatusUpdate: () => void;
+  caseId: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function ViewLegalCaseDialog({ 
-  isOpen,
-  onClose,
+export const ViewLegalCaseDialog = ({
   caseId,
-  currentStatus,
-  notes: initialNotes,
-  onStatusUpdate
-}: ViewLegalCaseDialogProps) {
-  const [status, setStatus] = useState<LegalCaseStatus>(currentStatus);
-  const [notes, setNotes] = useState(initialNotes);
-  const [isUpdating, setIsUpdating] = useState(false);
+  open,
+  onOpenChange,
+}: ViewLegalCaseDialogProps) => {
+  const { toast } = useToast();
+  
+  const { data: legalCase, isLoading, error } = useQuery({
+    queryKey: ["legal-case", caseId],
+    queryFn: async () => {
+      if (!caseId) return null;
 
-  const handleStatusUpdate = async () => {
-    try {
-      setIsUpdating(true);
-      const { error } = await supabase
-        .from('legal_cases')
-        .update({
-          status,
-          notes,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', caseId);
+      const { data, error } = await supabase
+        .from("legal_cases")
+        .select(`
+          *,
+          customer:profiles(full_name),
+          assigned_to_user:profiles(full_name)
+        `)
+        .eq("id", caseId)
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load legal case details: " + error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
 
-      toast.success('Legal case updated successfully');
-      onStatusUpdate();
-      onClose();
-    } catch (error) {
-      console.error('Error updating legal case:', error);
-      toast.error('Failed to update legal case');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+      return data;
+    },
+    enabled: !!caseId && open,
+  });
+
+  if (!open) return null;
+
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Loading...</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!legalCase) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Legal Case Not Found</DialogTitle>
+          </DialogHeader>
+          <p>The requested legal case could not be found.</p>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>View Legal Case</DialogTitle>
-          <DialogDescription>
-            View and update the status of this legal case.
-          </DialogDescription>
+          <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={status}
-              onValueChange={(value: LegalCaseStatus) => setStatus(value)}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                <SelectItem value="in_legal_process">In Legal Process</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
-          </div>
+        <div>
+          <h2>Case Type: {legalCase.case_type}</h2>
+          <p>Customer: {legalCase.customer?.full_name}</p>
+          <p>Assigned To: {legalCase.assigned_to_user?.full_name || 'Unassigned'}</p>
+          <p>Status: {legalCase.status}</p>
+          <p>Amount Owed: ${legalCase.amount_owed.toFixed(2)}</p>
+          <p>Created Date: {new Date(legalCase.created_at).toLocaleDateString()}</p>
+          <p>Details: {legalCase.details}</p>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isUpdating}>
-            Cancel
-          </Button>
-          <Button onClick={handleStatusUpdate} disabled={isUpdating}>
-            {isUpdating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              'Update Status'
-            )}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};

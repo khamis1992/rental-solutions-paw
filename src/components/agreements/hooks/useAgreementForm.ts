@@ -43,7 +43,8 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
   const agreementType = watch("agreementType");
 
-  const updateMonthlyPayment = (values: Partial<AgreementFormData>) => {
+  const updateMonthlyPayment = () => {
+    const values = watch();
     const totalAmount = Number(values.downPayment || 0);
     const duration = Number(values.agreementDuration || 1);
     const interestRate = Number(values.interestRate || 0) / 100;

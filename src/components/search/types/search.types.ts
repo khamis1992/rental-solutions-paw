@@ -1,13 +1,10 @@
-export interface SearchFilters {
-  entityType: "customers" | "rentals" | "vehicles";
-  status?: string;
-  dateRange?: {
-    from: Date;
-    to: Date;
-  };
-  keyword: string;
+export interface SearchFiltersProps {
+  onFilterChange: (filters: any) => void;
+  filters: any;
 }
 
-export interface AdvancedSearchProps {
-  onResultSelect?: (result: any) => void;
+export interface SearchFilters {
+  dateRange: { from: Date; to: Date } | null;
+  status: string[];
+  type: string[];
 }
