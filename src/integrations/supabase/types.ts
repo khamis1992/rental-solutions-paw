@@ -2309,11 +2309,14 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          is_recurring: boolean | null
           lease_id: string
+          next_payment_date: string | null
           payment_date: string | null
           payment_method:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          recurring_interval: unknown | null
           security_deposit_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           transaction_id: string | null
@@ -2323,11 +2326,14 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          is_recurring?: boolean | null
           lease_id: string
+          next_payment_date?: string | null
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          recurring_interval?: unknown | null
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
@@ -2337,11 +2343,14 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          is_recurring?: boolean | null
           lease_id?: string
+          next_payment_date?: string | null
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          recurring_interval?: unknown | null
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
@@ -3605,6 +3614,10 @@ export type Database = {
           p_changes: Json
           p_ip_address: string
         }
+        Returns: undefined
+      }
+      process_recurring_payments: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       process_recurring_transactions: {
