@@ -25,73 +25,7 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
   }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
-
-  .corporate {
-    --background: 220 14% 96%;
-    --foreground: 220 14% 4%;
-    --card: 220 14% 98%;
-    --card-foreground: 220 14% 4%;
-    --popover: 220 14% 98%;
-    --popover-foreground: 220 14% 4%;
-    --primary: 220.9 39.3% 11%;
-    --primary-foreground: 220 14% 98%;
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 92%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
-    --ring: 220.9 39.3% 11%;
-  }
-
-  .high-contrast {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 95%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 100% 45%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 0%;
-    --input: 0 0% 0%;
-    --ring: 0 0% 0%;
-  }
-
+ 
   * {
     @apply border-border;
   }
@@ -101,6 +35,7 @@
     overflow-x: auto;
   }
 
+  /* Improved touch targets for mobile */
   @media (max-width: 768px) {
     button, 
     a,
@@ -110,6 +45,7 @@
       @apply min-h-touch min-w-touch;
     }
 
+    /* Adjust text sizes for mobile */
     h1 {
       @apply text-mobile-h1;
     }
@@ -157,6 +93,7 @@
   }
 }
 
+/* Print-specific styles */
 @media print {
   html, body {
     width: 210mm;
