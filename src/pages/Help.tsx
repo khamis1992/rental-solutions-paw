@@ -29,10 +29,10 @@ const Help = () => {
   return (
     <DashboardLayout>
       <div className="flex flex-col min-h-[calc(100vh-56px)] w-full">
-        {/* Header Section */}
-        <div className="flex-shrink-0 w-full px-4 py-4 bg-background border-b">
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="space-y-1">
+        {/* Header Section - Reduced top padding */}
+        <div className="flex-shrink-0 w-full bg-background border-b">
+          <div className="container mx-auto flex justify-between items-center py-3">
+            <div>
               <h1 className="text-2xl font-bold">Help Center</h1>
               <p className="text-base text-muted-foreground">
                 Find comprehensive guides, documentation, and support for using the Rental Solutions system.
@@ -52,8 +52,8 @@ const Help = () => {
 
         {/* Main Content */}
         <div className="flex-grow overflow-hidden">
-          <div className="container mx-auto py-6">
-            <Tabs defaultValue="overview" className="h-full space-y-6">
+          <div className="container mx-auto py-4">
+            <Tabs defaultValue="overview" className="h-full space-y-4">
               <TabsList className="w-full justify-start border-b bg-transparent p-0">
                 <TabsTrigger 
                   value="overview" 
@@ -76,9 +76,9 @@ const Help = () => {
               </TabsList>
 
               <div className="flex-grow overflow-hidden">
-                <ScrollArea className="h-[calc(100vh-280px)] w-full print:h-auto px-1">
-                  <div className="space-y-6 pb-8">
-                    <TabsContent value="overview" className="mt-0 space-y-6">
+                <ScrollArea className="h-[calc(100vh-240px)] w-full print:h-auto px-1">
+                  <div className="space-y-4 pb-8">
+                    <TabsContent value="overview" className="mt-0 space-y-4">
                       <Card className="border shadow-sm">
                         <CardContent className="p-6">
                           <SystemOverview />
@@ -86,7 +86,7 @@ const Help = () => {
                       </Card>
                     </TabsContent>
 
-                    <TabsContent value="guides" className="mt-0 space-y-6">
+                    <TabsContent value="guides" className="mt-0 space-y-4">
                       <Card className="border shadow-sm">
                         <CardContent className="p-6">
                           <StepByStepGuides />
@@ -94,7 +94,7 @@ const Help = () => {
                       </Card>
                     </TabsContent>
 
-                    <TabsContent value="faq" className="mt-0 space-y-6">
+                    <TabsContent value="faq" className="mt-0 space-y-4">
                       <Card className="border shadow-sm">
                         <CardContent className="p-6">
                           <FAQSection />
