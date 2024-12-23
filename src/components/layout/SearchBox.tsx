@@ -15,6 +15,26 @@ import { cn } from "@/lib/utils";
 import { SearchResults } from "@/components/search/SearchResults";
 import { useSearch } from "@/components/search/useSearch";
 
+interface SearchResults {
+  vehicles: Array<{
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  }>;
+  customers: Array<{
+    id: string;
+    full_name: string;
+    phone_number: string;
+  }>;
+  agreements: Array<{
+    id: string;
+    agreement_number: string;
+    customer_name: string;
+  }>;
+}
+
 export const SearchBox = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +47,16 @@ export const SearchBox = () => {
   const [selectedAgreement, setSelectedAgreement] = useState<string | null>(null);
 
   const { data: searchResults, error, isLoading } = useSearch(debouncedSearch);
+  
+  const formattedResults: SearchResults = {
+    vehicles: searchResults?.vehicles || [],
+    customers: searchResults?.customers || [],
+    agreements: searchResults?.agreements.map(agreement => ({
+      id: agreement.id,
+      agreement_number: agreement.agreement_number,
+      customer_name: agreement.customer?.full_name || 'Unknown Customer'
+    })) || []
+  };
 
   const handleSelect = useCallback((type: string, id: string) => {
     setOpen(false);
@@ -67,7 +97,7 @@ export const SearchBox = () => {
               isLoading={isLoading}
               error={error}
               searchQuery={searchQuery}
-              searchResults={searchResults}
+              searchResults={formattedResults}
               handleSelect={handleSelect}
             />
           </CommandList>

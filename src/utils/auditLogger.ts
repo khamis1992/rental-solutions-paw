@@ -4,8 +4,13 @@ import { toast } from "sonner";
 export const logActivity = async (activity: string, details: any) => {
   try {
     const { error } = await supabase
-      .from("activity_logs")
-      .insert([{ activity, details }]);
+      .from('audit_logs')
+      .insert([{ 
+        action: activity,
+        changes: details,
+        entity_type: 'system',
+        entity_id: null
+      }]);
 
     if (error) throw error;
 
@@ -19,9 +24,9 @@ export const logActivity = async (activity: string, details: any) => {
 export const fetchActivityLogs = async () => {
   try {
     const { data, error } = await supabase
-      .from("activity_logs")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .from('audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
