@@ -44,7 +44,9 @@ export const FinanceOverview = () => {
       console.log("Completed payments:", revenueResult.data?.map(payment => ({
         id: payment.id,
         amount: payment.amount,
-        date: payment.created_at
+        date: payment.created_at,
+        lease_id: payment.lease_id,
+        payment_method: payment.payment_method
       })));
 
       const totalRevenue = revenueResult.data?.reduce((sum, payment) => 
@@ -52,7 +54,8 @@ export const FinanceOverview = () => {
 
       console.log("Total Revenue calculation:", {
         numberOfPayments: revenueResult.data?.length || 0,
-        totalRevenue: totalRevenue
+        totalRevenue: totalRevenue,
+        averagePayment: totalRevenue / (revenueResult.data?.length || 1)
       });
 
       return {
