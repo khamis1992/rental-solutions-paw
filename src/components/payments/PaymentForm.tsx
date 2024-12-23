@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface PaymentFormProps {
-  agreementId: string;
+  agreementId?: string; // Made optional with ?
 }
 
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
@@ -26,7 +26,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("payments").insert({
-        lease_id: agreementId,
+        lease_id: agreementId, // This will be null if no agreementId is provided
         amount: data.amount,
         payment_method: data.paymentMethod,
         description: data.description,
