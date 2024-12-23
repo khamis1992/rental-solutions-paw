@@ -36,7 +36,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
   return (
     <div className="rounded-md border">
-      <Table>
+      <Table aria-label="Transactions list">
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
@@ -57,6 +57,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
               <TableCell>
                 <Badge
                   variant={transaction.type === 'income' ? 'default' : 'destructive'}
+                  aria-label={`Transaction type: ${transaction.type}`}
                 >
                   {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </Badge>
@@ -64,12 +65,18 @@ export function TransactionList({ transactions }: TransactionListProps) {
               <TableCell>{transaction.accounting_categories?.name || 'Uncategorized'}</TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell className="text-right">
-                <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                <span 
+                  className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}
+                  aria-label={`Amount: ${formatCurrency(transaction.amount)}`}
+                >
                   {formatCurrency(transaction.amount)}
                 </span>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">
+                <Badge 
+                  variant="secondary"
+                  aria-label={`Status: ${transaction.status}`}
+                >
                   {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                 </Badge>
               </TableCell>
@@ -79,18 +86,23 @@ export function TransactionList({ transactions }: TransactionListProps) {
                     variant="ghost"
                     size="icon"
                     onClick={() => viewReceipt(transaction.receipt_url!)}
+                    aria-label="View receipt"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 ) : (
-                  <span className="text-muted-foreground">-</span>
+                  <span className="text-muted-foreground" aria-label="No receipt available">-</span>
                 )}
               </TableCell>
             </TableRow>
           ))}
           {transactions.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+              <TableCell 
+                colSpan={7} 
+                className="text-center py-4 text-muted-foreground"
+                aria-label="No transactions found"
+              >
                 No transactions found
               </TableCell>
             </TableRow>

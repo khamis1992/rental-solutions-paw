@@ -88,8 +88,9 @@ export function AccountingOverview() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Loading transactions">
+        <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
+        <span className="sr-only">Loading transactions...</span>
       </div>
     );
   }
@@ -97,7 +98,7 @@ export function AccountingOverview() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Accounting Overview</h2>
+        <h1 className="text-3xl font-bold" tabIndex={0}>Accounting Overview</h1>
         <Button 
           variant="destructive" 
           onClick={() => {
@@ -105,20 +106,21 @@ export function AccountingOverview() {
             setIsDeleteDialogOpen(true);
           }}
           className="gap-2"
+          aria-label="Delete all transactions"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
           Delete All Transactions
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3" role="region" aria-label="Financial summary">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-green-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600" tabIndex={0} aria-label={`Total income: ${formatCurrency(totalIncome)}`}>
               {formatCurrency(totalIncome)}
             </div>
           </CardContent>
@@ -127,10 +129,10 @@ export function AccountingOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500" />
+            <TrendingDown className="h-4 w-4 text-red-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-red-600" tabIndex={0} aria-label={`Total expenses: ${formatCurrency(totalExpenses)}`}>
               {formatCurrency(totalExpenses)}
             </div>
           </CardContent>
@@ -139,10 +141,14 @@ export function AccountingOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Income</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div 
+              className={`text-2xl font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              tabIndex={0}
+              aria-label={`Net income: ${formatCurrency(netIncome)}`}
+            >
               {formatCurrency(netIncome)}
             </div>
           </CardContent>
@@ -150,14 +156,14 @@ export function AccountingOverview() {
       </div>
 
       <Tabs defaultValue="transactions" className="space-y-4">
-        <TabsList>
+        <TabsList aria-label="Accounting sections">
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="new">New Transaction</TabsTrigger>
         </TabsList>
-        <TabsContent value="transactions">
+        <TabsContent value="transactions" role="tabpanel">
           <TransactionList transactions={transactions || []} />
         </TabsContent>
-        <TabsContent value="new">
+        <TabsContent value="new" role="tabpanel">
           <TransactionForm />
         </TabsContent>
       </Tabs>
