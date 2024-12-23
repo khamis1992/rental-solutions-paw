@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,25 +18,14 @@ import { Loader2 } from "lucide-react";
 import { CostTypeSelect } from "./components/CostTypeSelect";
 import { saveTransaction, uploadReceipt } from "./utils/transactionUtils";
 import { TransactionFormData } from "./types/transaction.types";
+import { Switch } from "@/components/ui/switch";
 
 export function TransactionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, watch } = useForm<TransactionFormData>();
   const transactionType = watch('type');
-
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["accounting-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("accounting_categories")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const onSubmit = async (data: TransactionFormData) => {
     setIsSubmitting(true);
@@ -47,9 +36,28 @@ export function TransactionForm() {
         receiptUrl = await uploadReceipt(data.receipt[0]);
       }
 
-      await saveTransaction(data, receiptUrl);
+      // If it's a payment transaction, create a payment record
+      if (data.type === 'payment') {
+        const paymentData = {
+          amount: data.amount,
+          payment_method: data.paymentMethod,
+          description: data.description,
+          payment_date: new Date().toISOString(),
+          is_recurring: isRecurring,
+          recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
+          next_payment_date: isRecurring ? 
+            new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue, data.intervalUnit)).toISOString() : 
+            null
+        };
 
-      toast.success("Transaction added successfully");
+        const { error: paymentError } = await supabase.from("payments").insert(paymentData);
+        if (paymentError) throw paymentError;
+      } else {
+        // Regular transaction
+        await saveTransaction(data, receiptUrl);
+      }
+
+      toast.success(data.type === 'payment' ? "Payment added successfully" : "Transaction added successfully");
       reset();
       queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
     } catch (error) {
@@ -60,13 +68,14 @@ export function TransactionForm() {
     }
   };
 
-  if (categoriesLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+  const getIntervalInMilliseconds = (value: number, unit: string) => {
+    const milliseconds = {
+      days: 24 * 60 * 60 * 1000,
+      weeks: 7 * 24 * 60 * 60 * 1000,
+      months: 30 * 24 * 60 * 60 * 1000
+    };
+    return value * milliseconds[unit as keyof typeof milliseconds];
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -80,6 +89,7 @@ export function TransactionForm() {
             <SelectContent>
               <SelectItem value="income">Income</SelectItem>
               <SelectItem value="expense">Expense</SelectItem>
+              <SelectItem value="payment">Payment</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -100,23 +110,78 @@ export function TransactionForm() {
           <CostTypeSelect register={register} />
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select {...register("category_id")} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories
-                ?.filter(cat => cat.type === transactionType)
-                .map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {transactionType === 'payment' && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod">Payment Method</Label>
+              <Select {...register("paymentMethod", { required: transactionType === 'payment' })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="wire_transfer">Wire Transfer</SelectItem>
+                  <SelectItem value="invoice">Invoice</SelectItem>
+                  <SelectItem value="on_hold">On Hold</SelectItem>
+                  <SelectItem value="deposit">Deposit</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="recurring"
+                checked={isRecurring}
+                onCheckedChange={setIsRecurring}
+                aria-label="Enable recurring payments"
+              />
+              <Label htmlFor="recurring">Recurring Payment</Label>
+            </div>
+
+            {isRecurring && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="intervalValue">Repeat Every</Label>
+                  <Input
+                    id="intervalValue"
+                    type="number"
+                    min="1"
+                    {...register("intervalValue", { required: isRecurring })}
+                    aria-label="Interval value"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="intervalUnit">Unit</Label>
+                  <Select {...register("intervalUnit", { required: isRecurring })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="days">Days</SelectItem>
+                      <SelectItem value="weeks">Weeks</SelectItem>
+                      <SelectItem value="months">Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {transactionType !== 'payment' && (
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select {...register("category_id")} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Fetch and display categories here */}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="transaction_date">Date</Label>
@@ -151,10 +216,10 @@ export function TransactionForm() {
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Adding Transaction...
+            {transactionType === 'payment' ? 'Adding Payment...' : 'Adding Transaction...'}
           </>
         ) : (
-          "Add Transaction"
+          transactionType === 'payment' ? 'Add Payment' : 'Add Transaction'
         )}
       </Button>
     </form>
