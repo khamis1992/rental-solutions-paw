@@ -6,6 +6,7 @@ import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { Button } from "@/components/ui/button";
 import { parseCSV } from "./utils/csvUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
