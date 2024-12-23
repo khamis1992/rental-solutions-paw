@@ -23,12 +23,21 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Delete expense transactions with explicit WHERE clause
-    const { error: expenseError, count: expenseCount } = await supabaseClient
+    // First, count the expense transactions
+    const { count: expenseCount, error: countExpenseError } = await supabaseClient
+      .from('expense_transactions')
+      .select('*', { count: 'exact', head: true });
+
+    if (countExpenseError) {
+      console.error("Error counting expense transactions:", countExpenseError);
+      throw countExpenseError;
+    }
+
+    // Then delete expense transactions
+    const { error: expenseError } = await supabaseClient
       .from('expense_transactions')
       .delete()
-      .neq('id', null)
-      .select('count');
+      .neq('id', null);
 
     if (expenseError) {
       console.error("Error deleting expense transactions:", expenseError);
@@ -37,12 +46,21 @@ serve(async (req) => {
 
     console.log(`Successfully deleted ${expenseCount} expense transactions`);
 
-    // Delete accounting transactions with explicit WHERE clause
-    const { error: accountingError, count: accountingCount } = await supabaseClient
+    // Count accounting transactions
+    const { count: accountingCount, error: countAccountingError } = await supabaseClient
+      .from('accounting_transactions')
+      .select('*', { count: 'exact', head: true });
+
+    if (countAccountingError) {
+      console.error("Error counting accounting transactions:", countAccountingError);
+      throw countAccountingError;
+    }
+
+    // Delete accounting transactions
+    const { error: accountingError } = await supabaseClient
       .from('accounting_transactions')
       .delete()
-      .neq('id', null)
-      .select('count');
+      .neq('id', null);
 
     if (accountingError) {
       console.error("Error deleting accounting transactions:", accountingError);
@@ -50,15 +68,14 @@ serve(async (req) => {
     }
 
     console.log(`Successfully deleted ${accountingCount} accounting transactions`);
-
     console.log("Successfully deleted all transactions in edge function");
 
     return new Response(
       JSON.stringify({ 
         success: true,
         deletedCounts: {
-          expenses: expenseCount,
-          accounting: accountingCount
+          expenses: expenseCount || 0,
+          accounting: accountingCount || 0
         }
       }),
       { 
