@@ -44,7 +44,7 @@ export const FinanceOverview = () => {
       
       if (error) throw error;
 
-      // Invalidate and refetch queries
+      // Invalidate and refetch queries to update the UI
       await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
       
       toast.success("All transactions have been deleted successfully");
