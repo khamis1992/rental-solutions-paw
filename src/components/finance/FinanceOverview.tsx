@@ -55,12 +55,14 @@ export const FinanceOverview = () => {
       setIsDeleting(true);
       
       // Call the RPC function to delete transactions
-      const { error } = await supabase.rpc('delete_all_transactions');
+      const { data, error } = await supabase.rpc('delete_all_transactions');
       
       if (error) {
         console.error("Error in delete_all_transactions RPC:", error);
         throw error;
       }
+
+      console.log("Delete all transactions successful:", data);
 
       // Invalidate and refetch queries to update the UI
       await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
