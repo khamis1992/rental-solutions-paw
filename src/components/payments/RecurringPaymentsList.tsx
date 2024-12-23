@@ -67,7 +67,7 @@ export function RecurringPaymentsList({ payments }: RecurringPaymentsListProps) 
             </TableCell>
             <TableCell>
               <Badge
-                variant={payment.status === "completed" ? "success" : "warning"}
+                variant={payment.status === "completed" ? "success" : "pending_payment"}
               >
                 {payment.status}
               </Badge>
