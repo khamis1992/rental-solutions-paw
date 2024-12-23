@@ -64,15 +64,13 @@ export const FinanceOverview = () => {
       console.log("Delete all transactions successful:", data);
 
       // Invalidate and refetch queries to update the UI
-      await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
-      
-      // Also invalidate any other related queries that might show transaction data
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
         queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["transaction-history"] })
       ]);
       
-      toast.success(`Successfully deleted ${data.deletedCounts.expenses + data.deletedCounts.accounting} transactions`);
+      toast.success("Successfully deleted all transactions");
       setIsDeleteDialogOpen(false);
     } catch (error: any) {
       console.error('Error deleting transactions:', error);
