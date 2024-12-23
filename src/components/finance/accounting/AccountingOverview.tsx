@@ -10,16 +10,18 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DeleteTransactionsDialog } from "../components/DeleteTransactionsDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function AccountingOverview() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const queryClient = useQueryClient();
 
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ["accounting-transactions"],
+    queryKey: ["accounting-transactions", selectedCategory],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("accounting_transactions")
         .select(`
           *,
@@ -30,7 +32,17 @@ export function AccountingOverview() {
         `)
         .order("transaction_date", { ascending: false });
 
-      if (error) throw error;
+      // Apply category filter if a specific category is selected
+      if (selectedCategory !== 'all') {
+        query = query.eq('category_id', selectedCategory);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching transactions:", error);
+        throw error;
+      }
       
       return data.map(transaction => ({
         ...transaction,
@@ -38,6 +50,25 @@ export function AccountingOverview() {
       }));
     },
   });
+
+  // Fetch categories for the dropdown
+  const { data: categories } = useQuery({
+    queryKey: ["accounting-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("accounting_categories")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleCategoryChange = (value: string) => {
+    console.log("Selected category:", value);
+    setSelectedCategory(value);
+  };
 
   const handleDeleteAllTransactions = async () => {
     try {
@@ -99,18 +130,33 @@ export function AccountingOverview() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold" tabIndex={0}>Accounting Overview</h1>
-        <Button 
-          variant="destructive" 
-          onClick={() => {
-            console.log("Delete button clicked");
-            setIsDeleteDialogOpen(true);
-          }}
-          className="gap-2"
-          aria-label="Delete all transactions"
-        >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-          Delete All Transactions
-        </Button>
+        <div className="flex gap-4 items-center">
+          <Select 
+            value={selectedCategory} 
+            onValueChange={handleCategoryChange}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories?.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="destructive" 
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="gap-2"
+            aria-label="Delete all transactions"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            Delete All Transactions
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3" role="region" aria-label="Financial summary">
