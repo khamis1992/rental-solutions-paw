@@ -5,6 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculatePayment } from "@/lib/paymentUtils";
 import { Agreement, AgreementType } from "@/types/database/agreement.types";
 
+interface PaymentScheduleItem {
+  due_date: string;
+  amount: number;
+  status: 'pending';
+  lease_id: string | null;
+}
+
 export interface AgreementFormData {
   agreementType: AgreementType;
   agreementNumber: string;
@@ -31,6 +38,7 @@ export interface AgreementFormData {
   damagePenaltyRate?: number;
   fuelPenaltyRate?: number;
   lateReturnFee?: number;
+  paymentSchedules?: PaymentScheduleItem[];
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
@@ -65,8 +73,8 @@ export const useAgreementForm = (onSuccess: () => void) => {
         const paymentSchedules = result.schedule.map(payment => ({
           due_date: payment.dueDate,
           amount: payment.amount,
-          status: 'pending',
-          lease_id: null // This will be set after lease creation
+          status: 'pending' as const,
+          lease_id: null
         }));
 
         // Store in form data for submission

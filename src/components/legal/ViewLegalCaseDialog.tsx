@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LegalCase, LegalCaseStatus } from "@/types/legal";
+import { LegalCase } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
   caseId: string | null;
@@ -53,7 +53,7 @@ export function ViewLegalCaseDialog({
     enabled: !!caseId,
   });
 
-  const updateStatus = async (newStatus: LegalCaseStatus) => {
+  const updateStatus = async (newStatus: LegalCase['status']) => {
     try {
       const { error } = await supabase
         .from("legal_cases")
@@ -133,6 +133,7 @@ export function ViewLegalCaseDialog({
                   <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
                   <SelectItem value="in_legal_process">In Legal Process</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="escalated">Escalated</SelectItem>
                 </SelectContent>
               </Select>
               <Button
