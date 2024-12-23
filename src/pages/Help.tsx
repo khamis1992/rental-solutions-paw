@@ -5,26 +5,13 @@ import { StepByStepGuides } from "@/components/help/StepByStepGuides";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
 import { useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
 
 const Help = () => {
-  const { toast } = useToast();
-
   useEffect(() => {
     injectPrintStyles();
   }, []);
-
-  const handlePrint = () => {
-    window.print();
-    toast({
-      title: "Print dialog opened",
-      description: "The print dialog has been opened. Select your printer to continue.",
-    });
-  };
 
   return (
     <DashboardLayout>
@@ -38,15 +25,6 @@ const Help = () => {
                 Find comprehensive guides, documentation, and support for using the Rental Solutions system.
               </p>
             </div>
-            <Button 
-              onClick={handlePrint}
-              className="print:hidden"
-              variant="outline"
-              size="sm"
-            >
-              <Printer className="mr-2 h-4 w-4" />
-              Print Documentation
-            </Button>
           </div>
         </div>
 
