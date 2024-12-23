@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
-import { router } from "./routes";
+import { router } from "@/routes";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./i18n/config"; // Import i18n configuration
