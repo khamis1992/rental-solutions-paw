@@ -24,31 +24,43 @@ serve(async (req) => {
     );
 
     // Delete expense transactions with explicit WHERE clause
-    const { error: expenseError } = await supabaseClient
+    const { error: expenseError, count: expenseCount } = await supabaseClient
       .from('expense_transactions')
       .delete()
-      .neq('id', null); // This ensures we delete all rows while satisfying the WHERE clause requirement
+      .neq('id', null)
+      .select('count');
 
     if (expenseError) {
       console.error("Error deleting expense transactions:", expenseError);
       throw expenseError;
     }
 
+    console.log(`Successfully deleted ${expenseCount} expense transactions`);
+
     // Delete accounting transactions with explicit WHERE clause
-    const { error: accountingError } = await supabaseClient
+    const { error: accountingError, count: accountingCount } = await supabaseClient
       .from('accounting_transactions')
       .delete()
-      .neq('id', null); // This ensures we delete all rows while satisfying the WHERE clause requirement
+      .neq('id', null)
+      .select('count');
 
     if (accountingError) {
       console.error("Error deleting accounting transactions:", accountingError);
       throw accountingError;
     }
 
+    console.log(`Successfully deleted ${accountingCount} accounting transactions`);
+
     console.log("Successfully deleted all transactions in edge function");
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        success: true,
+        deletedCounts: {
+          expenses: expenseCount,
+          accounting: accountingCount
+        }
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

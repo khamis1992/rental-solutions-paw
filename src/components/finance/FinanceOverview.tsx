@@ -54,7 +54,6 @@ export const FinanceOverview = () => {
       console.log("Starting delete all transactions process...");
       setIsDeleting(true);
       
-      // Call the edge function to delete transactions
       const { data, error } = await supabase.functions.invoke('delete-all-transactions');
       
       if (error) {
@@ -67,7 +66,7 @@ export const FinanceOverview = () => {
       // Invalidate and refetch queries to update the UI
       await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
       
-      toast.success("All transactions have been deleted successfully");
+      toast.success(`Successfully deleted ${data.deletedCounts.expenses + data.deletedCounts.accounting} transactions`);
       setIsDeleteDialogOpen(false);
     } catch (error: any) {
       console.error('Error deleting transactions:', error);
