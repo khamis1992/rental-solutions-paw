@@ -102,7 +102,7 @@ export function ViewLegalCaseDialog({
               <h4 className="font-medium text-sm">Status</h4>
               <Badge variant={
                 legalCase.status === 'resolved' ? 'default' :
-                legalCase.status === 'escalated' ? 'destructive' :
+                legalCase.status === 'in_legal_process' ? 'destructive' :
                 'secondary'
               }>
                 {legalCase.status.replace('_', ' ')}
@@ -131,7 +131,7 @@ export function ViewLegalCaseDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                  <SelectItem value="escalated">Escalated</SelectItem>
+                  <SelectItem value="in_legal_process">In Legal Process</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
                 </SelectContent>
               </Select>
