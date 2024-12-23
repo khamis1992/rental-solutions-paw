@@ -24,7 +24,6 @@ export function AccountingOverview() {
 
       if (error) throw error;
       
-      // Ensure the type field is correctly typed
       return data.map(transaction => ({
         ...transaction,
         type: transaction.type as 'income' | 'expense'
