@@ -4,35 +4,38 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
+
+const faqs = [
+  {
+    question: "How do I create a new rental agreement?",
+    answer: "To create a new rental agreement, navigate to the Agreements page and click the 'Create Agreement' button. Fill in the required information including customer details, vehicle selection, and rental terms. Review the information and submit the form to create the agreement."
+  },
+  {
+    question: "How can I track vehicle maintenance?",
+    answer: "Vehicle maintenance can be tracked through the Maintenance section. You can view scheduled maintenance, create new maintenance records, and track service history for each vehicle in your fleet."
+  },
+  {
+    question: "How do I generate reports?",
+    answer: "Navigate to the Reports & Analytics page where you can generate various reports including fleet status, financial reports, and customer analytics. Select the desired report type and date range, then click 'Generate Report'."
+  },
+  {
+    question: "How do I manage customer profiles?",
+    answer: "Customer profiles can be managed through the Customers page. You can add new customers, update existing information, view rental history, and manage documents associated with each customer."
+  },
+  {
+    question: "How do I handle vehicle inspections?",
+    answer: "Vehicle inspections are managed through the Vehicles section. You can create new inspection records, upload photos, document damage, and generate inspection reports for both check-in and check-out processes."
+  }
+];
 
 export const FAQSection = () => {
-  const { data: faqs, isLoading } = useQuery({
-    queryKey: ['help-faqs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('help_faqs')
-        .select('*')
-        .order('order_index');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  if (isLoading) {
-    return <LoadingSkeleton />;
-  }
-
   return (
     <div className="w-full max-w-4xl space-y-4">
       <h2 className="text-2xl font-semibold mb-4 text-left">Frequently Asked Questions</h2>
       <Accordion type="single" collapsible className="w-full space-y-2">
-        {faqs?.map((faq, index) => (
+        {faqs.map((faq, index) => (
           <AccordionItem 
-            key={faq.id} 
+            key={index} 
             value={`item-${index}`} 
             className="border rounded-lg px-4 hover:shadow-md transition-shadow"
           >
@@ -48,17 +51,3 @@ export const FAQSection = () => {
     </div>
   );
 };
-
-const LoadingSkeleton = () => (
-  <div className="w-full max-w-4xl space-y-4">
-    <Skeleton className="h-8 w-64 mb-4" />
-    <div className="space-y-2">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="border rounded-lg px-4 py-4">
-          <Skeleton className="h-6 w-full mb-2" />
-          <Skeleton className="h-20 w-full" />
-        </div>
-      ))}
-    </div>
-  </div>
-);
