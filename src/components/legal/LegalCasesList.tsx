@@ -73,7 +73,7 @@ export function LegalCasesList() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                <SelectItem value="reminder_sent">Reminder Sent</SelectItem>
+                <SelectItem value="in_legal_process">In Legal Process</SelectItem>
                 <SelectItem value="escalated">Escalated</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
