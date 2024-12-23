@@ -24,10 +24,11 @@ import { File, Filter, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { CreateLegalCaseDialog } from "./CreateLegalCaseDialog";
 import { ViewLegalCaseDialog } from "./ViewLegalCaseDialog";
+import { LegalCase, LegalCaseStatus } from "@/types/legal";
 
 export function LegalCasesList() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | LegalCaseStatus>("all");
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -43,7 +44,7 @@ export function LegalCasesList() {
         `);
 
       if (error) throw error;
-      return data;
+      return data as LegalCase[];
     },
   });
 
@@ -65,7 +66,7 @@ export function LegalCasesList() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-[300px]"
             />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value: typeof statusFilter) => setStatusFilter(value)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>

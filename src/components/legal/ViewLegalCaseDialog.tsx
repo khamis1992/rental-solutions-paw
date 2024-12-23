@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { LegalCase, LegalCaseStatus } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
   caseId: string | null;
@@ -47,12 +48,12 @@ export function ViewLegalCaseDialog({
         .single();
 
       if (error) throw error;
-      return data;
+      return data as LegalCase;
     },
     enabled: !!caseId,
   });
 
-  const updateStatus = async (newStatus: string) => {
+  const updateStatus = async (newStatus: LegalCaseStatus) => {
     try {
       const { error } = await supabase
         .from("legal_cases")
@@ -122,7 +123,7 @@ export function ViewLegalCaseDialog({
             <h4 className="font-medium text-sm mb-2">Update Status</h4>
             <div className="flex gap-4">
               <Select
-                onValueChange={updateStatus}
+                onValueChange={(value: LegalCaseStatus) => updateStatus(value)}
                 defaultValue={legalCase.status}
               >
                 <SelectTrigger className="w-[180px]">
