@@ -13,10 +13,12 @@ export const FinanceOverview = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: financialData, isLoading } = useQuery({
+  const { data: financialData, isLoading, error } = useQuery({
     queryKey: ["financial-overview"],
     queryFn: async () => {
       console.log("Fetching financial data...");
+      
+      // Fetch expenses and completed payments in parallel
       const [expenseResult, revenueResult] = await Promise.all([
         supabase
           .from("expense_transactions")
@@ -25,6 +27,7 @@ export const FinanceOverview = () => {
         supabase
           .from("payments")
           .select("*")
+          .eq("status", "completed")
           .order("created_at", { ascending: false })
       ]);
 
@@ -63,7 +66,6 @@ export const FinanceOverview = () => {
 
       console.log("Delete all transactions successful:", data);
 
-      // Invalidate and refetch queries to update the UI
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
         queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
@@ -88,8 +90,16 @@ export const FinanceOverview = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-red-600">
+        Failed to load financial data. Please try again later.
+      </div>
+    );
+  }
+
   const totalRevenue = financialData?.revenue.reduce((sum, payment) => 
-    payment.status === "completed" ? sum + (payment.amount || 0) : sum, 0) || 0;
+    sum + (payment.amount || 0), 0) || 0;
 
   const totalExpenses = financialData?.expenses.reduce((sum, expense) => 
     sum + (expense.amount || 0), 0) || 0;
@@ -129,6 +139,8 @@ export const FinanceOverview = () => {
       <FinancialCards 
         totalRevenue={totalRevenue}
         totalExpenses={totalExpenses}
+        isLoading={isLoading}
+        error={error}
       />
 
       <RecentTransactionsList transactions={recentTransactions} />
