@@ -16,6 +16,7 @@ export const FinanceOverview = () => {
   const { data: financialData, isLoading } = useQuery({
     queryKey: ["financial-overview"],
     queryFn: async () => {
+      console.log("Fetching financial data...");
       const [expenseResult, revenueResult] = await Promise.all([
         supabase
           .from("expense_transactions")
@@ -27,8 +28,19 @@ export const FinanceOverview = () => {
           .order("created_at", { ascending: false })
       ]);
 
-      if (expenseResult.error) throw expenseResult.error;
-      if (revenueResult.error) throw revenueResult.error;
+      if (expenseResult.error) {
+        console.error("Error fetching expenses:", expenseResult.error);
+        throw expenseResult.error;
+      }
+      if (revenueResult.error) {
+        console.error("Error fetching revenue:", revenueResult.error);
+        throw revenueResult.error;
+      }
+
+      console.log("Financial data fetched successfully:", {
+        expenses: expenseResult.data?.length || 0,
+        revenue: revenueResult.data?.length || 0
+      });
 
       return {
         expenses: expenseResult.data || [],
@@ -39,12 +51,20 @@ export const FinanceOverview = () => {
 
   const handleDeleteAllTransactions = async () => {
     try {
+      console.log("Starting delete all transactions process...");
       setIsDeleting(true);
-      const { error } = await supabase.rpc('delete_all_transactions');
       
-      if (error) throw error;
+      // Call the RPC function to delete transactions
+      const { data, error } = await supabase.rpc('delete_all_transactions');
+      console.log("Delete RPC response:", { data, error });
+      
+      if (error) {
+        console.error("Error in delete_all_transactions RPC:", error);
+        throw error;
+      }
 
       // Invalidate and refetch queries to update the UI
+      console.log("Invalidating queries...");
       await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
       
       toast.success("All transactions have been deleted successfully");
@@ -92,7 +112,10 @@ export const FinanceOverview = () => {
         <h2 className="text-3xl font-bold">Financial Overview</h2>
         <Button 
           variant="destructive" 
-          onClick={() => setIsDeleteDialogOpen(true)}
+          onClick={() => {
+            console.log("Delete button clicked");
+            setIsDeleteDialogOpen(true);
+          }}
           className="gap-2"
         >
           <Trash2 className="h-4 w-4" />
