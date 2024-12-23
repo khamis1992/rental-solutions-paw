@@ -1,15 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
-
-interface RequestConfig {
-  method?: RequestMethod;
-  body?: any;
-  params?: Record<string, string>;
-  headers?: Record<string, string>;
-}
-
 interface ApiResponse<T = any> {
   data: T | null;
   error: Error | null;
@@ -32,7 +23,7 @@ class ApiClient {
 
       // Handle database operations through Supabase
       if (endpoint.startsWith('/db/')) {
-        const tableName = endpoint.replace('/db/', '');
+        const tableName = endpoint.replace('/db/', '') as any;
         let query = supabase.from(tableName);
 
         switch (method) {
@@ -132,23 +123,3 @@ class ApiClient {
 
 // Export a singleton instance
 export const apiClient = new ApiClient();
-
-// Example usage:
-/*
-import { apiClient } from '@/utils/apiClient';
-
-// Fetch customers
-const { data: customers, error } = await apiClient.fetchCustomers();
-
-// Create a payment
-const { data: payment, error } = await apiClient.createPayment({
-  amount: 1000,
-  customerId: 'xxx',
-});
-
-// Update vehicle status
-const { data, error } = await apiClient.updateVehicleStatus('vehicle-id', 'maintenance');
-
-// Upload a document
-const { data, error } = await apiClient.uploadDocument(file, 'agreement_documents');
-*/

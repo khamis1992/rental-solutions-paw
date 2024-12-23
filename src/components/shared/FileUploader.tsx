@@ -12,6 +12,12 @@ interface FileUploaderProps {
   folderPath?: string;
 }
 
+interface UploadProgress {
+  progress: number;
+  uploadedBytes: number;
+  totalBytes: number;
+}
+
 export const FileUploader = ({
   bucket,
   onUploadComplete,
@@ -21,6 +27,10 @@ export const FileUploader = ({
 }: FileUploaderProps) => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  const handleProgress = (uploadProgress: UploadProgress) => {
+    setProgress(uploadProgress.progress);
+  };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -35,7 +45,7 @@ export const FileUploader = ({
         allowedTypes,
         maxSize,
         folderPath,
-        onProgress: setProgress
+        onProgress: handleProgress
       });
 
       onUploadComplete(result);
