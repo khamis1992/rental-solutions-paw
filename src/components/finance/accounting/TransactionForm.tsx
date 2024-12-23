@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { CostTypeSelect } from "./components/CostTypeSelect";
 import { saveTransaction, uploadReceipt } from "./utils/transactionUtils";
-import { TransactionFormData } from "./types/transaction.types";
+import { TransactionFormData, PaymentMethodType } from "./types/transaction.types";
 import { Switch } from "@/components/ui/switch";
 
 export function TransactionForm() {
@@ -40,17 +40,22 @@ export function TransactionForm() {
       if (data.type === 'payment') {
         const paymentData = {
           amount: data.amount,
-          payment_method: data.paymentMethod,
+          payment_method: data.paymentMethod as PaymentMethodType,
           description: data.description,
           payment_date: new Date().toISOString(),
           is_recurring: isRecurring,
           recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
           next_payment_date: isRecurring ? 
-            new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue, data.intervalUnit)).toISOString() : 
-            null
+            new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue!, data.intervalUnit!)).toISOString() : 
+            null,
+          // Set lease_id as null since this is a standalone payment
+          lease_id: null
         };
 
-        const { error: paymentError } = await supabase.from("payments").insert(paymentData);
+        const { error: paymentError } = await supabase
+          .from("payments")
+          .insert(paymentData);
+          
         if (paymentError) throw paymentError;
       } else {
         // Regular transaction
