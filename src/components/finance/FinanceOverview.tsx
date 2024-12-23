@@ -54,11 +54,11 @@ export const FinanceOverview = () => {
       console.log("Starting delete all transactions process...");
       setIsDeleting(true);
       
-      // Call the RPC function to delete transactions
-      const { data, error } = await supabase.rpc('delete_all_transactions');
+      // Call the edge function to delete transactions
+      const { data, error } = await supabase.functions.invoke('delete-all-transactions');
       
       if (error) {
-        console.error("Error in delete_all_transactions RPC:", error);
+        console.error("Error in delete-all-transactions function:", error);
         throw error;
       }
 

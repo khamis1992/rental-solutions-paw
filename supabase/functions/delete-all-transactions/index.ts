@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Starting delete all transactions process...");
+    console.log("Starting delete all transactions process in edge function...");
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -43,7 +43,7 @@ serve(async (req) => {
       throw accountingError;
     }
 
-    console.log("Successfully deleted all transactions");
+    console.log("Successfully deleted all transactions in edge function");
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -54,7 +54,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Error in delete-all-transactions function:", error);
+    console.error("Error in delete-all-transactions edge function:", error);
     
     return new Response(
       JSON.stringify({
