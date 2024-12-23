@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { CustomerProfileManagement } from "@/components/customers/CustomerProfileManagement";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
+import { UserActivityMonitor } from "@/components/monitoring/UserActivityMonitor";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
@@ -18,7 +19,6 @@ const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) 
   );
 };
 
-// Lazy load components with improved error handling
 const DashboardStats = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
   "DashboardStats"
@@ -44,7 +44,6 @@ const SystemChatbot = lazyLoadComponent(
   "SystemChatbot"
 );
 
-// Improved loading component with better visual feedback
 const ComponentLoader = ({ componentName }: { componentName: string }) => (
   <div className="w-full h-[200px] space-y-4 p-4">
     <div className="h-4 w-1/4">
@@ -87,6 +86,12 @@ const Index = () => {
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Customer Profiles" />}>
             <CustomerProfileManagement />
+          </Suspense>
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="User Activity Monitor" />}>
+            <UserActivityMonitor />
           </Suspense>
         </ErrorBoundary>
         
