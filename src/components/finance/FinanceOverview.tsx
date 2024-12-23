@@ -40,9 +40,19 @@ export const FinanceOverview = () => {
         throw revenueResult.error;
       }
 
-      console.log("Financial data fetched successfully:", {
-        expenses: expenseResult.data?.length || 0,
-        revenue: revenueResult.data?.length || 0
+      // Log detailed payment information
+      console.log("Completed payments:", revenueResult.data?.map(payment => ({
+        id: payment.id,
+        amount: payment.amount,
+        date: payment.created_at
+      })));
+
+      const totalRevenue = revenueResult.data?.reduce((sum, payment) => 
+        sum + (payment.amount || 0), 0) || 0;
+
+      console.log("Total Revenue calculation:", {
+        numberOfPayments: revenueResult.data?.length || 0,
+        totalRevenue: totalRevenue
       });
 
       return {
