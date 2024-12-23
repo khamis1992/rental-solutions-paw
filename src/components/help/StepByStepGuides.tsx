@@ -15,6 +15,15 @@ interface GuidesByCategory {
   [key: string]: Guide[];
 }
 
+interface GuideFromDB {
+  id: string;
+  title: string;
+  steps: string[] | string; // Update type to handle both string[] and string
+  category_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const StepByStepGuides = () => {
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['guide-categories'],
@@ -29,7 +38,7 @@ export const StepByStepGuides = () => {
     }
   });
 
-  const { data: guides, isLoading: guidesLoading } = useQuery({
+  const { data: guidesFromDB, isLoading: guidesLoading } = useQuery({
     queryKey: ['guides'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,7 +47,7 @@ export const StepByStepGuides = () => {
         .order('created_at');
       
       if (error) throw error;
-      return data;
+      return data as GuideFromDB[];
     }
   });
 
@@ -46,13 +55,23 @@ export const StepByStepGuides = () => {
     return <LoadingSkeleton />;
   }
 
+  // Transform the guides data to ensure steps is always string[]
+  const guides = guidesFromDB?.map(guide => ({
+    ...guide,
+    steps: Array.isArray(guide.steps) ? guide.steps : JSON.parse(guide.steps as string)
+  }));
+
   const guidesByCategory = guides?.reduce((acc: GuidesByCategory, guide) => {
     const category = categories?.find(c => c.id === guide.category_id);
     if (category) {
       if (!acc[category.slug]) {
         acc[category.slug] = [];
       }
-      acc[category.slug].push(guide);
+      acc[category.slug].push({
+        id: guide.id,
+        title: guide.title,
+        steps: guide.steps
+      });
     }
     return acc;
   }, {});
