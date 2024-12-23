@@ -36,15 +36,15 @@ export function RecentTransactions() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center h-64" role="status" aria-label="Loading transactions">
+        <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <Table>
+      <Table aria-label="Recent transactions">
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
@@ -64,6 +64,7 @@ export function RecentTransactions() {
               <TableCell>
                 <Badge
                   variant={transaction.type === "income" ? "default" : "destructive"}
+                  aria-label={`Transaction type: ${transaction.type}`}
                 >
                   {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </Badge>
@@ -77,12 +78,16 @@ export function RecentTransactions() {
                       ? "text-green-600"
                       : "text-red-600"
                   }
+                  aria-label={`Amount: ${formatCurrency(transaction.amount)}`}
                 >
                   {formatCurrency(transaction.amount)}
                 </span>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">
+                <Badge 
+                  variant="secondary"
+                  aria-label={`Status: ${transaction.status}`}
+                >
                   {transaction.status.charAt(0).toUpperCase() +
                     transaction.status.slice(1)}
                 </Badge>
