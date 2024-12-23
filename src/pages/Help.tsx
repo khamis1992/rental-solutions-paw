@@ -28,10 +28,11 @@ const Help = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-56px)] w-full">
+      <div className="flex flex-col min-h-[calc(100vh-56px)] w-full">
+        {/* Header Section */}
         <div className="flex-shrink-0 w-full px-4 py-4 bg-background border-b">
           <div className="container mx-auto flex justify-between items-center">
-            <div className="space-y-1 max-w-3xl">
+            <div className="space-y-1">
               <h1 className="text-2xl font-bold">Help Center</h1>
               <p className="text-base text-muted-foreground">
                 Find comprehensive guides, documentation, and support for using the Rental Solutions system.
@@ -49,37 +50,53 @@ const Help = () => {
           </div>
         </div>
 
+        {/* Main Content */}
         <div className="flex-grow overflow-hidden">
-          <div className="container h-full mx-auto py-4">
-            <Tabs defaultValue="overview" className="h-full flex flex-col">
-              <TabsList className="w-full justify-start border-b print:hidden mb-4">
-                <TabsTrigger value="overview" className="text-base px-6 py-2">Overview</TabsTrigger>
-                <TabsTrigger value="guides" className="text-base px-6 py-2">Step-by-Step Guides</TabsTrigger>
-                <TabsTrigger value="faq" className="text-base px-6 py-2">FAQ</TabsTrigger>
+          <div className="container mx-auto py-6">
+            <Tabs defaultValue="overview" className="h-full space-y-6">
+              <TabsList className="w-full justify-start border-b bg-transparent p-0">
+                <TabsTrigger 
+                  value="overview" 
+                  className="relative px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                >
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="guides" 
+                  className="relative px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                >
+                  Step-by-Step Guides
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="faq" 
+                  className="relative px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                >
+                  FAQ
+                </TabsTrigger>
               </TabsList>
 
               <div className="flex-grow overflow-hidden">
-                <ScrollArea className="h-[calc(100vh-280px)] w-full print:h-auto">
-                  <div className="print-content space-y-4 pb-6">
-                    <TabsContent value="overview" className="mt-0">
-                      <Card className="border">
-                        <CardContent className="pt-4">
+                <ScrollArea className="h-[calc(100vh-280px)] w-full print:h-auto px-1">
+                  <div className="space-y-6 pb-8">
+                    <TabsContent value="overview" className="mt-0 space-y-6">
+                      <Card className="border shadow-sm">
+                        <CardContent className="p-6">
                           <SystemOverview />
                         </CardContent>
                       </Card>
                     </TabsContent>
 
-                    <TabsContent value="guides" className="mt-0">
-                      <Card className="border">
-                        <CardContent className="pt-4">
+                    <TabsContent value="guides" className="mt-0 space-y-6">
+                      <Card className="border shadow-sm">
+                        <CardContent className="p-6">
                           <StepByStepGuides />
                         </CardContent>
                       </Card>
                     </TabsContent>
 
-                    <TabsContent value="faq" className="mt-0">
-                      <Card className="border">
-                        <CardContent className="pt-4">
+                    <TabsContent value="faq" className="mt-0 space-y-6">
+                      <Card className="border shadow-sm">
+                        <CardContent className="p-6">
                           <FAQSection />
                         </CardContent>
                       </Card>
