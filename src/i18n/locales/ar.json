@@ -1,0 +1,62 @@
+{
+  "common": {
+    "search": "بحث",
+    "filter": "تصفية",
+    "status": "الحالة",
+    "actions": "إجراءات",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "create": "إنشاء",
+    "submit": "إرسال",
+    "loading": "جاري التحميل..."
+  },
+  "dashboard": {
+    "welcome": "مرحباً بعودتك",
+    "quickActions": "إجراءات سريعة",
+    "recentActivity": "النشاط الأخير",
+    "stats": {
+      "activeAgreements": "الاتفاقيات النشطة",
+      "pendingAgreements": "الاتفاقيات المعلقة",
+      "closedAgreements": "الاتفاقيات المغلقة",
+      "totalAgreements": "إجمالي الاتفاقيات"
+    }
+  },
+  "agreements": {
+    "title": "الاتفاقيات",
+    "newAgreement": "اتفاقية جديدة",
+    "agreementNumber": "رقم الاتفاقية",
+    "licensePlate": "رقم اللوحة",
+    "vehicle": "المركبة",
+    "customerName": "اسم العميل",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "status": {
+      "all": "جميع الحالات",
+      "active": "نشط",
+      "pending": "معلق",
+      "expired": "منتهي",
+      "cancelled": "ملغي"
+    }
+  },
+  "customers": {
+    "title": "العملاء",
+    "newCustomer": "عميل جديد",
+    "fullName": "الاسم الكامل",
+    "phoneNumber": "رقم الهاتف",
+    "address": "العنوان",
+    "driverLicense": "رخصة القيادة"
+  },
+  "vehicles": {
+    "title": "المركبات",
+    "newVehicle": "مركبة جديدة",
+    "make": "الصانع",
+    "model": "الموديل",
+    "year": "السنة",
+    "color": "اللون",
+    "licensePlate": "رقم اللوحة",
+    "vin": "رقم الهيكل"
+  }
+}
