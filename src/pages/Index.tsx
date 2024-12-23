@@ -1,19 +1,18 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { CustomerProfileManagement } from "@/components/customers/CustomerProfileManagement";
 import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 import { UserActivityMonitor } from "@/components/monitoring/UserActivityMonitor";
+import { DashboardTutorial } from "@/components/onboarding/DashboardTutorial";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
     importFn().catch(error => {
       console.error(`Error loading ${componentName}:`, error);
-      toast.error(`Failed to load ${componentName}. Please refresh the page.`);
       return Promise.reject(error);
     })
   );
@@ -23,6 +22,7 @@ const DashboardStats = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
   "DashboardStats"
 );
+
 const DashboardAlerts = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })),
   "DashboardAlerts"
@@ -59,30 +59,44 @@ const ComponentLoader = ({ componentName }: { componentName: string }) => (
 );
 
 const Index = () => {
+  const [showTutorial, setShowTutorial] = useState(false);
   usePerformanceMonitoring();
   useDashboardSubscriptions();
+
+  useEffect(() => {
+    const isTutorialCompleted = localStorage.getItem('tutorial-dashboard-main-completed');
+    if (!isTutorialCompleted) {
+      setShowTutorial(true);
+    }
+  }, []);
 
   return (
     <DashboardLayout>
       <div className="space-y-8 px-2 py-6 w-full max-w-[1920px] mx-auto">
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
-            <WelcomeHeader />
+            <div id="dashboard-header">
+              <WelcomeHeader />
+            </div>
           </Suspense>
         </ErrorBoundary>
 
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-            <DashboardStats />
+            <div id="dashboard-stats">
+              <DashboardStats />
+            </div>
           </Suspense>
         </ErrorBoundary>
 
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
-            <QuickActions />
+            <div id="quick-actions">
+              <QuickActions />
+            </div>
           </Suspense>
         </ErrorBoundary>
-        
+
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Customer Profiles" />}>
             <CustomerProfileManagement />
@@ -94,12 +108,14 @@ const Index = () => {
             <UserActivityMonitor />
           </Suspense>
         </ErrorBoundary>
-        
+
         <div className="grid gap-8 lg:grid-cols-7">
           <div className="lg:col-span-7">
             <ErrorBoundary>
               <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
-                <DashboardAlerts />
+                <div id="dashboard-alerts">
+                  <DashboardAlerts />
+                </div>
               </Suspense>
             </ErrorBoundary>
           </div>
@@ -109,7 +125,9 @@ const Index = () => {
           <div className="lg:col-span-4">
             <ErrorBoundary>
               <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
-                <RecentActivity />
+                <div id="recent-activity">
+                  <RecentActivity />
+                </div>
               </Suspense>
             </ErrorBoundary>
           </div>
@@ -127,6 +145,8 @@ const Index = () => {
             <AuditLogViewer />
           </Suspense>
         </ErrorBoundary>
+
+        {showTutorial && <DashboardTutorial />}
       </div>
     </DashboardLayout>
   );
