@@ -1,110 +1,74 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface UploadProgress {
+  progress: number;
+  uploadedBytes: number;
+  totalBytes: number;
+}
+
 interface UploadOptions {
-  /**
-   * The storage bucket to upload to
-   */
-  bucket: 'agreement_documents' | 'customer_documents' | 'maintenance_documents' | 'accounting_receipts';
-  /**
-   * Optional folder path within the bucket
-   */
-  folderPath?: string;
-  /**
-   * Maximum file size in MB
-   */
-  maxSize?: number;
-  /**
-   * Allowed file types
-   */
-  allowedTypes?: string[];
-  /**
-   * Progress callback
-   */
-  onProgress?: (progress: number) => void;
+  bucket: string;
+  path?: string;
+  onProgress?: (progress: UploadProgress) => void;
 }
 
-interface UploadResult {
-  path: string;
-  url: string;
-}
-
-/**
- * Uploads a file to Supabase Storage with progress tracking and validation
- */
 export const uploadFile = async (
   file: File,
   options: UploadOptions
-): Promise<UploadResult> => {
+): Promise<{ url: string | null; error: Error | null }> => {
   try {
-    // Validate file size
-    const maxSize = (options.maxSize || 5) * 1024 * 1024; // Default 5MB
+    const { bucket, path = '', onProgress } = options;
+    
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      throw new Error(`File size must be less than ${options.maxSize || 5}MB`);
-    }
-
-    // Validate file type if specified
-    if (options.allowedTypes && options.allowedTypes.length > 0) {
-      const fileType = file.type || '';
-      if (!options.allowedTypes.includes(fileType)) {
-        throw new Error(`File type ${fileType} is not allowed. Allowed types: ${options.allowedTypes.join(', ')}`);
-      }
+      throw new Error('File size exceeds 10MB limit');
     }
 
     // Generate unique file path
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = options.folderPath 
-      ? `${options.folderPath}/${fileName}`
-      : fileName;
+    const timestamp = Date.now();
+    const fileName = `${timestamp}-${file.name}`;
+    const filePath = path ? `${path}/${fileName}` : fileName;
 
-    // Upload file with progress tracking
-    const { error: uploadError, data } = await supabase.storage
-      .from(options.bucket)
+    // Upload file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucket)
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false,
-        onUploadProgress: (progress) => {
-          const percentage = (progress.loaded / progress.total) * 100;
-          options.onProgress?.(percentage);
-        },
+        upsert: false
       });
 
-    if (uploadError) throw uploadError;
+    if (error) throw error;
 
-    // Get the public URL
+    // Get public URL if upload successful
     const { data: { publicUrl } } = supabase.storage
-      .from(options.bucket)
+      .from(bucket)
       .getPublicUrl(filePath);
 
-    return {
-      path: filePath,
-      url: publicUrl
-    };
-
-  } catch (error: any) {
-    console.error('File upload error:', error);
-    toast.error(error.message || 'Failed to upload file');
-    throw error;
+    return { url: publicUrl, error: null };
+  } catch (error) {
+    console.error('Upload error:', error);
+    toast.error('Failed to upload file');
+    return { url: null, error: error as Error };
   }
 };
 
-/**
- * Deletes a file from Supabase Storage
- */
 export const deleteFile = async (
-  bucket: UploadOptions['bucket'],
-  filePath: string
-): Promise<void> => {
+  bucket: string,
+  path: string
+): Promise<{ success: boolean; error: Error | null }> => {
   try {
     const { error } = await supabase.storage
       .from(bucket)
-      .remove([filePath]);
+      .remove([path]);
 
     if (error) throw error;
-  } catch (error: any) {
-    console.error('File deletion error:', error);
-    toast.error(error.message || 'Failed to delete file');
-    throw error;
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Delete error:', error);
+    toast.error('Failed to delete file');
+    return { success: false, error: error as Error };
   }
 };
