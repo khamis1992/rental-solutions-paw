@@ -5,6 +5,7 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { FeatureIntegrationChecklist } from "@/components/dashboard/FeatureIntegrationChecklist";
 
 // Improved lazy loading with better error handling
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
@@ -74,6 +75,12 @@ const Index = () => {
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
             <DashboardStats />
+          </Suspense>
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Feature Integration Checklist" />}>
+            <FeatureIntegrationChecklist />
           </Suspense>
         </ErrorBoundary>
 
