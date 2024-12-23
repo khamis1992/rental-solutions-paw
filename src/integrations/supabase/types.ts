@@ -3698,6 +3698,17 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_detailed_credit_score: {
+        Args: {
+          p_monthly_income: number
+          p_employment_status: string
+          p_debt_to_income_ratio: number
+          p_payment_history_score: number
+          p_credit_utilization: number
+          p_credit_history_length: number
+        }
+        Returns: Json
+      }
       calculate_risk_score: {
         Args: {
           p_customer_id: string
