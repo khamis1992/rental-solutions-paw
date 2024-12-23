@@ -5,61 +5,75 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { CostTypeSelect } from "./components/CostTypeSelect";
-import { saveTransaction, uploadReceipt } from "./utils/transactionUtils";
-import { TransactionFormData, PaymentMethodType } from "./types/transaction.types";
 import { Switch } from "@/components/ui/switch";
+import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
+import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
+import { PaymentMethodType } from "@/types/database/agreement.types";
+
+interface TransactionFormData {
+  type: 'income' | 'expense' | 'payment';
+  amount: number;
+  description?: string;
+  transaction_date: string;
+  payment_method?: PaymentMethodType;
+  intervalValue?: string;
+  intervalUnit?: string;
+}
 
 export function TransactionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, watch } = useForm<TransactionFormData>();
+  const { register, handleSubmit, reset, watch, setValue } = useForm<TransactionFormData>();
   const transactionType = watch('type');
 
   const onSubmit = async (data: TransactionFormData) => {
+    console.log("Submitting form with data:", data);
     setIsSubmitting(true);
     try {
-      let receiptUrl = null;
-
-      if (data.receipt && data.receipt[0]) {
-        receiptUrl = await uploadReceipt(data.receipt[0]);
-      }
-
-      // If it's a payment transaction, create a payment record
       if (data.type === 'payment') {
         const paymentData = {
           amount: data.amount,
-          payment_method: data.paymentMethod as PaymentMethodType,
+          payment_method: data.payment_method,
           description: data.description,
           payment_date: new Date().toISOString(),
           is_recurring: isRecurring,
           recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
           next_payment_date: isRecurring ? 
-            new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue!, data.intervalUnit!)).toISOString() : 
+            new Date(Date.now() + getIntervalInMilliseconds(Number(data.intervalValue), data.intervalUnit!)).toISOString() : 
             null,
-          // Set lease_id as null since this is a standalone payment
-          lease_id: null
+          lease_id: null // Now allowed since we made lease_id nullable
         };
 
+        console.log("Payment data to be inserted:", paymentData);
         const { error: paymentError } = await supabase
           .from("payments")
           .insert(paymentData);
           
-        if (paymentError) throw paymentError;
+        if (paymentError) {
+          console.error("Payment insertion error:", paymentError);
+          throw paymentError;
+        }
       } else {
-        // Regular transaction
-        await saveTransaction(data, receiptUrl);
+        // Regular transaction handling
+        const transactionData = {
+          amount: data.amount,
+          description: data.description,
+          transaction_date: data.transaction_date,
+          category_id: data.category_id,
+        };
+
+        const { error: transactionError } = await supabase
+          .from("accounting_transactions")
+          .insert(transactionData);
+          
+        if (transactionError) {
+          console.error("Transaction insertion error:", transactionError);
+          throw transactionError;
+        }
       }
 
       toast.success(data.type === 'payment' ? "Payment added successfully" : "Transaction added successfully");
@@ -80,6 +94,10 @@ export function TransactionForm() {
       months: 30 * 24 * 60 * 60 * 1000
     };
     return value * milliseconds[unit as keyof typeof milliseconds];
+  };
+
+  const handlePaymentMethodChange = (value: PaymentMethodType) => {
+    setValue('payment_method', value);
   };
 
   return (
@@ -111,27 +129,14 @@ export function TransactionForm() {
           />
         </div>
 
-        {transactionType === 'expense' && (
-          <CostTypeSelect register={register} />
-        )}
-
         {transactionType === 'payment' && (
           <>
             <div className="space-y-2">
               <Label htmlFor="paymentMethod">Payment Method</Label>
-              <Select {...register("paymentMethod", { required: transactionType === 'payment' })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="wire_transfer">Wire Transfer</SelectItem>
-                  <SelectItem value="invoice">Invoice</SelectItem>
-                  <SelectItem value="on_hold">On Hold</SelectItem>
-                  <SelectItem value="deposit">Deposit</SelectItem>
-                  <SelectItem value="cheque">Cheque</SelectItem>
-                </SelectContent>
-              </Select>
+              <PaymentMethodSelect
+                value={watch('payment_method')}
+                onChange={handlePaymentMethodChange}
+              />
             </div>
 
             <div className="flex items-center space-x-2">
@@ -145,31 +150,12 @@ export function TransactionForm() {
             </div>
 
             {isRecurring && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="intervalValue">Repeat Every</Label>
-                  <Input
-                    id="intervalValue"
-                    type="number"
-                    min="1"
-                    {...register("intervalValue", { required: isRecurring })}
-                    aria-label="Interval value"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="intervalUnit">Unit</Label>
-                  <Select {...register("intervalUnit", { required: isRecurring })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="days">Days</SelectItem>
-                      <SelectItem value="weeks">Weeks</SelectItem>
-                      <SelectItem value="months">Months</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
+              <RecurringPaymentFields
+                intervalValue={watch('intervalValue') || ''}
+                intervalUnit={watch('intervalUnit') || ''}
+                onIntervalValueChange={(value) => setValue('intervalValue', value)}
+                onIntervalUnitChange={(value) => setValue('intervalUnit', value)}
+              />
             )}
           </>
         )}
@@ -204,16 +190,6 @@ export function TransactionForm() {
           id="description"
           placeholder="Enter transaction description"
           {...register("description")}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="receipt">Receipt (optional)</Label>
-        <Input
-          id="receipt"
-          type="file"
-          accept="image/*,.pdf"
-          {...register("receipt")}
         />
       </div>
 

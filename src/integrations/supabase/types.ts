@@ -2310,7 +2310,7 @@ export type Database = {
           created_at: string
           id: string
           is_recurring: boolean | null
-          lease_id: string
+          lease_id: string | null
           next_payment_date: string | null
           payment_date: string | null
           payment_method:
@@ -2327,7 +2327,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_recurring?: boolean | null
-          lease_id: string
+          lease_id?: string | null
           next_payment_date?: string | null
           payment_date?: string | null
           payment_method?:
@@ -2344,7 +2344,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_recurring?: boolean | null
-          lease_id?: string
+          lease_id?: string | null
           next_payment_date?: string | null
           payment_date?: string | null
           payment_method?:
