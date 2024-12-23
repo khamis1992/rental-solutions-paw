@@ -4,6 +4,7 @@ import { AccountingOverview } from "@/components/finance/accounting/AccountingOv
 import { RecentTransactions } from "@/components/finance/RecentTransactions";
 import { TaxFilingDashboard } from "@/components/finance/tax/TaxFilingDashboard";
 import { TransactionImport } from "@/components/finance/transaction-import/TransactionImport";
+import { PaymentForm } from "@/components/payments/PaymentForm";
 
 const Finance = () => {
   return (
@@ -16,6 +17,7 @@ const Finance = () => {
             <TabsTrigger value="accounting">Accounting</TabsTrigger>
             <TabsTrigger value="tax">Tax Management</TabsTrigger>
             <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="import">Import Transactions</TabsTrigger>
           </TabsList>
 
@@ -29,6 +31,13 @@ const Finance = () => {
 
           <TabsContent value="transactions" role="tabpanel">
             <RecentTransactions />
+          </TabsContent>
+
+          <TabsContent value="payments" role="tabpanel">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold">Add Payment</h2>
+              <PaymentForm />
+            </div>
           </TabsContent>
 
           <TabsContent value="import" role="tabpanel">
