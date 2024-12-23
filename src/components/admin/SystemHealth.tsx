@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Server, Database, Activity } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const SystemHealth = () => {
   usePerformanceMonitoring();

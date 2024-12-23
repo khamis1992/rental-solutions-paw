@@ -15,6 +15,7 @@ import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import Audit from "@/pages/Audit";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { StaffDashboard } from "@/components/staff/StaffDashboard";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     element: <RouteWrapper><AdminDashboard /></RouteWrapper>
+  },
+  {
+    path: "/staff",
+    element: <RouteWrapper><StaffDashboard /></RouteWrapper>
   },
   {
     path: "/customers",
