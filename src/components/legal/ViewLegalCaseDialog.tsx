@@ -1,12 +1,9 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -14,10 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { LegalCase, LegalCaseStatus } from "@/types/legal";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { LegalCase } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
   caseId: string | null;
@@ -53,7 +53,7 @@ export function ViewLegalCaseDialog({
     enabled: !!caseId,
   });
 
-  const updateStatus = async (newStatus: LegalCaseStatus) => {
+  const updateStatus = async (newStatus: string) => {
     try {
       const { error } = await supabase
         .from("legal_cases")
@@ -123,7 +123,7 @@ export function ViewLegalCaseDialog({
             <h4 className="font-medium text-sm mb-2">Update Status</h4>
             <div className="flex gap-4">
               <Select
-                onValueChange={(value: LegalCaseStatus) => updateStatus(value)}
+                onValueChange={updateStatus}
                 defaultValue={legalCase.status}
               >
                 <SelectTrigger className="w-[180px]">
@@ -131,7 +131,6 @@ export function ViewLegalCaseDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                  <SelectItem value="reminder_sent">Reminder Sent</SelectItem>
                   <SelectItem value="escalated">Escalated</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
                 </SelectContent>
