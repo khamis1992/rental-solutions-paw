@@ -3,16 +3,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { FileUploadSection } from "./components/FileUploadSection";
-import { 
-  uploadImportFile, 
-  createImportLog, 
-  processImport,
-  pollImportStatus 
-} from "./services/transactionImportService";
+import { TransactionPreviewTable } from "./TransactionPreviewTable";
+import { Button } from "@/components/ui/button";
+import { parseCSV } from "./utils/csvUtils";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -32,71 +31,64 @@ export const TransactionImport = () => {
     setIsAnalyzing(true);
     
     try {
-      console.log('Starting file upload process...');
-      const fileName = await uploadImportFile(file);
-      console.log('File uploaded successfully:', fileName);
-
-      await createImportLog(fileName);
-      console.log('Import log created');
-
-      const { data: functionResponse, error: functionError } = await processImport(fileName);
-
-      if (functionError) {
-        console.error('Edge Function error:', functionError);
-        throw functionError;
-      }
-
-      console.log('Edge Function response:', functionResponse);
-
-      const pollInterval = setInterval(async () => {
-        try {
-          const importLog = await pollImportStatus(fileName);
-
-          if (importLog?.status === "completed") {
-            clearInterval(pollInterval);
-            toast({
-              title: "Import Complete",
-              description: `Successfully processed ${importLog.records_processed} transactions.`,
-            });
-            
-            await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-            setIsAnalyzing(false);
-          } else if (importLog?.status === "error") {
-            clearInterval(pollInterval);
-            throw new Error("Import failed");
-          }
-        } catch (error) {
-          console.error('Polling error:', error);
-          clearInterval(pollInterval);
-          setIsAnalyzing(false);
-          toast({
-            title: "Error",
-            description: "Failed to check import status",
-            variant: "destructive",
-          });
-        }
-      }, 2000);
-
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (isAnalyzing) {
-          setIsAnalyzing(false);
-          toast({
-            title: "Error",
-            description: "Import timed out. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }, 30000);
-
+      const text = await file.text();
+      const parsedData = parseCSV(text);
+      setPreviewData(parsedData);
+      setShowPreview(true);
+      setIsAnalyzing(false);
+      
+      toast({
+        title: "Success",
+        description: `Successfully parsed ${parsedData.length} transactions.`,
+      });
     } catch (error: any) {
-      console.error('Import process error:', error);
+      console.error('CSV parsing error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to process import",
+        description: error.message || "Failed to parse CSV file",
         variant: "destructive",
       });
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleDataChange = (newData: any[]) => {
+    setPreviewData(newData);
+  };
+
+  const handleSaveTransactions = async () => {
+    setIsUploading(true);
+    try {
+      const { data, error } = await supabase
+        .from('accounting_transactions')
+        .insert(previewData.map(row => ({
+          transaction_date: row.date,
+          amount: parseFloat(row.amount),
+          description: row.description,
+          category_id: row.category_id,
+          type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
+          customer_id: row.customer_id || null
+        })));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Successfully imported ${previewData.length} transactions.`,
+      });
+      
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      setShowPreview(false);
+      setPreviewData([]);
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to import transactions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -128,6 +120,31 @@ export const TransactionImport = () => {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Processing import...
+        </div>
+      )}
+
+      {showPreview && previewData.length > 0 && (
+        <div className="space-y-4">
+          <TransactionPreviewTable
+            data={previewData}
+            onDataChange={handleDataChange}
+          />
+          
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSaveTransactions}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                'Import Transactions'
+              )}
+            </Button>
+          </div>
         </div>
       )}
     </div>
