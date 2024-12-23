@@ -1,13 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransactionList } from "./TransactionList";
 import { TransactionForm } from "./TransactionForm";
 import { formatCurrency } from "@/lib/utils";
-import { Loader2, TrendingDown, TrendingUp } from "lucide-react";
+import { Loader2, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DeleteTransactionsDialog } from "../components/DeleteTransactionsDialog";
 
 export function AccountingOverview() {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
+
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["accounting-transactions"],
     queryFn: async () => {
@@ -30,6 +38,37 @@ export function AccountingOverview() {
       }));
     },
   });
+
+  const handleDeleteAllTransactions = async () => {
+    try {
+      console.log("Starting delete all transactions process...");
+      setIsDeleting(true);
+      
+      const { data, error } = await supabase.functions.invoke('delete-all-transactions');
+      
+      if (error) {
+        console.error("Error in delete-all-transactions function:", error);
+        throw error;
+      }
+
+      console.log("Delete all transactions successful:", data);
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["transaction-history"] }),
+        queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] })
+      ]);
+      
+      toast.success("Successfully deleted all transactions");
+      setIsDeleteDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error deleting transactions:', error);
+      toast.error(error.message || "Failed to delete transactions. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const totalIncome = transactions?.reduce((sum, transaction) => {
     if (transaction.type === "income") {
@@ -57,6 +96,21 @@ export function AccountingOverview() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold">Accounting Overview</h2>
+        <Button 
+          variant="destructive" 
+          onClick={() => {
+            console.log("Delete button clicked");
+            setIsDeleteDialogOpen(true);
+          }}
+          className="gap-2"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete All Transactions
+        </Button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -107,6 +161,13 @@ export function AccountingOverview() {
           <TransactionForm />
         </TabsContent>
       </Tabs>
+
+      <DeleteTransactionsDialog
+        isOpen={isDeleteDialogOpen}
+        isDeleting={isDeleting}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteAllTransactions}
+      />
     </div>
   );
 }

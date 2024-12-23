@@ -1,18 +1,10 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { FinancialCards } from "./components/FinancialCards";
 import { RecentTransactionsList } from "./components/RecentTransactionsList";
-import { DeleteTransactionsDialog } from "./components/DeleteTransactionsDialog";
 
 export const FinanceOverview = () => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const queryClient = useQueryClient();
-
   const { data: financialData, isLoading, error } = useQuery({
     queryKey: ["financial-overview"],
     queryFn: async () => {
@@ -65,36 +57,6 @@ export const FinanceOverview = () => {
     }
   });
 
-  const handleDeleteAllTransactions = async () => {
-    try {
-      console.log("Starting delete all transactions process...");
-      setIsDeleting(true);
-      
-      const { data, error } = await supabase.functions.invoke('delete-all-transactions');
-      
-      if (error) {
-        console.error("Error in delete-all-transactions function:", error);
-        throw error;
-      }
-
-      console.log("Delete all transactions successful:", data);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
-        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["transaction-history"] })
-      ]);
-      
-      toast.success("Successfully deleted all transactions");
-      setIsDeleteDialogOpen(false);
-    } catch (error: any) {
-      console.error('Error deleting transactions:', error);
-      toast.error(error.message || "Failed to delete transactions. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -136,17 +98,6 @@ export const FinanceOverview = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Financial Overview</h2>
-        <Button 
-          variant="destructive" 
-          onClick={() => {
-            console.log("Delete button clicked");
-            setIsDeleteDialogOpen(true);
-          }}
-          className="gap-2"
-        >
-          <Trash2 className="h-4 w-4" />
-          Delete All Transactions
-        </Button>
       </div>
 
       <FinancialCards 
@@ -157,13 +108,6 @@ export const FinanceOverview = () => {
       />
 
       <RecentTransactionsList transactions={recentTransactions} />
-
-      <DeleteTransactionsDialog
-        isOpen={isDeleteDialogOpen}
-        isDeleting={isDeleting}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDeleteAllTransactions}
-      />
     </div>
   );
 };
