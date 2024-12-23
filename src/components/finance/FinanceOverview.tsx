@@ -55,8 +55,7 @@ export const FinanceOverview = () => {
       setIsDeleting(true);
       
       // Call the RPC function to delete transactions
-      const { data, error } = await supabase.rpc('delete_all_transactions');
-      console.log("Delete RPC response:", { data, error });
+      const { error } = await supabase.rpc('delete_all_transactions');
       
       if (error) {
         console.error("Error in delete_all_transactions RPC:", error);
@@ -64,14 +63,13 @@ export const FinanceOverview = () => {
       }
 
       // Invalidate and refetch queries to update the UI
-      console.log("Invalidating queries...");
       await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
       
       toast.success("All transactions have been deleted successfully");
       setIsDeleteDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting transactions:', error);
-      toast.error("Failed to delete transactions. Please try again.");
+      toast.error(error.message || "Failed to delete transactions. Please try again.");
     } finally {
       setIsDeleting(false);
     }
