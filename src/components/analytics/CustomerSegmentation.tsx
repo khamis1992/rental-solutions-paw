@@ -50,8 +50,8 @@ export const CustomerSegmentation = () => {
 
   // Transform data for visualization
   const scatterData = segments?.map((segment) => ({
-    x: segment.features.rental_frequency || 0,
-    y: segment.features.average_rental_duration || 0,
+    x: segment.features ? (segment.features as any).rental_frequency || 0 : 0,
+    y: segment.features ? (segment.features as any).average_rental_duration || 0 : 0,
     segment: segment.segment_name,
     customer: segment.customer?.full_name,
   }));

@@ -1,3 +1,10 @@
+interface RequestConfig {
+  method?: string;
+  body?: any;
+  params?: Record<string, string>;
+  headers?: Record<string, string>;
+}
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
