@@ -33,10 +33,11 @@ serve(async (req) => {
       throw countExpenseError;
     }
 
-    // Then delete expense transactions using a simple delete
+    // Then delete expense transactions with a WHERE clause that matches all records
     const { error: expenseError } = await supabaseClient
       .from('expense_transactions')
-      .delete();
+      .delete()
+      .gte('created_at', '2000-01-01'); // This will match all records since this is a past date
 
     if (expenseError) {
       console.error("Error deleting expense transactions:", expenseError);
@@ -55,10 +56,11 @@ serve(async (req) => {
       throw countAccountingError;
     }
 
-    // Delete accounting transactions using a simple delete
+    // Delete accounting transactions with a WHERE clause that matches all records
     const { error: accountingError } = await supabaseClient
       .from('accounting_transactions')
-      .delete();
+      .delete()
+      .gte('created_at', '2000-01-01'); // This will match all records since this is a past date
 
     if (accountingError) {
       console.error("Error deleting accounting transactions:", accountingError);
