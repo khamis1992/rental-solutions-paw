@@ -33,11 +33,10 @@ serve(async (req) => {
       throw countExpenseError;
     }
 
-    // Then delete expense transactions
+    // Then delete expense transactions using a simple delete
     const { error: expenseError } = await supabaseClient
       .from('expense_transactions')
-      .delete()
-      .neq('id', null);
+      .delete();
 
     if (expenseError) {
       console.error("Error deleting expense transactions:", expenseError);
@@ -56,11 +55,10 @@ serve(async (req) => {
       throw countAccountingError;
     }
 
-    // Delete accounting transactions
+    // Delete accounting transactions using a simple delete
     const { error: accountingError } = await supabaseClient
       .from('accounting_transactions')
-      .delete()
-      .neq('id', null);
+      .delete();
 
     if (accountingError) {
       console.error("Error deleting accounting transactions:", accountingError);
