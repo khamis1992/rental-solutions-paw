@@ -920,6 +920,54 @@ export type Database = {
           },
         ]
       }
+      customer_segments: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          customer_id: string | null
+          features: Json
+          id: string
+          segment_description: string | null
+          segment_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          features: Json
+          id?: string
+          segment_description?: string | null
+          segment_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          features?: Json
+          id?: string
+          segment_description?: string | null
+          segment_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_segments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       damages: {
         Row: {
           created_at: string
