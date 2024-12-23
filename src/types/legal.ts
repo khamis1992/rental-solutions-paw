@@ -1,4 +1,4 @@
-export type LegalCaseStatus = 'pending_reminder' | 'reminder_sent' | 'escalated' | 'resolved';
+export type LegalCaseStatus = 'pending_reminder' | 'escalated' | 'resolved';
 
 export interface LegalCase {
   id: string;
