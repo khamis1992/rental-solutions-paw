@@ -504,32 +504,41 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          browser_info: Json | null
           changes: Json | null
           created_at: string
           entity_id: string | null
           entity_type: string
           id: string
           ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
           action: string
+          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           action?: string
+          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type?: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -3764,6 +3773,18 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
+      audit_action_type:
+        | "create"
+        | "update"
+        | "delete"
+        | "view"
+        | "login"
+        | "logout"
+        | "export"
+        | "import"
+        | "payment"
+        | "status_change"
+        | "document_upload"
       customer_status_type:
         | "active"
         | "inactive"

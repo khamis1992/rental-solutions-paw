@@ -6,6 +6,7 @@ import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { CustomerProfileManagement } from "@/components/customers/CustomerProfileManagement";
+import { AuditLogViewer } from "@/components/audit/AuditLogViewer";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
@@ -115,6 +116,12 @@ const Index = () => {
             </ErrorBoundary>
           </div>
         </div>
+
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Audit Logs" />}>
+            <AuditLogViewer />
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </DashboardLayout>
   );
