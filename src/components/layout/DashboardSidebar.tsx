@@ -100,7 +100,7 @@ export const DashboardSidebar = () => {
 
   if (isLoading) {
     return (
-      <Sidebar defaultCollapsed={isMobile}>
+      <Sidebar>
         <SidebarContent>
           <div className="flex h-14 items-center border-b px-6">
             <span className="font-semibold">Rental Solutions</span>
@@ -115,7 +115,7 @@ export const DashboardSidebar = () => {
 
   if (error) {
     return (
-      <Sidebar defaultCollapsed={isMobile}>
+      <Sidebar>
         <SidebarContent>
           <div className="flex h-14 items-center border-b px-6">
             <span className="font-semibold">Rental Solutions</span>
@@ -135,7 +135,7 @@ export const DashboardSidebar = () => {
   }
 
   return (
-    <Sidebar defaultCollapsed={isMobile}>
+    <Sidebar>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold">Rental Solutions</span>
