@@ -66,7 +66,10 @@ export function LegalCasesList() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-[300px]"
             />
-            <Select value={statusFilter} onValueChange={(value: typeof statusFilter) => setStatusFilter(value)}>
+            <Select 
+              value={statusFilter} 
+              onValueChange={(value: typeof statusFilter) => setStatusFilter(value)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
