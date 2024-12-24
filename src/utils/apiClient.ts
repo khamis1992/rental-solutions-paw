@@ -13,6 +13,8 @@ interface ApiResponse<T = any> {
   error: Error | null;
 }
 
+type TableName = "profiles" | "leases" | "vehicles" | "payments";
+
 class ApiClient {
   private baseUrl: string;
 
@@ -24,10 +26,8 @@ class ApiClient {
     try {
       const { method = 'GET', body, params, headers = {} } = config;
 
-      console.log(`API Request: ${method} ${endpoint}`, { body, params });
-
       if (endpoint.startsWith('/db/')) {
-        const tableName = endpoint.replace('/db/', '');
+        const tableName = endpoint.replace('/db/', '') as TableName;
         let query = supabase.from(tableName);
 
         switch (method) {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentScheduleItem } from "@/types/agreement";
 
 export interface AgreementFormData {
   agreementType: "lease_to_own" | "short_term";
@@ -24,9 +25,10 @@ export interface AgreementFormData {
   notes?: string;
   rentAmount: number;
   initialMileage: number;
+  total_amount: number;
 }
 
-export const useAgreementForm = (onSuccess?: (values: Partial<AgreementFormData>) => void) => {
+export const useAgreementForm = (onSuccess?: () => void) => {
   const [open, setOpen] = useState(false);
   const {
     register,
@@ -74,13 +76,14 @@ export const useAgreementForm = (onSuccess?: (values: Partial<AgreementFormData>
           status: "active",
           initial_mileage: data.initialMileage,
           rent_amount: data.rentAmount,
-          notes: data.notes
+          notes: data.notes,
+          total_amount: data.total_amount
         });
 
       if (agreementError) throw agreementError;
 
       if (onSuccess) {
-        onSuccess(data);
+        onSuccess();
       }
     } catch (error) {
       console.error("Error in form submission:", error);
