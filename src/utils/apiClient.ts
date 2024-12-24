@@ -2,24 +2,26 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { toast } from "sonner";
 
-// Define table types from Database type
+// Define basic types
 type Tables = Database['public']['Tables'];
 type TableName = keyof Tables;
 
-interface ApiResponse<T> {
-  data: T | null;
-  error: Error | null;
+// Simplified error interface
+interface ApiError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
 }
 
-interface Error {
-  message: string;
-  details: string;
-  hint: string;
-  code: string;
+// Simplified response interface
+interface ApiResponse<T> {
+  data: T | null;
+  error: ApiError | null;
 }
 
 async function request<T>(
-  method: string,
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   table: TableName,
   data?: Record<string, unknown>,
   id?: string
@@ -37,14 +39,14 @@ async function request<T>(
             .maybeSingle();
 
           result = {
-            data: fetchedData as unknown as T,
-            error: error as Error | null
+            data: fetchedData as T,
+            error: error as ApiError
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as unknown as T,
-            error: error as Error | null
+            data: fetchedData as T,
+            error: error as ApiError
           };
         }
         break;
@@ -57,8 +59,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: insertedData as unknown as T,
-          error: insertError as Error | null
+          data: insertedData as T,
+          error: insertError as ApiError
         };
         break;
       }
@@ -72,8 +74,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: updatedData as unknown as T,
-          error: updateError as Error | null
+          data: updatedData as T,
+          error: updateError as ApiError
         };
         break;
       }
@@ -86,8 +88,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: deletedData as unknown as T,
-          error: deleteError as Error | null
+          data: deletedData as T,
+          error: deleteError as ApiError
         };
         break;
       }
@@ -107,7 +109,7 @@ async function request<T>(
     toast.error('An unexpected error occurred');
     return { 
       data: null, 
-      error: error as Error 
+      error: error as ApiError 
     };
   }
 }
