@@ -31,6 +31,7 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
       setIsDeleting(true);
       console.log("Deleting maintenance record:", recordId);
 
+      // First delete related maintenance documents
       const { error: docsError } = await supabase
         .from('maintenance_documents')
         .delete()
@@ -41,6 +42,7 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
         throw docsError;
       }
 
+      // Then delete the maintenance record
       const { error } = await supabase
         .from('maintenance')
         .delete()
@@ -48,6 +50,8 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
 
       if (error) throw error;
 
+      // If the vehicle is in maintenance status and this was the only maintenance record,
+      // update vehicle status back to available
       if (status === 'scheduled' || status === 'in_progress') {
         const { data: otherMaintenanceRecords } = await supabase
           .from('maintenance')
@@ -65,8 +69,10 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
         }
       }
 
+      // Invalidate all relevant queries to trigger UI updates
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
+        queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
       ]);
