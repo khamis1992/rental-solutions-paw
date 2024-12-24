@@ -10,6 +10,13 @@ interface ApiResponse<T> {
   error: Error | null;
 }
 
+type PostgrestError = {
+  message: string;
+  details: string;
+  hint: string;
+  code: string;
+};
+
 async function request<T>(
   method: string,
   table: TableName,
@@ -26,43 +33,46 @@ async function request<T>(
           const { data: fetchedData, error } = await query
             .select('*')
             .eq('id', id)
-            .single();
+            .maybeSingle();
+
           result = {
-            data: (fetchedData || null) as T | null,
-            error: error
+            data: fetchedData as T | null,
+            error: error as Error | null
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: (fetchedData || null) as T | null,
-            error: error
+            data: fetchedData as T[] | null,
+            error: error as Error | null
           };
         }
         break;
       }
 
       case 'POST': {
+        if (!data) throw new Error('Data is required for POST requests');
         const { data: insertedData, error: insertError } = await query
           .insert(data)
           .select()
           .single();
         result = {
-          data: (insertedData || null) as T | null,
-          error: insertError
+          data: insertedData as T | null,
+          error: insertError as Error | null
         };
         break;
       }
 
       case 'PUT': {
         if (!id) throw new Error('ID is required for PUT requests');
+        if (!data) throw new Error('Data is required for PUT requests');
         const { data: updatedData, error: updateError } = await query
           .update(data)
           .eq('id', id)
           .select()
           .single();
         result = {
-          data: (updatedData || null) as T | null,
-          error: updateError
+          data: updatedData as T | null,
+          error: updateError as Error | null
         };
         break;
       }
@@ -75,8 +85,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: (deletedData || null) as T | null,
-          error: deleteError
+          data: deletedData as T | null,
+          error: deleteError as Error | null
         };
         break;
       }
@@ -86,8 +96,9 @@ async function request<T>(
     }
 
     if (result.error) {
-      console.error(`API Error (${method} ${table}):`, result.error);
-      toast.error(`Error: ${result.error.message}`);
+      const pgError = result.error as unknown as PostgrestError;
+      console.error(`API Error (${method} ${table}):`, pgError);
+      toast.error(`Error: ${pgError.message}`);
     }
 
     return result;
