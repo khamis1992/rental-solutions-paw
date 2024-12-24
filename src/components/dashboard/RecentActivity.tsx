@@ -1,8 +1,7 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car, Clock, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
 
 export const RecentActivity = () => {
   const { data: recentActivities } = useQuery({
@@ -13,7 +12,7 @@ export const RecentActivity = () => {
         .from("vehicles")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(1);
 
       // Fetch recent agreement updates
       const { data: agreements } = await supabase
@@ -26,68 +25,95 @@ export const RecentActivity = () => {
           )
         `)
         .order("updated_at", { ascending: false })
-        .limit(5);
+        .limit(1);
+
+      // Fetch recent vehicle returns
+      const { data: returns } = await supabase
+        .from("leases")
+        .select(`
+          *,
+          vehicles (
+            make,
+            model
+          )
+        `)
+        .eq("status", "closed")
+        .order("updated_at", { ascending: false })
+        .limit(1);
 
       return {
-        vehicles,
-        agreements
+        vehicleAddition: vehicles?.[0],
+        agreementUpdate: agreements?.[0],
+        vehicleReturn: returns?.[0],
       };
     },
   });
 
-  if (!recentActivities?.vehicles && !recentActivities?.agreements) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        No recent activity to display
-      </div>
-    );
-  }
+  const getTimeAgo = (date: string) => {
+    const now = new Date();
+    const then = new Date(date);
+    const diffInHours = Math.floor((now.getTime() - then.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours === 1) return "1h ago";
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return `${Math.floor(diffInHours / 24)}d ago`;
+  };
+
+  const activities = recentActivities ? [
+    recentActivities.vehicleAddition && {
+      icon: Car,
+      title: "New Vehicle Added",
+      description: `${recentActivities.vehicleAddition.year} ${recentActivities.vehicleAddition.make} ${recentActivities.vehicleAddition.model} - Added to fleet`,
+      time: getTimeAgo(recentActivities.vehicleAddition.created_at),
+      status: "success"
+    },
+    recentActivities.agreementUpdate && {
+      icon: Clock,
+      title: "Rental Agreement Updated",
+      description: `Agreement #${recentActivities.agreementUpdate.agreement_number} - ${recentActivities.agreementUpdate.vehicles.make} ${recentActivities.agreementUpdate.vehicles.model}`,
+      time: getTimeAgo(recentActivities.agreementUpdate.updated_at),
+      status: "warning"
+    },
+    recentActivities.vehicleReturn && {
+      icon: CheckCircle,
+      title: "Vehicle Returned",
+      description: `${recentActivities.vehicleReturn.vehicles.make} ${recentActivities.vehicleReturn.vehicles.model} returned`,
+      time: getTimeAgo(recentActivities.vehicleReturn.updated_at),
+      status: "info"
+    }
+  ].filter(Boolean) : [];
 
   return (
-    <div className="space-y-4">
-      {recentActivities?.vehicles?.map((vehicle) => (
-        <div
-          key={vehicle.id}
-          className="flex items-center gap-4 p-4 rounded-lg border bg-white hover:shadow-sm transition-shadow"
-        >
-          <div className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-50 text-blue-500">
-            <Car className="h-5 w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900">
-              New Vehicle Added
-            </p>
-            <p className="text-sm text-gray-500 truncate">
-              {vehicle.year} {vehicle.make} {vehicle.model}
-            </p>
-          </div>
-          <div className="text-xs text-gray-500">
-            {formatDistanceToNow(new Date(vehicle.created_at), { addSuffix: true })}
-          </div>
+    <Card className="lg:col-span-4">
+      <CardHeader>
+        <CardTitle>Recent Activity</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {activities.map((activity, i) => (
+            activity && (
+              <div key={i} className="flex items-center gap-4 p-4 rounded-lg border">
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center
+                  ${activity.status === 'success' ? 'bg-emerald-50 text-emerald-500' :
+                    activity.status === 'warning' ? 'bg-yellow-50 text-yellow-500' :
+                    'bg-blue-50 text-blue-500'}`}>
+                  <activity.icon className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-medium truncate">{activity.title}</h4>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {activity.description}
+                  </p>
+                </div>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {activity.time}
+                </span>
+              </div>
+            )
+          ))}
         </div>
-      ))}
-
-      {recentActivities?.agreements?.map((agreement) => (
-        <div
-          key={agreement.id}
-          className="flex items-center gap-4 p-4 rounded-lg border bg-white hover:shadow-sm transition-shadow"
-        >
-          <div className="h-10 w-10 rounded-full flex items-center justify-center bg-green-50 text-green-500">
-            <CheckCircle className="h-5 w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900">
-              Agreement Updated
-            </p>
-            <p className="text-sm text-gray-500 truncate">
-              {agreement.vehicles?.make} {agreement.vehicles?.model}
-            </p>
-          </div>
-          <div className="text-xs text-gray-500">
-            {formatDistanceToNow(new Date(agreement.updated_at), { addSuffix: true })}
-          </div>
-        </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
   );
 };

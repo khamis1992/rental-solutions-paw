@@ -1,67 +1,112 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
-import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
-import { CustomerSegmentation } from "@/components/analytics/CustomerSegmentation";
+import { Suspense, lazy } from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
+import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+
+// Improved lazy loading with better error handling
+const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
+  return lazy(() => 
+    importFn().catch(error => {
+      console.error(`Error loading ${componentName}:`, error);
+      toast.error(`Failed to load ${componentName}. Please refresh the page.`);
+      return Promise.reject(error);
+    })
+  );
+};
+
+// Lazy load components with improved error handling
+const DashboardStats = lazyLoadComponent(
+  () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
+  "DashboardStats"
+);
+const DashboardAlerts = lazyLoadComponent(
+  () => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })),
+  "DashboardAlerts"
+);
+const QuickActions = lazyLoadComponent(
+  () => import("@/components/dashboard/QuickActions").then(module => ({ default: module.QuickActions })),
+  "QuickActions"
+);
+const WelcomeHeader = lazyLoadComponent(
+  () => import("@/components/dashboard/WelcomeHeader").then(module => ({ default: module.WelcomeHeader })),
+  "WelcomeHeader"
+);
+const RecentActivity = lazyLoadComponent(
+  () => import("@/components/dashboard/RecentActivity").then(module => ({ default: module.RecentActivity })),
+  "RecentActivity"
+);
+const SystemChatbot = lazyLoadComponent(
+  () => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })),
+  "SystemChatbot"
+);
+
+// Improved loading component with better visual feedback
+const ComponentLoader = ({ componentName }: { componentName: string }) => (
+  <div className="w-full h-[200px] space-y-4 p-4">
+    <div className="h-4 w-1/4">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="h-[160px]">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="text-sm text-muted-foreground text-center">
+      Loading {componentName}...
+    </div>
+  </div>
+);
 
 const Index = () => {
+  usePerformanceMonitoring();
+  useDashboardSubscriptions();
+
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gray-50/50">
-        <div className="container mx-auto px-4 py-8">
-          {/* Welcome Section with improved spacing */}
-          <div className="mb-8">
+      <div className="space-y-8 px-2 py-6 w-full max-w-[1920px] mx-auto">
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
             <WelcomeHeader />
-          </div>
+          </Suspense>
+        </ErrorBoundary>
 
-          {/* Quick Actions with larger, more prominent buttons */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Quick Actions</h2>
-            <QuickActions />
-          </div>
-
-          {/* Main Stats Grid with enhanced visuals */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Key Metrics</h2>
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
             <DashboardStats />
+          </Suspense>
+        </ErrorBoundary>
+
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
+            <QuickActions />
+          </Suspense>
+        </ErrorBoundary>
+        
+        <div className="grid gap-8 lg:grid-cols-7">
+          <div className="lg:col-span-7">
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
+                <DashboardAlerts />
+              </Suspense>
+            </ErrorBoundary>
           </div>
-
-          {/* Three Column Layout for Additional Widgets */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-            {/* Left Column - Upcoming Rentals */}
-            <div className="lg:col-span-4">
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6 text-gray-800">Upcoming Rentals</h2>
-                <UpcomingRentals />
-              </div>
-            </div>
-
-            {/* Middle Column - Intelligent Scheduling */}
-            <div className="lg:col-span-4">
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6 text-gray-800">Schedule Overview</h2>
-                <IntelligentScheduling />
-              </div>
-            </div>
-
-            {/* Right Column - Recent Activity */}
-            <div className="lg:col-span-4">
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold mb-6 text-gray-800">Recent Activity</h2>
+        </div>
+        
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+          <div className="lg:col-span-4">
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
                 <RecentActivity />
-              </div>
-            </div>
+              </Suspense>
+            </ErrorBoundary>
           </div>
-
-          {/* Customer Insights Section */}
-          <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-8">
-              <h2 className="text-xl font-semibold mb-6 text-gray-800">Customer Insights</h2>
-              <CustomerSegmentation />
-            </div>
+          <div className="lg:col-span-3">
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
+                <SystemChatbot />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
       </div>

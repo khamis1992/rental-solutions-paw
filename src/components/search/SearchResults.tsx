@@ -1,91 +1,109 @@
-import { FC } from 'react';
+import { CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Loader2 } from "lucide-react";
 
-export interface SearchResultsProps {
+interface SearchResult {
+  id: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  license_plate?: string;
+  full_name?: string;
+  phone_number?: string;
+  agreement_number?: string;
+  vehicles?: {
+    make: string;
+    model: string;
+  };
+}
+
+interface SearchResultsProps {
   isLoading: boolean;
-  error: Error | null;
+  error: unknown;
   searchQuery: string;
   searchResults: {
-    vehicles: Array<{
-      id: string;
-      make: string;
-      model: string;
-      year: number;
-      license_plate: string;
-    }>;
-    customers: Array<{
-      id: string;
-      full_name: string;
-      phone_number: string;
-    }>;
-    agreements: Array<{
-      id: string;
-      agreement_number: string;
-      customer_name: string;
-    }>;
-  };
+    vehicles: SearchResult[];
+    customers: SearchResult[];
+    agreements: SearchResult[];
+  } | undefined;
   handleSelect: (type: string, id: string) => void;
 }
 
-export const SearchResults: FC<SearchResultsProps> = ({
+export const SearchResults = ({
   isLoading,
   error,
   searchQuery,
   searchResults,
-  handleSelect
-}) => {
+  handleSelect,
+}: SearchResultsProps) => {
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <CommandEmpty>Error loading results. Please try again.</CommandEmpty>;
+  }
+
+  if (!searchQuery) {
+    return <CommandEmpty>Start typing to search...</CommandEmpty>;
+  }
+
+  if (searchQuery.length < 2) {
+    return <CommandEmpty>Please enter at least 2 characters...</CommandEmpty>;
+  }
+
+  if (
+    !searchResults?.vehicles.length &&
+    !searchResults?.customers.length &&
+    !searchResults?.agreements.length
+  ) {
+    return <CommandEmpty>No results found.</CommandEmpty>;
   }
 
   return (
-    <div>
-      <h2>Search Results for "{searchQuery}"</h2>
-      <div>
-        <h3>Vehicles</h3>
-        {searchResults.vehicles.length > 0 ? (
-          <ul>
-            {searchResults.vehicles.map(vehicle => (
-              <li key={vehicle.id} onClick={() => handleSelect('vehicle', vehicle.id)}>
-                {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No vehicles found.</p>
-        )}
-      </div>
-      <div>
-        <h3>Customers</h3>
-        {searchResults.customers.length > 0 ? (
-          <ul>
-            {searchResults.customers.map(customer => (
-              <li key={customer.id} onClick={() => handleSelect('customer', customer.id)}>
-                {customer.full_name} - {customer.phone_number}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No customers found.</p>
-        )}
-      </div>
-      <div>
-        <h3>Agreements</h3>
-        {searchResults.agreements.length > 0 ? (
-          <ul>
-            {searchResults.agreements.map(agreement => (
-              <li key={agreement.id} onClick={() => handleSelect('agreement', agreement.id)}>
-                Agreement #{agreement.agreement_number} - {agreement.customer_name}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No agreements found.</p>
-        )}
-      </div>
-    </div>
+    <>
+      {searchResults?.vehicles.length > 0 && (
+        <CommandGroup heading="Vehicles">
+          {searchResults.vehicles.map((vehicle) => (
+            <CommandItem
+              key={vehicle.id}
+              onSelect={() => handleSelect("vehicle", vehicle.id)}
+            >
+              {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+
+      {searchResults?.customers.length > 0 && (
+        <CommandGroup heading="Customers">
+          {searchResults.customers.map((customer) => (
+            <CommandItem
+              key={customer.id}
+              onSelect={() => handleSelect("customer", customer.id)}
+            >
+              {customer.full_name} - {customer.phone_number}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+
+      {searchResults?.agreements.length > 0 && (
+        <CommandGroup heading="Agreements">
+          {searchResults.agreements.map((agreement) => (
+            <CommandItem
+              key={agreement.id}
+              onSelect={() => handleSelect("agreement", agreement.id)}
+            >
+              Agreement #{agreement.agreement_number} - {agreement.vehicles?.make}{" "}
+              {agreement.vehicles?.model}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      )}
+    </>
   );
 };

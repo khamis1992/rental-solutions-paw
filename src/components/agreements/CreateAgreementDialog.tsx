@@ -35,6 +35,7 @@ export function CreateAgreementDialog() {
     setValue,
     errors,
   } = useAgreementForm(() => {
+    // Callback after successful creation
     setOpen(false);
     setSelectedCustomerId("");
     toast.success("Agreement created successfully");

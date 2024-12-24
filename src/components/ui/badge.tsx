@@ -20,7 +20,6 @@ const badgeVariants = cva(
         pending_deposit: "border-transparent bg-orange-500 text-white hover:bg-orange-600",
         closed: "border-transparent bg-red-500 text-white hover:bg-red-600",
         success: "border-transparent bg-green-500 text-white hover:bg-green-600",
-        warning: "border-transparent bg-yellow-500 text-white hover:bg-yellow-600",
       },
     },
     defaultVariants: {
