@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { performanceMetrics } from "@/services/performanceMonitoring";
 import { toast } from "sonner";
 import type { ExtendedPerformance } from "@/services/performance/types";
+import { retryOperation } from "@/components/agreements/utils/retryUtils";
 
 const MONITORING_INTERVALS = {
   CPU: 10000,    // 10 seconds
@@ -39,46 +40,70 @@ export const usePerformanceMonitoring = () => {
 
   const monitorPerformance = async () => {
     try {
-      // Monitor CPU
+      // Monitor CPU with retry
       const monitorCPU = async () => {
-        const cpuUsage = await measureCPUUsage();
-        if (cpuUsage > PERFORMANCE_THRESHOLDS.CPU) {
-          toast.warning("High CPU Usage", {
-            description: `Current CPU utilization is ${cpuUsage.toFixed(1)}%`
-          });
+        try {
+          const cpuUsage = await measureCPUUsage();
+          if (cpuUsage > PERFORMANCE_THRESHOLDS.CPU) {
+            toast.warning("High CPU Usage", {
+              description: `Current CPU utilization is ${cpuUsage.toFixed(1)}%`
+            });
+          }
+          await retryOperation(
+            () => performanceMetrics.trackCPUUtilization(cpuUsage),
+            3, // 3 retries
+            1000 // 1 second delay between retries
+          );
+        } catch (error) {
+          console.error('Failed to track CPU utilization:', error);
         }
-        await performanceMetrics.trackCPUUtilization(cpuUsage);
       };
 
-      // Monitor Memory
+      // Monitor Memory with retry
       const monitorMemory = async () => {
         const performance = window.performance as ExtendedPerformance;
         if (performance?.memory) {
-          const usedMemory = performance.memory.usedJSHeapSize;
-          const totalMemory = performance.memory.totalJSHeapSize;
-          const memoryUsage = (usedMemory / totalMemory) * 100;
+          try {
+            const usedMemory = performance.memory.usedJSHeapSize;
+            const totalMemory = performance.memory.totalJSHeapSize;
+            const memoryUsage = (usedMemory / totalMemory) * 100;
 
-          if (memoryUsage > PERFORMANCE_THRESHOLDS.MEMORY) {
-            toast.warning("High Memory Usage", {
-              description: `Memory utilization is at ${memoryUsage.toFixed(1)}%`
-            });
+            if (memoryUsage > PERFORMANCE_THRESHOLDS.MEMORY) {
+              toast.warning("High Memory Usage", {
+                description: `Memory utilization is at ${memoryUsage.toFixed(1)}%`
+              });
+            }
+            await retryOperation(
+              () => performanceMetrics.trackMemoryUsage(),
+              3,
+              1000
+            );
+          } catch (error) {
+            console.error('Failed to track memory usage:', error);
           }
-          await performanceMetrics.trackMemoryUsage();
         }
       };
 
-      // Monitor Disk
+      // Monitor Disk with retry
       const monitorDisk = async () => {
         if ('storage' in navigator && 'estimate' in navigator.storage) {
-          const { quota = 0, usage = 0 } = await navigator.storage.estimate();
-          const usagePercentage = (usage / quota) * 100;
+          try {
+            const { quota = 0, usage = 0 } = await navigator.storage.estimate();
+            const usagePercentage = (usage / quota) * 100;
 
-          if (usagePercentage > PERFORMANCE_THRESHOLDS.DISK) {
-            toast.warning("High Disk Usage", {
-              description: `Storage utilization is at ${usagePercentage.toFixed(1)}%`
-            });
+            if (usagePercentage > PERFORMANCE_THRESHOLDS.DISK) {
+              toast.warning("High Disk Usage", {
+                description: `Storage utilization is at ${usagePercentage.toFixed(1)}%`
+              });
+            }
+            await retryOperation(
+              () => performanceMetrics.trackDiskIO(),
+              3,
+              1000
+            );
+          } catch (error) {
+            console.error('Failed to track disk I/O:', error);
           }
-          await performanceMetrics.trackDiskIO();
         }
       };
 
