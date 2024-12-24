@@ -15,10 +15,10 @@ import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
 import { RentManagement } from "./details/RentManagement";
-import { formatDateToDisplay } from "./utils/dateUtils";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { AgreementHeaderInfo } from "./details/AgreementHeaderInfo";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -79,27 +79,12 @@ export const AgreementDetailsDialog = ({
         },
         async (payload) => {
           console.log('Real-time update received for agreement:', payload);
-          
-          // Invalidate and refetch the agreement details query
           await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
-          
-          // Show a toast notification
-          const eventType = payload.eventType;
-          toast.info(
-            eventType === 'UPDATE' 
-              ? 'Agreement details updated'
-              : eventType === 'DELETE'
-              ? 'Agreement deleted'
-              : 'Agreement changed',
-            {
-              description: 'The agreement details have been updated.'
-            }
-          );
+          toast.info('Agreement details updated');
         }
       )
       .subscribe();
 
-    // Cleanup subscription on unmount or when dialog closes
     return () => {
       supabase.removeChannel(channel);
     };
@@ -118,28 +103,10 @@ export const AgreementDetailsDialog = ({
           <div>Loading agreement details...</div>
         ) : agreement ? (
           <div className="space-y-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Agreement Number</Label>
-                    <p className="text-lg font-medium">{agreement.agreement_number}</p>
-                  </div>
-                  <div>
-                    <Label>Status</Label>
-                    <p className="text-lg font-medium capitalize">{agreement.status}</p>
-                  </div>
-                  <div>
-                    <Label>Start Date</Label>
-                    <p>{formatDateToDisplay(agreement.start_date)}</p>
-                  </div>
-                  <div>
-                    <Label>End Date</Label>
-                    <p>{formatDateToDisplay(agreement.end_date)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AgreementHeaderInfo 
+              agreement={agreement}
+              onUpdate={() => queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] })}
+            />
 
             <Card>
               <CardContent className="pt-6">
