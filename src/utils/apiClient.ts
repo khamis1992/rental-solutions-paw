@@ -24,7 +24,7 @@ async function request<T>(
           const { data: result, error } = await query
             .select('*')
             .eq('id', id)
-            .single();
+            .maybeSingle();
           return { data: result as T, error: error as Error | null };
         } else {
           const { data: result, error } = await query.select('*');

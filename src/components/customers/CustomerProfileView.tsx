@@ -18,15 +18,20 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["customer", customerId],
     queryFn: async () => {
+      console.log("Fetching profile for user:", customerId);
+      
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", customerId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      
+      console.log("Profile data:", data);
       return data;
     },
+    enabled: !!customerId
   });
 
   if (isLoadingProfile) {
@@ -37,6 +42,10 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
         <Skeleton className="h-32 w-full" />
       </div>
     );
+  }
+
+  if (!profile) {
+    return <div>Customer not found</div>;
   }
 
   return (
