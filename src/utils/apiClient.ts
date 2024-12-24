@@ -40,7 +40,7 @@ async function request<T extends TableName>(
             .maybeSingle();
 
           result = {
-            data: fetchedData as Row<T>,
+            data: fetchedData as Row<T> | null,
             error: error as ApiError
           };
         } else {
@@ -50,7 +50,7 @@ async function request<T extends TableName>(
             .maybeSingle();
 
           result = {
-            data: fetchedData as Row<T>,
+            data: fetchedData as Row<T> | null,
             error: error as ApiError
           };
         }
@@ -59,13 +59,14 @@ async function request<T extends TableName>(
 
       case 'POST': {
         if (!data) throw new Error('Data is required for POST requests');
+        
         const { data: insertedData, error: insertError } = await query
-          .insert(data as Insert<T>)
+          .insert(data)
           .select()
           .single();
 
         result = {
-          data: insertedData as Row<T>,
+          data: insertedData as Row<T> | null,
           error: insertError as ApiError
         };
         break;
@@ -76,13 +77,13 @@ async function request<T extends TableName>(
         if (!data) throw new Error('Data is required for PUT requests');
         
         const { data: updatedData, error: updateError } = await query
-          .update(data as Insert<T>)
+          .update(data)
           .eq('id', id)
           .select()
           .single();
 
         result = {
-          data: updatedData as Row<T>,
+          data: updatedData as Row<T> | null,
           error: updateError as ApiError
         };
         break;
@@ -98,7 +99,7 @@ async function request<T extends TableName>(
           .single();
 
         result = {
-          data: deletedData as Row<T>,
+          data: deletedData as Row<T> | null,
           error: deleteError as ApiError
         };
         break;
