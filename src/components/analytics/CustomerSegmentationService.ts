@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
+
+type Json = Database['public']['Tables']['customer_segments']['Row']['features'];
 
 interface CustomerFeatures {
   rental_frequency: number;
@@ -61,7 +64,7 @@ export class CustomerSegmentationService {
       const paymentReliability = totalPayments > 0 ? onTimePayments / totalPayments : 0;
 
       // Determine preferred vehicle type
-      const vehicleTypes = leases.map(lease => `${lease.vehicle.make} ${lease.vehicle.model}`);
+      const vehicleTypes = leases.map(lease => `${lease.vehicles.make} ${lease.vehicles.model}`);
       const preferredVehicle = vehicleTypes.sort((a, b) =>
         vehicleTypes.filter(v => v === a).length - vehicleTypes.filter(v => v === b).length
       )[0];
@@ -136,7 +139,7 @@ export class CustomerSegmentationService {
           segment_name: result.segment,
           segment_description: result.description,
           confidence_score: result.confidence,
-          features: features,
+          features: features as unknown as Json,
         });
 
       if (error) throw error;
@@ -170,3 +173,4 @@ export class CustomerSegmentationService {
     }
   }
 }
+

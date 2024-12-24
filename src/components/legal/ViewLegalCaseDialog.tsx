@@ -1,125 +1,103 @@
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
-type LegalCaseStatus = "pending_reminder" | "in_legal_process" | "resolved";
 
 interface ViewLegalCaseDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  caseId: string;
-  currentStatus: LegalCaseStatus;
-  notes: string;
-  onStatusUpdate: () => void;
+  caseId: string | null;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
-export function ViewLegalCaseDialog({ 
-  isOpen,
-  onClose,
-  caseId,
-  currentStatus,
-  notes: initialNotes,
-  onStatusUpdate
-}: ViewLegalCaseDialogProps) {
-  const [status, setStatus] = useState<LegalCaseStatus>(currentStatus);
-  const [notes, setNotes] = useState(initialNotes);
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const handleStatusUpdate = async () => {
-    try {
-      setIsUpdating(true);
-      const { error } = await supabase
+export function ViewLegalCaseDialog({ caseId, onOpenChange, open }: ViewLegalCaseDialogProps) {
+  const { data: legalCase } = useQuery({
+    queryKey: ['legal-case', caseId],
+    queryFn: async () => {
+      if (!caseId) return null;
+      
+      const { data, error } = await supabase
         .from('legal_cases')
-        .update({
-          status,
-          notes,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', caseId);
+        .select(`
+          *,
+          customer:profiles!legal_cases_customer_id_fkey (
+            full_name
+          ),
+          assigned_to_user:profiles!legal_cases_assigned_to_fkey (
+            full_name
+          )
+        `)
+        .eq('id', caseId)
+        .single();
 
       if (error) throw error;
+      return data;
+    },
+    enabled: !!caseId
+  });
 
-      toast.success('Legal case updated successfully');
-      onStatusUpdate();
-      onClose();
-    } catch (error) {
-      console.error('Error updating legal case:', error);
-      toast.error('Failed to update legal case');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  if (!legalCase) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>View Legal Case</DialogTitle>
-          <DialogDescription>
-            View and update the status of this legal case.
-          </DialogDescription>
+          <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={status}
-              onValueChange={(value: LegalCaseStatus) => setStatus(value)}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                <SelectItem value="in_legal_process">In Legal Process</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium">Customer</h3>
+              <p>{legalCase.customer?.full_name || 'N/A'}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">Assigned To</h3>
+              <p>{legalCase.assigned_to_user?.full_name || 'Unassigned'}</p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
+
+          <div>
+            <h3 className="font-medium">Description</h3>
+            <p>{legalCase.description || 'No description provided'}</p>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium">Case Type</h3>
+              <p>{legalCase.case_type}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">Status</h3>
+              <Badge>{legalCase.status}</Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium">Amount Owed</h3>
+              <p>${legalCase.amount_owed.toFixed(2)}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">Created At</h3>
+              <p>{format(new Date(legalCase.created_at), 'PPp')}</p>
+            </div>
+          </div>
+
+          {legalCase.last_reminder_sent && (
+            <div>
+              <h3 className="font-medium">Last Reminder Sent</h3>
+              <p>{format(new Date(legalCase.last_reminder_sent), 'PPp')}</p>
+            </div>
+          )}
+
+          {legalCase.escalation_date && (
+            <div>
+              <h3 className="font-medium">Escalation Date</h3>
+              <p>{format(new Date(legalCase.escalation_date), 'PPp')}</p>
+            </div>
+          )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isUpdating}>
-            Cancel
-          </Button>
-          <Button onClick={handleStatusUpdate} disabled={isUpdating}>
-            {isUpdating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              'Update Status'
-            )}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
