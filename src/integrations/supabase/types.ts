@@ -3042,6 +3042,8 @@ export type Database = {
       }
       traffic_fine_imports: {
         Row: {
+          ai_analysis_results: Json | null
+          ai_analysis_status: string | null
           assigned_fines: number | null
           created_at: string | null
           file_name: string
@@ -3053,6 +3055,8 @@ export type Database = {
           unassigned_fines: number | null
         }
         Insert: {
+          ai_analysis_results?: Json | null
+          ai_analysis_status?: string | null
           assigned_fines?: number | null
           created_at?: string | null
           file_name: string
@@ -3064,6 +3068,8 @@ export type Database = {
           unassigned_fines?: number | null
         }
         Update: {
+          ai_analysis_results?: Json | null
+          ai_analysis_status?: string | null
           assigned_fines?: number | null
           created_at?: string | null
           file_name?: string
@@ -3103,6 +3109,7 @@ export type Database = {
           id: string
           import_batch_id: string | null
           lease_id: string | null
+          match_confidence: number | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           serial_number: string | null
           updated_at: string | null
@@ -3123,6 +3130,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           lease_id?: string | null
+          match_confidence?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           serial_number?: string | null
           updated_at?: string | null
@@ -3143,6 +3151,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           lease_id?: string | null
+          match_confidence?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           serial_number?: string | null
           updated_at?: string | null

@@ -29,6 +29,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Download the JSON file containing the preview data
     const { data: fileData, error: downloadError } = await supabaseClient
       .storage
       .from('imports')
@@ -40,64 +41,65 @@ serve(async (req) => {
     }
 
     const text = await fileData.text();
-    const rows = text.split('\n')
-      .map(row => row.trim())
-      .filter(row => row.length > 0);
-
-    if (rows.length < 2) {
-      throw new Error('File is empty or contains only headers');
-    }
-
-    const headers = rows[0].toLowerCase().split(',').map(h => h.trim());
-    const expectedColumns = 8;
-    
-    console.log('Processing CSV with headers:', headers);
-    console.log(`Expected columns: ${expectedColumns}, Found: ${headers.length}`);
-
-    if (headers.length !== expectedColumns) {
-      throw new Error(`Invalid header count. Expected ${expectedColumns} columns, found ${headers.length}`);
-    }
+    const fines = JSON.parse(text);
 
     let processed = 0;
     const errors = [];
+    const importId = crypto.randomUUID();
 
-    // Process each row (skip header)
-    for (let i = 1; i < rows.length; i++) {
+    // Log the import start
+    await supabaseClient
+      .from('traffic_fine_imports')
+      .insert([{
+        id: importId,
+        file_name: fileName,
+        total_fines: fines.length,
+        unassigned_fines: fines.length,
+        ai_analysis_status: 'pending'
+      }]);
+
+    // Process each fine
+    for (const fine of fines) {
       try {
-        const row = rows[i];
-        
-        if (!row.trim()) {
-          console.log(`Skipping empty row ${i}`);
-          continue;
-        }
+        // Insert the fine
+        const { error: insertError } = await supabaseClient
+          .from('traffic_fines')
+          .insert([{
+            serial_number: fine.serial_number,
+            violation_number: fine.violation_number,
+            violation_date: fine.violation_date,
+            license_plate: fine.license_plate,
+            fine_location: fine.fine_location,
+            violation_charge: fine.violation_charge,
+            fine_amount: fine.fine_amount,
+            violation_points: fine.violation_points,
+            import_batch_id: importId,
+            payment_status: 'pending',
+            assignment_status: 'pending'
+          }]);
 
-        const values = parseCSVRow(row);
-        validateRow(i, values, expectedColumns, row);
-
-        // Validate date and numeric values
-        const violationDate = validateDate(values[2], i);
-        const amount = validateNumeric(values[6], 'amount', i);
-        const points = validateNumeric(values[7], 'points', i);
-
-        await insertTrafficFine(supabaseClient, {
-          serial_number: values[0],
-          violation_number: values[1],
-          violation_date: violationDate.toISOString(),
-          license_plate: values[3],
-          fine_location: values[4],
-          violation_charge: values[5],
-          fine_amount: amount,
-          violation_points: points
-        });
-
+        if (insertError) throw insertError;
         processed++;
       } catch (error) {
-        console.error(`Error processing row ${i}:`, error);
-        errors.push({ row: i, error: error.message });
+        console.error(`Error processing fine:`, error);
+        errors.push({ fine, error: error.message });
       }
     }
 
-    await logImport(supabaseClient, fileName, processed, errors);
+    // Update import record with results
+    await supabaseClient
+      .from('traffic_fine_imports')
+      .update({
+        total_fines: processed,
+        unassigned_fines: processed,
+        import_errors: errors.length > 0 ? errors : null
+      })
+      .eq('id', importId);
+
+    // Trigger AI analysis in the background
+    supabaseClient.functions.invoke('analyze-traffic-fine', {
+      body: { importId }
+    }).catch(console.error);
 
     console.log('Import completed:', { processed, errors: errors.length });
 
