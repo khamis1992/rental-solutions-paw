@@ -1,89 +1,95 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { SearchFilters } from '../types/search.types';
+import { SearchFilters, SearchResult } from '../types/search.types';
+import { toast } from 'sonner';
 
-export function useAdvancedSearch() {
-  const [filters, setFilters] = useState<SearchFilters>({
-    entityType: 'all',
-    keyword: '',
-  });
-
-  const [results, setResults] = useState<any[]>([]);
+export function useAdvancedSearch(filters: SearchFilters) {
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const search = async () => {
-    setIsLoading(true);
-    try {
-      let query;
-
-      switch (filters.entityType) {
-        case 'customer':
-          query = supabase
-            .from('profiles')
-            .select('*')
-            .ilike('full_name', `%${filters.keyword}%`);
-          break;
-
-        case 'vehicle':
-          query = supabase
-            .from('vehicles')
-            .select('*')
-            .or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%,license_plate.ilike.%${filters.keyword}%`);
-          break;
-
-        case 'agreement':
-          query = supabase
-            .from('leases')
-            .select(`
-              *,
-              customer:profiles(full_name),
-              vehicle:vehicles(make, model)
-            `)
-            .or(`agreement_number.ilike.%${filters.keyword}%`);
-          break;
-
-        default:
-          // Search across all entities
-          const [customers, vehicles, agreements] = await Promise.all([
-            supabase
-              .from('profiles')
-              .select('*')
-              .ilike('full_name', `%${filters.keyword}%`),
-            supabase
-              .from('vehicles')
-              .select('*')
-              .or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%`),
-            supabase
-              .from('leases')
-              .select('*, customer:profiles(full_name)')
-              .ilike('agreement_number', `%${filters.keyword}%`)
-          ]);
-
-          setResults([
-            ...(customers.data || []),
-            ...(vehicles.data || []),
-            ...(agreements.data || [])
-          ]);
-          setIsLoading(false);
-          return;
+  useEffect(() => {
+    const search = async () => {
+      if (!filters.keyword) {
+        setResults([]);
+        return;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setResults(data || []);
-    } catch (error) {
-      console.error('Search error:', error);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        let query;
+
+        switch (filters.entityType) {
+          case 'customer':
+            const { data: customers, error: customerError } = await supabase
+              .from('profiles')
+              .select('id, full_name, phone_number')
+              .ilike('full_name', `%${filters.keyword}%`);
+
+            if (customerError) throw customerError;
+            setResults(customers || []);
+            break;
+
+          case 'vehicle':
+            const { data: vehicles, error: vehicleError } = await supabase
+              .from('vehicles')
+              .select('id, make, model, year, license_plate')
+              .or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%,license_plate.ilike.%${filters.keyword}%`);
+
+            if (vehicleError) throw vehicleError;
+            setResults(vehicles || []);
+            break;
+
+          case 'agreement':
+            const { data: agreements, error: agreementError } = await supabase
+              .from('leases')
+              .select('id, agreement_number, status')
+              .ilike('agreement_number', `%${filters.keyword}%`);
+
+            if (agreementError) throw agreementError;
+            setResults(agreements || []);
+            break;
+
+          case 'all':
+            const [customersAll, vehiclesAll, agreementsAll] = await Promise.all([
+              supabase
+                .from('profiles')
+                .select('id, full_name, phone_number')
+                .ilike('full_name', `%${filters.keyword}%`),
+              supabase
+                .from('vehicles')
+                .select('id, make, model, year, license_plate')
+                .or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%`),
+              supabase
+                .from('leases')
+                .select('id, agreement_number, status')
+                .ilike('agreement_number', `%${filters.keyword}%`)
+            ]);
+
+            setResults([
+              ...(customersAll.data || []),
+              ...(vehiclesAll.data || []),
+              ...(agreementsAll.data || [])
+            ]);
+            break;
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        setError(err as Error);
+        toast.error('Failed to perform search');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    search();
+  }, [filters]);
 
   return {
-    filters,
-    setFilters,
     results,
     isLoading,
-    search
+    error
   };
 }

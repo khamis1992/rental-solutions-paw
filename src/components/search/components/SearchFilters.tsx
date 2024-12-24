@@ -1,4 +1,4 @@
-import { SearchFilters, SearchFiltersProps } from '../types/search.types';
+import { type SearchFilters, type SearchFiltersProps } from '../types/search.types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
