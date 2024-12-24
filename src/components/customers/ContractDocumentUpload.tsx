@@ -38,9 +38,6 @@ export const ContractDocumentUpload = ({
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
-
       // Check if bucket exists before uploading
       const { data: buckets } = await supabase
         .storage
@@ -56,7 +53,10 @@ export const ContractDocumentUpload = ({
         return;
       }
 
-      const { error: uploadError, data } = await supabase.storage
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
         .from("customer_documents")
         .upload(filePath, file, {
           cacheControl: "3600",
