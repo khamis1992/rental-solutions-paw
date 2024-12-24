@@ -36,13 +36,13 @@ async function request<T>(
             .maybeSingle();
 
           result = {
-            data: fetchedData as T,
+            data: (fetchedData || null) as unknown as T,
             error: error as PostgrestError | null
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as T,
+            data: (fetchedData || null) as unknown as T,
             error: error as PostgrestError | null
           };
         }
@@ -56,7 +56,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: insertedData as T,
+          data: (insertedData || null) as unknown as T,
           error: insertError as PostgrestError | null
         };
         break;
@@ -71,7 +71,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: updatedData as T,
+          data: (updatedData || null) as unknown as T,
           error: updateError as PostgrestError | null
         };
         break;
@@ -85,7 +85,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: deletedData as T,
+          data: (deletedData || null) as unknown as T,
           error: deleteError as PostgrestError | null
         };
         break;
