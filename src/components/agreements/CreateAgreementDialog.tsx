@@ -13,6 +13,19 @@ export const CreateAgreementDialog = () => {
 
   const handleSubmit = async (values: Partial<AgreementFormData>) => {
     try {
+      // Calculate total amount based on agreement type
+      let totalAmount = 0;
+      if (values.agreementType === 'short_term') {
+        // For short term, total is just the rent amount
+        totalAmount = values.rentAmount || 0;
+      } else {
+        // For lease to own, calculate total including down payment and monthly payments
+        const monthlyPayment = values.monthlyPayment || 0;
+        const duration = values.agreementDuration || 1;
+        const downPayment = values.downPayment || 0;
+        totalAmount = (monthlyPayment * duration) + downPayment;
+      }
+
       const { data, error } = await supabase
         .from('leases')
         .insert({
@@ -26,7 +39,7 @@ export const CreateAgreementDialog = () => {
           agreement_type: values.agreementType,
           notes: values.notes,
           initial_mileage: values.initialMileage,
-          total_amount: values.total_amount
+          total_amount: totalAmount // Add the calculated total amount
         })
         .select()
         .single();
