@@ -52,9 +52,9 @@ export const apiClient = {
     try {
       const { data: insertedData, error } = await supabase
         .from(table)
-        .insert(data)
+        .insert(data as Tables[T]['Insert'])
         .select()
-        .single();
+        .maybeSingle();
 
       return {
         data: insertedData as Row<T> | null,
@@ -76,10 +76,10 @@ export const apiClient = {
     try {
       const { data: updatedData, error } = await supabase
         .from(table)
-        .update(data)
+        .update(data as Tables[T]['Update'])
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       return {
         data: updatedData as Row<T> | null,
@@ -100,7 +100,7 @@ export const apiClient = {
         .delete()
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       return {
         data: deletedData as Row<T> | null,
