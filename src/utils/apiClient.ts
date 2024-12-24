@@ -52,7 +52,7 @@ export const apiClient = {
     try {
       const { data: insertedData, error } = await supabase
         .from(table)
-        .insert(data as unknown as Tables[T]['Insert'])
+        .insert(data)
         .select()
         .maybeSingle();
 
@@ -76,7 +76,7 @@ export const apiClient = {
     try {
       const { data: updatedData, error } = await supabase
         .from(table)
-        .update(data as unknown as Tables[T]['Update'])
+        .update(data)
         .eq('id', id)
         .select()
         .maybeSingle();
@@ -93,7 +93,10 @@ export const apiClient = {
     }
   },
 
-  async delete<T extends TableName>(table: T, id: string): Promise<ApiResponse<Row<T>>> {
+  async delete<T extends TableName>(
+    table: T, 
+    id: string
+  ): Promise<ApiResponse<Row<T>>> {
     try {
       const { data: deletedData, error } = await supabase
         .from(table)
