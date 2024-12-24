@@ -52,7 +52,7 @@ export const apiClient = {
     try {
       const { data: insertedData, error } = await supabase
         .from(table)
-        .insert(data as Tables[T]['Insert'])
+        .insert(data)
         .select()
         .maybeSingle();
 
@@ -76,7 +76,7 @@ export const apiClient = {
     try {
       const { data: updatedData, error } = await supabase
         .from(table)
-        .update(data as Tables[T]['Update'])
+        .update(data)
         .eq('id', id)
         .select()
         .maybeSingle();
