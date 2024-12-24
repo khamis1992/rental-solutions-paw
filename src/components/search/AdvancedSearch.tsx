@@ -42,26 +42,28 @@ export const AdvancedSearch = () => {
         if (filters.keyword) {
           switch (filters.entityType) {
             case "profiles":
-              query = query.or(`full_name.ilike.%${filters.keyword}%,phone_number.ilike.%${filters.keyword}%`);
+              query = query.filter(`full_name.ilike.%${filters.keyword}%`).filter(`phone_number.ilike.%${filters.keyword}%`);
               break;
             case "leases":
-              query = query.or(`agreement_number.ilike.%${filters.keyword}%`);
+              query = query.filter(`agreement_number.ilike.%${filters.keyword}%`);
               break;
             case "vehicles":
-              query = query.or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%,license_plate.ilike.%${filters.keyword}%`);
+              query = query.filter(`make.ilike.%${filters.keyword}%`)
+                         .filter(`model.ilike.%${filters.keyword}%`)
+                         .filter(`license_plate.ilike.%${filters.keyword}%`);
               break;
           }
         }
 
         if (filters.status) {
-          query = query.eq("status", filters.status);
+          query = query.filter('status', 'eq', filters.status);
         }
 
         if (filters.dateRange?.from && filters.dateRange?.to) {
           const dateField = filters.entityType === "leases" ? "start_date" : "created_at";
           query = query
-            .gte(dateField, filters.dateRange.from.toISOString())
-            .lte(dateField, filters.dateRange.to.toISOString());
+            .filter(dateField, 'gte', filters.dateRange.from.toISOString())
+            .filter(dateField, 'lte', filters.dateRange.to.toISOString());
         }
 
         const { data, error } = await query.select();

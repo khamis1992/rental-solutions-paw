@@ -981,6 +981,7 @@ export type Database = {
           reported_date: string
           status: string | null
           updated_at: string
+          vehicle_id: string | null
         }
         Insert: {
           created_at?: string
@@ -994,6 +995,7 @@ export type Database = {
           reported_date?: string
           status?: string | null
           updated_at?: string
+          vehicle_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1007,6 +1009,7 @@ export type Database = {
           reported_date?: string
           status?: string | null
           updated_at?: string
+          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -1014,6 +1017,13 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "damages_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]

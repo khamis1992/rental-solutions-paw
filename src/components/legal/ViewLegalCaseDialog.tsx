@@ -7,9 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ViewLegalCaseDialogProps {
   caseId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const ViewLegalCaseDialog = ({ caseId }: ViewLegalCaseDialogProps) => {
+export const ViewLegalCaseDialog = ({ caseId, open, onOpenChange }: ViewLegalCaseDialogProps) => {
   const [legalCase, setLegalCase] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,19 +32,21 @@ export const ViewLegalCaseDialog = ({ caseId }: ViewLegalCaseDialogProps) => {
       setLoading(false);
     };
 
-    fetchLegalCase();
-  }, [caseId]);
+    if (open && caseId) {
+      fetchLegalCase();
+    }
+  }, [caseId, open]);
 
   const getStatusColor = (status: LegalCaseStatus) => {
     switch (status) {
       case 'pending_reminder':
         return 'bg-yellow-500';
-      case 'in_progress':
+      case 'in_legal_process':
         return 'bg-blue-500';
       case 'resolved':
         return 'bg-green-500';
-      case 'closed':
-        return 'bg-gray-500';
+      case 'escalated':
+        return 'bg-red-500';
       default:
         return 'bg-gray-500';
     }
@@ -53,25 +57,27 @@ export const ViewLegalCaseDialog = ({ caseId }: ViewLegalCaseDialogProps) => {
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold">Case ID: {legalCase.id}</h3>
-            <p className="text-sm text-muted-foreground">Description: {legalCase.description}</p>
-            <Badge className={`text-white ${getStatusColor(legalCase.status)}`}>
-              {legalCase.status}
-            </Badge>
+            <h3 className="text-lg font-semibold">Case ID: {legalCase?.id}</h3>
+            <p className="text-sm text-muted-foreground">Description: {legalCase?.description}</p>
+            {legalCase?.status && (
+              <Badge className={`text-white ${getStatusColor(legalCase.status as LegalCaseStatus)}`}>
+                {legalCase.status}
+              </Badge>
+            )}
           </div>
           <div>
-            <h4 className="font-medium">Amount Owed: ${legalCase.amount_owed}</h4>
-            <p>Priority: {legalCase.priority}</p>
-            <p>Assigned To: {legalCase.assigned_to || 'Unassigned'}</p>
-            <p>Created At: {new Date(legalCase.created_at).toLocaleString()}</p>
-            <p>Updated At: {new Date(legalCase.updated_at).toLocaleString()}</p>
+            <h4 className="font-medium">Amount Owed: ${legalCase?.amount_owed}</h4>
+            <p>Priority: {legalCase?.priority}</p>
+            <p>Assigned To: {legalCase?.assigned_to || 'Unassigned'}</p>
+            <p>Created At: {legalCase?.created_at && new Date(legalCase.created_at).toLocaleString()}</p>
+            <p>Updated At: {legalCase?.updated_at && new Date(legalCase.updated_at).toLocaleString()}</p>
           </div>
         </div>
       </DialogContent>
