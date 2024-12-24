@@ -1,6 +1,7 @@
 import { UseFormRegister, UseFormWatch, UseFormSetValue } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { AgreementFormData } from "../AgreementForm";
 
 interface VehicleAgreementDetailsProps {
@@ -17,6 +18,7 @@ export const VehicleAgreementDetails = ({
   setValue,
 }: VehicleAgreementDetailsProps) => {
   const agreementType = watch("agreementType");
+  const isRecurring = watch("isRecurring") || false;
 
   return (
     <div className="space-y-4">
@@ -36,15 +38,42 @@ export const VehicleAgreementDetails = ({
         </div>
 
         {agreementType === 'short_term' && (
-          <div>
-            <Label htmlFor="rentAmount">Recurring Payment (QAR)</Label>
-            <Input
-              id="rentAmount"
-              type="number"
-              {...register("rentAmount", { required: true })}
-            />
-            {errors.rentAmount && (
-              <span className="text-sm text-red-500">This field is required</span>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rentAmount">Recurring Payment (QAR)</Label>
+              <Input
+                id="rentAmount"
+                type="number"
+                {...register("rentAmount", { required: true })}
+              />
+              {errors.rentAmount && (
+                <span className="text-sm text-red-500">This field is required</span>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="isRecurring"
+                checked={isRecurring}
+                onCheckedChange={(checked) => setValue("isRecurring", checked)}
+              />
+              <Label htmlFor="isRecurring">Enable Recurring Payment</Label>
+            </div>
+            {isRecurring && (
+              <div>
+                <Label htmlFor="recurringInterval">Payment Interval (days)</Label>
+                <Input
+                  id="recurringInterval"
+                  type="number"
+                  min="1"
+                  {...register("recurringInterval", { 
+                    required: isRecurring,
+                    min: 1 
+                  })}
+                />
+                {errors.recurringInterval && (
+                  <span className="text-sm text-red-500">Please enter a valid interval</span>
+                )}
+              </div>
             )}
           </div>
         )}

@@ -39,7 +39,9 @@ export const CreateAgreementDialog = () => {
           agreement_type: values.agreementType,
           notes: values.notes,
           initial_mileage: values.initialMileage,
-          total_amount: totalAmount // Add the calculated total amount
+          total_amount: totalAmount,
+          is_recurring: values.isRecurring || false,
+          recurring_interval: values.isRecurring ? `${values.recurringInterval} days` : null
         })
         .select()
         .single();

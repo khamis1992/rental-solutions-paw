@@ -27,6 +27,8 @@ export interface AgreementFormData {
   rentAmount: number;
   initialMileage: number;
   total_amount: number;
+  isRecurring?: boolean;
+  recurringInterval?: number;
 }
 
 interface AgreementFormProps {
