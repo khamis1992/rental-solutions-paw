@@ -8,11 +8,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSessionContext } from '@supabase/auth-helpers-react';
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const baseMenuItems = [
@@ -26,135 +21,12 @@ const baseMenuItems = [
   { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: Gavel, label: "Legal", href: "/legal" },
   { icon: HelpCircle, label: "Help", href: "/help" },
+  { icon: Settings, label: "Settings", href: "/settings" }
 ];
 
-const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" };
-
 export const DashboardSidebar = () => {
-  const [menuItems, setMenuItems] = useState<typeof baseMenuItems>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const navigate = useNavigate();
-  const { session, isLoading: sessionLoading } = useSessionContext();
-  const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    let mounted = true;
-
-    const checkSession = async () => {
-      try {
-        // Wait for session to be checked
-        if (sessionLoading) return;
-
-        // Redirect if no session
-        if (!session) {
-          navigate('/auth');
-          return;
-        }
-
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          if (mounted) {
-            setError('Could not fetch user profile');
-            toast({
-              title: "Error",
-              description: "Could not fetch user profile",
-              variant: "destructive",
-            });
-          }
-          return;
-        }
-
-        // Set menu items based on role
-        if (mounted) {
-          if (profile?.role === 'admin') {
-            setMenuItems([...baseMenuItems, settingsMenuItem]);
-          } else {
-            setMenuItems(baseMenuItems);
-          }
-          setError(null);
-        }
-      } catch (error) {
-        console.error('Error checking user role:', error);
-        if (mounted) {
-          setError('Could not verify user permissions');
-          toast({
-            title: "Error",
-            description: "Could not verify user permissions",
-            variant: "destructive",
-          });
-          setMenuItems(baseMenuItems);
-        }
-      } finally {
-        if (mounted) {
-          setIsInitializing(false);
-        }
-      }
-    };
-
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/auth');
-      } else if (event === 'SIGNED_IN') {
-        checkSession();
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [session, sessionLoading, navigate, toast]);
-
-  // Show loading state only during initialization
-  if (sessionLoading || isInitializing) {
-    return (
-      <Sidebar>
-        <SidebarContent>
-          <div className="flex h-14 items-center border-b px-6">
-            <span className="font-semibold">Rental Solutions</span>
-          </div>
-          <div className="flex items-center justify-center h-[calc(100vh-3.5rem)] animate-pulse">
-            <span className="text-muted-foreground">Loading menu...</span>
-          </div>
-        </SidebarContent>
-      </Sidebar>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <Sidebar>
-        <SidebarContent>
-          <div className="flex h-14 items-center border-b px-6">
-            <span className="font-semibold">Rental Solutions</span>
-          </div>
-          <div className="p-4 text-destructive">
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-2 text-sm text-primary hover:underline"
-            >
-              Retry
-            </button>
-          </div>
-        </SidebarContent>
-      </Sidebar>
-    );
-  }
-
-  // Show menu items
   return (
     <Sidebar>
       <SidebarContent>
@@ -164,7 +36,7 @@ export const DashboardSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {baseMenuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton asChild>
                     <a
