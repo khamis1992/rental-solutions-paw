@@ -42,7 +42,7 @@ async function request<T>(
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as T[] | null,
+            data: fetchedData as unknown as T,
             error: error as Error | null
           };
         }
@@ -56,7 +56,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: insertedData as T | null,
+          data: insertedData as unknown as T,
           error: insertError as Error | null
         };
         break;
@@ -71,7 +71,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: updatedData as T | null,
+          data: updatedData as unknown as T,
           error: updateError as Error | null
         };
         break;
@@ -85,7 +85,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: deletedData as T | null,
+          data: deletedData as unknown as T,
           error: deleteError as Error | null
         };
         break;
