@@ -41,7 +41,7 @@ async function request<T>(
         const { data: insertedData, error: insertError } = await query
           .insert(data)
           .select()
-          .single();
+          .maybeSingle();
         return { 
           data: insertedData as unknown as T, 
           error: insertError as Error | null 
@@ -53,7 +53,7 @@ async function request<T>(
           .update(data)
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
         return { 
           data: updatedData as unknown as T, 
           error: updateError as Error | null 
@@ -65,7 +65,7 @@ async function request<T>(
           .delete()
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
         return { 
           data: deletedData as unknown as T, 
           error: deleteError as Error | null 
