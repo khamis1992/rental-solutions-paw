@@ -42,28 +42,26 @@ export const AdvancedSearch = () => {
         if (filters.keyword) {
           switch (filters.entityType) {
             case "profiles":
-              query = query.filter(`full_name.ilike.%${filters.keyword}%`).filter(`phone_number.ilike.%${filters.keyword}%`);
+              query = query.or(`full_name.ilike.%${filters.keyword}%,phone_number.ilike.%${filters.keyword}%`);
               break;
             case "leases":
-              query = query.filter(`agreement_number.ilike.%${filters.keyword}%`);
+              query = query.or(`agreement_number.ilike.%${filters.keyword}%`);
               break;
             case "vehicles":
-              query = query.filter(`make.ilike.%${filters.keyword}%`)
-                         .filter(`model.ilike.%${filters.keyword}%`)
-                         .filter(`license_plate.ilike.%${filters.keyword}%`);
+              query = query.or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%,license_plate.ilike.%${filters.keyword}%`);
               break;
           }
         }
 
         if (filters.status) {
-          query = query.filter('status', 'eq', filters.status);
+          query = query.eq('status', filters.status);
         }
 
         if (filters.dateRange?.from && filters.dateRange?.to) {
           const dateField = filters.entityType === "leases" ? "start_date" : "created_at";
           query = query
-            .filter(dateField, 'gte', filters.dateRange.from.toISOString())
-            .filter(dateField, 'lte', filters.dateRange.to.toISOString());
+            .gte(dateField, filters.dateRange.from.toISOString())
+            .lte(dateField, filters.dateRange.to.toISOString());
         }
 
         const { data, error } = await query.select();
@@ -119,7 +117,7 @@ export const AdvancedSearch = () => {
                 <label className="text-sm font-medium">Search In</label>
                 <Select
                   value={filters.entityType}
-                  onValueChange={(value: "customers" | "rentals" | "vehicles") =>
+                  onValueChange={(value: SearchEntityType) =>
                     setFilters({ ...filters, entityType: value })
                   }
                 >
@@ -127,8 +125,8 @@ export const AdvancedSearch = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customers">Customers</SelectItem>
-                    <SelectItem value="rentals">Rentals</SelectItem>
+                    <SelectItem value="profiles">Customers</SelectItem>
+                    <SelectItem value="leases">Rentals</SelectItem>
                     <SelectItem value="vehicles">Vehicles</SelectItem>
                   </SelectContent>
                 </Select>
