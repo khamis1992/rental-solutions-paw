@@ -504,32 +504,41 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          browser_info: Json | null
           changes: Json | null
           created_at: string
           entity_id: string | null
           entity_type: string
           id: string
           ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
           action: string
+          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           action?: string
+          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type?: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -904,6 +913,54 @@ export type Database = {
           },
           {
             foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_segments: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          customer_id: string | null
+          features: Json
+          id: string
+          segment_description: string | null
+          segment_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          features: Json
+          id?: string
+          segment_description?: string | null
+          segment_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          features?: Json
+          id?: string
+          segment_description?: string | null
+          segment_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_segments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -3200,6 +3257,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          activity_count: number
+          id: string
+          timestamp: string
+        }
+        Insert: {
+          activity_count?: number
+          id?: string
+          timestamp?: string
+        }
+        Update: {
+          activity_count?: number
+          id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       variable_costs: {
         Row: {
           amount: number
@@ -3764,6 +3839,18 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
+      audit_action_type:
+        | "create"
+        | "update"
+        | "delete"
+        | "view"
+        | "login"
+        | "logout"
+        | "export"
+        | "import"
+        | "payment"
+        | "status_change"
+        | "document_upload"
       customer_status_type:
         | "active"
         | "inactive"

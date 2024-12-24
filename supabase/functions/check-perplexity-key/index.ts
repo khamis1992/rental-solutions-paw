@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,60 +9,46 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204,
+    });
   }
 
   try {
-    console.log("Checking Perplexity API key...");
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
     
-    if (!perplexityApiKey) {
-      console.error('Perplexity API key not configured');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Perplexity API key not configured' 
-        }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
+    if (!apiKey) {
+      throw new Error('PERPLEXITY_API_KEY is not set');
     }
 
-    // Test the API key with a minimal request
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [{ role: 'user', content: 'Test' }],
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('Invalid Perplexity API key response:', await response.text());
-      throw new Error('Invalid Perplexity API key');
-    }
-
+    // Return success response with CORS headers
     return new Response(
-      JSON.stringify({ valid: true }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      JSON.stringify({ 
+        success: true,
+        message: 'Perplexity API key is configured'
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 200,
       },
     );
   } catch (error) {
-    console.error('Error checking Perplexity API key:', error);
+    // Return error response with CORS headers
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Failed to validate Perplexity API key',
-        details: error instanceof Error ? error.stack : undefined,
+      JSON.stringify({
+        success: false,
+        error: error.message
       }),
       {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 400,
       },
     );
   }
