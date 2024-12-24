@@ -1,12 +1,15 @@
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
+
+type TableNames = keyof Database['public']['Tables'];
+
 interface RequestConfig {
   method?: string;
   body?: any;
   params?: Record<string, string>;
   headers?: Record<string, string>;
 }
-
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface ApiResponse<T = any> {
   data: T | null;
@@ -24,29 +27,27 @@ class ApiClient {
     try {
       const { method = 'GET', body, params, headers = {} } = config;
 
-      // Log request details in development
       console.log(`API Request: ${method} ${endpoint}`, { body, params });
 
-      // Handle database operations through Supabase
       if (endpoint.startsWith('/db/')) {
-        const tableName = endpoint.replace('/db/', '');
+        const tableName = endpoint.replace('/db/', '') as TableNames;
         let query = supabase.from(tableName);
 
         switch (method) {
           case 'GET': {
-            const { data, error } = await query.select();
+            const { data, error } = await query.select('*');
             return { data: data as T, error };
           }
           case 'POST': {
-            const { data, error } = await query.insert(body);
+            const { data, error } = await query.insert(body).select('*').single();
             return { data: data as T, error };
           }
           case 'PUT': {
-            const { data, error } = await query.update(body).eq('id', body.id);
+            const { data, error } = await query.update(body).eq('id', body.id).select('*').single();
             return { data: data as T, error };
           }
           case 'DELETE': {
-            const { data, error } = await query.delete().eq('id', body.id);
+            const { data, error } = await query.delete().eq('id', body.id).select('*').single();
             return { data: data as T, error };
           }
           default:
@@ -54,7 +55,6 @@ class ApiClient {
         }
       }
 
-      // Handle Edge Functions or external API calls
       const url = new URL(endpoint.startsWith('/') ? `${this.baseUrl}${endpoint}` : endpoint);
       
       if (params) {
