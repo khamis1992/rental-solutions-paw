@@ -1,0 +1,62 @@
+{
+  "common": {
+    "search": "Search",
+    "filter": "Filter",
+    "status": "Status",
+    "actions": "Actions",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "create": "Create",
+    "submit": "Submit",
+    "loading": "Loading..."
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "stats": {
+      "activeAgreements": "Active Agreements",
+      "pendingAgreements": "Pending Agreements",
+      "closedAgreements": "Closed Agreements",
+      "totalAgreements": "Total Agreements"
+    }
+  },
+  "agreements": {
+    "title": "Agreements",
+    "newAgreement": "New Agreement",
+    "agreementNumber": "Agreement Number",
+    "licensePlate": "License Plate",
+    "vehicle": "Vehicle",
+    "customerName": "Customer Name",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "status": {
+      "all": "All Status",
+      "active": "Active",
+      "pending": "Pending",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "newCustomer": "New Customer",
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "address": "Address",
+    "driverLicense": "Driver License"
+  },
+  "vehicles": {
+    "title": "Vehicles",
+    "newVehicle": "New Vehicle",
+    "make": "Make",
+    "model": "Model",
+    "year": "Year",
+    "color": "Color",
+    "licensePlate": "License Plate",
+    "vin": "VIN"
+  }
+}

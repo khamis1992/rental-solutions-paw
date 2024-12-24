@@ -504,32 +504,41 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          browser_info: Json | null
           changes: Json | null
           created_at: string
           entity_id: string | null
           entity_type: string
           id: string
           ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
           action: string
+          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           action?: string
+          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type?: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -911,6 +920,54 @@ export type Database = {
           },
         ]
       }
+      customer_segments: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          customer_id: string | null
+          features: Json
+          id: string
+          segment_description: string | null
+          segment_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          features: Json
+          id?: string
+          segment_description?: string | null
+          segment_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          features?: Json
+          id?: string
+          segment_description?: string | null
+          segment_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_segments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       damages: {
         Row: {
           created_at: string
@@ -1245,6 +1302,119 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          order_index: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_features: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_guide_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_guides: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          steps: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          steps: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          steps?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_guides_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "help_guide_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -3585,6 +3755,17 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_detailed_credit_score: {
+        Args: {
+          p_monthly_income: number
+          p_employment_status: string
+          p_debt_to_income_ratio: number
+          p_payment_history_score: number
+          p_credit_utilization: number
+          p_credit_history_length: number
+        }
+        Returns: Json
+      }
       calculate_risk_score: {
         Args: {
           p_customer_id: string
@@ -3640,6 +3821,18 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
+      audit_action_type:
+        | "create"
+        | "update"
+        | "delete"
+        | "view"
+        | "login"
+        | "logout"
+        | "export"
+        | "import"
+        | "payment"
+        | "status_change"
+        | "document_upload"
       customer_status_type:
         | "active"
         | "inactive"
