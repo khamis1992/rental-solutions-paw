@@ -44,7 +44,8 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
     try {
       setSelectedCustomer(customer);
       if (register) {
-        register("customerId").onChange({ target: { value: customer.id } });
+        // Directly set the value instead of using onChange
+        register('customerId', { value: customer.id });
       }
       if (onCustomerSelect) {
         onCustomerSelect(customer.id);
