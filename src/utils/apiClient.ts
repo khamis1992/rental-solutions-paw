@@ -7,15 +7,15 @@ type TableName = keyof Tables;
 
 interface ApiResponse<T> {
   data: T | null;
-  error: PostgrestError | null;
+  error: Error | null;
 }
 
-type PostgrestError = {
+interface Error {
   message: string;
   details: string;
   hint: string;
   code: string;
-};
+}
 
 async function request<T>(
   method: string,
@@ -37,13 +37,13 @@ async function request<T>(
 
           result = {
             data: (fetchedData || null) as unknown as T,
-            error: error as PostgrestError | null
+            error: error as Error | null
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
             data: (fetchedData || null) as unknown as T,
-            error: error as PostgrestError | null
+            error: error as Error | null
           };
         }
         break;
@@ -57,7 +57,7 @@ async function request<T>(
           .single();
         result = {
           data: (insertedData || null) as unknown as T,
-          error: insertError as PostgrestError | null
+          error: insertError as Error | null
         };
         break;
       }
@@ -72,7 +72,7 @@ async function request<T>(
           .single();
         result = {
           data: (updatedData || null) as unknown as T,
-          error: updateError as PostgrestError | null
+          error: updateError as Error | null
         };
         break;
       }
@@ -86,7 +86,7 @@ async function request<T>(
           .single();
         result = {
           data: (deletedData || null) as unknown as T,
-          error: deleteError as PostgrestError | null
+          error: deleteError as Error | null
         };
         break;
       }
@@ -96,16 +96,18 @@ async function request<T>(
     }
 
     if (result.error) {
-      const pgError = result.error;
-      console.error(`API Error (${method} ${table}):`, pgError);
-      toast.error(`Error: ${pgError.message}`);
+      console.error(`API Error (${method} ${table}):`, result.error);
+      toast.error(`Error: ${result.error.message}`);
     }
 
     return result;
   } catch (error) {
     console.error(`API Request Failed (${method} ${table}):`, error);
     toast.error('An unexpected error occurred');
-    return { data: null, error: error as PostgrestError };
+    return { 
+      data: null, 
+      error: error as Error 
+    };
   }
 }
 
