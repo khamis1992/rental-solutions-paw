@@ -1,55 +1,40 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { corsHeaders, handleCorsPreflightRequest, isValidOrigin } from '../_shared/cors.ts'
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204,
-    });
+  // Handle CORS preflight request
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
+
+  // Validate origin
+  const origin = req.headers.get('origin');
+  if (!isValidOrigin(origin)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid origin' }), 
+      { 
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 
   try {
-    const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    
-    if (!apiKey) {
-      throw new Error('PERPLEXITY_API_KEY is not set');
-    }
+    const apiKey = Deno.env.get('PERPLEXITY_API_KEY')
+    const isConfigured = !!apiKey
 
-    // Return success response with CORS headers
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: 'Perplexity API key is configured'
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-        status: 200,
-      },
-    );
+      JSON.stringify({ isConfigured }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   } catch (error) {
-    // Return error response with CORS headers
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-        status: 400,
-      },
-    );
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
-});
+})
