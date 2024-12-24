@@ -22,21 +22,16 @@ import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { SearchResults } from "./SearchResults";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "sonner";
-
-interface SearchFilters {
-  entityType: "customers" | "rentals" | "vehicles";
-  status?: string;
-  dateRange?: {
-    from: Date;
-    to: Date;
-  };
-  keyword: string;
-}
+import { SearchFilters } from "./types/search.types";
 
 export const AdvancedSearch = () => {
   const [filters, setFilters] = useState<SearchFilters>({
-    entityType: "customers",
+    entityType: "profiles",
     keyword: "",
+    dateRange: {
+      from: new Date(),
+      to: new Date()
+    }
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const debouncedKeyword = useDebounce(filters.keyword, 300);
@@ -50,10 +45,10 @@ export const AdvancedSearch = () => {
         // Base search conditions based on entity type
         if (filters.keyword) {
           switch (filters.entityType) {
-            case "customers":
+            case "profiles":
               query = query.or(`full_name.ilike.%${filters.keyword}%,phone_number.ilike.%${filters.keyword}%`);
               break;
-            case "rentals":
+            case "leases":
               query = query.or(`agreement_number.ilike.%${filters.keyword}%`);
               break;
             case "vehicles":
@@ -69,7 +64,7 @@ export const AdvancedSearch = () => {
 
         // Apply date range filter if selected
         if (filters.dateRange?.from && filters.dateRange?.to) {
-          const dateField = filters.entityType === "rentals" ? "start_date" : "created_at";
+          const dateField = filters.entityType === "leases" ? "start_date" : "created_at";
           query = query
             .gte(dateField, filters.dateRange.from.toISOString())
             .lte(dateField, filters.dateRange.to.toISOString());
@@ -194,7 +189,7 @@ export const AdvancedSearch = () => {
       ) : searchResults?.length === 0 ? (
         <div className="text-center py-4 text-muted-foreground">No results found</div>
       ) : (
-        <SearchResults results={searchResults} entityType={filters.entityType} />
+        <SearchResults data={searchResults} entityType={filters.entityType} isLoading={isLoading} />
       )}
     </div>
   );

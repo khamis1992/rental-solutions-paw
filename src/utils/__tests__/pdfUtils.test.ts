@@ -1,4 +1,4 @@
-import { generatePDF, downloadPDF } from '../pdfUtils';
+import { generatePDF } from '../pdfUtils';
 import { Agreement } from '@/types/agreement';
 
 describe('PDF Generation Utilities', () => {
@@ -10,6 +10,11 @@ describe('PDF Generation Utilities', () => {
     end_date: '2024-04-20T00:00:00Z',
     initial_mileage: 50000,
     total_amount: 5000,
+    return_mileage: 0,
+    notes: '',
+    agreement_type: 'short_term',
+    rent_amount: 1000,
+    rent_due_day: 1,
     customer: {
       id: '456',
       full_name: 'John Doe',

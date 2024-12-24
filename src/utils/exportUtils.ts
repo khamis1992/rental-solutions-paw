@@ -1,6 +1,6 @@
 import { Agreement } from "@/types/agreement";
 import { Customer } from "@/types/customer";
-import { formatCurrency } from "./utils";
+import { formatCurrency } from "@/lib/utils";
 
 type ExportableDataType = 'customers' | 'agreements' | 'financial';
 

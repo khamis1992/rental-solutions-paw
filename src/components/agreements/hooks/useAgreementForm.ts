@@ -2,13 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface PaymentScheduleItem {
-  due_date: string;
-  amount: number;
-  status: "pending" | "paid" | "overdue";
-  lease_id: string;
-}
-
 export interface AgreementFormData {
   agreementType: "lease_to_own" | "short_term";
   agreementNumber: string;
@@ -33,7 +26,7 @@ export interface AgreementFormData {
   initialMileage: number;
 }
 
-export const useAgreementForm = (onSuccess?: () => void) => {
+export const useAgreementForm = (onSuccess?: (values: Partial<AgreementFormData>) => void) => {
   const [open, setOpen] = useState(false);
   const {
     register,
@@ -72,7 +65,7 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           vehicle_id: data.vehicleId,
           start_date: data.startDate,
           end_date: data.endDate,
-          duration_months: data.agreementDuration,
+          lease_duration: `${data.agreementDuration} months`,
           down_payment: data.downPayment,
           monthly_payment: data.monthlyPayment,
           interest_rate: data.interestRate,
@@ -86,15 +79,8 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
       if (agreementError) throw agreementError;
 
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ status: "rented" })
-        .eq("id", data.vehicleId);
-
-      if (vehicleError) throw vehicleError;
-
       if (onSuccess) {
-        onSuccess();
+        onSuccess(data);
       }
     } catch (error) {
       console.error("Error in form submission:", error);
