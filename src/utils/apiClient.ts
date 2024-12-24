@@ -25,10 +25,16 @@ async function request<T>(
             .select('*')
             .eq('id', id)
             .maybeSingle();
-          return { data: result as T, error: error as Error | null };
+          return { 
+            data: result as unknown as T, 
+            error: error as Error | null 
+          };
         } else {
           const { data: result, error } = await query.select('*');
-          return { data: result as T, error: error as Error | null };
+          return { 
+            data: result as unknown as T, 
+            error: error as Error | null 
+          };
         }
 
       case 'POST':
@@ -36,7 +42,10 @@ async function request<T>(
           .insert(data)
           .select()
           .single();
-        return { data: insertedData as T, error: insertError as Error | null };
+        return { 
+          data: insertedData as unknown as T, 
+          error: insertError as Error | null 
+        };
 
       case 'PUT':
         if (!id) throw new Error('ID is required for PUT requests');
@@ -45,7 +54,10 @@ async function request<T>(
           .eq('id', id)
           .select()
           .single();
-        return { data: updatedData as T, error: updateError as Error | null };
+        return { 
+          data: updatedData as unknown as T, 
+          error: updateError as Error | null 
+        };
 
       case 'DELETE':
         if (!id) throw new Error('ID is required for DELETE requests');
@@ -54,7 +66,10 @@ async function request<T>(
           .eq('id', id)
           .select()
           .single();
-        return { data: deletedData as T, error: deleteError as Error | null };
+        return { 
+          data: deletedData as unknown as T, 
+          error: deleteError as Error | null 
+        };
 
       default:
         throw new Error(`Unsupported method: ${method}`);
