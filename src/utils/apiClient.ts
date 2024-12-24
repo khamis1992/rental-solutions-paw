@@ -1,138 +1,72 @@
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Database } from "@/integrations/supabase/types";
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-type TableNames = keyof Database['public']['Tables'];
-type DbResult<T> = T extends PromiseLike<infer U> ? U : never;
+type Tables = Database['public']['Tables'];
+type TableName = keyof Tables;
 
-interface RequestConfig {
-  method?: string;
-  body?: any;
-  params?: Record<string, string>;
-  headers?: Record<string, string>;
-}
-
-interface ApiResponse<T = any> {
+interface ApiResponse<T> {
   data: T | null;
   error: Error | null;
 }
 
-class ApiClient {
-  private baseUrl: string;
+async function request<T>(
+  method: string,
+  table: TableName,
+  data?: any,
+  id?: string
+): Promise<ApiResponse<T>> {
+  try {
+    let query = supabase.from(table);
 
-  constructor() {
-    this.baseUrl = '/api';
-  }
-
-  private async request<T>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
-    try {
-      const { method = 'GET', body, params, headers = {} } = config;
-
-      console.log(`API Request: ${method} ${endpoint}`, { body, params });
-
-      if (endpoint.startsWith('/db/')) {
-        const tableName = endpoint.replace('/db/', '') as TableNames;
-        const query = supabase.from(tableName);
-
-        switch (method) {
-          case 'GET': {
-            const { data, error } = await query.select('*');
-            return { data: data as T, error };
-          }
-          case 'POST': {
-            const { data, error } = await query.insert(body).select('*').single();
-            return { data: data as T, error };
-          }
-          case 'PUT': {
-            const { data, error } = await query.update(body).eq('id', body.id).select('*').single();
-            return { data: data as T, error };
-          }
-          case 'DELETE': {
-            const { data, error } = await query.delete().eq('id', body.id).select('*').single();
-            return { data: data as T, error };
-          }
-          default:
-            throw new Error(`Unsupported method: ${method}`);
+    switch (method) {
+      case 'GET':
+        if (id) {
+          const { data: result, error } = await query
+            .select('*')
+            .eq('id', id)
+            .single();
+          return { data: result as T, error: error as Error | null };
+        } else {
+          const { data: result, error } = await query.select('*');
+          return { data: result as T, error: error as Error | null };
         }
-      }
 
-      const url = new URL(endpoint.startsWith('/') ? `${this.baseUrl}${endpoint}` : endpoint);
-      
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          url.searchParams.append(key, value);
-        });
-      }
+      case 'POST':
+        const { data: insertedData, error: insertError } = await query
+          .insert(data)
+          .select()
+          .single();
+        return { data: insertedData as T, error: insertError as Error | null };
 
-      const response = await fetch(url.toString(), {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
+      case 'PUT':
+        if (!id) throw new Error('ID is required for PUT requests');
+        const { data: updatedData, error: updateError } = await query
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single();
+        return { data: updatedData as T, error: updateError as Error | null };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      case 'DELETE':
+        if (!id) throw new Error('ID is required for DELETE requests');
+        const { data: deletedData, error: deleteError } = await query
+          .delete()
+          .eq('id', id)
+          .select()
+          .single();
+        return { data: deletedData as T, error: deleteError as Error | null };
 
-      const data = await response.json();
-      return { data, error: null };
-
-    } catch (error) {
-      console.error('API Error:', error);
-      toast.error('An error occurred while processing your request');
-      return { data: null, error: error as Error };
+      default:
+        throw new Error(`Unsupported method: ${method}`);
     }
-  }
-
-  async get<T>(endpoint: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET', params });
-  }
-
-  async post<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'POST', body: data });
-  }
-
-  async put<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'PUT', body: data });
-  }
-
-  async delete<T>(endpoint: string, id: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE', body: { id } });
-  }
-
-  // Specialized methods for common operations
-  async fetchCustomers<T>(params?: Record<string, string>): Promise<ApiResponse<T>> {
-    return this.get<T>('/db/profiles', params);
-  }
-
-  async fetchRentals<T>(params?: Record<string, string>): Promise<ApiResponse<T>> {
-    return this.get<T>('/db/leases', params);
-  }
-
-  async createPayment<T>(paymentData: any): Promise<ApiResponse<T>> {
-    return this.post<T>('/db/payments', paymentData);
-  }
-
-  async updateVehicleStatus<T>(vehicleId: string, status: string): Promise<ApiResponse<T>> {
-    return this.put<T>('/db/vehicles', { id: vehicleId, status });
-  }
-
-  async uploadDocument(file: File, bucket: string): Promise<ApiResponse<any>> {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(`${Date.now()}-${file.name}`, file);
-
-    if (error) {
-      toast.error('Failed to upload document');
-      return { data: null, error };
-    }
-
-    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: error as Error };
   }
 }
 
-// Export a singleton instance
-export const apiClient = new ApiClient();
+export const apiClient = {
+  get: <T>(table: TableName, id?: string) => request<T>('GET', table, undefined, id),
+  post: <T>(table: TableName, data: any) => request<T>('POST', table, data),
+  put: <T>(table: TableName, id: string, data: any) => request<T>('PUT', table, data, id),
+  delete: <T>(table: TableName, id: string) => request<T>('DELETE', table, undefined, id),
+};
