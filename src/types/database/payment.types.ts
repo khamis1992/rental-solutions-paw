@@ -13,6 +13,13 @@ export interface Payment {
   updated_at: string;
 }
 
+export interface PaymentScheduleItem {
+  dueDate: Date;
+  amount: number;
+  remainingBalance: number;
+  status?: PaymentStatus;
+}
+
 export interface PaymentHistory {
   id: string;
   lease_id: string;

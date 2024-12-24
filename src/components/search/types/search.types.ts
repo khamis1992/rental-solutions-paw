@@ -1,16 +1,17 @@
 export interface SearchFilters {
   entityType: "profiles" | "leases" | "vehicles";
+  keyword: string;
   status?: string;
-  dateRange: {
+  dateRange?: {
     from: Date;
     to: Date;
   };
-  keyword: string;
 }
 
 export interface SearchResultsProps {
-  data: any[];
-  entityType: "profiles" | "leases" | "vehicles";
   isLoading?: boolean;
   error?: Error | null;
+  searchQuery: string;
+  searchResults: any[];
+  handleSelect: (type: string, id: string) => void;
 }

@@ -18,3 +18,12 @@ export interface LegalCase {
     full_name: string;
   };
 }
+
+export interface ViewLegalCaseDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  caseId: string;
+  currentStatus: LegalCaseStatus;
+  notes: string;
+  onStatusUpdate: () => void;
+}
