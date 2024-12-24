@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,6 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Vehicle {
   id: string;
@@ -45,6 +48,27 @@ export const VehicleTableContent = ({
   onLicensePlateClick,
   STATUS_COLORS,
 }: VehicleTableContentProps) => {
+  // Query to fetch document counts for each vehicle
+  const { data: documentCounts } = useQuery({
+    queryKey: ['vehicle-documents'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vehicle_documents')
+        .select('vehicle_id, id')
+        .in('vehicle_id', vehicles.map(v => v.id));
+
+      if (error) throw error;
+
+      // Count documents per vehicle
+      const counts: Record<string, number> = {};
+      data.forEach(doc => {
+        counts[doc.vehicle_id] = (counts[doc.vehicle_id] || 0) + 1;
+      });
+      return counts;
+    },
+    enabled: vehicles.length > 0,
+  });
+
   return (
     <Table>
       <TableHeader>
@@ -54,6 +78,7 @@ export const VehicleTableContent = ({
           <TableHead>Status</TableHead>
           <TableHead>VIN</TableHead>
           <TableHead>Mileage</TableHead>
+          <TableHead>Documents</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -110,6 +135,20 @@ export const VehicleTableContent = ({
             </TableCell>
             <TableCell>{vehicle.vin}</TableCell>
             <TableCell>{vehicle.mileage?.toLocaleString() || 0} km</TableCell>
+            <TableCell>
+              {documentCounts?.[vehicle.id] ? (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <FileText className="h-4 w-4 text-blue-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {documentCounts[vehicle.id]} document{documentCounts[vehicle.id] > 1 ? 's' : ''} available
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-muted-foreground text-sm">No documents</span>
+              )}
+            </TableCell>
             <TableCell>
               <Button
                 variant="ghost"
