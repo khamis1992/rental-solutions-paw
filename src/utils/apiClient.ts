@@ -5,6 +5,7 @@ import { toast } from "sonner";
 // Define basic types
 type Tables = Database['public']['Tables'];
 type TableName = keyof Tables;
+type Row<T extends TableName> = Tables[T]['Row'];
 
 // Simplified error interface
 interface ApiError {
@@ -20,15 +21,15 @@ interface ApiResponse<T> {
   error: ApiError | null;
 }
 
-async function request<T>(
+async function request<T extends TableName>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-  table: TableName,
-  data?: Record<string, unknown>,
+  table: T,
+  data?: Partial<Row<T>>,
   id?: string
-): Promise<ApiResponse<T>> {
+): Promise<ApiResponse<Row<T>>> {
   try {
     const query = supabase.from(table);
-    let result: ApiResponse<T>;
+    let result: ApiResponse<Row<T>>;
 
     switch (method) {
       case 'GET': {
@@ -39,13 +40,13 @@ async function request<T>(
             .maybeSingle();
 
           result = {
-            data: fetchedData as T,
+            data: fetchedData,
             error: error as ApiError
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as T,
+            data: fetchedData?.[0] || null,
             error: error as ApiError
           };
         }
@@ -59,7 +60,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: insertedData as T,
+          data: insertedData,
           error: insertError as ApiError
         };
         break;
@@ -74,7 +75,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: updatedData as T,
+          data: updatedData,
           error: updateError as ApiError
         };
         break;
@@ -88,7 +89,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: deletedData as T,
+          data: deletedData,
           error: deleteError as ApiError
         };
         break;
@@ -115,8 +116,8 @@ async function request<T>(
 }
 
 export const apiClient = {
-  get: <T>(table: TableName, id?: string) => request<T>('GET', table, undefined, id),
-  post: <T>(table: TableName, data: Record<string, unknown>) => request<T>('POST', table, data),
-  put: <T>(table: TableName, id: string, data: Record<string, unknown>) => request<T>('PUT', table, data, id),
-  delete: <T>(table: TableName, id: string) => request<T>('DELETE', table, undefined, id),
+  get: <T extends TableName>(table: T, id?: string) => request<T>('GET', table, undefined, id),
+  post: <T extends TableName>(table: T, data: Partial<Row<T>>) => request<T>('POST', table, data),
+  put: <T extends TableName>(table: T, id: string, data: Partial<Row<T>>) => request<T>('PUT', table, data, id),
+  delete: <T extends TableName>(table: T, id: string) => request<T>('DELETE', table, undefined, id),
 };
