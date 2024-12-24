@@ -36,13 +36,13 @@ async function request<T>(
             .maybeSingle();
 
           result = {
-            data: fetchedData as T | null,
+            data: fetchedData as unknown as T,
             error: error as Error | null
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as T[] as unknown as T,
+            data: fetchedData as unknown as T,
             error: error as Error | null
           };
         }
