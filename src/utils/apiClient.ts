@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
 
 type TableNames = keyof Database['public']['Tables'];
+type DbResult<T> = T extends PromiseLike<infer U> ? U : never;
 
 interface RequestConfig {
   method?: string;
@@ -31,7 +32,7 @@ class ApiClient {
 
       if (endpoint.startsWith('/db/')) {
         const tableName = endpoint.replace('/db/', '') as TableNames;
-        let query = supabase.from(tableName);
+        const query = supabase.from(tableName);
 
         switch (method) {
           case 'GET': {
