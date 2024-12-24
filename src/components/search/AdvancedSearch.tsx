@@ -37,18 +37,19 @@ export const AdvancedSearch = () => {
     queryKey: ["advanced-search", filters.entityType, debouncedKeyword, filters.status, filters.dateRange],
     queryFn: async () => {
       try {
-        let query = supabase.from(filters.entityType);
+        let query = supabase.from(filters.entityType).select();
 
         if (filters.keyword) {
           switch (filters.entityType) {
             case "profiles":
-              query = query.or(`full_name.ilike.%${filters.keyword}%,phone_number.ilike.%${filters.keyword}%`);
+              query = query.ilike('full_name', `%${filters.keyword}%`).or(`phone_number.ilike.%${filters.keyword}%`);
               break;
             case "leases":
-              query = query.or(`agreement_number.ilike.%${filters.keyword}%`);
+              query = query.ilike('agreement_number', `%${filters.keyword}%`);
               break;
             case "vehicles":
-              query = query.or(`make.ilike.%${filters.keyword}%,model.ilike.%${filters.keyword}%,license_plate.ilike.%${filters.keyword}%`);
+              query = query.ilike('make', `%${filters.keyword}%`)
+                         .or(`model.ilike.%${filters.keyword}%,license_plate.ilike.%${filters.keyword}%`);
               break;
           }
         }
@@ -64,7 +65,7 @@ export const AdvancedSearch = () => {
             .lte(dateField, filters.dateRange.to.toISOString());
         }
 
-        const { data, error } = await query.select();
+        const { data, error } = await query;
 
         if (error) throw error;
         return data;
