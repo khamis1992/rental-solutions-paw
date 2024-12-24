@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { AgreementFormData } from "./hooks/useAgreementForm";
-import { AgreementForm } from "./AgreementForm";
+import { AgreementForm, AgreementFormData } from "./AgreementForm";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,26 +14,26 @@ export const CreateAgreementDialog = () => {
   const handleSubmit = async (values: Partial<AgreementFormData>) => {
     try {
       const { data, error } = await supabase
-        .from('agreements')
+        .from('leases')
         .insert({
           customer_id: values.customerId,
           vehicle_id: values.vehicleId,
-          start_date: values.startDate?.toISOString(),
-          end_date: values.endDate?.toISOString(),
-          rental_rate: values.rentalRate,
-          deposit_amount: values.depositAmount,
+          start_date: values.startDate instanceof Date ? values.startDate.toISOString() : values.startDate,
+          end_date: values.endDate instanceof Date ? values.endDate.toISOString() : values.endDate,
+          rent_amount: values.rentAmount,
+          down_payment: values.downPayment,
           status: 'draft',
-          terms_accepted: false,
           agreement_type: values.agreementType,
-          payment_frequency: values.paymentFrequency,
-          notes: values.notes
+          notes: values.notes,
+          initial_mileage: values.initialMileage,
+          total_amount: values.total_amount
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['agreements'] });
+      await queryClient.invalidateQueries({ queryKey: ['leases'] });
       toast.success('Agreement created successfully');
       setOpen(false);
     } catch (error: any) {
