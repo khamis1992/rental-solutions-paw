@@ -8,7 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -100,7 +100,7 @@ export const DashboardSidebar = () => {
 
   if (isLoading) {
     return (
-      <Sidebar>
+      <Sidebar defaultCollapsed={isMobile}>
         <SidebarContent>
           <div className="flex h-14 items-center border-b px-6">
             <span className="font-semibold">Rental Solutions</span>
@@ -115,7 +115,7 @@ export const DashboardSidebar = () => {
 
   if (error) {
     return (
-      <Sidebar>
+      <Sidebar defaultCollapsed={isMobile}>
         <SidebarContent>
           <div className="flex h-14 items-center border-b px-6">
             <span className="font-semibold">Rental Solutions</span>
@@ -135,7 +135,7 @@ export const DashboardSidebar = () => {
   }
 
   return (
-    <Sidebar>
+    <Sidebar defaultCollapsed={isMobile}>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold">Rental Solutions</span>
