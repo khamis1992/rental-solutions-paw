@@ -32,7 +32,18 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
       setIsDeleting(true);
       console.log("Deleting maintenance record:", recordId);
 
-      // First delete related maintenance documents
+      // First delete related vehicle inspections
+      const { error: inspectionError } = await supabase
+        .from('vehicle_inspections')
+        .delete()
+        .eq('maintenance_id', recordId);
+
+      if (inspectionError) {
+        console.error("Error deleting vehicle inspections:", inspectionError);
+        throw inspectionError;
+      }
+
+      // Then delete related maintenance documents
       const { error: docsError } = await supabase
         .from('maintenance_documents')
         .delete()
@@ -43,7 +54,7 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
         throw docsError;
       }
 
-      // Then delete the maintenance record
+      // Finally delete the maintenance record
       const { error } = await supabase
         .from('maintenance')
         .delete()
