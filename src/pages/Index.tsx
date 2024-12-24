@@ -12,18 +12,20 @@ const Index = () => {
     <DashboardLayout>
       <div className="min-h-screen bg-gray-50/50">
         <div className="container mx-auto px-4 py-8">
-          {/* Welcome Section */}
+          {/* Welcome Section with improved spacing */}
           <div className="mb-8">
             <WelcomeHeader />
           </div>
 
-          {/* Quick Actions Grid */}
+          {/* Quick Actions with larger, more prominent buttons */}
           <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Quick Actions</h2>
             <QuickActions />
           </div>
 
-          {/* Main Stats Grid */}
+          {/* Main Stats Grid with enhanced visuals */}
           <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Key Metrics</h2>
             <DashboardStats />
           </div>
 
@@ -31,12 +33,18 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
             {/* Left Column - Upcoming Rentals */}
             <div className="lg:col-span-4">
-              <UpcomingRentals />
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold mb-6 text-gray-800">Upcoming Rentals</h2>
+                <UpcomingRentals />
+              </div>
             </div>
 
             {/* Middle Column - Intelligent Scheduling */}
             <div className="lg:col-span-4">
-              <IntelligentScheduling />
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold mb-6 text-gray-800">Schedule Overview</h2>
+                <IntelligentScheduling />
+              </div>
             </div>
 
             {/* Right Column - Recent Activity */}

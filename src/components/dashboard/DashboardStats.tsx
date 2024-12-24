@@ -88,7 +88,7 @@ export const DashboardStats = () => {
           title="Total Vehicles"
           value={stats?.totalVehicles.toString() || "0"}
           icon={Car}
-          className="bg-white shadow-sm p-6"
+          className="bg-white shadow-sm p-6 hover:shadow-md transition-shadow"
           iconClassName="h-8 w-8 text-blue-500"
           description={
             <span className="flex items-center text-emerald-600 text-base mt-2">
@@ -101,7 +101,7 @@ export const DashboardStats = () => {
           title="Active Rentals"
           value={stats?.activeRentals.toString() || "0"}
           icon={FileText}
-          className="bg-white shadow-sm p-6"
+          className="bg-white shadow-sm p-6 hover:shadow-md transition-shadow"
           iconClassName="h-8 w-8 text-purple-500"
           description={
             <span className="text-amber-600 text-base mt-2">
@@ -113,7 +113,7 @@ export const DashboardStats = () => {
           title="Monthly Revenue"
           value={formatCurrency(stats?.monthlyRevenue || 0)}
           icon={DollarSign}
-          className="bg-white shadow-sm p-6"
+          className="bg-white shadow-sm p-6 hover:shadow-md transition-shadow"
           iconClassName="h-8 w-8 text-green-500"
           description={
             <span className="flex items-center text-emerald-600 text-base mt-2">
