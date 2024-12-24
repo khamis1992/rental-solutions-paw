@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CustomerFormFields } from "./CustomerFormFields";
 import { DocumentScanner } from "./DocumentScanner";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
+import { ContractDocumentUpload } from "./ContractDocumentUpload";
 
 interface CreateCustomerDialogProps {
   children?: ReactNode;
@@ -47,6 +48,15 @@ export const CreateCustomerDialog = ({ children, open, onOpenChange }: CreateCus
     console.log("Scan complete with data:", extractedData);
     form.setValue('full_name', extractedData.full_name);
     form.setValue('driver_license', extractedData.id_number);
+  };
+
+  const handleDocumentUpload = (url: string, type: 'id' | 'license' | 'contract') => {
+    const fieldMap = {
+      id: 'id_document_url',
+      license: 'license_document_url',
+      contract: 'contract_document_url'
+    };
+    form.setValue(fieldMap[type], url);
   };
 
   const onSubmit = async (values: any) => {
@@ -128,6 +138,27 @@ export const CreateCustomerDialog = ({ children, open, onOpenChange }: CreateCus
               />
             )}
             <CustomerFormFields form={form} />
+            
+            <div className="space-y-4">
+              <ContractDocumentUpload
+                label="ID Document"
+                fieldName="id_document_url"
+                onUploadComplete={(url) => handleDocumentUpload(url, 'id')}
+              />
+              
+              <ContractDocumentUpload
+                label="Driver License Document"
+                fieldName="license_document_url"
+                onUploadComplete={(url) => handleDocumentUpload(url, 'license')}
+              />
+              
+              <ContractDocumentUpload
+                label="Contract Document"
+                fieldName="contract_document_url"
+                onUploadComplete={(url) => handleDocumentUpload(url, 'contract')}
+              />
+            </div>
+
             <DialogFooter>
               <EnhancedButton
                 type="submit"
