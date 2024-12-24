@@ -35,12 +35,6 @@ export const AuthForm = () => {
         title: "Password recovery",
         description: "Check your email for password reset instructions.",
       });
-    } else if (event === "USER_DELETED") {
-      toast({
-        title: "Account deleted",
-        description: "Your account has been deleted.",
-      });
-      navigate("/auth");
     }
   });
 
@@ -70,13 +64,36 @@ export const AuthForm = () => {
                 container: 'w-full',
                 button: 'w-full',
                 input: 'rounded-md',
-                message: 'text-red-500 text-sm',
+                message: 'text-destructive text-sm mt-2',
+                anchor: 'text-primary hover:text-primary/80',
               },
             }}
             providers={[]}
             view="sign_in"
             showLinks={true}
             theme="light"
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Sign in',
+                  loading_button_label: 'Signing in...',
+                  email_input_placeholder: 'Your email address',
+                  password_input_placeholder: 'Your password',
+                  link_text: 'Already have an account? Sign in',
+                },
+                sign_up: {
+                  email_label: 'Email',
+                  password_label: 'Password',
+                  button_label: 'Sign up',
+                  loading_button_label: 'Signing up...',
+                  email_input_placeholder: 'Your email address',
+                  password_input_placeholder: 'Your password',
+                  link_text: "Don't have an account? Sign up",
+                },
+              },
+            }}
           />
         </CardContent>
       </Card>
