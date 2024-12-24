@@ -22,16 +22,13 @@ import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { SearchResults } from "./SearchResults";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "sonner";
-import { SearchFilters } from "./types/search.types";
+import { SearchFilters, SearchEntityType } from "./types/search.types";
 
 export const AdvancedSearch = () => {
   const [filters, setFilters] = useState<SearchFilters>({
     entityType: "profiles",
     keyword: "",
-    dateRange: {
-      from: new Date(),
-      to: new Date()
-    }
+    dateRange: undefined
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const debouncedKeyword = useDebounce(filters.keyword, 300);
@@ -42,7 +39,6 @@ export const AdvancedSearch = () => {
       try {
         let query = supabase.from(filters.entityType);
 
-        // Base search conditions based on entity type
         if (filters.keyword) {
           switch (filters.entityType) {
             case "profiles":
@@ -57,12 +53,10 @@ export const AdvancedSearch = () => {
           }
         }
 
-        // Apply status filter if selected
         if (filters.status) {
           query = query.eq("status", filters.status);
         }
 
-        // Apply date range filter if selected
         if (filters.dateRange?.from && filters.dateRange?.to) {
           const dateField = filters.entityType === "leases" ? "start_date" : "created_at";
           query = query
@@ -85,9 +79,9 @@ export const AdvancedSearch = () => {
 
   const getStatusOptions = () => {
     switch (filters.entityType) {
-      case "customers":
+      case "profiles":
         return ["active", "inactive", "pending"];
-      case "rentals":
+      case "leases":
         return ["active", "pending", "completed", "cancelled"];
       case "vehicles":
         return ["available", "rented", "maintenance", "retired"];

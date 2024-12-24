@@ -1,4 +1,4 @@
-export type LegalCaseStatus = 'pending_reminder' | 'in_legal_process' | 'resolved' | 'escalated';
+export type LegalCaseStatus = 'pending_reminder' | 'pending_review' | 'in_progress' | 'resolved' | 'closed';
 
 export interface LegalCase {
   id: string;
@@ -6,24 +6,9 @@ export interface LegalCase {
   case_type: string;
   status: LegalCaseStatus;
   amount_owed: number;
-  description?: string;
-  priority?: string;
-  assigned_to?: string;
+  description: string;
+  priority: string;
+  assigned_to: string | null;
   created_at: string;
   updated_at: string;
-  customer: {
-    full_name: string;
-  };
-  assigned_to_user?: {
-    full_name: string;
-  };
-}
-
-export interface ViewLegalCaseDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  caseId: string;
-  currentStatus: LegalCaseStatus;
-  notes: string;
-  onStatusUpdate: () => void;
 }

@@ -1,124 +1,80 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
+import { LegalCaseStatus } from "@/types/legal";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
-export interface ViewLegalCaseDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface ViewLegalCaseDialogProps {
   caseId: string;
-  currentStatus: LegalCaseStatus;
-  notes: string;
-  onStatusUpdate: () => void;
 }
 
-export function ViewLegalCaseDialog({ 
-  isOpen,
-  onClose,
-  caseId,
-  currentStatus,
-  notes: initialNotes,
-  onStatusUpdate
-}: ViewLegalCaseDialogProps) {
-  const [status, setStatus] = useState<LegalCaseStatus>(currentStatus);
-  const [notes, setNotes] = useState(initialNotes);
-  const [isUpdating, setIsUpdating] = useState(false);
+export const ViewLegalCaseDialog = ({ caseId }: ViewLegalCaseDialogProps) => {
+  const [legalCase, setLegalCase] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleStatusUpdate = async () => {
-    try {
-      setIsUpdating(true);
-      const { error } = await supabase
+  useEffect(() => {
+    const fetchLegalCase = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
         .from('legal_cases')
-        .update({
-          status,
-          notes,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', caseId);
+        .select('*')
+        .eq('id', caseId)
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching legal case:', error);
+      } else {
+        setLegalCase(data);
+      }
+      setLoading(false);
+    };
 
-      toast.success('Legal case updated successfully');
-      onStatusUpdate();
-      onClose();
-    } catch (error) {
-      console.error('Error updating legal case:', error);
-      toast.error('Failed to update legal case');
-    } finally {
-      setIsUpdating(false);
+    fetchLegalCase();
+  }, [caseId]);
+
+  const getStatusColor = (status: LegalCaseStatus) => {
+    switch (status) {
+      case 'pending_reminder':
+        return 'bg-yellow-500';
+      case 'in_progress':
+        return 'bg-blue-500';
+      case 'resolved':
+        return 'bg-green-500';
+      case 'closed':
+        return 'bg-gray-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>View Legal Case</DialogTitle>
-          <DialogDescription>
-            View and update the status of this legal case.
-          </DialogDescription>
+          <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={status}
-              onValueChange={(value: LegalCaseStatus) => setStatus(value)}
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                <SelectItem value="in_legal_process">In Legal Process</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">Case ID: {legalCase.id}</h3>
+            <p className="text-sm text-muted-foreground">Description: {legalCase.description}</p>
+            <Badge className={`text-white ${getStatusColor(legalCase.status)}`}>
+              {legalCase.status}
+            </Badge>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
+          <div>
+            <h4 className="font-medium">Amount Owed: ${legalCase.amount_owed}</h4>
+            <p>Priority: {legalCase.priority}</p>
+            <p>Assigned To: {legalCase.assigned_to || 'Unassigned'}</p>
+            <p>Created At: {new Date(legalCase.created_at).toLocaleString()}</p>
+            <p>Updated At: {new Date(legalCase.updated_at).toLocaleString()}</p>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isUpdating}>
-            Cancel
-          </Button>
-          <Button onClick={handleStatusUpdate} disabled={isUpdating}>
-            {isUpdating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              'Update Status'
-            )}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};
