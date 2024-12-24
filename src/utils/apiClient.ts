@@ -20,7 +20,6 @@ class ApiClient {
     this.baseUrl = '/api';
   }
 
-  // Generic request method
   private async request<T>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     try {
       const { method = 'GET', body, params, headers = {} } = config;
@@ -30,19 +29,26 @@ class ApiClient {
 
       // Handle database operations through Supabase
       if (endpoint.startsWith('/db/')) {
-        const tableName = endpoint.replace('/db/', '') as any;
+        const tableName = endpoint.replace('/db/', '');
         let query = supabase.from(tableName);
 
         switch (method) {
-          case 'GET':
+          case 'GET': {
             const { data, error } = await query.select();
-            return { data, error };
-          case 'POST':
-            return await query.insert(body);
-          case 'PUT':
-            return await query.update(body).eq('id', body.id);
-          case 'DELETE':
-            return await query.delete().eq('id', body.id);
+            return { data: data as T, error };
+          }
+          case 'POST': {
+            const { data, error } = await query.insert(body);
+            return { data: data as T, error };
+          }
+          case 'PUT': {
+            const { data, error } = await query.update(body).eq('id', body.id);
+            return { data: data as T, error };
+          }
+          case 'DELETE': {
+            const { data, error } = await query.delete().eq('id', body.id);
+            return { data: data as T, error };
+          }
           default:
             throw new Error(`Unsupported method: ${method}`);
         }
@@ -80,7 +86,6 @@ class ApiClient {
     }
   }
 
-  // Convenience methods for different HTTP verbs
   async get<T>(endpoint: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET', params });
   }
@@ -98,23 +103,23 @@ class ApiClient {
   }
 
   // Specialized methods for common operations
-  async fetchCustomers(params?: Record<string, string>) {
-    return this.get('/db/profiles', params);
+  async fetchCustomers<T>(params?: Record<string, string>): Promise<ApiResponse<T>> {
+    return this.get<T>('/db/profiles', params);
   }
 
-  async fetchRentals(params?: Record<string, string>) {
-    return this.get('/db/leases', params);
+  async fetchRentals<T>(params?: Record<string, string>): Promise<ApiResponse<T>> {
+    return this.get<T>('/db/leases', params);
   }
 
-  async createPayment(paymentData: any) {
-    return this.post('/db/payments', paymentData);
+  async createPayment<T>(paymentData: any): Promise<ApiResponse<T>> {
+    return this.post<T>('/db/payments', paymentData);
   }
 
-  async updateVehicleStatus(vehicleId: string, status: string) {
-    return this.put('/db/vehicles', { id: vehicleId, status });
+  async updateVehicleStatus<T>(vehicleId: string, status: string): Promise<ApiResponse<T>> {
+    return this.put<T>('/db/vehicles', { id: vehicleId, status });
   }
 
-  async uploadDocument(file: File, bucket: string) {
+  async uploadDocument(file: File, bucket: string): Promise<ApiResponse<any>> {
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(`${Date.now()}-${file.name}`, file);
