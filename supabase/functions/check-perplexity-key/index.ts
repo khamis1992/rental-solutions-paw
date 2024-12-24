@@ -9,6 +9,7 @@ serve(async (req) => {
   // Validate origin
   const origin = req.headers.get('origin');
   if (!isValidOrigin(origin)) {
+    console.error('Invalid origin:', origin);
     return new Response(
       JSON.stringify({ error: 'Invalid origin' }), 
       { 
@@ -29,6 +30,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error('Error checking Perplexity key:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

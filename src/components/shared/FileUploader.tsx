@@ -47,7 +47,7 @@ export const FileUploader = ({
       });
 
       if (result.error) throw result.error;
-      onUploadComplete({ path: result.path, url: result.url });
+      onUploadComplete({ path: result.path || '', url: result.url });
       event.target.value = '';
     } catch (error) {
       console.error('Upload error:', error);
