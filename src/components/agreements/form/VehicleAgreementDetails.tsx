@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from "react-hook-form";
-import { AgreementFormData } from "../hooks/useAgreementForm";
+import { AgreementFormData } from "../AgreementForm";
 import { VehicleSelect } from "./VehicleSelect";
 
 interface VehicleAgreementDetailsProps {

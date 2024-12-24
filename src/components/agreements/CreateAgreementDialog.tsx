@@ -22,7 +22,7 @@ export const CreateAgreementDialog = () => {
           end_date: values.endDate instanceof Date ? values.endDate.toISOString() : values.endDate,
           rent_amount: values.rentAmount,
           down_payment: values.downPayment,
-          status: 'draft',
+          status: 'pending_payment',
           agreement_type: values.agreementType,
           notes: values.notes,
           initial_mileage: values.initialMileage,
