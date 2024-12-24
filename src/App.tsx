@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 
 // Lazy load components
+const Auth = lazy(() => import("@/pages/Auth"));
 const Dashboard = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
 const VehicleDetails = lazy(() => import("@/components/vehicles/VehicleDetails"));
@@ -65,20 +66,37 @@ export default function App() {
     <>
       <Toaster />
       <Routes>
+        {!session && (
+          <Route
+            path="/auth"
+            element={
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                <Auth />
+              </Suspense>
+            }
+          />
+        )}
         {protectedRoutes.map(({ path, component: Component }) => (
           <Route
             key={path}
             path={path}
             element={
-              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <RouteWrapper>
-                  <Component />
-                </RouteWrapper>
-              </Suspense>
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Component />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
             }
           />
         ))}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route 
+          path="*" 
+          element={<Navigate to={session ? "/" : "/auth"} replace />} 
+        />
       </Routes>
     </>
   );
