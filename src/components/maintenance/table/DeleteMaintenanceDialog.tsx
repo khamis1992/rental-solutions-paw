@@ -25,6 +25,7 @@ interface DeleteMaintenanceDialogProps {
 export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteMaintenanceDialogProps) => {
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -69,7 +70,7 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
         }
       }
 
-      // Invalidate all relevant queries to trigger UI updates
+      // Force refetch all relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
         queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] }),
@@ -77,6 +78,7 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
         queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
       ]);
 
+      setIsOpen(false);
       toast.success('Maintenance record deleted successfully');
     } catch (error: any) {
       console.error("Error deleting maintenance record:", error);
@@ -87,7 +89,7 @@ export const DeleteMaintenanceDialog = ({ recordId, vehicleId, status }: DeleteM
   };
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button 
           variant="ghost" 

@@ -27,10 +27,12 @@ export const MaintenanceList = () => {
         async (payload) => {
           console.log('Real-time update received:', payload);
           
-          // Invalidate and refetch queries
-          await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
-          await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-          await queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] });
+          // Force refetch all related queries
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] }),
+            queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
+            queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
+          ]);
           
           const eventType = payload.eventType;
           const message = eventType === 'INSERT' 
