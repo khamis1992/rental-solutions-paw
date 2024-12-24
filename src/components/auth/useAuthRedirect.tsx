@@ -68,7 +68,7 @@ export const useAuthRedirect = () => {
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (event === 'SIGNED_OUT') {
         navigate('/auth');
       } else if (event === 'SIGNED_IN' && session) {
         const { data: profile } = await supabase

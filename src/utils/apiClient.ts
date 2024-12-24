@@ -42,7 +42,7 @@ async function request<T>(
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as unknown as T,
+            data: fetchedData as T[] as unknown as T,
             error: error as Error | null
           };
         }
