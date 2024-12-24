@@ -29,10 +29,10 @@ export const ContractDocumentUpload = ({
       return;
     }
 
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    // Validate file size (2MB limit)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
     if (file.size > maxSize) {
-      toast.error('File is too large. Maximum size is 5MB.');
+      toast.error('File is too large. Maximum size is 2MB.');
       return;
     }
 
