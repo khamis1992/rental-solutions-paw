@@ -10,30 +10,6 @@ import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination
 
 const ITEMS_PER_PAGE = 10;
 
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  license_plate: string;
-}
-
-interface MaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  description?: string | null;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'urgent';
-  cost?: number | null;
-  scheduled_date: string;
-  completed_date?: string | null;
-  performed_by?: string | null;
-  notes?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  vehicles?: Vehicle;
-}
-
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,6 +30,7 @@ export const MaintenanceList = () => {
           // Invalidate and refetch queries
           await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
           await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+          await queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] });
           
           const eventType = payload.eventType;
           const message = eventType === 'INSERT' 
@@ -104,11 +81,11 @@ export const MaintenanceList = () => {
       if (vehiclesError) throw vehiclesError;
 
       // Convert accident vehicles to maintenance record format
-      const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
+      const accidentRecords = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',
-        status: 'urgent',
+        status: 'urgent' as const,
         scheduled_date: new Date().toISOString(),
         cost: null,
         description: 'Vehicle reported in accident status',
