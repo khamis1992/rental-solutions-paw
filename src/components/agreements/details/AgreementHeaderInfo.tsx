@@ -8,11 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDateToDisplay } from "../utils/dateUtils";
 
+type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated";
+
 interface AgreementHeaderInfoProps {
   agreement: {
     id: string;
     agreement_number: string | null;
-    status: string;
+    status: LeaseStatus;
     start_date: string;
     end_date: string;
     vehicle_id: string;
@@ -24,7 +26,7 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
   const [isEditing, setIsEditing] = useState(false);
   const [agreementNumber, setAgreementNumber] = useState(agreement.agreement_number || '');
   const [isChangingStatus, setIsChangingStatus] = useState(false);
-  const [newStatus, setNewStatus] = useState(agreement.status);
+  const [newStatus, setNewStatus] = useState<LeaseStatus>(agreement.status);
 
   const handleSave = async () => {
     try {
@@ -44,7 +46,7 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
     }
   };
 
-  const validateStatusChange = async (newStatus: string) => {
+  const validateStatusChange = async (newStatus: LeaseStatus) => {
     // Check if vehicle is available when activating agreement
     if (newStatus === 'active') {
       const { data: vehicle, error } = await supabase
@@ -82,7 +84,7 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
     return true;
   };
 
-  const handleStatusChange = async (status: string) => {
+  const handleStatusChange = async (status: LeaseStatus) => {
     try {
       await validateStatusChange(status);
 
@@ -140,7 +142,7 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
                 <>
                   <Select
                     value={newStatus}
-                    onValueChange={(value) => setNewStatus(value)}
+                    onValueChange={(value: LeaseStatus) => setNewStatus(value)}
                   >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select status" />
