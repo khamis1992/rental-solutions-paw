@@ -28,13 +28,13 @@ async function request<T>(
             .eq('id', id)
             .maybeSingle();
           result = {
-            data: fetchedData as unknown as T,
+            data: fetchedData as T,
             error: error as Error | null
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as unknown as T,
+            data: fetchedData as T,
             error: error as Error | null
           };
         }
@@ -45,9 +45,9 @@ async function request<T>(
         const { data: insertedData, error: insertError } = await query
           .insert(data)
           .select()
-          .maybeSingle();
+          .single();
         result = {
-          data: insertedData as unknown as T,
+          data: insertedData as T,
           error: insertError as Error | null
         };
         break;
@@ -59,9 +59,9 @@ async function request<T>(
           .update(data)
           .eq('id', id)
           .select()
-          .maybeSingle();
+          .single();
         result = {
-          data: updatedData as unknown as T,
+          data: updatedData as T,
           error: updateError as Error | null
         };
         break;
@@ -73,9 +73,9 @@ async function request<T>(
           .delete()
           .eq('id', id)
           .select()
-          .maybeSingle();
+          .single();
         result = {
-          data: deletedData as unknown as T,
+          data: deletedData as T,
           error: deleteError as Error | null
         };
         break;
