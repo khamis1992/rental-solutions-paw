@@ -56,6 +56,7 @@ interface MaintenanceTableRowProps {
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const queryClient = useQueryClient();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
@@ -100,6 +101,21 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
   const handleDelete = async () => {
     try {
+      setIsDeleting(true);
+      console.log("Deleting maintenance record:", record.id);
+
+      // First, delete any associated maintenance documents
+      const { error: docsError } = await supabase
+        .from('maintenance_documents')
+        .delete()
+        .eq('maintenance_id', record.id);
+
+      if (docsError) {
+        console.error("Error deleting maintenance documents:", docsError);
+        throw docsError;
+      }
+
+      // Then delete the maintenance record
       const { error } = await supabase
         .from('maintenance')
         .delete()
@@ -107,13 +123,23 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (error) throw error;
 
+      // If the vehicle is in maintenance status and this was its only maintenance record,
+      // update its status to available
       if (record.status === 'scheduled' || record.status === 'in_progress') {
-        const { error: vehicleError } = await supabase
-          .from('vehicles')
-          .update({ status: 'available' })
-          .eq('id', record.vehicle_id);
+        const { data: otherMaintenanceRecords } = await supabase
+          .from('maintenance')
+          .select('id')
+          .eq('vehicle_id', record.vehicle_id)
+          .neq('id', record.id);
 
-        if (vehicleError) throw vehicleError;
+        if (!otherMaintenanceRecords?.length) {
+          const { error: vehicleError } = await supabase
+            .from('vehicles')
+            .update({ status: 'available' })
+            .eq('id', record.vehicle_id);
+
+          if (vehicleError) throw vehicleError;
+        }
       }
 
       await Promise.all([
@@ -126,6 +152,8 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
     } catch (error: any) {
       console.error("Error deleting maintenance record:", error);
       toast.error('Failed to delete maintenance record');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -175,7 +203,11 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
         <TableCell>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                disabled={isDeleting}
+              >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </AlertDialogTrigger>
@@ -188,8 +220,12 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Delete
+                <AlertDialogAction 
+                  onClick={handleDelete} 
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
