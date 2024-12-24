@@ -97,7 +97,7 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
         status,
       };
 
-      // Set end date when closing or terminating
+      // Set end date when closing
       if (status === 'closed') {
         updateData.end_date = new Date().toISOString();
       }
