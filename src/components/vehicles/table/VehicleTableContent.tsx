@@ -105,7 +105,10 @@ export const VehicleTableContent = ({
                 value={vehicle.status}
                 onValueChange={(value) => onStatusChange(vehicle.id, value)}
               >
-                <SelectTrigger className="w-[140px]" onClick={(e) => e.stopPropagation()}>
+                <SelectTrigger 
+                  className="w-[140px]" 
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <SelectValue>
                     <Badge
                       className="text-white"
@@ -138,11 +141,14 @@ export const VehicleTableContent = ({
             <TableCell>
               {documentCounts?.[vehicle.id] ? (
                 <Tooltip>
-                  <TooltipTrigger>
-                    <FileText className="h-4 w-4 text-blue-500" />
+                  <TooltipTrigger asChild>
+                    <FileText 
+                      className="h-4 w-4 text-blue-500" 
+                      aria-label="Document Count"
+                    />
                   </TooltipTrigger>
                   <TooltipContent>
-                    {documentCounts[vehicle.id]} document{documentCounts[vehicle.id] > 1 ? 's' : ''} available
+                    <p>{documentCounts[vehicle.id]} document{documentCounts[vehicle.id] > 1 ? 's' : ''} available</p>
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -153,8 +159,11 @@ export const VehicleTableContent = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                onClick={(e) => onDeleteClick(vehicle.id, e)}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteClick(vehicle.id, e);
+                }}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
