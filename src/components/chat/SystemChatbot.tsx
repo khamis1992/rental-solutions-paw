@@ -14,9 +14,6 @@ interface Message {
   content: string;
 }
 
-// Get the current origin for postMessage security
-const TRUSTED_ORIGIN = window.location.origin;
-
 export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -24,31 +21,6 @@ export const SystemChatbot = () => {
       content: "Hello! I'm your Rental Solutions assistant. How can I help you today?",
     },
   ]);
-
-  // Check if Perplexity API key is configured
-  const { isLoading: isCheckingKey, isError: isKeyError } = useQuery({
-    queryKey: ["perplexity-api-key"],
-    queryFn: async () => {
-      try {
-        // Add origin to request headers
-        const { data, error } = await supabase.functions.invoke("check-perplexity-key", {
-          headers: {
-            'Origin': TRUSTED_ORIGIN
-          }
-        });
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.error('Failed to check API key:', error);
-        throw error;
-      }
-    },
-    retry: 1,
-    retryDelay: 1000,
-    meta: {
-      errorMessage: 'Chat service is currently unavailable'
-    }
-  });
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
@@ -79,14 +51,10 @@ export const SystemChatbot = () => {
 
       console.log('Sending messages to AI:', apiMessages);
       
-      // Add origin to request headers
       const { data, error } = await supabase.functions.invoke("chat", {
         body: { 
           messages: apiMessages,
           dbResponse: null // No database response, use AI
-        },
-        headers: {
-          'Origin': TRUSTED_ORIGIN
         }
       });
       
@@ -112,34 +80,8 @@ export const SystemChatbot = () => {
   });
 
   const handleSendMessage = (message: string) => {
-    if (isKeyError) {
-      toast.error("Chat service is not properly configured. Please try again later.");
-      return;
-    }
     chatMutation.mutate(message);
   };
-
-  if (isCheckingKey) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isKeyError) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="py-10">
-          <p className="text-center text-muted-foreground">
-            Chat service is currently unavailable. Please try again later.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -166,7 +108,7 @@ export const SystemChatbot = () => {
 
         <ChatInput
           onSend={handleSendMessage}
-          disabled={chatMutation.isPending || isCheckingKey}
+          disabled={chatMutation.isPending}
         />
       </CardContent>
     </Card>
