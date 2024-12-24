@@ -31,24 +31,29 @@ const baseMenuItems = [
 const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" };
 
 export const DashboardSidebar = () => {
-  const [menuItems, setMenuItems] = useState(baseMenuItems);
+  const [menuItems, setMenuItems] = useState<typeof baseMenuItems>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
   const { session, isLoading: sessionLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkSession = async () => {
       try {
+        // Wait for session to be checked
         if (sessionLoading) return;
 
+        // Redirect if no session
         if (!session) {
           navigate('/auth');
           return;
         }
 
+        // Fetch user profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -57,32 +62,41 @@ export const DashboardSidebar = () => {
 
         if (profileError) {
           console.error('Error fetching user profile:', profileError);
-          setError('Could not fetch user profile');
-          toast({
-            title: "Error",
-            description: "Could not fetch user profile",
-            variant: "destructive",
-          });
+          if (mounted) {
+            setError('Could not fetch user profile');
+            toast({
+              title: "Error",
+              description: "Could not fetch user profile",
+              variant: "destructive",
+            });
+          }
           return;
         }
 
-        if (profile?.role === 'admin') {
-          setMenuItems([...baseMenuItems, settingsMenuItem]);
-        } else {
-          setMenuItems(baseMenuItems);
+        // Set menu items based on role
+        if (mounted) {
+          if (profile?.role === 'admin') {
+            setMenuItems([...baseMenuItems, settingsMenuItem]);
+          } else {
+            setMenuItems(baseMenuItems);
+          }
+          setError(null);
         }
-        setError(null);
       } catch (error) {
         console.error('Error checking user role:', error);
-        setError('Could not verify user permissions');
-        toast({
-          title: "Error",
-          description: "Could not verify user permissions",
-          variant: "destructive",
-        });
-        setMenuItems(baseMenuItems);
+        if (mounted) {
+          setError('Could not verify user permissions');
+          toast({
+            title: "Error",
+            description: "Could not verify user permissions",
+            variant: "destructive",
+          });
+          setMenuItems(baseMenuItems);
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsInitializing(false);
+        }
       }
     };
 
@@ -97,11 +111,13 @@ export const DashboardSidebar = () => {
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [session, sessionLoading, navigate, toast]);
 
-  if (sessionLoading || isLoading) {
+  // Show loading state only during initialization
+  if (sessionLoading || isInitializing) {
     return (
       <Sidebar>
         <SidebarContent>
@@ -116,6 +132,7 @@ export const DashboardSidebar = () => {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <Sidebar>
@@ -137,6 +154,7 @@ export const DashboardSidebar = () => {
     );
   }
 
+  // Show menu items
   return (
     <Sidebar>
       <SidebarContent>
