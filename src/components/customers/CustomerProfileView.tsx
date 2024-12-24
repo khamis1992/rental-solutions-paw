@@ -9,46 +9,25 @@ import { TrafficFinesSummary } from "./profile/TrafficFinesSummary";
 import { CredibilityScore } from "./profile/CredibilityScore";
 import { CreditAssessment } from "./profile/CreditAssessment";
 import { CustomerNotes } from "./profile/CustomerNotes";
-import { useSessionContext } from "@supabase/auth-helpers-react";
-import { toast } from "sonner";
 
 interface CustomerProfileViewProps {
   customerId: string;
 }
 
 export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) => {
-  const { session } = useSessionContext();
-
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["customer", customerId],
     queryFn: async () => {
-      if (!session) {
-        throw new Error("No authenticated session");
-      }
-
-      console.log("Fetching profile for user:", customerId);
-      
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", customerId)
-        .maybeSingle();
+        .single();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
-        toast.error("Failed to load customer profile");
-        throw error;
-      }
-      
-      console.log("Profile data:", data);
+      if (error) throw error;
       return data;
     },
-    enabled: !!customerId && !!session
   });
-
-  if (!session) {
-    return <div>Please log in to view customer profiles</div>;
-  }
 
   if (isLoadingProfile) {
     return (
@@ -58,10 +37,6 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
         <Skeleton className="h-32 w-full" />
       </div>
     );
-  }
-
-  if (!profile) {
-    return <div>Customer not found</div>;
   }
 
   return (

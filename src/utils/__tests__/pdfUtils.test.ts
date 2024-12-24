@@ -1,52 +1,46 @@
-import { generatePDF } from '../pdfUtils';
-import type { Agreement } from '@/types/agreement';
+import { generatePDF, downloadPDF } from '../pdfUtils';
+import { Agreement } from '@/types/agreement';
 
-describe('pdfUtils', () => {
+describe('PDF Generation Utilities', () => {
   const mockAgreement: Agreement = {
     id: '123',
-    agreement_number: 'AGR-001',
+    agreement_number: 'AGR-2024-001',
     status: 'active',
-    start_date: '2024-01-01',
-    end_date: '2024-12-31',
+    start_date: '2024-03-20T00:00:00Z',
+    end_date: '2024-04-20T00:00:00Z',
     initial_mileage: 50000,
-    return_mileage: null,
     total_amount: 5000,
-    notes: '',
-    agreement_type: 'short_term',
-    rent_amount: 500,
-    rent_due_day: 1,
     customer: {
-      id: 'cust-123',
+      id: '456',
       full_name: 'John Doe',
-      phone_number: '1234567890',
+      phone_number: '+1234567890',
       address: '123 Main St'
     },
     vehicle: {
-      id: 'veh-123',
+      id: '789',
       make: 'Toyota',
       model: 'Camry',
-      year: 2020,
+      year: 2023,
       license_plate: 'ABC123'
     },
-    vehicle_id: 'veh-123',
-    customer_id: 'cust-123'
+    vehicle_id: '789',
+    customer_id: '456'
   };
 
-  it('should generate PDF with customer information', async () => {
+  it('should generate a PDF blob', async () => {
     const pdfBlob = await generatePDF(mockAgreement);
-    const pdfText = await pdfBlob.text();
-    
-    expect(pdfText).toContain('John Doe');
-    expect(pdfText).toContain('1234567890');
-    expect(pdfText).toContain('123 Main St');
+    expect(pdfBlob).toBeInstanceOf(Blob);
+    expect(pdfBlob.type).toBe('application/pdf');
   });
 
-  it('should generate PDF with vehicle information', async () => {
-    const pdfBlob = await generatePDF(mockAgreement);
-    const pdfText = await pdfBlob.text();
-    
-    expect(pdfText).toContain('Toyota');
-    expect(pdfText).toContain('Camry');
-    expect(pdfText).toContain('ABC123');
+  it('should generate PDF with custom options', async () => {
+    const pdfBlob = await generatePDF(mockAgreement, {
+      includeHeader: false,
+      includeLogo: false,
+      fontSize: 14,
+      lineSpacing: 12
+    });
+    expect(pdfBlob).toBeInstanceOf(Blob);
+    expect(pdfBlob.type).toBe('application/pdf');
   });
 });

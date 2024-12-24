@@ -1,59 +1,85 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { uploadFile } from "@/utils/fileUpload";
+import { Loader2 } from "lucide-react";
 
-interface UploadOptions {
+interface FileUploaderProps {
+  bucket: Parameters<typeof uploadFile>[1]['bucket'];
+  onUploadComplete: (result: { path: string; url: string }) => void;
   allowedTypes?: string[];
-  onUploadComplete: (data: { path: string; url: string }) => void;
-  onError: (error: Error) => void;
+  maxSize?: number;
+  folderPath?: string;
 }
 
-export const FileUploader = ({ allowedTypes, onUploadComplete, onError }: UploadOptions) => {
-  const [file, setFile] = useState<File | null>(null);
+interface UploadProgress {
+  progress: number;
+  uploadedBytes: number;
+  totalBytes: number;
+}
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      if (allowedTypes && !allowedTypes.includes(selectedFile.type)) {
-        onError(new Error("File type not allowed"));
-        return;
-      }
-      setFile(selectedFile);
-    }
+export const FileUploader = ({
+  bucket,
+  onUploadComplete,
+  allowedTypes,
+  maxSize,
+  folderPath
+}: FileUploaderProps) => {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const handleProgress = (uploadProgress: UploadProgress) => {
+    setProgress(uploadProgress.progress);
   };
 
-  const handleUpload = async () => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    const bucket = "your-bucket-name"; // Replace with your actual bucket name
+    setUploading(true);
+    setProgress(0);
+
     try {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(`${Date.now()}-${file.name}`, file, {
-          cacheControl: '3600',
-          contentType: file.type
-        });
+      const result = await uploadFile(file, {
+        bucket,
+        allowedTypes,
+        maxSize,
+        folderPath,
+        onProgress: handleProgress
+      });
 
-      if (error) throw error;
-
-      if (data) {
-        onUploadComplete({
-          path: data.path,
-          url: data.path
-        });
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      onError(error as Error);
+      onUploadComplete(result);
+      event.target.value = '';
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <div>
-      <input type="file" onChange={handleFileChange} />
-      <Button onClick={handleUpload} disabled={!file}>
-        Upload
+    <div className="space-y-4">
+      <Button asChild disabled={uploading}>
+        <label className="cursor-pointer">
+          {uploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            'Select File'
+          )}
+          <input
+            type="file"
+            className="hidden"
+            onChange={handleFileChange}
+            accept={allowedTypes?.join(',')}
+            disabled={uploading}
+          />
+        </label>
       </Button>
+
+      {uploading && (
+        <Progress value={progress} className="h-2" />
+      )}
     </div>
   );
 };

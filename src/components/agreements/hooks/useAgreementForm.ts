@@ -2,8 +2,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface AgreementFormData {
-  agreementType: "lease_to_own" | "short_term";
+interface PaymentScheduleItem {
+  due_date: string;
+  amount: number;
+  status: "pending" | "paid" | "overdue";
+  lease_id: string;
+}
+
+interface AgreementFormData {
+  agreementType: string;
   agreementNumber: string;
   customerId: string;
   vehicleId: string;
@@ -20,15 +27,7 @@ export interface AgreementFormData {
   interestRate: number;
   lateFeeRate: number;
   lateReturnFee: number;
-  rentAmount: number;
-  rentDueDay: number;
-  initialMileage: number;
-  notes?: string;
-  paymentSchedules: {
-    dueDate: string;
-    amount: number;
-    status: 'pending' | 'paid' | 'overdue';
-  }[];
+  paymentSchedules: PaymentScheduleItem[];
 }
 
 export const useAgreementForm = (onSuccess?: () => void) => {
@@ -43,8 +42,7 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
   const agreementType = watch("agreementType");
 
-  const updateMonthlyPayment = () => {
-    const values = watch();
+  const updateMonthlyPayment = (values: Partial<AgreementFormData>) => {
     const totalAmount = Number(values.downPayment || 0);
     const duration = Number(values.agreementDuration || 1);
     const interestRate = Number(values.interestRate || 0) / 100;
@@ -62,8 +60,21 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      const { error } = await supabase
-        .from('leases')
+      const schedules = data.paymentSchedules.map(schedule => ({
+        due_date: new Date(schedule.due_date).toISOString(),
+        amount: schedule.amount,
+        status: "pending" as const,
+        lease_id: data.agreementNumber
+      }));
+
+      const { error: schedulesError } = await supabase
+        .from("payment_schedules")
+        .insert(schedules);
+
+      if (schedulesError) throw schedulesError;
+
+      const { error: agreementError } = await supabase
+        .from("leases")
         .insert({
           agreement_type: data.agreementType,
           agreement_number: data.agreementNumber,
@@ -71,25 +82,29 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           vehicle_id: data.vehicleId,
           start_date: data.startDate,
           end_date: data.endDate,
-          initial_mileage: data.initialMileage,
-          total_amount: data.monthlyPayment * data.agreementDuration,
+          duration_months: data.agreementDuration,
           down_payment: data.downPayment,
           monthly_payment: data.monthlyPayment,
           interest_rate: data.interestRate,
           late_fee_rate: data.lateFeeRate,
           late_return_fee: data.lateReturnFee,
-          rent_amount: data.rentAmount,
-          rent_due_day: data.rentDueDay,
-          notes: data.notes
+          status: "active"
         });
 
-      if (error) throw error;
+      if (agreementError) throw agreementError;
+
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "rented" })
+        .eq("id", data.vehicleId);
+
+      if (vehicleError) throw vehicleError;
 
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error('Error creating agreement:', error);
+      console.error("Error in form submission:", error);
       throw error;
     }
   };
