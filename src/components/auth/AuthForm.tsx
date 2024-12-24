@@ -35,6 +35,12 @@ export const AuthForm = () => {
         title: "Password recovery",
         description: "Check your email for password reset instructions.",
       });
+    } else if (event === "USER_DELETED") {
+      toast({
+        title: "Account deleted",
+        description: "Your account has been deleted.",
+      });
+      navigate("/auth");
     }
   });
 
