@@ -2,15 +2,15 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 
-interface PaymentScheduleItem {
+export interface PaymentScheduleItem {
   due_date: string;
   amount: number;
   status: "pending" | "paid" | "overdue";
   lease_id: string;
 }
 
-interface AgreementFormData {
-  agreementType: string;
+export interface AgreementFormData {
+  agreementType: "lease_to_own" | "short_term";
   agreementNumber: string;
   customerId: string;
   vehicleId: string;
@@ -28,6 +28,9 @@ interface AgreementFormData {
   lateFeeRate: number;
   lateReturnFee: number;
   paymentSchedules: PaymentScheduleItem[];
+  notes?: string;
+  rentAmount: number;
+  initialMileage: number;
 }
 
 export const useAgreementForm = (onSuccess?: () => void) => {
@@ -60,19 +63,6 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      const schedules = data.paymentSchedules.map(schedule => ({
-        due_date: new Date(schedule.due_date).toISOString(),
-        amount: schedule.amount,
-        status: "pending" as const,
-        lease_id: data.agreementNumber
-      }));
-
-      const { error: schedulesError } = await supabase
-        .from("payment_schedules")
-        .insert(schedules);
-
-      if (schedulesError) throw schedulesError;
-
       const { error: agreementError } = await supabase
         .from("leases")
         .insert({
@@ -88,7 +78,10 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           interest_rate: data.interestRate,
           late_fee_rate: data.lateFeeRate,
           late_return_fee: data.lateReturnFee,
-          status: "active"
+          status: "active",
+          initial_mileage: data.initialMileage,
+          rent_amount: data.rentAmount,
+          notes: data.notes
         });
 
       if (agreementError) throw agreementError;

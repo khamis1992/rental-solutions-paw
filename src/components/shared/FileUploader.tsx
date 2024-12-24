@@ -5,7 +5,7 @@ import { uploadFile } from "@/utils/fileUpload";
 import { Loader2 } from "lucide-react";
 
 interface FileUploaderProps {
-  bucket: Parameters<typeof uploadFile>[1]['bucket'];
+  bucket: string;
   onUploadComplete: (result: { path: string; url: string }) => void;
   allowedTypes?: string[];
   maxSize?: number;
@@ -42,14 +42,15 @@ export const FileUploader = ({
     try {
       const result = await uploadFile(file, {
         bucket,
-        allowedTypes,
-        maxSize,
-        folderPath,
+        path: folderPath,
         onProgress: handleProgress
       });
 
-      onUploadComplete(result);
+      if (result.error) throw result.error;
+      onUploadComplete({ path: result.path, url: result.url });
       event.target.value = '';
+    } catch (error) {
+      console.error('Upload error:', error);
     } finally {
       setUploading(false);
     }

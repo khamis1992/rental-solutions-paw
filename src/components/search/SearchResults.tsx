@@ -1,121 +1,98 @@
-import { useNavigate } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import React from "react";
 
-interface SearchResultsProps {
-  results: any[];
-  entityType: "customers" | "rentals" | "vehicles";
+interface SearchResult {
+  vehicles?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  }[];
+  customers?: {
+    id: string;
+    full_name: string;
+    phone_number: string;
+  }[];
+  agreements?: {
+    id: string;
+    agreement_number: string;
+    customer?: {
+      full_name: string;
+    };
+    vehicle?: {
+      make: string;
+      model: string;
+    };
+  }[];
 }
 
-export const SearchResults = ({ results, entityType }: SearchResultsProps) => {
-  const navigate = useNavigate();
+export interface SearchResultsProps {
+  isLoading?: boolean;
+  error?: Error | null;
+  searchQuery: string;
+  searchResults: SearchResult;
+  handleSelect: (type: string, id: string) => void;
+}
 
-  const handleRowClick = (id: string) => {
-    switch (entityType) {
-      case "customers":
-        navigate(`/customers/${id}`);
-        break;
-      case "rentals":
-        navigate(`/agreements/${id}`);
-        break;
-      case "vehicles":
-        navigate(`/vehicles/${id}`);
-        break;
-    }
-  };
+export const SearchResults = ({
+  isLoading,
+  error,
+  searchQuery,
+  searchResults,
+  handleSelect
+}: SearchResultsProps) => {
+  if (isLoading) {
+    return <div className="text-center py-4">Loading results...</div>;
+  }
 
-  const renderHeaders = () => {
-    switch (entityType) {
-      case "customers":
-        return (
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
-          </TableRow>
-        );
-      case "rentals":
-        return (
-          <TableRow>
-            <TableHead>Agreement #</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Start Date</TableHead>
-          </TableRow>
-        );
-      case "vehicles":
-        return (
-          <TableRow>
-            <TableHead>Vehicle</TableHead>
-            <TableHead>License Plate</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Mileage</TableHead>
-          </TableRow>
-        );
-    }
-  };
-
-  const renderRow = (item: any) => {
-    switch (entityType) {
-      case "customers":
-        return (
-          <TableRow
-            key={item.id}
-            className="cursor-pointer hover:bg-muted/50"
-            onClick={() => handleRowClick(item.id)}
-          >
-            <TableCell>{item.full_name}</TableCell>
-            <TableCell>{item.phone_number}</TableCell>
-            <TableCell>{item.status}</TableCell>
-            <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
-          </TableRow>
-        );
-      case "rentals":
-        return (
-          <TableRow
-            key={item.id}
-            className="cursor-pointer hover:bg-muted/50"
-            onClick={() => handleRowClick(item.id)}
-          >
-            <TableCell>{item.agreement_number}</TableCell>
-            <TableCell>{item.customer?.full_name}</TableCell>
-            <TableCell>{item.status}</TableCell>
-            <TableCell>
-              {item.start_date
-                ? new Date(item.start_date).toLocaleDateString()
-                : "N/A"}
-            </TableCell>
-          </TableRow>
-        );
-      case "vehicles":
-        return (
-          <TableRow
-            key={item.id}
-            className="cursor-pointer hover:bg-muted/50"
-            onClick={() => handleRowClick(item.id)}
-          >
-            <TableCell>{`${item.year} ${item.make} ${item.model}`}</TableCell>
-            <TableCell>{item.license_plate}</TableCell>
-            <TableCell>{item.status}</TableCell>
-            <TableCell>{item.mileage?.toLocaleString() || "N/A"}</TableCell>
-          </TableRow>
-        );
-    }
-  };
+  if (error) {
+    return <div className="text-center py-4 text-red-500">Error loading results: {error.message}</div>;
+  }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>{renderHeaders()}</TableHeader>
-        <TableBody>{results.map((item) => renderRow(item))}</TableBody>
-      </Table>
+    <div className="space-y-4">
+      {searchResults.vehicles && searchResults.vehicles.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold">Vehicles</h3>
+          <ul>
+            {searchResults.vehicles.map(vehicle => (
+              <li key={vehicle.id} onClick={() => handleSelect("vehicle", vehicle.id)}>
+                {vehicle.year} {vehicle.make} {vehicle.model} ({vehicle.license_plate})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {searchResults.customers && searchResults.customers.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold">Customers</h3>
+          <ul>
+            {searchResults.customers.map(customer => (
+              <li key={customer.id} onClick={() => handleSelect("customer", customer.id)}>
+                {customer.full_name} - {customer.phone_number}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {searchResults.agreements && searchResults.agreements.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold">Agreements</h3>
+          <ul>
+            {searchResults.agreements.map(agreement => (
+              <li key={agreement.id} onClick={() => handleSelect("agreement", agreement.id)}>
+                Agreement No: {agreement.agreement_number} - Customer: {agreement.customer?.full_name} - Vehicle: {agreement.vehicle?.make} {agreement.vehicle?.model}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {searchResults.vehicles?.length === 0 && searchResults.customers?.length === 0 && searchResults.agreements?.length === 0 && (
+        <div className="text-center py-4">No results found for "{searchQuery}"</div>
+      )}
     </div>
   );
 };

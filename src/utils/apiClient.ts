@@ -1,6 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface RequestConfig {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  body?: any;
+  params?: Record<string, string>;
+  headers?: Record<string, string>;
+}
+
 interface ApiResponse<T = any> {
   data: T | null;
   error: Error | null;
@@ -13,35 +20,38 @@ class ApiClient {
     this.baseUrl = '/api';
   }
 
-  // Generic request method
   private async request<T>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     try {
       const { method = 'GET', body, params, headers = {} } = config;
 
-      // Log request details in development
       console.log(`API Request: ${method} ${endpoint}`, { body, params });
 
-      // Handle database operations through Supabase
       if (endpoint.startsWith('/db/')) {
-        const tableName = endpoint.replace('/db/', '') as any;
+        const tableName = endpoint.replace('/db/', '');
         let query = supabase.from(tableName);
 
         switch (method) {
-          case 'GET':
+          case 'GET': {
             const { data, error } = await query.select();
-            return { data, error };
-          case 'POST':
-            return await query.insert(body);
-          case 'PUT':
-            return await query.update(body).eq('id', body.id);
-          case 'DELETE':
-            return await query.delete().eq('id', body.id);
+            return { data: data as T, error };
+          }
+          case 'POST': {
+            const { data, error } = await query.insert(body);
+            return { data: data as T, error };
+          }
+          case 'PUT': {
+            const { data, error } = await query.update(body).eq('id', body.id);
+            return { data: data as T, error };
+          }
+          case 'DELETE': {
+            const { data, error } = await query.delete().eq('id', body.id);
+            return { data: data as T, error };
+          }
           default:
             throw new Error(`Unsupported method: ${method}`);
         }
       }
 
-      // Handle Edge Functions or external API calls
       const url = new URL(endpoint.startsWith('/') ? `${this.baseUrl}${endpoint}` : endpoint);
       
       if (params) {
@@ -73,7 +83,6 @@ class ApiClient {
     }
   }
 
-  // Convenience methods for different HTTP verbs
   async get<T>(endpoint: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET', params });
   }
@@ -90,7 +99,6 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE', body: { id } });
   }
 
-  // Specialized methods for common operations
   async fetchCustomers(params?: Record<string, string>) {
     return this.get('/db/profiles', params);
   }
@@ -117,9 +125,18 @@ class ApiClient {
       return { data: null, error };
     }
 
-    return { data, error: null };
+    const { data: urlData } = await supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return { 
+      data: { 
+        path: data.path,
+        url: urlData.publicUrl 
+      }, 
+      error: null 
+    };
   }
 }
 
-// Export a singleton instance
 export const apiClient = new ApiClient();
