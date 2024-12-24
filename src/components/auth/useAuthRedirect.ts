@@ -4,6 +4,25 @@ import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Define allowed origins for enhanced security
+const ALLOWED_ORIGINS = [
+  'https://preview--rental-solutions.lovable.app',
+  'https://gptengineer.app',
+  'http://localhost:3000',
+  'https://lovable.dev'
+];
+
+// Helper to validate origins
+const isValidOrigin = (origin: string): boolean => {
+  return ALLOWED_ORIGINS.includes(origin);
+};
+
+// Helper to get the correct target origin
+const getTargetOrigin = (): string => {
+  const currentOrigin = window.location.origin;
+  return isValidOrigin(currentOrigin) ? currentOrigin : ALLOWED_ORIGINS[0];
+};
+
 export const useAuthRedirect = () => {
   const navigate = useNavigate();
   const { session, isLoading } = useSessionContext();
@@ -12,7 +31,6 @@ export const useAuthRedirect = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Get the current session state
         const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -23,7 +41,6 @@ export const useAuthRedirect = () => {
         }
 
         if (existingSession) {
-          // Validate the session token
           const { data: { user }, error: tokenError } = await supabase.auth.getUser();
           
           if (tokenError) {
@@ -34,7 +51,6 @@ export const useAuthRedirect = () => {
             return;
           }
 
-          // Check user profile and role
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -43,7 +59,6 @@ export const useAuthRedirect = () => {
 
           if (profileError) {
             if (profileError.code === 'PGRST116') {
-              // Create profile if it doesn't exist
               const { error: createError } = await supabase
                 .from('profiles')
                 .insert([{ 
@@ -83,10 +98,8 @@ export const useAuthRedirect = () => {
       }
     };
 
-    // Initialize auth state
     initializeAuth();
 
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         const { data: profile, error: profileError } = await supabase
@@ -96,13 +109,19 @@ export const useAuthRedirect = () => {
           .single();
 
         if (profile?.role === 'admin' || profile?.role === 'staff') {
-          // Use window.location.origin to ensure correct origin matching
-          const targetOrigin = window.location.origin;
+          const targetOrigin = getTargetOrigin();
+          console.log('Sending postMessage to origin:', targetOrigin); // Debug log
+
           if (window.opener) {
-            window.opener.postMessage(
-              { type: 'SIGNED_IN', session },
-              targetOrigin
-            );
+            try {
+              window.opener.postMessage(
+                { type: 'SIGNED_IN', session },
+                targetOrigin
+              );
+              console.log('PostMessage sent successfully'); // Debug log
+            } catch (error) {
+              console.error('PostMessage error:', error); // Error log
+            }
           }
           navigate('/');
         } else {
@@ -110,12 +129,19 @@ export const useAuthRedirect = () => {
           await supabase.auth.signOut();
         }
       } else if (event === 'SIGNED_OUT') {
-        const targetOrigin = window.location.origin;
+        const targetOrigin = getTargetOrigin();
+        console.log('Sending SIGNED_OUT postMessage to origin:', targetOrigin); // Debug log
+
         if (window.opener) {
-          window.opener.postMessage(
-            { type: 'SIGNED_OUT' },
-            targetOrigin
-          );
+          try {
+            window.opener.postMessage(
+              { type: 'SIGNED_OUT' },
+              targetOrigin
+            );
+            console.log('SIGNED_OUT PostMessage sent successfully'); // Debug log
+          } catch (error) {
+            console.error('SIGNED_OUT PostMessage error:', error); // Error log
+          }
         }
         navigate('/auth');
       }
