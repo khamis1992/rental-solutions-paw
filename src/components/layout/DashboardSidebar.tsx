@@ -32,6 +32,7 @@ const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" 
 
 export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
@@ -47,14 +48,15 @@ export const DashboardSidebar = () => {
       }
 
       try {
-        const { data: profile, error } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
 
-        if (error) {
-          console.error('Error fetching user profile:', error);
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          setError('Could not fetch user profile');
           toast({
             title: "Error",
             description: "Could not fetch user profile",
@@ -68,8 +70,10 @@ export const DashboardSidebar = () => {
         } else {
           setMenuItems(baseMenuItems);
         }
+        setError(null);
       } catch (error) {
         console.error('Error checking user role:', error);
+        setError('Could not verify user permissions');
         toast({
           title: "Error",
           description: "Could not verify user permissions",
@@ -79,7 +83,8 @@ export const DashboardSidebar = () => {
       }
     };
 
-    // Set up auth state change listener
+    checkSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         navigate('/auth');
@@ -88,10 +93,6 @@ export const DashboardSidebar = () => {
       }
     });
 
-    // Initial check
-    checkSession();
-
-    // Cleanup subscription
     return () => {
       subscription.unsubscribe();
     };
@@ -104,7 +105,30 @@ export const DashboardSidebar = () => {
           <div className="flex h-14 items-center border-b px-6">
             <span className="font-semibold">Rental Solutions</span>
           </div>
-          <div className="p-4">Loading...</div>
+          <div className="flex items-center justify-center h-[calc(100vh-3.5rem)] animate-pulse">
+            <span className="text-muted-foreground">Loading menu...</span>
+          </div>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
+
+  if (error) {
+    return (
+      <Sidebar>
+        <SidebarContent>
+          <div className="flex h-14 items-center border-b px-6">
+            <span className="font-semibold">Rental Solutions</span>
+          </div>
+          <div className="p-4 text-destructive">
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-2 text-sm text-primary hover:underline"
+            >
+              Retry
+            </button>
+          </div>
         </SidebarContent>
       </Sidebar>
     );
