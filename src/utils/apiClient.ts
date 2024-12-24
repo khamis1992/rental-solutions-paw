@@ -26,16 +26,16 @@ async function request<T>(
           const { data: fetchedData, error } = await query
             .select('*')
             .eq('id', id)
-            .maybeSingle();
+            .single();
           result = {
-            data: fetchedData as T,
-            error: error as Error | null
+            data: (fetchedData || null) as T | null,
+            error: error
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: fetchedData as T,
-            error: error as Error | null
+            data: (fetchedData || null) as T | null,
+            error: error
           };
         }
         break;
@@ -47,8 +47,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: insertedData as T,
-          error: insertError as Error | null
+          data: (insertedData || null) as T | null,
+          error: insertError
         };
         break;
       }
@@ -61,8 +61,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: updatedData as T,
-          error: updateError as Error | null
+          data: (updatedData || null) as T | null,
+          error: updateError
         };
         break;
       }
@@ -75,8 +75,8 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: deletedData as T,
-          error: deleteError as Error | null
+          data: (deletedData || null) as T | null,
+          error: deleteError
         };
         break;
       }

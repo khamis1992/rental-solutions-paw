@@ -13,28 +13,24 @@ export const useAuthRedirect = () => {
     const initializeAuth = async () => {
       try {
         console.log("Initializing auth state...");
-        console.log("LocalStorage state:", {
-          accessToken: localStorage.getItem('sb-vqdlsidkucrownbfuouq-auth-token'),
-          refreshToken: localStorage.getItem('sb-vqdlsidkucrownbfuouq-auth-refresh-token')
-        });
+        
+        // Clear any stale tokens
+        if (!session) {
+          localStorage.removeItem('sb-vqdlsidkucrownbfuouq-auth-token');
+          localStorage.removeItem('sb-vqdlsidkucrownbfuouq-auth-refresh-token');
+        }
         
         const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("Session check failed:", sessionError);
-          toast.error("Failed to check authentication status");
+          await supabase.auth.signOut();
+          toast.error("Authentication error. Please login again.");
           return;
         }
 
-        console.log("Current session state:", {
-          session: existingSession,
-          hasSession: !!existingSession,
-          userId: existingSession?.user?.id,
-          tokenExpiry: existingSession?.expires_at
-        });
-
         if (existingSession) {
-          console.log("Existing session found, validating session...");
+          console.log("Existing session found, validating...");
           
           const { data: { user }, error: tokenError } = await supabase.auth.getUser();
           
@@ -70,8 +66,6 @@ export const useAuthRedirect = () => {
                 await supabase.auth.signOut();
                 return;
               }
-              
-              console.log("New profile created successfully");
             } else {
               console.error("Profile fetch error:", profileError);
               toast.error("Failed to load user profile");
@@ -92,6 +86,7 @@ export const useAuthRedirect = () => {
       } catch (error) {
         console.error("Auth initialization error:", error);
         toast.error("Authentication system initialization failed");
+        await supabase.auth.signOut();
       } finally {
         setIsInitializing(false);
       }
@@ -100,12 +95,7 @@ export const useAuthRedirect = () => {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", { 
-        event, 
-        session,
-        userId: session?.user?.id,
-        tokenExpiry: session?.expires_at
-      });
+      console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_IN' && session) {
         console.log("Sign in detected, validating profile and role...");
@@ -115,8 +105,6 @@ export const useAuthRedirect = () => {
           .select('role')
           .eq('id', session.user.id)
           .single();
-
-        console.log("Profile validation result:", { profile, profileError });
 
         if (profile?.role === 'admin' || profile?.role === 'staff') {
           console.log("Valid role confirmed, redirecting to dashboard");
@@ -130,7 +118,6 @@ export const useAuthRedirect = () => {
     });
 
     return () => {
-      console.log("Cleaning up auth subscriptions");
       subscription.unsubscribe();
     };
   }, [navigate]);
