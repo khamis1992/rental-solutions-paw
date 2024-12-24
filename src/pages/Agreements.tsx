@@ -9,7 +9,7 @@ import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDial
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { TrafficCone, Plus, Upload, Trash2 } from "lucide-react";
+import { TrafficCone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Agreements() {
@@ -41,45 +41,28 @@ export default function Agreements() {
       <div className="container py-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Agreements</h1>
-          <div className="flex items-center gap-3">
-            {/* Primary action */}
-            <Button 
-              className="flex items-center gap-2" 
-              onClick={() => navigate("/agreements/new")}
-            >
-              <Plus className="h-4 w-4" />
-              Create Agreement
-            </Button>
-
-            {/* Secondary actions */}
+          <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setShowAgreementImport(true)}
-              className="flex items-center gap-2"
             >
-              <Upload className="h-4 w-4" />
               Import Agreements
             </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate("/traffic-fines")}
-              className="flex items-center gap-2"
-            >
-              <TrafficCone className="h-4 w-4" />
-              Traffic Fine Tools
-            </Button>
-
-            {/* Destructive action */}
             <Button
               variant="destructive"
               onClick={() => setShowDeleteDialog(true)}
               disabled={isDeleting}
-              className="flex items-center gap-2"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete All
+              Delete All Agreements
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/traffic-fines")}
+            >
+              <TrafficCone className="h-4 w-4 mr-2" />
+              Traffic Fine Tools
+            </Button>
+            <CreateAgreementDialog />
           </div>
         </div>
 
