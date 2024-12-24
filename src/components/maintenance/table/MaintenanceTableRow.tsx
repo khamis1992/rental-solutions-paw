@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,7 +14,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
-import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,27 +57,32 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const queryClient = useQueryClient();
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
-      console.log("Current record:", record);
-      console.log("Updating maintenance status to:", newStatus);
+      setIsUpdating(true);
+      console.log("Updating maintenance status:", { recordId: record.id, newStatus });
+
+      // Update maintenance record
+      const updateData: Partial<MaintenanceRecord> = {
+        status: newStatus,
+        completed_date: newStatus === 'completed' ? new Date().toISOString() : null
+      };
 
       const { error: maintenanceError } = await supabase
         .from('maintenance')
-        .update({ 
-          status: newStatus,
-          completed_date: newStatus === 'completed' ? new Date().toISOString() : null
-        })
+        .update(updateData)
         .eq('id', record.id);
 
       if (maintenanceError) throw maintenanceError;
 
+      // Update vehicle status based on maintenance status
       const newVehicleStatus = (newStatus === 'completed' || newStatus === 'cancelled') 
         ? 'available' 
         : 'maintenance';
 
-      console.log("Updating vehicle status to:", newVehicleStatus);
+      console.log("Updating vehicle status:", { vehicleId: record.vehicle_id, newStatus: newVehicleStatus });
       
       const { error: vehicleError } = await supabase
         .from('vehicles')
@@ -86,6 +91,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (vehicleError) throw vehicleError;
 
+      // Invalidate and refetch relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
         queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
@@ -94,8 +100,10 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       toast.success('Status updated successfully');
     } catch (error: any) {
-      console.error("Error in handleStatusChange:", error);
-      toast.error('Failed to update status');
+      console.error("Error updating maintenance status:", error);
+      toast.error(error.message || 'Failed to update status');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -123,8 +131,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
 
       if (error) throw error;
 
-      // If the vehicle is in maintenance status and this was its only maintenance record,
-      // update its status to available
+      // Check if this was the last maintenance record for the vehicle
       if (record.status === 'scheduled' || record.status === 'in_progress') {
         const { data: otherMaintenanceRecords } = await supabase
           .from('maintenance')
@@ -151,7 +158,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
       toast.success('Maintenance record deleted successfully');
     } catch (error: any) {
       console.error("Error deleting maintenance record:", error);
-      toast.error('Failed to delete maintenance record');
+      toast.error(error.message || 'Failed to delete maintenance record');
     } finally {
       setIsDeleting(false);
     }
@@ -181,6 +188,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
             <Select
               value={record.status}
               onValueChange={handleStatusChange}
+              disabled={isUpdating}
             >
               <SelectTrigger className="w-[130px]">
                 <SelectValue />
