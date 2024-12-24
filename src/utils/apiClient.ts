@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { toast } from "sonner";
 
+// Define table types from Database type
 type Tables = Database['public']['Tables'];
 type TableName = keyof Tables;
 
@@ -36,13 +37,13 @@ async function request<T>(
             .maybeSingle();
 
           result = {
-            data: (fetchedData || null) as unknown as T,
+            data: fetchedData as unknown as T,
             error: error as Error | null
           };
         } else {
           const { data: fetchedData, error } = await query.select('*');
           result = {
-            data: (fetchedData || null) as unknown as T,
+            data: fetchedData as unknown as T,
             error: error as Error | null
           };
         }
@@ -56,7 +57,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: (insertedData || null) as unknown as T,
+          data: insertedData as unknown as T,
           error: insertError as Error | null
         };
         break;
@@ -71,7 +72,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: (updatedData || null) as unknown as T,
+          data: updatedData as unknown as T,
           error: updateError as Error | null
         };
         break;
@@ -85,7 +86,7 @@ async function request<T>(
           .select()
           .single();
         result = {
-          data: (deletedData || null) as unknown as T,
+          data: deletedData as unknown as T,
           error: deleteError as Error | null
         };
         break;
