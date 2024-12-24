@@ -3373,6 +3373,7 @@ export type Database = {
           inspection_type: string
           inspector_notes: string | null
           lease_id: string | null
+          maintenance_id: string | null
           odometer_reading: number | null
           photos: string[] | null
           renter_signature: string | null
@@ -3395,6 +3396,7 @@ export type Database = {
           inspection_type: string
           inspector_notes?: string | null
           lease_id?: string | null
+          maintenance_id?: string | null
           odometer_reading?: number | null
           photos?: string[] | null
           renter_signature?: string | null
@@ -3417,6 +3419,7 @@ export type Database = {
           inspection_type?: string
           inspector_notes?: string | null
           lease_id?: string | null
+          maintenance_id?: string | null
           odometer_reading?: number | null
           photos?: string[] | null
           renter_signature?: string | null
@@ -3430,6 +3433,13 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance"
             referencedColumns: ["id"]
           },
           {
