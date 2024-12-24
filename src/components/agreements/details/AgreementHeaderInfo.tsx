@@ -90,15 +90,21 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
     try {
       await validateStatusChange(status);
 
+      const updateData: {
+        status: LeaseStatus;
+        end_date?: string;
+      } = {
+        status,
+      };
+
+      // Set end date when closing or terminating
+      if (status === 'closed') {
+        updateData.end_date = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('leases')
-        .update({ 
-          status,
-          // Set end date when closing or terminating
-          ...(status === 'closed' || status === 'terminated' 
-            ? { end_date: new Date().toISOString() } 
-            : {})
-        })
+        .update(updateData)
         .eq('id', agreement.id);
 
       if (error) throw error;
@@ -154,7 +160,6 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
                       <SelectItem value="pending_deposit">Pending Deposit</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
-                      <SelectItem value="terminated">Terminated</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button onClick={() => handleStatusChange(newStatus)} size="sm">Save</Button>
