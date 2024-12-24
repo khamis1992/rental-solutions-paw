@@ -1,13 +1,22 @@
-import { TrafficFinesList } from "./TrafficFinesList";
 import { TrafficFineStats } from "./TrafficFineStats";
-import { TrafficFineAuditLogs } from "./TrafficFineAuditLogs";
+import { TrafficFineImport } from "./TrafficFineImport";
+import { TrafficFinesList } from "./TrafficFinesList";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
-export const TrafficFinesDashboard = () => {
+export function TrafficFinesDashboard() {
   return (
     <div className="space-y-6">
-      <TrafficFineStats />
-      <TrafficFinesList />
-      <TrafficFineAuditLogs />
+      <ErrorBoundary>
+        <TrafficFineStats />
+      </ErrorBoundary>
+      
+      <ErrorBoundary>
+        <TrafficFineImport />
+      </ErrorBoundary>
+      
+      <ErrorBoundary>
+        <TrafficFinesList />
+      </ErrorBoundary>
     </div>
   );
-};
+}
