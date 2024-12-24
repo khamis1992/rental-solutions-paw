@@ -61,7 +61,7 @@ async function request<T extends TableName>(
         if (!data) throw new Error('Data is required for POST requests');
         
         const { data: insertedData, error: insertError } = await query
-          .insert(data)
+          .insert(data as Tables[T]['Insert'])
           .select()
           .single();
 
@@ -77,7 +77,7 @@ async function request<T extends TableName>(
         if (!data) throw new Error('Data is required for PUT requests');
         
         const { data: updatedData, error: updateError } = await query
-          .update(data)
+          .update(data as Tables[T]['Insert'])
           .eq('id', id)
           .select()
           .single();
