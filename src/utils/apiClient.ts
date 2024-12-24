@@ -1,11 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { toast } from "sonner";
 
 // Define basic types
 type Tables = Database['public']['Tables'];
 type TableName = keyof Tables;
 type Row<T extends TableName> = Tables[T]['Row'];
+type Insert<T extends TableName> = Tables[T]['Insert'];
 
 // Simplified error interface
 interface ApiError {
@@ -24,7 +24,7 @@ interface ApiResponse<T> {
 async function request<T extends TableName>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   table: T,
-  data?: Partial<Row<T>>,
+  data?: Partial<Insert<T>>,
   id?: string
 ): Promise<ApiResponse<Row<T>>> {
   try {
@@ -40,13 +40,17 @@ async function request<T extends TableName>(
             .maybeSingle();
 
           result = {
-            data: fetchedData,
+            data: fetchedData as Row<T>,
             error: error as ApiError
           };
         } else {
-          const { data: fetchedData, error } = await query.select('*');
+          const { data: fetchedData, error } = await query
+            .select('*')
+            .limit(1)
+            .maybeSingle();
+
           result = {
-            data: fetchedData?.[0] || null,
+            data: fetchedData as Row<T>,
             error: error as ApiError
           };
         }
@@ -56,11 +60,12 @@ async function request<T extends TableName>(
       case 'POST': {
         if (!data) throw new Error('Data is required for POST requests');
         const { data: insertedData, error: insertError } = await query
-          .insert(data)
+          .insert(data as Insert<T>)
           .select()
           .single();
+
         result = {
-          data: insertedData,
+          data: insertedData as Row<T>,
           error: insertError as ApiError
         };
         break;
@@ -69,13 +74,15 @@ async function request<T extends TableName>(
       case 'PUT': {
         if (!id) throw new Error('ID is required for PUT requests');
         if (!data) throw new Error('Data is required for PUT requests');
+        
         const { data: updatedData, error: updateError } = await query
-          .update(data)
+          .update(data as Insert<T>)
           .eq('id', id)
           .select()
           .single();
+
         result = {
-          data: updatedData,
+          data: updatedData as Row<T>,
           error: updateError as ApiError
         };
         break;
@@ -83,13 +90,15 @@ async function request<T extends TableName>(
 
       case 'DELETE': {
         if (!id) throw new Error('ID is required for DELETE requests');
+        
         const { data: deletedData, error: deleteError } = await query
           .delete()
           .eq('id', id)
           .select()
           .single();
+
         result = {
-          data: deletedData,
+          data: deletedData as Row<T>,
           error: deleteError as ApiError
         };
         break;
@@ -101,13 +110,12 @@ async function request<T extends TableName>(
 
     if (result.error) {
       console.error(`API Error (${method} ${table}):`, result.error);
-      toast.error(`Error: ${result.error.message}`);
+      throw result.error;
     }
 
     return result;
   } catch (error) {
     console.error(`API Request Failed (${method} ${table}):`, error);
-    toast.error('An unexpected error occurred');
     return { 
       data: null, 
       error: error as ApiError 
@@ -116,8 +124,12 @@ async function request<T extends TableName>(
 }
 
 export const apiClient = {
-  get: <T extends TableName>(table: T, id?: string) => request<T>('GET', table, undefined, id),
-  post: <T extends TableName>(table: T, data: Partial<Row<T>>) => request<T>('POST', table, data),
-  put: <T extends TableName>(table: T, id: string, data: Partial<Row<T>>) => request<T>('PUT', table, data, id),
-  delete: <T extends TableName>(table: T, id: string) => request<T>('DELETE', table, undefined, id),
+  get: <T extends TableName>(table: T, id?: string) => 
+    request<T>('GET', table, undefined, id),
+  post: <T extends TableName>(table: T, data: Partial<Insert<T>>) => 
+    request<T>('POST', table, data),
+  put: <T extends TableName>(table: T, id: string, data: Partial<Insert<T>>) => 
+    request<T>('PUT', table, data, id),
+  delete: <T extends TableName>(table: T, id: string) => 
+    request<T>('DELETE', table, undefined, id),
 };
