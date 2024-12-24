@@ -7,8 +7,10 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDateToDisplay } from "../utils/dateUtils";
+import { Database } from "@/integrations/supabase/types";
 
-type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated";
+// Get the lease_status type from the Database types
+type LeaseStatus = Database['public']['Enums']['lease_status'];
 
 interface AgreementHeaderInfoProps {
   agreement: {
