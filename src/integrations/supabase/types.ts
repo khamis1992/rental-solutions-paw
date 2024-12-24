@@ -3257,6 +3257,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          activity_count: number
+          id: string
+          timestamp: string
+        }
+        Insert: {
+          activity_count?: number
+          id?: string
+          timestamp?: string
+        }
+        Update: {
+          activity_count?: number
+          id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       variable_costs: {
         Row: {
           amount: number

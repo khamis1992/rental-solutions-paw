@@ -1,28 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Chart } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
-import { ChartConfig } from '@/components/ui/chart';
+
+interface ActivityData {
+  timestamp: string;
+  activity_count: number;
+}
 
 export const UserActivityMonitor = () => {
-  const [activityData, setActivityData] = useState([]);
+  const [activityData, setActivityData] = useState<ActivityData[]>([]);
   
-  const chartConfig: ChartConfig = {
-    type: 'line',
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-        },
-      },
-    },
-  };
-
   useEffect(() => {
     const fetchActivityData = async () => {
       const { data, error } = await supabase
         .from('user_activity')
-        .select('timestamp, activity_count')
+        .select('*')
         .order('timestamp', { ascending: true });
 
       if (error) {
@@ -37,10 +29,27 @@ export const UserActivityMonitor = () => {
 
   return (
     <div className="space-y-4">
-      <Chart config={chartConfig}>
-        <Chart.Series data={activityData.map(item => item.activity_count)} />
-        <Chart.XAxis data={activityData.map(item => item.timestamp)} />
-      </Chart>
+      <div className="h-[400px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={activityData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="timestamp" 
+              tickFormatter={(value) => new Date(value).toLocaleDateString()}
+            />
+            <YAxis />
+            <Tooltip 
+              labelFormatter={(value) => new Date(value).toLocaleString()}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="activity_count" 
+              stroke="#8884d8" 
+              name="Activity Count"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

@@ -1,96 +1,104 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 
 interface ViewLegalCaseDialogProps {
   caseId: string | null;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
-export const ViewLegalCaseDialog = ({
-  caseId,
-  open,
-  onOpenChange,
-}: ViewLegalCaseDialogProps) => {
-  const { toast } = useToast();
-  
-  const { data: legalCase, isLoading, error } = useQuery({
-    queryKey: ["legal-case", caseId],
+export function ViewLegalCaseDialog({ caseId, onOpenChange, open }: ViewLegalCaseDialogProps) {
+  const { data: legalCase } = useQuery({
+    queryKey: ['legal-case', caseId],
     queryFn: async () => {
       if (!caseId) return null;
-
+      
       const { data, error } = await supabase
-        .from("legal_cases")
+        .from('legal_cases')
         .select(`
           *,
-          customer:profiles(full_name),
-          assigned_to_user:profiles(full_name)
+          customer:profiles!legal_cases_customer_id_fkey (
+            full_name
+          ),
+          assigned_to_user:profiles!legal_cases_assigned_to_fkey (
+            full_name
+          )
         `)
-        .eq("id", caseId)
+        .eq('id', caseId)
         .single();
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load legal case details: " + error.message,
-          variant: "destructive",
-        });
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
-    enabled: !!caseId && open,
+    enabled: !!caseId
   });
 
-  if (!open) return null;
-
-  if (isLoading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Loading...</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center p-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (!legalCase) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Legal Case Not Found</DialogTitle>
-          </DialogHeader>
-          <p>The requested legal case could not be found.</p>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  if (!legalCase) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
-        <div>
-          <h2>Case Type: {legalCase.case_type}</h2>
-          <p>Customer: {legalCase.customer?.full_name}</p>
-          <p>Assigned To: {legalCase.assigned_to_user?.full_name || 'Unassigned'}</p>
-          <p>Status: {legalCase.status}</p>
-          <p>Amount Owed: ${legalCase.amount_owed.toFixed(2)}</p>
-          <p>Created Date: {new Date(legalCase.created_at).toLocaleDateString()}</p>
-          <p>Details: {legalCase.details}</p>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium">Customer</h3>
+              <p>{legalCase.customer?.full_name || 'N/A'}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">Assigned To</h3>
+              <p>{legalCase.assigned_to_user?.full_name || 'Unassigned'}</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-medium">Description</h3>
+            <p>{legalCase.description || 'No description provided'}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium">Case Type</h3>
+              <p>{legalCase.case_type}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">Status</h3>
+              <Badge>{legalCase.status}</Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-medium">Amount Owed</h3>
+              <p>${legalCase.amount_owed.toFixed(2)}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">Created At</h3>
+              <p>{format(new Date(legalCase.created_at), 'PPp')}</p>
+            </div>
+          </div>
+
+          {legalCase.last_reminder_sent && (
+            <div>
+              <h3 className="font-medium">Last Reminder Sent</h3>
+              <p>{format(new Date(legalCase.last_reminder_sent), 'PPp')}</p>
+            </div>
+          )}
+
+          {legalCase.escalation_date && (
+            <div>
+              <h3 className="font-medium">Escalation Date</h3>
+              <p>{format(new Date(legalCase.escalation_date), 'PPp')}</p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

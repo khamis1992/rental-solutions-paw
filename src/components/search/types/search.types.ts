@@ -1,10 +1,14 @@
-export interface SearchFiltersProps {
-  onFilterChange: (filters: any) => void;
-  filters: any;
+export interface SearchFilters {
+  entityType: 'customer' | 'vehicle' | 'agreement' | 'all';
+  keyword: string;
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  status?: string;
 }
 
-export interface SearchFilters {
-  dateRange: { from: Date; to: Date } | null;
-  status: string[];
-  type: string[];
+export interface SearchFiltersProps {
+  filters: SearchFilters;
+  onFilterChange: (filters: SearchFilters) => void;
 }
