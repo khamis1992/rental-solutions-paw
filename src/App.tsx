@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 
 // Lazy load components
-const Auth = lazy(() => import("@/pages/Auth"));
 const Dashboard = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
 const VehicleDetails = lazy(() => import("@/components/vehicles/VehicleDetails"));
@@ -58,26 +57,6 @@ export default function App() {
     },
   });
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
-        toast({
-          title: "Welcome back!",
-          variant: "default",
-        });
-      } else if (event === "SIGNED_OUT") {
-        toast({
-          title: "You have been logged out.",
-          variant: "default",
-        });
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [toast]);
-
   if (loadingSession) {
     return <Skeleton className="h-screen w-screen" />;
   }
@@ -86,15 +65,6 @@ export default function App() {
     <>
       <Toaster />
       <Routes>
-        <Route
-          path="/auth"
-          element={
-            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-              <Auth />
-            </Suspense>
-          }
-        />
-
         {protectedRoutes.map(({ path, component: Component }) => (
           <Route
             key={path}
@@ -108,7 +78,6 @@ export default function App() {
             }
           />
         ))}
-
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
