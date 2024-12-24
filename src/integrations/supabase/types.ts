@@ -971,6 +971,7 @@ export type Database = {
       damages: {
         Row: {
           created_at: string
+          damage_location: string | null
           description: string
           id: string
           images: string[] | null
@@ -983,6 +984,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          damage_location?: string | null
           description: string
           id?: string
           images?: string[] | null
@@ -995,6 +997,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          damage_location?: string | null
           description?: string
           id?: string
           images?: string[] | null
