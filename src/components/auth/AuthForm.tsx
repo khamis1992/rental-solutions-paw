@@ -51,6 +51,8 @@ export const AuthForm = () => {
               },
             }}
             providers={[]}
+            view="sign_in"
+            showLinks={true}
             theme="light"
           />
         </CardContent>
