@@ -33,21 +33,22 @@ const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" 
 export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const { session, isLoading } = useSessionContext();
+  const { session, isLoading: sessionLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkSession = async () => {
-      if (isLoading) return;
-
-      if (!session) {
-        navigate('/auth');
-        return;
-      }
-
       try {
+        if (sessionLoading) return;
+
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -80,6 +81,8 @@ export const DashboardSidebar = () => {
           variant: "destructive",
         });
         setMenuItems(baseMenuItems);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -96,9 +99,9 @@ export const DashboardSidebar = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [session, isLoading, navigate, toast]);
+  }, [session, sessionLoading, navigate, toast]);
 
-  if (isLoading) {
+  if (sessionLoading || isLoading) {
     return (
       <Sidebar>
         <SidebarContent>
