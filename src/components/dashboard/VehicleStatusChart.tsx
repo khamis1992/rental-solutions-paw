@@ -69,7 +69,7 @@ export const VehicleStatusChart = () => {
   if (isLoading) {
     return (
       <Card className="bg-white">
-        <CardContent className="h-[400px] flex items-center justify-center">
+        <CardContent className="h-[500px] flex items-center justify-center">
           <div className="animate-pulse w-full h-full bg-muted rounded-md" />
         </CardContent>
       </Card>
@@ -85,30 +85,28 @@ export const VehicleStatusChart = () => {
   const totalVehicles = vehicleCounts?.reduce((sum, item) => sum + item.value, 0) || 0;
 
   return (
-    <Card className="bg-white">
-      <CardContent className="pt-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Vehicle Status</h3>
-          <ChartStatusSelect
-            selectedStatus={selectedStatus}
-            onStatusChange={setSelectedStatus}
-            statusData={vehicleCounts || []}
-          />
-        </div>
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h3 className="text-2xl font-semibold">Vehicle Status</h3>
+        <ChartStatusSelect
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          statusData={vehicleCounts || []}
+        />
+      </div>
 
-        <div className="flex gap-8">
-          <DonutChart
-            data={filteredData || []}
-            config={config}
-            primaryValue={totalVehicles}
-            primaryLabel="Total Vehicles"
-          />
-          <ChartLegend
-            data={vehicleCounts || []}
-            onStatusSelect={setSelectedStatus}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex gap-12">
+        <DonutChart
+          data={filteredData || []}
+          config={config}
+          primaryValue={totalVehicles}
+          primaryLabel="Total Vehicles"
+        />
+        <ChartLegend
+          data={vehicleCounts || []}
+          onStatusSelect={setSelectedStatus}
+        />
+      </div>
+    </div>
   );
 };
