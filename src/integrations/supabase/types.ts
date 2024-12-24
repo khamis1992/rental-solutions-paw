@@ -975,7 +975,7 @@ export type Database = {
           description: string
           id: string
           images: string[] | null
-          lease_id: string
+          lease_id: string | null
           notes: string | null
           repair_cost: number | null
           reported_date: string
@@ -989,7 +989,7 @@ export type Database = {
           description: string
           id?: string
           images?: string[] | null
-          lease_id: string
+          lease_id?: string | null
           notes?: string | null
           repair_cost?: number | null
           reported_date?: string
@@ -1003,7 +1003,7 @@ export type Database = {
           description?: string
           id?: string
           images?: string[] | null
-          lease_id?: string
+          lease_id?: string | null
           notes?: string | null
           repair_cost?: number | null
           reported_date?: string
