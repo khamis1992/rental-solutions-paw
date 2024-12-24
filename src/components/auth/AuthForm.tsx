@@ -19,6 +19,22 @@ export const AuthForm = () => {
         description: "You have successfully signed in.",
       });
       navigate("/");
+    } else if (event === "SIGNED_OUT") {
+      toast({
+        title: "Signed out",
+        description: "You have been signed out.",
+      });
+      navigate("/auth");
+    } else if (event === "USER_UPDATED") {
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated.",
+      });
+    } else if (event === "PASSWORD_RECOVERY") {
+      toast({
+        title: "Password recovery",
+        description: "Check your email for password reset instructions.",
+      });
     }
   });
 
@@ -48,6 +64,7 @@ export const AuthForm = () => {
                 container: 'w-full',
                 button: 'w-full',
                 input: 'rounded-md',
+                message: 'text-red-500 text-sm',
               },
             }}
             providers={[]}
