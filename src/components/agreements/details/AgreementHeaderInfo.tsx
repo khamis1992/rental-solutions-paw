@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,6 +15,7 @@ interface AgreementHeaderInfoProps {
     status: string;
     start_date: string;
     end_date: string;
+    vehicle_id: string;
   };
   onUpdate: () => void;
 }
@@ -21,6 +23,8 @@ interface AgreementHeaderInfoProps {
 export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfoProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [agreementNumber, setAgreementNumber] = useState(agreement.agreement_number || '');
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+  const [newStatus, setNewStatus] = useState(agreement.status);
 
   const handleSave = async () => {
     try {
@@ -37,6 +41,70 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
     } catch (error) {
       console.error('Error updating agreement number:', error);
       toast.error('Failed to update agreement number');
+    }
+  };
+
+  const validateStatusChange = async (newStatus: string) => {
+    // Check if vehicle is available when activating agreement
+    if (newStatus === 'active') {
+      const { data: vehicle, error } = await supabase
+        .from('vehicles')
+        .select('status')
+        .eq('id', agreement.vehicle_id)
+        .single();
+
+      if (error) {
+        throw new Error('Failed to check vehicle status');
+      }
+
+      if (vehicle.status !== 'available' && vehicle.status !== 'reserve') {
+        throw new Error('Vehicle is not available for rental');
+      }
+    }
+
+    // Check for pending payments when closing agreement
+    if (newStatus === 'closed') {
+      const { data: payments, error } = await supabase
+        .from('payments')
+        .select('status')
+        .eq('lease_id', agreement.id)
+        .eq('status', 'pending');
+
+      if (error) {
+        throw new Error('Failed to check pending payments');
+      }
+
+      if (payments.length > 0) {
+        throw new Error('Cannot close agreement with pending payments');
+      }
+    }
+
+    return true;
+  };
+
+  const handleStatusChange = async (status: string) => {
+    try {
+      await validateStatusChange(status);
+
+      const { error } = await supabase
+        .from('leases')
+        .update({ 
+          status,
+          // Set end date when closing or terminating
+          ...(status === 'closed' || status === 'terminated' 
+            ? { end_date: new Date().toISOString() } 
+            : {})
+        })
+        .eq('id', agreement.id);
+
+      if (error) throw error;
+
+      toast.success('Agreement status updated successfully');
+      setIsChangingStatus(false);
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error updating agreement status:', error);
+      toast.error(error.message || 'Failed to update agreement status');
     }
   };
 
@@ -67,7 +135,34 @@ export const AgreementHeaderInfo = ({ agreement, onUpdate }: AgreementHeaderInfo
           </div>
           <div>
             <Label>Status</Label>
-            <p className="text-lg font-medium capitalize">{agreement.status}</p>
+            <div className="flex items-center gap-2">
+              {isChangingStatus ? (
+                <>
+                  <Select
+                    value={newStatus}
+                    onValueChange={(value) => setNewStatus(value)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending_payment">Pending Payment</SelectItem>
+                      <SelectItem value="pending_deposit">Pending Deposit</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="terminated">Terminated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={() => handleStatusChange(newStatus)} size="sm">Save</Button>
+                  <Button onClick={() => setIsChangingStatus(false)} variant="outline" size="sm">Cancel</Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-medium capitalize">{agreement.status}</p>
+                  <Button onClick={() => setIsChangingStatus(true)} variant="outline" size="sm">Change Status</Button>
+                </>
+              )}
+            </div>
           </div>
           <div>
             <Label>Start Date</Label>
