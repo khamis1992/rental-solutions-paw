@@ -1,39 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
-import { Wand2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const TrafficFineStats = () => {
-  const { toast } = useToast();
-  const [isAssigning, setIsAssigning] = useState(false);
+interface TrafficFineStatsProps {
+  agreementId?: string;
+  paymentCount: number;
+}
 
-  const { data: stats, isLoading, refetch } = useQuery({
-    queryKey: ["traffic-fines-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('traffic_fines')
-        .select('fine_amount, assignment_status');
-
-      if (error) throw error;
-
-      const totalAmount = data.reduce((sum, fine) => sum + (fine.fine_amount || 0), 0);
-      const totalFines = data.length;
-      const unassignedFines = data.filter(fine => fine.assignment_status === 'pending').length;
-
-      return {
-        totalAmount,
-        totalFines,
-        unassignedFines
-      };
-    },
-  });
+export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStatsProps) {
+  const queryClient = useQueryClient();
+  const [isReconciling, setIsReconciling] = useState(false);
 
   const handleBulkAssignment = async () => {
-    setIsAssigning(true);
+    setIsReconciling(true);
     try {
       // Get all unassigned fines
       const { data: unassignedFines, error: finesError } = await supabase
@@ -57,14 +40,18 @@ export const TrafficFineStats = () => {
           }
 
           // Find any lease that covers the violation date for the vehicle
-          const query = supabase
+          let query = supabase
             .from('leases')
-            .select('id')
-            .eq('vehicle_id', fine.vehicle_id);
+            .select('id');
+
+          // Only add vehicle_id condition if it exists
+          if (fine.vehicle_id) {
+            query = query.eq('vehicle_id', fine.vehicle_id);
+          }
 
           // Add date conditions only if violation_date exists
           if (fine.violation_date) {
-            query
+            query = query
               .lte('start_date', fine.violation_date)
               .gte('end_date', fine.violation_date);
           }
@@ -95,62 +82,41 @@ export const TrafficFineStats = () => {
         }
       }
 
-      toast({
-        description: `Successfully assigned ${assignedCount} fines. ${errorCount} fines could not be assigned.`,
-      });
+      toast.success(
+        `Successfully assigned ${assignedCount} fines. ${errorCount} fines could not be assigned.`
+      );
 
       // Refresh the stats after assignment
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
 
     } catch (error: any) {
       console.error('Bulk assignment failed:', error);
-      toast({
-        variant: "destructive",
-        description: error.message || "Failed to process traffic fines",
-      });
+      toast.error(error.message || "Failed to process traffic fines");
     } finally {
-      setIsAssigning(false);
+      setIsReconciling(false);
     }
   };
 
-  if (isLoading) {
-    return <div>Loading statistics...</div>;
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3 flex-1">
-          <Card className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
-              <p className="text-2xl font-bold">{stats?.totalFines || 0}</p>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-              <p className="text-2xl font-bold">{formatCurrency(stats?.totalAmount || 0)}</p>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Unassigned Fines</p>
-              <p className="text-2xl font-bold">{stats?.unassignedFines || 0}</p>
-            </div>
-          </Card>
-        </div>
-        <div className="ml-4">
-          <Button
-            onClick={handleBulkAssignment}
-            disabled={isAssigning || (stats?.unassignedFines || 0) === 0}
-            className="whitespace-nowrap"
-          >
-            <Wand2 className="mr-2 h-4 w-4" />
-            {isAssigning ? "Assigning..." : "Auto-Assign All"}
-          </Button>
-        </div>
+    <div className="flex justify-between items-center">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3 flex-1">
+        <Card className="p-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
+            <p className="text-2xl font-bold">{paymentCount}</p>
+          </div>
+        </Card>
+      </div>
+      <div className="ml-4">
+        <Button
+          onClick={handleBulkAssignment}
+          disabled={isReconciling || !paymentCount}
+          className="whitespace-nowrap"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
+          {isReconciling ? "Assigning..." : "Auto-Assign All"}
+        </Button>
       </div>
     </div>
   );
-};
+}
