@@ -2,91 +2,49 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Upload } from "lucide-react";
-import { parseCSVLine, validateDateFormat, validateCSVHeaders } from "./utils/csvParser";
 
 export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const validateCsvContent = async (file: File): Promise<boolean> => {
-    console.log('Starting CSV validation for file:', file.name);
-    
-    const text = await file.text();
-    const lines = text.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    
-    if (lines.length < 2) {
-      toast({
-        title: "Invalid File",
-        description: "File is empty or contains only headers",
-        variant: "destructive",
-      });
-      return false;
-    }
+  const downloadTemplate = () => {
+    const headers = [
+      "serial_number",
+      "violation_number",
+      "violation_date",
+      "license_plate",
+      "fine_location",
+      "violation_charge",
+      "fine_amount",
+      "violation_points"
+    ].join(",");
 
-    // Parse and validate headers
-    const headers = parseCSVLine(lines[0]);
-    console.log('Parsed headers:', headers);
-    
-    const { isValid, missingHeaders } = validateCSVHeaders(headers);
-    if (!isValid) {
-      toast({
-        title: "Invalid CSV Format",
-        description: `Missing required columns: ${missingHeaders.join(', ')}`,
-        variant: "destructive",
-      });
-      return false;
-    }
+    const sampleData = [
+      "A123,V456,2024-03-20,ABC123,Dubai Marina,Speeding,500,2",
+      "B234,V789,2024-03-21,XYZ789,JBR,Parking,200,1"
+    ].join("\n");
 
-    // Find the index of required columns
-    const dateIndex = headers.findIndex(h => h.toLowerCase().trim() === 'violation_date');
-    if (dateIndex === -1) {
-      toast({
-        title: "Invalid CSV Format",
-        description: "Could not find violation_date column",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    // Validate each data row
-    for (let i = 1; i < lines.length; i++) {
-      const columns = parseCSVLine(lines[i]);
-      console.log(`Validating row ${i}:`, columns);
-
-      if (columns.length !== headers.length) {
-        toast({
-          title: "Invalid Row Format",
-          description: `Row ${i + 1} has incorrect number of columns`,
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      if (!validateDateFormat(columns[dateIndex])) {
-        toast({
-          title: "Invalid Date Format",
-          description: `Row ${i + 1} contains an invalid date format. Expected YYYY-MM-DD format.`,
-          variant: "destructive",
-        });
-        return false;
-      }
-    }
-
-    return true;
+    const csvContent = `${headers}\n${sampleData}`;
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "traffic_fines_template.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
-
-    if (!file.name.endsWith('.csv')) {
+    if (file.type !== "text/csv") {
       toast({
-        title: "Invalid File",
+        title: "Invalid File Type",
         description: "Please upload a CSV file",
         variant: "destructive",
       });
@@ -95,39 +53,29 @@ export const TrafficFineImport = () => {
 
     setIsUploading(true);
     try {
-      const isValid = await validateCsvContent(file);
-      if (!isValid) {
-        setIsUploading(false);
-        return;
-      }
-
+      // Upload file to Supabase Storage
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
-      console.log('Uploading file to storage:', fileName);
-      
       const { error: uploadError } = await supabase.storage
-        .from('imports')
+        .from("imports")
         .upload(fileName, file);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
+      // Process the uploaded file
       const { data: processingData, error: processingError } = await supabase.functions
-        .invoke('process-traffic-fine-import', {
+        .invoke("process-traffic-fine-import", {
           body: { fileName }
         });
 
-      if (processingError) {
-        throw processingError;
-      }
+      if (processingError) throw processingError;
 
       toast({
         title: "Success",
-        description: `Successfully imported ${processingData.processed} fines`,
+        description: `Successfully imported ${processingData.processed} traffic fines`,
       });
 
     } catch (error: any) {
-      console.error('Import error:', error);
+      console.error("Import error:", error);
       toast({
         title: "Import Failed",
         description: error.message || "Failed to import traffic fines",
@@ -135,42 +83,57 @@ export const TrafficFineImport = () => {
       });
     } finally {
       setIsUploading(false);
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h3 className="text-lg font-medium">Import Traffic Fines</h3>
-        <p className="text-sm text-muted-foreground">
-          Upload a CSV file containing traffic fine records. The file should include serial number, 
+    <Card>
+      <CardHeader>
+        <CardTitle>Import Traffic Fines</CardTitle>
+        <CardDescription>
+          Upload a CSV file containing traffic fine records. The file should include serial number,
           violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button disabled={isUploading} asChild>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleFileUpload}
+                disabled={isUploading}
+              />
+              <div className="flex items-center gap-2">
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {isUploading ? "Importing..." : "Import CSV"}
+              </div>
+            </label>
+          </Button>
 
-      <div className="flex items-center gap-4">
-        <Button disabled={isUploading} asChild>
-          <label className="cursor-pointer">
-            <Upload className="mr-2 h-4 w-4" />
-            {isUploading ? "Importing..." : "Import CSV"}
-            <input
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-            />
-          </label>
-        </Button>
-      </div>
-
-      {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Processing file...
+          <Button
+            variant="outline"
+            onClick={downloadTemplate}
+            disabled={isUploading}
+          >
+            Download Template
+          </Button>
         </div>
-      )}
-    </div>
+
+        {isUploading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing file...
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
