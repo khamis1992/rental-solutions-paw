@@ -3,24 +3,29 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, AlertTriangle, CheckCircle } from "lucide-react";
+import { analyzeCsvContent, generateErrorReport } from "./utils/csvAnalyzer";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+const REQUIRED_HEADERS = [
+  "serial_number",
+  "violation_number",
+  "violation_date",
+  "license_plate",
+  "fine_location",
+  "violation_charge",
+  "fine_amount",
+  "violation_points"
+];
 
 export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
   const { toast } = useToast();
 
   const downloadTemplate = () => {
-    const headers = [
-      "serial_number",
-      "violation_number",
-      "violation_date",
-      "license_plate",
-      "fine_location",
-      "violation_charge",
-      "fine_amount",
-      "violation_points"
-    ].join(",");
-
+    const headers = REQUIRED_HEADERS.join(",");
     const sampleData = [
       "A123,V456,2024-03-20,ABC123,Dubai Marina,Speeding,500,2",
       "B234,V789,2024-03-21,XYZ789,JBR,Parking,200,1"
@@ -53,7 +58,25 @@ export const TrafficFineImport = () => {
 
     setIsUploading(true);
     try {
-      // Upload file to Supabase Storage
+      console.log('Starting file analysis...');
+      
+      // Read and analyze the file
+      const content = await file.text();
+      const analysis = analyzeCsvContent(content, REQUIRED_HEADERS);
+      setAnalysisResult(analysis);
+      
+      console.log('Analysis complete:', analysis);
+
+      if (!analysis.isValid) {
+        toast({
+          title: "Validation Failed",
+          description: "Please review the analysis report below",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Proceed with upload if file is valid
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("imports")
@@ -61,7 +84,6 @@ export const TrafficFineImport = () => {
 
       if (uploadError) throw uploadError;
 
-      // Process the uploaded file
       const { data: processingData, error: processingError } = await supabase.functions
         .invoke("process-traffic-fine-import", {
           body: { fileName }
@@ -101,52 +123,110 @@ export const TrafficFineImport = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Import Traffic Fines</CardTitle>
-        <CardDescription>
-          Upload a CSV file containing traffic fine records. The file should include serial number,
-          violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Button disabled={isUploading} asChild>
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
-              <div className="flex items-center gap-2">
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                {isUploading ? "Importing..." : "Import CSV"}
-              </div>
-            </label>
-          </Button>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Import Traffic Fines</CardTitle>
+          <CardDescription>
+            Upload a CSV file containing traffic fine records. The file should include serial number,
+            violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Button disabled={isUploading} asChild>
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                />
+                <div className="flex items-center gap-2">
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {isUploading ? "Importing..." : "Import CSV"}
+                </div>
+              </label>
+            </Button>
 
-          <Button
-            variant="outline"
-            onClick={downloadTemplate}
-            disabled={isUploading}
-          >
-            Download Template
-          </Button>
-        </div>
-
-        {isUploading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Processing file...
+            <Button
+              variant="outline"
+              onClick={downloadTemplate}
+              disabled={isUploading}
+            >
+              Download Template
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {isUploading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing file...
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {analysisResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {analysisResult.isValid ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              )}
+              CSV Analysis Report
+            </CardTitle>
+            <CardDescription>
+              {analysisResult.isValid
+                ? "File structure is valid and ready for import"
+                : "Issues were found in the file structure"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm font-medium">Total Rows</div>
+                  <div className="mt-1 text-2xl font-bold">{analysisResult.totalRows}</div>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm font-medium">Valid Rows</div>
+                  <div className="mt-1 text-2xl font-bold text-green-600">
+                    {analysisResult.validRows}
+                  </div>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm font-medium">Error Rows</div>
+                  <div className="mt-1 text-2xl font-bold text-red-600">
+                    {analysisResult.errorRows}
+                  </div>
+                </div>
+              </div>
+
+              {analysisResult.errors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Validation Errors</AlertTitle>
+                  <AlertDescription>
+                    <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                      <pre className="text-sm">
+                        {generateErrorReport(analysisResult)}
+                      </pre>
+                    </ScrollArea>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
