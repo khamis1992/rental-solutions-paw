@@ -88,7 +88,7 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
               <p>Amount Owed: ${legalCase.amount_owed.toFixed(2)}</p>
               <p>Description: {legalCase.description}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 onClick={() => handleStatusChange('in_legal_process')}
@@ -109,6 +109,13 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
                 disabled={status === 'escalated'}
               >
                 Set to Escalated
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange('pending_reminder')}
+                disabled={status === 'pending_reminder'}
+              >
+                Set to Pending Reminder
               </Button>
             </div>
           </div>
