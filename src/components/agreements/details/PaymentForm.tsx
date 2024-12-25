@@ -14,6 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PaymentMethodType, PaymentStatus } from "@/types/database/agreement.types";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -30,14 +31,15 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       const paymentData = {
         lease_id: agreementId,
         amount: data.amount,
-        payment_method: data.paymentMethod,
+        payment_method: data.paymentMethod as PaymentMethodType,
         description: data.description,
         payment_date: new Date().toISOString(),
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
         next_payment_date: isRecurring ? 
           new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue, data.intervalUnit)).toISOString() : 
-          null
+          null,
+        status: 'pending' as PaymentStatus
       };
 
       const { error } = await supabase.from("payments").insert(paymentData);
@@ -84,12 +86,12 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             <SelectValue placeholder="Select payment method" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="cash">Cash</SelectItem>
-            <SelectItem value="wire_transfer">Wire Transfer</SelectItem>
-            <SelectItem value="invoice">Invoice</SelectItem>
-            <SelectItem value="on_hold">On Hold</SelectItem>
-            <SelectItem value="deposit">Deposit</SelectItem>
-            <SelectItem value="cheque">Cheque</SelectItem>
+            <SelectItem value="Cash">Cash</SelectItem>
+            <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
+            <SelectItem value="Invoice">Invoice</SelectItem>
+            <SelectItem value="On_hold">On Hold</SelectItem>
+            <SelectItem value="Deposit">Deposit</SelectItem>
+            <SelectItem value="Cheque">Cheque</SelectItem>
           </SelectContent>
         </Select>
       </div>
