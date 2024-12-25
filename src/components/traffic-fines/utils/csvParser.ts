@@ -30,6 +30,7 @@ export const parseCSVLine = (line: string): ParseResult => {
   let current = '';
   let inQuotes = false;
   let unclosedQuote = false;
+  let lastQuoteIndex = -1;
   
   // Handle empty line
   if (!line.trim()) {
@@ -46,6 +47,7 @@ export const parseCSVLine = (line: string): ParseResult => {
       // Start of quoted content
       if (!inQuotes && (i === 0 || prevChar === ',' || prevChar === ' ')) {
         inQuotes = true;
+        lastQuoteIndex = i;
         continue;
       }
       // End of quoted content
@@ -61,8 +63,15 @@ export const parseCSVLine = (line: string): ParseResult => {
       }
       // Unmatched quote - attempt repair
       else {
-        repairs.push(`Unmatched quote found at position ${i}`);
-        unclosedQuote = !unclosedQuote;
+        repairs.push(`Unmatched quote found at position ${i}, attempting repair`);
+        if (i - lastQuoteIndex > 1) {
+          // If there's significant content since the last quote, treat this as a closing quote
+          inQuotes = false;
+        } else {
+          // Otherwise, treat it as an opening quote
+          inQuotes = true;
+          lastQuoteIndex = i;
+        }
         continue;
       }
     }
@@ -85,7 +94,7 @@ export const parseCSVLine = (line: string): ParseResult => {
   result.push(current.trim());
   
   // Handle any remaining unclosed quotes
-  if (unclosedQuote) {
+  if (inQuotes) {
     repairs.push('Closed unclosed quote at end of line');
   }
 

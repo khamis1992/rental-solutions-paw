@@ -1,8 +1,8 @@
 import { CsvAnalysisResult, RepairResult } from './types';
 import { incrementErrorPattern } from './errorPatterns';
-import { repairQuotes, repairDelimiters } from './repairUtils';
+import { repairQuotes, repairDelimiters, reconstructMalformedRow } from './repairUtils';
 import { parseCSVLine, validateHeaders } from './csvParser';
-import { ensureColumnCount, repairDate, repairNumeric } from './dataRepair';
+import { repairDate, repairNumeric } from './dataRepair';
 
 export const analyzeCsvContent = (content: string, expectedHeaders: string[]): CsvAnalysisResult => {
   console.log('Starting CSV analysis...');
@@ -41,23 +41,29 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
     for (let i = 1; i < lines.length; i++) {
       const rowNumber = i;
       let line = lines[i];
+      const nextLine = lines[i + 1];
 
       // Apply repairs
       const quoteRepair = repairQuotes(line);
       const delimiterRepair = repairDelimiters(quoteRepair.value);
       
-      const repairs = [...quoteRepair.repairs, ...delimiterRepair.repairs];
+      let repairs = [...quoteRepair.repairs, ...delimiterRepair.repairs];
       line = delimiterRepair.value;
 
       try {
         const { values, repairs: parseRepairs } = parseCSVLine(line);
-        const columnResult = ensureColumnCount(values, headers.length);
+        const { repairedRow, skipNextRow, repairs: reconstructRepairs } = 
+          reconstructMalformedRow(values, nextLine, headers.length);
         
-        let rowRepairs = [...repairs, ...parseRepairs, ...columnResult.repairs];
+        if (skipNextRow) {
+          i++; // Skip the next row since we merged it
+        }
+        
+        let rowRepairs = [...repairs, ...parseRepairs, ...reconstructRepairs];
         let rowHasError = false;
 
         // Validate and repair each field
-        const repairedData = columnResult.row.map((value, index) => {
+        const repairedData = repairedRow.map((value, index) => {
           const header = headers[index];
           const repairResult = repairField(header, value, rowNumber);
           
@@ -84,6 +90,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           result.repairedRows.push({
             rowNumber,
             repairs: rowRepairs,
+            originalData: line,
             finalData: repairedData
           });
         }

@@ -4,6 +4,10 @@ interface RepairResult {
   value: string;
   wasRepaired: boolean;
   repairDetails?: string;
+  error?: {
+    type: string;
+    details: string;
+  };
 }
 
 export const repairDate = (value: string): RepairResult => {
@@ -35,14 +39,20 @@ export const repairDate = (value: string): RepairResult => {
     return { 
       value: cleanValue,
       wasRepaired: false,
-      repairDetails: 'Invalid date format'
+      error: {
+        type: 'invalid_date',
+        details: 'Invalid date format'
+      }
     };
   } catch (error) {
     console.error('Date repair error:', error);
     return { 
       value: cleanValue,
       wasRepaired: false,
-      repairDetails: 'Date parsing error'
+      error: {
+        type: 'date_parsing_error',
+        details: 'Date parsing error'
+      }
     };
   }
 };
@@ -62,26 +72,4 @@ export const repairNumeric = (value: string): RepairResult => {
   }
 
   return { value: cleanValue, wasRepaired: false };
-};
-
-export const ensureColumnCount = (
-  row: string[],
-  expectedCount: number
-): { row: string[]; repairs: string[] } => {
-  const repairs: string[] = [];
-  let repairedRow = [...row];
-
-  // Add empty values for missing columns
-  while (repairedRow.length < expectedCount) {
-    repairs.push(`Added empty column at position ${repairedRow.length + 1}`);
-    repairedRow.push('');
-  }
-
-  // Remove extra columns
-  if (repairedRow.length > expectedCount) {
-    repairs.push(`Removed ${repairedRow.length - expectedCount} extra columns`);
-    repairedRow = repairedRow.slice(0, expectedCount);
-  }
-
-  return { row: repairedRow, repairs };
 };
