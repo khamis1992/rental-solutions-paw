@@ -1,55 +1,70 @@
 import { isValid, parseISO } from "date-fns";
 
-export const parseCSVLine = (line: string): string[] => {
-  const result = [];
+interface ParseResult {
+  values: string[];
+  repairs: string[];
+}
+
+export const parseCSVLine = (line: string): ParseResult => {
+  const result: string[] = [];
+  const repairs: string[] = [];
   let current = '';
   let inQuotes = false;
+  let columnIndex = 0;
   
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+    const nextChar = line[i + 1];
     
     if (char === '"') {
-      inQuotes = !inQuotes;
-      continue;
+      if (!inQuotes) {
+        inQuotes = true;
+        if (current.length > 0) {
+          repairs.push(`Fixed unescaped quote at column ${columnIndex}`);
+        }
+        continue;
+      } else if (nextChar === '"') {
+        current += '"';
+        i++; // Skip next quote
+        continue;
+      } else {
+        inQuotes = false;
+        continue;
+      }
     }
     
     if (char === ',' && !inQuotes) {
       result.push(current.trim());
       current = '';
+      columnIndex++;
       continue;
     }
     
     current += char;
   }
   
+  // Add the last value
   result.push(current.trim());
-  return result.filter(Boolean); // Remove empty entries
+  
+  return { values: result, repairs };
 };
 
 export const validateDateFormat = (dateStr: string): boolean => {
-  if (!dateStr) {
-    console.error('Empty date string');
-    return false;
-  }
+  if (!dateStr) return false;
 
   const cleanDateStr = dateStr.replace(/"/g, '').trim();
-  console.log('Validating date:', cleanDateStr);
-  
   const parsedDate = parseISO(cleanDateStr);
+  
   if (isValid(parsedDate)) {
-    console.log('Valid ISO date');
     return true;
   }
 
+  // Try parsing as regular date
   const date = new Date(cleanDateStr);
-  const isValidDate = isValid(date);
-  console.log('Valid regular date:', isValidDate);
-  return isValidDate;
+  return isValid(date);
 };
 
-export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {
-  console.log('Validating headers:', headers);
-  
+export const validateHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {
   const requiredHeaders = [
     'serial_number',
     'violation_number',
@@ -61,12 +76,7 @@ export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missi
     'violation_points'
   ];
 
-  const normalizedHeaders = headers
-    .map(h => h.toLowerCase().trim())
-    .filter(Boolean); // Remove empty headers
-  
-  console.log('Normalized headers:', normalizedHeaders);
-  
+  const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
   const missingHeaders = requiredHeaders.filter(h => !normalizedHeaders.includes(h));
   
   return {

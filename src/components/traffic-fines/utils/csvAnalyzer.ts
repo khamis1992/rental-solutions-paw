@@ -1,4 +1,5 @@
 import { toast } from "@/hooks/use-toast";
+import { parseCSVLine, validateHeaders } from './csvParser';
 import { repairDate, repairNumeric, repairString, ensureColumnCount } from './dataRepair';
 
 interface CsvAnalysisResult {
@@ -43,23 +44,22 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
   };
 
   try {
-    // Split content into lines and filter out empty lines
     const lines = content.split('\n').filter(line => line.trim());
-    result.totalRows = lines.length - 1; // Exclude header row
+    result.totalRows = lines.length - 1;
     
     console.log(`Processing ${result.totalRows} data rows...`);
 
     // Validate headers
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-    const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+    const headerValidation = validateHeaders(headers);
     
-    if (missingHeaders.length > 0) {
+    if (!headerValidation.isValid) {
       result.errors.push({
         row: 0,
         type: 'header_mismatch',
-        details: `Missing required headers: ${missingHeaders.join(', ')}`,
+        details: `Missing required headers: ${headerValidation.missingHeaders.join(', ')}`,
       });
-      console.error('Header validation failed:', missingHeaders);
+      console.error('Header validation failed:', headerValidation.missingHeaders);
     }
 
     // Process each data row
@@ -69,18 +69,14 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       console.log(`Processing row ${rowNumber}:`, line);
 
       try {
-        let values = line.split(',').map(v => v.trim());
-        let repairs: string[] = [];
-
-        // Ensure correct column count
+        const { values, repairs } = parseCSVLine(line);
         const columnResult = ensureColumnCount(values, headers.length);
-        values = columnResult.row;
-        repairs = columnResult.repairs;
+        let rowRepairs = [...repairs, ...columnResult.repairs];
+        let rowHasError = false;
 
         // Validate and repair each field
-        let rowHasError = false;
         headers.forEach((header, index) => {
-          const value = values[index];
+          const value = columnResult.row[index];
           const repairResult = repairField(header, value, rowNumber);
           
           if (repairResult.error) {
@@ -90,16 +86,16 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           }
           
           if (repairResult.wasRepaired) {
-            values[index] = repairResult.value;
-            repairs.push(`Column '${header}': ${repairResult.repairDetails}`);
+            columnResult.row[index] = repairResult.value;
+            rowRepairs.push(`Column '${header}': ${repairResult.repairDetails}`);
           }
         });
 
-        if (repairs.length > 0) {
+        if (rowRepairs.length > 0) {
           result.repairedRows.push({
             rowNumber,
-            repairs,
-            finalData: values
+            repairs: rowRepairs,
+            finalData: columnResult.row
           });
         }
 
@@ -122,7 +118,6 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       }
     }
 
-    // Final validation
     result.isValid = result.validRows > 0;
     console.log('CSV analysis completed:', result);
 

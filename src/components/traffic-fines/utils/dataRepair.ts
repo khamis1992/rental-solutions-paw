@@ -7,10 +7,8 @@ interface RepairResult {
 }
 
 export const repairDate = (value: string): RepairResult => {
-  // Try different date formats and normalize them
   const cleanValue = value.trim().replace(/['"]/g, '');
   
-  // Check if it's already valid
   if (validateDateFormat(cleanValue)) {
     return { value: cleanValue, wasRepaired: false };
   }
@@ -27,14 +25,12 @@ export const repairDate = (value: string): RepairResult => {
     };
   }
 
-  // Return original if can't repair
   return { value: cleanValue, wasRepaired: false };
 };
 
 export const repairNumeric = (value: string): RepairResult => {
   const cleanValue = value.trim().replace(/['"]/g, '');
   
-  // Remove currency symbols and spaces
   const processed = cleanValue.replace(/[^0-9.-]/g, '');
   
   if (processed !== cleanValue) {
@@ -69,13 +65,11 @@ export const ensureColumnCount = (
   const repairs: string[] = [];
   let repairedRow = [...row];
 
-  // Add missing columns
   while (repairedRow.length < expectedCount) {
     repairs.push(`Added empty column at position ${repairedRow.length + 1}`);
     repairedRow.push('');
   }
 
-  // Remove extra columns
   if (repairedRow.length > expectedCount) {
     repairs.push(`Removed ${repairedRow.length - expectedCount} extra columns`);
     repairedRow = repairedRow.slice(0, expectedCount);

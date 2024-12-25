@@ -2988,6 +2988,65 @@ export type Database = {
           },
         ]
       }
+      traffic_fines: {
+        Row: {
+          assignment_status: string | null
+          created_at: string | null
+          fine_amount: number | null
+          fine_location: string | null
+          id: string
+          lease_id: string | null
+          license_plate: string | null
+          payment_status: string | null
+          serial_number: string | null
+          updated_at: string | null
+          violation_charge: string | null
+          violation_date: string | null
+          violation_number: string | null
+          violation_points: number | null
+        }
+        Insert: {
+          assignment_status?: string | null
+          created_at?: string | null
+          fine_amount?: number | null
+          fine_location?: string | null
+          id?: string
+          lease_id?: string | null
+          license_plate?: string | null
+          payment_status?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          violation_charge?: string | null
+          violation_date?: string | null
+          violation_number?: string | null
+          violation_points?: number | null
+        }
+        Update: {
+          assignment_status?: string | null
+          created_at?: string | null
+          fine_amount?: number | null
+          fine_location?: string | null
+          id?: string
+          lease_id?: string | null
+          license_plate?: string | null
+          payment_status?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          violation_charge?: string | null
+          violation_date?: string | null
+          violation_number?: string | null
+          violation_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traffic_fines_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_import_items: {
         Row: {
           amount: number
