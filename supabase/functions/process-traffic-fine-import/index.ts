@@ -14,6 +14,9 @@ serve(async (req) => {
   try {
     console.log('Starting traffic fine import process');
     const { fileName } = await req.json()
+    if (!fileName) {
+      throw new Error('No file name provided');
+    }
     console.log('Processing file:', fileName)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -101,7 +104,9 @@ serve(async (req) => {
           fine_amount: amount,
           violation_points: points,
           payment_status: 'pending',
-          assignment_status: 'pending'
+          assignment_status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
       } catch (error) {
         console.error(`Error processing row ${i + 1}:`, error)
@@ -134,7 +139,11 @@ serve(async (req) => {
         file_name: fileName,
         total_fines: fines.length,
         unassigned_fines: fines.length,
-        import_errors: errors.length > 0 ? errors : null
+        import_errors: errors.length > 0 ? errors : null,
+        processed_by: null,
+        created_at: new Date().toISOString(),
+        ai_analysis_status: 'pending',
+        ai_analysis_results: null
       })
 
     if (logError) {
@@ -155,7 +164,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Processing error:', error)
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
