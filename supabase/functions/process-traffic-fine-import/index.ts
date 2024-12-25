@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { parseCSVRow, validateRow, validateDate, validateNumeric } from './csvParser.ts'
-import { insertTrafficFine, logImport } from './dbOperations.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -74,21 +73,41 @@ serve(async (req) => {
         const values = parseCSVRow(row);
         validateRow(i, values, expectedColumns, row);
 
-        // Validate date and numeric values
-        const violationDate = validateDate(values[2], i);
+        // Validate date and numeric values with more detailed error messages
+        let violationDate: Date;
+        try {
+          violationDate = validateDate(values[2], i);
+          if (isNaN(violationDate.getTime())) {
+            throw new Error(`Invalid date format in row ${i}: ${values[2]}`);
+          }
+        } catch (error) {
+          console.error(`Date validation error in row ${i}:`, error);
+          errors.push({ row: i, error: `Invalid date format: ${values[2]}. Expected YYYY-MM-DD` });
+          continue;
+        }
+
         const amount = validateNumeric(values[6], 'amount', i);
         const points = validateNumeric(values[7], 'points', i);
 
-        await insertTrafficFine(supabaseClient, {
-          serial_number: values[0],
-          violation_number: values[1],
-          violation_date: violationDate.toISOString(),
-          license_plate: values[3],
-          fine_location: values[4],
-          violation_charge: values[5],
-          fine_amount: amount,
-          violation_points: points
-        });
+        // Insert the fine with validated data
+        const { error: insertError } = await supabaseClient
+          .from('traffic_fines')
+          .insert({
+            serial_number: values[0],
+            violation_number: values[1],
+            violation_date: violationDate.toISOString(),
+            license_plate: values[3],
+            fine_location: values[4],
+            violation_charge: values[5],
+            fine_amount: amount,
+            violation_points: points,
+            payment_status: 'pending',
+            assignment_status: 'pending'
+          });
+
+        if (insertError) {
+          throw insertError;
+        }
 
         processed++;
       } catch (error) {
@@ -97,7 +116,20 @@ serve(async (req) => {
       }
     }
 
-    await logImport(supabaseClient, fileName, processed, errors);
+    // Log import results
+    const { error: logError } = await supabaseClient
+      .from('traffic_fine_imports')
+      .insert({
+        file_name: fileName,
+        total_fines: processed,
+        unassigned_fines: processed,
+        import_errors: errors.length > 0 ? errors : null,
+        ai_analysis_status: 'pending'
+      });
+
+    if (logError) {
+      console.error('Error logging import:', logError);
+    }
 
     console.log('Import completed:', { processed, errors: errors.length });
 
