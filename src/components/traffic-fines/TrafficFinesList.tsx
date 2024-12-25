@@ -17,7 +17,6 @@ export const TrafficFinesList = () => {
   const [selectedFine, setSelectedFine] = useState<any>(null);
   const queryClient = useQueryClient();
 
-  // Force an immediate refresh when the component mounts
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
   }, [queryClient]);
@@ -58,19 +57,24 @@ export const TrafficFinesList = () => {
 
   const handleAssignCustomer = async (fineId: string, customerId: string) => {
     try {
+      // Find lease that covers the violation date
+      const fine = fines?.find(f => f.id === fineId);
+      if (!fine) throw new Error("Fine not found");
+
       const { data: leases, error: leaseError } = await supabase
         .from('leases')
         .select('id')
         .eq('customer_id', customerId)
-        .eq('status', 'active')
+        .lte('start_date', fine.violation_date)
+        .gte('end_date', fine.violation_date)
         .limit(1);
 
       if (leaseError) throw leaseError;
       
       if (!leases?.length) {
         toast({
-          title: "No Active Lease",
-          description: "Customer must have an active lease to assign fines",
+          title: "No Matching Lease",
+          description: "No lease found covering the violation date",
           variant: "destructive",
         });
         return;
@@ -90,6 +94,9 @@ export const TrafficFinesList = () => {
         title: "Success",
         description: "Fine assigned successfully",
       });
+
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
     } catch (error: any) {
       toast({
         title: "Error",
