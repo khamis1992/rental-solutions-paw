@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { LegalCase } from "@/types/legal";
+import type { LegalCase, LegalCaseStatus } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
   legalCaseId: string;
@@ -24,14 +24,22 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
       try {
         const { data, error } = await supabase
           .from("legal_cases")
-          .select("*")
+          .select(`
+            *,
+            customer:profiles!legal_cases_customer_id_fkey (
+              full_name
+            ),
+            assigned_to_user:profiles!legal_cases_assigned_to_fkey (
+              full_name
+            )
+          `)
           .eq("id", legalCaseId)
           .single();
 
         if (error) throw error;
 
-        setLegalCase(data);
-        setStatus(data.status);
+        setLegalCase(data as LegalCase);
+        setStatus(data.status as LegalCaseStatus);
       } catch (error) {
         console.error("Error fetching legal case:", error);
         setError("Failed to load legal case.");
@@ -71,15 +79,17 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
         <DialogHeader>
           <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
-        <div>
-          <h3>Case Type: {legalCase?.case_type}</h3>
-          <p>Status: {status}</p>
-          <p>Amount Owed: {legalCase?.amount_owed}</p>
-          <p>Description: {legalCase?.description}</p>
-          <Button onClick={() => handleStatusChange('in_legal_process')}>Set to In Legal Process</Button>
-          <Button onClick={() => handleStatusChange('resolved')}>Set to Resolved</Button>
-          <Button onClick={() => handleStatusChange('escalated')}>Set to Escalated</Button>
-        </div>
+        {legalCase && (
+          <div>
+            <h3>Case Type: {legalCase.case_type}</h3>
+            <p>Status: {status}</p>
+            <p>Amount Owed: {legalCase.amount_owed}</p>
+            <p>Description: {legalCase.description}</p>
+            <Button onClick={() => handleStatusChange('in_legal_process')}>Set to In Legal Process</Button>
+            <Button onClick={() => handleStatusChange('resolved')}>Set to Resolved</Button>
+            <Button onClick={() => handleStatusChange('escalated')}>Set to Escalated</Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

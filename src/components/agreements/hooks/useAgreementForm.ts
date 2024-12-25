@@ -67,9 +67,9 @@ export const useAgreementForm = (onSuccess: () => void) => {
         setValue("monthlyPayment", result.schedule[0]?.amount || 0);
         setValue("totalAmount", result.totalAmount);
 
-        // Store the payment schedule for later use
+        // Store the payment schedule for later use, converting Date to ISO string
         const paymentSchedules = result.schedule.map(payment => ({
-          due_date: payment.dueDate,
+          due_date: payment.dueDate.toISOString(),
           amount: payment.amount,
           status: 'pending' as const,
           lease_id: null
