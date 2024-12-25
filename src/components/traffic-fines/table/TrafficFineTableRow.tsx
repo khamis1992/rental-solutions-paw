@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { CustomerSelect } from "../../agreements/form/CustomerSelect";
 
 interface TrafficFineTableRowProps {
   fine: any;
@@ -45,12 +44,7 @@ export const TrafficFineTableRow = ({
         {fine.lease?.customer ? (
           <span className="font-medium">{fine.lease.customer.full_name}</span>
         ) : (
-          <div className="flex items-center gap-2">
-            <CustomerSelect
-              register={() => {}}
-              onCustomerSelect={(customerId) => onAssignCustomer(fine.id, customerId)}
-            />
-          </div>
+          <span className="text-muted-foreground">Unassigned</span>
         )}
       </TableCell>
       <TableCell>
