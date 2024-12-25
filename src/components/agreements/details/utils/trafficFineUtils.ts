@@ -39,15 +39,7 @@ export const deleteAllTrafficFines = async () => {
     // Delete all records without any filtering
     const { data, error } = await supabase
       .from('traffic_fines')
-      .delete()
-      .then(response => {
-        console.log('Delete operation response:', response);
-        return response;
-      })
-      .catch(err => {
-        console.error('Delete operation failed:', err);
-        throw err;
-      });
+      .delete();
 
     if (error) {
       console.error('Error deleting traffic fines:', {
