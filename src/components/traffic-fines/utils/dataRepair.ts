@@ -14,13 +14,7 @@ export const repairDate = (value: string): RepairResult => {
   const cleanValue = value.trim().replace(/['"]/g, '');
   
   try {
-    // Try parsing as ISO date (YYYY-MM-DD)
-    const isoDate = parseISO(cleanValue);
-    if (isValid(isoDate)) {
-      return { value: format(isoDate, 'yyyy-MM-dd'), wasRepaired: false };
-    }
-
-    // Try DD/MM/YYYY format
+    // Try DD/MM/YYYY format first since that's the expected format
     const parts = cleanValue.split(/[/-]/);
     if (parts.length === 3) {
       const day = parts[0].padStart(2, '0');
@@ -38,13 +32,22 @@ export const repairDate = (value: string): RepairResult => {
         };
       }
     }
+
+    // Fallback: Try parsing as ISO date (YYYY-MM-DD)
+    const isoDate = parseISO(cleanValue);
+    if (isValid(isoDate)) {
+      return { 
+        value: format(isoDate, 'yyyy-MM-dd'), 
+        wasRepaired: false 
+      };
+    }
     
     return { 
       value: cleanValue,
       wasRepaired: false,
       error: {
         type: 'invalid_date',
-        details: 'Invalid date format'
+        details: 'Invalid date format. Expected DD/MM/YYYY'
       }
     };
   } catch (error) {
