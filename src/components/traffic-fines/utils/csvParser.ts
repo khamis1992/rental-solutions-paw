@@ -73,3 +73,58 @@ export const validateHeaders = (headers: string[], requiredHeaders: string[]): {
     missingHeaders
   };
 };
+
+export const reconstructMalformedRow = (
+  currentRow: string[],
+  nextRow: string | undefined,
+  expectedColumns: number
+): { 
+  repairedRow: string[]; 
+  skipNextRow: boolean; 
+  repairs: string[] 
+} => {
+  const repairs: string[] = [];
+  let repairedRow = [...currentRow];
+  let skipNextRow = false;
+
+  // If we have fewer columns than expected and there's a next row
+  if (currentRow.length < expectedColumns && nextRow) {
+    console.log('Attempting to repair malformed row by merging with next row');
+    // Check if the next row might be a continuation
+    const nextRowParts = nextRow.split(',');
+    const remaining = expectedColumns - currentRow.length;
+    
+    // Only take what we need from the next row
+    const neededParts = nextRowParts.slice(0, remaining);
+    repairedRow = [...currentRow, ...neededParts];
+    
+    repairs.push(`Merged split row due to line break. Added ${neededParts.length} values from next row`);
+    skipNextRow = true;
+  }
+
+  // Ensure we have exactly the expected number of columns
+  while (repairedRow.length < expectedColumns) {
+    repairs.push(`Added empty placeholder for column ${repairedRow.length + 1}`);
+    repairedRow.push('');
+  }
+
+  // Remove extra columns if we have too many
+  if (repairedRow.length > expectedColumns) {
+    const removedCount = repairedRow.length - expectedColumns;
+    repairs.push(`Removed ${removedCount} extra columns`);
+    repairedRow = repairedRow.slice(0, expectedColumns);
+  }
+
+  console.log('Row repair results:', {
+    originalLength: currentRow.length,
+    repairedLength: repairedRow.length,
+    repairs,
+    skipNextRow
+  });
+
+  return {
+    repairedRow,
+    skipNextRow,
+    repairs
+  };
+};
