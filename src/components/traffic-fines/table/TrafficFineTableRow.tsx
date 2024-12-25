@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface TrafficFineTableRowProps {
   fine: any;
@@ -14,6 +15,8 @@ export const TrafficFineTableRow = ({
   onAssignCustomer,
   onMarkAsPaid,
 }: TrafficFineTableRowProps) => {
+  const { toast } = useToast();
+
   const getStatusColor = (status: string): string => {
     const statusColors = {
       completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -25,10 +28,20 @@ export const TrafficFineTableRow = ({
   };
 
   const handleLicensePlateClick = () => {
-    // Copy to clipboard
     if (fine.license_plate) {
       navigator.clipboard.writeText(fine.license_plate);
-      // You could add a toast notification here if you want to show feedback
+      toast({
+        description: "License plate copied to clipboard",
+      });
+    }
+  };
+
+  const handleCustomerNameClick = () => {
+    if (fine.lease?.customer?.full_name) {
+      navigator.clipboard.writeText(fine.lease.customer.full_name);
+      toast({
+        description: "Customer name copied to clipboard",
+      });
     }
   };
 
@@ -58,7 +71,13 @@ export const TrafficFineTableRow = ({
       </TableCell>
       <TableCell>
         {fine.lease?.customer ? (
-          <span className="font-medium">{fine.lease.customer.full_name}</span>
+          <Button
+            variant="ghost"
+            className="h-auto p-0 font-medium hover:bg-transparent"
+            onClick={handleCustomerNameClick}
+          >
+            {fine.lease.customer.full_name}
+          </Button>
         ) : (
           <span className="text-muted-foreground">Unassigned</span>
         )}
