@@ -32,17 +32,13 @@ export const fetchTrafficFines = async (agreementId: string): Promise<TrafficFin
   return data as TrafficFine[];
 };
 
-export const deleteAllTrafficFines = async (agreementId: string) => {
-  console.log('Attempting to delete traffic fines for lease:', agreementId);
+export const deleteAllTrafficFines = async () => {
+  console.log('Attempting to delete all traffic fines');
   
-  if (!agreementId) {
-    throw new Error('Agreement ID is required');
-  }
-
   const { data, error } = await supabase
     .from('traffic_fines')
     .delete()
-    .eq('lease_id', agreementId)
+    .neq('id', null) // This ensures we have a WHERE clause while deleting all records
     .select();
 
   if (error) {

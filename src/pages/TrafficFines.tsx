@@ -27,6 +27,7 @@ export default function TrafficFines() {
       const { data, error } = await supabase
         .from('traffic_fines')
         .delete()
+        .neq('id', null)
         .select();
 
       if (error) {
