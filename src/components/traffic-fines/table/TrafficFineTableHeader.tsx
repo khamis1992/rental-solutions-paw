@@ -8,7 +8,6 @@ export const TrafficFineTableHeader = () => {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead>Serial Number</TableHead>
         <TableHead>Violation Number</TableHead>
         <TableHead>Violation Date</TableHead>
         <TableHead>License Plate</TableHead>

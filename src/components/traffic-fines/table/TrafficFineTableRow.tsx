@@ -27,7 +27,6 @@ export const TrafficFineTableRow = ({
 
   return (
     <TableRow key={fine.id} className="hover:bg-muted/50">
-      <TableCell>{fine.serial_number || 'N/A'}</TableCell>
       <TableCell>{fine.violation_number || 'N/A'}</TableCell>
       <TableCell>
         {new Date(fine.violation_date).toLocaleDateString()}
