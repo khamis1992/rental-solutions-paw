@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import type { LegalCase, LegalCaseStatus } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
-  legalCaseId: string;
+  legalCaseId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -48,7 +48,7 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
       }
     };
 
-    if (open) {
+    if (open && legalCaseId) {
       fetchLegalCase();
     }
   }, [legalCaseId, open]);
@@ -80,14 +80,36 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
           <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
         {legalCase && (
-          <div>
-            <h3>Case Type: {legalCase.case_type}</h3>
-            <p>Status: {status}</p>
-            <p>Amount Owed: {legalCase.amount_owed}</p>
-            <p>Description: {legalCase.description}</p>
-            <Button onClick={() => handleStatusChange('in_legal_process')}>Set to In Legal Process</Button>
-            <Button onClick={() => handleStatusChange('resolved')}>Set to Resolved</Button>
-            <Button onClick={() => handleStatusChange('escalated')}>Set to Escalated</Button>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <h3 className="font-semibold">Case Type: {legalCase.case_type}</h3>
+              <p>Status: {status}</p>
+              <p>Amount Owed: ${legalCase.amount_owed.toFixed(2)}</p>
+              <p>Description: {legalCase.description}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange('in_legal_process')}
+                disabled={status === 'in_legal_process'}
+              >
+                Set to In Legal Process
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange('resolved')}
+                disabled={status === 'resolved'}
+              >
+                Set to Resolved
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange('escalated')}
+                disabled={status === 'escalated'}
+              >
+                Set to Escalated
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
