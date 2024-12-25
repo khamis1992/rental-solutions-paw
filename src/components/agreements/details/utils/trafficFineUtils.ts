@@ -35,6 +35,10 @@ export const fetchTrafficFines = async (agreementId: string): Promise<TrafficFin
 export const deleteAllTrafficFines = async (agreementId: string) => {
   console.log('Attempting to delete traffic fines for lease:', agreementId);
   
+  if (!agreementId) {
+    throw new Error('Agreement ID is required');
+  }
+
   const { data, error } = await supabase
     .from('traffic_fines')
     .delete()
