@@ -67,12 +67,25 @@ export const TrafficFineImport = () => {
           body: { fileName }
         });
 
-      if (processingError) throw processingError;
+      if (processingError) {
+        console.error('Processing error:', processingError);
+        throw new Error(processingError.message || 'Failed to process file');
+      }
+
+      if (!processingData.success) {
+        throw new Error(processingData.error || 'Failed to process file');
+      }
 
       toast({
         title: "Success",
-        description: `Successfully imported ${processingData.processed} traffic fines`,
+        description: `Successfully imported ${processingData.processed} traffic fines${
+          processingData.errors?.length ? ` with ${processingData.errors.length} errors` : ''
+        }`,
       });
+
+      if (processingData.errors?.length) {
+        console.error('Import errors:', processingData.errors);
+      }
 
     } catch (error: any) {
       console.error("Import error:", error);
