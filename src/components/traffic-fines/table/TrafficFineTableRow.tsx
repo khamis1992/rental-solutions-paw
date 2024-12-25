@@ -27,11 +27,11 @@ export const TrafficFineTableRow = ({
 
   return (
     <TableRow key={fine.id} className="hover:bg-muted/50">
+      <TableCell>{fine.license_plate || 'N/A'}</TableCell>
       <TableCell>{fine.violation_number || 'N/A'}</TableCell>
       <TableCell>
         {new Date(fine.violation_date).toLocaleDateString()}
       </TableCell>
-      <TableCell>{fine.license_plate || 'N/A'}</TableCell>
       <TableCell>{fine.fine_location || 'N/A'}</TableCell>
       <TableCell>{fine.violation_charge || 'N/A'}</TableCell>
       <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>
