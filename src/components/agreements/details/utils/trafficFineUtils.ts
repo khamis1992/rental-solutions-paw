@@ -35,17 +35,15 @@ export const fetchTrafficFines = async (agreementId: string): Promise<TrafficFin
 export const deleteAllTrafficFines = async () => {
   console.log('Attempting to delete all traffic fines');
   
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('traffic_fines')
     .delete()
-    .neq('id', null) // This ensures we have a WHERE clause while deleting all records
-    .select();
+    .is('id', 'not.null'); // This is a safer way to delete all records
 
   if (error) {
     console.error('Error deleting traffic fines:', error);
     throw error;
   }
 
-  console.log('Successfully deleted traffic fines:', data);
-  return data;
+  return true;
 };
