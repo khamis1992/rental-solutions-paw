@@ -11,13 +11,28 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { TrafficFine } from "@/types/traffic-fines";
 import { format, isValid, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TrafficFinesProps {
   agreementId: string;
 }
 
 export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
-  const { data: fines, isLoading } = useQuery<TrafficFine[]>({
+  const { toast } = useToast();
+  const { data: fines, isLoading, refetch } = useQuery<TrafficFine[]>({
     queryKey: ["traffic-fines", agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -50,6 +65,30 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
       return data as TrafficFine[];
     },
   });
+
+  const handleDeleteAll = async () => {
+    try {
+      const { error } = await supabase
+        .from('traffic_fines')
+        .delete()
+        .eq('lease_id', agreementId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "All traffic fines have been deleted",
+      });
+      
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete traffic fines",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusColor = (status: string): string => {
     const statusColors = {
@@ -87,7 +126,34 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-primary">Traffic Fines</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-primary">Traffic Fines</h3>
+        {fines && fines.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="gap-2">
+                <Trash2 className="h-4 w-4" />
+                Delete All
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete all traffic fines
+                  associated with this agreement.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAll}>
+                  Delete All
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
       
       <div className="rounded-lg border bg-card">
         <Table>
