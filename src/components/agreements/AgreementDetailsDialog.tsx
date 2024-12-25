@@ -15,6 +15,7 @@ import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
 import { RentManagement } from "./details/RentManagement";
 import { formatDateToDisplay } from "@/lib/dateUtils";
+
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";

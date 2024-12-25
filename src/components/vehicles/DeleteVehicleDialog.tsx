@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export interface DeleteVehicleDialogProps {
   vehicleId: string;
-  vehicleName: string;
+  vehicleName: string;  // Added this prop to the interface
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
