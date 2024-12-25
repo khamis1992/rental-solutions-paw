@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { createClient } from 'https://esm.sh/@supabase_supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +34,8 @@ serve(async (req) => {
     }
 
     const content = await fileData.text()
+    
+    // Split content into lines and clean them
     const lines = content.split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0)
@@ -44,7 +46,7 @@ serve(async (req) => {
       throw new Error('File is empty or contains only headers')
     }
 
-    // Validate headers
+    // Parse and validate headers
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim())
     const requiredHeaders = [
       'serial_number',
@@ -68,43 +70,47 @@ serve(async (req) => {
     const fines = []
     const errors = []
 
+    // Skip header row
     for (let i = 1; i < lines.length; i++) {
       try {
-        const values = lines[i].split(',').map(v => v.trim())
+        // Split the line by comma, but handle quoted values
+        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
         
         if (values.length !== headers.length) {
-          throw new Error(`Row ${i + 1} has incorrect number of columns`)
+          throw new Error(`Row ${i + 1} has incorrect number of columns (expected ${headers.length}, got ${values.length})`)
         }
 
+        // Create an object mapping headers to values
         const rowData = headers.reduce((obj, header, index) => {
           obj[header] = values[index]
           return obj
         }, {} as Record<string, string>)
 
+        // Log the row data for debugging
+        console.log(`Processing row ${i + 1}:`, rowData)
+
         // Validate required fields are not empty
-        const emptyFields = requiredHeaders.filter(field => !rowData[field])
+        const emptyFields = requiredHeaders.filter(field => !rowData[field]?.trim())
         if (emptyFields.length > 0) {
-          throw new Error(`Missing required values for fields: ${emptyFields.join(', ')}`)
+          throw new Error(`Row ${i + 1}: Missing required values for fields: ${emptyFields.join(', ')}`)
         }
 
         // Validate date format
         const date = new Date(rowData.violation_date)
         if (isNaN(date.getTime())) {
-          throw new Error(`Invalid date format in row ${i + 1}`)
+          throw new Error(`Row ${i + 1}: Invalid date format. Expected YYYY-MM-DD, got: ${rowData.violation_date}`)
         }
 
         // Validate numeric values
         const amount = parseFloat(rowData.fine_amount)
-        const points = parseInt(rowData.violation_points)
-        
         if (isNaN(amount)) {
-          throw new Error(`Invalid amount in row ${i + 1}`)
-        }
-        if (isNaN(points)) {
-          throw new Error(`Invalid points in row ${i + 1}`)
+          throw new Error(`Row ${i + 1}: Invalid amount: ${rowData.fine_amount}`)
         }
 
-        console.log(`Processing row ${i + 1}:`, rowData)
+        const points = parseInt(rowData.violation_points)
+        if (isNaN(points)) {
+          throw new Error(`Row ${i + 1}: Invalid points: ${rowData.violation_points}`)
+        }
 
         fines.push({
           serial_number: rowData.serial_number,
@@ -130,11 +136,13 @@ serve(async (req) => {
       }
     }
 
-    if (fines.length === 0) {
-      throw new Error('No valid records found to import. Please check the file format and try again.')
-    }
+    console.log(`Processed ${lines.length - 1} rows:`)
+    console.log(`- Valid records: ${fines.length}`)
+    console.log(`- Errors: ${errors.length}`)
 
-    console.log(`Successfully validated ${fines.length} fines, with ${errors.length} errors`)
+    if (fines.length === 0) {
+      throw new Error('No valid records found to import. Please check the file format and ensure all required fields are properly formatted.')
+    }
 
     // Insert fines into database
     const { error: insertError } = await supabase
@@ -164,7 +172,7 @@ serve(async (req) => {
       console.error('Error logging import:', logError)
     }
 
-    console.log('Import completed successfully:', fines.length, 'fines processed')
+    console.log('Import completed successfully')
 
     return new Response(
       JSON.stringify({ 
