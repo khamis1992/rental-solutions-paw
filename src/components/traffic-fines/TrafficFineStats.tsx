@@ -57,13 +57,19 @@ export const TrafficFineStats = () => {
           }
 
           // Find any lease that covers the violation date for the vehicle
-          const { data: leases, error: leaseError } = await supabase
+          const query = supabase
             .from('leases')
             .select('id')
-            .eq('vehicle_id', fine.vehicle_id)
-            .lte('start_date', fine.violation_date)
-            .gte('end_date', fine.violation_date)
-            .limit(1);
+            .eq('vehicle_id', fine.vehicle_id);
+
+          // Add date conditions only if violation_date exists
+          if (fine.violation_date) {
+            query
+              .lte('start_date', fine.violation_date)
+              .gte('end_date', fine.violation_date);
+          }
+
+          const { data: leases, error: leaseError } = await query.limit(1);
 
           if (leaseError) throw leaseError;
 
