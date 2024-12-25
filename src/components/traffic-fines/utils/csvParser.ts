@@ -1,74 +1,55 @@
-export interface CSVValidationError {
-  row: number;
-  expected: number;
-  actual: number;
-  data: string[];
-}
+import { isValid, parseISO } from "date-fns";
 
-export const parseCSV = (content: string): { data: any[]; errors: CSVValidationError[] } => {
-  const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-  const expectedColumns = 8;
-  const data: any[] = [];
-  const errors: CSVValidationError[] = [];
-
-  // Process each line after headers
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    let values: string[] = [];
-
-    // Handle quoted values and commas within quotes
-    let currentValue = '';
-    let insideQuotes = false;
+export const parseCSVLine = (line: string): string[] => {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
     
-    for (let j = 0; j < line.length; j++) {
-      const char = line[j];
-      
-      if (char === '"') {
-        insideQuotes = !insideQuotes;
-        continue;
-      }
-      
-      if (char === ',' && !insideQuotes) {
-        values.push(currentValue.trim());
-        currentValue = '';
-        continue;
-      }
-      
-      currentValue += char;
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
     }
-    values.push(currentValue.trim()); // Add the last value
-
-    // Validate column count
-    if (values.length !== expectedColumns) {
-      console.error(`Row ${i} has incorrect number of columns:`, {
-        expected: expectedColumns,
-        actual: values.length,
-        data: values
-      });
-      
-      errors.push({
-        row: i,
-        expected: expectedColumns,
-        actual: values.length,
-        data: values
-      });
-      continue; // Skip this row
+    
+    if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+      continue;
     }
+    
+    current += char;
+  }
+  
+  result.push(current.trim());
+  return result.filter(Boolean); // Remove empty entries
+};
 
-    // Create object from valid row
-    const rowData = headers.reduce((obj, header, index) => {
-      obj[header] = values[index];
-      return obj;
-    }, {} as Record<string, string>);
-
-    data.push(rowData);
+export const validateDateFormat = (dateStr: string): boolean => {
+  if (!dateStr) {
+    console.error('Empty date string');
+    return false;
   }
 
-  return { data, errors };
+  const cleanDateStr = dateStr.replace(/"/g, '').trim();
+  console.log('Validating date:', cleanDateStr);
+  
+  const parsedDate = parseISO(cleanDateStr);
+  if (isValid(parsedDate)) {
+    console.log('Valid ISO date');
+    return true;
+  }
+
+  const date = new Date(cleanDateStr);
+  const isValidDate = isValid(date);
+  console.log('Valid regular date:', isValidDate);
+  return isValidDate;
 };
 
 export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {
+  console.log('Validating headers:', headers);
+  
   const requiredHeaders = [
     'serial_number',
     'violation_number',
@@ -80,9 +61,14 @@ export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missi
     'violation_points'
   ];
 
-  const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
+  const normalizedHeaders = headers
+    .map(h => h.toLowerCase().trim())
+    .filter(Boolean); // Remove empty headers
+  
+  console.log('Normalized headers:', normalizedHeaders);
+  
   const missingHeaders = requiredHeaders.filter(h => !normalizedHeaders.includes(h));
-
+  
   return {
     isValid: missingHeaders.length === 0,
     missingHeaders
