@@ -49,7 +49,14 @@ export const TrafficFineStats = () => {
       // Process each fine
       for (const fine of unassignedFines || []) {
         try {
-          // Find any lease that covers the violation date for the vehicle, regardless of status
+          // Skip fines without a vehicle_id
+          if (!fine.vehicle_id) {
+            console.warn(`Skipping fine ${fine.id} - no vehicle_id`);
+            errorCount++;
+            continue;
+          }
+
+          // Find any lease that covers the violation date for the vehicle
           const { data: leases, error: leaseError } = await supabase
             .from('leases')
             .select('id')
@@ -82,7 +89,6 @@ export const TrafficFineStats = () => {
         }
       }
 
-      // Show success message with details
       toast({
         description: `Successfully assigned ${assignedCount} fines. ${errorCount} fines could not be assigned.`,
       });
