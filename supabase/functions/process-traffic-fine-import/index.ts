@@ -12,10 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting traffic fine import process');
     const { fileName } = await req.json()
     if (!fileName) {
-      throw new Error('No file name provided');
+      throw new Error('No file name provided')
     }
     console.log('Processing file:', fileName)
 
@@ -34,6 +33,7 @@ serve(async (req) => {
     }
 
     const content = await fileData.text()
+    console.log('File content loaded')
     
     // Split content into lines and clean them
     const lines = content.split('\n')
@@ -73,7 +73,9 @@ serve(async (req) => {
     // Skip header row
     for (let i = 1; i < lines.length; i++) {
       try {
-        // Split the line by comma, but handle quoted values
+        console.log(`Processing row ${i}:`, lines[i])
+        
+        // Split the line by comma, handling quoted values
         const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
         
         if (values.length !== headers.length) {
@@ -86,30 +88,27 @@ serve(async (req) => {
           return obj
         }, {} as Record<string, string>)
 
-        // Log the row data for debugging
-        console.log(`Processing row ${i + 1}:`, rowData)
-
         // Validate required fields are not empty
         const emptyFields = requiredHeaders.filter(field => !rowData[field]?.trim())
         if (emptyFields.length > 0) {
-          throw new Error(`Row ${i + 1}: Missing required values for fields: ${emptyFields.join(', ')}`)
+          throw new Error(`Missing required values for fields: ${emptyFields.join(', ')}`)
         }
 
         // Validate date format
         const date = new Date(rowData.violation_date)
         if (isNaN(date.getTime())) {
-          throw new Error(`Row ${i + 1}: Invalid date format. Expected YYYY-MM-DD, got: ${rowData.violation_date}`)
+          throw new Error(`Invalid date format. Expected YYYY-MM-DD, got: ${rowData.violation_date}`)
         }
 
         // Validate numeric values
         const amount = parseFloat(rowData.fine_amount)
         if (isNaN(amount)) {
-          throw new Error(`Row ${i + 1}: Invalid amount: ${rowData.fine_amount}`)
+          throw new Error(`Invalid amount: ${rowData.fine_amount}`)
         }
 
         const points = parseInt(rowData.violation_points)
         if (isNaN(points)) {
-          throw new Error(`Row ${i + 1}: Invalid points: ${rowData.violation_points}`)
+          throw new Error(`Invalid points: ${rowData.violation_points}`)
         }
 
         fines.push({
@@ -126,6 +125,8 @@ serve(async (req) => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
+        
+        console.log('Successfully processed row:', rowData)
       } catch (error) {
         console.error(`Error processing row ${i + 1}:`, error)
         errors.push({
