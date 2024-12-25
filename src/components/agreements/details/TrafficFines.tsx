@@ -40,19 +40,25 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
 
   const handleDeleteAll = async () => {
     try {
+      console.log('Initiating delete all operation');
       await deleteAllTrafficFines();
       
       toast({
         title: "Success",
-        description: "All traffic fines have been deleted",
+        description: "All traffic fines have been deleted successfully",
       });
       
       refetch();
     } catch (error: any) {
-      console.error('Delete operation failed:', error);
+      console.error('Delete operation failed:', {
+        error,
+        message: error.message,
+        details: error?.details
+      });
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to delete traffic fines",
+        description: error.message || "Failed to delete traffic fines. Please try again.",
         variant: "destructive",
       });
     }
