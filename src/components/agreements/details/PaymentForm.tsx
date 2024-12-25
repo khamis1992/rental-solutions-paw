@@ -20,6 +20,10 @@ interface PaymentFormProps {
   agreementId: string;
 }
 
+// Define the valid payment status types
+type PaymentStatus = 'completed' | 'pending' | 'failed' | 'refunded';
+type PaymentMethod = 'cash' | 'wire_transfer' | 'invoice' | 'on_hold' | 'deposit' | 'cheque';
+
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
@@ -37,7 +41,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       const paymentData = {
         lease_id: agreementId,
         amount: parseFloat(data.amount),
-        payment_method: data.paymentMethod,
+        payment_method: data.paymentMethod as PaymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
         is_recurring: isRecurring,
@@ -45,7 +49,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         next_payment_date: isRecurring ? 
           new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue, data.intervalUnit)).toISOString() : 
           null,
-        status: 'completed'
+        status: 'completed' as PaymentStatus // Explicitly type the status
       };
 
       const { error } = await supabase
