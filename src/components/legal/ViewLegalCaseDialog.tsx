@@ -15,7 +15,7 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
   const [legalCase, setLegalCase] = useState<LegalCase | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<LegalCaseStatus>('pending_reminder');
+  const [status, setStatus] = useState<LegalCaseStatus>("pending_reminder");
 
   useEffect(() => {
     const fetchLegalCase = async () => {
@@ -38,8 +38,9 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
 
         if (error) throw error;
 
-        setLegalCase(data as LegalCase);
-        setStatus(data.status as LegalCaseStatus);
+        const legalCaseData = data as LegalCase;
+        setLegalCase(legalCaseData);
+        setStatus(legalCaseData.status);
       } catch (error) {
         console.error("Error fetching legal case:", error);
         setError("Failed to load legal case.");
