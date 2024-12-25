@@ -27,13 +27,13 @@ export const generateErrorReport = (analysis: any): string => {
     return 'No errors to report';
   }
 
-  const patterns = analysis.patterns.commonErrors;
+  const patterns = analysis.patterns.commonErrors as Record<string, ErrorPattern>;
   if (!patterns || Object.keys(patterns).length === 0) {
     return 'No errors to report';
   }
 
   return Object.values(patterns)
-    .map(pattern => {
+    .map((pattern: ErrorPattern) => {
       if (!pattern || !pattern.type) return '';
       const examples = pattern.examples || [];
       return `${pattern.type}: ${pattern.count} occurrences\n` +

@@ -88,25 +88,35 @@ export const analyzeCsvContent = (content: string, requiredHeaders: string[]): C
           result.validRows++;
         } else {
           result.errorRows++;
+          const errorDetails = `Row has ${parseResult.values.length} columns but expected ${requiredHeaders.length}`;
           result.errors.push({
             row: i,
             type: 'column_count_mismatch',
-            details: `Row has ${parseResult.values.length} columns but expected ${requiredHeaders.length}`,
+            details: errorDetails,
             data: line,
           });
-          incrementErrorPattern(result.patterns.commonErrors, 'column_count_mismatch');
+          incrementErrorPattern(
+            result.patterns.commonErrors, 
+            'column_count_mismatch',
+            `Row ${i}: ${errorDetails}`
+          );
         }
 
       } catch (error: any) {
         console.error(`Error processing row ${i}:`, error);
         result.errorRows++;
+        const errorDetails = error.message || 'Unknown error';
         result.errors.push({
           row: i,
           type: 'processing_error',
-          details: error.message,
+          details: errorDetails,
           data: lines[i],
         });
-        incrementErrorPattern(result.patterns.commonErrors, 'processing_error');
+        incrementErrorPattern(
+          result.patterns.commonErrors,
+          'processing_error',
+          `Row ${i}: ${errorDetails}`
+        );
       }
     }
 
