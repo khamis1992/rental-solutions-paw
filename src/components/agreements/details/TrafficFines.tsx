@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { TrafficFine } from "@/types/traffic-fines";
+import { format, isValid, parseISO } from "date-fns";
 
 interface TrafficFinesProps {
   agreementId: string;
@@ -60,6 +61,22 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
     return statusColors[status as keyof typeof statusColors] || statusColors.pending;
   };
 
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = parseISO(dateString);
+      if (!isValid(date)) {
+        console.warn(`Invalid date value: ${dateString}`);
+        return 'Invalid Date';
+      }
+      return format(date, 'dd/MM/yyyy');
+    } catch (error) {
+      console.error(`Error formatting date: ${dateString}`, error);
+      return 'Invalid Date';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -87,7 +104,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
             {fines?.map((fine) => (
               <TableRow key={fine.id} className="hover:bg-muted/50 transition-colors">
                 <TableCell>
-                  {new Date(fine.violation_date).toLocaleDateString()}
+                  {formatDate(fine.violation_date)}
                 </TableCell>
                 <TableCell>{fine.fine_type}</TableCell>
                 <TableCell>{fine.fine_location}</TableCell>
