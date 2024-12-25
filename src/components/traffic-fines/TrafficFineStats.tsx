@@ -84,7 +84,6 @@ export const TrafficFineStats = () => {
 
       // Show success message with details
       toast({
-        title: "Bulk Assignment Complete",
         description: `Successfully assigned ${assignedCount} fines. ${errorCount} fines could not be assigned.`,
       });
 
@@ -94,9 +93,8 @@ export const TrafficFineStats = () => {
     } catch (error: any) {
       console.error('Bulk assignment failed:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to process traffic fines",
         variant: "destructive",
+        description: error.message || "Failed to process traffic fines",
       });
     } finally {
       setIsAssigning(false);
