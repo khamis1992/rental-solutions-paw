@@ -77,18 +77,7 @@ export const parseCSVLine = (line: string): ParseResult => {
   return { values: result, repairs };
 };
 
-export const validateHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {
-  const requiredHeaders = [
-    'serial_number',
-    'violation_number',
-    'violation_date',
-    'license_plate',
-    'fine_location',
-    'violation_charge',
-    'fine_amount',
-    'violation_points'
-  ];
-
+export const validateHeaders = (headers: string[], requiredHeaders: string[]): { isValid: boolean; missingHeaders: string[] } => {
   const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
   const missingHeaders = requiredHeaders.filter(h => !normalizedHeaders.includes(h));
   

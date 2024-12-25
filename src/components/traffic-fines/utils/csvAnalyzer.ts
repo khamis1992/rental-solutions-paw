@@ -7,7 +7,7 @@ import {
   reconstructMalformedRow 
 } from './csvParser';
 
-export const analyzeCsvContent = (content: string): CsvAnalysisResult => {
+export const analyzeCsvContent = (content: string, requiredHeaders: string[]): CsvAnalysisResult => {
   console.log('Starting CSV analysis...');
   
   const result: CsvAnalysisResult = {
@@ -31,7 +31,7 @@ export const analyzeCsvContent = (content: string): CsvAnalysisResult => {
     
     // Validate headers
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-    const headerValidation = validateHeaders(headers);
+    const headerValidation = validateHeaders(headers, requiredHeaders);
     
     if (!headerValidation.isValid) {
       result.errors.push({
@@ -57,11 +57,11 @@ export const analyzeCsvContent = (content: string): CsvAnalysisResult => {
         const parseResult = parseCSVLine(line);
         
         // If we have too few columns and there's a next line, try to reconstruct
-        if (parseResult.values.length < 8 && i + 1 < lines.length) {
+        if (parseResult.values.length < requiredHeaders.length && i + 1 < lines.length) {
           const reconstruction = reconstructMalformedRow(
             parseResult.values,
             lines[i + 1],
-            8
+            requiredHeaders.length
           );
           
           if (reconstruction.skipNextRow) {
