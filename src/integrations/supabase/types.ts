@@ -3102,20 +3102,21 @@ export type Database = {
           assignment_notes: string | null
           assignment_status: string | null
           created_at: string | null
-          fine_amount: number
+          fine_amount: number | null
           fine_location: string | null
           fine_reference: string | null
-          fine_type: string
+          fine_type: string | null
           id: string
           import_batch_id: string | null
           lease_id: string | null
           match_confidence: number | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
+          raw_data: Json | null
           serial_number: string | null
           updated_at: string | null
           vehicle_id: string | null
           violation_charge: string | null
-          violation_date: string
+          violation_date: string | null
           violation_number: string | null
           violation_points: number | null
         }
@@ -3123,20 +3124,21 @@ export type Database = {
           assignment_notes?: string | null
           assignment_status?: string | null
           created_at?: string | null
-          fine_amount: number
+          fine_amount?: number | null
           fine_location?: string | null
           fine_reference?: string | null
-          fine_type: string
+          fine_type?: string | null
           id?: string
           import_batch_id?: string | null
           lease_id?: string | null
           match_confidence?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          raw_data?: Json | null
           serial_number?: string | null
           updated_at?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
-          violation_date: string
+          violation_date?: string | null
           violation_number?: string | null
           violation_points?: number | null
         }
@@ -3144,20 +3146,21 @@ export type Database = {
           assignment_notes?: string | null
           assignment_status?: string | null
           created_at?: string | null
-          fine_amount?: number
+          fine_amount?: number | null
           fine_location?: string | null
           fine_reference?: string | null
-          fine_type?: string
+          fine_type?: string | null
           id?: string
           import_batch_id?: string | null
           lease_id?: string | null
           match_confidence?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          raw_data?: Json | null
           serial_number?: string | null
           updated_at?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
-          violation_date?: string
+          violation_date?: string | null
           violation_number?: string | null
           violation_points?: number | null
         }
