@@ -31,6 +31,12 @@ export interface AgreementFormData {
   damagePenaltyRate?: number;
   fuelPenaltyRate?: number;
   lateReturnFee?: number;
+  paymentSchedules?: Array<{
+    due_date: string;
+    amount: number;
+    status: 'pending';
+    lease_id: string | null;
+  }>;
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
@@ -65,8 +71,8 @@ export const useAgreementForm = (onSuccess: () => void) => {
         const paymentSchedules = result.schedule.map(payment => ({
           due_date: payment.dueDate,
           amount: payment.amount,
-          status: 'pending',
-          lease_id: null // This will be set after lease creation
+          status: 'pending' as const,
+          lease_id: null
         }));
 
         // Store in form data for submission

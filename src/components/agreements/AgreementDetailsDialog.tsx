@@ -15,7 +15,7 @@ import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
 import { RentManagement } from "./details/RentManagement";
-import { formatDateToDisplay } from "./utils/dateUtils";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";

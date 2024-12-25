@@ -1,7 +1,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateToDisplay } from "../utils/dateUtils";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import type { Agreement } from "../hooks/useAgreements";
 import { useState } from "react";
 import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
