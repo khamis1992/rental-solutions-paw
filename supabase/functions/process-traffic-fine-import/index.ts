@@ -9,7 +9,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log('Function invoked with request:', req.method)
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request')
     return new Response(null, { headers: corsHeaders })
@@ -35,59 +34,40 @@ serve(async (req) => {
       .download(fileName)
 
     if (downloadError) {
-      console.error('Download error:', downloadError)
-      throw new Error(`Failed to download file: ${downloadError.message}`)
+      throw downloadError
     }
 
+    // Convert file content to text
     const content = await fileData.text()
-    const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-    
-    // Skip header row
-    const rows = lines.slice(1)
+    const rows = content.split('\n').filter(row => row.trim())
     console.log(`Processing ${rows.length} rows`)
 
+    // Process each row without validation
     for (const row of rows) {
       try {
-        const values = row.split(',')
-        const fineData = {
-          serial_number: values[0] || null,
-          violation_number: values[1] || null,
-          violation_date: values[2] || null,
-          license_plate: values[3] || null,
-          fine_location: values[4] || null,
-          violation_charge: values[5] || null,
-          fine_amount: parseFloat(values[6]) || 0,
-          violation_points: parseInt(values[7]) || 0,
-          payment_status: 'pending',
-          assignment_status: 'pending',
-          created_at: new Date().toISOString()
-        }
+        const values = row.split(',').map(v => v.trim())
+        const rowData: Record<string, any> = {}
+        
+        // Store all values without validation
+        values.forEach((value, index) => {
+          if (value) {
+            rowData[`column_${index + 1}`] = value
+          }
+        })
 
+        // Insert raw data
         const { error: insertError } = await supabase
           .from('traffic_fines')
-          .insert([fineData])
+          .insert([rowData])
 
         if (insertError) {
-          console.error('Insert error for row:', row, insertError)
+          console.error('Error inserting row:', insertError)
+          continue // Continue with next row even if this one fails
         }
       } catch (rowError) {
-        console.error('Error processing row:', row, rowError)
-        // Continue with next row even if this one fails
+        console.error('Error processing row:', rowError)
+        continue // Skip problematic rows
       }
-    }
-
-    // Log import
-    const { error: logError } = await supabase
-      .from('traffic_fine_imports')
-      .insert([{
-        file_name: fileName,
-        processed_at: new Date().toISOString(),
-        total_fines: rows.length,
-        processed_by: req.headers.get('x-user-id')
-      }])
-
-    if (logError) {
-      console.error('Log error:', logError)
     }
 
     console.log('Processing completed successfully')
@@ -100,23 +80,20 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        },
+        status: 200 
       }
     )
-
   } catch (error) {
-    console.error('Processing error:', error)
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message
-      }),
+      JSON.stringify({ error: error.message }),
       { 
-        status: 400,
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
-        } 
+        },
+        status: 500 
       }
     )
   }

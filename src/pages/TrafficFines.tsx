@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { TrafficFinesDashboard } from "@/components/traffic-fines/TrafficFinesDashboard";
+import { TrafficFineImport } from "@/components/traffic-fines/TrafficFineImport";
+import { RawTrafficFinesList } from "@/components/traffic-fines/RawTrafficFinesList";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function TrafficFines() {
@@ -10,7 +11,8 @@ export default function TrafficFines() {
           <h1 className="text-3xl font-bold">Traffic Fines Management</h1>
         </div>
         <ErrorBoundary>
-          <TrafficFinesDashboard />
+          <TrafficFineImport />
+          <RawTrafficFinesList />
         </ErrorBoundary>
       </div>
     </DashboardLayout>

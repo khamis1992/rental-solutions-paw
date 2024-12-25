@@ -9,78 +9,32 @@ export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const downloadTemplate = () => {
-    const headers = [
-      "serial_number",
-      "violation_number",
-      "violation_date",
-      "license_plate",
-      "fine_location",
-      "violation_charge",
-      "fine_amount",
-      "violation_points"
-    ].join(",");
-
-    const sampleData = [
-      "A123,V456,2024-03-20,ABC123,Dubai Marina,Speeding,500,2",
-      "B234,V789,2024-03-21,XYZ789,JBR,Parking,200,1"
-    ].join("\n");
-
-    const csvContent = `${headers}\n${sampleData}`;
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "traffic_fines_template.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
-
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "text/csv") {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsUploading(true);
     try {
       // Upload file to Supabase Storage
-      const fileName = `traffic-fines/${Date.now()}_${file.name}`;
+      const fileName = `raw-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('imports')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // Get the authenticated user's ID
-      const { data: { user } } = await supabase.auth.getUser();
-      
       // Process the uploaded file
-      const { data: processingData, error: processingError } = await supabase.functions
+      const { error: processingError } = await supabase.functions
         .invoke("process-traffic-fine-import", {
-          body: { fileName },
-          headers: { 'x-user-id': user?.id || '' }
+          body: { fileName }
         });
 
-      if (processingError) {
-        console.error('Processing error:', processingError);
-        throw new Error(processingError.message || 'Failed to process file');
-      }
+      if (processingError) throw processingError;
 
       toast({
         title: "Success",
         description: "File uploaded and processed successfully",
       });
-
     } catch (error: any) {
       console.error("Import error:", error);
       toast({
@@ -99,8 +53,7 @@ export const TrafficFineImport = () => {
       <CardHeader>
         <CardTitle>Import Traffic Fines</CardTitle>
         <CardDescription>
-          Upload a CSV file containing traffic fine records. The file should include serial number,
-          violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
+          Upload a CSV file containing traffic fine records. All data will be imported as-is.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -123,14 +76,6 @@ export const TrafficFineImport = () => {
                 {isUploading ? "Importing..." : "Import CSV"}
               </div>
             </label>
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={downloadTemplate}
-            disabled={isUploading}
-          >
-            Download Template
           </Button>
         </div>
 
