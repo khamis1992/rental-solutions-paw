@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { validateRow, normalizeRow, validateHeaders } from './validators.ts'
-import { processCSVContent, insertTrafficFines } from './dataProcessor.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,18 +7,13 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { fileName } = await req.json()
-    if (!fileName) {
-      throw new Error('No file name provided')
-    }
-    console.log('Processing file:', fileName)
-
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -36,104 +29,53 @@ serve(async (req) => {
     }
 
     const content = await fileData.text()
-    console.log('File content loaded')
+    const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+    const headers = lines[0].toLowerCase().split(',')
+    const rows = lines.slice(1)
 
-    // Process CSV content
-    const { headers, rows } = processCSVContent(content, 8)
-    console.log('Headers:', headers)
+    // Process each row without validation
+    for (const row of rows) {
+      const values = row.split(',')
+      const fineData = {
+        serial_number: values[0] || null,
+        violation_number: values[1] || null,
+        violation_date: values[2] || null,
+        license_plate: values[3] || null,
+        fine_location: values[4] || null,
+        violation_charge: values[5] || null,
+        fine_amount: parseFloat(values[6]) || 0,
+        violation_points: parseInt(values[7]) || 0,
+        payment_status: 'pending',
+        assignment_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
 
-    // Validate headers
-    const missingHeaders = validateHeaders(headers)
-    if (missingHeaders) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Missing required columns: ${missingHeaders.join(', ')}`
-        }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
+      const { error: insertError } = await supabase
+        .from('traffic_fines')
+        .insert([fineData])
 
-    // Process rows with validation and normalization
-    const fines = []
-    const errors = []
-
-    for (let i = 0; i < rows.length; i++) {
-      try {
-        const rowIndex = i + 1
-        console.log(`Processing row ${rowIndex}:`, rows[i])
-
-        // Validate row
-        const validationError = validateRow(rows[i], rowIndex, headers.length)
-        if (validationError) {
-          errors.push(validationError)
-          // Continue processing other rows even if this one has an error
-          continue
-        }
-
-        // Normalize row if needed
-        const normalizedRow = normalizeRow(rows[i], headers.length)
-        
-        // Create fine object from normalized row
-        const rowData = headers.reduce((obj, header, index) => {
-          obj[header] = normalizedRow[index]
-          return obj
-        }, {} as Record<string, string>)
-
-        // Validate required fields and data types
-        const date = new Date(rowData.violation_date)
-        if (isNaN(date.getTime())) {
-          throw new Error(`Invalid date format. Expected YYYY-MM-DD, got: ${rowData.violation_date}`)
-        }
-
-        const amount = parseFloat(rowData.fine_amount)
-        if (isNaN(amount)) {
-          throw new Error(`Invalid amount: ${rowData.fine_amount}`)
-        }
-
-        const points = parseInt(rowData.violation_points)
-        if (isNaN(points)) {
-          throw new Error(`Invalid points: ${rowData.violation_points}`)
-        }
-
-        fines.push({
-          serial_number: rowData.serial_number,
-          violation_number: rowData.violation_number,
-          violation_date: date.toISOString(),
-          license_plate: rowData.license_plate,
-          fine_location: rowData.fine_location,
-          violation_charge: rowData.violation_charge,
-          fine_amount: amount,
-          violation_points: points,
-          payment_status: 'pending',
-          assignment_status: 'pending',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        
-        console.log('Successfully processed row:', rowData)
-      } catch (error) {
-        console.error(`Error processing row ${i + 1}:`, error)
-        errors.push({
-          row: i + 1,
-          error: error.message,
-          data: rows[i].join(',')
-        })
+      if (insertError) {
+        console.error('Insert error:', insertError)
       }
     }
 
-    console.log(`Processed ${rows.length} rows:`)
-    console.log(`- Valid records: ${fines.length}`)
-    console.log(`- Errors: ${errors.length}`)
+    // Log the import
+    const { error: logError } = await supabase
+      .from('traffic_fine_imports')
+      .insert([{
+        file_name: fileName,
+        processed_at: new Date().toISOString(),
+        total_fines: rows.length,
+        unassigned_fines: rows.length
+      }])
 
-    // Process the data and handle response
-    const result = await insertTrafficFines(supabase, fines, errors)
-    
+    if (logError) {
+      console.error('Log error:', logError)
+    }
+
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({ success: true, processed: rows.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
@@ -142,8 +84,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message,
-        stack: error.stack
+        error: error.message
       }),
       { 
         status: 400,
