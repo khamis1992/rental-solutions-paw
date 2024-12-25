@@ -15,40 +15,40 @@ export const parseCSVLine = (line: string): string[] => {
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (char === ',' && !inQuotes) {
+      continue;
+    }
+    
+    if (char === ',' && !inQuotes) {
       result.push(current.trim());
       current = '';
-    } else {
-      current += char;
+      continue;
     }
+    
+    current += char;
   }
+  
   result.push(current.trim());
-  return result.filter(Boolean); // Remove empty strings
+  return result;
 };
 
 export const validateDateFormat = (dateStr: string): boolean => {
-  try {
-    if (!dateStr) {
-      console.error('Empty date string');
-      return false;
-    }
-
-    // Remove any quotes and whitespace
-    const cleanDateStr = dateStr.replace(/"/g, '').trim();
-    
-    // Try parsing as ISO date first
-    const parsedDate = parseISO(cleanDateStr);
-    if (isValid(parsedDate)) {
-      return true;
-    }
-
-    // Try parsing as regular date
-    const date = new Date(cleanDateStr);
-    return isValid(date);
-  } catch (error) {
-    console.error('Date validation error:', error);
+  if (!dateStr) {
+    console.error('Empty date string');
     return false;
   }
+
+  // Remove any quotes and whitespace
+  const cleanDateStr = dateStr.replace(/"/g, '').trim();
+  
+  // Try parsing as ISO date
+  const parsedDate = parseISO(cleanDateStr);
+  if (isValid(parsedDate)) {
+    return true;
+  }
+
+  // Try parsing as regular date
+  const date = new Date(cleanDateStr);
+  return isValid(date);
 };
 
 export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {

@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { parseCSVRow, validateRow, validateDate, validateNumeric } from './csvParser.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -172,3 +171,70 @@ serve(async (req) => {
     );
   }
 });
+
+function parseCSVRow(row: string): string[] {
+  const values: string[] = [];
+  let currentValue = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i];
+    const nextChar = row[i + 1];
+
+    if (char === '"') {
+      if (!insideQuotes) {
+        insideQuotes = true;
+        continue;
+      } else if (nextChar === '"') {
+        currentValue += '"';
+        i++; // Skip next quote
+        continue;
+      } else {
+        insideQuotes = false;
+        continue;
+      }
+    }
+
+    if (char === ',' && !insideQuotes) {
+      values.push(currentValue.trim());
+      currentValue = '';
+      continue;
+    }
+
+    currentValue += char;
+  }
+
+  values.push(currentValue.trim());
+  return values;
+}
+
+function validateRow(rowNumber: number, values: string[], expectedColumns: number, originalRow: string): void {
+  if (values.length !== expectedColumns) {
+    console.error(`Row ${rowNumber} parsing error:`);
+    console.error('Original row:', originalRow);
+    console.error('Parsed values:', values);
+    console.error(`Number of values: ${values.length}`);
+    throw new Error(
+      `Row ${rowNumber} has incorrect number of columns. Expected ${expectedColumns}, found ${values.length}. Please check for missing values or unmatched quotes.`
+    );
+  }
+}
+
+function validateDate(dateValue: string, rowNumber: number): Date {
+  const cleanDate = dateValue.replace(/"/g, '').trim();
+  const date = new Date(cleanDate);
+  
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date format in row ${rowNumber}: ${dateValue}`);
+  }
+  
+  return date;
+}
+
+function validateNumeric(value: string, field: string, rowNumber: number): number {
+  const num = parseFloat(value.replace(/"/g, '').trim());
+  if (isNaN(num)) {
+    throw new Error(`Invalid ${field} in row ${rowNumber}: ${value}`);
+  }
+  return num;
+}
