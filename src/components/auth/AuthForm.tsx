@@ -35,6 +35,12 @@ export const AuthForm = () => {
         title: "Password recovery",
         description: "Check your email for password reset instructions.",
       });
+    } else if (event === "SIGNED_IN" && !session) {
+      toast({
+        variant: "destructive",
+        title: "Authentication error",
+        description: "Please check your credentials and try again.",
+      });
     }
   });
 

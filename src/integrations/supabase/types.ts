@@ -3893,7 +3893,12 @@ export type Database = {
       discount_type: "percentage" | "fixed_amount"
       document_language: "english" | "spanish" | "french" | "arabic"
       import_type: "payments" | "customers" | "agreements"
-      lease_status: "pending_payment" | "pending_deposit" | "active" | "closed"
+      lease_status:
+        | "pending_payment"
+        | "pending_deposit"
+        | "active"
+        | "closed"
+        | "terminated"
       legal_case_status: "pending_reminder" | "in_legal_process" | "resolved"
       maintenance_status:
         | "scheduled"
