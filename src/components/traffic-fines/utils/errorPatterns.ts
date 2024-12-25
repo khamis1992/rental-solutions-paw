@@ -6,40 +6,69 @@ export interface ErrorPattern {
 
 export const incrementErrorPattern = (
   patterns: Record<string, ErrorPattern>,
-  errorType: string,
+  type: string,
   example: string,
-  rawData: string
-): void => {
-  if (!patterns[errorType]) {
-    patterns[errorType] = {
-      type: errorType,
+  data: string
+) => {
+  if (!patterns[type]) {
+    patterns[type] = {
+      type,
       count: 0,
       examples: []
     };
   }
-  patterns[errorType].count++;
-  if (patterns[errorType].examples.length < 3) {
-    patterns[errorType].examples.push(example);
+  
+  patterns[type].count++;
+  if (patterns[type].examples.length < 3) { // Keep only first 3 examples
+    patterns[type].examples.push(example);
   }
 };
 
 export const generateErrorReport = (analysis: any): string => {
-  if (!analysis?.patterns?.commonErrors) {
+  if (!analysis || !analysis.errors || !analysis.errors.length) {
     return 'No errors to report';
   }
 
-  const patterns = analysis.patterns.commonErrors as Record<string, ErrorPattern>;
-  if (!patterns || Object.keys(patterns).length === 0) {
-    return 'No errors to report';
+  let report = 'CSV Analysis Report:\n\n';
+  
+  // Add summary
+  report += `Total Rows: ${analysis.totalRows}\n`;
+  report += `Valid Rows: ${analysis.validRows}\n`;
+  report += `Error Rows: ${analysis.errorRows}\n`;
+  report += `Repaired Rows: ${analysis.repairedRows.length}\n\n`;
+
+  // Group errors by type
+  const errorsByType: Record<string, number> = {};
+  analysis.errors.forEach((error: any) => {
+    errorsByType[error.type] = (errorsByType[error.type] || 0) + 1;
+  });
+
+  // Add error type summary
+  report += 'Error Summary:\n';
+  Object.entries(errorsByType).forEach(([type, count]) => {
+    report += `${type}: ${count} occurrences\n`;
+  });
+
+  // Add detailed error list
+  report += '\nDetailed Errors:\n';
+  analysis.errors.forEach((error: any, index: number) => {
+    report += `\nError ${index + 1}:\n`;
+    report += `Row: ${error.row}\n`;
+    report += `Type: ${error.type}\n`;
+    report += `Details: ${error.details}\n`;
+    if (error.data) {
+      report += `Data: ${error.data}\n`;
+    }
+  });
+
+  // Add repair summary if available
+  if (analysis.repairedRows?.length > 0) {
+    report += '\nRepaired Rows:\n';
+    analysis.repairedRows.forEach((repair: any) => {
+      report += `\nRow ${repair.rowNumber}:\n`;
+      repair.repairs.forEach((r: string) => report += `- ${r}\n`);
+    });
   }
 
-  return Object.values(patterns)
-    .map((pattern: ErrorPattern) => {
-      if (!pattern?.type) return '';
-      const examples = pattern.examples || [];
-      return `${pattern.type}: ${pattern.count} occurrences\n` +
-        `Examples:\n${examples.map(ex => `  - ${ex}`).join('\n')}`;
-    })
-    .filter(report => report.length > 0)
-    .join('\n\n');
+  return report;
 };

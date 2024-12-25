@@ -70,7 +70,7 @@ export const reconstructMalformedRow = (
 
   // If we have fewer columns than expected and there's a next row
   if (currentRow.length < expectedColumns && nextRow) {
-    // Check if the next row might be a continuation of a quoted field
+    // Check if the next row might be a continuation
     const nextRowParts = nextRow.split(',');
     const remaining = expectedColumns - currentRow.length;
     
@@ -78,7 +78,7 @@ export const reconstructMalformedRow = (
     const neededParts = nextRowParts.slice(0, remaining);
     repairedRow = [...currentRow, ...neededParts];
     
-    repairs.push('Merged split row due to line break in quoted field');
+    repairs.push('Merged split row due to line break');
     skipNextRow = true;
   }
 
