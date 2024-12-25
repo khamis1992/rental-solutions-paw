@@ -11,7 +11,7 @@ export const TrafficFineStats = () => {
   const { toast } = useToast();
   const [isAssigning, setIsAssigning] = useState(false);
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery({
     queryKey: ["traffic-fines-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -87,6 +87,9 @@ export const TrafficFineStats = () => {
         title: "Bulk Assignment Complete",
         description: `Successfully assigned ${assignedCount} fines. ${errorCount} fines could not be assigned.`,
       });
+
+      // Refresh the stats after assignment
+      refetch();
 
     } catch (error: any) {
       console.error('Bulk assignment failed:', error);
