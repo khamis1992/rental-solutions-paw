@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentHistoryAnalysis } from "./profile/PaymentHistoryAnalysis";
 import { RentDueManagement } from "./profile/RentDueManagement";
+import { TrafficFinesSummary } from "./profile/TrafficFinesSummary";
 import { CredibilityScore } from "./profile/CredibilityScore";
 import { CustomerDocumentAnalysis } from "./analysis/CustomerDocumentAnalysis";
 import { useToast } from "@/components/ui/use-toast";
@@ -131,6 +132,7 @@ export const CustomerDetailsDialog = ({
             <TabsTrigger value="credibility">Credibility Score</TabsTrigger>
             <TabsTrigger value="payments">Payment History</TabsTrigger>
             <TabsTrigger value="rentdue">Rent Due</TabsTrigger>
+            <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
             <TabsTrigger value="documents">Document Analysis</TabsTrigger>
           </TabsList>
           <TabsContent value="credibility">
@@ -141,6 +143,9 @@ export const CustomerDetailsDialog = ({
           </TabsContent>
           <TabsContent value="rentdue">
             <RentDueManagement customerId={customerId} />
+          </TabsContent>
+          <TabsContent value="fines">
+            <TrafficFinesSummary customerId={customerId} />
           </TabsContent>
           <TabsContent value="documents">
             <CustomerDocumentAnalysis customerId={customerId} />

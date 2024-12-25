@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaymentHistoryAnalysis } from "./profile/PaymentHistoryAnalysis";
 import { RentDueManagement } from "./profile/RentDueManagement";
+import { TrafficFinesSummary } from "./profile/TrafficFinesSummary";
 import { CredibilityScore } from "./profile/CredibilityScore";
 import { CreditAssessment } from "./profile/CreditAssessment";
 import { CustomerNotes } from "./profile/CustomerNotes";
@@ -61,10 +62,15 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
       <Tabs defaultValue="payments" className="space-y-4">
         <TabsList>
           <TabsTrigger value="payments">Payment History</TabsTrigger>
+          <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
         </TabsList>
 
         <TabsContent value="payments">
           <PaymentHistoryAnalysis customerId={customerId} />
+        </TabsContent>
+
+        <TabsContent value="fines">
+          <TrafficFinesSummary customerId={customerId} />
         </TabsContent>
       </Tabs>
     </div>
