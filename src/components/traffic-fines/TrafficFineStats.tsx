@@ -4,7 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 interface TrafficFineStatsProps {
   agreementId?: string;
@@ -14,6 +14,20 @@ interface TrafficFineStatsProps {
 export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStatsProps) {
   const queryClient = useQueryClient();
   const [isReconciling, setIsReconciling] = useState(false);
+
+  // Query to get unassigned fines count
+  const { data: unassignedCount = 0 } = useQuery({
+    queryKey: ["unassigned-fines-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('traffic_fines')
+        .select('*', { count: 'exact', head: true })
+        .eq('assignment_status', 'pending');
+      
+      if (error) throw error;
+      return count || 0;
+    }
+  });
 
   const handleBulkAssignment = async () => {
     setIsReconciling(true);
@@ -107,6 +121,7 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
 
       // Refresh the stats after assignment
       queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
+      queryClient.invalidateQueries({ queryKey: ["unassigned-fines-count"] });
 
     } catch (error: any) {
       console.error('Bulk assignment failed:', error);
@@ -118,18 +133,24 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
 
   return (
     <div className="flex justify-between items-center">
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3 flex-1">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 flex-1">
         <Card className="p-4">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
             <p className="text-2xl font-bold">{paymentCount}</p>
           </div>
         </Card>
+        <Card className="p-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">Unassigned Fines</p>
+            <p className="text-2xl font-bold">{unassignedCount}</p>
+          </div>
+        </Card>
       </div>
       <div className="ml-4">
         <Button
           onClick={handleBulkAssignment}
-          disabled={isReconciling || !paymentCount}
+          disabled={isReconciling || !unassignedCount}
           className="whitespace-nowrap"
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
