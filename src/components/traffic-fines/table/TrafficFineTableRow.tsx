@@ -32,9 +32,7 @@ export const TrafficFineTableRow = ({
       <TableCell>
         {new Date(fine.violation_date).toLocaleDateString()}
       </TableCell>
-      <TableCell>
-        {fine.vehicle?.license_plate || 'N/A'}
-      </TableCell>
+      <TableCell>{fine.license_plate || 'N/A'}</TableCell>
       <TableCell>{fine.fine_location || 'N/A'}</TableCell>
       <TableCell>{fine.violation_charge || 'N/A'}</TableCell>
       <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>

@@ -1,8 +1,3 @@
-interface ParseResult {
-  values: string[];
-  repairs: string[];
-}
-
 export const validateHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {
   const requiredHeaders = [
     'serial_number',
@@ -38,7 +33,6 @@ export const parseCSVLine = (line: string): ParseResult => {
   // Split line into characters and process
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    const nextChar = line[i + 1];
 
     // Handle quotes
     if (char === '"' || char === "'") {
@@ -67,10 +61,25 @@ export const parseCSVLine = (line: string): ParseResult => {
   // Add the last value
   result.push(current.trim());
 
-  // If still in quotes at the end, note it
-  if (inQuotes) {
-    repairs.push('Unclosed quote detected and handled');
+  // Normalize the number of columns to match the expected order
+  const expectedColumns = 8;
+  
+  // Add empty values for missing columns
+  while (result.length < expectedColumns) {
+    result.push('');
+    repairs.push(`Added empty placeholder for column ${result.length}`);
+  }
+
+  // Remove excess columns
+  if (result.length > expectedColumns) {
+    const removed = result.splice(expectedColumns);
+    repairs.push(`Removed ${removed.length} excess columns`);
   }
 
   return { values: result, repairs };
 };
+
+interface ParseResult {
+  values: string[];
+  repairs: string[];
+}
