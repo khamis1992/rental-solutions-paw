@@ -504,41 +504,32 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
-          browser_info: Json | null
           changes: Json | null
           created_at: string
           entity_id: string | null
           entity_type: string
           id: string
           ip_address: string | null
-          metadata: Json | null
-          user_agent: string | null
           user_id: string | null
         }
         Insert: {
           action: string
-          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type: string
           id?: string
           ip_address?: string | null
-          metadata?: Json | null
-          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
           action?: string
-          browser_info?: Json | null
           changes?: Json | null
           created_at?: string
           entity_id?: string | null
           entity_type?: string
           id?: string
           ip_address?: string | null
-          metadata?: Json | null
-          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -920,96 +911,42 @@ export type Database = {
           },
         ]
       }
-      customer_segments: {
-        Row: {
-          confidence_score: number | null
-          created_at: string | null
-          customer_id: string | null
-          features: Json
-          id: string
-          segment_description: string | null
-          segment_name: string
-          updated_at: string | null
-        }
-        Insert: {
-          confidence_score?: number | null
-          created_at?: string | null
-          customer_id?: string | null
-          features: Json
-          id?: string
-          segment_description?: string | null
-          segment_name: string
-          updated_at?: string | null
-        }
-        Update: {
-          confidence_score?: number | null
-          created_at?: string | null
-          customer_id?: string | null
-          features?: Json
-          id?: string
-          segment_description?: string | null
-          segment_name?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_segments_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customer_segments_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       damages: {
         Row: {
           created_at: string
-          damage_location: string | null
           description: string
           id: string
           images: string[] | null
-          lease_id: string | null
+          lease_id: string
           notes: string | null
           repair_cost: number | null
           reported_date: string
           status: string | null
           updated_at: string
-          vehicle_id: string | null
         }
         Insert: {
           created_at?: string
-          damage_location?: string | null
           description: string
           id?: string
           images?: string[] | null
-          lease_id?: string | null
+          lease_id: string
           notes?: string | null
           repair_cost?: number | null
           reported_date?: string
           status?: string | null
           updated_at?: string
-          vehicle_id?: string | null
         }
         Update: {
           created_at?: string
-          damage_location?: string | null
           description?: string
           id?: string
           images?: string[] | null
-          lease_id?: string | null
+          lease_id?: string
           notes?: string | null
           repair_cost?: number | null
           reported_date?: string
           status?: string | null
           updated_at?: string
-          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -1017,13 +954,6 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "damages_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
@@ -3042,8 +2972,6 @@ export type Database = {
       }
       traffic_fine_imports: {
         Row: {
-          ai_analysis_results: Json | null
-          ai_analysis_status: string | null
           assigned_fines: number | null
           created_at: string | null
           file_name: string
@@ -3055,8 +2983,6 @@ export type Database = {
           unassigned_fines: number | null
         }
         Insert: {
-          ai_analysis_results?: Json | null
-          ai_analysis_status?: string | null
           assigned_fines?: number | null
           created_at?: string | null
           file_name: string
@@ -3068,8 +2994,6 @@ export type Database = {
           unassigned_fines?: number | null
         }
         Update: {
-          ai_analysis_results?: Json | null
-          ai_analysis_status?: string | null
           assigned_fines?: number | null
           created_at?: string | null
           file_name?: string
@@ -3109,7 +3033,6 @@ export type Database = {
           id: string
           import_batch_id: string | null
           lease_id: string | null
-          match_confidence: number | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           serial_number: string | null
           updated_at: string | null
@@ -3130,7 +3053,6 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           lease_id?: string | null
-          match_confidence?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           serial_number?: string | null
           updated_at?: string | null
@@ -3151,7 +3073,6 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           lease_id?: string | null
-          match_confidence?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           serial_number?: string | null
           updated_at?: string | null
@@ -3279,24 +3200,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_activity: {
-        Row: {
-          activity_count: number
-          id: string
-          timestamp: string
-        }
-        Insert: {
-          activity_count?: number
-          id?: string
-          timestamp?: string
-        }
-        Update: {
-          activity_count?: number
-          id?: string
-          timestamp?: string
-        }
-        Relationships: []
-      }
       variable_costs: {
         Row: {
           amount: number
@@ -3395,7 +3298,6 @@ export type Database = {
           inspection_type: string
           inspector_notes: string | null
           lease_id: string | null
-          maintenance_id: string | null
           odometer_reading: number | null
           photos: string[] | null
           renter_signature: string | null
@@ -3418,7 +3320,6 @@ export type Database = {
           inspection_type: string
           inspector_notes?: string | null
           lease_id?: string | null
-          maintenance_id?: string | null
           odometer_reading?: number | null
           photos?: string[] | null
           renter_signature?: string | null
@@ -3441,7 +3342,6 @@ export type Database = {
           inspection_type?: string
           inspector_notes?: string | null
           lease_id?: string | null
-          maintenance_id?: string | null
           odometer_reading?: number | null
           photos?: string[] | null
           renter_signature?: string | null
@@ -3455,13 +3355,6 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vehicle_inspections_maintenance_id_fkey"
-            columns: ["maintenance_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance"
             referencedColumns: ["id"]
           },
           {
@@ -3871,18 +3764,6 @@ export type Database = {
     }
     Enums: {
       agreement_type: "lease_to_own" | "short_term"
-      audit_action_type:
-        | "create"
-        | "update"
-        | "delete"
-        | "view"
-        | "login"
-        | "logout"
-        | "export"
-        | "import"
-        | "payment"
-        | "status_change"
-        | "document_upload"
       customer_status_type:
         | "active"
         | "inactive"
@@ -3893,13 +3774,7 @@ export type Database = {
       discount_type: "percentage" | "fixed_amount"
       document_language: "english" | "spanish" | "french" | "arabic"
       import_type: "payments" | "customers" | "agreements"
-      lease_status:
-        | "pending_payment"
-        | "pending_deposit"
-        | "active"
-        | "closed"
-        | "terminated"
-        | "cancelled"
+      lease_status: "pending_payment" | "pending_deposit" | "active" | "closed"
       legal_case_status: "pending_reminder" | "in_legal_process" | "resolved"
       maintenance_status:
         | "scheduled"

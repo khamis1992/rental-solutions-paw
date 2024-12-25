@@ -14,60 +14,42 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface PaymentFormProps {
   agreementId: string;
 }
 
-// Define the valid payment status types
-type PaymentStatus = 'completed' | 'pending' | 'failed' | 'refunded';
-type PaymentMethod = 'cash' | 'wire_transfer' | 'invoice' | 'on_hold' | 'deposit' | 'cheque';
-
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
-  const queryClient = useQueryClient();
+  const { register, handleSubmit, reset } = useForm();
 
   const onSubmit = async (data: any) => {
-    if (!data.amount || !data.paymentMethod) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const paymentData = {
         lease_id: agreementId,
-        amount: parseFloat(data.amount),
-        payment_method: data.paymentMethod as PaymentMethod,
+        amount: data.amount,
+        payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
         next_payment_date: isRecurring ? 
           new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue, data.intervalUnit)).toISOString() : 
-          null,
-        status: 'completed' as PaymentStatus // Explicitly type the status
+          null
       };
 
-      const { error } = await supabase
-        .from("payments")
-        .insert(paymentData);
+      const { error } = await supabase.from("payments").insert(paymentData);
 
       if (error) throw error;
-
-      // Invalidate and refetch relevant queries
-      await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
-      await queryClient.invalidateQueries({ queryKey: ['payments', agreementId] });
 
       toast.success("Payment added successfully");
       reset();
       setIsRecurring(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error adding payment:", error);
-      toast.error(error.message || "Failed to add payment");
+      toast.error("Failed to add payment");
     } finally {
       setIsSubmitting(false);
     }
@@ -93,9 +75,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           {...register("amount", { required: true })}
           aria-required="true"
         />
-        {errors.amount && (
-          <span className="text-sm text-red-500">Amount is required</span>
-        )}
       </div>
       
       <div>
@@ -113,9 +92,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             <SelectItem value="cheque">Cheque</SelectItem>
           </SelectContent>
         </Select>
-        {errors.paymentMethod && (
-          <span className="text-sm text-red-500">Payment method is required</span>
-        )}
       </div>
 
       <div className="flex items-center space-x-2">
@@ -139,9 +115,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
               {...register("intervalValue", { required: isRecurring })}
               aria-label="Interval value"
             />
-            {errors.intervalValue && (
-              <span className="text-sm text-red-500">Interval value is required for recurring payments</span>
-            )}
           </div>
           <div className="flex-1">
             <Label htmlFor="intervalUnit">Unit</Label>
@@ -155,9 +128,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
                 <SelectItem value="months">Months</SelectItem>
               </SelectContent>
             </Select>
-            {errors.intervalUnit && (
-              <span className="text-sm text-red-500">Interval unit is required for recurring payments</span>
-            )}
           </div>
         </div>
       )}
@@ -175,7 +145,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       <Button 
         type="submit" 
         disabled={isSubmitting}
-        className="w-full"
         aria-label={isSubmitting ? "Adding payment..." : "Add payment"}
       >
         {isSubmitting ? "Adding Payment..." : "Add Payment"}

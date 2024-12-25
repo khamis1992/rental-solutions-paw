@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +58,26 @@ export default function App() {
     },
   });
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        toast({
+          title: "Welcome back!",
+          variant: "default",
+        });
+      } else if (event === "SIGNED_OUT") {
+        toast({
+          title: "You have been logged out.",
+          variant: "default",
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
+
   if (loadingSession) {
     return <Skeleton className="h-screen w-screen" />;
   }
@@ -66,37 +86,30 @@ export default function App() {
     <>
       <Toaster />
       <Routes>
-        {!session && (
-          <Route
-            path="/auth"
-            element={
-              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <Auth />
-              </Suspense>
-            }
-          />
-        )}
+        <Route
+          path="/auth"
+          element={
+            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+              <Auth />
+            </Suspense>
+          }
+        />
+
         {protectedRoutes.map(({ path, component: Component }) => (
           <Route
             key={path}
             path={path}
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Component />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                <RouteWrapper>
+                  <Component />
+                </RouteWrapper>
+              </Suspense>
             }
           />
         ))}
-        <Route 
-          path="*" 
-          element={<Navigate to={session ? "/" : "/auth"} replace />} 
-        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

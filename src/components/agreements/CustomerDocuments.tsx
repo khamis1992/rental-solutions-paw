@@ -1,7 +1,6 @@
 import { FileText, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DocumentViewer } from "@/components/shared/DocumentViewer";
 
 interface CustomerDocumentsProps {
   customerId: string;
@@ -43,32 +42,38 @@ export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
     <div className="col-span-2 space-y-4 border rounded-lg p-4 bg-muted/50">
       <h3 className="font-medium">Customer Documents</h3>
       <div className="grid grid-cols-2 gap-4">
-        {customer?.id_document_url ? (
-          <DocumentViewer
-            documentUrl={customer.id_document_url}
-            documentName="ID Document"
-            bucket="customer_documents"
-          />
-        ) : (
-          <div className="flex items-center gap-2 p-2 rounded-md text-gray-400">
-            <FileText className="h-4 w-4" />
-            <span>ID Document</span>
+        <a
+          href={customer?.id_document_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-2 p-2 rounded-md ${
+            customer?.id_document_url
+              ? "text-blue-600 hover:bg-blue-50"
+              : "text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          <span>ID Document</span>
+          {!customer?.id_document_url && (
             <AlertCircle className="h-4 w-4 text-yellow-500" />
-          </div>
-        )}
-        {customer?.license_document_url ? (
-          <DocumentViewer
-            documentUrl={customer.license_document_url}
-            documentName="Driver License"
-            bucket="customer_documents"
-          />
-        ) : (
-          <div className="flex items-center gap-2 p-2 rounded-md text-gray-400">
-            <FileText className="h-4 w-4" />
-            <span>Driver License</span>
+          )}
+        </a>
+        <a
+          href={customer?.license_document_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-2 p-2 rounded-md ${
+            customer?.license_document_url
+              ? "text-blue-600 hover:bg-blue-50"
+              : "text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          <span>Driver License</span>
+          {!customer?.license_document_url && (
             <AlertCircle className="h-4 w-4 text-yellow-500" />
-          </div>
-        )}
+          )}
+        </a>
       </div>
     </div>
   );

@@ -8,15 +8,14 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, dbResponse } = await req.json()
-
-    // If we have a database response, return it directly
-    if (dbResponse) {
-      return new Response(
-        JSON.stringify({ message: dbResponse }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // Verify origin
+    const origin = req.headers.get('origin')
+    if (!origin) {
+      throw new Error('Origin header is required')
     }
+
+    // Get request data
+    const { messages, dbResponse } = await req.json()
 
     // Call Perplexity API
     const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -47,16 +46,26 @@ serve(async (req) => {
     const data = await perplexityResponse.json()
     
     return new Response(
-      JSON.stringify({ message: data.choices[0].message.content }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        message: data.choices[0].message.content,
+        origin: origin // Include origin in response for debugging
+      }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          // Only allow the specific origin that made the request
+          'Access-Control-Allow-Origin': origin
+        } 
+      }
     )
   } catch (error) {
-    console.error('Error in chat function:', error)
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
       }
     )
   }

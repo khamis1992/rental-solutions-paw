@@ -44,9 +44,13 @@ export interface AgreementDocument {
   updated_at: string | null;
 }
 
-export interface PaymentScheduleItem {
-  dueDate: Date;
+export interface Payment {
+  id: string;
+  lease_id: string;
   amount: number;
-  remainingBalance: number;
-  status?: PaymentStatus;
+  status: PaymentStatus;
+  payment_date: string | null;
+  transaction_id: string | null;
+  created_at: string;
+  updated_at: string;
 }

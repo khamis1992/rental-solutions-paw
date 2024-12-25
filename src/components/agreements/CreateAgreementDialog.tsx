@@ -1,81 +1,142 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { AgreementForm, AgreementFormData } from "./AgreementForm";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { FilePlus2 } from "lucide-react";
+import { useAgreementForm } from "./hooks/useAgreementForm";
+import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
+import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
+import { useState } from "react";
+import { AgreementBasicInfo } from "./form/AgreementBasicInfo";
+import { CustomerInformation } from "./form/CustomerInformation";
+import { VehicleAgreementDetails } from "./form/VehicleAgreementDetails";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-export const CreateAgreementDialog = () => {
-  const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
+export function CreateAgreementDialog() {
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    open,
+    setOpen,
+    register,
+    handleSubmit,
+    onSubmit,
+    agreementType,
+    updateMonthlyPayment,
+    watch,
+    setValue,
+    errors,
+  } = useAgreementForm(() => {
+    // Callback after successful creation
+    setOpen(false);
+    setSelectedCustomerId("");
+    toast.success("Agreement created successfully");
+  });
 
-  const handleSubmit = async (values: Partial<AgreementFormData>) => {
+  const handleFormSubmit = async (data: any) => {
     try {
-      // Calculate total amount based on agreement type
-      let totalAmount = 0;
-      if (values.agreementType === 'short_term') {
-        // For short term, total is just the rent amount
-        totalAmount = values.rentAmount || 0;
-      } else {
-        // For lease to own, calculate total including down payment and monthly payments
-        const monthlyPayment = values.monthlyPayment || 0;
-        const duration = values.agreementDuration || 1;
-        const downPayment = values.downPayment || 0;
-        totalAmount = (monthlyPayment * duration) + downPayment;
-      }
-
-      const { data, error } = await supabase
-        .from('leases')
-        .insert({
-          customer_id: values.customerId,
-          vehicle_id: values.vehicleId,
-          start_date: values.startDate instanceof Date ? values.startDate.toISOString() : values.startDate,
-          end_date: values.endDate instanceof Date ? values.endDate.toISOString() : values.endDate,
-          rent_amount: values.rentAmount,
-          down_payment: values.downPayment,
-          status: 'pending_payment',
-          agreement_type: values.agreementType,
-          notes: values.notes,
-          initial_mileage: values.initialMileage,
-          total_amount: totalAmount,
-          is_recurring: values.isRecurring || false,
-          recurring_interval: values.isRecurring ? `${values.recurringInterval} days` : null
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ['leases'] });
-      toast.success('Agreement created successfully');
-      setOpen(false);
-    } catch (error: any) {
-      console.error('Error creating agreement:', error);
-      toast.error(error.message || 'Failed to create agreement');
+      console.log("Form submission started with data:", data);
+      setIsSubmitting(true);
+      await onSubmit(data);
+    } catch (error) {
+      console.error("Error creating agreement:", error);
+      toast.error("Failed to create agreement. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Agreement
-        </Button>
+        <button className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors w-full">
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500">
+            <FilePlus2 className="h-5 w-5" />
+          </div>
+          <span className="font-medium">New Agreement</span>
+        </button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Agreement</DialogTitle>
+          <DialogDescription>
+            Create a new lease-to-own or short-term rental agreement.
+          </DialogDescription>
         </DialogHeader>
-        <div className="mt-4">
-          <AgreementForm
-            onSubmit={handleSubmit}
-            onCancel={() => setOpen(false)}
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          <AgreementBasicInfo register={register} errors={errors} />
+          
+          <CustomerInformation 
+            register={register} 
+            errors={errors}
+            selectedCustomerId={selectedCustomerId}
+            onCustomerSelect={setSelectedCustomerId}
+            setValue={setValue}
           />
-        </div>
+
+          <VehicleAgreementDetails 
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+          />
+
+          {agreementType === "lease_to_own" && (
+            <LeaseToOwnFields
+              register={register}
+              updateMonthlyPayment={updateMonthlyPayment}
+              watch={watch}
+            />
+          )}
+
+          <div className="col-span-2">
+            <h3 className="text-lg font-semibold mb-4">Late Fees & Penalties</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <LateFeesPenaltiesFields register={register} />
+            </div>
+          </div>
+
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea placeholder="Additional notes..." {...register("notes")} />
+          </div>
+
+          <DialogFooter className="sticky bottom-0 bg-background pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+              className="relative"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="opacity-0">Create Agreement</span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                </>
+              ) : (
+                "Create Agreement"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
-};
+}

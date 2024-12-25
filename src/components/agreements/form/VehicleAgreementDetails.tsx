@@ -1,143 +1,83 @@
-import { UseFormRegister, UseFormWatch, UseFormSetValue } from "react-hook-form";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { AgreementFormData } from "../AgreementForm";
+import { Label } from "@/components/ui/label";
+import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from "react-hook-form";
+import { AgreementFormData } from "../hooks/useAgreementForm";
+import { VehicleSelect } from "./VehicleSelect";
 
 interface VehicleAgreementDetailsProps {
   register: UseFormRegister<AgreementFormData>;
-  errors: any;
+  errors: FieldErrors<AgreementFormData>;
   watch: UseFormWatch<AgreementFormData>;
   setValue: UseFormSetValue<AgreementFormData>;
 }
 
-export const VehicleAgreementDetails = ({
-  register,
+export const VehicleAgreementDetails = ({ 
+  register, 
   errors,
   watch,
-  setValue,
+  setValue 
 }: VehicleAgreementDetailsProps) => {
-  const agreementType = watch("agreementType");
-  const isRecurring = watch("isRecurring") || false;
+  const handleVehicleSelect = (vehicleId: string) => {
+    setValue('vehicleId', vehicleId);
+  };
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Vehicle Agreement Details</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="initialMileage">Initial Mileage</Label>
+      <h3 className="text-lg font-semibold">Vehicle & Agreement Details</h3>
+      <div className="grid grid-cols-2 gap-4">
+        <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
+
+        <div className="space-y-2">
+          <Label htmlFor="agreementDuration">Agreement Duration (months)</Label>
           <Input
-            id="initialMileage"
             type="number"
-            {...register("initialMileage", { required: true })}
+            {...register("agreementDuration", {
+              required: "Duration is required",
+              min: { value: 1, message: "Duration must be at least 1 month" }
+            })}
+            placeholder="Enter duration in months"
           />
-          {errors.initialMileage && (
-            <span className="text-sm text-red-500">This field is required</span>
+          {errors.agreementDuration && (
+            <span className="text-sm text-red-500">{errors.agreementDuration.message}</span>
           )}
         </div>
 
-        {agreementType === 'short_term' && (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="rentAmount">Recurring Payment (QAR)</Label>
-              <Input
-                id="rentAmount"
-                type="number"
-                {...register("rentAmount", { required: true })}
-              />
-              {errors.rentAmount && (
-                <span className="text-sm text-red-500">This field is required</span>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="isRecurring"
-                checked={isRecurring}
-                onCheckedChange={(checked) => setValue("isRecurring", checked)}
-              />
-              <Label htmlFor="isRecurring">Enable Recurring Payment</Label>
-            </div>
-            {isRecurring && (
-              <div>
-                <Label htmlFor="recurringInterval">Payment Interval (days)</Label>
-                <Input
-                  id="recurringInterval"
-                  type="number"
-                  min="1"
-                  {...register("recurringInterval", { 
-                    required: isRecurring,
-                    min: 1 
-                  })}
-                />
-                {errors.recurringInterval && (
-                  <span className="text-sm text-red-500">Please enter a valid interval</span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {agreementType === 'lease_to_own' && (
-          <>
-            <div>
-              <Label htmlFor="downPayment">Down Payment (QAR)</Label>
-              <Input
-                id="downPayment"
-                type="number"
-                {...register("downPayment", { required: true })}
-              />
-              {errors.downPayment && (
-                <span className="text-sm text-red-500">This field is required</span>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="monthlyPayment">Monthly Payment (QAR)</Label>
-              <Input
-                id="monthlyPayment"
-                type="number"
-                {...register("monthlyPayment", { required: true })}
-              />
-              {errors.monthlyPayment && (
-                <span className="text-sm text-red-500">This field is required</span>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="agreementDuration">Duration (months)</Label>
-              <Input
-                id="agreementDuration"
-                type="number"
-                {...register("agreementDuration", { required: true })}
-              />
-              {errors.agreementDuration && (
-                <span className="text-sm text-red-500">This field is required</span>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="interestRate">Interest Rate (%)</Label>
-              <Input
-                id="interestRate"
-                type="number"
-                step="0.01"
-                {...register("interestRate", { required: true })}
-              />
-              {errors.interestRate && (
-                <span className="text-sm text-red-500">This field is required</span>
-              )}
-            </div>
-          </>
-        )}
-
-        <div>
-          <Label htmlFor="notes">Notes</Label>
+        <div className="space-y-2">
+          <Label htmlFor="rentAmount">Rent Amount</Label>
           <Input
-            id="notes"
-            type="text"
-            {...register("notes")}
+            type="number"
+            step="0.01"
+            {...register("rentAmount", {
+              required: "Rent amount is required",
+              min: { value: 0, message: "Rent amount must be positive" }
+            })}
+            placeholder="Enter rent amount"
           />
+          {errors.rentAmount && (
+            <span className="text-sm text-red-500">{errors.rentAmount.message}</span>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="downPayment">Down Payment</Label>
+          <Input
+            type="number"
+            step="0.01"
+            {...register("downPayment")}
+            placeholder="Enter down payment amount"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="initialMileage">Initial Mileage</Label>
+          <Input
+            type="number"
+            {...register("initialMileage", { required: "Initial mileage is required" })}
+            placeholder="Enter initial mileage"
+          />
+          {errors.initialMileage && (
+            <span className="text-sm text-red-500">{errors.initialMileage.message}</span>
+          )}
         </div>
       </div>
     </div>

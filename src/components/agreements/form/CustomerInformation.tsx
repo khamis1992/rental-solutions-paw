@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormRegister, FieldErrors, UseFormSetValue } from "react-hook-form";
-import { AgreementFormData } from "../AgreementForm";
+import { AgreementFormData } from "../hooks/useAgreementForm";
 import { CustomerSelect } from "./CustomerSelect";
 import { CustomerDocuments } from "../CustomerDocuments";
 import { useQuery } from "@tanstack/react-query";

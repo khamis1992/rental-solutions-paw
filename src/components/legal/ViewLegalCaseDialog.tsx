@@ -1,86 +1,150 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { LegalCaseStatus } from "@/types/legal";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { LegalCase, LegalCaseStatus } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
-  caseId: string;
+  caseId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const ViewLegalCaseDialog = ({ caseId, open, onOpenChange }: ViewLegalCaseDialogProps) => {
-  const [legalCase, setLegalCase] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export function ViewLegalCaseDialog({
+  caseId,
+  open,
+  onOpenChange,
+}: ViewLegalCaseDialogProps) {
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchLegalCase = async () => {
-      setLoading(true);
+  const { data: legalCase } = useQuery({
+    queryKey: ["legal-case", caseId],
+    queryFn: async () => {
+      if (!caseId) return null;
+
       const { data, error } = await supabase
-        .from('legal_cases')
-        .select('*')
-        .eq('id', caseId)
+        .from("legal_cases")
+        .select(`
+          *,
+          customer:profiles!legal_cases_customer_id_fkey(full_name),
+          assigned_to_user:profiles!legal_cases_assigned_to_fkey(full_name)
+        `)
+        .eq("id", caseId)
         .single();
 
-      if (error) {
-        console.error('Error fetching legal case:', error);
-      } else {
-        setLegalCase(data);
-      }
-      setLoading(false);
-    };
+      if (error) throw error;
+      return data as LegalCase;
+    },
+    enabled: !!caseId,
+  });
 
-    if (open && caseId) {
-      fetchLegalCase();
-    }
-  }, [caseId, open]);
+  const updateStatus = async (newStatus: LegalCaseStatus) => {
+    try {
+      const { error } = await supabase
+        .from("legal_cases")
+        .update({ status: newStatus })
+        .eq("id", caseId);
 
-  const getStatusColor = (status: LegalCaseStatus) => {
-    switch (status) {
-      case 'pending_reminder':
-        return 'bg-yellow-500';
-      case 'in_legal_process':
-        return 'bg-blue-500';
-      case 'resolved':
-        return 'bg-green-500';
-      case 'escalated':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-500';
+      if (error) throw error;
+
+      toast.success("Case status updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["legal-cases"] });
+      queryClient.invalidateQueries({ queryKey: ["legal-case", caseId] });
+    } catch (error) {
+      console.error("Error updating case status:", error);
+      toast.error("Failed to update case status");
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (!legalCase) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">Case ID: {legalCase?.id}</h3>
-            <p className="text-sm text-muted-foreground">Description: {legalCase?.description}</p>
-            {legalCase?.status && (
-              <Badge className={`text-white ${getStatusColor(legalCase.status as LegalCaseStatus)}`}>
-                {legalCase.status}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-sm">Customer</h4>
+              <p>{legalCase.customer.full_name}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-sm">Case Type</h4>
+              <p>{legalCase.case_type}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-sm">Amount Owed</h4>
+              <p>${legalCase.amount_owed.toFixed(2)}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-sm">Created Date</h4>
+              <p>{format(new Date(legalCase.created_at), 'MMM d, yyyy')}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-sm">Status</h4>
+              <Badge variant={
+                legalCase.status === 'resolved' ? 'default' :
+                legalCase.status === 'in_legal_process' ? 'destructive' :
+                'secondary'
+              }>
+                {legalCase.status.replace('_', ' ')}
               </Badge>
-            )}
+            </div>
+            <div>
+              <h4 className="font-medium text-sm">Assigned To</h4>
+              <p>{legalCase.assigned_to_user?.full_name || 'Unassigned'}</p>
+            </div>
           </div>
+
           <div>
-            <h4 className="font-medium">Amount Owed: ${legalCase?.amount_owed}</h4>
-            <p>Priority: {legalCase?.priority}</p>
-            <p>Assigned To: {legalCase?.assigned_to || 'Unassigned'}</p>
-            <p>Created At: {legalCase?.created_at && new Date(legalCase.created_at).toLocaleString()}</p>
-            <p>Updated At: {legalCase?.updated_at && new Date(legalCase.updated_at).toLocaleString()}</p>
+            <h4 className="font-medium text-sm mb-2">Description</h4>
+            <p className="text-sm">{legalCase.description}</p>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-sm mb-2">Update Status</h4>
+            <div className="flex gap-4">
+              <Select
+                onValueChange={updateStatus}
+                defaultValue={legalCase.status}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
+                  <SelectItem value="in_legal_process">In Legal Process</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

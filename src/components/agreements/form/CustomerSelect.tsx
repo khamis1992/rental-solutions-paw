@@ -19,7 +19,6 @@ import { Label } from "@/components/ui/label";
 import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialog";
 import { useCustomerSearch } from "./hooks/useCustomerSearch";
 import { CustomerSelectProps } from "./types/customerSelect.types";
-import { toast } from "sonner";
 
 export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectProps) => {
   const [open, setOpen] = useState(false);
@@ -41,21 +40,13 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
   } = useCustomerSearch(searchQuery);
 
   const handleSelect = (customer: { id: string; full_name: string }) => {
-    try {
-      setSelectedCustomer(customer);
-      if (register) {
-        // Directly set the value instead of using onChange
-        register('customerId', { value: customer.id });
-      }
-      if (onCustomerSelect) {
-        onCustomerSelect(customer.id);
-      }
-      setOpen(false);
-      toast.success("Customer selected successfully");
-    } catch (error) {
-      console.error("Error selecting customer:", error);
-      toast.error("Failed to select customer");
+    console.log("Selected customer:", customer);
+    setSelectedCustomer(customer);
+    register("customerId").onChange({ target: { value: customer.id } });
+    if (onCustomerSelect) {
+      onCustomerSelect(customer.id);
     }
+    setOpen(false);
   };
 
   const handleCreateNewCustomer = () => {
@@ -76,7 +67,7 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="customerId">Customer <span className="text-red-500">*</span></Label>
+        <Label htmlFor="customerId">Customer</Label>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -94,8 +85,10 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
               <CommandInput 
                 placeholder="Search customers..." 
                 value={searchQuery}
-                onValueChange={setSearchQuery}
-                className="h-9"
+                onValueChange={(value) => {
+                  console.log("Search value changed:", value);
+                  setSearchQuery(value);
+                }}
               />
               <CommandList className="max-h-[300px] overflow-y-auto" onScroll={handleScroll}>
                 <CommandEmpty>

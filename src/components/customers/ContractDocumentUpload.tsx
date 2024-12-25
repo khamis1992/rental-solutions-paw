@@ -29,15 +29,18 @@ export const ContractDocumentUpload = ({
       return;
     }
 
-    // Validate file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
-      toast.error('File is too large. Maximum size is 10MB.');
+      toast.error('File is too large. Maximum size is 5MB.');
       return;
     }
 
     setIsUploading(true);
     try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
       // Check if bucket exists before uploading
       const { data: buckets } = await supabase
         .storage
@@ -53,10 +56,7 @@ export const ContractDocumentUpload = ({
         return;
       }
 
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from("customer_documents")
         .upload(filePath, file, {
           cacheControl: "3600",

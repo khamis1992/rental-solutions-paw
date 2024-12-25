@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { AgreementFormData } from "../AgreementForm";
+import { AgreementFormData } from "../hooks/useAgreementForm";
 import { AgreementTypeSelect } from "./AgreementTypeSelect";
 
 interface AgreementBasicInfoProps {

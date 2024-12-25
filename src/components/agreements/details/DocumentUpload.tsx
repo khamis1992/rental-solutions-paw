@@ -4,9 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, FileText, Download } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { DocumentViewer } from "@/components/shared/DocumentViewer";
+import { Loader2 } from "lucide-react";
 
 interface DocumentUploadProps {
   agreementId: string;
@@ -14,21 +12,6 @@ interface DocumentUploadProps {
 
 export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
   const [uploading, setUploading] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: documents, isLoading } = useQuery({
-    queryKey: ['agreement-documents', agreementId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('agreement_documents')
-        .select('*')
-        .eq('lease_id', agreementId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -76,9 +59,6 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
 
       if (dbError) throw dbError;
 
-      // Invalidate and refetch documents
-      await queryClient.invalidateQueries({ queryKey: ['agreement-documents', agreementId] });
-
       toast.success('Document uploaded successfully');
       event.target.value = '';
     } catch (error: any) {
@@ -109,31 +89,6 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
         <p className="text-sm text-muted-foreground mt-1">
           Supported formats: PDF, JPEG, PNG (max 5MB)
         </p>
-      </div>
-
-      {/* Display uploaded documents */}
-      <div className="space-y-2">
-        {isLoading ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading documents...</span>
-          </div>
-        ) : documents && documents.length > 0 ? (
-          <div className="grid gap-4">
-            {documents.map((doc) => (
-              <DocumentViewer
-                key={doc.id}
-                documentUrl={doc.document_url}
-                documentName={doc.document_url.split('/').pop()}
-                bucket="agreement_documents"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-sm text-muted-foreground">
-            No documents uploaded yet
-          </div>
-        )}
       </div>
     </div>
   );
