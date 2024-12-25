@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, Upload, AlertTriangle, CheckCircle, FileText } from "lucide-react";
 import { analyzeCsvContent, generateErrorReport } from "./utils/csvAnalyzer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ImportAnalysisCard } from "./components/ImportAnalysisCard";
+import { ImportActions } from "./components/ImportActions";
+import { ImportErrorReport } from "./components/ImportErrorReport";
 
 const REQUIRED_HEADERS = [
   "serial_number",
@@ -23,25 +26,6 @@ export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const { toast } = useToast();
-
-  const downloadTemplate = () => {
-    const headers = REQUIRED_HEADERS.join(",");
-    const sampleData = [
-      "A123,V456,2024-03-20,ABC123,Dubai Marina,Speeding,500,2",
-      "B234,V789,2024-03-21,XYZ789,JBR,Parking,200,1"
-    ].join("\n");
-
-    const csvContent = `${headers}\n${sampleData}`;
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "traffic_fines_template.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -67,16 +51,16 @@ export const TrafficFineImport = () => {
       
       console.log('Analysis complete:', analysis);
 
-      if (!analysis.isValid) {
+      if (!analysis.isValid && analysis.validRows === 0) {
         toast({
           title: "Validation Failed",
-          description: "Please review the analysis report below",
+          description: "No valid records found to import. Please review the analysis report.",
           variant: "destructive",
         });
         return;
       }
 
-      // Proceed with upload if file is valid
+      // Proceed with upload if there are valid rows
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("imports")
@@ -86,7 +70,11 @@ export const TrafficFineImport = () => {
 
       const { data: processingData, error: processingError } = await supabase.functions
         .invoke("process-traffic-fine-import", {
-          body: { fileName }
+          body: { 
+            fileName,
+            repairedRows: analysis.repairedRows,
+            validRows: analysis.validRows
+          }
         });
 
       if (processingError) {
@@ -132,100 +120,20 @@ export const TrafficFineImport = () => {
             violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Button disabled={isUploading} asChild>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                />
-                <div className="flex items-center gap-2">
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  {isUploading ? "Importing..." : "Import CSV"}
-                </div>
-              </label>
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={downloadTemplate}
-              disabled={isUploading}
-            >
-              Download Template
-            </Button>
-          </div>
-
-          {isUploading && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Processing file...
-            </div>
-          )}
+        <CardContent>
+          <ImportActions 
+            onFileUpload={handleFileUpload}
+            isUploading={isUploading}
+            requiredHeaders={REQUIRED_HEADERS}
+          />
         </CardContent>
       </Card>
 
       {analysisResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {analysisResult.isValid ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              )}
-              CSV Analysis Report
-            </CardTitle>
-            <CardDescription>
-              {analysisResult.isValid
-                ? "File structure is valid and ready for import"
-                : "Issues were found in the file structure"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm font-medium">Total Rows</div>
-                  <div className="mt-1 text-2xl font-bold">{analysisResult.totalRows}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm font-medium">Valid Rows</div>
-                  <div className="mt-1 text-2xl font-bold text-green-600">
-                    {analysisResult.validRows}
-                  </div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm font-medium">Error Rows</div>
-                  <div className="mt-1 text-2xl font-bold text-red-600">
-                    {analysisResult.errorRows}
-                  </div>
-                </div>
-              </div>
-
-              {analysisResult.errors.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Validation Errors</AlertTitle>
-                  <AlertDescription>
-                    <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                      <pre className="text-sm">
-                        {generateErrorReport(analysisResult)}
-                      </pre>
-                    </ScrollArea>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <>
+          <ImportAnalysisCard analysis={analysisResult} />
+          <ImportErrorReport analysis={analysisResult} />
+        </>
       )}
     </div>
   );

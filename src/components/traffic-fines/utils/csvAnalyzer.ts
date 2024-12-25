@@ -1,4 +1,5 @@
 import { toast } from "@/hooks/use-toast";
+import { repairDate, repairNumeric, repairString, ensureColumnCount } from './dataRepair';
 
 interface CsvAnalysisResult {
   isValid: boolean;
@@ -10,12 +11,18 @@ interface CsvAnalysisResult {
     type: string;
     details: string;
     data?: any;
+    repairs?: string[];
   }>;
   patterns: {
     commonErrors: Record<string, number>;
     problematicColumns: string[];
     dataTypeIssues: Record<string, number>;
   };
+  repairedRows: Array<{
+    rowNumber: number;
+    repairs: string[];
+    finalData: string[];
+  }>;
 }
 
 export const analyzeCsvContent = (content: string, expectedHeaders: string[]): CsvAnalysisResult => {
@@ -32,6 +39,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       problematicColumns: [],
       dataTypeIssues: {},
     },
+    repairedRows: []
   };
 
   try {
@@ -46,7 +54,6 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
     const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
     
     if (missingHeaders.length > 0) {
-      result.isValid = false;
       result.errors.push({
         row: 0,
         type: 'header_mismatch',
@@ -62,35 +69,39 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       console.log(`Processing row ${rowNumber}:`, line);
 
       try {
-        const values = line.split(',').map(v => v.trim());
+        let values = line.split(',').map(v => v.trim());
+        let repairs: string[] = [];
 
-        // Check for correct number of columns
-        if (values.length !== headers.length) {
-          result.errorRows++;
-          result.errors.push({
-            row: rowNumber,
-            type: 'column_count_mismatch',
-            details: `Expected ${headers.length} columns but found ${values.length}`,
-            data: line,
-          });
-          incrementErrorPattern(result, 'column_count_mismatch');
-          continue;
-        }
+        // Ensure correct column count
+        const columnResult = ensureColumnCount(values, headers.length);
+        values = columnResult.row;
+        repairs = columnResult.repairs;
 
-        // Validate each field
+        // Validate and repair each field
         let rowHasError = false;
         headers.forEach((header, index) => {
           const value = values[index];
-          const error = validateField(header, value, rowNumber);
-          if (error) {
+          const repairResult = repairField(header, value, rowNumber);
+          
+          if (repairResult.error) {
             rowHasError = true;
-            result.errors.push(error);
-            incrementErrorPattern(result, error.type);
-            if (!result.patterns.problematicColumns.includes(header)) {
-              result.patterns.problematicColumns.push(header);
-            }
+            result.errors.push(repairResult.error);
+            incrementErrorPattern(result, repairResult.error.type);
+          }
+          
+          if (repairResult.wasRepaired) {
+            values[index] = repairResult.value;
+            repairs.push(`Column '${header}': ${repairResult.repairDetails}`);
           }
         });
+
+        if (repairs.length > 0) {
+          result.repairedRows.push({
+            rowNumber,
+            repairs,
+            finalData: values
+          });
+        }
 
         if (!rowHasError) {
           result.validRows++;
@@ -112,7 +123,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
     }
 
     // Final validation
-    result.isValid = result.errorRows === 0;
+    result.isValid = result.validRows > 0;
     console.log('CSV analysis completed:', result);
 
   } catch (error) {
@@ -129,63 +140,66 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
   return result;
 };
 
-const validateField = (header: string, value: string, rowNumber: number) => {
-  console.log(`Validating field ${header} with value "${value}" in row ${rowNumber}`);
-  
-  if (!value) {
-    return {
-      row: rowNumber,
-      type: 'missing_value',
-      details: `Missing value for ${header}`,
-    };
-  }
+const repairField = (header: string, value: string, rowNumber: number): {
+  value: string;
+  wasRepaired: boolean;
+  repairDetails?: string;
+  error?: {
+    row: number;
+    type: string;
+    details: string;
+  };
+} => {
+  let repairResult;
 
   switch (header) {
     case 'violation_date':
-      if (!isValidDate(value)) {
+      repairResult = repairDate(value);
+      if (!repairResult.wasRepaired && !value) {
         return {
-          row: rowNumber,
-          type: 'invalid_date',
-          details: `Invalid date format for ${header}: ${value}`,
+          value,
+          wasRepaired: false,
+          error: {
+            row: rowNumber,
+            type: 'invalid_date',
+            details: `Invalid or missing date: ${value}`
+          }
         };
       }
       break;
     
     case 'fine_amount':
-      if (!isValidNumber(value)) {
+    case 'violation_points':
+      repairResult = repairNumeric(value);
+      if (!repairResult.wasRepaired && !value) {
         return {
-          row: rowNumber,
-          type: 'invalid_number',
-          details: `Invalid number format for ${header}: ${value}`,
+          value,
+          wasRepaired: false,
+          error: {
+            row: rowNumber,
+            type: 'invalid_number',
+            details: `Invalid or missing number: ${value}`
+          }
         };
       }
       break;
     
-    case 'violation_points':
-      if (!isValidInteger(value)) {
+    default:
+      repairResult = repairString(value);
+      if (!repairResult.wasRepaired && !value) {
         return {
-          row: rowNumber,
-          type: 'invalid_integer',
-          details: `Invalid integer format for ${header}: ${value}`,
+          value,
+          wasRepaired: false,
+          error: {
+            row: rowNumber,
+            type: 'missing_value',
+            details: `Missing required value for ${header}`
+          }
         };
       }
-      break;
   }
 
-  return null;
-};
-
-const isValidDate = (value: string): boolean => {
-  const date = new Date(value);
-  return date instanceof Date && !isNaN(date.getTime());
-};
-
-const isValidNumber = (value: string): boolean => {
-  return !isNaN(parseFloat(value));
-};
-
-const isValidInteger = (value: string): boolean => {
-  return !isNaN(parseInt(value)) && Number.isInteger(parseFloat(value));
+  return repairResult;
 };
 
 const incrementErrorPattern = (result: CsvAnalysisResult, errorType: string) => {
@@ -199,9 +213,15 @@ export const generateErrorReport = (analysis: CsvAnalysisResult): string => {
     `- Total Rows: ${analysis.totalRows}`,
     `- Valid Rows: ${analysis.validRows}`,
     `- Error Rows: ${analysis.errorRows}`,
+    `- Repaired Rows: ${analysis.repairedRows.length}`,
     `- Overall Status: ${analysis.isValid ? 'VALID' : 'INVALID'}\n`,
     
-    `## Common Error Patterns`,
+    `## Data Repairs`,
+    analysis.repairedRows.map(repair => 
+      `Row ${repair.rowNumber}:\n${repair.repairs.map(r => `  - ${r}`).join('\n')}`
+    ).join('\n\n'),
+    
+    `\n## Common Error Patterns`,
     Object.entries(analysis.patterns.commonErrors)
       .map(([type, count]) => `- ${type}: ${count} occurrences`)
       .join('\n'),
@@ -237,6 +257,7 @@ const generateRecommendations = (analysis: CsvAnalysisResult): string => {
 
   if (analysis.patterns.commonErrors['invalid_date']) {
     recommendations.push('- Use the format YYYY-MM-DD for all dates');
+    recommendations.push('- Check for any regional date formats that need conversion');
   }
 
   if (analysis.patterns.commonErrors['invalid_number']) {
@@ -247,6 +268,11 @@ const generateRecommendations = (analysis: CsvAnalysisResult): string => {
   if (analysis.patterns.commonErrors['missing_value']) {
     recommendations.push('- Fill in all required fields before import');
     recommendations.push('- Use appropriate placeholder values for optional fields');
+  }
+
+  if (analysis.repairedRows.length > 0) {
+    recommendations.push('- Review repaired data to ensure corrections are appropriate');
+    recommendations.push('- Consider updating source data to prevent future repairs');
   }
 
   return recommendations.join('\n');
