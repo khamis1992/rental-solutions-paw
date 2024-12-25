@@ -56,15 +56,19 @@ export const TrafficFineImport = () => {
       // Upload file to Supabase Storage
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
-        .from("imports")
+        .from('imports')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
+      // Get the authenticated user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Process the uploaded file
       const { data: processingData, error: processingError } = await supabase.functions
         .invoke("process-traffic-fine-import", {
-          body: { fileName }
+          body: { fileName },
+          headers: { 'x-user-id': user?.id || '' }
         });
 
       if (processingError) {
@@ -74,7 +78,7 @@ export const TrafficFineImport = () => {
 
       toast({
         title: "Success",
-        description: "File uploaded successfully",
+        description: "File uploaded and processed successfully",
       });
 
     } catch (error: any) {

@@ -7,12 +7,14 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { fileName } = await req.json()
+    console.log('Processing file:', fileName)
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -30,44 +32,49 @@ serve(async (req) => {
 
     const content = await fileData.text()
     const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-    const headers = lines[0].toLowerCase().split(',')
+    
+    // Skip header row
     const rows = lines.slice(1)
+    console.log(`Processing ${rows.length} rows`)
 
-    // Process each row without validation
     for (const row of rows) {
-      const values = row.split(',')
-      const fineData = {
-        serial_number: values[0] || null,
-        violation_number: values[1] || null,
-        violation_date: values[2] || null,
-        license_plate: values[3] || null,
-        fine_location: values[4] || null,
-        violation_charge: values[5] || null,
-        fine_amount: parseFloat(values[6]) || 0,
-        violation_points: parseInt(values[7]) || 0,
-        payment_status: 'pending',
-        assignment_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
+      try {
+        const values = row.split(',')
+        const fineData = {
+          serial_number: values[0] || null,
+          violation_number: values[1] || null,
+          violation_date: values[2] || null,
+          license_plate: values[3] || null,
+          fine_location: values[4] || null,
+          violation_charge: values[5] || null,
+          fine_amount: parseFloat(values[6]) || 0,
+          violation_points: parseInt(values[7]) || 0,
+          payment_status: 'pending',
+          assignment_status: 'pending',
+          created_at: new Date().toISOString()
+        }
 
-      const { error: insertError } = await supabase
-        .from('traffic_fines')
-        .insert([fineData])
+        const { error: insertError } = await supabase
+          .from('traffic_fines')
+          .insert([fineData])
 
-      if (insertError) {
-        console.error('Insert error:', insertError)
+        if (insertError) {
+          console.error('Insert error for row:', row, insertError)
+        }
+      } catch (rowError) {
+        console.error('Error processing row:', row, rowError)
+        // Continue with next row even if this one fails
       }
     }
 
-    // Log the import
+    // Log import
     const { error: logError } = await supabase
       .from('traffic_fine_imports')
       .insert([{
         file_name: fileName,
         processed_at: new Date().toISOString(),
         total_fines: rows.length,
-        unassigned_fines: rows.length
+        processed_by: req.headers.get('x-user-id')
       }])
 
     if (logError) {
@@ -76,7 +83,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, processed: rows.length }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        } 
+      }
     )
 
   } catch (error) {
@@ -88,7 +100,10 @@ serve(async (req) => {
       }),
       { 
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        } 
       }
     )
   }
