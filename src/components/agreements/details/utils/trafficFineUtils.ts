@@ -33,14 +33,19 @@ export const fetchTrafficFines = async (agreementId: string): Promise<TrafficFin
 };
 
 export const deleteAllTrafficFines = async (agreementId: string) => {
-  console.log('Deleting traffic fines for lease:', agreementId);
-  const { error } = await supabase
+  console.log('Attempting to delete traffic fines for lease:', agreementId);
+  
+  const { data, error } = await supabase
     .from('traffic_fines')
     .delete()
-    .eq('lease_id', agreementId);
+    .eq('lease_id', agreementId)
+    .select();
 
   if (error) {
     console.error('Error deleting traffic fines:', error);
     throw error;
   }
+
+  console.log('Successfully deleted traffic fines:', data);
+  return data;
 };
