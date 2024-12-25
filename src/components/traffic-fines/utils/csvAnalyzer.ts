@@ -43,14 +43,14 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       let line = lines[i];
       const nextLine = lines[i + 1];
 
-      // Apply repairs
-      const quoteRepair = repairQuotes(line);
-      const delimiterRepair = repairDelimiters(quoteRepair.value);
-      
-      let repairs = [...quoteRepair.repairs, ...delimiterRepair.repairs];
-      line = delimiterRepair.value;
-
       try {
+        // Apply repairs
+        const quoteRepair = repairQuotes(line);
+        const delimiterRepair = repairDelimiters(quoteRepair.value);
+        
+        let repairs = [...quoteRepair.repairs, ...delimiterRepair.repairs];
+        line = delimiterRepair.value;
+
         const { values, repairs: parseRepairs } = parseCSVLine(line);
         const { repairedRow, skipNextRow, repairs: reconstructRepairs } = 
           reconstructMalformedRow(values, nextLine, headers.length);
@@ -90,8 +90,8 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           result.repairedRows.push({
             rowNumber,
             repairs: rowRepairs,
-            originalData: line,
-            finalData: repairedData
+            finalData: repairedData,
+            raw: line // Store the original raw line for reference
           });
         }
 

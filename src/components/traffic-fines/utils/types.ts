@@ -19,6 +19,7 @@ export interface CsvAnalysisResult {
     rowNumber: number;
     repairs: string[];
     finalData: string[];
+    raw: string; // Added to store original raw line
   }>;
 }
 

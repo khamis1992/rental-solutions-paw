@@ -19,6 +19,12 @@ export const repairQuotes = (line: string): { value: string; repairs: string[] }
     }
   });
   
+  // Handle single quotes around values
+  repairedLine = repairedLine.replace(/'([^']+)'/g, (match, p1) => {
+    repairs.push('Converted single quotes to double quotes');
+    return `"${p1}"`;
+  });
+  
   return { value: repairedLine, repairs };
 };
 
@@ -43,28 +49,6 @@ export const repairDelimiters = (line: string): { value: string; repairs: string
   }
   
   return { value: repairedLine, repairs };
-};
-
-export const ensureColumnCount = (
-  row: string[],
-  expectedCount: number
-): { row: string[]; repairs: string[] } => {
-  const repairs: string[] = [];
-  let repairedRow = [...row];
-
-  // Add empty values for missing columns
-  while (repairedRow.length < expectedCount) {
-    repairs.push(`Added empty column at position ${repairedRow.length + 1}`);
-    repairedRow.push('');
-  }
-
-  // Remove extra columns
-  if (repairedRow.length > expectedCount) {
-    repairs.push(`Removed ${repairedRow.length - expectedCount} extra columns`);
-    repairedRow = repairedRow.slice(0, expectedCount);
-  }
-
-  return { row: repairedRow, repairs };
 };
 
 export const reconstructMalformedRow = (
@@ -97,11 +81,19 @@ export const reconstructMalformedRow = (
   }
 
   // Ensure we have exactly the expected number of columns
-  const { row: finalRow, repairs: columnRepairs } = ensureColumnCount(repairedRow, expectedColumns);
-  repairs.push(...columnRepairs);
+  while (repairedRow.length < expectedColumns) {
+    repairs.push(`Added empty placeholder for column ${repairedRow.length + 1}`);
+    repairedRow.push('');
+  }
+
+  // Remove extra columns if we have too many
+  if (repairedRow.length > expectedColumns) {
+    repairs.push(`Removed ${repairedRow.length - expectedColumns} extra columns`);
+    repairedRow = repairedRow.slice(0, expectedColumns);
+  }
 
   return {
-    repairedRow: finalRow,
+    repairedRow,
     skipNextRow,
     repairs
   };
