@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, ArrowRight } from "lucide-react";
@@ -28,7 +27,7 @@ export const NonCompliantCustomers = () => {
       if (error) throw error;
       return leases.filter(lease => 
         lease.penalties.some(penalty => penalty.status === 'pending') ||
-        lease.payments.some(payment => payment.status === 'overdue')
+        lease.payments.some(payment => payment.status === 'failed')
       );
     },
   });
@@ -75,10 +74,10 @@ export const NonCompliantCustomers = () => {
                         Pending Penalties
                       </Badge>
                     )}
-                    {lease.payments.some(payment => payment.status === 'overdue') && (
+                    {lease.payments.some(payment => payment.status === 'failed') && (
                       <Badge variant="destructive" className="gap-1">
                         <AlertTriangle className="h-3 w-3" />
-                        Overdue Payments
+                        Failed Payments
                       </Badge>
                     )}
                   </div>

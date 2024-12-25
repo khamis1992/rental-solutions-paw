@@ -13,7 +13,6 @@ import { PaymentForm } from "./details/PaymentForm";
 import { InvoiceList } from "./details/InvoiceList";
 import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
-import { TrafficFines } from "./details/TrafficFines";
 import { RentManagement } from "./details/RentManagement";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { useEffect } from "react";
@@ -191,7 +190,6 @@ export const AgreementDetailsDialog = ({
                 <TabsTrigger value="invoices">Invoices</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="damages">Damages</TabsTrigger>
-                <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
                 {agreement.status === 'active' && (
                   <TabsTrigger value="rent">Rent Management</TabsTrigger>
                 )}
@@ -207,9 +205,6 @@ export const AgreementDetailsDialog = ({
               </TabsContent>
               <TabsContent value="damages">
                 <DamageAssessment agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="fines">
-                <TrafficFines agreementId={agreementId} />
               </TabsContent>
               {agreement.status === 'active' && (
                 <TabsContent value="rent">

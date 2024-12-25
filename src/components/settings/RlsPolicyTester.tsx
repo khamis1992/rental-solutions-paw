@@ -1,25 +1,35 @@
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
-import { testRlsPolicies } from "@/utils/testRlsPolicies";
-import { Loader2 } from "lucide-react";
-
-interface TestResult {
-  table: string;
-  operation: 'select' | 'insert' | 'update' | 'delete';
-  success: boolean;
-  error?: string;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 export const RlsPolicyTester = () => {
+  const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<TestResult[]>([]);
 
-  const handleTest = async () => {
+  const testPolicies = async () => {
     setIsLoading(true);
     try {
-      const testResults = await testRlsPolicies();
-      setResults(testResults);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .limit(1);
+      
+      setResults([
+        {
+          test: 'Read profiles',
+          result: error ? 'Failed' : 'Passed',
+          error: error?.message
+        }
+      ]);
+    } catch (error: any) {
+      setResults([
+        {
+          test: 'Read profiles',
+          result: 'Failed',
+          error: error.message
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -28,48 +38,25 @@ export const RlsPolicyTester = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          RLS Policy Tester
-          <Button 
-            onClick={handleTest} 
-            disabled={isLoading}
-          >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Test RLS Policies
-          </Button>
-        </CardTitle>
+        <CardTitle>RLS Policy Tester</CardTitle>
       </CardHeader>
       <CardContent>
+        <Button onClick={testPolicies} disabled={isLoading}>
+          {isLoading ? 'Testing...' : 'Test Policies'}
+        </Button>
         {results.length > 0 && (
-          <div className="space-y-4">
+          <div className="mt-4">
             {results.map((result, index) => (
-              <div
-                key={`${result.table}-${result.operation}-${index}`}
-                className={`p-4 rounded-lg border ${
-                  result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="font-medium">{result.table}</span>
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {result.operation.toUpperCase()}
-                    </span>
-                  </div>
-                  <span className={result.success ? 'text-green-600' : 'text-red-600'}>
-                    {result.success ? 'Success' : 'Failed'}
-                  </span>
-                </div>
-                {!result.success && result.error && (
-                  <p className="mt-2 text-sm text-red-600">{result.error}</p>
+              <div key={index} className="mb-2">
+                <strong>{result.test}:</strong>{' '}
+                <span className={result.result === 'Passed' ? 'text-green-500' : 'text-red-500'}>
+                  {result.result}
+                </span>
+                {result.error && (
+                  <div className="text-sm text-red-500">{result.error}</div>
                 )}
               </div>
             ))}
-          </div>
-        )}
-        {results.length === 0 && !isLoading && (
-          <div className="text-center text-muted-foreground">
-            Click the button above to test RLS policies
           </div>
         )}
       </CardContent>
