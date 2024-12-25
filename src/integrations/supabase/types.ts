@@ -3001,6 +3001,7 @@ export type Database = {
           payment_status: string | null
           serial_number: string | null
           updated_at: string | null
+          vehicle_id: string | null
           violation_charge: string | null
           violation_date: string | null
           violation_number: string | null
@@ -3018,6 +3019,7 @@ export type Database = {
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
+          vehicle_id?: string | null
           violation_charge?: string | null
           violation_date?: string | null
           violation_number?: string | null
@@ -3035,6 +3037,7 @@ export type Database = {
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
+          vehicle_id?: string | null
           violation_charge?: string | null
           violation_date?: string | null
           violation_number?: string | null
@@ -3046,6 +3049,13 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "traffic_fines_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]

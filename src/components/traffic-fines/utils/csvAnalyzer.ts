@@ -1,5 +1,5 @@
-import { CsvAnalysisResult } from './types';
-import { incrementErrorPattern, generateErrorReport } from './errorPatterns';
+import { CsvAnalysisResult, RepairResult } from './types';
+import { incrementErrorPattern } from './errorPatterns';
 import { repairQuotes, repairDelimiters } from './repairUtils';
 import { parseCSVLine, validateHeaders } from './csvParser';
 import { ensureColumnCount, repairDate, repairNumeric } from './dataRepair';
@@ -63,7 +63,12 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           
           if (repairResult.error) {
             rowHasError = true;
-            result.errors.push(repairResult.error);
+            result.errors.push({
+              row: rowNumber,
+              type: repairResult.error.type,
+              details: repairResult.error.details,
+              data: value
+            });
             incrementErrorPattern(result.patterns.commonErrors, repairResult.error.type);
           }
           
@@ -89,7 +94,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           result.errorRows++;
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error processing row ${rowNumber}:`, error);
         result.errorRows++;
         result.errors.push({
@@ -104,7 +109,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
 
     result.isValid = result.validRows > 0;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Fatal error during CSV analysis:', error);
     result.isValid = false;
     result.errors.push({
@@ -118,7 +123,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
   return result;
 };
 
-const repairField = (header: string, value: string, rowNumber: number) => {
+const repairField = (header: string, value: string, rowNumber: number): RepairResult => {
   switch (header) {
     case 'violation_date':
       return repairDate(value);
@@ -133,36 +138,4 @@ const repairField = (header: string, value: string, rowNumber: number) => {
   }
 };
 
-export const generateErrorReport = (analysis: CsvAnalysisResult): string => {
-  const sections = [
-    `# Traffic Fines CSV Import Analysis Report\n`,
-    `## Summary`,
-    `- Total Rows: ${analysis.totalRows}`,
-    `- Valid Rows: ${analysis.validRows}`,
-    `- Error Rows: ${analysis.errorRows}`,
-    `- Repaired Rows: ${analysis.repairedRows.length}`,
-    `- Overall Status: ${analysis.isValid ? 'VALID' : 'INVALID'}\n`,
-    
-    `## Data Repairs`,
-    analysis.repairedRows.map(repair => 
-      `Row ${repair.rowNumber}:\n${repair.repairs.map(r => `  - ${r}`).join('\n')}`
-    ).join('\n\n'),
-    
-    `\n## Common Error Patterns`,
-    Object.entries(analysis.patterns.commonErrors)
-      .map(([type, count]) => `- ${type}: ${count} occurrences`)
-      .join('\n'),
-    
-    `\n## Problematic Columns`,
-    analysis.patterns.problematicColumns
-      .map(column => `- ${column}`)
-      .join('\n'),
-    
-    `\n## Detailed Errors`,
-    analysis.errors
-      .map(error => `Row ${error.row}: ${error.type} - ${error.details}`)
-      .join('\n')
-  ].join('\n');
-
-  return sections;
-};
+export { generateErrorReport } from './errorPatterns';

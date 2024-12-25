@@ -11,7 +11,7 @@ export interface CsvAnalysisResult {
     repairs?: string[];
   }>;
   patterns: {
-    commonErrors: Record<string, number>;
+    commonErrors: Record<string, ErrorPattern>;
     problematicColumns: string[];
     dataTypeIssues: Record<string, number>;
   };
@@ -26,4 +26,14 @@ export interface ErrorPattern {
   type: string;
   count: number;
   examples: string[];
+}
+
+export interface RepairResult {
+  value: string;
+  wasRepaired: boolean;
+  repairDetails?: string;
+  error?: {
+    type: string;
+    details: string;
+  };
 }

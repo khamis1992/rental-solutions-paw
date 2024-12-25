@@ -25,12 +25,14 @@ export const TrafficFinesList = () => {
         .select(`
           *,
           lease:leases(
+            id,
             customer:profiles(
               id,
               full_name
             )
           ),
           vehicle:vehicles(
+            id,
             make,
             model,
             license_plate
