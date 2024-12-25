@@ -15,11 +15,15 @@ export const incrementErrorPattern = (
   return patterns;
 };
 
-export const generateErrorReport = (patterns: Record<string, ErrorPattern>): string => {
-  return Object.values(patterns)
+export const generateErrorReport = (analysis: any): string => {
+  if (!analysis || !analysis.patterns || !analysis.patterns.commonErrors) {
+    return 'No errors to report';
+  }
+
+  return Object.values(analysis.patterns.commonErrors)
     .map(pattern => 
       `${pattern.type}: ${pattern.count} occurrences\n` +
-      `Examples:\n${pattern.examples.map(ex => `  - ${ex}`).join('\n')}`
+      `Examples:\n${(pattern.examples || []).map(ex => `  - ${ex}`).join('\n')}`
     )
     .join('\n\n');
 };

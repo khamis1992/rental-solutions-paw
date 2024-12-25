@@ -8,7 +8,7 @@ interface ImportErrorReportProps {
 }
 
 export const ImportErrorReport = ({ analysis }: ImportErrorReportProps) => {
-  if (!analysis.errors.length) return null;
+  if (!analysis || !analysis.errors || !analysis.errors.length) return null;
 
   return (
     <Alert variant="destructive">
