@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,153 +9,68 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface DeleteVehicleDialogProps {
   vehicleId: string;
-  vehicleName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const DeleteVehicleDialog = ({
+export function DeleteVehicleDialog({
   vehicleId,
-  vehicleName,
   open,
   onOpenChange,
-}: DeleteVehicleDialogProps) => {
+}: DeleteVehicleDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
-  const deleteVehicle = useMutation({
-    mutationFn: async () => {
-      console.log("Starting force deletion process for vehicle:", vehicleId);
-      
-      // 1. Delete vehicle sensor data
-      const { error: sensorError } = await supabase
-        .from('vehicle_sensor_data')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-      
-      if (sensorError) {
-        console.error("Error deleting sensor data:", sensorError);
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+
+      // Check for active leases
+      const { data: activeLeases } = await supabase
+        .from("leases")
+        .select("id")
+        .eq("vehicle_id", vehicleId)
+        .eq("status", "active");
+
+      if (activeLeases && activeLeases.length > 0) {
+        toast.error("Cannot delete vehicle with active leases");
+        return;
       }
 
-      // 2. Delete fleet optimization recommendations
-      const { error: fleetOptError } = await supabase
-        .from('fleet_optimization_recommendations')
+      // Delete related records first
+      await Promise.all([
+        supabase.from("vehicle_documents").delete().eq("vehicle_id", vehicleId),
+        supabase.from("vehicle_inspections").delete().eq("vehicle_id", vehicleId),
+        supabase.from("vehicle_insurance").delete().eq("vehicle_id", vehicleId),
+        supabase.from("vehicle_parts").delete().eq("vehicle_id", vehicleId),
+        supabase.from("maintenance").delete().eq("vehicle_id", vehicleId),
+        supabase.from("damages").delete().eq("vehicle_id", vehicleId),
+      ]);
+
+      // Finally delete the vehicle
+      const { error: deleteError } = await supabase
+        .from("vehicles")
         .delete()
-        .eq('vehicle_id', vehicleId);
+        .eq("id", vehicleId);
 
-      if (fleetOptError) {
-        console.error("Error deleting fleet optimization records:", fleetOptError);
-      }
+      if (deleteError) throw deleteError;
 
-      // 3. Delete maintenance predictions
-      const { error: maintenancePredError } = await supabase
-        .from('maintenance_predictions')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (maintenancePredError) {
-        console.error("Error deleting maintenance predictions:", maintenancePredError);
-      }
-
-      // 4. Delete vehicle inspections
-      const { error: inspectionError } = await supabase
-        .from('vehicle_inspections')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (inspectionError) {
-        console.error("Error deleting inspections:", inspectionError);
-      }
-
-      // 5. Delete maintenance records
-      const { error: maintenanceError } = await supabase
-        .from('maintenance')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (maintenanceError) {
-        console.error("Error deleting maintenance records:", maintenanceError);
-      }
-
-      // 6. Delete traffic fines
-      const { error: finesError } = await supabase
-        .from('traffic_fines')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (finesError) {
-        console.error("Error deleting traffic fines:", finesError);
-      }
-
-      // 7. Delete agreement documents
-      const { error: docsError } = await supabase
-        .from('agreement_documents')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (docsError) {
-        console.error("Error deleting agreement documents:", docsError);
-      }
-
-      // 8. Delete vehicle schedules
-      const { error: scheduleError } = await supabase
-        .from('vehicle_schedules')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (scheduleError) {
-        console.error("Error deleting vehicle schedules:", scheduleError);
-      }
-
-      // 9. Delete optimized routes
-      const { error: routesError } = await supabase
-        .from('optimized_routes')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (routesError) {
-        console.error("Error deleting optimized routes:", routesError);
-      }
-
-      // 10. Delete leases
-      const { error: leaseError } = await supabase
-        .from('leases')
-        .delete()
-        .eq('vehicle_id', vehicleId);
-
-      if (leaseError) {
-        console.error("Error deleting leases:", leaseError);
-      }
-
-      // Finally, delete the vehicle
-      console.log("Attempting to delete vehicle:", vehicleId);
-      const { error: deleteVehicleError } = await supabase
-        .from('vehicles')
-        .delete()
-        .eq('id', vehicleId);
-
-      if (deleteVehicleError) {
-        console.error("Error deleting vehicle:", deleteVehicleError);
-        throw deleteVehicleError;
-      }
-
-      console.log("Vehicle deletion completed successfully");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       toast.success("Vehicle deleted successfully");
       onOpenChange(false);
-    },
-    onError: (error) => {
-      console.error('Error in delete mutation:', error);
-      toast.error("Failed to delete vehicle. Please try again or contact support.");
-    },
-  });
+    } catch (error) {
+      console.error("Error deleting vehicle:", error);
+      toast.error("Failed to delete vehicle");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -162,19 +78,21 @@ export const DeleteVehicleDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete {vehicleName} and all related records. This action cannot be undone.
+            This action cannot be undone. This will permanently delete the vehicle
+            and all associated records.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => deleteVehicle.mutate()}
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            {isDeleting ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+}

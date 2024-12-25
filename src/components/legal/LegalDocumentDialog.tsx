@@ -1,177 +1,151 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
-import { injectPrintStyles } from "@/lib/printStyles";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 interface LegalDocumentDialogProps {
-  customerId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  customerId: string;
 }
 
 export function LegalDocumentDialog({
-  customerId,
   open,
   onOpenChange,
+  customerId,
 }: LegalDocumentDialogProps) {
-  const { data: customerData, isLoading } = useQuery({
-    queryKey: ["legal-document", customerId],
-    queryFn: async () => {
-      if (!customerId) return null;
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [generatedContent, setGeneratedContent] = useState<string>("");
 
-      const { data, error } = await supabase
-        .from("profiles")
+  const { data: customerData } = useQuery({
+    queryKey: ["customer-legal-data", customerId],
+    queryFn: async () => {
+      const { data: leases, error: leasesError } = await supabase
+        .from("leases")
         .select(`
           *,
-          leases (
-            id,
-            payment_schedules (
-              id,
-              due_date,
-              amount,
-              status
-            ),
-            traffic_fines (
-              id,
-              violation_date,
-              fine_amount,
-              fine_type,
-              payment_status
-            ),
-            damages (
-              id,
-              description,
-              repair_cost,
-              reported_date,
-              status
-            )
+          penalties (
+            amount,
+            type,
+            status
           )
         `)
-        .eq("id", customerId)
-        .maybeSingle();
+        .eq("customer_id", customerId);
+
+      if (leasesError) throw leasesError;
+
+      const pendingPenalties = leases
+        .flatMap((lease) => lease.penalties)
+        .filter((penalty) => penalty.status === "pending");
+
+      return {
+        leases,
+        pendingPenalties,
+      };
+    },
+    enabled: !!customerId,
+  });
+
+  const { data: templates } = useQuery({
+    queryKey: ["legal-document-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("legal_document_templates")
+        .select("*")
+        .eq("is_active", true);
 
       if (error) throw error;
       return data;
     },
-    enabled: open && !!customerId,
   });
 
-  const handlePrint = () => {
-    injectPrintStyles();
+  const handleGenerateDocument = async () => {
+    try {
+      const template = templates?.find((t) => t.id === selectedTemplate);
+      if (!template) return;
+
+      let content = template.content;
+
+      // Replace variables in template
+      if (customerData) {
+        const totalPendingAmount = customerData.pendingPenalties.reduce(
+          (sum, penalty) => sum + penalty.amount,
+          0
+        );
+
+        content = content
+          .replace(/\{total_pending_amount\}/g, totalPendingAmount.toString())
+          .replace(
+            /\{pending_penalties_count\}/g,
+            customerData.pendingPenalties.length.toString()
+          );
+      }
+
+      setGeneratedContent(content);
+      toast.success("Document generated successfully");
+    } catch (error) {
+      console.error("Error generating document:", error);
+      toast.error("Failed to generate document");
+    }
   };
-
-  if (isLoading || !customerData) {
-    return null;
-  }
-
-  const overduePayments = customerData.leases?.flatMap(lease => 
-    lease.payment_schedules?.filter(payment => 
-      payment.status === 'pending'
-    ) || []
-  );
-
-  const unpaidFines = customerData.leases?.flatMap(lease =>
-    lease.traffic_fines?.filter(fine =>
-      fine.payment_status === 'pending'
-    ) || []
-  );
-
-  const unresolvedDamages = customerData.leases?.flatMap(lease =>
-    lease.damages?.filter(damage =>
-      damage.status === 'pending'
-    ) || []
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex justify-between items-center">
-            <span>Legal Document - {customerData.full_name}</span>
-            <Button onClick={handlePrint} className="print:hidden">
-              <Printer className="h-4 w-4 mr-2" />
-              Print Document
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Generate Legal Document</DialogTitle>
+          <DialogDescription>
+            Select a template and generate a legal document based on customer data.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 print:p-6">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Customer Information</h3>
-            <p>Name: {customerData.full_name}</p>
-            <p>Address: {customerData.address}</p>
-            <p>Phone: {customerData.phone_number}</p>
+            <Label>Select Template</Label>
+            <select
+              className="w-full p-2 border rounded-md"
+              value={selectedTemplate}
+              onChange={(e) => setSelectedTemplate(e.target.value)}
+            >
+              <option value="">Select a template...</option>
+              {templates?.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {overduePayments && overduePayments.length > 0 && (
+          <Button
+            onClick={handleGenerateDocument}
+            disabled={!selectedTemplate}
+            className="w-full"
+          >
+            Generate Document
+          </Button>
+
+          {generatedContent && (
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Overdue Payments</h3>
-              <ul className="list-disc pl-6 space-y-1">
-                {overduePayments.map(payment => (
-                  <li key={payment.id}>
-                    Due Date: {format(new Date(payment.due_date), "PP")} - Amount: {formatCurrency(payment.amount)}
-                  </li>
-                ))}
-              </ul>
+              <Label>Generated Document</Label>
+              <Textarea
+                value={generatedContent}
+                readOnly
+                className="min-h-[200px]"
+              />
             </div>
           )}
-
-          {unpaidFines && unpaidFines.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Unpaid Traffic Fines</h3>
-              <ul className="list-disc pl-6 space-y-1">
-                {unpaidFines.map(fine => (
-                  <li key={fine.id}>
-                    Date: {format(new Date(fine.violation_date), "PP")} - Type: {fine.fine_type} - Amount: {formatCurrency(fine.fine_amount)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {unresolvedDamages && unresolvedDamages.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Unresolved Vehicle Damages</h3>
-              <ul className="list-disc pl-6 space-y-1">
-                {unresolvedDamages.map(damage => (
-                  <li key={damage.id}>
-                    Reported: {format(new Date(damage.reported_date), "PP")} - {damage.description} - 
-                    Repair Cost: {damage.repair_cost ? formatCurrency(damage.repair_cost) : "Pending Assessment"}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Total Outstanding Amount</h3>
-            <p className="text-xl font-bold">
-              {formatCurrency(
-                (overduePayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0) +
-                (unpaidFines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0) +
-                (unresolvedDamages?.reduce((sum, damage) => sum + (damage.repair_cost || 0), 0) || 0)
-              )}
-            </p>
-          </div>
-
-          <div className="mt-8 pt-8 border-t">
-            <p className="text-sm text-muted-foreground">
-              This document was generated on {format(new Date(), "PPpp")} and represents the current status
-              of outstanding obligations. All amounts are subject to additional late fees and penalties as
-              specified in the rental agreement.
-            </p>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
