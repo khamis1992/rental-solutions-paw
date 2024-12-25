@@ -2,19 +2,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { CustomerSelect } from "../../agreements/form/CustomerSelect";
+import { useTrafficFineAssignment } from "../hooks/useTrafficFineAssignment";
 
 interface TrafficFineTableRowProps {
   fine: any;
-  onAssignCustomer: (fineId: string, customerId: string) => void;
   onMarkAsPaid: (fineId: string) => void;
 }
 
 export const TrafficFineTableRow = ({
   fine,
-  onAssignCustomer,
   onMarkAsPaid,
 }: TrafficFineTableRowProps) => {
+  const { assignFine } = useTrafficFineAssignment();
+  
   const getStatusColor = (status: string): string => {
     const statusColors = {
       completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -46,12 +46,13 @@ export const TrafficFineTableRow = ({
         {fine.lease?.customer ? (
           <span className="font-medium">{fine.lease.customer.full_name}</span>
         ) : (
-          <div className="flex items-center gap-2">
-            <CustomerSelect
-              register={() => {}}
-              onCustomerSelect={(customerId) => onAssignCustomer(fine.id, customerId)}
-            />
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => assignFine(fine.id)}
+          >
+            Auto Assign
+          </Button>
         )}
       </TableCell>
       <TableCell>
