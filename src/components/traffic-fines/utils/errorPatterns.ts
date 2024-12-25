@@ -6,17 +6,20 @@ export interface ErrorPattern {
 
 export const incrementErrorPattern = (
   patterns: Record<string, ErrorPattern>,
-  type: string,
-  example?: string
-) => {
-  if (!patterns[type]) {
-    patterns[type] = { type, count: 0, examples: [] };
+  errorType: string,
+  example: string
+): void => {
+  if (!patterns[errorType]) {
+    patterns[errorType] = {
+      type: errorType,
+      count: 0,
+      examples: []
+    };
   }
-  patterns[type].count++;
-  if (example && patterns[type].examples.length < 3) {
-    patterns[type].examples.push(example);
+  patterns[errorType].count++;
+  if (patterns[errorType].examples.length < 3) {
+    patterns[errorType].examples.push(example);
   }
-  return patterns;
 };
 
 export const generateErrorReport = (analysis: any): string => {
@@ -24,12 +27,18 @@ export const generateErrorReport = (analysis: any): string => {
     return 'No errors to report';
   }
 
-  const patterns = analysis.patterns.commonErrors as Record<string, ErrorPattern>;
-  
+  const patterns = analysis.patterns.commonErrors;
+  if (!patterns || Object.keys(patterns).length === 0) {
+    return 'No errors to report';
+  }
+
   return Object.values(patterns)
-    .map(pattern => 
-      `${pattern.type}: ${pattern.count} occurrences\n` +
-      `Examples:\n${(pattern.examples || []).map(ex => `  - ${ex}`).join('\n')}`
-    )
+    .map(pattern => {
+      if (!pattern || !pattern.type) return '';
+      const examples = pattern.examples || [];
+      return `${pattern.type}: ${pattern.count} occurrences\n` +
+        `Examples:\n${examples.map(ex => `  - ${ex}`).join('\n')}`;
+    })
+    .filter(report => report.length > 0)
     .join('\n\n');
 };

@@ -60,7 +60,7 @@ export const TrafficFineImport = () => {
         return;
       }
 
-      // Proceed with upload if there are valid rows
+      // Upload file to storage
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("imports")
@@ -69,14 +69,18 @@ export const TrafficFineImport = () => {
       if (uploadError) throw uploadError;
 
       try {
+        console.log('Invoking edge function with:', { fileName, repairedRows: analysis.repairedRows, validRows: analysis.validRows });
+        
         const { data: processingData, error: processingError } = await supabase.functions
           .invoke("process-traffic-fine-import", {
             body: { 
               fileName,
-              repairedRows: analysis.repairedRows,
-              validRows: analysis.validRows
+              repairedRows: analysis.repairedRows || 0,
+              validRows: analysis.validRows || 0
             }
           });
+
+        console.log('Edge function response:', { processingData, processingError });
 
         if (processingError) {
           console.error('Processing error:', processingError);
@@ -101,7 +105,7 @@ export const TrafficFineImport = () => {
         console.error('Edge function error:', error);
         toast({
           title: "Import Processing Failed",
-          description: "Failed to process the imported file. Please try again.",
+          description: error.message || "Failed to process the imported file. Please try again.",
           variant: "destructive",
         });
       }
