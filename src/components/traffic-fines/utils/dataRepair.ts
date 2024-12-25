@@ -10,7 +10,7 @@ export const repairDate = (value: string): RepairResult => {
   const cleanValue = value.trim().replace(/['"]/g, '');
   
   try {
-    // Try parsing as ISO date
+    // Try parsing as ISO date (YYYY-MM-DD)
     const date = parseISO(cleanValue);
     if (isValid(date)) {
       return { value: format(date, 'yyyy-MM-dd'), wasRepaired: false };
