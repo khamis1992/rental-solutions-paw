@@ -24,9 +24,25 @@ export const TrafficFineTableRow = ({
     return statusColors[status as keyof typeof statusColors] || statusColors.pending;
   };
 
+  const handleLicensePlateClick = () => {
+    // Copy to clipboard
+    if (fine.license_plate) {
+      navigator.clipboard.writeText(fine.license_plate);
+      // You could add a toast notification here if you want to show feedback
+    }
+  };
+
   return (
     <TableRow key={fine.id} className="hover:bg-muted/50">
-      <TableCell>{fine.license_plate || 'N/A'}</TableCell>
+      <TableCell>
+        <Button 
+          variant="ghost" 
+          className="h-auto p-0 font-normal hover:bg-transparent"
+          onClick={handleLicensePlateClick}
+        >
+          {fine.license_plate || 'N/A'}
+        </Button>
+      </TableCell>
       <TableCell>{fine.violation_number || 'N/A'}</TableCell>
       <TableCell>
         {new Date(fine.violation_date).toLocaleDateString()}
