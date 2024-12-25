@@ -39,16 +39,41 @@ export const insertTrafficFines = async (
     };
   }
 
-  const { error: insertError } = await supabase
-    .from('traffic_fines')
-    .insert(fines);
+  // Insert fines in batches of 100 to avoid potential payload size limits
+  const batchSize = 100;
+  const batches = [];
+  
+  for (let i = 0; i < fines.length; i += batchSize) {
+    const batch = fines.slice(i, i + batchSize);
+    batches.push(batch);
+  }
 
-  if (insertError) {
-    console.error('Database insertion error:', insertError);
+  let insertedCount = 0;
+  const insertErrors = [];
+
+  for (const batch of batches) {
+    const { error: insertError, data } = await supabase
+      .from('traffic_fines')
+      .insert(batch)
+      .select();
+
+    if (insertError) {
+      console.error('Database insertion error:', insertError);
+      insertErrors.push(insertError.message);
+    } else {
+      insertedCount += data?.length || 0;
+    }
+  }
+
+  if (insertErrors.length > 0) {
     return {
       success: false,
-      error: `Failed to insert fines: ${insertError.message}`,
-      errors
+      error: `Failed to insert some fines: ${insertErrors.join(', ')}`,
+      errors: [...errors, ...insertErrors.map((error, index) => ({
+        row: -1,
+        error,
+        data: `Batch insert error ${index + 1}`
+      }))]
     };
   }
 
@@ -69,7 +94,7 @@ export const insertTrafficFines = async (
 
   return {
     success: true,
-    processed: fines.length,
+    processed: insertedCount,
     errors: errors.length > 0 ? errors : undefined
   };
 };

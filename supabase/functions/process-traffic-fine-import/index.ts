@@ -70,6 +70,7 @@ serve(async (req) => {
         const validationError = validateRow(rows[i], rowIndex, headers.length)
         if (validationError) {
           errors.push(validationError)
+          // Continue processing other rows even if this one has an error
           continue
         }
 
