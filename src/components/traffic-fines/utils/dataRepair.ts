@@ -15,16 +15,19 @@ export const repairDate = (value: string): RepairResult => {
   
   try {
     // Try parsing as ISO date (YYYY-MM-DD)
-    const date = parseISO(cleanValue);
-    if (isValid(date)) {
-      return { value: format(date, 'yyyy-MM-dd'), wasRepaired: false };
+    const isoDate = parseISO(cleanValue);
+    if (isValid(isoDate)) {
+      return { value: format(isoDate, 'yyyy-MM-dd'), wasRepaired: false };
     }
 
     // Try DD/MM/YYYY format
     const parts = cleanValue.split(/[/-]/);
     if (parts.length === 3) {
-      const [day, month, year] = parts;
-      const repairedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+      
+      const repairedDate = `${year}-${month}-${day}`;
       const parsedDate = parseISO(repairedDate);
       
       if (isValid(parsedDate)) {
