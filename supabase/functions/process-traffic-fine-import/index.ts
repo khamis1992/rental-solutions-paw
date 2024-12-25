@@ -38,6 +38,8 @@ serve(async (req) => {
       .map(line => line.trim())
       .filter(line => line.length > 0)
 
+    console.log(`Found ${lines.length} lines in file`)
+
     if (lines.length < 2) {
       throw new Error('File is empty or contains only headers')
     }
@@ -54,6 +56,8 @@ serve(async (req) => {
       'fine_amount',
       'violation_points'
     ]
+
+    console.log('File headers:', headers)
 
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
     if (missingHeaders.length > 0) {
@@ -77,6 +81,12 @@ serve(async (req) => {
           return obj
         }, {} as Record<string, string>)
 
+        // Validate required fields are not empty
+        const emptyFields = requiredHeaders.filter(field => !rowData[field])
+        if (emptyFields.length > 0) {
+          throw new Error(`Missing required values for fields: ${emptyFields.join(', ')}`)
+        }
+
         // Validate date format
         const date = new Date(rowData.violation_date)
         if (isNaN(date.getTime())) {
@@ -93,6 +103,8 @@ serve(async (req) => {
         if (isNaN(points)) {
           throw new Error(`Invalid points in row ${i + 1}`)
         }
+
+        console.log(`Processing row ${i + 1}:`, rowData)
 
         fines.push({
           serial_number: rowData.serial_number,
@@ -119,8 +131,10 @@ serve(async (req) => {
     }
 
     if (fines.length === 0) {
-      throw new Error('No valid records found to import')
+      throw new Error('No valid records found to import. Please check the file format and try again.')
     }
+
+    console.log(`Successfully validated ${fines.length} fines, with ${errors.length} errors`)
 
     // Insert fines into database
     const { error: insertError } = await supabase
