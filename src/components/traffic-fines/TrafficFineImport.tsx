@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Upload } from "lucide-react";
+import { parseCSV, CSVValidationError } from "./utils/csvParser";
 
 export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -53,6 +54,25 @@ export const TrafficFineImport = () => {
 
     setIsUploading(true);
     try {
+      // Read and parse the CSV file
+      const fileContent = await file.text();
+      const { data: validRows, errors } = parseCSV(fileContent);
+
+      if (errors.length > 0) {
+        console.error('CSV validation errors:', errors);
+        const errorMessage = `Found ${errors.length} invalid rows. Example: Row ${errors[0].row} has ${errors[0].actual} columns instead of ${errors[0].expected}`;
+        toast({
+          title: "CSV Validation Errors",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (validRows.length === 0) {
+        throw new Error("No valid records found to import");
+      }
+
       // Upload file to Supabase Storage
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
