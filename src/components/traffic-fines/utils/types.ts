@@ -8,7 +8,6 @@ export interface CsvAnalysisResult {
     type: string;
     details: string;
     data?: any;
-    repairs?: string[];
   }>;
   patterns: {
     commonErrors: Record<string, ErrorPattern>;
@@ -19,7 +18,7 @@ export interface CsvAnalysisResult {
     rowNumber: number;
     repairs: string[];
     finalData: string[];
-    raw: string; // Added to store original raw line
+    raw: string;
   }>;
 }
 

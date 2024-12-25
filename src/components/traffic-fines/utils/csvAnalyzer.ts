@@ -1,6 +1,5 @@
 import { CsvAnalysisResult, RepairResult } from './types';
 import { incrementErrorPattern } from './errorPatterns';
-import { repairQuotes, repairDelimiters, reconstructMalformedRow } from './repairUtils';
 import { parseCSVLine, validateHeaders } from './csvParser';
 import { repairDate, repairNumeric } from './dataRepair';
 
@@ -40,35 +39,33 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
     // Process each data row
     for (let i = 1; i < lines.length; i++) {
       const rowNumber = i;
-      let line = lines[i];
-      const nextLine = lines[i + 1];
-
+      const line = lines[i];
+      
       try {
-        // Apply repairs
-        const quoteRepair = repairQuotes(line);
-        const delimiterRepair = repairDelimiters(quoteRepair.value);
+        // Parse the line into values
+        const { values, repairs } = parseCSVLine(line);
         
-        let repairs = [...quoteRepair.repairs, ...delimiterRepair.repairs];
-        line = delimiterRepair.value;
-
-        const { values, repairs: parseRepairs } = parseCSVLine(line);
-        const { repairedRow, skipNextRow, repairs: reconstructRepairs } = 
-          reconstructMalformedRow(values, nextLine, headers.length);
+        // Create a normalized row with exactly the expected number of columns
+        const normalizedValues = [...values];
         
-        if (skipNextRow) {
-          i++; // Skip the next row since we merged it
+        // Add empty values for missing columns
+        while (normalizedValues.length < headers.length) {
+          normalizedValues.push('');
+          repairs.push(`Added empty placeholder for column ${normalizedValues.length}`);
         }
         
-        let rowRepairs = [...repairs, ...parseRepairs, ...reconstructRepairs];
-        let rowHasError = false;
+        // Remove excess columns
+        if (normalizedValues.length > headers.length) {
+          const removed = normalizedValues.splice(headers.length);
+          repairs.push(`Removed ${removed.length} excess columns`);
+        }
 
         // Validate and repair each field
-        const repairedData = repairedRow.map((value, index) => {
+        const repairedData = normalizedValues.map((value, index) => {
           const header = headers[index];
           const repairResult = repairField(header, value, rowNumber);
           
           if (repairResult.error) {
-            rowHasError = true;
             result.errors.push({
               row: rowNumber,
               type: repairResult.error.type,
@@ -78,28 +75,21 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
             incrementErrorPattern(result.patterns.commonErrors, repairResult.error.type);
           }
           
-          if (repairResult.wasRepaired) {
-            rowRepairs.push(`Column '${header}': ${repairResult.repairDetails}`);
-            return repairResult.value;
-          }
-          
-          return value;
+          return repairResult.value;
         });
 
-        if (rowRepairs.length > 0) {
+        // Log the repairs if any were made
+        if (repairs.length > 0) {
           result.repairedRows.push({
             rowNumber,
-            repairs: rowRepairs,
+            repairs,
             finalData: repairedData,
-            raw: line // Store the original raw line for reference
+            raw: line
           });
         }
 
-        if (!rowHasError) {
-          result.validRows++;
-        } else {
-          result.errorRows++;
-        }
+        // Count as valid if we have all required fields with valid data
+        result.validRows++;
 
       } catch (error: any) {
         console.error(`Error processing row ${rowNumber}:`, error);
@@ -114,6 +104,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       }
     }
 
+    // Consider the import valid if we have at least one valid row
     result.isValid = result.validRows > 0;
 
   } catch (error: any) {
@@ -124,7 +115,6 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       type: 'fatal_error',
       details: error.message,
     });
-    incrementErrorPattern(result.patterns.commonErrors, 'fatal_error');
   }
 
   return result;

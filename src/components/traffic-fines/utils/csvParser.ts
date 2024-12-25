@@ -29,73 +29,47 @@ export const parseCSVLine = (line: string): ParseResult => {
   const repairs: string[] = [];
   let current = '';
   let inQuotes = false;
-  let unclosedQuote = false;
-  let lastQuoteIndex = -1;
   
   // Handle empty line
   if (!line.trim()) {
     return { values: [], repairs: ['Empty line skipped'] };
   }
 
+  // Split line into characters and process
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
     const nextChar = line[i + 1];
-    const prevChar = line[i - 1];
-    
-    // Handle quote characters
-    if (char === '"') {
-      // Start of quoted content
-      if (!inQuotes && (i === 0 || prevChar === ',' || prevChar === ' ')) {
+
+    // Handle quotes
+    if (char === '"' || char === "'") {
+      if (!inQuotes) {
         inQuotes = true;
-        lastQuoteIndex = i;
+        if (char === "'") {
+          repairs.push('Converted single quote to double quote');
+        }
         continue;
-      }
-      // End of quoted content
-      else if (inQuotes && (nextChar === ',' || nextChar === undefined)) {
+      } else {
         inQuotes = false;
         continue;
       }
-      // Escaped quote within quoted content
-      else if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++; // Skip next quote
-        continue;
-      }
-      // Unmatched quote - attempt repair
-      else {
-        repairs.push(`Unmatched quote found at position ${i}, attempting repair`);
-        if (i - lastQuoteIndex > 1) {
-          // If there's significant content since the last quote, treat this as a closing quote
-          inQuotes = false;
-        } else {
-          // Otherwise, treat it as an opening quote
-          inQuotes = true;
-          lastQuoteIndex = i;
-        }
-        continue;
-      }
     }
-    
+
     // Handle delimiters
     if (char === ',' && !inQuotes) {
-      if (unclosedQuote) {
-        repairs.push('Closed unclosed quote before delimiter');
-        unclosedQuote = false;
-      }
       result.push(current.trim());
       current = '';
       continue;
     }
-    
+
     current += char;
   }
-  
+
   // Add the last value
   result.push(current.trim());
-  
-  // Handle any remaining unclosed quotes
+
+  // If still in quotes at the end, note it
   if (inQuotes) {
-    repairs.push('Closed unclosed quote at end of line');
+    repairs.push('Unclosed quote detected and handled');
   }
 
   return { values: result, repairs };
