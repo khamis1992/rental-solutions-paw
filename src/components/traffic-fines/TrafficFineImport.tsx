@@ -68,33 +68,42 @@ export const TrafficFineImport = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: processingData, error: processingError } = await supabase.functions
-        .invoke("process-traffic-fine-import", {
-          body: { 
-            fileName,
-            repairedRows: analysis.repairedRows,
-            validRows: analysis.validRows
-          }
+      try {
+        const { data: processingData, error: processingError } = await supabase.functions
+          .invoke("process-traffic-fine-import", {
+            body: { 
+              fileName,
+              repairedRows: analysis.repairedRows,
+              validRows: analysis.validRows
+            }
+          });
+
+        if (processingError) {
+          console.error('Processing error:', processingError);
+          throw new Error(processingError.message || 'Failed to process file');
+        }
+
+        if (!processingData?.success) {
+          throw new Error(processingData?.error || 'Failed to process file');
+        }
+
+        toast({
+          title: "Success",
+          description: `Successfully imported ${processingData.processed} traffic fines${
+            processingData.errors?.length ? ` with ${processingData.errors.length} errors` : ''
+          }`,
         });
 
-      if (processingError) {
-        console.error('Processing error:', processingError);
-        throw new Error(processingError.message || 'Failed to process file');
-      }
-
-      if (!processingData.success) {
-        throw new Error(processingData.error || 'Failed to process file');
-      }
-
-      toast({
-        title: "Success",
-        description: `Successfully imported ${processingData.processed} traffic fines${
-          processingData.errors?.length ? ` with ${processingData.errors.length} errors` : ''
-        }`,
-      });
-
-      if (processingData.errors?.length) {
-        console.error('Import errors:', processingData.errors);
+        if (processingData.errors?.length) {
+          console.error('Import errors:', processingData.errors);
+        }
+      } catch (error: any) {
+        console.error('Edge function error:', error);
+        toast({
+          title: "Import Processing Failed",
+          description: "Failed to process the imported file. Please try again.",
+          variant: "destructive",
+        });
       }
 
     } catch (error: any) {

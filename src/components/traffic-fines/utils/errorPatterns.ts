@@ -1,4 +1,8 @@
-import { ErrorPattern } from './types';
+export interface ErrorPattern {
+  type: string;
+  count: number;
+  examples: string[];
+}
 
 export const incrementErrorPattern = (
   patterns: Record<string, ErrorPattern>,
@@ -20,7 +24,9 @@ export const generateErrorReport = (analysis: any): string => {
     return 'No errors to report';
   }
 
-  return Object.values(analysis.patterns.commonErrors)
+  const patterns = analysis.patterns.commonErrors as Record<string, ErrorPattern>;
+  
+  return Object.values(patterns)
     .map(pattern => 
       `${pattern.type}: ${pattern.count} occurrences\n` +
       `Examples:\n${(pattern.examples || []).map(ex => `  - ${ex}`).join('\n')}`
