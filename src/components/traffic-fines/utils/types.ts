@@ -28,12 +28,7 @@ export interface ErrorPattern {
   examples: string[];
 }
 
-export interface RepairResult {
-  value: string;
-  wasRepaired: boolean;
-  repairDetails?: string;
-  error?: {
-    type: string;
-    details: string;
-  };
+export interface ParseResult {
+  values: string[];
+  repairs: string[];
 }

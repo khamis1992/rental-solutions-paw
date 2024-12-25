@@ -1,9 +1,13 @@
-import { CsvAnalysisResult, RepairResult } from './types';
+import { CsvAnalysisResult } from './types';
 import { incrementErrorPattern } from './errorPatterns';
-import { parseCSVLine, validateHeaders } from './csvParser';
-import { repairDate, repairNumeric } from './dataRepair';
+import { 
+  parseCSVLine, 
+  validateHeaders, 
+  repairQuotedFields,
+  reconstructMalformedRow 
+} from './csvParser';
 
-export const analyzeCsvContent = (content: string, expectedHeaders: string[]): CsvAnalysisResult => {
+export const analyzeCsvContent = (content: string): CsvAnalysisResult => {
   console.log('Starting CSV analysis...');
   
   const result: CsvAnalysisResult = {
@@ -21,8 +25,9 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
   };
 
   try {
+    // Split content into lines and filter out empty lines
     const lines = content.split('\n').filter(line => line.trim());
-    result.totalRows = lines.length - 1;
+    result.totalRows = lines.length - 1; // Exclude header row
     
     // Validate headers
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
@@ -38,67 +43,55 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
 
     // Process each data row
     for (let i = 1; i < lines.length; i++) {
-      const rowNumber = i;
-      const line = lines[i];
-      
       try {
-        // Parse the line into values
-        const { values, repairs } = parseCSVLine(line);
-        
-        // Create a normalized row with exactly the expected number of columns
-        const normalizedValues = [...values];
-        
-        // Add empty values for missing columns
-        while (normalizedValues.length < headers.length) {
-          normalizedValues.push('');
-          repairs.push(`Added empty placeholder for column ${normalizedValues.length}`);
-        }
-        
-        // Remove excess columns
-        if (normalizedValues.length > headers.length) {
-          const removed = normalizedValues.splice(headers.length);
-          repairs.push(`Removed ${removed.length} excess columns`);
-        }
+        const rowNumber = i;
+        let line = lines[i];
+        const repairs: string[] = [];
 
-        // Validate and repair each field
-        const repairedData = normalizedValues.map((value, index) => {
-          const header = headers[index];
-          const repairResult = repairField(header, value, rowNumber);
+        // First, try to repair any quoted field issues
+        const quotedRepair = repairQuotedFields(line);
+        line = quotedRepair.value;
+        repairs.push(...quotedRepair.repairs);
+
+        // Parse the line into values
+        const parseResult = parseCSVLine(line);
+        
+        // If we have too few columns and there's a next line, try to reconstruct
+        if (parseResult.values.length < 8 && i + 1 < lines.length) {
+          const reconstruction = reconstructMalformedRow(
+            parseResult.values,
+            lines[i + 1],
+            8
+          );
           
-          if (repairResult.error) {
-            result.errors.push({
-              row: rowNumber,
-              type: repairResult.error.type,
-              details: repairResult.error.details,
-              data: value
-            });
-            incrementErrorPattern(result.patterns.commonErrors, repairResult.error.type);
+          if (reconstruction.skipNextRow) {
+            i++; // Skip the next row as it was merged
+            repairs.push(...reconstruction.repairs);
+            parseResult.values = reconstruction.repairedRow;
           }
-          
-          return repairResult.value;
-        });
+        }
 
         // Log the repairs if any were made
-        if (repairs.length > 0) {
+        if (repairs.length > 0 || parseResult.repairs.length > 0) {
           result.repairedRows.push({
             rowNumber,
-            repairs,
-            finalData: repairedData,
+            repairs: [...repairs, ...parseResult.repairs],
+            finalData: parseResult.values,
             raw: line
           });
         }
 
-        // Count as valid if we have all required fields with valid data
+        // Count as valid if we have all required fields
         result.validRows++;
 
       } catch (error: any) {
-        console.error(`Error processing row ${rowNumber}:`, error);
+        console.error(`Error processing row ${i}:`, error);
         result.errorRows++;
         result.errors.push({
-          row: rowNumber,
+          row: i,
           type: 'processing_error',
           details: error.message,
-          data: line,
+          data: lines[i],
         });
         incrementErrorPattern(result.patterns.commonErrors, 'processing_error');
       }
@@ -118,21 +111,6 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
   }
 
   return result;
-};
-
-const repairField = (header: string, value: string, rowNumber: number): RepairResult => {
-  switch (header) {
-    case 'violation_date':
-      return repairDate(value);
-    case 'fine_amount':
-    case 'violation_points':
-      return repairNumeric(value);
-    default:
-      return {
-        value: value.trim(),
-        wasRepaired: false
-      };
-  }
 };
 
 export { generateErrorReport } from './errorPatterns';
