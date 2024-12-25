@@ -1,6 +1,5 @@
-import { toast } from "@/hooks/use-toast";
 import { parseCSVLine, validateHeaders } from './csvParser';
-import { repairDate, repairNumeric, repairString, ensureColumnCount } from './dataRepair';
+import { ensureColumnCount, repairDate, repairNumeric } from './dataRepair';
 
 interface CsvAnalysisResult {
   isValid: boolean;
@@ -25,6 +24,10 @@ interface CsvAnalysisResult {
     finalData: string[];
   }>;
 }
+
+const incrementErrorPattern = (result: CsvAnalysisResult, errorType: string) => {
+  result.patterns.commonErrors[errorType] = (result.patterns.commonErrors[errorType] || 0) + 1;
+};
 
 export const analyzeCsvContent = (content: string, expectedHeaders: string[]): CsvAnalysisResult => {
   console.log('Starting CSV analysis...');
@@ -75,8 +78,8 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
         let rowHasError = false;
 
         // Validate and repair each field
-        headers.forEach((header, index) => {
-          const value = columnResult.row[index];
+        const repairedData = columnResult.row.map((value, index) => {
+          const header = headers[index];
           const repairResult = repairField(header, value, rowNumber);
           
           if (repairResult.error) {
@@ -86,16 +89,18 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           }
           
           if (repairResult.wasRepaired) {
-            columnResult.row[index] = repairResult.value;
             rowRepairs.push(`Column '${header}': ${repairResult.repairDetails}`);
+            return repairResult.value;
           }
+          
+          return value;
         });
 
         if (rowRepairs.length > 0) {
           result.repairedRows.push({
             rowNumber,
             repairs: rowRepairs,
-            finalData: columnResult.row
+            finalData: repairedData
           });
         }
 
@@ -145,12 +150,10 @@ const repairField = (header: string, value: string, rowNumber: number): {
     details: string;
   };
 } => {
-  let repairResult;
-
   switch (header) {
     case 'violation_date':
-      repairResult = repairDate(value);
-      if (!repairResult.wasRepaired && !value) {
+      const dateResult = repairDate(value);
+      if (!dateResult.wasRepaired && !value) {
         return {
           value,
           wasRepaired: false,
@@ -161,12 +164,12 @@ const repairField = (header: string, value: string, rowNumber: number): {
           }
         };
       }
-      break;
+      return dateResult;
     
     case 'fine_amount':
     case 'violation_points':
-      repairResult = repairNumeric(value);
-      if (!repairResult.wasRepaired && !value) {
+      const numericResult = repairNumeric(value);
+      if (!numericResult.wasRepaired && !value) {
         return {
           value,
           wasRepaired: false,
@@ -177,28 +180,14 @@ const repairField = (header: string, value: string, rowNumber: number): {
           }
         };
       }
-      break;
+      return numericResult;
     
     default:
-      repairResult = repairString(value);
-      if (!repairResult.wasRepaired && !value) {
-        return {
-          value,
-          wasRepaired: false,
-          error: {
-            row: rowNumber,
-            type: 'missing_value',
-            details: `Missing required value for ${header}`
-          }
-        };
-      }
+      return {
+        value: value.trim(),
+        wasRepaired: false
+      };
   }
-
-  return repairResult;
-};
-
-const incrementErrorPattern = (result: CsvAnalysisResult, errorType: string) => {
-  result.patterns.commonErrors[errorType] = (result.patterns.commonErrors[errorType] || 0) + 1;
 };
 
 export const generateErrorReport = (analysis: CsvAnalysisResult): string => {
@@ -229,46 +218,8 @@ export const generateErrorReport = (analysis: CsvAnalysisResult): string => {
     `\n## Detailed Errors`,
     analysis.errors
       .map(error => `Row ${error.row}: ${error.type} - ${error.details}`)
-      .join('\n'),
-    
-    `\n## Recommendations`,
-    generateRecommendations(analysis),
+      .join('\n')
   ].join('\n');
 
   return sections;
-};
-
-const generateRecommendations = (analysis: CsvAnalysisResult): string => {
-  const recommendations = [];
-
-  if (analysis.patterns.commonErrors['header_mismatch']) {
-    recommendations.push('- Ensure the CSV file contains all required headers in the correct format');
-  }
-
-  if (analysis.patterns.commonErrors['column_count_mismatch']) {
-    recommendations.push('- Check for missing commas or extra commas in the CSV file');
-    recommendations.push('- Ensure no fields contain unescaped commas');
-  }
-
-  if (analysis.patterns.commonErrors['invalid_date']) {
-    recommendations.push('- Use the format YYYY-MM-DD for all dates');
-    recommendations.push('- Check for any regional date formats that need conversion');
-  }
-
-  if (analysis.patterns.commonErrors['invalid_number']) {
-    recommendations.push('- Ensure all numeric values use dots (.) as decimal separators');
-    recommendations.push('- Remove any currency symbols or special characters from numeric fields');
-  }
-
-  if (analysis.patterns.commonErrors['missing_value']) {
-    recommendations.push('- Fill in all required fields before import');
-    recommendations.push('- Use appropriate placeholder values for optional fields');
-  }
-
-  if (analysis.repairedRows.length > 0) {
-    recommendations.push('- Review repaired data to ensure corrections are appropriate');
-    recommendations.push('- Consider updating source data to prevent future repairs');
-  }
-
-  return recommendations.join('\n');
 };
