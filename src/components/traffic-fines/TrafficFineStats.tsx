@@ -38,55 +38,58 @@ export const TrafficFineStats = () => {
       // Get all unassigned fines
       const { data: unassignedFines, error: finesError } = await supabase
         .from('traffic_fines')
-        .select('id, violation_date, fine_location, fine_type, fine_amount')
+        .select('id, violation_date, vehicle_id')
         .eq('assignment_status', 'pending');
 
       if (finesError) throw finesError;
 
+      let assignedCount = 0;
+      let errorCount = 0;
+
       // Process each fine
       for (const fine of unassignedFines || []) {
-        const response = await fetch('/functions/v1/analyze-traffic-fine', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ fineId: fine.id }),
-        });
+        try {
+          // Find a matching lease based on violation date and vehicle ID
+          const { data: leases, error: leaseError } = await supabase
+            .from('leases')
+            .select('id')
+            .eq('vehicle_id', fine.vehicle_id)
+            .lte('start_date', fine.violation_date)
+            .gte('end_date', fine.violation_date)
+            .limit(1);
 
-        const data = await response.json();
-        
-        if (data.error) {
-          console.error(`Error analyzing fine ${fine.id}:`, data.error);
-          continue;
-        }
+          if (leaseError) throw leaseError;
 
-        // Find the highest confidence suggestion
-        const bestMatch = data.suggestions
-          .sort((a, b) => b.confidence - a.confidence)
-          .find(s => s.confidence > 0.7); // Only assign if confidence is > 70%
+          if (leases && leases.length > 0) {
+            // Assign the fine to the lease
+            const { error: updateError } = await supabase
+              .from('traffic_fines')
+              .update({ 
+                lease_id: leases[0].id,
+                assignment_status: 'assigned'
+              })
+              .eq('id', fine.id);
 
-        if (bestMatch) {
-          // Assign the fine to the customer
-          const { error: updateError } = await supabase
-            .from('traffic_fines')
-            .update({ 
-              lease_id: bestMatch.agreement.id,
-              assignment_status: 'assigned'
-            })
-            .eq('id', fine.id);
-
-          if (updateError) {
-            console.error(`Error assigning fine ${fine.id}:`, updateError);
+            if (updateError) throw updateError;
+            assignedCount++;
+          } else {
+            console.log(`No matching lease found for fine ${fine.id}`);
+            errorCount++;
           }
+        } catch (error) {
+          console.error(`Error processing fine ${fine.id}:`, error);
+          errorCount++;
         }
       }
 
+      // Show success message with details
       toast({
         title: "Bulk Assignment Complete",
-        description: "Traffic fines have been analyzed and assigned where possible.",
+        description: `Successfully assigned ${assignedCount} fines. ${errorCount} fines could not be assigned.`,
       });
+
     } catch (error: any) {
+      console.error('Bulk assignment failed:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to process traffic fines",
