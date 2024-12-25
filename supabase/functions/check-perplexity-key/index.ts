@@ -15,6 +15,7 @@ serve(async (req) => {
     const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
     
     if (!perplexityApiKey) {
+      console.error('Perplexity API key not configured');
       throw new Error('Perplexity API key not configured');
     }
 
