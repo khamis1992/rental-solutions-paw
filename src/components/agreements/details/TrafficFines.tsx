@@ -40,7 +40,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
 
   const handleDeleteAll = async () => {
     try {
-      await deleteAllTrafficFines(agreementId);
+      await deleteAllTrafficFines();
       
       toast({
         title: "Success",
