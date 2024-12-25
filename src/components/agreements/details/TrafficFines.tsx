@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -25,6 +24,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { fetchTrafficFines, deleteAllTrafficFines } from "./utils/trafficFineUtils";
+import { TrafficFineStatusBadge } from "./components/TrafficFineStatusBadge";
 
 interface TrafficFinesProps {
   agreementId: string;
@@ -34,51 +35,13 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
   const { toast } = useToast();
   const { data: fines, isLoading, refetch } = useQuery<TrafficFine[]>({
     queryKey: ["traffic-fines", agreementId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('traffic_fines')
-        .select(`
-          *,
-          lease:leases(
-            id,
-            customer_id,
-            customer:profiles(
-              id,
-              full_name
-            ),
-            vehicle:vehicles(
-              make,
-              model,
-              year,
-              license_plate
-            )
-          )
-        `)
-        .eq('lease_id', agreementId)
-        .order('violation_date', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching traffic fines:', error);
-        throw error;
-      }
-
-      return data as TrafficFine[];
-    },
+    queryFn: () => fetchTrafficFines(agreementId),
   });
 
   const handleDeleteAll = async () => {
     try {
-      console.log('Deleting traffic fines for lease:', agreementId);
-      const { error } = await supabase
-        .from('traffic_fines')
-        .delete()
-        .eq('lease_id', agreementId);
-
-      if (error) {
-        console.error('Error deleting traffic fines:', error);
-        throw error;
-      }
-
+      await deleteAllTrafficFines(agreementId);
+      
       toast({
         title: "Success",
         description: "All traffic fines have been deleted",
@@ -93,16 +56,6 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
         variant: "destructive",
       });
     }
-  };
-
-  const getStatusColor = (status: string): string => {
-    const statusColors = {
-      completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      refunded: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-    };
-    return statusColors[status as keyof typeof statusColors] || statusColors.pending;
   };
 
   const formatDate = (dateString: string | null): string => {
@@ -174,16 +127,12 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
           <TableBody>
             {fines?.map((fine) => (
               <TableRow key={fine.id} className="hover:bg-muted/50 transition-colors">
-                <TableCell>
-                  {formatDate(fine.violation_date)}
-                </TableCell>
+                <TableCell>{formatDate(fine.violation_date)}</TableCell>
                 <TableCell>{fine.fine_type}</TableCell>
                 <TableCell>{fine.fine_location}</TableCell>
                 <TableCell className="font-medium">{formatCurrency(fine.fine_amount)}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(fine.payment_status)}`}>
-                    {fine.payment_status}
-                  </span>
+                  <TrafficFineStatusBadge status={fine.payment_status} />
                 </TableCell>
               </TableRow>
             ))}
