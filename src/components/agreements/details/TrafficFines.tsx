@@ -68,12 +68,16 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
 
   const handleDeleteAll = async () => {
     try {
+      console.log('Deleting traffic fines for lease:', agreementId);
       const { error } = await supabase
         .from('traffic_fines')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting traffic fines:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -82,6 +86,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
       
       refetch();
     } catch (error: any) {
+      console.error('Delete operation failed:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to delete traffic fines",
