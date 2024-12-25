@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrafficFineTableHeader } from "./table/TrafficFineTableHeader";
 import { TrafficFineTableRow } from "./table/TrafficFineTableRow";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -15,6 +15,12 @@ import { CustomerSelect } from "../agreements/form/CustomerSelect";
 export const TrafficFinesList = () => {
   const { toast } = useToast();
   const [selectedFine, setSelectedFine] = useState<any>(null);
+  const queryClient = useQueryClient();
+
+  // Force an immediate refresh when the component mounts
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
+  }, [queryClient]);
 
   const { data: fines, isLoading, error } = useQuery({
     queryKey: ["traffic-fines"],
