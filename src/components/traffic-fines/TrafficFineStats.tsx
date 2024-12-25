@@ -30,13 +30,28 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
     }
   });
 
-  // Query to get total amount of fines
+  // Query to get total amount of all fines
   const { data: totalAmount = 0 } = useQuery({
     queryKey: ["traffic-fines-total-amount"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('traffic_fines')
         .select('fine_amount');
+      
+      if (error) throw error;
+      
+      return data.reduce((sum, fine) => sum + (fine.fine_amount || 0), 0);
+    }
+  });
+
+  // Query to get total amount of unassigned fines
+  const { data: unassignedAmount = 0 } = useQuery({
+    queryKey: ["unassigned-fines-amount"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('traffic_fines')
+        .select('fine_amount')
+        .eq('assignment_status', 'pending');
       
       if (error) throw error;
       
@@ -149,7 +164,7 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
 
   return (
     <div className="flex justify-between items-center">
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3 flex-1">
+      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4 flex-1">
         <Card className="p-4">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
@@ -166,6 +181,12 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
             <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">Unassigned Amount</p>
+            <p className="text-2xl font-bold">{formatCurrency(unassignedAmount)}</p>
           </div>
         </Card>
       </div>
