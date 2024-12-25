@@ -58,19 +58,30 @@ export const analyzeCsvContent = (content: string, requiredHeaders: string[]): C
         // Parse the line into values
         const parseResult = parseCSVLine(line);
         
-        // If we have too few columns and there's a next line, try to reconstruct
-        if (parseResult.values.length < requiredHeaders.length && i + 1 < lines.length) {
-          const reconstruction = reconstructMalformedRow(
-            parseResult.values,
-            lines[i + 1],
-            requiredHeaders.length
-          );
-          
-          if (reconstruction.skipNextRow) {
-            i++; // Skip the next row as it was merged
-            repairs.push(...reconstruction.repairs);
-            parseResult.values = reconstruction.repairedRow;
+        // Handle column count mismatch
+        if (parseResult.values.length !== requiredHeaders.length) {
+          // If we have too few columns, pad with empty values
+          while (parseResult.values.length < requiredHeaders.length) {
+            parseResult.values.push('');
+            repairs.push(`Added empty value for missing column ${parseResult.values.length}`);
           }
+          
+          // If we have too many columns, trim the excess
+          if (parseResult.values.length > requiredHeaders.length) {
+            const removed = parseResult.values.splice(requiredHeaders.length);
+            repairs.push(`Removed ${removed.length} excess columns`);
+          }
+          
+          // Log the repair as a repairedRow instead of an error
+          result.repairedRows.push({
+            rowNumber,
+            repairs,
+            finalData: parseResult.values,
+            raw: line
+          });
+          result.validRows++; // Count as valid since we repaired it
+        } else {
+          result.validRows++;
         }
 
         // Log the repairs if any were made
@@ -81,25 +92,6 @@ export const analyzeCsvContent = (content: string, requiredHeaders: string[]): C
             finalData: parseResult.values,
             raw: line
           });
-        }
-
-        // Count as valid if we have all required fields after repairs
-        if (parseResult.values.length >= requiredHeaders.length) {
-          result.validRows++;
-        } else {
-          result.errorRows++;
-          const errorDetails = `Row has ${parseResult.values.length} columns but expected ${requiredHeaders.length}`;
-          result.errors.push({
-            row: i,
-            type: 'column_count_mismatch',
-            details: errorDetails,
-            data: line,
-          });
-          incrementErrorPattern(
-            result.patterns.commonErrors, 
-            'column_count_mismatch',
-            `Row ${i}: ${errorDetails}`
-          );
         }
 
       } catch (error: any) {
