@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Checking Perplexity API key...');
     const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
     
     if (!perplexityApiKey) {
