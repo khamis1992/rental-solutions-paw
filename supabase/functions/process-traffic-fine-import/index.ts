@@ -75,32 +75,27 @@ serve(async (req) => {
       try {
         console.log(`Processing row ${i}:`, lines[i])
         
-        // Split the line by comma, handling quoted values
         const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
         
         if (values.length !== headers.length) {
           throw new Error(`Row ${i + 1} has incorrect number of columns (expected ${headers.length}, got ${values.length})`)
         }
 
-        // Create an object mapping headers to values
         const rowData = headers.reduce((obj, header, index) => {
           obj[header] = values[index]
           return obj
         }, {} as Record<string, string>)
 
-        // Validate required fields are not empty
         const emptyFields = requiredHeaders.filter(field => !rowData[field]?.trim())
         if (emptyFields.length > 0) {
           throw new Error(`Missing required values for fields: ${emptyFields.join(', ')}`)
         }
 
-        // Validate date format
         const date = new Date(rowData.violation_date)
         if (isNaN(date.getTime())) {
           throw new Error(`Invalid date format. Expected YYYY-MM-DD, got: ${rowData.violation_date}`)
         }
 
-        // Validate numeric values
         const amount = parseFloat(rowData.fine_amount)
         if (isNaN(amount)) {
           throw new Error(`Invalid amount: ${rowData.fine_amount}`)
@@ -164,9 +159,7 @@ serve(async (req) => {
         unassigned_fines: fines.length,
         import_errors: errors.length > 0 ? errors : null,
         processed_by: null,
-        created_at: new Date().toISOString(),
-        ai_analysis_status: 'pending',
-        ai_analysis_results: null
+        created_at: new Date().toISOString()
       })
 
     if (logError) {

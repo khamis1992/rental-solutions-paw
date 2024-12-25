@@ -2,20 +2,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { Wand2 } from "lucide-react";
 import { CustomerSelect } from "../../agreements/form/CustomerSelect";
 
 interface TrafficFineTableRowProps {
   fine: any;
   onAssignCustomer: (fineId: string, customerId: string) => void;
-  onAiAssignment: (fineId: string) => void;
   onMarkAsPaid: (fineId: string) => void;
 }
 
 export const TrafficFineTableRow = ({
   fine,
   onAssignCustomer,
-  onAiAssignment,
   onMarkAsPaid,
 }: TrafficFineTableRowProps) => {
   const getStatusColor = (status: string): string => {
@@ -56,13 +53,6 @@ export const TrafficFineTableRow = ({
               register={() => {}}
               onCustomerSelect={(customerId) => onAssignCustomer(fine.id, customerId)}
             />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onAiAssignment(fine.id)}
-            >
-              <Wand2 className="h-4 w-4" />
-            </Button>
           </div>
         )}
       </TableCell>

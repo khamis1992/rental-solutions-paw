@@ -6,18 +6,15 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { AIAssignmentDialog } from "./AIAssignmentDialog";
 import { TrafficFineTableHeader } from "./table/TrafficFineTableHeader";
 import { TrafficFineTableRow } from "./table/TrafficFineTableRow";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Loader2 } from "lucide-react";
+import { CustomerSelect } from "../agreements/form/CustomerSelect";
 
 export const TrafficFinesList = () => {
   const { toast } = useToast();
-  const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [selectedFine, setSelectedFine] = useState<any>(null);
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { data: fines, isLoading, error } = useQuery({
     queryKey: ["traffic-fines"],
@@ -50,36 +47,6 @@ export const TrafficFinesList = () => {
       return data;
     },
   });
-
-  const handleAiAssignment = async (fineId: string) => {
-    try {
-      setIsAnalyzing(true);
-      setSelectedFine(fines?.find(f => f.id === fineId));
-      setAiDialogOpen(true);
-
-      const response = await fetch('/functions/v1/analyze-traffic-fine', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ fineId }),
-      });
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      setAiSuggestions(data.suggestions);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to analyze fine",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
 
   const handleAssignCustomer = async (fineId: string, customerId: string) => {
     try {
@@ -115,8 +82,6 @@ export const TrafficFinesList = () => {
         title: "Success",
         description: "Fine assigned successfully",
       });
-      
-      setAiDialogOpen(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -175,7 +140,6 @@ export const TrafficFinesList = () => {
                 <TrafficFineTableRow
                   fine={fine}
                   onAssignCustomer={handleAssignCustomer}
-                  onAiAssignment={handleAiAssignment}
                   onMarkAsPaid={handleMarkAsPaid}
                 />
               </ErrorBoundary>
@@ -190,15 +154,6 @@ export const TrafficFinesList = () => {
           </TableBody>
         </Table>
       </div>
-
-      <AIAssignmentDialog
-        open={aiDialogOpen}
-        onOpenChange={setAiDialogOpen}
-        selectedFine={selectedFine}
-        onAssignCustomer={handleAssignCustomer}
-        isAnalyzing={isAnalyzing}
-        aiSuggestions={aiSuggestions}
-      />
     </ErrorBoundary>
   );
 };
