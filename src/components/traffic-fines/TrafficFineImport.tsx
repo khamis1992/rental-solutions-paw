@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload } from "lucide-react";
@@ -10,16 +9,50 @@ export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
+  const parseCSVLine = (line: string): string[] => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
   const validateDateFormat = (dateStr: string): boolean => {
     try {
       console.log('Validating date:', dateStr);
-      const parsedDate = parseISO(dateStr);
+      // Remove any quotes from the date string
+      const cleanDateStr = dateStr.replace(/"/g, '').trim();
+      
+      if (!cleanDateStr) {
+        console.error('Empty date string');
+        return false;
+      }
+
+      const parsedDate = parseISO(cleanDateStr);
       if (isValid(parsedDate)) {
         console.log('Date is valid ISO format');
         return true;
       }
 
-      const date = new Date(dateStr);
+      const date = new Date(cleanDateStr);
       const isValidDate = isValid(date);
       console.log('Date validation result:', isValidDate);
       return isValidDate;
@@ -46,17 +79,31 @@ export const TrafficFineImport = () => {
       return false;
     }
 
+    const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+    const requiredHeaders = ['serial_number', 'violation_number', 'violation_date', 'license_plate', 'fine_location', 'violation_charge', 'fine_amount', 'violation_points'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+    if (missingHeaders.length > 0) {
+      toast({
+        title: "Invalid CSV Format",
+        description: `Missing required columns: ${missingHeaders.join(', ')}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+
     // Skip header row and validate each data row
     for (let i = 1; i < lines.length; i++) {
-      const columns = lines[i].split(',').map(col => col.trim());
+      const columns = parseCSVLine(lines[i]);
       console.log(`Row ${i} columns:`, columns);
       
-      // Validate date column (assuming it's the third column, index 2)
-      if (columns.length >= 3 && !validateDateFormat(columns[2])) {
-        console.error(`Invalid date in row ${i}:`, columns[2]);
+      // Find the index of the violation_date column
+      const dateIndex = headers.indexOf('violation_date');
+      if (dateIndex === -1 || !validateDateFormat(columns[dateIndex])) {
+        console.error(`Invalid date in row ${i}:`, columns[dateIndex]);
         toast({
           title: "Invalid Date Format",
-          description: `Row ${i + 1} contains an invalid date format. Expected YYYY-MM-DD or ISO date format.`,
+          description: `Row ${i + 1} contains an invalid date format. Expected YYYY-MM-DD format.`,
           variant: "destructive",
         });
         return false;
@@ -142,7 +189,7 @@ export const TrafficFineImport = () => {
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Import Traffic Fines</h3>
         <p className="text-sm text-muted-foreground">
-          Upload a CSV file containing traffic fine records. Dates should be in YYYY-MM-DD format.
+          Upload a CSV file containing traffic fine records. The file should include serial number, violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
         </p>
       </div>
 
