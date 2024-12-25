@@ -10,59 +10,18 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { TrafficFine } from "@/types/traffic-fines";
 import { format, isValid, parseISO } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { fetchTrafficFines, deleteAllTrafficFines } from "./utils/trafficFineUtils";
 import { TrafficFineStatusBadge } from "./components/TrafficFineStatusBadge";
+import { fetchTrafficFines } from "./utils/trafficFineUtils";
 
 interface TrafficFinesProps {
   agreementId: string;
 }
 
 export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
-  const { toast } = useToast();
-  const { data: fines, isLoading, refetch } = useQuery<TrafficFine[]>({
+  const { data: fines, isLoading } = useQuery<TrafficFine[]>({
     queryKey: ["traffic-fines", agreementId],
     queryFn: () => fetchTrafficFines(agreementId),
   });
-
-  const handleDeleteAll = async () => {
-    try {
-      console.log('Initiating delete all operation');
-      await deleteAllTrafficFines();
-      
-      toast({
-        title: "Success",
-        description: "All traffic fines have been deleted successfully",
-      });
-      
-      refetch();
-    } catch (error: any) {
-      console.error('Delete operation failed:', {
-        error,
-        message: error.message,
-        details: error?.details
-      });
-      
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete traffic fines. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
@@ -92,31 +51,6 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-primary">Traffic Fines</h3>
-        {fines && fines.length > 0 && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="gap-2">
-                <Trash2 className="h-4 w-4" />
-                Delete All
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete all traffic fines
-                  associated with this agreement.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteAll}>
-                  Delete All
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
       </div>
       
       <div className="rounded-lg border bg-card">
