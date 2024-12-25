@@ -3900,7 +3900,11 @@ export type Database = {
         | "closed"
         | "terminated"
         | "cancelled"
-      legal_case_status: "pending_reminder" | "in_legal_process" | "resolved"
+      legal_case_status:
+        | "pending_reminder"
+        | "in_legal_process"
+        | "resolved"
+        | "escalated"
       maintenance_status:
         | "scheduled"
         | "in_progress"
