@@ -21,7 +21,7 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
       // Get all unassigned fines
       const { data: unassignedFines, error: finesError } = await supabase
         .from('traffic_fines')
-        .select('id, violation_date, vehicle_id')
+        .select('id, violation_date, vehicle_id, license_plate')
         .eq('assignment_status', 'pending');
 
       if (finesError) throw finesError;
@@ -32,24 +32,35 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
       // Process each fine
       for (const fine of unassignedFines || []) {
         try {
-          // Skip fines without a vehicle_id
-          if (!fine.vehicle_id) {
-            console.warn(`Skipping fine ${fine.id} - no vehicle_id`);
-            errorCount++;
-            continue;
-          }
-
-          // Find any lease that covers the violation date for the vehicle
           let query = supabase
             .from('leases')
             .select('id');
 
-          // Only add vehicle_id condition if it exists
+          // Try to match by vehicle_id if available
           if (fine.vehicle_id) {
             query = query.eq('vehicle_id', fine.vehicle_id);
+          } else if (fine.license_plate) {
+            // If no vehicle_id, try to find vehicle by license plate first
+            const { data: vehicles } = await supabase
+              .from('vehicles')
+              .select('id')
+              .eq('license_plate', fine.license_plate)
+              .limit(1);
+
+            if (vehicles && vehicles.length > 0) {
+              query = query.eq('vehicle_id', vehicles[0].id);
+            } else {
+              console.log(`No vehicle found for license plate ${fine.license_plate}`);
+              errorCount++;
+              continue;
+            }
+          } else {
+            console.log('No vehicle_id or license_plate available for fine');
+            errorCount++;
+            continue;
           }
 
-          // Add date conditions only if violation_date exists
+          // Add date conditions
           if (fine.violation_date) {
             query = query
               .lte('start_date', fine.violation_date)
@@ -58,7 +69,11 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
 
           const { data: leases, error: leaseError } = await query.limit(1);
 
-          if (leaseError) throw leaseError;
+          if (leaseError) {
+            console.error('Lease query error:', leaseError);
+            errorCount++;
+            continue;
+          }
 
           if (leases && leases.length > 0) {
             // Assign the fine to the lease
@@ -70,7 +85,11 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
               })
               .eq('id', fine.id);
 
-            if (updateError) throw updateError;
+            if (updateError) {
+              console.error('Update error:', updateError);
+              errorCount++;
+              continue;
+            }
             assignedCount++;
           } else {
             console.log(`No matching lease found for fine ${fine.id}`);
