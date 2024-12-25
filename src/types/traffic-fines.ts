@@ -13,7 +13,7 @@ export interface TrafficFine {
   assignment_status: 'pending' | 'assigned';
   created_at?: string | null;
   updated_at?: string | null;
-  fine_type?: string;
+  fine_type?: string | null;
   lease?: {
     id: string;
     customer_id: string;

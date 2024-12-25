@@ -1,33 +1,8 @@
+import { CsvAnalysisResult } from './types';
+import { incrementErrorPattern, generateErrorReport } from './errorPatterns';
+import { repairQuotes, repairDelimiters } from './repairUtils';
 import { parseCSVLine, validateHeaders } from './csvParser';
 import { ensureColumnCount, repairDate, repairNumeric } from './dataRepair';
-
-interface CsvAnalysisResult {
-  isValid: boolean;
-  totalRows: number;
-  validRows: number;
-  errorRows: number;
-  errors: Array<{
-    row: number;
-    type: string;
-    details: string;
-    data?: any;
-    repairs?: string[];
-  }>;
-  patterns: {
-    commonErrors: Record<string, number>;
-    problematicColumns: string[];
-    dataTypeIssues: Record<string, number>;
-  };
-  repairedRows: Array<{
-    rowNumber: number;
-    repairs: string[];
-    finalData: string[];
-  }>;
-}
-
-const incrementErrorPattern = (result: CsvAnalysisResult, errorType: string) => {
-  result.patterns.commonErrors[errorType] = (result.patterns.commonErrors[errorType] || 0) + 1;
-};
 
 export const analyzeCsvContent = (content: string, expectedHeaders: string[]): CsvAnalysisResult => {
   console.log('Starting CSV analysis...');
@@ -50,8 +25,6 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
     const lines = content.split('\n').filter(line => line.trim());
     result.totalRows = lines.length - 1;
     
-    console.log(`Processing ${result.totalRows} data rows...`);
-
     // Validate headers
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
     const headerValidation = validateHeaders(headers);
@@ -62,19 +35,25 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
         type: 'header_mismatch',
         details: `Missing required headers: ${headerValidation.missingHeaders.join(', ')}`,
       });
-      console.error('Header validation failed:', headerValidation.missingHeaders);
     }
 
     // Process each data row
     for (let i = 1; i < lines.length; i++) {
       const rowNumber = i;
-      const line = lines[i];
-      console.log(`Processing row ${rowNumber}:`, line);
+      let line = lines[i];
+
+      // Apply repairs
+      const quoteRepair = repairQuotes(line);
+      const delimiterRepair = repairDelimiters(quoteRepair.value);
+      
+      const repairs = [...quoteRepair.repairs, ...delimiterRepair.repairs];
+      line = delimiterRepair.value;
 
       try {
-        const { values, repairs } = parseCSVLine(line);
+        const { values, repairs: parseRepairs } = parseCSVLine(line);
         const columnResult = ensureColumnCount(values, headers.length);
-        let rowRepairs = [...repairs, ...columnResult.repairs];
+        
+        let rowRepairs = [...repairs, ...parseRepairs, ...columnResult.repairs];
         let rowHasError = false;
 
         // Validate and repair each field
@@ -85,7 +64,7 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           if (repairResult.error) {
             rowHasError = true;
             result.errors.push(repairResult.error);
-            incrementErrorPattern(result, repairResult.error.type);
+            incrementErrorPattern(result.patterns.commonErrors, repairResult.error.type);
           }
           
           if (repairResult.wasRepaired) {
@@ -119,12 +98,11 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
           details: error.message,
           data: line,
         });
-        incrementErrorPattern(result, 'processing_error');
+        incrementErrorPattern(result.patterns.commonErrors, 'processing_error');
       }
     }
 
     result.isValid = result.validRows > 0;
-    console.log('CSV analysis completed:', result);
 
   } catch (error) {
     console.error('Fatal error during CSV analysis:', error);
@@ -134,54 +112,19 @@ export const analyzeCsvContent = (content: string, expectedHeaders: string[]): C
       type: 'fatal_error',
       details: error.message,
     });
-    incrementErrorPattern(result, 'fatal_error');
+    incrementErrorPattern(result.patterns.commonErrors, 'fatal_error');
   }
 
   return result;
 };
 
-const repairField = (header: string, value: string, rowNumber: number): {
-  value: string;
-  wasRepaired: boolean;
-  repairDetails?: string;
-  error?: {
-    row: number;
-    type: string;
-    details: string;
-  };
-} => {
+const repairField = (header: string, value: string, rowNumber: number) => {
   switch (header) {
     case 'violation_date':
-      const dateResult = repairDate(value);
-      if (!dateResult.wasRepaired && !value) {
-        return {
-          value,
-          wasRepaired: false,
-          error: {
-            row: rowNumber,
-            type: 'invalid_date',
-            details: `Invalid or missing date: ${value}`
-          }
-        };
-      }
-      return dateResult;
-    
+      return repairDate(value);
     case 'fine_amount':
     case 'violation_points':
-      const numericResult = repairNumeric(value);
-      if (!numericResult.wasRepaired && !value) {
-        return {
-          value,
-          wasRepaired: false,
-          error: {
-            row: rowNumber,
-            type: 'invalid_number',
-            details: `Invalid or missing number: ${value}`
-          }
-        };
-      }
-      return numericResult;
-    
+      return repairNumeric(value);
     default:
       return {
         value: value.trim(),

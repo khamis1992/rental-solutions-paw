@@ -2994,6 +2994,7 @@ export type Database = {
           created_at: string | null
           fine_amount: number | null
           fine_location: string | null
+          fine_type: string | null
           id: string
           lease_id: string | null
           license_plate: string | null
@@ -3010,6 +3011,7 @@ export type Database = {
           created_at?: string | null
           fine_amount?: number | null
           fine_location?: string | null
+          fine_type?: string | null
           id?: string
           lease_id?: string | null
           license_plate?: string | null
@@ -3026,6 +3028,7 @@ export type Database = {
           created_at?: string | null
           fine_amount?: number | null
           fine_location?: string | null
+          fine_type?: string | null
           id?: string
           lease_id?: string | null
           license_plate?: string | null
