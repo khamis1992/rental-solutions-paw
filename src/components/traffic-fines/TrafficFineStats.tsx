@@ -49,7 +49,7 @@ export const TrafficFineStats = () => {
       // Process each fine
       for (const fine of unassignedFines || []) {
         try {
-          // Find a matching lease based on violation date and vehicle ID
+          // Find any lease that covers the violation date for the vehicle, regardless of status
           const { data: leases, error: leaseError } = await supabase
             .from('leases')
             .select('id')
