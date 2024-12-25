@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { routes } from "@/routes";
@@ -14,12 +14,18 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createBrowserRouter(routes);
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <Routes>
+        {routes.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={route.element}
+          />
+        ))}
+      </Routes>
       <Toaster />
     </QueryClientProvider>
   );
