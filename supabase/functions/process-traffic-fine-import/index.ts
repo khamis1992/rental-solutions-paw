@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { downloadFile, parseCSVContent } from './fileUtils.ts'
+import { downloadFile, parseCSVContent, validateHeaders } from './fileUtils.ts'
 import { processRows, insertFines } from './dataProcessor.ts'
 
 const corsHeaders = {
@@ -14,6 +14,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting traffic fine import process');
     const { fileName } = await req.json()
     console.log('Processing file:', fileName)
 
@@ -23,10 +24,15 @@ serve(async (req) => {
 
     // Download and parse file
     const fileContent = await downloadFile(supabase, fileName)
-    const rows = parseCSVContent(fileContent)
+    console.log('File content length:', fileContent.length)
 
-    if (rows.length < 2) {
-      throw new Error('File contains no data rows')
+    const { headers, rows } = parseCSVContent(fileContent)
+    console.log('Parsed rows:', rows.length)
+
+    // Validate headers
+    const headerValidation = validateHeaders(headers)
+    if (!headerValidation.isValid) {
+      throw new Error(`Invalid headers: ${headerValidation.errors.join(', ')}`)
     }
 
     // Create import batch record
@@ -44,7 +50,7 @@ serve(async (req) => {
     }
 
     // Process and insert fines
-    const fines = processRows(rows, batchData.id)
+    const fines = processRows(rows, headers, batchData.id)
     const processed = await insertFines(supabase, fines)
 
     // Update batch record
@@ -55,6 +61,8 @@ serve(async (req) => {
         unassigned_fines: processed,
       })
       .eq('id', batchData.id)
+
+    console.log('Import completed successfully:', processed, 'fines processed');
 
     return new Response(
       JSON.stringify({ success: true, processed }),
