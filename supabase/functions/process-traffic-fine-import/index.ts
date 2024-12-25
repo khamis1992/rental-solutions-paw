@@ -71,6 +71,8 @@ serve(async (req) => {
         }
 
         const values = parseCSVRow(row);
+        console.log(`Processing row ${i}:`, values);
+        
         validateRow(i, values, expectedColumns, row);
 
         // Validate date and numeric values with more detailed error messages
@@ -89,6 +91,8 @@ serve(async (req) => {
         const amount = validateNumeric(values[6], 'amount', i);
         const points = validateNumeric(values[7], 'points', i);
 
+        console.log(`Inserting fine for row ${i}`);
+
         // Insert the fine with validated data
         const { error: insertError } = await supabaseClient
           .from('traffic_fines')
@@ -106,10 +110,12 @@ serve(async (req) => {
           });
 
         if (insertError) {
+          console.error(`Insert error for row ${i}:`, insertError);
           throw insertError;
         }
 
         processed++;
+        console.log(`Successfully processed row ${i}`);
       } catch (error) {
         console.error(`Error processing row ${i}:`, error);
         errors.push({ row: i, error: error.message });
@@ -117,6 +123,7 @@ serve(async (req) => {
     }
 
     // Log import results
+    console.log('Logging import results...');
     const { error: logError } = await supabaseClient
       .from('traffic_fine_imports')
       .insert({

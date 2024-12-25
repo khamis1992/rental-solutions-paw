@@ -12,21 +12,30 @@ export const TrafficFineImport = () => {
 
   const validateDateFormat = (dateStr: string): boolean => {
     try {
-      // First try parsing as ISO date
+      console.log('Validating date:', dateStr);
       const parsedDate = parseISO(dateStr);
-      if (isValid(parsedDate)) return true;
+      if (isValid(parsedDate)) {
+        console.log('Date is valid ISO format');
+        return true;
+      }
 
-      // If not ISO, try parsing as regular date
       const date = new Date(dateStr);
-      return isValid(date);
-    } catch {
+      const isValidDate = isValid(date);
+      console.log('Date validation result:', isValidDate);
+      return isValidDate;
+    } catch (error) {
+      console.error('Date validation error:', error);
       return false;
     }
   };
 
   const validateCsvContent = async (file: File): Promise<boolean> => {
+    console.log('Starting CSV validation for file:', file.name);
     const text = await file.text();
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    console.log('CSV Headers:', lines[0]);
+    console.log('Number of rows:', lines.length);
     
     if (lines.length < 2) {
       toast({
@@ -40,9 +49,11 @@ export const TrafficFineImport = () => {
     // Skip header row and validate each data row
     for (let i = 1; i < lines.length; i++) {
       const columns = lines[i].split(',').map(col => col.trim());
+      console.log(`Row ${i} columns:`, columns);
       
       // Validate date column (assuming it's the third column, index 2)
       if (columns.length >= 3 && !validateDateFormat(columns[2])) {
+        console.error(`Invalid date in row ${i}:`, columns[2]);
         toast({
           title: "Invalid Date Format",
           description: `Row ${i + 1} contains an invalid date format. Expected YYYY-MM-DD or ISO date format.`,
@@ -58,6 +69,8 @@ export const TrafficFineImport = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
 
     if (!file.name.endsWith('.csv')) {
       toast({
@@ -78,13 +91,19 @@ export const TrafficFineImport = () => {
       }
 
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
+      console.log('Uploading file to storage:', fileName);
       
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('imports')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('File uploaded successfully, processing...');
 
       // Process the file
       const { data: processingData, error: processingError } = await supabase.functions
@@ -92,7 +111,12 @@ export const TrafficFineImport = () => {
           body: { fileName }
         });
 
-      if (processingError) throw processingError;
+      if (processingError) {
+        console.error('Processing error:', processingError);
+        throw processingError;
+      }
+
+      console.log('Processing complete:', processingData);
 
       toast({
         title: "Success",
