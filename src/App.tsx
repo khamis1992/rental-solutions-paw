@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 
 // Lazy load components
 const Auth = lazy(() => import("@/pages/Auth"));
@@ -83,7 +84,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
       <Toaster />
       <Routes>
         <Route
@@ -111,6 +112,6 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </ThemeProvider>
   );
 }

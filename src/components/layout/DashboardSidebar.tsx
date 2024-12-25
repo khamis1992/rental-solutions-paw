@@ -1,4 +1,8 @@
-import { Home, Car, Users, FileText, Settings, HelpCircle, Wrench, FilePen, BarChart3, Gavel, Wallet, FileText as AuditIcon } from "lucide-react";
+import { 
+  Home, Car, Users, FileText, Settings, 
+  HelpCircle, Wrench, FilePen, BarChart3, 
+  Gavel, Wallet, FileText as AuditIcon 
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -33,6 +37,7 @@ const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" 
 export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -79,22 +84,7 @@ export const DashboardSidebar = () => {
       }
     };
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/auth');
-      } else if (event === 'SIGNED_IN') {
-        checkSession();
-      }
-    });
-
-    // Initial check
     checkSession();
-
-    // Cleanup subscription
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [session, isLoading, navigate, toast]);
 
   if (isLoading) {
@@ -121,10 +111,13 @@ export const DashboardSidebar = () => {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton 
+                    asChild
+                    active={location.pathname === item.href}
+                  >
                     <a
                       href={item.href}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
