@@ -7,7 +7,8 @@ export interface ErrorPattern {
 export const incrementErrorPattern = (
   patterns: Record<string, ErrorPattern>,
   errorType: string,
-  example: string
+  example: string,
+  rawData: string
 ): void => {
   if (!patterns[errorType]) {
     patterns[errorType] = {
@@ -23,7 +24,7 @@ export const incrementErrorPattern = (
 };
 
 export const generateErrorReport = (analysis: any): string => {
-  if (!analysis || !analysis.patterns || !analysis.patterns.commonErrors) {
+  if (!analysis?.patterns?.commonErrors) {
     return 'No errors to report';
   }
 
@@ -34,7 +35,7 @@ export const generateErrorReport = (analysis: any): string => {
 
   return Object.values(patterns)
     .map((pattern: ErrorPattern) => {
-      if (!pattern || !pattern.type) return '';
+      if (!pattern?.type) return '';
       const examples = pattern.examples || [];
       return `${pattern.type}: ${pattern.count} occurrences\n` +
         `Examples:\n${examples.map(ex => `  - ${ex}`).join('\n')}`;

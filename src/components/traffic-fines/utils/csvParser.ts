@@ -11,13 +11,6 @@ export const parseCSVLine = (line: string): ParseResult => {
     return { values: [], repairs: ['Empty line skipped'] };
   }
 
-  // Count quotes to detect unmatched quotes
-  const quoteCount = (line.match(/"/g) || []).length;
-  if (quoteCount % 2 !== 0) {
-    line = line + '"';
-    repairs.push('Added missing closing quote');
-  }
-
   // Process each character
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
@@ -62,30 +55,6 @@ export const validateHeaders = (headers: string[], requiredHeaders: string[]): {
   };
 };
 
-export const repairQuotedFields = (line: string): { value: string; repairs: string[] } => {
-  const repairs: string[] = [];
-  let repairedLine = line;
-
-  // Fix unclosed quotes
-  const quoteCount = (repairedLine.match(/"/g) || []).length;
-  if (quoteCount % 2 !== 0) {
-    repairs.push('Added missing closing quote');
-    repairedLine = repairedLine + '"';
-  }
-
-  // Fix consecutive quotes that aren't escaped
-  repairedLine = repairedLine.replace(/"{2,}/g, (match) => {
-    if (match.length % 2 === 0) {
-      return match; // Even number of quotes - likely intentional escaping
-    } else {
-      repairs.push('Fixed unescaped consecutive quotes');
-      return '"'.repeat(match.length - 1); // Remove one quote to make it even
-    }
-  });
-
-  return { value: repairedLine, repairs };
-};
-
 export const reconstructMalformedRow = (
   currentRow: string[],
   nextRow: string | undefined,
@@ -102,17 +71,15 @@ export const reconstructMalformedRow = (
   // If we have fewer columns than expected and there's a next row
   if (currentRow.length < expectedColumns && nextRow) {
     // Check if the next row might be a continuation of a quoted field
-    if (!nextRow.includes('"') || nextRow.trim().startsWith('"')) {
-      const nextRowParts = nextRow.split(',');
-      const remaining = expectedColumns - currentRow.length;
-      
-      // Only take what we need from the next row
-      const neededParts = nextRowParts.slice(0, remaining);
-      repairedRow = [...currentRow, ...neededParts];
-      
-      repairs.push('Merged split row due to line break in quoted field');
-      skipNextRow = true;
-    }
+    const nextRowParts = nextRow.split(',');
+    const remaining = expectedColumns - currentRow.length;
+    
+    // Only take what we need from the next row
+    const neededParts = nextRowParts.slice(0, remaining);
+    repairedRow = [...currentRow, ...neededParts];
+    
+    repairs.push('Merged split row due to line break in quoted field');
+    skipNextRow = true;
   }
 
   // Ensure we have exactly the expected number of columns
