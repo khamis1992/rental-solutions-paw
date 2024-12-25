@@ -91,29 +91,29 @@ export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLeg
             <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
-                onClick={() => handleStatusChange('in_legal_process')}
-                disabled={status === 'in_legal_process'}
+                onClick={() => handleStatusChange("in_legal_process")}
+                disabled={status === "in_legal_process"}
               >
                 Set to In Legal Process
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => handleStatusChange('resolved')}
-                disabled={status === 'resolved'}
+                onClick={() => handleStatusChange("resolved")}
+                disabled={status === "resolved"}
               >
                 Set to Resolved
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => handleStatusChange('escalated')}
-                disabled={status === 'escalated'}
+                onClick={() => handleStatusChange("escalated")}
+                disabled={status === "escalated"}
               >
                 Set to Escalated
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => handleStatusChange('pending_reminder')}
-                disabled={status === 'pending_reminder'}
+                onClick={() => handleStatusChange("pending_reminder")}
+                disabled={status === "pending_reminder"}
               >
                 Set to Pending Reminder
               </Button>
