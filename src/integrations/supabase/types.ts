@@ -3899,6 +3899,7 @@ export type Database = {
         | "active"
         | "closed"
         | "terminated"
+        | "cancelled"
       legal_case_status: "pending_reminder" | "in_legal_process" | "resolved"
       maintenance_status:
         | "scheduled"
