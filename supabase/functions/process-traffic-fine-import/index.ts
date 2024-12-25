@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { validateRow, normalizeRow, validateHeaders } from './validators.ts'
+import { processCSVContent, insertTrafficFines } from './dataProcessor.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,63 +37,52 @@ serve(async (req) => {
 
     const content = await fileData.text()
     console.log('File content loaded')
-    
-    // Split content into lines and clean them
-    const lines = content.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
 
-    console.log(`Found ${lines.length} lines in file`)
+    // Process CSV content
+    const { headers, rows } = processCSVContent(content, 8)
+    console.log('Headers:', headers)
 
-    if (lines.length < 2) {
-      throw new Error('File is empty or contains only headers')
+    // Validate headers
+    const missingHeaders = validateHeaders(headers)
+    if (missingHeaders) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Missing required columns: ${missingHeaders.join(', ')}`
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
     }
 
-    // Parse and validate headers
-    const headers = lines[0].toLowerCase().split(',').map(h => h.trim())
-    const requiredHeaders = [
-      'serial_number',
-      'violation_number',
-      'violation_date',
-      'license_plate',
-      'fine_location',
-      'violation_charge',
-      'fine_amount',
-      'violation_points'
-    ]
-
-    console.log('File headers:', headers)
-
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
-    if (missingHeaders.length > 0) {
-      throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`)
-    }
-
-    // Process rows
+    // Process rows with validation and normalization
     const fines = []
     const errors = []
 
-    // Skip header row
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
       try {
-        console.log(`Processing row ${i}:`, lines[i])
-        
-        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
-        
-        if (values.length !== headers.length) {
-          throw new Error(`Row ${i + 1} has incorrect number of columns (expected ${headers.length}, got ${values.length})`)
+        const rowIndex = i + 1
+        console.log(`Processing row ${rowIndex}:`, rows[i])
+
+        // Validate row
+        const validationError = validateRow(rows[i], rowIndex, headers.length)
+        if (validationError) {
+          errors.push(validationError)
+          continue
         }
 
+        // Normalize row if needed
+        const normalizedRow = normalizeRow(rows[i], headers.length)
+        
+        // Create fine object from normalized row
         const rowData = headers.reduce((obj, header, index) => {
-          obj[header] = values[index]
+          obj[header] = normalizedRow[index]
           return obj
         }, {} as Record<string, string>)
 
-        const emptyFields = requiredHeaders.filter(field => !rowData[field]?.trim())
-        if (emptyFields.length > 0) {
-          throw new Error(`Missing required values for fields: ${emptyFields.join(', ')}`)
-        }
-
+        // Validate required fields and data types
         const date = new Date(rowData.violation_date)
         if (isNaN(date.getTime())) {
           throw new Error(`Invalid date format. Expected YYYY-MM-DD, got: ${rowData.violation_date}`)
@@ -128,63 +119,20 @@ serve(async (req) => {
         errors.push({
           row: i + 1,
           error: error.message,
-          data: lines[i]
+          data: rows[i].join(',')
         })
       }
     }
 
-    console.log(`Processed ${lines.length - 1} rows:`)
+    console.log(`Processed ${rows.length} rows:`)
     console.log(`- Valid records: ${fines.length}`)
     console.log(`- Errors: ${errors.length}`)
 
-    if (fines.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'No valid records found to import. Please check the file format and ensure all required fields are properly formatted.',
-          validation_errors: errors
-        }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    // Insert fines into database
-    const { error: insertError } = await supabase
-      .from('traffic_fines')
-      .insert(fines)
-
-    if (insertError) {
-      console.error('Insert error:', insertError)
-      throw insertError
-    }
-
-    // Log import results
-    const { error: logError } = await supabase
-      .from('traffic_fine_imports')
-      .insert({
-        file_name: fileName,
-        total_fines: fines.length,
-        unassigned_fines: fines.length,
-        import_errors: errors.length > 0 ? errors : null,
-        processed_by: null,
-        created_at: new Date().toISOString()
-      })
-
-    if (logError) {
-      console.error('Error logging import:', logError)
-    }
-
-    console.log('Import completed successfully')
-
+    // Process the data and handle response
+    const result = await insertTrafficFines(supabase, fines, errors)
+    
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        processed: fines.length,
-        errors: errors.length > 0 ? errors : null 
-      }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
