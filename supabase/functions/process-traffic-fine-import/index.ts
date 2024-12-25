@@ -7,8 +7,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('Function invoked with request:', req.method)
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request')
     return new Response(null, { headers: corsHeaders })
   }
 
@@ -16,9 +19,15 @@ serve(async (req) => {
     const { fileName } = await req.json()
     console.log('Processing file:', fileName)
     
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing environment variables')
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    console.log('Supabase client created')
 
     // Download file content
     const { data: fileData, error: downloadError } = await supabase.storage
@@ -81,8 +90,12 @@ serve(async (req) => {
       console.error('Log error:', logError)
     }
 
+    console.log('Processing completed successfully')
     return new Response(
-      JSON.stringify({ success: true, processed: rows.length }),
+      JSON.stringify({ 
+        success: true, 
+        processed: rows.length 
+      }),
       { 
         headers: { 
           ...corsHeaders,
