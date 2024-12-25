@@ -9,12 +9,7 @@ export const parseCSVLine = (line: string): string[] => {
     const char = line[i];
     
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
+      inQuotes = !inQuotes;
       continue;
     }
     
@@ -28,7 +23,7 @@ export const parseCSVLine = (line: string): string[] => {
   }
   
   result.push(current.trim());
-  return result;
+  return result.filter(Boolean); // Remove empty entries
 };
 
 export const validateDateFormat = (dateStr: string): boolean => {
@@ -37,21 +32,24 @@ export const validateDateFormat = (dateStr: string): boolean => {
     return false;
   }
 
-  // Remove any quotes and whitespace
   const cleanDateStr = dateStr.replace(/"/g, '').trim();
+  console.log('Validating date:', cleanDateStr);
   
-  // Try parsing as ISO date
   const parsedDate = parseISO(cleanDateStr);
   if (isValid(parsedDate)) {
+    console.log('Valid ISO date');
     return true;
   }
 
-  // Try parsing as regular date
   const date = new Date(cleanDateStr);
-  return isValid(date);
+  const isValidDate = isValid(date);
+  console.log('Valid regular date:', isValidDate);
+  return isValidDate;
 };
 
 export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missingHeaders: string[] } => {
+  console.log('Validating headers:', headers);
+  
   const requiredHeaders = [
     'serial_number',
     'violation_number',
@@ -63,9 +61,14 @@ export const validateCSVHeaders = (headers: string[]): { isValid: boolean; missi
     'violation_points'
   ];
 
-  const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
+  const normalizedHeaders = headers
+    .map(h => h.toLowerCase().trim())
+    .filter(Boolean); // Remove empty headers
+  
+  console.log('Normalized headers:', normalizedHeaders);
+  
   const missingHeaders = requiredHeaders.filter(h => !normalizedHeaders.includes(h));
-
+  
   return {
     isValid: missingHeaders.length === 0,
     missingHeaders

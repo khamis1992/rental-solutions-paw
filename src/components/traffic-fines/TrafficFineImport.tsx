@@ -11,6 +11,7 @@ export const TrafficFineImport = () => {
 
   const validateCsvContent = async (file: File): Promise<boolean> => {
     console.log('Starting CSV validation for file:', file.name);
+    
     const text = await file.text();
     const lines = text.split('\n')
       .map(line => line.trim())
@@ -27,7 +28,7 @@ export const TrafficFineImport = () => {
 
     // Parse and validate headers
     const headers = parseCSVLine(lines[0]);
-    console.log('CSV Headers:', headers.join(','));
+    console.log('Parsed headers:', headers);
     
     const { isValid, missingHeaders } = validateCSVHeaders(headers);
     if (!isValid) {
@@ -53,9 +54,18 @@ export const TrafficFineImport = () => {
     // Validate each data row
     for (let i = 1; i < lines.length; i++) {
       const columns = parseCSVLine(lines[i]);
-      console.log(`Processing row ${i}:`, columns);
+      console.log(`Validating row ${i}:`, columns);
 
-      if (!columns[dateIndex] || !validateDateFormat(columns[dateIndex])) {
+      if (columns.length !== headers.length) {
+        toast({
+          title: "Invalid Row Format",
+          description: `Row ${i + 1} has incorrect number of columns`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (!validateDateFormat(columns[dateIndex])) {
         toast({
           title: "Invalid Date Format",
           description: `Row ${i + 1} contains an invalid date format. Expected YYYY-MM-DD format.`,
