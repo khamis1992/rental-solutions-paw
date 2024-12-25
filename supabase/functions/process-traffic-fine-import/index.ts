@@ -7,9 +7,8 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  console.log('Function invoked:', req.method)
+  console.log('Function invoked with request:', req.method)
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request')
     return new Response(null, { headers: corsHeaders })
