@@ -49,31 +49,6 @@ export const parseCSVLine = (line: string): ParseResult => {
   // Add the last value
   result.push(current.trim());
 
-  // Normalize the number of columns to match the expected order
-  const expectedColumns = 8;
-  const columnNames = [
-    'serial_number',
-    'violation_number',
-    'violation_date',
-    'license_plate',
-    'fine_location',
-    'violation_charge',
-    'fine_amount',
-    'violation_points'
-  ];
-  
-  // Add empty values for missing columns
-  while (result.length < expectedColumns) {
-    repairs.push(`Added empty placeholder for ${columnNames[result.length]}`);
-    result.push('');
-  }
-
-  // Remove excess columns
-  if (result.length > expectedColumns) {
-    const removed = result.splice(expectedColumns);
-    repairs.push(`Removed ${removed.length} excess columns`);
-  }
-
   return { values: result, repairs };
 };
 

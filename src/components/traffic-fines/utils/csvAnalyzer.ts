@@ -39,6 +39,8 @@ export const analyzeCsvContent = (content: string, requiredHeaders: string[]): C
         type: 'header_mismatch',
         details: `Missing required headers: ${headerValidation.missingHeaders.join(', ')}`,
       });
+      result.isValid = false;
+      return result;
     }
 
     // Process each data row
@@ -81,8 +83,19 @@ export const analyzeCsvContent = (content: string, requiredHeaders: string[]): C
           });
         }
 
-        // Count as valid if we have all required fields
-        result.validRows++;
+        // Count as valid if we have all required fields after repairs
+        if (parseResult.values.length >= requiredHeaders.length) {
+          result.validRows++;
+        } else {
+          result.errorRows++;
+          result.errors.push({
+            row: i,
+            type: 'column_count_mismatch',
+            details: `Row has ${parseResult.values.length} columns but expected ${requiredHeaders.length}`,
+            data: line,
+          });
+          incrementErrorPattern(result.patterns.commonErrors, 'column_count_mismatch');
+        }
 
       } catch (error: any) {
         console.error(`Error processing row ${i}:`, error);
@@ -99,6 +112,7 @@ export const analyzeCsvContent = (content: string, requiredHeaders: string[]): C
 
     // Consider the import valid if we have at least one valid row
     result.isValid = result.validRows > 0;
+    console.log('Analysis complete:', result);
 
   } catch (error: any) {
     console.error('Fatal error during CSV analysis:', error);
