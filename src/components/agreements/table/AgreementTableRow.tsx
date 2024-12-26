@@ -50,7 +50,7 @@ export const AgreementTableRow = ({
           onClick={() => onViewContract(agreement.id)}
           title="View Contract"
         >
-          <Eye className="h-4 w-4" />
+          <Eye className="h-4 w-4 text-primary hover:text-primary/80" />
         </Button>
         <Button
           variant="ghost"
@@ -58,7 +58,7 @@ export const AgreementTableRow = ({
           onClick={() => onPrintContract(agreement.id)}
           title="Print Contract"
         >
-          <Printer className="h-4 w-4" />
+          <Printer className="h-4 w-4 text-blue-600 hover:text-blue-500" />
         </Button>
         <Button
           variant="ghost"
@@ -66,16 +66,16 @@ export const AgreementTableRow = ({
           onClick={() => onAgreementClick(agreement.id)}
           title="View Invoice"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="h-4 w-4 text-violet-600 hover:text-violet-500" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={onDeleteClick}
-          className="text-destructive hover:text-destructive"
+          className="hover:bg-destructive/10"
           title="Delete Agreement"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/90" />
         </Button>
       </TableCell>
     </TableRow>
