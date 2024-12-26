@@ -10,6 +10,8 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
   const { data: agreement, isLoading } = useQuery({
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
+      console.log('Fetching agreement details for:', agreementId);
+      
       const [
         { data: agreement, error: agreementError }, 
         { data: remainingAmount, error: remainingError }
@@ -41,11 +43,26 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
           .maybeSingle()
       ]);
 
-      if (agreementError) throw agreementError;
+      if (agreementError) {
+        console.error('Error fetching agreement:', agreementError);
+        throw agreementError;
+      }
+      
+      if (remainingError) {
+        console.error('Error fetching remaining amount:', remainingError);
+      }
+
+      console.log('Fetched agreement:', agreement);
+      console.log('Fetched remaining amount:', remainingAmount);
       
       return {
         ...agreement,
-        remainingAmount
+        remainingAmount: remainingAmount || {
+          rent_amount: agreement.rent_amount || 0,
+          final_price: agreement.total_amount || 0,
+          remaining_amount: (agreement.total_amount || 0) - 0, // Initial remaining amount is total amount
+          amount_paid: 0
+        }
       };
     },
     enabled: !!agreementId && open,
@@ -54,6 +71,8 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
   // Set up real-time subscription for both leases and remaining_amounts tables
   useEffect(() => {
     if (!agreementId || !open) return;
+
+    console.log('Setting up real-time subscriptions for agreement:', agreementId);
 
     const channel = supabase
       .channel('agreement-details-changes')
@@ -88,6 +107,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
       .subscribe();
 
     return () => {
+      console.log('Cleaning up subscriptions');
       supabase.removeChannel(channel);
     };
   }, [agreementId, open, queryClient]);
