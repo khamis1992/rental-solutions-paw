@@ -27,40 +27,40 @@ export function RemainingAmountStats() {
   });
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="min-w-[320px]">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Remaining</CardTitle>
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Remaining</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">{formatCurrency(stats?.totalRemaining || 0)}</div>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">{formatCurrency(stats?.totalRemaining || 0)}</div>
         </CardContent>
       </Card>
       
-      <Card className="min-w-[320px]">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Paid</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">{formatCurrency(stats?.totalPaid || 0)}</div>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">{formatCurrency(stats?.totalPaid || 0)}</div>
         </CardContent>
       </Card>
       
-      <Card className="min-w-[320px]">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Value</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-xl font-bold whitespace-nowrap overflow-hidden text-ellipsis">{formatCurrency(stats?.totalValue || 0)}</div>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">{formatCurrency(stats?.totalValue || 0)}</div>
         </CardContent>
       </Card>
       
-      <Card className="min-w-[320px]">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Agreements</CardTitle>
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Agreements</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-xl font-bold">{stats?.count || 0}</div>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">{stats?.count || 0}</div>
         </CardContent>
       </Card>
     </div>
