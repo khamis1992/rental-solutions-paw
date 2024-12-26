@@ -85,33 +85,37 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-      <Toaster />
-      <Routes>
-        <Route
-          path="/auth"
-          element={
-            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-              <Auth />
-            </Suspense>
-          }
-        />
-
-        {protectedRoutes.map(({ path, component: Component }) => (
+      <div className="min-h-screen bg-background">
+        <Toaster />
+        <Routes>
           <Route
-            key={path}
-            path={path}
+            path="/auth"
             element={
               <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <RouteWrapper>
-                  <Component />
-                </RouteWrapper>
+                <Auth />
               </Suspense>
             }
           />
-        ))}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {protectedRoutes.map(({ path, component: Component }) => (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <div className="content-container">
+                      <Component />
+                    </div>
+                  </RouteWrapper>
+                </Suspense>
+              }
+            />
+          ))}
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </ThemeProvider>
   );
 }
