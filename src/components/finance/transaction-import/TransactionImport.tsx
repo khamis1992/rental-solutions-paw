@@ -3,13 +3,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FileUploadSection } from "./components/FileUploadSection";
+import { TransactionPreviewTable } from "./TransactionPreviewTable";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [importedData, setImportedData] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
@@ -20,8 +23,16 @@ export const TransactionImport = () => {
         const csvContent = e.target?.result as string;
         const rows = csvContent.split('\n').map(row => {
           const [transaction_date, amount, description, status] = row.split(',');
-          return { transaction_date, amount, description, status };
+          return { 
+            transaction_date, 
+            amount: parseFloat(amount) || 0,
+            description, 
+            status,
+            type: 'income' // Set transaction type as income
+          };
         }).filter((row, index) => index > 0); // Skip header row
+
+        setImportedData(rows);
 
         const { error: functionError } = await supabase.functions
           .invoke('process-transaction-import', {
@@ -39,9 +50,9 @@ export const TransactionImport = () => {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] }),
           queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
-          queryClient.invalidateQueries({ queryKey: ["financial-overview"] })
+          queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
+          queryClient.invalidateQueries({ queryKey: ["transaction-imports"] })
         ]);
-
       };
 
       reader.onerror = () => {
@@ -67,6 +78,12 @@ export const TransactionImport = () => {
         onFileUpload={handleFileUpload}
         isUploading={isUploading}
       />
+      {importedData.length > 0 && (
+        <TransactionPreviewTable 
+          data={importedData}
+          onDataChange={setImportedData}
+        />
+      )}
     </div>
   );
 };
