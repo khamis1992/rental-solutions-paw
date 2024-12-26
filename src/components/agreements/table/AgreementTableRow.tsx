@@ -6,6 +6,8 @@ import type { Agreement } from "../hooks/useAgreements";
 import { useState } from "react";
 import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
 import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
+import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
+import { Trash2 } from "lucide-react";
 
 interface AgreementTableRowProps {
   agreement: Agreement;
@@ -13,6 +15,7 @@ interface AgreementTableRowProps {
   onPrintContract: (id: string) => void;
   onAgreementClick: (id: string) => void;
   onNameClick: (id: string) => void;
+  onDeleted?: () => void;
 }
 
 export const AgreementTableRow = ({
@@ -21,9 +24,11 @@ export const AgreementTableRow = ({
   onPrintContract,
   onAgreementClick,
   onNameClick,
+  onDeleted,
 }: AgreementTableRowProps) => {
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const badgeVariant = agreement.status as "active" | "pending_payment" | "pending_deposit" | "closed";
 
   return (
@@ -83,8 +88,17 @@ export const AgreementTableRow = ({
           >
             View Invoice
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </TableCell>
       </TableRow>
+
       <VehicleDetailsDialog
         vehicleId={agreement.vehicle.id}
         open={showVehicleDetails}
@@ -94,6 +108,12 @@ export const AgreementTableRow = ({
         customerId={agreement.customer.id}
         open={showCustomerDetails}
         onOpenChange={setShowCustomerDetails}
+      />
+      <DeleteAgreementDialog
+        agreementId={agreement.id}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onDeleted={onDeleted}
       />
     </>
   );
