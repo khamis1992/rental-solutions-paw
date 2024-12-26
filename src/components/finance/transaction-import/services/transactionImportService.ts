@@ -8,7 +8,7 @@ export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
       .from('raw_transaction_imports')
       .insert(
         rows.map(row => ({
-          raw_data: row,
+          raw_data: row as unknown as Json,
           is_valid: true
         }))
       )
@@ -22,10 +22,10 @@ export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
       .insert(
         rawImports.map(importRow => ({
           transaction_id: importRow.id,
-          amount: Number(importRow.raw_data.amount),
+          amount: Number((importRow.raw_data as ImportedTransaction).amount),
           type: 'income' as const,
-          category: importRow.raw_data.category || null,
-          recorded_date: importRow.raw_data.transaction_date
+          category: (importRow.raw_data as ImportedTransaction).category || null,
+          recorded_date: (importRow.raw_data as ImportedTransaction).transaction_date
         }))
       );
 
