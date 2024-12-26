@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import { AgreementStatus } from "./AgreementStatus";
+import { AgreementStatus } from "@/components/agreements/details/AgreementStatus";
 import { formatCurrency } from "@/lib/utils";
 
 // Define the LeaseStatus type to match our database schema
