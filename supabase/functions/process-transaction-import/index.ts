@@ -4,40 +4,86 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { fileName } = await req.json();
+    console.log('Starting transaction import process...');
     
-    const supabase = createClient(
+    // Create Supabase client
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          detectSessionInUrl: false
+        }
+      }
     );
 
-    // Download the file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
+    // Get request body
+    const { fileName } = await req.json();
+    console.log('Processing file:', fileName);
+
+    if (!fileName) {
+      throw new Error('No file name provided');
+    }
+
+    // Download file from storage
+    console.log('Downloading file from storage...');
+    const { data: fileData, error: downloadError } = await supabaseClient
+      .storage
       .from('imports')
       .download(fileName);
 
-    if (downloadError) throw downloadError;
+    if (downloadError) {
+      console.error('Download error:', downloadError);
+      throw downloadError;
+    }
 
-    // Parse CSV content
     const text = await fileData.text();
-    const lines = text.split('\n');
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    console.log(`Processing ${lines.length} lines from file...`);
+
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+    console.log('CSV Headers:', headers);
+
+    // Validate required headers
+    const requiredHeaders = [
+      'agreement_number',
+      'customer_name',
+      'amount',
+      'license_plate',
+      'vehicle',
+      'payment_date',
+      'payment_method',
+      'payment_number',
+      'payment_description'
+    ];
     
-    // Process each line
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    if (missingHeaders.length > 0) {
+      console.error('Missing required headers:', missingHeaders);
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    }
+
+    const errors = [];
     const processedRows = [];
-    let errorRows = [];
-    
+
+    // Process each row
     for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
+      console.log(`Processing row ${i}...`);
       
+      if (!lines[i].trim()) continue;
+
       const values = lines[i].split(',').map(v => v.trim());
       const row = headers.reduce((obj: any, header, index) => {
         obj[header] = values[index];
@@ -45,64 +91,97 @@ serve(async (req) => {
       }, {});
 
       try {
-        // Validate required fields
-        if (!row.date || !row.amount || isNaN(parseFloat(row.amount))) {
-          throw new Error('Invalid date or amount format');
+        // Validate amount
+        const amount = parseFloat(row.amount);
+        if (isNaN(amount)) {
+          throw new Error(`Invalid amount format in row ${i}: ${row.amount}`);
         }
 
-        processedRows.push({
-          transaction_date: row.date,
-          amount: parseFloat(row.amount),
-          description: row.description,
-          status: 'pending'
-        });
+        // Validate date
+        const paymentDate = new Date(row.payment_date);
+        if (isNaN(paymentDate.getTime())) {
+          throw new Error(`Invalid date format in row ${i}: ${row.payment_date}`);
+        }
+
+        // Create transaction record
+        const transaction = {
+          type: 'income',
+          amount: amount,
+          description: `${row.payment_description} (Agreement: ${row.agreement_number})`,
+          transaction_date: paymentDate.toISOString(),
+          reference_type: 'agreement',
+          reference_id: row.agreement_number,
+          status: 'completed',
+          metadata: {
+            customer_name: row.customer_name,
+            license_plate: row.license_plate,
+            vehicle: row.vehicle,
+            payment_method: row.payment_method,
+            payment_number: row.payment_number
+          }
+        };
+
+        processedRows.push(transaction);
+        console.log(`Successfully processed row ${i}`);
+
       } catch (error) {
-        errorRows.push({
-          row_number: i,
+        console.error(`Error processing row ${i}:`, error);
+        errors.push({
+          row: i,
           error: error.message,
           data: row
         });
       }
     }
 
-    // Update import log with results
-    const { error: updateError } = await supabase
-      .from('transaction_imports')
-      .update({
-        status: errorRows.length > 0 ? 'completed_with_errors' : 'completed',
-        records_processed: processedRows.length,
-        errors: errorRows.length > 0 ? errorRows : null
-      })
-      .eq('file_name', fileName);
+    console.log(`Processed ${processedRows.length} rows with ${errors.length} errors`);
 
-    if (updateError) throw updateError;
-
-    // Insert processed rows
+    // Insert valid rows
     if (processedRows.length > 0) {
-      const { error: insertError } = await supabase
-        .from('transaction_import_items')
+      console.log('Inserting processed transactions...');
+      const { error: insertError } = await supabaseClient
+        .from('accounting_transactions')
         .insert(processedRows);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
+      }
+      console.log('Successfully inserted transactions');
     }
+
+    // Update import log
+    console.log('Updating import log...');
+    await supabaseClient
+      .from('transaction_imports')
+      .insert({
+        file_name: fileName,
+        status: errors.length === 0 ? 'completed' : 'completed_with_errors',
+        records_processed: processedRows.length,
+        errors: errors.length > 0 ? errors : null
+      });
+
+    console.log('Import process completed successfully');
 
     return new Response(
       JSON.stringify({
         success: true,
         processed: processedRows.length,
-        errors: errorRows.length
+        errors
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     );
 
   } catch (error) {
     console.error('Error processing import:', error);
     return new Response(
       JSON.stringify({
-        error: 'Failed to process import',
-        details: error.message
+        error: error.message
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400
       }
