@@ -2,7 +2,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { Trash2 } from "lucide-react";
+import { Eye, Printer, FileText, Trash2 } from "lucide-react";
 import type { Agreement } from "../hooks/useAgreements";
 
 export interface AgreementTableRowProps {
@@ -12,7 +12,7 @@ export interface AgreementTableRowProps {
   onAgreementClick: (id: string) => void;
   onNameClick: (id: string) => void;
   onDeleted?: () => void;
-  onDeleteClick: () => void;  // Add this line
+  onDeleteClick: () => void;
 }
 
 export const AgreementTableRow = ({
@@ -48,28 +48,32 @@ export const AgreementTableRow = ({
           variant="ghost"
           size="sm"
           onClick={() => onViewContract(agreement.id)}
+          title="View Contract"
         >
-          View Contract
+          <Eye className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onPrintContract(agreement.id)}
+          title="Print Contract"
         >
-          Print
+          <Printer className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onAgreementClick(agreement.id)}
+          title="View Invoice"
         >
-          View Invoice
+          <FileText className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={onDeleteClick}
           className="text-destructive hover:text-destructive"
+          title="Delete Agreement"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
