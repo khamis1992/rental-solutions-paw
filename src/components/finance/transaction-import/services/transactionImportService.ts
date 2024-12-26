@@ -1,38 +1,48 @@
 import { supabase } from "@/integrations/supabase/client";
+import { ImportedTransaction } from "../types/transaction.types";
 
-export async function uploadImportFile(file: File): Promise<string> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${crypto.randomUUID()}.${fileExt}`;
-  
-  const { error: uploadError } = await supabase.storage
-    .from('imports')
-    .upload(fileName, file);
+export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
+  try {
+    // First save to raw_transaction_imports
+    const { data: rawImports, error: rawError } = await supabase
+      .from('raw_transaction_imports')
+      .insert(rows.map(row => ({
+        raw_data: row,
+        is_valid: true
+      })))
+      .select();
 
-  if (uploadError) throw uploadError;
-  return fileName;
-}
+    if (rawError) throw rawError;
 
-export async function createImportLog(fileName: string) {
-  const { error } = await supabase
-    .from('transaction_imports')
-    .insert([{ file_name: fileName }]);
+    // Then save to transaction_amounts
+    const { error: amountsError } = await supabase
+      .from('transaction_amounts')
+      .insert(
+        rawImports.map(importRow => ({
+          transaction_id: importRow.id,
+          amount: importRow.raw_data.amount,
+          type: 'income',
+          category: importRow.raw_data.category,
+          recorded_date: importRow.raw_data.transaction_date
+        }))
+      );
 
-  if (error) throw error;
-}
+    if (amountsError) throw amountsError;
 
-export async function processImport(fileName: string) {
-  return await supabase.functions.invoke('process-transaction-import', {
-    body: { fileName }
-  });
-}
+    return { success: true, count: rows.length };
+  } catch (error) {
+    console.error('Error saving transactions:', error);
+    throw error;
+  }
+};
 
-export async function pollImportStatus(fileName: string) {
-  const { data, error } = await supabase
-    .from('transaction_imports')
-    .select('*')
-    .eq('file_name', fileName)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
+export const deleteAllTransactions = async () => {
+  try {
+    const { error } = await supabase.functions.invoke('delete-all-transactions');
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting transactions:', error);
+    throw error;
+  }
+};

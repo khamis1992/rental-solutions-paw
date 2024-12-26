@@ -3183,6 +3183,50 @@ export type Database = {
           },
         ]
       }
+      transaction_amounts: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string | null
+          id: string
+          month_year: string | null
+          recorded_date: string | null
+          transaction_id: string | null
+          type: Database["public"]["Enums"]["transaction_amount_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          month_year?: string | null
+          recorded_date?: string | null
+          transaction_id?: string | null
+          type?: Database["public"]["Enums"]["transaction_amount_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          month_year?: string | null
+          recorded_date?: string | null
+          transaction_id?: string | null
+          type?: Database["public"]["Enums"]["transaction_amount_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_amounts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "raw_transaction_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_import_items: {
         Row: {
           amount: number
@@ -3806,6 +3850,15 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_transaction_summaries: {
+        Row: {
+          month_year: string | null
+          total_amount: number | null
+          transaction_count: number | null
+          type: Database["public"]["Enums"]["transaction_amount_type"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_credit_score: {
@@ -3936,6 +3989,7 @@ export type Database = {
         | "submitted"
         | "accepted"
         | "rejected"
+      transaction_amount_type: "income" | "expense" | "refund"
       user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status:
         | "available"
