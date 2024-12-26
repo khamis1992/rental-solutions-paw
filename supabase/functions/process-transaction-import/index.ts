@@ -47,16 +47,37 @@ serve(async (req) => {
 
     console.log('Created import log:', importLog)
 
-    // Save raw import data
-    const rawImports = rows.map(row => ({
-      import_id: importLog.id,
-      raw_data: row,
-      is_valid: true
-    }))
+    // Parse and validate dates before saving
+    const processedRows = rows.map(row => {
+      let transactionDate;
+      try {
+        // Try to parse the date string
+        if (row.transaction_date) {
+          const parsedDate = new Date(row.transaction_date);
+          if (isNaN(parsedDate.getTime())) {
+            throw new Error('Invalid date');
+          }
+          transactionDate = parsedDate.toISOString();
+        } else {
+          transactionDate = new Date().toISOString();
+        }
+      } catch (error) {
+        console.warn('Invalid date format, using current date:', row.transaction_date);
+        transactionDate = new Date().toISOString();
+      }
 
+      return {
+        import_id: importLog.id,
+        raw_data: row,
+        is_valid: true,
+        created_at: new Date().toISOString()
+      };
+    });
+
+    // Save raw import data
     const { error: rawImportError } = await supabaseClient
       .from('raw_transaction_imports')
-      .insert(rawImports)
+      .insert(processedRows)
 
     if (rawImportError) {
       console.error('Error saving raw imports:', rawImportError)
@@ -65,12 +86,19 @@ serve(async (req) => {
 
     console.log('Saved raw transaction data')
 
-    // Prepare transactions for insert
+    // Prepare transactions for insert with validated dates
     const transactions = rows.map(row => ({
       type: 'expense',
       amount: parseFloat(row.amount) || 0,
       description: row.description,
-      transaction_date: new Date(row.transaction_date).toISOString(),
+      transaction_date: (() => {
+        try {
+          const date = new Date(row.transaction_date);
+          return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+        } catch {
+          return new Date().toISOString();
+        }
+      })(),
       status: row.status || 'pending',
       reference_type: 'import',
       reference_id: importLog.id
