@@ -8,7 +8,7 @@ export default function RemainingAmount() {
     <DashboardLayout>
       <div className="container py-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Remaining Amounts</h1>
+          <h1 className="text-3xl font-bold tracking-tight min-w-[250px]">Remaining Amounts</h1>
         </div>
 
         <RemainingAmountStats />
