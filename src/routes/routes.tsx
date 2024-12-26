@@ -1,58 +1,18 @@
-import { Navigate } from "react-router-dom";
-import Index from "@/pages/Index";
-import Agreements from "@/pages/Agreements";
-import Customers from "@/pages/Customers";
-import Vehicles from "@/pages/Vehicles";
-import Maintenance from "@/pages/Maintenance";
-import TrafficFines from "@/pages/TrafficFines";
-import Finance from "@/pages/Finance";
-import Settings from "@/pages/Settings";
-import Help from "@/pages/Help";
-import RemainingAmount from "@/pages/RemainingAmount";
+import { lazy } from "react";
 
-export const routes = [
-  {
-    path: "/",
-    element: <Index />,
-  },
-  {
-    path: "/agreements",
-    element: <Agreements />,
-  },
-  {
-    path: "/customers",
-    element: <Customers />,
-  },
-  {
-    path: "/vehicles",
-    element: <Vehicles />,
-  },
-  {
-    path: "/maintenance",
-    element: <Maintenance />,
-  },
-  {
-    path: "/traffic-fines",
-    element: <TrafficFines />,
-  },
-  {
-    path: "/finance",
-    element: <Finance />,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-  },
-  {
-    path: "/help",
-    element: <Help />,
-  },
-  {
-    path: "/remaining-amount",
-    element: <RemainingAmount />,
-  },
-  {
-    path: "*",
-    element: <Navigate to="/" />,
-  },
-];
+export const Auth = lazy(() => import("@/pages/Auth"));
+export const Dashboard = lazy(() => import("@/pages/Index"));
+export const Vehicles = lazy(() => import("@/pages/Vehicles"));
+export const VehicleDetails = lazy(() => import("@/pages/VehicleDetails"));
+export const Customers = lazy(() => import("@/pages/Customers"));
+export const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
+export const Agreements = lazy(() => import("@/pages/Agreements"));
+export const Settings = lazy(() => import("@/pages/Settings"));
+export const Maintenance = lazy(() => import("@/pages/Maintenance"));
+export const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
+export const Reports = lazy(() => import("@/pages/Reports"));
+export const Finance = lazy(() => import("@/pages/Finance"));
+export const Help = lazy(() => import("@/pages/Help"));
+export const Legal = lazy(() => import("@/pages/Legal"));
+export const Audit = lazy(() => import("@/pages/Audit"));
+export const RemainingAmount = lazy(() => import("@/pages/RemainingAmount"));

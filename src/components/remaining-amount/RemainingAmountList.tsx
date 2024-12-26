@@ -1,9 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+
+interface RemainingAmount {
+  id: string;
+  agreement_number: string;
+  license_plate: string;
+  rent_amount: number;
+  final_price: number;
+  amount_paid: number;
+  remaining_amount: number;
+  agreement_duration: string;
+}
 
 export function RemainingAmountList() {
   const { data: remainingAmounts, isLoading } = useQuery({
@@ -15,7 +25,7 @@ export function RemainingAmountList() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as RemainingAmount[];
     },
   });
 

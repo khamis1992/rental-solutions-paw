@@ -147,6 +147,15 @@ export default function App() {
           />
 
           <Route
+            path="/remaining-amount"
+            element={
+              <ProtectedRoute session={session}>
+                <LazyComponents.RemainingAmount />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/settings"
             element={
               <ProtectedRoute session={session}>
