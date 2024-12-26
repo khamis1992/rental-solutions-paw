@@ -2556,6 +2556,66 @@ export type Database = {
           },
         ]
       }
+      payroll: {
+        Row: {
+          base_salary: number
+          bonuses: number | null
+          created_at: string | null
+          deductions: number | null
+          employee_id: string | null
+          id: string
+          net_pay: number
+          pay_period_end: string
+          pay_period_start: string
+          payment_date: string | null
+          payment_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_salary: number
+          bonuses?: number | null
+          created_at?: string | null
+          deductions?: number | null
+          employee_id?: string | null
+          id?: string
+          net_pay: number
+          pay_period_end: string
+          pay_period_start: string
+          payment_date?: string | null
+          payment_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_salary?: number
+          bonuses?: number | null
+          created_at?: string | null
+          deductions?: number | null
+          employee_id?: string | null
+          id?: string
+          net_pay?: number
+          pay_period_end?: string
+          pay_period_start?: string
+          payment_date?: string | null
+          payment_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       penalties: {
         Row: {
           amount: number
@@ -2840,6 +2900,50 @@ export type Database = {
             columns: ["import_id"]
             isOneToOne: false
             referencedRelation: "transaction_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_revenue: {
+        Row: {
+          amount: number
+          created_at: string | null
+          frequency: string
+          id: string
+          last_processed_date: string | null
+          lease_id: string | null
+          next_due_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          frequency: string
+          id?: string
+          last_processed_date?: string | null
+          lease_id?: string | null
+          next_due_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          last_processed_date?: string | null
+          lease_id?: string | null
+          next_due_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_revenue_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
             referencedColumns: ["id"]
           },
         ]
@@ -3916,6 +4020,10 @@ export type Database = {
         Returns: undefined
       }
       process_recurring_transactions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      send_payment_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
