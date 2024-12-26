@@ -28,13 +28,22 @@ export const RemainingAmountImport = () => {
         body: formData,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Import error:', error);
+        throw error;
+      }
 
-      toast.success("Data imported successfully!");
-      queryClient.invalidateQueries({ queryKey: ['remaining-amounts'] });
+      toast.success(`Successfully processed ${data?.processed || 0} records`);
+      if (data?.errors?.length > 0) {
+        toast.warning(`${data.errors.length} records had issues. Check the console for details.`);
+        console.log('Import errors:', data.errors);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['remaining-amounts'] });
     } catch (error: any) {
       console.error('Import error:', error);
-      toast.error(error.message || "Failed to import data");
+      const errorDetails = JSON.parse(error.message)?.details || error.message;
+      toast.error(errorDetails || "Failed to import data");
     } finally {
       setIsUploading(false);
       if (event.target) {
@@ -44,8 +53,30 @@ export const RemainingAmountImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Agreement Number,License Plate,Rent Amount,Final Price,Amount Paid,Remaining Amount,Agreement Duration\n" +
-                      "AGR-001,ABC123,1000,1200,800,400,3 months";
+    const headers = [
+      "Agreement Number",
+      "License Plate", 
+      "Rent Amount",
+      "Final Price",
+      "Amount Paid",
+      "Remaining Amount",
+      "Agreement Duration"
+    ];
+    
+    const sampleData = [
+      "AGR-001",
+      "ABC123",
+      "1000",
+      "1200",
+      "800",
+      "400",
+      "3 months"
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      sampleData.join(',')
+    ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
