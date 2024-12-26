@@ -19,6 +19,7 @@ import {
 import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
 import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
 import { PaymentMethodType } from "@/types/database/agreement.types";
+import { TRANSACTION_CATEGORIES } from "./constants/transactionCategories";
 
 interface TransactionFormData {
   type: 'income' | 'expense' | 'payment';
@@ -176,7 +177,11 @@ export function TransactionForm() {
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {/* Fetch and display categories here */}
+                {TRANSACTION_CATEGORIES.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
