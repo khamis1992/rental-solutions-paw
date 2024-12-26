@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaymentForm } from "./details/PaymentForm";
@@ -36,6 +37,9 @@ export const AgreementDetailsDialog = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Agreement Details</DialogTitle>
+          <DialogDescription>
+            View and manage agreement details, payments, and related information.
+          </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (

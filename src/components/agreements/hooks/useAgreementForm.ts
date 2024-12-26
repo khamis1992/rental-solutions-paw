@@ -3,22 +3,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 
+export interface AgreementFormData {
+  agreementNumber: string;
+  agreementType: string;
+  nationality: string;
+  drivingLicense: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
+  vehicleId: string;
+  agreementDuration: number;
+  rentAmount: number;
+  downPayment?: number;
+  initialMileage: number;
+  notes?: string;
+}
+
 export const useAgreementForm = (onSuccess?: () => void) => {
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm();
+  const [open, setOpen] = useState(false);
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<AgreementFormData>();
   const [agreementType, setAgreementType] = useState("lease_to_own");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [monthlyPayment, setMonthlyPayment] = useState(0);
 
-  const onSubmit = async (data: any) => {
+  const updateMonthlyPayment = (totalAmount: number, duration: number) => {
+    if (duration > 0) {
+      setMonthlyPayment(totalAmount / duration);
+    }
+  };
+
+  const onSubmit = async (data: AgreementFormData) => {
     try {
       console.log('Submitting agreement form with data:', data);
+      setIsSubmitting(true);
       
       // Insert the agreement
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .insert([{
           ...data,
-          total_amount: data.total_amount || data.rent_amount,
+          total_amount: data.rentAmount,
           status: 'pending_payment'
         }])
         .select()
@@ -26,19 +50,17 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
       if (agreementError) throw agreementError;
 
-      console.log('Agreement created:', agreement);
-
       // Create the remaining amount record
       const { error: remainingAmountError } = await supabase
         .from('remaining_amounts')
         .insert([{
           agreement_number: agreement.agreement_number,
-          license_plate: data.license_plate,
-          rent_amount: data.rent_amount || 0,
-          final_price: data.total_amount || data.rent_amount || 0,
+          license_plate: agreement.license_plate,
+          rent_amount: data.rentAmount || 0,
+          final_price: data.rentAmount || 0,
           amount_paid: 0,
-          remaining_amount: data.total_amount || data.rent_amount || 0,
-          agreement_duration: data.lease_duration || '12 months',
+          remaining_amount: data.rentAmount || 0,
+          agreement_duration: `${data.agreementDuration} months`,
           lease_id: agreement.id
         }]);
 
@@ -47,14 +69,18 @@ export const useAgreementForm = (onSuccess?: () => void) => {
         throw remainingAmountError;
       }
 
-      console.log('Remaining amount record created');
-      
       if (onSuccess) {
         onSuccess();
       }
+      
+      toast.success('Agreement created successfully');
+      setOpen(false);
     } catch (error) {
       console.error('Error in form submission:', error);
+      toast.error('Failed to create agreement');
       throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -71,5 +97,8 @@ export const useAgreementForm = (onSuccess?: () => void) => {
     setIsSubmitting,
     monthlyPayment,
     setMonthlyPayment,
+    updateMonthlyPayment,
+    open,
+    setOpen
   };
 };
