@@ -1,119 +1,156 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { ImportActions } from "./components/ImportActions";
-import { TransactionTable } from "./components/TransactionTable";
-import { saveTransactionImport, deleteAllTransactions } from "./services/transactionImportService";
-import Papa from 'papaparse';
-import { ImportedTransaction } from "./types/transaction.types";
+import { TransactionPreviewTable } from "./TransactionPreviewTable";
+import { FileUploadSection } from "./components/FileUploadSection";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImportedTransaction, RawTransactionImport } from "./types/transaction.types";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const { data: transactions = [] } = useQuery({
+  // Query to fetch existing imported transactions
+  const { data: importedData = [], isLoading } = useQuery<ImportedTransaction[]>({
     queryKey: ['imported-transactions'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('raw_transaction_imports')
-        .select('raw_data')
-        .order('created_at', { ascending: false });
+        .select('*')
+        .order('created_at', { ascending: false }) as { data: RawTransactionImport[] | null, error: any };
 
       if (error) throw error;
-      return data.map(item => item.raw_data as unknown as ImportedTransaction);
+      return (data || []).map(item => item.raw_data);
     }
   });
 
-  const handleImportClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.csv';
-    input.onchange = (e) => handleFileUpload(e);
-    input.click();
-  };
-
-  const handleFileUpload = async (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     try {
-      const text = await file.text();
+      const reader = new FileReader();
       
-      Papa.parse(text, {
-        header: true,
-        complete: async (results) => {
-          try {
-            const parsedData = results.data as ImportedTransaction[];
-            await saveTransactionImport(parsedData);
-            
-            toast({
-              title: "Success",
-              description: `Successfully imported ${results.data.length} transactions.`,
-            });
-            
-            await queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
-          } catch (error: any) {
-            console.error('Import error:', error);
-            toast({
-              title: "Error",
-              description: error.message || "Failed to import transactions",
-              variant: "destructive",
-            });
-          } finally {
-            setIsUploading(false);
-          }
-        },
-        error: (error) => {
-          console.error('CSV parsing error:', error);
+      reader.onload = async (e) => {
+        const csvContent = e.target?.result as string;
+        const rows: ImportedTransaction[] = csvContent.split('\n')
+          .map(row => {
+            const values = row.split(',').map(value => value.trim());
+            return {
+              agreement_number: values[0] || '',
+              customer_name: values[1] || '',
+              amount: parseFloat(values[2]) || 0,
+              license_plate: values[3] || '',
+              vehicle: values[4] || '',
+              payment_date: values[5] || '',
+              payment_method: values[6] || '',
+              payment_number: values[7] || '',
+              description: values[8] || ''
+            };
+          })
+          .filter((row, index) => index > 0); // Skip header row
+
+        // Save to Supabase
+        const { error: functionError } = await supabase.functions
+          .invoke('process-transaction-import', {
+            body: { rows }
+          });
+
+        if (functionError) {
+          console.error('Import error:', functionError);
           toast({
             title: "Error",
-            description: "Failed to parse CSV file",
+            description: "Failed to import transactions. Please try again.",
             variant: "destructive",
           });
-          setIsUploading(false);
+          return;
         }
-      });
+
+        toast({
+          title: "Success",
+          description: `Successfully imported ${rows.length} transactions`,
+        });
+
+        // Refresh the data
+        queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+      };
+
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to read file",
+          variant: "destructive",
+        });
+      };
+
+      reader.readAsText(file);
     } catch (error: any) {
-      console.error('File reading error:', error);
+      console.error('Import error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to read file",
+        description: error.message || "Failed to import transactions",
         variant: "destructive",
       });
+    } finally {
       setIsUploading(false);
     }
   };
 
   const handleDeleteAll = async () => {
     try {
-      await deleteAllTransactions();
-      await queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+      const { error } = await supabase
+        .from('raw_transaction_imports')
+        .delete()
+        .neq('id', ''); // Delete all records
+
+      if (error) throw error;
+
       toast({
         title: "Success",
-        description: "All transactions have been deleted.",
+        description: "All imported transactions have been deleted",
       });
+
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
     } catch (error: any) {
+      console.error('Delete error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete transactions",
+        description: "Failed to delete transactions",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <Card className="p-6">
-      <ImportActions
-        onImportClick={handleImportClick}
-        onDeleteAll={handleDeleteAll}
-        isUploading={isUploading}
-        hasTransactions={transactions.length > 0}
-      />
-      <TransactionTable transactions={transactions} />
-    </Card>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <FileUploadSection 
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+        />
+        {importedData.length > 0 && (
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAll}
+            className="ml-4"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete All
+          </Button>
+        )}
+      </div>
+      
+      {!isLoading && importedData.length > 0 && (
+        <TransactionPreviewTable 
+          data={importedData}
+          onDataChange={() => {}}
+        />
+      )}
+    </div>
   );
 };

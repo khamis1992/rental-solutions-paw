@@ -1,6 +1,8 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountingOverview } from "@/components/finance/accounting/AccountingOverview";
+import { RecentTransactions } from "@/components/finance/RecentTransactions";
+import { TaxFilingDashboard } from "@/components/finance/tax/TaxFilingDashboard";
 import { TransactionImport } from "@/components/finance/transaction-import/TransactionImport";
 
 const Finance = () => {
@@ -12,11 +14,21 @@ const Finance = () => {
         <Tabs defaultValue="accounting" className="space-y-6">
           <TabsList aria-label="Finance sections">
             <TabsTrigger value="accounting">Accounting</TabsTrigger>
+            <TabsTrigger value="tax">Tax Management</TabsTrigger>
+            <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
             <TabsTrigger value="import">Import Transactions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="accounting" role="tabpanel">
             <AccountingOverview />
+          </TabsContent>
+
+          <TabsContent value="tax" role="tabpanel">
+            <TaxFilingDashboard />
+          </TabsContent>
+
+          <TabsContent value="transactions" role="tabpanel">
+            <RecentTransactions />
           </TabsContent>
 
           <TabsContent value="import" role="tabpanel">

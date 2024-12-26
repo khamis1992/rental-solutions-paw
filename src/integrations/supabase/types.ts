@@ -2556,66 +2556,6 @@ export type Database = {
           },
         ]
       }
-      payroll: {
-        Row: {
-          base_salary: number
-          bonuses: number | null
-          created_at: string | null
-          deductions: number | null
-          employee_id: string | null
-          id: string
-          net_pay: number
-          pay_period_end: string
-          pay_period_start: string
-          payment_date: string | null
-          payment_status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          base_salary: number
-          bonuses?: number | null
-          created_at?: string | null
-          deductions?: number | null
-          employee_id?: string | null
-          id?: string
-          net_pay: number
-          pay_period_end: string
-          pay_period_start: string
-          payment_date?: string | null
-          payment_status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          base_salary?: number
-          bonuses?: number | null
-          created_at?: string | null
-          deductions?: number | null
-          employee_id?: string | null
-          id?: string
-          net_pay?: number
-          pay_period_end?: string
-          pay_period_start?: string
-          payment_date?: string | null
-          payment_status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payroll_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payroll_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       penalties: {
         Row: {
           amount: number
@@ -2900,50 +2840,6 @@ export type Database = {
             columns: ["import_id"]
             isOneToOne: false
             referencedRelation: "transaction_imports"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recurring_revenue: {
-        Row: {
-          amount: number
-          created_at: string | null
-          frequency: string
-          id: string
-          last_processed_date: string | null
-          lease_id: string | null
-          next_due_date: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          frequency: string
-          id?: string
-          last_processed_date?: string | null
-          lease_id?: string | null
-          next_due_date?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          frequency?: string
-          id?: string
-          last_processed_date?: string | null
-          lease_id?: string | null
-          next_due_date?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recurring_revenue_lease_id_fkey"
-            columns: ["lease_id"]
-            isOneToOne: false
-            referencedRelation: "leases"
             referencedColumns: ["id"]
           },
         ]
@@ -3283,50 +3179,6 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      transaction_amounts: {
-        Row: {
-          amount: number
-          category: string | null
-          created_at: string | null
-          id: string
-          month_year: string | null
-          recorded_date: string | null
-          transaction_id: string | null
-          type: Database["public"]["Enums"]["transaction_amount_type"]
-          updated_at: string | null
-        }
-        Insert: {
-          amount: number
-          category?: string | null
-          created_at?: string | null
-          id?: string
-          month_year?: string | null
-          recorded_date?: string | null
-          transaction_id?: string | null
-          type?: Database["public"]["Enums"]["transaction_amount_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: number
-          category?: string | null
-          created_at?: string | null
-          id?: string
-          month_year?: string | null
-          recorded_date?: string | null
-          transaction_id?: string | null
-          type?: Database["public"]["Enums"]["transaction_amount_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transaction_amounts_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "raw_transaction_imports"
             referencedColumns: ["id"]
           },
         ]
@@ -3954,15 +3806,6 @@ export type Database = {
         }
         Relationships: []
       }
-      monthly_transaction_summaries: {
-        Row: {
-          month_year: string | null
-          total_amount: number | null
-          transaction_count: number | null
-          type: Database["public"]["Enums"]["transaction_amount_type"] | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       calculate_credit_score: {
@@ -4020,10 +3863,6 @@ export type Database = {
         Returns: undefined
       }
       process_recurring_transactions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      send_payment_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -4097,7 +3936,6 @@ export type Database = {
         | "submitted"
         | "accepted"
         | "rejected"
-      transaction_amount_type: "income" | "expense" | "refund"
       user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status:
         | "available"
