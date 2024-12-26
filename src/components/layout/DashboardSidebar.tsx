@@ -2,7 +2,7 @@ import {
   Home, Car, Users, FileText, Settings, 
   HelpCircle, Wrench, FilePen, BarChart3, 
   Gavel, Wallet, FileText as AuditIcon,
-  AlertTriangle
+  AlertTriangle, DollarSign
 } from "lucide-react";
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const baseMenuItems = [
   { icon: Users, label: "Customers", href: "/customers" },
   { icon: FilePen, label: "Agreements", href: "/agreements" },
   { icon: AlertTriangle, label: "Traffic Fines", href: "/traffic-fines" },
+  { icon: DollarSign, label: "Remaining Amount", href: "/remaining-amount" },
   { icon: Wallet, label: "Finance", href: "/finance" },
   { icon: AuditIcon, label: "Audit", href: "/audit" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
