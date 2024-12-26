@@ -33,19 +33,60 @@ export const TransactionImport = () => {
       
       setValidRows(validRows);
       setSkippedRows(skippedRows);
-      
-      if (validRows.length === 0) {
-        toast({
-          title: "Error",
-          description: "No valid rows found in the CSV file",
-          variant: "destructive",
+
+      // Create an import log entry
+      const { data: importLog, error: importLogError } = await supabase
+        .from('transaction_imports')
+        .insert([{
+          file_name: file.name,
+          status: 'processing',
+          records_processed: 0
+        }])
+        .select()
+        .single();
+
+      if (importLogError) throw importLogError;
+
+      // Process all rows (both valid and invalid)
+      const allRows = text.split('\n')
+        .slice(1) // Skip header row
+        .filter(line => line.trim().length > 0)
+        .map((line, index) => {
+          const values = line.split(',').map(v => v.trim());
+          const isValid = values.length === 9; // Check if row has correct number of columns
+          
+          return {
+            raw_data: {
+              line: line,
+              values: values
+            },
+            error_description: isValid ? null : `Row has ${values.length} values but requires 9`,
+            is_valid: isValid,
+            import_id: importLog.id
+          };
         });
-        return;
-      }
+
+      // Save all rows to raw_transaction_imports
+      const { error: rawImportError } = await supabase
+        .from('raw_transaction_imports')
+        .insert(allRows);
+
+      if (rawImportError) throw rawImportError;
+
+      // Update import log status
+      const { error: updateLogError } = await supabase
+        .from('transaction_imports')
+        .update({ 
+          status: 'completed',
+          records_processed: allRows.length
+        })
+        .eq('id', importLog.id);
+
+      if (updateLogError) throw updateLogError;
 
       toast({
-        title: "Validation Complete",
-        description: `Found ${validRows.length} valid rows and ${skippedRows.length} invalid rows.`,
+        title: "Import Complete",
+        description: `Processed ${allRows.length} rows. ${validRows.length} valid, ${skippedRows.length} with errors.`,
       });
     } catch (error: any) {
       console.error('CSV processing error:', error);
@@ -69,19 +110,6 @@ export const TransactionImport = () => {
 
     setIsUploading(true);
     try {
-      // First create an import log
-      const { data: importLog, error: importLogError } = await supabase
-        .from('transaction_imports')
-        .insert([{
-          file_name: 'manual_import',
-          status: 'processing',
-          records_processed: validRows.length
-        }])
-        .select()
-        .single();
-
-      if (importLogError) throw importLogError;
-
       // Prepare transactions for insert
       const transactions = validRows.map(row => ({
         transaction_date: new Date(row.transaction_date).toISOString(),
@@ -97,14 +125,6 @@ export const TransactionImport = () => {
         .insert(transactions);
 
       if (transactionError) throw transactionError;
-
-      // Update import log status
-      const { error: updateLogError } = await supabase
-        .from('transaction_imports')
-        .update({ status: 'completed' })
-        .eq('id', importLog.id);
-
-      if (updateLogError) throw updateLogError;
 
       toast({
         title: "Success",
