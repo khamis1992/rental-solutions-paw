@@ -1,13 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransactionForm } from "../TransactionForm";
 import { TransactionList } from "../TransactionList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Transaction } from "@/types/finance.types";
 
 export const ExpenseTracking = () => {
-  const { data: transactions, isLoading } = useQuery({
+  const { data: transactions } = useQuery({
     queryKey: ["expense-transactions"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,17 +23,14 @@ export const ExpenseTracking = () => {
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Type assertion to ensure transactions match our Transaction type
+      return (data as Transaction[]).map(transaction => ({
+        ...transaction,
+        type: transaction.type as 'income' | 'expense'
+      }));
     },
   });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
