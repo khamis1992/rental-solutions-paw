@@ -12,7 +12,7 @@ export interface TransactionRow {
   tags: string;
 }
 
-export const saveTransactions = async (validRows: TransactionRow[]) => {
+export const saveTransactions = async (rows: TransactionRow[]) => {
   try {
     console.log('Starting transaction save process...');
     
@@ -30,11 +30,11 @@ export const saveTransactions = async (validRows: TransactionRow[]) => {
     
     console.log('Created import log:', importLog);
 
-    // Process each row and store in raw_transaction_imports
-    const rawImports = validRows.map(row => ({
+    // Save raw import data
+    const rawImports = rows.map(row => ({
       import_id: importLog.id,
-      raw_data: row,
-      is_valid: true // We'll validate this later
+      raw_data: row as unknown as Json,
+      is_valid: true
     }));
 
     const { error: rawImportError } = await supabase
@@ -46,7 +46,7 @@ export const saveTransactions = async (validRows: TransactionRow[]) => {
     console.log('Saved raw transaction data');
 
     // Prepare transactions for insert into accounting_transactions
-    const transactions = validRows.map(row => ({
+    const transactions = rows.map(row => ({
       type: 'expense',
       amount: parseFloat(row.amount) || 0,
       description: row.description,
@@ -62,7 +62,6 @@ export const saveTransactions = async (validRows: TransactionRow[]) => {
 
     if (transactionError) {
       console.error('Error inserting transactions:', transactionError);
-      // Update import log with error status
       await supabase
         .from('transaction_imports')
         .update({ 

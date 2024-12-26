@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Download } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 
 interface FileUploadSectionProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -38,6 +38,13 @@ export const FileUploadSection = ({
           Download Template
         </Button>
       </div>
+
+      {isUploading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Upload className="h-4 w-4 animate-pulse" />
+          Importing transactions...
+        </div>
+      )}
     </div>
   );
 };

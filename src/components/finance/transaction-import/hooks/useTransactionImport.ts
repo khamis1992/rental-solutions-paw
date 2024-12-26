@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { saveTransactions, TransactionRow } from "../services/transactionService";
-import { validateImportData } from "../utils/importValidation";
+import Papa from 'papaparse';
 
 export const useTransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [validRows, setValidRows] = useState<TransactionRow[]>([]);
-  const [skippedRows, setSkippedRows] = useState<Array<{ index: number; content: string; reason: string }>>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -28,74 +25,53 @@ export const useTransactionImport = () => {
     setIsUploading(true);
     try {
       const text = await file.text();
-      const { validRows, skippedRows } = validateImportData(text);
       
-      setValidRows(validRows);
-      setSkippedRows(skippedRows);
-
-      // Immediately save to database
-      await saveTransactions(validRows);
-
-      toast({
-        title: "Success",
-        description: `Successfully imported ${validRows.length} transactions. ${skippedRows.length} rows were skipped.`,
+      Papa.parse(text, {
+        header: true,
+        complete: async (results) => {
+          try {
+            await saveTransactions(results.data as TransactionRow[]);
+            
+            toast({
+              title: "Success",
+              description: `Successfully imported ${results.data.length} transactions.`,
+            });
+            
+            await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          } catch (error: any) {
+            console.error('Import error:', error);
+            toast({
+              title: "Error",
+              description: error.message || "Failed to import transactions",
+              variant: "destructive",
+            });
+          } finally {
+            setIsUploading(false);
+          }
+        },
+        error: (error) => {
+          console.error('CSV parsing error:', error);
+          toast({
+            title: "Error",
+            description: "Failed to parse CSV file",
+            variant: "destructive",
+          });
+          setIsUploading(false);
+        }
       });
-      
-      // Refresh the transactions list
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      
     } catch (error: any) {
-      console.error('Import error:', error);
+      console.error('File reading error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to import transactions",
+        description: error.message || "Failed to read file",
         variant: "destructive",
       });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleSaveTransactions = async () => {
-    if (validRows.length === 0) {
-      toast({
-        title: "Error",
-        description: "No valid data to import",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      await saveTransactions(validRows);
-
-      toast({
-        title: "Success",
-        description: `Successfully imported ${validRows.length} transactions.`,
-      });
-      
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      
-      setValidRows([]);
-      setSkippedRows([]);
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to import transactions",
-        variant: "destructive",
-      });
-    } finally {
       setIsUploading(false);
     }
   };
 
   return {
     isUploading,
-    validRows,
-    skippedRows,
     handleFileUpload,
-    handleSaveTransactions
   };
 };

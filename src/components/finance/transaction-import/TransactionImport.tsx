@@ -1,16 +1,8 @@
 import { FileUploadSection } from "./components/FileUploadSection";
-import { ValidationSummary } from "./components/ValidationSummary";
-import { ImportPreview } from "./components/ImportPreview";
 import { useTransactionImport } from "./hooks/useTransactionImport";
 
 export const TransactionImport = () => {
-  const {
-    isUploading,
-    validRows,
-    skippedRows,
-    handleFileUpload,
-    handleSaveTransactions
-  } = useTransactionImport();
+  const { isUploading, handleFileUpload } = useTransactionImport();
 
   const downloadTemplate = () => {
     const csvContent = "Transaction_Date,Amount,Description,Category,Payment_Method,Reference_Number,Status,Notes,Tags\n" +
@@ -27,22 +19,6 @@ export const TransactionImport = () => {
     document.body.removeChild(a);
   };
 
-  const downloadErrorLog = () => {
-    const logContent = skippedRows
-      .map(row => `Row ${row.index}: ${row.reason}\nContent: ${row.content}`)
-      .join('\n\n');
-    
-    const blob = new Blob([logContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'import_errors.log');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
   return (
     <div className="space-y-4">
       <FileUploadSection
@@ -50,21 +26,6 @@ export const TransactionImport = () => {
         onDownloadTemplate={downloadTemplate}
         isUploading={isUploading}
       />
-
-      {skippedRows.length > 0 && (
-        <ValidationSummary 
-          skippedRows={skippedRows}
-          onDownloadLog={downloadErrorLog}
-        />
-      )}
-
-      {validRows.length > 0 && (
-        <ImportPreview
-          data={validRows}
-          onImport={handleSaveTransactions}
-          isImporting={isUploading}
-        />
-      )}
     </div>
   );
 };
