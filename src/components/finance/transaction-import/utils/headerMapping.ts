@@ -7,6 +7,10 @@ export interface SavedMapping {
   id: string;
   mapping_name: string;
   field_mappings: Record<string, string>;
+  created_by?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const normalizeHeader = (header: string): string => {

@@ -17,7 +17,15 @@ export const useHeaderMapping = () => {
       return;
     }
 
-    setSavedMappings(data);
+    // Transform the data to ensure field_mappings is a Record<string, string>
+    const transformedData = data.map(mapping => ({
+      ...mapping,
+      field_mappings: typeof mapping.field_mappings === 'string' 
+        ? JSON.parse(mapping.field_mappings)
+        : mapping.field_mappings
+    })) as SavedMapping[];
+
+    setSavedMappings(transformedData);
   }, []);
 
   const applyMapping = useCallback((headers: string[], mapping: Record<string, string>) => {
