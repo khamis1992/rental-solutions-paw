@@ -83,10 +83,8 @@ export const TransactionPreviewTable = ({
 
   const formatTransactionDate = (dateString: string) => {
     try {
-      // Try parsing the date string
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        // If invalid date, return the original string
         return dateString;
       }
       return format(date, 'dd/MM/yyyy');
@@ -101,19 +99,21 @@ export const TransactionPreviewTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Customer Name</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>Customer</TableHead>
+            <TableHead>License Plate</TableHead>
+            <TableHead>Vehicle</TableHead>
+            <TableHead>Payment Date</TableHead>
+            <TableHead>Payment Method</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Payment Number</TableHead>
+            <TableHead>Payment Description</TableHead>
             <TableHead>Category</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((row, index) => (
             <TableRow key={index}>
-              <TableCell>{formatTransactionDate(row.date)}</TableCell>
-              <TableCell>{row.description}</TableCell>
-              <TableCell>{formatCurrency(row.amount)}</TableCell>
               <TableCell>
                 <Select
                   value={selectedCustomers[index] || 'unassigned'}
@@ -132,6 +132,14 @@ export const TransactionPreviewTable = ({
                   </SelectContent>
                 </Select>
               </TableCell>
+              <TableCell>{formatCurrency(row.amount)}</TableCell>
+              <TableCell>{row.license_plate || '-'}</TableCell>
+              <TableCell>{row.vehicle || '-'}</TableCell>
+              <TableCell>{formatTransactionDate(row.payment_date)}</TableCell>
+              <TableCell>{row.payment_method || '-'}</TableCell>
+              <TableCell>{row.status || 'Pending'}</TableCell>
+              <TableCell>{row.payment_number || '-'}</TableCell>
+              <TableCell>{row.payment_description || '-'}</TableCell>
               <TableCell>
                 <Select
                   value={row.category_id || 'uncategorized'}
