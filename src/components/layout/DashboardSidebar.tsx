@@ -44,7 +44,6 @@ const menuItems = [
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   isOpen,
-  onToggle,
   companyName,
   logoUrl,
 }) => {
@@ -61,12 +60,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           {logoUrl ? (
             <img 
               src={logoUrl} 
-              alt="Company Logo" 
+              alt={`${companyName} Logo`}
               className="h-8 w-auto mr-3 transition-transform hover:scale-105" 
             />
           ) : (
             <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-semibold">RS</span>
+              <span className="text-primary font-semibold">
+                {companyName?.charAt(0) || 'R'}
+              </span>
             </div>
           )}
           <span className="font-semibold text-sidebar-primary tracking-tight">
@@ -84,6 +85,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                       <a
                         href={item.href}
                         className="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 hover:bg-sidebar-accent/10 text-sidebar-foreground group"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(item.href);
+                        }}
                       >
                         <item.icon className="h-4 w-4 text-sidebar-primary/70 group-hover:text-sidebar-primary transition-colors" />
                         <span className="font-medium text-sm">{item.label}</span>

@@ -12,7 +12,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Fetch company settings for branding
   const { data: settings, isLoading: loadingSettings } = useQuery({
     queryKey: ['company-settings'],
     queryFn: async () => {
@@ -26,7 +25,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     },
   });
 
-  // Session check
   const { data: session, isLoading } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -57,7 +55,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
       <DashboardSidebar 
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -65,7 +62,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         logoUrl={settings?.logo_url}
       />
 
-      {/* Main Content */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
         isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
       }`}>
@@ -81,7 +77,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           </div>
         </main>
 
-        {/* Footer */}
         <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-6">
             <div className="text-center text-sm text-muted-foreground">
