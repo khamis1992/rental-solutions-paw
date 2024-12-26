@@ -16,6 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Vehicle {
   id: string;
@@ -46,6 +50,47 @@ export const VehicleTableContent = ({
   onLicensePlateClick,
   STATUS_COLORS,
 }: VehicleTableContentProps) => {
+  const [editingLocation, setEditingLocation] = useState<string | null>(null);
+  const [locationValue, setLocationValue] = useState("");
+  const { toast } = useToast();
+
+  const handleLocationClick = (vehicle: Vehicle) => {
+    setEditingLocation(vehicle.id);
+    setLocationValue(vehicle.location || "");
+  };
+
+  const handleLocationUpdate = async (vehicleId: string) => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ location: locationValue })
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Location updated",
+        description: "Vehicle location has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating location:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update vehicle location",
+        variant: "destructive",
+      });
+    }
+    setEditingLocation(null);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, vehicleId: string) => {
+    if (e.key === 'Enter') {
+      handleLocationUpdate(vehicleId);
+    } else if (e.key === 'Escape') {
+      setEditingLocation(null);
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -110,14 +155,27 @@ export const VehicleTableContent = ({
                 </SelectContent>
               </Select>
             </TableCell>
-            <TableCell>
-              {vehicle.location ? (
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {vehicle.location}
+            <TableCell onClick={(e) => {
+              e.stopPropagation();
+              handleLocationClick(vehicle);
+            }}>
+              {editingLocation === vehicle.id ? (
+                <div className="flex items-center" onClick={e => e.stopPropagation()}>
+                  <Input
+                    value={locationValue}
+                    onChange={(e) => setLocationValue(e.target.value)}
+                    onKeyDown={(e) => handleKeyPress(e, vehicle.id)}
+                    onBlur={() => handleLocationUpdate(vehicle.id)}
+                    autoFocus
+                    className="w-full"
+                    placeholder="Enter location"
+                  />
                 </div>
               ) : (
-                <span className="text-muted-foreground">Not available</span>
+                <div className="flex items-center hover:bg-gray-100 p-2 rounded">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {vehicle.location || <span className="text-muted-foreground">Not available</span>}
+                </div>
               )}
             </TableCell>
             <TableCell>{vehicle.vin}</TableCell>
