@@ -69,23 +69,52 @@ export const TransactionImport = () => {
 
     setIsUploading(true);
     try {
-      const { error } = await supabase
-        .from('accounting_transactions')
-        .insert(validRows.map(row => ({
-          transaction_date: row.transaction_date,
-          amount: row.amount,
-          description: row.description,
-          type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
-          status: 'pending'
-        })));
+      // First create an import log
+      const { data: importLog, error: importLogError } = await supabase
+        .from('transaction_imports')
+        .insert([{
+          file_name: 'manual_import',
+          status: 'processing',
+          records_processed: validRows.length
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (importLogError) throw importLogError;
+
+      // Prepare transactions for insert
+      const transactions = validRows.map(row => ({
+        transaction_date: new Date(row.transaction_date).toISOString(),
+        amount: parseFloat(row.amount),
+        description: row.description,
+        type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
+        status: 'pending'
+      }));
+
+      // Insert transactions
+      const { error: transactionError } = await supabase
+        .from('accounting_transactions')
+        .insert(transactions);
+
+      if (transactionError) throw transactionError;
+
+      // Update import log status
+      const { error: updateLogError } = await supabase
+        .from('transaction_imports')
+        .update({ status: 'completed' })
+        .eq('id', importLog.id);
+
+      if (updateLogError) throw updateLogError;
 
       toast({
         title: "Success",
         description: `Successfully imported ${validRows.length} transactions.`,
       });
+      
+      // Invalidate queries to refresh the data
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      
+      // Reset state
       setValidRows([]);
       setSkippedRows([]);
     } catch (error: any) {
