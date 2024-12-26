@@ -73,35 +73,35 @@ export function TrafficFinesList() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>License Plate</TableHead>
-            <TableHead>Violation Number</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Fine Type</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Customer</TableHead>
+            <TableHead className="w-[120px] font-semibold">License Plate</TableHead>
+            <TableHead className="w-[140px] font-semibold">Violation Number</TableHead>
+            <TableHead className="w-[120px] font-semibold">Date</TableHead>
+            <TableHead className="w-[180px] font-semibold">Fine Type</TableHead>
+            <TableHead className="w-[120px] font-semibold">Amount</TableHead>
+            <TableHead className="w-[120px] font-semibold">Status</TableHead>
+            <TableHead className="w-[180px] font-semibold">Customer</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredFines?.map((fine) => (
             <TableRow key={fine.id}>
-              <TableCell>
+              <TableCell className="min-w-[120px]">
                 {fine.license_plate}
               </TableCell>
-              <TableCell>{fine.violation_number}</TableCell>
-              <TableCell>
+              <TableCell className="min-w-[140px]">{fine.violation_number}</TableCell>
+              <TableCell className="min-w-[120px]">
                 {format(new Date(fine.violation_date), 'dd/MM/yyyy')}
               </TableCell>
-              <TableCell>{fine.fine_type}</TableCell>
-              <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>
-              <TableCell>
+              <TableCell className="min-w-[180px]">{fine.fine_type}</TableCell>
+              <TableCell className="min-w-[120px]">{formatCurrency(fine.fine_amount)}</TableCell>
+              <TableCell className="min-w-[120px]">
                 <Badge 
                   variant={fine.payment_status === 'completed' ? 'success' : 'warning'}
                 >
                   {fine.payment_status}
                 </Badge>
               </TableCell>
-              <TableCell>
+              <TableCell className="min-w-[180px]">
                 {fine.lease?.customer?.full_name || 'Unassigned'}
               </TableCell>
             </TableRow>
