@@ -61,30 +61,32 @@ export const RemainingAmountImport = () => {
   };
 
   const downloadTemplate = () => {
-    // Ensure headers match exactly what the Edge Function expects
+    // Headers exactly matching what the Edge Function expects
     const headers = [
       "Agreement Number",
       "License Plate", 
-      "Rent Amount",
-      "Final Price",
-      "Amount Paid",
-      "Remaining Amount",
+      "rent amount",
+      "final price",
+      "amout paid",
+      "remaining amount",
       "Agreement Duration"
     ];
     
+    // Sample data matching the format
     const sampleData = [
-      "AGR-001",
-      "ABC123",
-      "1000",
-      "1200",
-      "800",
-      "400",
-      "3 months"
+      "MR202462",
+      "7042",
+      "2100",
+      "21350",
+      "10350",
+      "11000",
+      "10"
     ];
     
+    // Create CSV content with tab delimiter
     const csvContent = [
-      headers.join(','),
-      sampleData.join(',')
+      headers.join('\t'),
+      sampleData.join('\t')
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
