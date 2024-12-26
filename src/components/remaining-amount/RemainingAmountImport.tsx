@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useCustomerImport } from "./hooks/useCustomerImport";
+import { useRemainingAmountImport } from "./hooks/useRemainingAmountImport";
 import { Upload } from "lucide-react";
 
-export const ImportExportCustomers = () => {
-  const { toast } = useToast();
-  const { isUploading, handleFileUpload } = useCustomerImport();
+export const RemainingAmountImport = () => {
+  const { isUploading, handleFileUpload } = useRemainingAmountImport();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
