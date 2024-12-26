@@ -29,9 +29,14 @@ export function RecentTransactions() {
         .order("transaction_date", { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching transactions:", error);
+        throw error;
+      }
       return data;
     },
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   if (isLoading) {
