@@ -145,32 +145,29 @@ export const useAgreementForm = (onSuccess: () => void) => {
         throw leaseError;
       }
 
-      // Create payment schedules if they exist
-      if (data.paymentSchedules && lease) {
-        const { error: schedulesError } = await supabase
-          .from("payment_schedules")
-          .insert(
-            data.paymentSchedules.map(schedule => ({
-              ...schedule,
-              lease_id: lease.id
-            }))
-          );
+      // After successfully creating the lease, create a remaining amount record
+      if (lease) {
+        const { error: remainingAmountError } = await supabase
+          .from('remaining_amounts')
+          .insert({
+            agreement_number: lease.agreement_number,
+            license_plate: data.vehicleId, // This will be updated with the actual license plate
+            rent_amount: data.rentAmount || 0,
+            final_price: data.totalAmount || 0,
+            amount_paid: 0, // Initial amount paid is 0
+            remaining_amount: data.totalAmount || 0, // Initially, remaining amount equals total amount
+            agreement_duration: `${data.agreementDuration} months`,
+            lease_id: lease.id
+          });
 
-        if (schedulesError) {
-          console.error("Error creating payment schedules:", schedulesError);
-          throw schedulesError;
+        if (remainingAmountError) {
+          console.error("Error creating remaining amount record:", remainingAmountError);
+          toast({
+            title: "Warning",
+            description: "Agreement created but failed to initialize remaining amount tracking.",
+            variant: "destructive",
+          });
         }
-      }
-
-      // Update vehicle status to 'rented'
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ status: "rented" })
-        .eq("id", data.vehicleId);
-
-      if (vehicleError) {
-        console.error("Error updating vehicle status:", vehicleError);
-        throw vehicleError;
       }
 
       reset();
