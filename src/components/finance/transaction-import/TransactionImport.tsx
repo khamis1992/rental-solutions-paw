@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 import { FileUploadSection } from "./components/FileUploadSection";
-import { ValidationErrorDisplay } from "./components/ValidationErrorDisplay";
-import { Button } from "@/components/ui/button";
-import { validateAndRepairCSV, displayValidationErrors } from "./utils/csvValidation";
-import { parseCSV } from "./utils/csvUtils";
+import { ValidationSummary } from "./components/ValidationSummary";
+import { ImportPreview } from "./components/ImportPreview";
+import { validateImportData } from "./utils/importValidation";
 import { supabase } from "@/integrations/supabase/client";
-import { TransactionPreviewTable } from "./TransactionPreviewTable";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Array<{ row: number; message: string; content?: string }>>([]);
-  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [validRows, setValidRows] = useState<any[]>([]);
+  const [skippedRows, setSkippedRows] = useState<Array<{ index: number; content: string; reason: string }>>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -32,36 +29,23 @@ export const TransactionImport = () => {
 
     try {
       const text = await file.text();
-      const expectedColumns = 9;
+      const { validRows, skippedRows } = validateImportData(text);
       
-      // Validate and repair CSV content
-      const { isValid, repairedData, errors } = validateAndRepairCSV(text, expectedColumns);
+      setValidRows(validRows);
+      setSkippedRows(skippedRows);
       
-      if (errors) {
-        setValidationErrors(errors);
-        displayValidationErrors(errors);
-        
-        if (!isValid) {
-          return;
-        }
-      }
-
-      if (!repairedData) {
+      if (validRows.length === 0) {
         toast({
           title: "Error",
-          description: "Failed to process CSV file",
+          description: "No valid rows found in the CSV file",
           variant: "destructive",
         });
         return;
       }
 
-      // Parse the repaired data
-      const parsedData = parseCSV(repairedData.join('\n'));
-      setPreviewData(parsedData);
-      
       toast({
-        title: "Success",
-        description: `Successfully parsed ${parsedData.length} transactions.`,
+        title: "Validation Complete",
+        description: `Found ${validRows.length} valid rows and ${skippedRows.length} invalid rows.`,
       });
     } catch (error: any) {
       console.error('CSV processing error:', error);
@@ -74,7 +58,7 @@ export const TransactionImport = () => {
   };
 
   const handleSaveTransactions = async () => {
-    if (previewData.length === 0) {
+    if (validRows.length === 0) {
       toast({
         title: "Error",
         description: "No valid data to import",
@@ -87,7 +71,7 @@ export const TransactionImport = () => {
     try {
       const { error } = await supabase
         .from('accounting_transactions')
-        .insert(previewData.map(row => ({
+        .insert(validRows.map(row => ({
           transaction_date: row.transaction_date,
           amount: row.amount,
           description: row.description,
@@ -99,11 +83,11 @@ export const TransactionImport = () => {
 
       toast({
         title: "Success",
-        description: `Successfully imported ${previewData.length} transactions.`,
+        description: `Successfully imported ${validRows.length} transactions.`,
       });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      setPreviewData([]);
-      setValidationErrors([]);
+      setValidRows([]);
+      setSkippedRows([]);
     } catch (error: any) {
       console.error('Import error:', error);
       toast({
@@ -131,6 +115,22 @@ export const TransactionImport = () => {
     document.body.removeChild(a);
   };
 
+  const downloadErrorLog = () => {
+    const logContent = skippedRows
+      .map(row => `Row ${row.index}: ${row.reason}\nContent: ${row.content}`)
+      .join('\n\n');
+    
+    const blob = new Blob([logContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'import_errors.log');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="space-y-4">
       <FileUploadSection
@@ -139,32 +139,19 @@ export const TransactionImport = () => {
         isUploading={isUploading}
       />
 
-      {validationErrors.length > 0 && (
-        <ValidationErrorDisplay errors={validationErrors} />
+      {skippedRows.length > 0 && (
+        <ValidationSummary 
+          skippedRows={skippedRows}
+          onDownloadLog={downloadErrorLog}
+        />
       )}
 
-      {previewData.length > 0 && (
-        <div className="space-y-4">
-          <TransactionPreviewTable 
-            data={previewData}
-            onDataChange={setPreviewData}
-          />
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveTransactions}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                'Import Transactions'
-              )}
-            </Button>
-          </div>
-        </div>
+      {validRows.length > 0 && (
+        <ImportPreview
+          data={validRows}
+          onImport={handleSaveTransactions}
+          isImporting={isUploading}
+        />
       )}
     </div>
   );
