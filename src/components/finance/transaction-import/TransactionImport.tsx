@@ -1,29 +1,70 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { FileUploadSection } from "./components/FileUploadSection";
-import { useTransactionImport } from "./hooks/useTransactionImport";
 
 export const TransactionImport = () => {
-  const { isUploading, handleFileUpload } = useTransactionImport();
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const downloadTemplate = () => {
-    const csvContent = "Transaction_Date,Amount,Description,Category,Payment_Method,Reference_Number,Status,Notes,Tags\n" +
-                      "2024-03-20,1000.00,Monthly Revenue,Income,bank_transfer,REF001,completed,Regular payment,revenue";
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'transaction_import_template.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        const csvContent = e.target?.result as string;
+        const rows = csvContent.split('\n').map(row => {
+          const [transaction_date, amount, description, status] = row.split(',');
+          return { transaction_date, amount, description, status };
+        }).filter((row, index) => index > 0); // Skip header row
+
+        const { error: functionError } = await supabase.functions
+          .invoke('process-transaction-import', {
+            body: { rows }
+          });
+
+        if (functionError) throw functionError;
+
+        toast({
+          title: "Success",
+          description: "Transactions imported successfully",
+        });
+
+        // Invalidate relevant queries to refresh the data
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] }),
+          queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
+          queryClient.invalidateQueries({ queryKey: ["financial-overview"] })
+        ]);
+
+      };
+
+      reader.onerror = () => {
+        throw new Error('Error reading file');
+      };
+
+      reader.readAsText(file);
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to import transactions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <div className="space-y-4">
-      <FileUploadSection
+      <FileUploadSection 
         onFileUpload={handleFileUpload}
-        onDownloadTemplate={downloadTemplate}
         isUploading={isUploading}
       />
     </div>
