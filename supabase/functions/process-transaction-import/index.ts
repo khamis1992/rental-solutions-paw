@@ -62,72 +62,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { fileName } = await req.json();
-    console.log('Processing file:', fileName);
-
-    // Download file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('imports')
-      .download(fileName);
-
-    if (downloadError) {
-      throw downloadError;
-    }
-
-    const content = await fileData.text();
-    const rows = content.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => {
-        const values = line.split(',').map(value => value.trim());
-        return {
-          agreement_number: values[0],
-          customer_name: values[1],
-          amount: parseFloat(values[2]) || 0,
-          license_plate: values[3],
-          vehicle: values[4],
-          payment_date: values[5],
-          payment_method: values[6],
-          payment_number: values[7],
-          description: values[8]
-        };
-      })
-      .filter((_, index) => index > 0); // Skip header row
-
-    console.log('Processed rows:', rows.length);
-
-    // Create import log
-    const { data: importLog, error: importError } = await supabase
-      .from('transaction_imports')
-      .insert({
-        file_name: fileName,
-        status: 'processing',
-        records_processed: rows.length
-      })
-      .select()
-      .single();
-
-    if (importError) throw importError;
-    console.log('Created import log:', importLog);
+    const { rows } = await req.json();
+    console.log('Processing transactions:', rows.length);
 
     // Save raw import data
-    const processedRows = rows.map((row: any) => ({
-      import_id: importLog.id,
-      raw_data: row,
-      transaction_date: parseDate(row.payment_date),
-      amount: row.amount,
-      description: row.description,
-      status: 'pending'
-    }));
-
     const { error: rawDataError } = await supabase
       .from('raw_transaction_imports')
-      .insert(processedRows);
+      .insert(rows.map((row: any) => ({
+        raw_data: row,
+        is_valid: true
+      })));
 
-    if (rawDataError) throw rawDataError;
-    console.log('Saved raw transaction data');
+    if (rawDataError) {
+      console.error('Error saving raw data:', rawDataError);
+      throw rawDataError;
+    }
 
-    // Process and insert transactions
+    // Process and save transactions
     const transactions = rows.map((row: any) => ({
       type: 'income',
       amount: row.amount,
@@ -135,7 +86,6 @@ serve(async (req) => {
       transaction_date: parseDate(row.payment_date),
       status: 'completed',
       reference_type: 'import',
-      reference_id: importLog.id,
       metadata: {
         agreement_number: row.agreement_number,
         customer_name: row.customer_name,
@@ -150,18 +100,10 @@ serve(async (req) => {
       .from('accounting_transactions')
       .insert(transactions);
 
-    if (transactionError) throw transactionError;
-
-    // Update import log status
-    const { error: updateError } = await supabase
-      .from('transaction_imports')
-      .update({ 
-        status: 'completed',
-        records_processed: rows.length
-      })
-      .eq('id', importLog.id);
-
-    if (updateError) throw updateError;
+    if (transactionError) {
+      console.error('Error saving transactions:', transactionError);
+      throw transactionError;
+    }
 
     return new Response(
       JSON.stringify({ 

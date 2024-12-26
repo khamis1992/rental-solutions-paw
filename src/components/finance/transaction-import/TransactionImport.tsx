@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
+import { FileUploadSection } from "./components/FileUploadSection";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -24,7 +22,6 @@ export const TransactionImport = () => {
         const rows = csvContent.split('\n')
           .map(row => {
             const values = row.split(',').map(value => value.trim());
-            // Map values to specific columns in the required order
             return {
               agreement_number: values[0] || '',
               customer_name: values[1] || '',
@@ -41,29 +38,41 @@ export const TransactionImport = () => {
 
         setImportedData(rows);
 
+        // Save to Supabase
         const { error: functionError } = await supabase.functions
           .invoke('process-transaction-import', {
             body: { rows }
           });
 
-        if (functionError) throw functionError;
+        if (functionError) {
+          console.error('Import error:', functionError);
+          toast({
+            title: "Error",
+            description: "Failed to import transactions. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
 
         toast({
           title: "Success",
-          description: "Transactions imported successfully",
+          description: `Successfully imported ${rows.length} transactions`,
         });
 
-        // Invalidate relevant queries to refresh the data
+        // Invalidate queries to refresh the data
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] }),
-          queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
-          queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
-          queryClient.invalidateQueries({ queryKey: ["transaction-imports"] })
+          supabase.from('accounting_transactions').select('*'),
+          supabase.from('raw_transaction_imports').select('*')
         ]);
+
       };
 
       reader.onerror = () => {
-        throw new Error('Error reading file');
+        toast({
+          title: "Error",
+          description: "Failed to read file",
+          variant: "destructive",
+        });
       };
 
       reader.readAsText(file);
