@@ -25,29 +25,6 @@ const Help = lazy(() => import("@/pages/Help"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Audit = lazy(() => import("@/pages/Audit"));
 
-// Define protected route interface
-interface ProtectedRouteConfig {
-  path: string;
-  component: React.ComponentType;
-}
-
-const protectedRoutes: ProtectedRouteConfig[] = [
-  { path: "/", component: Dashboard },
-  { path: "/vehicles", component: Vehicles },
-  { path: "/vehicles/:id", component: VehicleDetails },
-  { path: "/customers", component: Customers },
-  { path: "/customers/:id", component: CustomerProfile },
-  { path: "/agreements", component: Agreements },
-  { path: "/settings", component: Settings },
-  { path: "/maintenance/*", component: Maintenance },
-  { path: "/traffic-fines", component: TrafficFines },
-  { path: "/reports", component: Reports },
-  { path: "/finance", component: Finance },
-  { path: "/help", component: Help },
-  { path: "/legal", component: Legal },
-  { path: "/audit", component: Audit },
-];
-
 export default function App() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -56,7 +33,6 @@ export default function App() {
     queryKey: ["session"],
     queryFn: async () => {
       try {
-        // First try to get the current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -64,7 +40,6 @@ export default function App() {
           throw sessionError;
         }
 
-        // If no session, try to refresh
         if (!session) {
           const { data: { session: refreshedSession }, error: refreshError } = 
             await supabase.auth.refreshSession();
@@ -80,7 +55,6 @@ export default function App() {
         return session;
       } catch (error) {
         console.error("Auth error:", error);
-        // Clear any stale auth data
         await supabase.auth.signOut();
         navigate('/auth');
         return null;
@@ -106,8 +80,6 @@ export default function App() {
           variant: "default",
         });
         navigate('/auth');
-      } else if (event === "TOKEN_REFRESHED") {
-        console.log("Token refreshed successfully");
       }
     });
 
@@ -115,13 +87,6 @@ export default function App() {
       subscription.unsubscribe();
     };
   }, [toast, navigate]);
-
-  // Redirect to auth if no session and not loading
-  useEffect(() => {
-    if (!loadingSession && !session && window.location.pathname !== '/auth') {
-      navigate('/auth');
-    }
-  }, [session, loadingSession, navigate]);
 
   if (loadingSession) {
     return <Skeleton className="h-screen w-screen" />;
@@ -141,25 +106,216 @@ export default function App() {
             }
           />
 
-          {protectedRoutes.map(({ path, component: Component }) => (
-            <Route
-              key={path}
-              path={path}
-              element={
-                session ? (
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <RouteWrapper>
-                      <div className="content-container">
-                        <Component />
-                      </div>
-                    </RouteWrapper>
-                  </Suspense>
-                ) : (
-                  <Navigate to="/auth" replace />
-                )
-              }
-            />
-          ))}
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Dashboard />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/vehicles"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Vehicles />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/vehicles/:id"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <VehicleDetails />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/customers"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Customers />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/customers/:id"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <CustomerProfile />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/agreements"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Agreements />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Settings />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/maintenance/*"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Maintenance />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/traffic-fines"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <TrafficFines />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Reports />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/finance"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Finance />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/help"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Help />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/legal"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Legal />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/audit"
+            element={
+              session ? (
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Audit />
+                  </RouteWrapper>
+                </Suspense>
+              ) : (
+                <Navigate to="/auth" replace />
+              )
+            }
+          />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
