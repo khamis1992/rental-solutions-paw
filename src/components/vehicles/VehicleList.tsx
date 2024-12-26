@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { VehicleTableContent } from "./table/VehicleTableContent";
 import { VehicleTablePagination } from "./table/VehicleTablePagination";
+import { Vehicle } from "@/types/vehicle"; // Import the correct Vehicle type
 
 type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen";
 
@@ -20,18 +21,6 @@ const STATUS_COLORS = {
   reserve: "#8B5CF6",
   rented: "#22C55E"
 } as const;
-
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  status: VehicleStatus;
-  vin: string;
-  mileage: number;
-  license_plate: string;
-  location: string | null;
-}
 
 interface VehicleListProps {
   vehicles: Vehicle[];
