@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/types/database/database.types";
 
 export interface TransactionRow {
   transaction_date: string;
