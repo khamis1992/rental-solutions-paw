@@ -8,7 +8,7 @@ interface TransactionPreviewTableProps {
 }
 
 export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPreviewTableProps) => {
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
     
     try {

@@ -6,10 +6,12 @@ export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
     // First save to raw_transaction_imports
     const { data: rawImports, error: rawError } = await supabase
       .from('raw_transaction_imports')
-      .insert(rows.map(row => ({
-        raw_data: row,
-        is_valid: true
-      })))
+      .insert(
+        rows.map(row => ({
+          raw_data: row,
+          is_valid: true
+        }))
+      )
       .select();
 
     if (rawError) throw rawError;
@@ -20,9 +22,9 @@ export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
       .insert(
         rawImports.map(importRow => ({
           transaction_id: importRow.id,
-          amount: importRow.raw_data.amount,
-          type: 'income',
-          category: importRow.raw_data.category,
+          amount: Number(importRow.raw_data.amount),
+          type: 'income' as const,
+          category: importRow.raw_data.category || null,
           recorded_date: importRow.raw_data.transaction_date
         }))
       );

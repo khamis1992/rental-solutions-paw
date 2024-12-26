@@ -23,7 +23,7 @@ export const TransactionImport = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data.map(item => item.raw_data);
+      return data.map(item => item.raw_data as ImportedTransaction);
     }
   });
 
@@ -47,7 +47,8 @@ export const TransactionImport = () => {
         header: true,
         complete: async (results) => {
           try {
-            await saveTransactionImport(results.data as ImportedTransaction[]);
+            const parsedData = results.data as ImportedTransaction[];
+            await saveTransactionImport(parsedData);
             
             toast({
               title: "Success",
