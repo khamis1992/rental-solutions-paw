@@ -1,9 +1,10 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, isValid, parseISO } from "date-fns";
+import { ImportedTransaction } from "./types/transaction.types";
 
 interface TransactionPreviewTableProps {
-  data: any[];
-  onDataChange: (data: any[]) => void;
+  data: ImportedTransaction[];
+  onDataChange: (data: ImportedTransaction[]) => void;
 }
 
 export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPreviewTableProps) => {

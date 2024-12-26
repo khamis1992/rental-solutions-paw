@@ -6,6 +6,7 @@ import { FileUploadSection } from "./components/FileUploadSection";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImportedTransaction } from "./types/transaction.types";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -13,7 +14,7 @@ export const TransactionImport = () => {
   const { toast } = useToast();
 
   // Query to fetch existing imported transactions
-  const { data: importedData = [], isLoading } = useQuery({
+  const { data: importedData = [], isLoading } = useQuery<ImportedTransaction[]>({
     queryKey: ['imported-transactions'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,7 +23,7 @@ export const TransactionImport = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data.map(item => item.raw_data) || [];
+      return data.map(item => item.raw_data as ImportedTransaction) || [];
     }
   });
 
@@ -36,7 +37,7 @@ export const TransactionImport = () => {
       
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
-        const rows = csvContent.split('\n')
+        const rows: ImportedTransaction[] = csvContent.split('\n')
           .map(row => {
             const values = row.split(',').map(value => value.trim());
             return {
