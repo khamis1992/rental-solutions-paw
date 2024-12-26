@@ -18,7 +18,7 @@ import { RentManagement } from "./details/RentManagement";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { AgreementHeader } from "./details/AgreementHeader";
+import { AgreementHeader } from "./AgreementHeader";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -36,29 +36,40 @@ export const AgreementDetailsDialog = ({
   const { data: agreement, isLoading } = useQuery({
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('leases')
-        .select(`
-          *,
-          customer:profiles (
-            id,
-            full_name,
-            phone_number,
-            address
-          ),
-          vehicle:vehicles (
-            id,
-            make,
-            model,
-            year,
-            license_plate
-          )
-        `)
-        .eq('id', agreementId)
-        .single();
+      const [{ data: agreement, error: agreementError }, { data: remainingAmount, error: remainingError }] = await Promise.all([
+        supabase
+          .from('leases')
+          .select(`
+            *,
+            customer:profiles (
+              id,
+              full_name,
+              phone_number,
+              address
+            ),
+            vehicle:vehicles (
+              id,
+              make,
+              model,
+              year,
+              license_plate
+            )
+          `)
+          .eq('id', agreementId)
+          .single(),
+        supabase
+          .from('remaining_amounts')
+          .select('*')
+          .eq('lease_id', agreementId)
+          .maybeSingle()
+      ]);
 
-      if (error) throw error;
-      return data;
+      if (agreementError) throw agreementError;
+      
+      return {
+        ...agreement,
+        remainingAmount
+      };
     },
     enabled: !!agreementId && open,
   });
@@ -109,7 +120,10 @@ export const AgreementDetailsDialog = ({
           <div>Loading agreement details...</div>
         ) : agreement ? (
           <div className="space-y-6">
-            <AgreementHeader agreement={agreement} />
+            <AgreementHeader 
+              agreement={agreement} 
+              remainingAmount={agreement.remainingAmount}
+            />
 
             <Card>
               <CardContent className="pt-6">
