@@ -152,6 +152,7 @@ export default function App() {
             }
           />
 
+          {/* Other protected routes */}
           <Route
             path="/customers"
             element={
