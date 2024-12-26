@@ -31,7 +31,10 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'llama-3.1-sonar-small-128k-online',
-        messages: [{ role: 'system', content: 'Test message' }],
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'user', content: 'Hello!' }
+        ],
         temperature: 0.7,
         max_tokens: 100
       })
