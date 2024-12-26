@@ -5,7 +5,8 @@ export const parseCSV = (content: string) => {
       throw new Error('CSV file is empty');
     }
 
-    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+    // Normalize headers by removing spaces and making lowercase
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/\s+/g, '_'));
     const requiredHeaders = [
       'amount',
       'payment_date',
@@ -20,19 +21,25 @@ export const parseCSV = (content: string) => {
     // Validate headers
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
     if (missingHeaders.length > 0) {
-      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}\n\nExpected headers are: ${requiredHeaders.join(', ')}`);
     }
 
     return lines.slice(1)
       .filter(line => line.trim().length > 0)
-      .map(line => {
+      .map((line, index) => {
         const values = line.split(',').map(v => v.trim());
+        
+        // Check if we have enough values for all headers
+        if (values.length !== headers.length) {
+          throw new Error(`Row ${index + 2} has ${values.length} values but should have ${headers.length} values`);
+        }
+
         const row = headers.reduce((obj, header, index) => {
           // Ensure amount is a valid number
           if (header === 'amount') {
             const amount = parseFloat(values[index]);
             if (isNaN(amount)) {
-              throw new Error(`Invalid amount format in row: ${line}`);
+              throw new Error(`Invalid amount format in row ${index + 2}: ${line}`);
             }
             obj[header] = amount;
           } else {
@@ -44,7 +51,7 @@ export const parseCSV = (content: string) => {
         // Validate required fields
         for (const field of requiredHeaders) {
           if (row[field] === undefined || row[field] === null) {
-            throw new Error(`Missing required field "${field}" in row: ${line}`);
+            throw new Error(`Missing required field "${field}" in row ${index + 2}: ${line}`);
           }
         }
 
