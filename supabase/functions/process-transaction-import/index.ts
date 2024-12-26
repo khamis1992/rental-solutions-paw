@@ -88,7 +88,7 @@ serve(async (req) => {
 
     // Prepare transactions for insert with validated dates
     const transactions = rows.map(row => ({
-      type: 'expense',
+      type: 'income',
       amount: parseFloat(row.amount) || 0,
       description: row.description,
       transaction_date: (() => {
