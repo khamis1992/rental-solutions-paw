@@ -60,7 +60,6 @@ export const TrafficFineTableRow = ({
       <TableCell>
         {new Date(fine.violation_date).toLocaleDateString()}
       </TableCell>
-      <TableCell>{fine.fine_location || 'N/A'}</TableCell>
       <TableCell>{fine.violation_charge || 'N/A'}</TableCell>
       <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>
       <TableCell>{fine.violation_points || '0'}</TableCell>

@@ -11,7 +11,6 @@ export const TrafficFineTableHeader = () => {
         <TableHead>License Plate</TableHead>
         <TableHead>Violation Number</TableHead>
         <TableHead>Violation Date</TableHead>
-        <TableHead>Location</TableHead>
         <TableHead>Violation Charge</TableHead>
         <TableHead>Fine Amount</TableHead>
         <TableHead>Points</TableHead>
