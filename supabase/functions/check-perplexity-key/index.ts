@@ -30,8 +30,10 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'sonar-small-chat',
-        messages: [{ role: 'system', content: 'Test message' }]
+        model: 'llama-3.1-sonar-large-128k-online',
+        messages: [{ role: 'system', content: 'Test message' }],
+        temperature: 0.7,
+        max_tokens: 100
       })
     })
 
