@@ -19,6 +19,8 @@ import {
 import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
 import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
 import { PaymentMethodType } from "@/types/database/agreement.types";
+import { TRANSACTION_CATEGORIES } from "./constants/transactionCategories";
+import { format, parse } from "date-fns";
 
 interface TransactionFormData {
   type: 'income' | 'expense' | 'payment';
@@ -42,12 +44,16 @@ export function TransactionForm() {
     console.log("Submitting form with data:", data);
     setIsSubmitting(true);
     try {
+      // Parse the date from DD/MM/YYYY format to ISO string
+      const parsedDate = parse(data.transaction_date, 'dd/MM/yyyy', new Date());
+      const isoDate = parsedDate.toISOString();
+
       if (data.type === 'payment') {
         const paymentData = {
           amount: data.amount,
           payment_method: data.payment_method,
           description: data.description,
-          payment_date: new Date().toISOString(),
+          payment_date: isoDate,
           is_recurring: isRecurring,
           recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
           next_payment_date: isRecurring ? 
@@ -71,7 +77,7 @@ export function TransactionForm() {
           type: data.type,
           amount: data.amount,
           description: data.description,
-          transaction_date: data.transaction_date,
+          transaction_date: isoDate,
           category_id: data.category_id,
         };
 
@@ -108,6 +114,9 @@ export function TransactionForm() {
   const handlePaymentMethodChange = (value: PaymentMethodType) => {
     setValue('payment_method', value);
   };
+
+  // Format today's date as DD/MM/YYYY
+  const today = format(new Date(), 'dd/MM/yyyy');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -176,7 +185,11 @@ export function TransactionForm() {
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {/* Fetch and display categories here */}
+                {TRANSACTION_CATEGORIES.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -186,8 +199,16 @@ export function TransactionForm() {
           <Label htmlFor="transaction_date">Date</Label>
           <Input
             id="transaction_date"
-            type="date"
-            {...register("transaction_date", { required: true })}
+            type="text"
+            placeholder="DD/MM/YYYY"
+            defaultValue={today}
+            {...register("transaction_date", { 
+              required: true,
+              pattern: {
+                value: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/(19|20)\d\d$/,
+                message: "Please enter a valid date in DD/MM/YYYY format"
+              }
+            })}
           />
         </div>
       </div>
