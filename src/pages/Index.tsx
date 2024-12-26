@@ -5,6 +5,7 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { CustomerProfileManagement } from "@/components/customers/CustomerProfileManagement";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
@@ -79,6 +80,12 @@ const Index = () => {
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
             <QuickActions />
+          </Suspense>
+        </ErrorBoundary>
+        
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Customer Profiles" />}>
+            <CustomerProfileManagement />
           </Suspense>
         </ErrorBoundary>
         
