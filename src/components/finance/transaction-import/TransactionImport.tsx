@@ -21,16 +21,23 @@ export const TransactionImport = () => {
       
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
-        const rows = csvContent.split('\n').map(row => {
-          const [transaction_date, amount, description, status] = row.split(',');
-          return { 
-            transaction_date, 
-            amount: parseFloat(amount) || 0,
-            description, 
-            status,
-            type: 'income' // Set transaction type as income
-          };
-        }).filter((row, index) => index > 0); // Skip header row
+        const rows = csvContent.split('\n')
+          .map(row => {
+            const values = row.split(',').map(value => value.trim());
+            // Map values to specific columns in the required order
+            return {
+              agreement_number: values[0] || '',
+              customer_name: values[1] || '',
+              amount: parseFloat(values[2]) || 0,
+              license_plate: values[3] || '',
+              vehicle: values[4] || '',
+              payment_date: values[5] || '',
+              payment_method: values[6] || '',
+              payment_number: values[7] || '',
+              description: values[8] || ''
+            };
+          })
+          .filter((row, index) => index > 0); // Skip header row
 
         setImportedData(rows);
 

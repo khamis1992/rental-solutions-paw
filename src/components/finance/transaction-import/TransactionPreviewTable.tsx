@@ -66,10 +66,10 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
               <TableCell>{typeof row.amount === 'number' ? row.amount.toFixed(2) : row.amount || 'N/A'}</TableCell>
               <TableCell>{row.license_plate || 'N/A'}</TableCell>
               <TableCell>{row.vehicle || 'N/A'}</TableCell>
-              <TableCell>{formatDate(row.payment_date || row.transaction_date)}</TableCell>
+              <TableCell>{formatDate(row.payment_date)}</TableCell>
               <TableCell>{row.payment_method || 'N/A'}</TableCell>
               <TableCell>{row.payment_number || 'N/A'}</TableCell>
-              <TableCell>{row.description || row.payment_description || 'N/A'}</TableCell>
+              <TableCell>{row.description || 'N/A'}</TableCell>
             </TableRow>
           ))}
           {data.length === 0 && (
