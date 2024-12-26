@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -7,14 +7,21 @@ import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { Button } from "@/components/ui/button";
 import { parseCSV } from "./utils/csvUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { HeaderMappingDialog } from "./components/HeaderMappingDialog";
+import { useHeaderMapping } from "./hooks/useHeaderMapping";
+import { getRequiredHeaders } from "./utils/headerMapping";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [showHeaderMapping, setShowHeaderMapping] = useState(false);
+  const [currentHeaders, setCurrentHeaders] = useState<string[]>([]);
+  const [csvContent, setCsvContent] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { validateAndMapHeaders, applyMapping } = useHeaderMapping();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -33,16 +40,20 @@ export const TransactionImport = () => {
     
     try {
       const text = await file.text();
-      const parsedData = parseCSV(text);
-      console.log('Parsed CSV data:', parsedData);
+      setCsvContent(text);
       
-      setPreviewData(parsedData);
-      setShowPreview(true);
+      const lines = text.split('\n').map(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim());
       
-      toast({
-        title: "Success",
-        description: `Successfully parsed ${parsedData.length} transactions.`,
-      });
+      const { isValid, unmappedHeaders } = validateAndMapHeaders(headers, getRequiredHeaders());
+      
+      if (!isValid && unmappedHeaders.length > 0) {
+        setCurrentHeaders(headers);
+        setShowHeaderMapping(true);
+        return;
+      }
+      
+      processCSVContent(text, headers);
     } catch (error: any) {
       console.error('CSV parsing error:', error);
       toast({
@@ -53,6 +64,37 @@ export const TransactionImport = () => {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const processCSVContent = (content: string, headers: string[]) => {
+    try {
+      const parsedData = parseCSV(content);
+      console.log('Parsed CSV data:', parsedData);
+      
+      setPreviewData(parsedData);
+      setShowPreview(true);
+      
+      toast({
+        title: "Success",
+        description: `Successfully parsed ${parsedData.length} transactions.`,
+      });
+    } catch (error: any) {
+      console.error('CSV processing error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process CSV data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleHeaderMapping = (mapping: Record<string, string>) => {
+    const mappedHeaders = applyMapping(currentHeaders, mapping);
+    const headerLine = mappedHeaders.join(',');
+    const contentLines = csvContent.split('\n').slice(1);
+    const newContent = [headerLine, ...contentLines].join('\n');
+    
+    processCSVContent(newContent, mappedHeaders);
   };
 
   const handleDataChange = (newData: any[]) => {
@@ -118,6 +160,13 @@ export const TransactionImport = () => {
         onDownloadTemplate={downloadTemplate}
         isUploading={isUploading}
         isAnalyzing={isAnalyzing}
+      />
+
+      <HeaderMappingDialog
+        isOpen={showHeaderMapping}
+        onClose={() => setShowHeaderMapping(false)}
+        headers={currentHeaders}
+        onSaveMapping={handleHeaderMapping}
       />
 
       {isAnalyzing && (

@@ -16,7 +16,6 @@ serve(async (req) => {
   try {
     console.log('Starting transaction import process...');
     
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -29,16 +28,13 @@ serve(async (req) => {
       }
     );
 
-    // Get request body
-    const { fileName } = await req.json();
-    console.log('Processing file:', fileName);
+    const { fileName, headerMapping } = await req.json();
+    console.log('Processing file:', fileName, 'with mapping:', headerMapping);
 
     if (!fileName) {
       throw new Error('No file name provided');
     }
 
-    // Download file from storage
-    console.log('Downloading file from storage...');
     const { data: fileData, error: downloadError } = await supabaseClient
       .storage
       .from('imports')
@@ -51,10 +47,14 @@ serve(async (req) => {
 
     const text = await fileData.text();
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    console.log(`Processing ${lines.length} lines from file...`);
-
+    
+    // Apply header mapping if provided
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-    console.log('CSV Headers:', headers);
+    const mappedHeaders = headerMapping ? 
+      headers.map(h => headerMapping[h] || h) :
+      headers;
+    
+    console.log('Mapped headers:', mappedHeaders);
 
     // Validate required headers
     const requiredHeaders = [
@@ -69,7 +69,7 @@ serve(async (req) => {
       'payment_description'
     ];
     
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    const missingHeaders = requiredHeaders.filter(h => !mappedHeaders.includes(h));
     if (missingHeaders.length > 0) {
       console.error('Missing required headers:', missingHeaders);
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
@@ -82,10 +82,8 @@ serve(async (req) => {
     for (let i = 1; i < lines.length; i++) {
       console.log(`Processing row ${i}...`);
       
-      if (!lines[i].trim()) continue;
-
       const values = lines[i].split(',').map(v => v.trim());
-      const row = headers.reduce((obj: any, header, index) => {
+      const row = mappedHeaders.reduce((obj: any, header, index) => {
         obj[header] = values[index];
         return obj;
       }, {});
