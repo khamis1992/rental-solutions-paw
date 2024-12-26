@@ -14,8 +14,8 @@ export const RemainingAmountImport = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "text/csv") {
-      toast.error("Please upload a CSV file");
+    if (file.type !== "text/csv" && file.type !== "text/tab-separated-values") {
+      toast.error("Please upload a CSV or TSV file");
       return;
     }
 
@@ -30,7 +30,6 @@ export const RemainingAmountImport = () => {
 
       if (error) {
         console.error('Import error:', error);
-        // Try to parse the error message if it's JSON, otherwise use the raw message
         let errorMessage;
         try {
           const parsedError = JSON.parse(error.message);
@@ -89,12 +88,12 @@ export const RemainingAmountImport = () => {
       sampleData.join('\t')
     ].join('\n');
     
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/tab-separated-values' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'remaining_amount_template.csv');
+    a.setAttribute('download', 'remaining_amount_template.tsv');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -105,7 +104,7 @@ export const RemainingAmountImport = () => {
       <CardHeader>
         <CardTitle>Import Remaining Amounts</CardTitle>
         <CardDescription>
-          Upload a CSV file containing remaining amount data. Download the template to ensure correct format.
+          Upload a tab-separated (TSV) file containing remaining amount data. Download the template to ensure correct format.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -118,7 +117,7 @@ export const RemainingAmountImport = () => {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.tsv"
                 onChange={handleFileUpload}
                 className="hidden"
               />
@@ -127,7 +126,7 @@ export const RemainingAmountImport = () => {
               ) : (
                 <Upload className="h-4 w-4" />
               )}
-              {isUploading ? "Importing..." : "Upload CSV"}
+              {isUploading ? "Importing..." : "Upload File"}
             </label>
           </Button>
 

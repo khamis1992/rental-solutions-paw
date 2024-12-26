@@ -19,7 +19,7 @@ const REQUIRED_HEADERS = [
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -31,18 +31,19 @@ serve(async (req) => {
     }
 
     const fileContent = await file.text()
+    console.log('Raw file content:', fileContent)
+    
     // Split by newlines and clean up each line
     const lines = fileContent.split('\n').map(line => 
       line.trim()
-        .replace(/[\r]/g, '') // Remove carriage returns but keep tabs
-        .replace(/^"|"$/g, '') // Remove quotes at start/end
+        .replace(/\r/g, '') // Remove carriage returns but keep tabs
     ).filter(line => line.length > 0) // Remove empty lines
     
     if (lines.length < 2) {
       throw new Error('File is empty or contains only headers')
     }
 
-    // Clean up headers - remove quotes and extra spaces
+    // Split headers by tab and clean them
     const headers = lines[0].split('\t').map(h => 
       h.trim()
         .replace(/^"|"$/g, '') // Remove quotes
@@ -68,7 +69,8 @@ serve(async (req) => {
     // Process each line (skip header)
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split('\t').map(v => 
-        v.trim().replace(/^"|"$/g, '') // Remove quotes
+        v.trim()
+          .replace(/^"|"$/g, '') // Remove quotes
       )
       
       console.log(`Processing line ${i}:`, values)
