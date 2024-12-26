@@ -33,7 +33,8 @@ serve(async (req) => {
     const fileContent = await file.text()
     // Split by newlines and clean up each line
     const lines = fileContent.split('\n').map(line => 
-      line.trim().replace(/[\t\r]/g, '')
+      line.trim()
+        .replace(/[\r]/g, '') // Remove carriage returns but keep tabs
         .replace(/^"|"$/g, '') // Remove quotes at start/end
     ).filter(line => line.length > 0) // Remove empty lines
     
@@ -72,6 +73,11 @@ serve(async (req) => {
       
       console.log(`Processing line ${i}:`, values)
 
+      if (values.length !== REQUIRED_HEADERS.length) {
+        errors.push({ line: i + 1, error: 'Invalid number of columns' })
+        continue
+      }
+
       const record = {
         agreement_number: values[headers.indexOf('Agreement Number')],
         license_plate: values[headers.indexOf('License Plate')],
@@ -79,7 +85,7 @@ serve(async (req) => {
         final_price: parseFloat(values[headers.indexOf('final price')]),
         amount_paid: parseFloat(values[headers.indexOf('amout paid')]),
         remaining_amount: parseFloat(values[headers.indexOf('remaining amount')]),
-        agreement_duration: `${values[headers.indexOf('Agreement Duration')]} months`,
+        agreement_duration: values[headers.indexOf('Agreement Duration')] + ' months',
         import_status: 'completed'
       }
 
