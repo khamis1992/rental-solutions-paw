@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +20,8 @@ serve(async (req) => {
       throw new Error('API key not configured')
     }
 
+    console.log('Testing Perplexity API key...')
+
     // Test the API key with a simple request
     const testResponse = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -29,14 +30,17 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'mistral-7b-instruct',
+        model: 'sonar-small-chat',
         messages: [{ role: 'system', content: 'Test message' }]
       })
     })
 
+    const responseText = await testResponse.text()
+    console.log('Perplexity API response:', responseText)
+
     if (!testResponse.ok) {
-      console.error('Perplexity API test failed:', await testResponse.text())
-      throw new Error('API key validation failed')
+      console.error('Perplexity API test failed:', responseText)
+      throw new Error(`API key validation failed: ${responseText}`)
     }
 
     return new Response(
