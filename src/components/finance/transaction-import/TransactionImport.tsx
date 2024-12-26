@@ -6,6 +6,7 @@ import { ValidationSummary } from "./components/ValidationSummary";
 import { ImportPreview } from "./components/ImportPreview";
 import { validateImportData } from "./utils/importValidation";
 import { supabase } from "@/integrations/supabase/client";
+import { format, parse } from "date-fns";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -111,13 +112,17 @@ export const TransactionImport = () => {
     setIsUploading(true);
     try {
       // Prepare transactions for insert
-      const transactions = validRows.map(row => ({
-        transaction_date: new Date(row.transaction_date).toISOString(),
-        amount: parseFloat(row.amount),
-        description: row.description,
-        type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
-        status: 'pending'
-      }));
+      const transactions = validRows.map(row => {
+        // Parse the date string and format it correctly
+        const parsedDate = parse(row.transaction_date, 'yyyy-MM-dd', new Date());
+        return {
+          transaction_date: format(parsedDate, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+          amount: parseFloat(row.amount),
+          description: row.description,
+          type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
+          status: 'pending'
+        };
+      });
 
       // Insert transactions
       const { error: transactionError } = await supabase
