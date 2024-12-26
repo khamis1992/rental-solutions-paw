@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 
 export interface AgreementFormData {
   agreementNumber: string;
-  agreementType: string;
+  agreementType: "lease_to_own" | "short_term";
   nationality: string;
   drivingLicense: string;
   phoneNumber: string;
   email: string;
   address: string;
   vehicleId: string;
+  customerId: string;
   agreementDuration: number;
   rentAmount: number;
   downPayment?: number;
@@ -22,7 +23,7 @@ export interface AgreementFormData {
 export const useAgreementForm = (onSuccess?: () => void) => {
   const [open, setOpen] = useState(false);
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<AgreementFormData>();
-  const [agreementType, setAgreementType] = useState("lease_to_own");
+  const [agreementType, setAgreementType] = useState<"lease_to_own" | "short_term">("lease_to_own");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [monthlyPayment, setMonthlyPayment] = useState(0);
 
@@ -41,21 +42,36 @@ export const useAgreementForm = (onSuccess?: () => void) => {
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .insert([{
-          ...data,
+          customer_id: data.customerId,
+          vehicle_id: data.vehicleId,
+          agreement_type: data.agreementType,
+          initial_mileage: data.initialMileage,
           total_amount: data.rentAmount,
-          status: 'pending_payment'
+          rent_amount: data.rentAmount,
+          status: 'pending_payment',
+          down_payment: data.downPayment,
+          notes: data.notes
         }])
         .select()
         .single();
 
       if (agreementError) throw agreementError;
 
+      // Get vehicle details for license plate
+      const { data: vehicle, error: vehicleError } = await supabase
+        .from('vehicles')
+        .select('license_plate')
+        .eq('id', data.vehicleId)
+        .single();
+
+      if (vehicleError) throw vehicleError;
+
       // Create the remaining amount record
       const { error: remainingAmountError } = await supabase
         .from('remaining_amounts')
         .insert([{
           agreement_number: agreement.agreement_number,
-          license_plate: agreement.license_plate,
+          license_plate: vehicle.license_plate,
           rent_amount: data.rentAmount || 0,
           final_price: data.rentAmount || 0,
           amount_paid: 0,
