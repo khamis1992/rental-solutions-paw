@@ -1,6 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, isValid, parseISO } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 
 interface TransactionPreviewTableProps {
   data: any[];
@@ -36,7 +35,6 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
         }
       }
       
-      // If all parsing attempts fail, return N/A
       return 'N/A';
     } catch (error) {
       console.error('Error formatting date:', error);
@@ -49,28 +47,34 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Transaction Date</TableHead>
+            <TableHead>Agreement Number</TableHead>
+            <TableHead>Customer Name</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>License Plate</TableHead>
+            <TableHead>Vehicle</TableHead>
+            <TableHead>Payment Date</TableHead>
+            <TableHead>Payment Method</TableHead>
+            <TableHead>Payment Number</TableHead>
+            <TableHead>Payment Description</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((row, index) => (
             <TableRow key={index}>
-              <TableCell>{formatDate(row.transaction_date)}</TableCell>
-              <TableCell>{typeof row.amount === 'number' ? row.amount.toFixed(2) : row.amount}</TableCell>
-              <TableCell>{row.description}</TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {row.status || 'pending'}
-                </Badge>
-              </TableCell>
+              <TableCell>{row.agreement_number || 'N/A'}</TableCell>
+              <TableCell>{row.customer_name || 'N/A'}</TableCell>
+              <TableCell>{typeof row.amount === 'number' ? row.amount.toFixed(2) : row.amount || 'N/A'}</TableCell>
+              <TableCell>{row.license_plate || 'N/A'}</TableCell>
+              <TableCell>{row.vehicle || 'N/A'}</TableCell>
+              <TableCell>{formatDate(row.payment_date || row.transaction_date)}</TableCell>
+              <TableCell>{row.payment_method || 'N/A'}</TableCell>
+              <TableCell>{row.payment_number || 'N/A'}</TableCell>
+              <TableCell>{row.description || row.payment_description || 'N/A'}</TableCell>
             </TableRow>
           ))}
           {data.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className="text-center">
+              <TableCell colSpan={9} className="text-center">
                 No data to preview
               </TableCell>
             </TableRow>
