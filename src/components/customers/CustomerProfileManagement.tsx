@@ -63,6 +63,9 @@ export const CustomerProfileManagement = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Customer Profiles</h2>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          Add New Customer
+        </Button>
       </div>
 
       <div className="rounded-md border">
