@@ -9,10 +9,10 @@ const corsHeaders = {
 const REQUIRED_HEADERS = [
   'Agreement Number',
   'License Plate',
-  'Rent Amount',
-  'Final Price',
-  'Amount Paid',
-  'Remaining Amount',
+  'rent amount',
+  'final price',
+  'amout paid',
+  'remaining amount',
   'Agreement Duration'
 ];
 
@@ -31,13 +31,24 @@ serve(async (req) => {
     }
 
     const fileContent = await file.text()
-    const lines = fileContent.split('\n').map(line => line.trim())
+    // Split by newlines and clean up each line
+    const lines = fileContent.split('\n').map(line => 
+      line.trim().replace(/[\t\r]/g, '')
+        .replace(/^"|"$/g, '') // Remove quotes at start/end
+    ).filter(line => line.length > 0) // Remove empty lines
     
     if (lines.length < 2) {
       throw new Error('File is empty or contains only headers')
     }
 
-    const headers = lines[0].split(',').map(h => h.trim())
+    // Clean up headers - remove quotes and extra spaces
+    const headers = lines[0].split('\t').map(h => 
+      h.trim()
+        .replace(/^"|"$/g, '') // Remove quotes
+        .replace(/\s+/g, ' ') // Normalize spaces
+    )
+    
+    console.log('Detected headers:', headers)
     
     // Validate required headers
     const missingHeaders = REQUIRED_HEADERS.filter(h => !headers.includes(h))
@@ -55,19 +66,24 @@ serve(async (req) => {
 
     // Process each line (skip header)
     for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue
+      const values = lines[i].split('\t').map(v => 
+        v.trim().replace(/^"|"$/g, '') // Remove quotes
+      )
       
-      const values = lines[i].split(',').map(v => v.trim())
+      console.log(`Processing line ${i}:`, values)
+
       const record = {
         agreement_number: values[headers.indexOf('Agreement Number')],
         license_plate: values[headers.indexOf('License Plate')],
-        rent_amount: parseFloat(values[headers.indexOf('Rent Amount')]),
-        final_price: parseFloat(values[headers.indexOf('Final Price')]),
-        amount_paid: parseFloat(values[headers.indexOf('Amount Paid')]),
-        remaining_amount: parseFloat(values[headers.indexOf('Remaining Amount')]),
-        agreement_duration: values[headers.indexOf('Agreement Duration')],
+        rent_amount: parseFloat(values[headers.indexOf('rent amount')]),
+        final_price: parseFloat(values[headers.indexOf('final price')]),
+        amount_paid: parseFloat(values[headers.indexOf('amout paid')]),
+        remaining_amount: parseFloat(values[headers.indexOf('remaining amount')]),
+        agreement_duration: `${values[headers.indexOf('Agreement Duration')]} months`,
         import_status: 'completed'
       }
+
+      console.log('Parsed record:', record)
 
       // Validate record
       if (isNaN(record.rent_amount) || isNaN(record.final_price) || 
@@ -76,7 +92,7 @@ serve(async (req) => {
         continue
       }
 
-      if (!record.agreement_number || !record.license_plate || !record.agreement_duration) {
+      if (!record.agreement_number || !record.license_plate) {
         errors.push({ line: i + 1, error: 'Missing required fields' })
         continue
       }
@@ -84,12 +100,17 @@ serve(async (req) => {
       records.push(record)
     }
 
+    console.log(`Processing ${records.length} valid records`)
+
     if (records.length > 0) {
       const { error: insertError } = await supabase
         .from('remaining_amounts')
         .insert(records)
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw insertError
+      }
     }
 
     return new Response(
