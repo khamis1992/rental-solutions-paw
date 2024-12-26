@@ -74,7 +74,7 @@ export const AgreementDetailsDialog = ({
     enabled: !!agreementId && open,
   });
 
-  // Set up real-time subscription
+  // Set up real-time subscription for both leases and remaining_amounts tables
   useEffect(() => {
     if (!agreementId || !open) return;
 
@@ -91,13 +91,21 @@ export const AgreementDetailsDialog = ({
         async (payload) => {
           console.log('Real-time update received for agreement:', payload);
           await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
-          toast.info(
-            payload.eventType === 'UPDATE' 
-              ? 'Agreement details updated'
-              : payload.eventType === 'DELETE'
-              ? 'Agreement deleted'
-              : 'Agreement changed'
-          );
+          toast.info('Agreement details updated');
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'remaining_amounts',
+          filter: `lease_id=eq.${agreementId}`
+        },
+        async (payload) => {
+          console.log('Real-time update received for remaining amounts:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
+          toast.info('Remaining amounts updated');
         }
       )
       .subscribe();
