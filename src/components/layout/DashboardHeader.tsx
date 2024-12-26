@@ -1,8 +1,9 @@
-import { UserProfileMenu } from "./UserProfileMenu";
-import { NotificationsButton } from "./NotificationsButton";
-import { SearchBox } from "./SearchBox";
+import React from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SearchBox } from "./SearchBox";
+import { NotificationsButton } from "./NotificationsButton";
+import { UserProfileMenu } from "./UserProfileMenu";
 
 interface DashboardHeaderProps {
   isSidebarOpen: boolean;
@@ -10,14 +11,18 @@ interface DashboardHeaderProps {
   companyName?: string;
 }
 
-export const DashboardHeader = ({ isSidebarOpen, onToggleSidebar, companyName }: DashboardHeaderProps) => {
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
+  isSidebarOpen,
+  onToggleSidebar,
+  companyName,
+}) => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
+      <div className="container flex h-16 items-center">
         <Button
           variant="ghost"
           size="icon"
-          className="mr-4 hover:bg-accent/10"
+          className="mr-4 hover:bg-accent/10 transition-colors"
           onClick={onToggleSidebar}
         >
           <Menu className="h-5 w-5 text-muted-foreground" />
@@ -25,13 +30,13 @@ export const DashboardHeader = ({ isSidebarOpen, onToggleSidebar, companyName }:
         </Button>
         
         <div className="flex flex-1 items-center justify-between space-x-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex-1">
             <SearchBox />
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             <NotificationsButton />
-            <div className="h-5 w-px bg-border/40" /> {/* Separator */}
+            <div className="h-6 w-px bg-border/40" aria-hidden="true" />
             <UserProfileMenu />
           </div>
         </div>
