@@ -34,9 +34,10 @@ export const TransactionImport = () => {
     try {
       const text = await file.text();
       const parsedData = parseCSV(text);
+      console.log('Parsed CSV data:', parsedData);
+      
       setPreviewData(parsedData);
       setShowPreview(true);
-      setIsAnalyzing(false);
       
       toast({
         title: "Success",
@@ -49,6 +50,7 @@ export const TransactionImport = () => {
         description: error.message || "Failed to parse CSV file",
         variant: "destructive",
       });
+    } finally {
       setIsAnalyzing(false);
     }
   };
@@ -63,12 +65,11 @@ export const TransactionImport = () => {
       const { data, error } = await supabase
         .from('accounting_transactions')
         .insert(previewData.map(row => ({
-          transaction_date: row.date,
-          amount: parseFloat(row.amount),
-          description: row.description,
-          category_id: row.category_id,
+          transaction_date: row.payment_date,
+          amount: row.amount,
+          description: row.payment_description,
           type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
-          customer_id: row.customer_id || null
+          status: row.status || 'pending'
         })));
 
       if (error) throw error;
@@ -94,8 +95,8 @@ export const TransactionImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Date,Amount,Description,Category,Customer\n" +
-                      "2024-03-20,1000.00,Monthly Revenue,Income,Customer Name";
+    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Payment_Number,Payment_Description,License_Plate,Vehicle\n" +
+                      "1000.00,2024-03-20,credit_card,completed,INV001,Monthly payment,ABC123,Toyota Camry";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
