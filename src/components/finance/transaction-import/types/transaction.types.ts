@@ -1,16 +1,18 @@
+import { Json } from '@/integrations/supabase/types';
+
 export interface ImportedTransaction {
+  amount: number;
+  transaction_date: string;
+  category?: string;
+  description?: string;
+  status?: string;
   agreement_number?: string;
   customer_name?: string;
-  amount: number;
   license_plate?: string;
   vehicle?: string;
   payment_date?: string;
   payment_method?: string;
   payment_number?: string;
-  description?: string;
-  transaction_date: string;
-  category?: string;
-  status?: string;
 }
 
 export type TransactionAmountType = 'income' | 'expense' | 'refund';

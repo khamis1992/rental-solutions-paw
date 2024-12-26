@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ImportedTransaction } from "../types/transaction.types";
+import { Json } from '@/integrations/supabase/types';
 
 export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
   try {
@@ -8,7 +9,7 @@ export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
       .from('raw_transaction_imports')
       .insert(
         rows.map(row => ({
-          raw_data: row,
+          raw_data: row as unknown as Json,
           is_valid: true
         }))
       )
@@ -22,10 +23,10 @@ export const saveTransactionImport = async (rows: ImportedTransaction[]) => {
       .insert(
         rawImports.map(importRow => ({
           transaction_id: importRow.id,
-          amount: Number(importRow.raw_data.amount),
+          amount: Number((importRow.raw_data as unknown as ImportedTransaction).amount),
           type: 'income' as const,
-          category: importRow.raw_data.category || null,
-          recorded_date: importRow.raw_data.transaction_date
+          category: ((importRow.raw_data as unknown as ImportedTransaction).category || 'other'),
+          recorded_date: (importRow.raw_data as unknown as ImportedTransaction).transaction_date
         }))
       );
 

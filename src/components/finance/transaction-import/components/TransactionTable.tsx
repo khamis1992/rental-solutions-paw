@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ImportedTransaction } from "../types/transaction.types";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/dateUtils";
 
 interface TransactionTableProps {
   transactions: ImportedTransaction[];
@@ -29,12 +29,12 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
         {transactions.map((transaction, index) => (
           <TableRow key={index}>
             <TableCell>
-              {format(new Date(transaction.transaction_date), 'dd/MM/yyyy')}
+              {formatDate(transaction.transaction_date) || 'N/A'}
             </TableCell>
-            <TableCell>{transaction.description}</TableCell>
-            <TableCell>{transaction.category}</TableCell>
-            <TableCell>{transaction.amount.toFixed(2)}</TableCell>
-            <TableCell>{transaction.status}</TableCell>
+            <TableCell>{transaction.description || 'N/A'}</TableCell>
+            <TableCell>{transaction.category || 'N/A'}</TableCell>
+            <TableCell>{typeof transaction.amount === 'number' ? transaction.amount.toFixed(2) : transaction.amount || 'N/A'}</TableCell>
+            <TableCell>{transaction.status || 'N/A'}</TableCell>
           </TableRow>
         ))}
         {transactions.length === 0 && (
