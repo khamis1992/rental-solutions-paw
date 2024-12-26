@@ -2774,6 +2774,41 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_payment_imports: {
+        Row: {
+          created_at: string | null
+          error_description: string | null
+          id: string
+          import_id: string | null
+          is_valid: boolean | null
+          raw_data: Json
+        }
+        Insert: {
+          created_at?: string | null
+          error_description?: string | null
+          id?: string
+          import_id?: string | null
+          is_valid?: boolean | null
+          raw_data: Json
+        }
+        Update: {
+          created_at?: string | null
+          error_description?: string | null
+          id?: string
+          import_id?: string | null
+          is_valid?: boolean | null
+          raw_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_payment_imports_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "import_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       raw_transaction_imports: {
         Row: {
           created_at: string | null
