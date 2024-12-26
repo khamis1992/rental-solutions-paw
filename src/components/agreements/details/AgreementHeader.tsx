@@ -3,11 +3,14 @@ import { Label } from "@/components/ui/label";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { AgreementStatus } from "./AgreementStatus";
 
+// Define the LeaseStatus type to match our database schema
+type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
+
 interface AgreementHeaderProps {
   agreement: {
     id: string;
     agreement_number: string;
-    status: string;
+    status: LeaseStatus;
     start_date: string;
     end_date: string;
   };
