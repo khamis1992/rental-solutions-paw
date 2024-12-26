@@ -32,57 +32,48 @@ export const DeleteVehicleDialog = ({
       console.log("Starting force deletion process for vehicle:", vehicleId);
       
       try {
-        // 1. First delete agreement documents
-        const { error: docsError } = await supabase
-          .from('agreement_documents')
-          .delete()
-          .eq('vehicle_id', vehicleId);
-
-        if (docsError) {
-          console.error("Error deleting agreement documents:", docsError);
-          throw docsError;
-        }
-
-        // 2. Then delete any documents that reference leases associated with this vehicle
-        const { data: leases } = await supabase
+        // 1. First get all leases associated with this vehicle
+        const { data: leases, error: leaseError } = await supabase
           .from('leases')
           .select('id')
           .eq('vehicle_id', vehicleId);
 
+        if (leaseError) throw leaseError;
+
+        // 2. Delete agreement documents for all associated leases
         if (leases && leases.length > 0) {
           const leaseIds = leases.map(lease => lease.id);
-          const { error: leaseDocsError } = await supabase
+          const { error: docsError } = await supabase
             .from('agreement_documents')
             .delete()
             .in('lease_id', leaseIds);
 
-          if (leaseDocsError) {
-            console.error("Error deleting lease documents:", leaseDocsError);
-            throw leaseDocsError;
-          }
+          if (docsError) throw docsError;
         }
 
-        // 3. Delete associated leases
-        const { error: leasesError } = await supabase
+        // 3. Delete agreement documents directly associated with the vehicle
+        const { error: vehicleDocsError } = await supabase
+          .from('agreement_documents')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (vehicleDocsError) throw vehicleDocsError;
+
+        // 4. Delete all leases associated with this vehicle
+        const { error: deleteLeaseError } = await supabase
           .from('leases')
           .delete()
           .eq('vehicle_id', vehicleId);
 
-        if (leasesError) {
-          console.error("Error deleting leases:", leasesError);
-          throw leasesError;
-        }
+        if (deleteLeaseError) throw deleteLeaseError;
 
-        // 4. Finally delete the vehicle
+        // 5. Finally delete the vehicle
         const { error: vehicleError } = await supabase
           .from('vehicles')
           .delete()
           .eq('id', vehicleId);
 
-        if (vehicleError) {
-          console.error("Error deleting vehicle:", vehicleError);
-          throw vehicleError;
-        }
+        if (vehicleError) throw vehicleError;
 
         console.log("Vehicle deletion completed successfully");
       } catch (error: any) {
