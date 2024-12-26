@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -80,6 +81,21 @@ export const TransactionPreviewTable = ({
     onDataChange(newData);
   };
 
+  const formatTransactionDate = (dateString: string) => {
+    try {
+      // Try parsing the date string
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        // If invalid date, return the original string
+        return dateString;
+      }
+      return format(date, 'dd/MM/yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
+  };
+
   return (
     <div className="border rounded-md">
       <Table>
@@ -95,7 +111,7 @@ export const TransactionPreviewTable = ({
         <TableBody>
           {data.map((row, index) => (
             <TableRow key={index}>
-              <TableCell>{row.date}</TableCell>
+              <TableCell>{formatTransactionDate(row.date)}</TableCell>
               <TableCell>{row.description}</TableCell>
               <TableCell>{formatCurrency(row.amount)}</TableCell>
               <TableCell>
