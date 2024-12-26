@@ -15,7 +15,7 @@ export interface TransactionRow {
 
 export const saveTransactions = async (rows: TransactionRow[]) => {
   try {
-    console.log('Starting transaction save process...');
+    console.log('Starting transaction save process...', { rowCount: rows.length });
     
     // First create an import log
     const { data: importLog, error: importLogError } = await supabase
@@ -27,7 +27,10 @@ export const saveTransactions = async (rows: TransactionRow[]) => {
       .select()
       .single();
 
-    if (importLogError) throw importLogError;
+    if (importLogError) {
+      console.error('Error creating import log:', importLogError);
+      throw importLogError;
+    }
     
     console.log('Created import log:', importLog);
 
@@ -42,7 +45,10 @@ export const saveTransactions = async (rows: TransactionRow[]) => {
       .from('raw_transaction_imports')
       .insert(rawImports);
 
-    if (rawImportError) throw rawImportError;
+    if (rawImportError) {
+      console.error('Error saving raw imports:', rawImportError);
+      throw rawImportError;
+    }
     
     console.log('Saved raw transaction data');
 
@@ -74,13 +80,18 @@ export const saveTransactions = async (rows: TransactionRow[]) => {
     }
 
     // Update import log status to completed
-    await supabase
+    const { error: updateError } = await supabase
       .from('transaction_imports')
       .update({ 
         status: 'completed',
         records_processed: transactions.length
       })
       .eq('id', importLog.id);
+
+    if (updateError) {
+      console.error('Error updating import log status:', updateError);
+      throw updateError;
+    }
 
     console.log('Import process completed successfully');
   } catch (error) {
