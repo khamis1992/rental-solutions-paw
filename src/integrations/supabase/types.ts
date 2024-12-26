@@ -2774,6 +2774,59 @@ export type Database = {
         }
         Relationships: []
       }
+      remaining_amounts: {
+        Row: {
+          agreement_duration: unknown
+          agreement_number: string
+          amount_paid: number
+          created_at: string
+          final_price: number
+          id: string
+          import_status: Database["public"]["Enums"]["import_status"] | null
+          lease_id: string | null
+          license_plate: string
+          remaining_amount: number
+          rent_amount: number
+          updated_at: string
+        }
+        Insert: {
+          agreement_duration: unknown
+          agreement_number: string
+          amount_paid: number
+          created_at?: string
+          final_price: number
+          id?: string
+          import_status?: Database["public"]["Enums"]["import_status"] | null
+          lease_id?: string | null
+          license_plate: string
+          remaining_amount: number
+          rent_amount: number
+          updated_at?: string
+        }
+        Update: {
+          agreement_duration?: unknown
+          agreement_number?: string
+          amount_paid?: number
+          created_at?: string
+          final_price?: number
+          id?: string
+          import_status?: Database["public"]["Enums"]["import_status"] | null
+          lease_id?: string | null
+          license_plate?: string
+          remaining_amount?: number
+          rent_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remaining_amounts_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rent_payments: {
         Row: {
           amount: number
@@ -3780,6 +3833,7 @@ export type Database = {
       damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
       document_language: "english" | "spanish" | "french" | "arabic"
+      import_status: "pending" | "processing" | "completed" | "failed"
       import_type: "payments" | "customers" | "agreements"
       lease_status:
         | "pending_payment"
