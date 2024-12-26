@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { validateAndRepairCSV, displayValidationErrors } from "./utils/csvValidation";
 import { parseCSV } from "./utils/csvUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { TransactionPreviewTable } from "./TransactionPreviewTable";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -31,7 +32,7 @@ export const TransactionImport = () => {
 
     try {
       const text = await file.text();
-      const expectedColumns = 9; // Update this based on your requirements
+      const expectedColumns = 9;
       
       // Validate and repair CSV content
       const { isValid, repairedData, errors } = validateAndRepairCSV(text, expectedColumns);
@@ -46,7 +47,11 @@ export const TransactionImport = () => {
       }
 
       if (!repairedData) {
-        toast.error("Failed to process CSV file");
+        toast({
+          title: "Error",
+          description: "Failed to process CSV file",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -54,16 +59,27 @@ export const TransactionImport = () => {
       const parsedData = parseCSV(repairedData.join('\n'));
       setPreviewData(parsedData);
       
-      toast.success(`Successfully parsed ${parsedData.length} transactions.`);
+      toast({
+        title: "Success",
+        description: `Successfully parsed ${parsedData.length} transactions.`,
+      });
     } catch (error: any) {
       console.error('CSV processing error:', error);
-      toast.error(error.message || "Failed to process CSV file");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process CSV file",
+        variant: "destructive",
+      });
     }
   };
 
   const handleSaveTransactions = async () => {
     if (previewData.length === 0) {
-      toast.error("No valid data to import");
+      toast({
+        title: "Error",
+        description: "No valid data to import",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -81,13 +97,20 @@ export const TransactionImport = () => {
 
       if (error) throw error;
 
-      toast.success(`Successfully imported ${previewData.length} transactions.`);
+      toast({
+        title: "Success",
+        description: `Successfully imported ${previewData.length} transactions.`,
+      });
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setPreviewData([]);
       setValidationErrors([]);
     } catch (error: any) {
       console.error('Import error:', error);
-      toast.error(error.message || "Failed to import transactions");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to import transactions",
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
@@ -122,6 +145,10 @@ export const TransactionImport = () => {
 
       {previewData.length > 0 && (
         <div className="space-y-4">
+          <TransactionPreviewTable 
+            data={previewData}
+            onDataChange={setPreviewData}
+          />
           <div className="flex justify-end">
             <Button 
               onClick={handleSaveTransactions}

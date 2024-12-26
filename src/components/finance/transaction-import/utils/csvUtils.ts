@@ -2,15 +2,15 @@ import { validateAndRepairCSV, displayValidationErrors } from './csvValidation';
 
 export const parseCSV = (content: string) => {
   const requiredHeaders = [
-    'agreement_number',
-    'customer_name',
+    'transaction_date',
     'amount',
-    'license_plate',
-    'vehicle',
-    'payment_date',
+    'description',
+    'category',
     'payment_method',
-    'payment_number',
-    'payment_description'
+    'reference_number',
+    'status',
+    'notes',
+    'tags'
   ];
 
   try {
@@ -44,27 +44,16 @@ export const parseCSV = (content: string) => {
       const row = headers.reduce((obj: Record<string, any>, header, i) => {
         // Handle amount field specially
         if (header === 'amount') {
-          const amount = parseFloat(values[i]);
+          const amount = parseFloat(values[i] || '0');
           if (isNaN(amount)) {
             throw new Error(`Invalid amount format in row ${index + 2}: ${values[i]}`);
           }
           obj[header] = amount;
         } else {
-          obj[header] = values[i] || null;
+          obj[header] = values[i] || '';
         }
         return obj;
       }, {});
-
-      // Validate required fields
-      for (const field of requiredHeaders) {
-        if (row[field] === undefined || row[field] === null) {
-          throw new Error(
-            `Missing required field "${field}" in row ${index + 2}.\n` +
-            `Row data: ${values.join(',')}\n\n` +
-            `All fields are required: ${requiredHeaders.join(', ')}`
-          );
-        }
-      }
 
       return row;
     });

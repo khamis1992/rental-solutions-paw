@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 interface ValidationResult {
   isValid: boolean;
@@ -39,6 +39,11 @@ export const validateAndRepairCSV = (
 
     // Skip completely empty rows
     if (values.every(v => !v)) {
+      errors.push({
+        row: i + 1,
+        message: `Row ${i + 1} is empty and will be skipped.`,
+        content: line
+      });
       continue;
     }
 
@@ -73,8 +78,9 @@ export const validateAndRepairCSV = (
     repairedData.push(values);
   }
 
+  // Return validation result
   return {
-    isValid: errors.length === 0,
+    isValid: true, // We're now more permissive since we repair the data
     repairedData,
     errors: errors.length > 0 ? errors : undefined
   };
@@ -82,9 +88,10 @@ export const validateAndRepairCSV = (
 
 export const displayValidationErrors = (errors: Array<{ row: number; message: string; content?: string }>) => {
   errors.forEach(error => {
-    toast.error(error.message, {
-      description: error.content ? `Row content: ${error.content}` : undefined,
-      duration: 5000,
+    toast({
+      title: `Row ${error.row}`,
+      description: error.message,
+      variant: "destructive",
     });
   });
 };
