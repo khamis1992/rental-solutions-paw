@@ -43,7 +43,6 @@ export const HeaderMappingDialog = ({
     }, {} as Record<string, string>);
 
     try {
-      // Save mapping to database if name is provided
       if (mappingName.trim()) {
         await supabase.from('csv_import_mappings').insert({
           mapping_name: mappingName,
@@ -60,54 +59,56 @@ export const HeaderMappingDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Map CSV Headers</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="grid gap-4">
-            {mappings.map(({ originalHeader, mappedHeader }, index) => (
-              <div key={index} className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{originalHeader}</Label>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="space-y-4 py-4">
+            <div className="grid gap-4">
+              {mappings.map(({ originalHeader, mappedHeader }, index) => (
+                <div key={index} className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{originalHeader}</Label>
+                  </div>
+                  <Select
+                    value={mappedHeader}
+                    onValueChange={(value) => {
+                      const newMappings = [...mappings];
+                      newMappings[index].mappedHeader = value;
+                      setMappings(newMappings);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select field" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {requiredHeaders.map((header) => (
+                        <SelectItem key={header} value={header}>
+                          {header}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select
-                  value={mappedHeader}
-                  onValueChange={(value) => {
-                    const newMappings = [...mappings];
-                    newMappings[index].mappedHeader = value;
-                    setMappings(newMappings);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select field" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {requiredHeaders.map((header) => (
-                      <SelectItem key={header} value={header}>
-                        {header}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Save Mapping (Optional)</Label>
-            <input
-              type="text"
-              placeholder="Mapping name"
-              className="w-full px-3 py-2 border rounded"
-              value={mappingName}
-              onChange={(e) => setMappingName(e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label>Save Mapping (Optional)</Label>
+              <input
+                type="text"
+                placeholder="Mapping name"
+                className="w-full px-3 py-2 border rounded"
+                value={mappingName}
+                onChange={(e) => setMappingName(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-2 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
