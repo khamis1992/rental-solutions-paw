@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
 interface TransactionPreviewTableProps {
@@ -8,6 +8,28 @@ interface TransactionPreviewTableProps {
 }
 
 export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPreviewTableProps) => {
+  const formatDate = (dateString: string) => {
+    try {
+      // First try parsing as ISO string
+      const date = parseISO(dateString);
+      if (isValid(date)) {
+        return format(date, 'dd/MM/yyyy');
+      }
+      
+      // If not valid ISO, try creating a new Date
+      const fallbackDate = new Date(dateString);
+      if (isValid(fallbackDate)) {
+        return format(fallbackDate, 'dd/MM/yyyy');
+      }
+      
+      // If still not valid, return the original string
+      return 'Invalid date';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  };
+
   return (
     <div className="border rounded-md">
       <Table>
@@ -32,7 +54,7 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
               <TableCell>{typeof row.amount === 'number' ? row.amount.toFixed(2) : row.amount}</TableCell>
               <TableCell>{row.license_plate}</TableCell>
               <TableCell>{row.vehicle}</TableCell>
-              <TableCell>{format(new Date(row.payment_date), 'dd/MM/yyyy')}</TableCell>
+              <TableCell>{row.payment_date ? formatDate(row.payment_date) : 'N/A'}</TableCell>
               <TableCell>
                 <Badge variant="outline">
                   {row.payment_method}
