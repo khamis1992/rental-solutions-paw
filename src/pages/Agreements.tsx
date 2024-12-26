@@ -9,7 +9,6 @@ import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDial
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { TrafficCone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Agreements() {
@@ -54,13 +53,6 @@ export default function Agreements() {
               disabled={isDeleting}
             >
               Delete All Agreements
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/traffic-fines")}
-            >
-              <TrafficCone className="h-4 w-4 mr-2" />
-              Traffic Fine Tools
             </Button>
             <CreateAgreementDialog />
           </div>
