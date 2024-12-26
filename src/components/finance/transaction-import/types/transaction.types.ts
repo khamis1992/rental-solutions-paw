@@ -9,3 +9,12 @@ export interface ImportedTransaction {
   payment_number: string;
   description: string;
 }
+
+export interface RawTransactionImport {
+  id: string;
+  import_id: string | null;
+  raw_data: ImportedTransaction;
+  error_description: string | null;
+  is_valid: boolean;
+  created_at: string;
+}

@@ -6,7 +6,7 @@ import { FileUploadSection } from "./components/FileUploadSection";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImportedTransaction } from "./types/transaction.types";
+import { ImportedTransaction, RawTransactionImport } from "./types/transaction.types";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -20,10 +20,10 @@ export const TransactionImport = () => {
       const { data, error } = await supabase
         .from('raw_transaction_imports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: RawTransactionImport[] | null, error: any };
 
       if (error) throw error;
-      return data.map(item => item.raw_data as ImportedTransaction) || [];
+      return (data || []).map(item => item.raw_data);
     }
   });
 
