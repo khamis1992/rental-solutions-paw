@@ -15,6 +15,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+interface DashboardSidebarProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  companyName?: string;
+  logoUrl?: string;
+}
+
 const baseMenuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
   { icon: Car, label: "Vehicles", href: "/vehicles" },
@@ -30,7 +37,7 @@ const baseMenuItems = [
 
 const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" };
 
-export const DashboardSidebar = () => {
+export const DashboardSidebar = ({ isOpen, onToggle, companyName, logoUrl }: DashboardSidebarProps) => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
   const navigate = useNavigate();
   const { session, isLoading } = useSessionContext();
@@ -114,7 +121,10 @@ export const DashboardSidebar = () => {
     <Sidebar>
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
-          <span className="font-semibold">Rental Solutions</span>
+          {logoUrl && (
+            <img src={logoUrl} alt="Company Logo" className="h-8 w-auto mr-2" />
+          )}
+          <span className="font-semibold">{companyName || 'Rental Solutions'}</span>
         </div>
         <SidebarGroup>
           <SidebarGroupContent>
