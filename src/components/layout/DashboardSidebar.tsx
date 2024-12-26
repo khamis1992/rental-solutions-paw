@@ -113,7 +113,7 @@ export const DashboardSidebar = () => {
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton 
                     asChild
-                    active={location.pathname === item.href}
+                    isActive={location.pathname === item.href}
                   >
                     <a
                       href={item.href}
