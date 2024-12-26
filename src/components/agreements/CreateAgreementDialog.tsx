@@ -30,7 +30,6 @@ export function CreateAgreementDialog() {
     handleSubmit,
     onSubmit,
     agreementType,
-    updateMonthlyPayment,
     watch,
     setValue,
     errors,

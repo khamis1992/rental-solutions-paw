@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
 
 export interface AgreementFormData {
   agreementNumber: string;
@@ -41,7 +41,7 @@ export const useAgreementForm = (onSuccess?: () => void) => {
       // Insert the agreement
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
-        .insert([{
+        .insert({
           customer_id: data.customerId,
           vehicle_id: data.vehicleId,
           agreement_type: data.agreementType,
@@ -51,11 +51,13 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           status: 'pending_payment',
           down_payment: data.downPayment,
           notes: data.notes
-        }])
+        })
         .select()
         .single();
 
       if (agreementError) throw agreementError;
+
+      console.log('Created agreement:', agreement);
 
       // Get vehicle details for license plate
       const { data: vehicle, error: vehicleError } = await supabase
@@ -66,19 +68,21 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
       if (vehicleError) throw vehicleError;
 
+      console.log('Retrieved vehicle:', vehicle);
+
       // Create the remaining amount record
       const { error: remainingAmountError } = await supabase
         .from('remaining_amounts')
-        .insert([{
+        .insert({
           agreement_number: agreement.agreement_number,
           license_plate: vehicle.license_plate,
-          rent_amount: data.rentAmount || 0,
-          final_price: data.rentAmount || 0,
+          rent_amount: data.rentAmount,
+          final_price: data.rentAmount,
           amount_paid: 0,
-          remaining_amount: data.rentAmount || 0,
+          remaining_amount: data.rentAmount,
           agreement_duration: `${data.agreementDuration} months`,
           lease_id: agreement.id
-        }]);
+        });
 
       if (remainingAmountError) {
         console.error('Error creating remaining amount:', remainingAmountError);

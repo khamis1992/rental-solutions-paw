@@ -20,10 +20,13 @@ interface AgreementHeaderProps {
     rent_amount: number;
     final_price: number;
     remaining_amount: number;
-  };
+  } | null;
 }
 
 export const AgreementHeader = ({ agreement, remainingAmount }: AgreementHeaderProps) => {
+  console.log("Agreement data:", agreement);
+  console.log("Remaining amount data:", remainingAmount);
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -49,15 +52,21 @@ export const AgreementHeader = ({ agreement, remainingAmount }: AgreementHeaderP
           </div>
           <div>
             <Label>Rent Amount</Label>
-            <p className="text-lg font-medium">{formatCurrency(remainingAmount?.rent_amount || agreement.rent_amount || 0)}</p>
+            <p className="text-lg font-medium">
+              {formatCurrency(remainingAmount?.rent_amount || agreement.rent_amount || 0)}
+            </p>
           </div>
           <div>
             <Label>Contract Value</Label>
-            <p className="text-lg font-medium">{formatCurrency(remainingAmount?.final_price || 0)}</p>
+            <p className="text-lg font-medium">
+              {formatCurrency(remainingAmount?.final_price || 0)}
+            </p>
           </div>
           <div>
             <Label>Remaining Amount</Label>
-            <p className="text-lg font-medium">{formatCurrency(remainingAmount?.remaining_amount || 0)}</p>
+            <p className="text-lg font-medium">
+              {formatCurrency(remainingAmount?.remaining_amount || 0)}
+            </p>
           </div>
         </div>
       </CardContent>
