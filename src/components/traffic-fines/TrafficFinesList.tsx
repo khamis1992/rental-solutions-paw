@@ -73,42 +73,46 @@ export function TrafficFinesList() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px] font-semibold">License Plate</TableHead>
-            <TableHead className="w-[140px] font-semibold">Violation Number</TableHead>
-            <TableHead className="w-[120px] font-semibold">Date</TableHead>
-            <TableHead className="w-[180px] font-semibold">Fine Type</TableHead>
-            <TableHead className="w-[120px] font-semibold">Amount</TableHead>
-            <TableHead className="w-[120px] font-semibold">Status</TableHead>
-            <TableHead className="w-[180px] font-semibold">Customer</TableHead>
+            <TableHead className="w-[180px] font-semibold">License Plate</TableHead>
+            <TableHead className="w-[200px] font-semibold">Violation Number</TableHead>
+            <TableHead className="w-[180px] font-semibold">Date</TableHead>
+            <TableHead className="w-[250px] font-semibold">Fine Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredFines?.map((fine) => (
-            <TableRow key={fine.id}>
-              <TableCell className="min-w-[120px]">
-                {fine.license_plate}
-              </TableCell>
-              <TableCell className="min-w-[140px]">{fine.violation_number}</TableCell>
-              <TableCell className="min-w-[120px]">
-                {format(new Date(fine.violation_date), 'dd/MM/yyyy')}
-              </TableCell>
-              <TableCell className="min-w-[180px]">{fine.fine_type}</TableCell>
-              <TableCell className="min-w-[120px]">{formatCurrency(fine.fine_amount)}</TableCell>
-              <TableCell className="min-w-[120px]">
-                <Badge 
-                  variant={fine.payment_status === 'completed' ? 'success' : 'warning'}
-                >
-                  {fine.payment_status}
-                </Badge>
-              </TableCell>
-              <TableCell className="min-w-[180px]">
-                {fine.lease?.customer?.full_name || 'Unassigned'}
-              </TableCell>
-            </TableRow>
+            <>
+              <TableRow key={`${fine.id}-1`}>
+                <TableCell className="min-w-[180px]">
+                  {fine.license_plate}
+                </TableCell>
+                <TableCell className="min-w-[200px]">{fine.violation_number}</TableCell>
+                <TableCell className="min-w-[180px]">
+                  {format(new Date(fine.violation_date), 'dd/MM/yyyy')}
+                </TableCell>
+                <TableCell className="min-w-[250px]">{fine.fine_type}</TableCell>
+              </TableRow>
+              <TableRow key={`${fine.id}-2`} className="border-b border-border">
+                <TableCell className="min-w-[180px]">
+                  {formatCurrency(fine.fine_amount)}
+                </TableCell>
+                <TableCell className="min-w-[200px]">
+                  <Badge 
+                    variant={fine.payment_status === 'completed' ? 'success' : 'warning'}
+                    className="capitalize"
+                  >
+                    {fine.payment_status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="min-w-[430px]" colSpan={2}>
+                  {fine.lease?.customer?.full_name || 'Unassigned'}
+                </TableCell>
+              </TableRow>
+            </>
           ))}
           {!filteredFines?.length && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-4">
+              <TableCell colSpan={4} className="text-center py-4">
                 No traffic fines found
               </TableCell>
             </TableRow>
