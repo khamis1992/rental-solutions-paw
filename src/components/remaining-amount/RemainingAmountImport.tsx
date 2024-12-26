@@ -30,7 +30,16 @@ export const RemainingAmountImport = () => {
 
       if (error) {
         console.error('Import error:', error);
-        throw error;
+        // Try to parse the error message if it's JSON, otherwise use the raw message
+        let errorMessage;
+        try {
+          const parsedError = JSON.parse(error.message);
+          errorMessage = parsedError.details || parsedError.error || error.message;
+        } catch {
+          errorMessage = error.message;
+        }
+        toast.error(errorMessage || "Failed to import data");
+        return;
       }
 
       toast.success(`Successfully processed ${data?.processed || 0} records`);
@@ -42,8 +51,7 @@ export const RemainingAmountImport = () => {
       await queryClient.invalidateQueries({ queryKey: ['remaining-amounts'] });
     } catch (error: any) {
       console.error('Import error:', error);
-      const errorDetails = JSON.parse(error.message)?.details || error.message;
-      toast.error(errorDetails || "Failed to import data");
+      toast.error("Failed to process import. Please check the file format and try again.");
     } finally {
       setIsUploading(false);
       if (event.target) {
@@ -53,6 +61,7 @@ export const RemainingAmountImport = () => {
   };
 
   const downloadTemplate = () => {
+    // Ensure headers match exactly what the Edge Function expects
     const headers = [
       "Agreement Number",
       "License Plate", 
