@@ -42,7 +42,37 @@ export const DeleteVehicleDialog = ({
 
         const leaseIds = leases?.map(lease => lease.id) || [];
 
-        // 2. Delete damages
+        // 2. Delete payment history for leases
+        if (leaseIds.length > 0) {
+          const { error: paymentHistoryError } = await supabase
+            .from('payment_history')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (paymentHistoryError) throw paymentHistoryError;
+        }
+
+        // 3. Delete payments for leases
+        if (leaseIds.length > 0) {
+          const { error: paymentsError } = await supabase
+            .from('payments')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (paymentsError) throw paymentsError;
+        }
+
+        // 4. Delete payment schedules for leases
+        if (leaseIds.length > 0) {
+          const { error: schedulesError } = await supabase
+            .from('payment_schedules')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (schedulesError) throw schedulesError;
+        }
+
+        // 5. Delete damages
         const { error: damagesError } = await supabase
           .from('damages')
           .delete()
@@ -59,7 +89,7 @@ export const DeleteVehicleDialog = ({
           if (leaseDamagesError) throw leaseDamagesError;
         }
 
-        // 3. Delete traffic fines
+        // 6. Delete traffic fines
         const { error: trafficFinesError } = await supabase
           .from('traffic_fines')
           .delete()
@@ -76,7 +106,7 @@ export const DeleteVehicleDialog = ({
           if (leaseTrafficFinesError) throw leaseTrafficFinesError;
         }
 
-        // 4. Delete vehicle inspections and related maintenance documents
+        // 7. Delete vehicle inspections
         const { error: inspectionsError } = await supabase
           .from('vehicle_inspections')
           .delete()
@@ -84,7 +114,7 @@ export const DeleteVehicleDialog = ({
 
         if (inspectionsError) throw inspectionsError;
 
-        // 5. Delete maintenance documents and maintenance records
+        // 8. Delete maintenance documents
         const { error: maintenanceDocsError } = await supabase
           .from('maintenance_documents')
           .delete()
@@ -92,6 +122,7 @@ export const DeleteVehicleDialog = ({
 
         if (maintenanceDocsError) throw maintenanceDocsError;
 
+        // 9. Delete maintenance records
         const { error: maintenanceError } = await supabase
           .from('maintenance')
           .delete()
@@ -99,7 +130,7 @@ export const DeleteVehicleDialog = ({
 
         if (maintenanceError) throw maintenanceError;
 
-        // 6. Delete agreement documents
+        // 10. Delete agreement documents
         if (leaseIds.length > 0) {
           const { error: leaseDocsError } = await supabase
             .from('agreement_documents')
@@ -116,7 +147,7 @@ export const DeleteVehicleDialog = ({
 
         if (vehicleDocsError) throw vehicleDocsError;
 
-        // 7. Delete vehicle documents
+        // 11. Delete vehicle documents
         const { error: vehicleDocumentsError } = await supabase
           .from('vehicle_documents')
           .delete()
@@ -124,7 +155,7 @@ export const DeleteVehicleDialog = ({
 
         if (vehicleDocumentsError) throw vehicleDocumentsError;
 
-        // 8. Delete vehicle parts
+        // 12. Delete vehicle parts
         const { error: vehiclePartsError } = await supabase
           .from('vehicle_parts')
           .delete()
@@ -132,7 +163,7 @@ export const DeleteVehicleDialog = ({
 
         if (vehiclePartsError) throw vehiclePartsError;
 
-        // 9. Delete vehicle insurance
+        // 13. Delete vehicle insurance
         const { error: insuranceError } = await supabase
           .from('vehicle_insurance')
           .delete()
@@ -140,7 +171,27 @@ export const DeleteVehicleDialog = ({
 
         if (insuranceError) throw insuranceError;
 
-        // 10. Delete leases
+        // 14. Delete penalties for leases
+        if (leaseIds.length > 0) {
+          const { error: penaltiesError } = await supabase
+            .from('penalties')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (penaltiesError) throw penaltiesError;
+        }
+
+        // 15. Delete security deposits for leases
+        if (leaseIds.length > 0) {
+          const { error: depositsError } = await supabase
+            .from('security_deposits')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (depositsError) throw depositsError;
+        }
+
+        // 16. Delete leases
         const { error: leasesError } = await supabase
           .from('leases')
           .delete()
@@ -148,7 +199,7 @@ export const DeleteVehicleDialog = ({
 
         if (leasesError) throw leasesError;
 
-        // 11. Finally delete the vehicle
+        // 17. Finally delete the vehicle
         const { error: vehicleError } = await supabase
           .from('vehicles')
           .delete()
