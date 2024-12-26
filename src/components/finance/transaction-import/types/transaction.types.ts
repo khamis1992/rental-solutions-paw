@@ -1,28 +1,54 @@
+/**
+ * Represents a transaction imported from CSV
+ */
 export interface ImportedTransaction {
-  agreement_number?: string;
-  customer_name?: string;
+  /** Unique identifier for the agreement (format: AGR-YYYYMM-XXXX) */
+  agreement_number: string;
+  
+  /** Full name of the customer associated with the transaction */
+  customer_name: string;
+  
+  /** Payment amount received (income) */
   amount: number;
-  license_plate?: string;
-  vehicle?: string;
-  payment_date?: string;
-  payment_method?: string;
-  payment_number?: string;
-  description?: string;
-  transaction_date: string;
-  category?: string;
-  status?: string;
+  
+  /** Vehicle license plate number */
+  license_plate: string;
+  
+  /** Vehicle make and model */
+  vehicle: string;
+  
+  /** Date when the payment was made */
+  payment_date: string;
+  
+  /** Method used for payment (e.g., cash, card, bank transfer) */
+  payment_method: string;
+  
+  /** Unique identifier for the payment */
+  payment_number: string;
+  
+  /** Additional details about the payment */
+  description: string;
 }
 
-export type TransactionAmountType = 'income' | 'expense' | 'refund';
-
-export interface TransactionAmount {
-  id?: string;
-  transaction_id?: string;
-  amount: number;
-  type: TransactionAmountType;
-  category?: string;
-  recorded_date?: string;
-  month_year?: string;
-  created_at?: string;
-  updated_at?: string;
+/**
+ * Represents a raw transaction import record in the database
+ */
+export interface RawTransactionImport {
+  /** Unique identifier for the import record */
+  id: string;
+  
+  /** Reference to the import batch ID */
+  import_id: string | null;
+  
+  /** The actual transaction data */
+  raw_data: ImportedTransaction;
+  
+  /** Description of any errors encountered during import */
+  error_description: string | null;
+  
+  /** Indicates if the import was successful */
+  is_valid: boolean;
+  
+  /** Timestamp of when the record was created */
+  created_at: string;
 }
