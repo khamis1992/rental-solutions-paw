@@ -1,9 +1,8 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 }
 
 serve(async (req) => {
@@ -16,7 +15,7 @@ serve(async (req) => {
     const apiKey = Deno.env.get('PERPLEXITY_API_KEY')
     
     if (!apiKey) {
-      console.error('PERPLEXITY_API_KEY not found in environment variables')
+      console.error('Perplexity API key not configured')
       return new Response(
         JSON.stringify({ error: 'API key not configured' }),
         { 
@@ -26,14 +25,38 @@ serve(async (req) => {
       )
     }
 
+    // Test the API key with a simple request
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'Test message'
+          }
+        ]
+      })
+    })
+
+    if (!response.ok) {
+      console.error('API key validation failed:', await response.text())
+      throw new Error('Invalid API key')
+    }
+
     return new Response(
-      JSON.stringify({ status: 'success', hasKey: true }),
+      JSON.stringify({ valid: true }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
+
   } catch (error) {
-    console.error('Error checking Perplexity API key:', error)
+    console.error('Error checking API key:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
