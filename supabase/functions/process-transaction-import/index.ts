@@ -15,18 +15,27 @@ function formatDate(dateString: string): string {
   if (!dateString) return new Date().toISOString();
   
   try {
-    // Try parsing the date string
-    const date = new Date(dateString);
+    // First try parsing as is
+    let date = new Date(dateString);
     
-    // Check if the date is valid
-    if (isValidDate(dateString)) {
-      return date.toISOString();
+    // If invalid, try different formats
+    if (!isValidDate(dateString)) {
+      // Try DD-MM-YYYY format
+      const parts = dateString.split(/[-/]/);
+      if (parts.length === 3) {
+        // Assume DD-MM-YYYY or DD/MM/YYYY
+        date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      }
     }
     
-    // If invalid, return current date
-    return new Date().toISOString();
+    // If still invalid, return current date
+    if (!isValidDate(date.toISOString())) {
+      return new Date().toISOString();
+    }
+    
+    return date.toISOString();
   } catch {
-    // If parsing fails, return current date
+    // If any error occurs, return current date
     return new Date().toISOString();
   }
 }

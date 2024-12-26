@@ -12,19 +12,31 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
     if (!dateString) return 'N/A';
     
     try {
-      // First try parsing as ISO string
-      const date = parseISO(dateString);
+      // Try different date formats
+      let date: Date | null = null;
+      
+      // Try parsing as ISO string
+      date = parseISO(dateString);
       if (isValid(date)) {
         return format(date, 'dd/MM/yyyy');
       }
       
-      // If not valid ISO, try creating a new Date
-      const fallbackDate = new Date(dateString);
-      if (isValid(fallbackDate)) {
-        return format(fallbackDate, 'dd/MM/yyyy');
+      // Try parsing as regular date string
+      date = new Date(dateString);
+      if (isValid(date)) {
+        return format(date, 'dd/MM/yyyy');
       }
       
-      // If still not valid, return N/A
+      // Try DD-MM-YYYY format
+      const parts = dateString.split(/[-/]/);
+      if (parts.length === 3) {
+        date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        if (isValid(date)) {
+          return format(date, 'dd/MM/yyyy');
+        }
+      }
+      
+      // If all parsing attempts fail, return N/A
       return 'N/A';
     } catch (error) {
       console.error('Error formatting date:', error);
