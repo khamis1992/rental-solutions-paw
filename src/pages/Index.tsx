@@ -6,7 +6,6 @@ import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-// Improved error handling for lazy loading
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
     importFn().catch(error => {

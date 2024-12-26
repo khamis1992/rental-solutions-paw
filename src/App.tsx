@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
+// Lazy load components
 const Auth = lazy(() => import("@/pages/Auth"));
 const Dashboard = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
@@ -24,6 +24,7 @@ const Help = lazy(() => import("@/pages/Help"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Audit = lazy(() => import("@/pages/Audit"));
 
+// Define protected route interface
 interface ProtectedRouteConfig {
   path: string;
   component: React.ComponentType;
@@ -82,36 +83,34 @@ export default function App() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Toaster />
-        <Routes>
+    <>
+      <Toaster />
+      <Routes>
+        <Route
+          path="/auth"
+          element={
+            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+              <Auth />
+            </Suspense>
+          }
+        />
+
+        {protectedRoutes.map(({ path, component: Component }) => (
           <Route
-            path="/auth"
+            key={path}
+            path={path}
             element={
               <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <Auth />
+                <RouteWrapper>
+                  <Component />
+                </RouteWrapper>
               </Suspense>
             }
           />
+        ))}
 
-          {protectedRoutes.map(({ path, component: Component }) => (
-            <Route
-              key={path}
-              path={path}
-              element={
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Component />
-                  </RouteWrapper>
-                </Suspense>
-              }
-            />
-          ))}
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </SidebarProvider>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
