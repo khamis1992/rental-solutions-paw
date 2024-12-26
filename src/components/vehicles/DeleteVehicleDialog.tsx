@@ -40,18 +40,75 @@ export const DeleteVehicleDialog = ({
 
         if (leaseError) throw leaseError;
 
-        // 2. Delete agreement documents for all associated leases
-        if (leases && leases.length > 0) {
-          const leaseIds = leases.map(lease => lease.id);
-          const { error: docsError } = await supabase
+        const leaseIds = leases?.map(lease => lease.id) || [];
+
+        // 2. Delete damages
+        const { error: damagesError } = await supabase
+          .from('damages')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (damagesError) throw damagesError;
+
+        if (leaseIds.length > 0) {
+          const { error: leaseDamagesError } = await supabase
+            .from('damages')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (leaseDamagesError) throw leaseDamagesError;
+        }
+
+        // 3. Delete traffic fines
+        const { error: trafficFinesError } = await supabase
+          .from('traffic_fines')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (trafficFinesError) throw trafficFinesError;
+
+        if (leaseIds.length > 0) {
+          const { error: leaseTrafficFinesError } = await supabase
+            .from('traffic_fines')
+            .delete()
+            .in('lease_id', leaseIds);
+
+          if (leaseTrafficFinesError) throw leaseTrafficFinesError;
+        }
+
+        // 4. Delete vehicle inspections and related maintenance documents
+        const { error: inspectionsError } = await supabase
+          .from('vehicle_inspections')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (inspectionsError) throw inspectionsError;
+
+        // 5. Delete maintenance documents and maintenance records
+        const { error: maintenanceDocsError } = await supabase
+          .from('maintenance_documents')
+          .delete()
+          .eq('maintenance_id', vehicleId);
+
+        if (maintenanceDocsError) throw maintenanceDocsError;
+
+        const { error: maintenanceError } = await supabase
+          .from('maintenance')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (maintenanceError) throw maintenanceError;
+
+        // 6. Delete agreement documents
+        if (leaseIds.length > 0) {
+          const { error: leaseDocsError } = await supabase
             .from('agreement_documents')
             .delete()
             .in('lease_id', leaseIds);
 
-          if (docsError) throw docsError;
+          if (leaseDocsError) throw leaseDocsError;
         }
 
-        // 3. Delete agreement documents directly associated with the vehicle
         const { error: vehicleDocsError } = await supabase
           .from('agreement_documents')
           .delete()
@@ -59,15 +116,39 @@ export const DeleteVehicleDialog = ({
 
         if (vehicleDocsError) throw vehicleDocsError;
 
-        // 4. Delete all leases associated with this vehicle
-        const { error: deleteLeaseError } = await supabase
+        // 7. Delete vehicle documents
+        const { error: vehicleDocumentsError } = await supabase
+          .from('vehicle_documents')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (vehicleDocumentsError) throw vehicleDocumentsError;
+
+        // 8. Delete vehicle parts
+        const { error: vehiclePartsError } = await supabase
+          .from('vehicle_parts')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (vehiclePartsError) throw vehiclePartsError;
+
+        // 9. Delete vehicle insurance
+        const { error: insuranceError } = await supabase
+          .from('vehicle_insurance')
+          .delete()
+          .eq('vehicle_id', vehicleId);
+
+        if (insuranceError) throw insuranceError;
+
+        // 10. Delete leases
+        const { error: leasesError } = await supabase
           .from('leases')
           .delete()
           .eq('vehicle_id', vehicleId);
 
-        if (deleteLeaseError) throw deleteLeaseError;
+        if (leasesError) throw leasesError;
 
-        // 5. Finally delete the vehicle
+        // 11. Finally delete the vehicle
         const { error: vehicleError } = await supabase
           .from('vehicles')
           .delete()
