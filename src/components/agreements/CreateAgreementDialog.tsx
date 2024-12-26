@@ -33,6 +33,7 @@ export function CreateAgreementDialog() {
     watch,
     setValue,
     errors,
+    calculateAndUpdateMonthlyPayment
   } = useAgreementForm(() => {
     setOpen(false);
     setSelectedCustomerId("");
@@ -90,7 +91,7 @@ export function CreateAgreementDialog() {
           {agreementType === "lease_to_own" && (
             <LeaseToOwnFields
               register={register}
-              updateMonthlyPayment={updateMonthlyPayment}
+              updateMonthlyPayment={calculateAndUpdateMonthlyPayment}
               watch={watch}
             />
           )}

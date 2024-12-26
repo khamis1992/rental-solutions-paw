@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { calculateMonthlyPayment } from "../utils/paymentCalculations";
 
 export interface AgreementFormData {
   agreementNumber: string;
@@ -18,6 +19,8 @@ export interface AgreementFormData {
   downPayment?: number;
   initialMileage: number;
   notes?: string;
+  interestRate?: number;
+  monthlyPayment?: number;
 }
 
 export const useAgreementForm = (onSuccess?: () => void) => {
@@ -25,12 +28,21 @@ export const useAgreementForm = (onSuccess?: () => void) => {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<AgreementFormData>();
   const [agreementType, setAgreementType] = useState<"lease_to_own" | "short_term">("lease_to_own");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [monthlyPayment, setMonthlyPayment] = useState(0);
 
-  const updateMonthlyPayment = (totalAmount: number, duration: number) => {
-    if (duration > 0) {
-      setMonthlyPayment(totalAmount / duration);
-    }
+  const calculateAndUpdateMonthlyPayment = () => {
+    const totalAmount = watch('rentAmount') || 0;
+    const downPayment = watch('downPayment') || 0;
+    const interestRate = watch('interestRate') || 0;
+    const leaseDuration = watch('agreementDuration') || 12;
+
+    const monthlyPayment = calculateMonthlyPayment(
+      totalAmount,
+      downPayment,
+      interestRate,
+      leaseDuration
+    );
+
+    setValue('monthlyPayment', monthlyPayment);
   };
 
   const onSubmit = async (data: AgreementFormData) => {
@@ -38,7 +50,6 @@ export const useAgreementForm = (onSuccess?: () => void) => {
       console.log('Submitting agreement form with data:', data);
       setIsSubmitting(true);
       
-      // Insert the agreement
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .insert({
@@ -59,7 +70,6 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
       console.log('Created agreement:', agreement);
 
-      // Get vehicle details for license plate
       const { data: vehicle, error: vehicleError } = await supabase
         .from('vehicles')
         .select('license_plate')
@@ -70,7 +80,6 @@ export const useAgreementForm = (onSuccess?: () => void) => {
 
       console.log('Retrieved vehicle:', vehicle);
 
-      // Create the remaining amount record
       const { error: remainingAmountError } = await supabase
         .from('remaining_amounts')
         .insert({
@@ -115,9 +124,7 @@ export const useAgreementForm = (onSuccess?: () => void) => {
     errors,
     isSubmitting,
     setIsSubmitting,
-    monthlyPayment,
-    setMonthlyPayment,
-    updateMonthlyPayment,
+    calculateAndUpdateMonthlyPayment,
     open,
     setOpen
   };
