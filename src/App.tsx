@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Lazy load components
 const Auth = lazy(() => import("@/pages/Auth"));
@@ -24,7 +25,6 @@ const Help = lazy(() => import("@/pages/Help"));
 const Legal = lazy(() => import("@/pages/Legal"));
 const Audit = lazy(() => import("@/pages/Audit"));
 
-// Define protected route interface
 interface ProtectedRouteConfig {
   path: string;
   component: React.ComponentType;
@@ -83,34 +83,36 @@ export default function App() {
   }
 
   return (
-    <>
-      <Toaster />
-      <Routes>
-        <Route
-          path="/auth"
-          element={
-            <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-              <Auth />
-            </Suspense>
-          }
-        />
-
-        {protectedRoutes.map(({ path, component: Component }) => (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <Toaster />
+        <Routes>
           <Route
-            key={path}
-            path={path}
+            path="/auth"
             element={
               <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <RouteWrapper>
-                  <Component />
-                </RouteWrapper>
+                <Auth />
               </Suspense>
             }
           />
-        ))}
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </>
+          {protectedRoutes.map(({ path, component: Component }) => (
+            <Route
+              key={path}
+              path={path}
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <RouteWrapper>
+                    <Component />
+                  </RouteWrapper>
+                </Suspense>
+              }
+            />
+          ))}
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </SidebarProvider>
   );
 }
