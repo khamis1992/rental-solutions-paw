@@ -21,11 +21,20 @@ export const RemainingAmountImport = () => {
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // First upload the file to Supabase storage
+      const fileName = `remaining-amounts/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file);
 
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      // Then call the Edge Function with the file name
       const { data, error } = await supabase.functions.invoke('process-remaining-amount-import', {
-        body: formData,
+        body: { fileName }
       });
 
       if (error) {
@@ -50,7 +59,7 @@ export const RemainingAmountImport = () => {
       await queryClient.invalidateQueries({ queryKey: ['remaining-amounts'] });
     } catch (error: any) {
       console.error('Import error:', error);
-      toast.error("Failed to process import. Please check the file format and try again.");
+      toast.error(error.message || "Failed to process import. Please check the file format and try again.");
     } finally {
       setIsUploading(false);
       if (event.target) {
