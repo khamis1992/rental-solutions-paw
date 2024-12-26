@@ -14,8 +14,8 @@ export const RemainingAmountImport = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "text/csv" && file.type !== "text/tab-separated-values") {
-      toast.error("Please upload a CSV or TSV file");
+    if (file.type !== "text/csv") {
+      toast.error("Please upload a CSV file");
       return;
     }
 
@@ -91,18 +91,18 @@ export const RemainingAmountImport = () => {
       "10"
     ];
     
-    // Create CSV content with tab delimiter
+    // Create CSV content with comma delimiter
     const csvContent = [
-      headers.join('\t'),
-      sampleData.join('\t')
+      headers.join(','),
+      sampleData.join(',')
     ].join('\n');
     
-    const blob = new Blob([csvContent], { type: 'text/tab-separated-values' });
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'remaining_amount_template.tsv');
+    a.setAttribute('download', 'remaining_amount_template.csv');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -113,7 +113,7 @@ export const RemainingAmountImport = () => {
       <CardHeader>
         <CardTitle>Import Remaining Amounts</CardTitle>
         <CardDescription>
-          Upload a tab-separated (TSV) file containing remaining amount data. Download the template to ensure correct format.
+          Upload a CSV file containing remaining amount data. Download the template to ensure correct format.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -126,7 +126,7 @@ export const RemainingAmountImport = () => {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="file"
-                accept=".csv,.tsv"
+                accept=".csv"
                 onChange={handleFileUpload}
                 className="hidden"
               />
