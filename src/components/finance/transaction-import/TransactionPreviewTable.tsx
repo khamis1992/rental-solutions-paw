@@ -9,6 +9,8 @@ interface TransactionPreviewTableProps {
 
 export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPreviewTableProps) => {
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    
     try {
       // First try parsing as ISO string
       const date = parseISO(dateString);
@@ -22,11 +24,11 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
         return format(fallbackDate, 'dd/MM/yyyy');
       }
       
-      // If still not valid, return the original string
-      return 'Invalid date';
+      // If still not valid, return N/A
+      return 'N/A';
     } catch (error) {
       console.error('Error formatting date:', error);
-      return 'Invalid date';
+      return 'N/A';
     }
   };
 
@@ -35,38 +37,28 @@ export const TransactionPreviewTable = ({ data, onDataChange }: TransactionPrevi
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Agreement Number</TableHead>
-            <TableHead>Customer Name</TableHead>
+            <TableHead>Transaction Date</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>License Plate</TableHead>
-            <TableHead>Vehicle</TableHead>
-            <TableHead>Payment Date</TableHead>
-            <TableHead>Payment Method</TableHead>
-            <TableHead>Payment Number</TableHead>
-            <TableHead>Payment Description</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((row, index) => (
             <TableRow key={index}>
-              <TableCell>{row.agreement_number}</TableCell>
-              <TableCell>{row.customer_name}</TableCell>
+              <TableCell>{formatDate(row.transaction_date)}</TableCell>
               <TableCell>{typeof row.amount === 'number' ? row.amount.toFixed(2) : row.amount}</TableCell>
-              <TableCell>{row.license_plate}</TableCell>
-              <TableCell>{row.vehicle}</TableCell>
-              <TableCell>{row.payment_date ? formatDate(row.payment_date) : 'N/A'}</TableCell>
+              <TableCell>{row.description}</TableCell>
               <TableCell>
                 <Badge variant="outline">
-                  {row.payment_method}
+                  {row.status || 'pending'}
                 </Badge>
               </TableCell>
-              <TableCell>{row.payment_number}</TableCell>
-              <TableCell>{row.payment_description}</TableCell>
             </TableRow>
           ))}
           {data.length === 0 && (
             <TableRow>
-              <TableCell colSpan={9} className="text-center">
+              <TableCell colSpan={4} className="text-center">
                 No data to preview
               </TableCell>
             </TableRow>
