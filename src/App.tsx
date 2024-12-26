@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
@@ -50,34 +50,78 @@ const protectedRoutes: ProtectedRouteConfig[] = [
 
 export default function App() {
   const { toast } = useToast();
-  const { data: session, isLoading: loadingSession } = useQuery({
+  const navigate = useNavigate();
+
+  const { data: session, isLoading: loadingSession, error } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      return data.session;
+      try {
+        // First try to get the current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
+        }
+
+        // If no session, try to refresh
+        if (!session) {
+          const { data: { session: refreshedSession }, error: refreshError } = 
+            await supabase.auth.refreshSession();
+          
+          if (refreshError) {
+            console.error("Refresh error:", refreshError);
+            throw refreshError;
+          }
+          
+          return refreshedSession;
+        }
+
+        return session;
+      } catch (error) {
+        console.error("Auth error:", error);
+        // Clear any stale auth data
+        await supabase.auth.signOut();
+        navigate('/auth');
+        return null;
+      }
     },
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      
       if (event === "SIGNED_IN") {
         toast({
           title: "Welcome back!",
           variant: "default",
         });
+        navigate('/');
       } else if (event === "SIGNED_OUT") {
         toast({
           title: "You have been logged out.",
           variant: "default",
         });
+        navigate('/auth');
+      } else if (event === "TOKEN_REFRESHED") {
+        console.log("Token refreshed successfully");
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [toast, navigate]);
+
+  // Redirect to auth if no session and not loading
+  useEffect(() => {
+    if (!loadingSession && !session && window.location.pathname !== '/auth') {
+      navigate('/auth');
+    }
+  }, [session, loadingSession, navigate]);
 
   if (loadingSession) {
     return <Skeleton className="h-screen w-screen" />;
@@ -102,13 +146,17 @@ export default function App() {
               key={path}
               path={path}
               element={
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <div className="content-container">
-                      <Component />
-                    </div>
-                  </RouteWrapper>
-                </Suspense>
+                session ? (
+                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                    <RouteWrapper>
+                      <div className="content-container">
+                        <Component />
+                      </div>
+                    </RouteWrapper>
+                  </Suspense>
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
               }
             />
           ))}
