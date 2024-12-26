@@ -33,7 +33,14 @@ export const AgreementTableRow = ({
           {agreement.agreement_number}
         </button>
       </TableCell>
-      <TableCell>{agreement.vehicle?.license_plate}</TableCell>
+      <TableCell>
+        <button
+          onClick={() => onNameClick(agreement.id)}
+          className="text-blue-600 hover:underline"
+        >
+          {agreement.vehicle?.license_plate}
+        </button>
+      </TableCell>
       <TableCell>{`${agreement.vehicle?.make} ${agreement.vehicle?.model}`}</TableCell>
       <TableCell>{agreement.customer?.full_name}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.start_date)}</TableCell>
