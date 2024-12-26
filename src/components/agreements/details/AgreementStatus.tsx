@@ -3,16 +3,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
+
 interface AgreementStatusProps {
   agreementId: string;
-  currentStatus: string;
+  currentStatus: LeaseStatus;
 }
 
 export const AgreementStatus = ({ agreementId, currentStatus }: AgreementStatusProps) => {
-  const [status, setStatus] = useState(currentStatus);
+  const [status, setStatus] = useState<LeaseStatus>(currentStatus);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: LeaseStatus) => {
     try {
       setIsUpdating(true);
       const { error } = await supabase
@@ -46,6 +48,8 @@ export const AgreementStatus = ({ agreementId, currentStatus }: AgreementStatusP
         <SelectItem value="pending_deposit">Pending Deposit</SelectItem>
         <SelectItem value="active">Active</SelectItem>
         <SelectItem value="closed">Closed</SelectItem>
+        <SelectItem value="terminated">Terminated</SelectItem>
+        <SelectItem value="cancelled">Cancelled</SelectItem>
       </SelectContent>
     </Select>
   );
