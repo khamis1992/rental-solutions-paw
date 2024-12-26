@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
@@ -30,6 +30,7 @@ interface Vehicle {
   vin: string;
   mileage: number;
   license_plate: string;
+  location: string | null;
 }
 
 interface VehicleListProps {
@@ -98,6 +99,35 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  useEffect(() => {
+    // Subscribe to real-time location updates
+    const channel = supabase
+      .channel('vehicle-locations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'vehicles',
+          filter: 'location=neq.null'
+        },
+        (payload: any) => {
+          const updatedVehicle = payload.new;
+          if (updatedVehicle.location) {
+            toast({
+              title: "Location Updated",
+              description: `${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
 
   if (isLoading) {
     return (

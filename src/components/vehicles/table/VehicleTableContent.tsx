@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { MapPin } from "lucide-react";
+
 interface Vehicle {
   id: string;
   make: string;
@@ -26,6 +28,7 @@ interface Vehicle {
   vin: string;
   mileage: number;
   license_plate: string;
+  location: string | null;
 }
 
 interface VehicleTableContentProps {
@@ -52,6 +55,7 @@ export const VehicleTableContent = ({
           <TableHead>License Plate</TableHead>
           <TableHead>Vehicle</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Location</TableHead>
           <TableHead>VIN</TableHead>
           <TableHead>Mileage</TableHead>
           <TableHead>Actions</TableHead>
@@ -107,6 +111,16 @@ export const VehicleTableContent = ({
                   ))}
                 </SelectContent>
               </Select>
+            </TableCell>
+            <TableCell>
+              {vehicle.location ? (
+                <div className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {vehicle.location}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Not available</span>
+              )}
             </TableCell>
             <TableCell>{vehicle.vin}</TableCell>
             <TableCell>{vehicle.mileage?.toLocaleString() || 0} km</TableCell>

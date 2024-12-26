@@ -3615,6 +3615,7 @@ export type Database = {
           image_url: string | null
           is_test_data: boolean | null
           license_plate: string
+          location: string | null
           make: string
           mileage: number | null
           model: string
@@ -3631,6 +3632,7 @@ export type Database = {
           image_url?: string | null
           is_test_data?: boolean | null
           license_plate: string
+          location?: string | null
           make: string
           mileage?: number | null
           model: string
@@ -3647,6 +3649,7 @@ export type Database = {
           image_url?: string | null
           is_test_data?: boolean | null
           license_plate?: string
+          location?: string | null
           make?: string
           mileage?: number | null
           model?: string

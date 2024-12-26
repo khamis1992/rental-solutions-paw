@@ -3,6 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { MapPin } from "lucide-react";
 
 interface Vehicle {
   id: string;
@@ -13,6 +17,7 @@ interface Vehicle {
   daily_rate: number;
   image_url: string;
   license_plate: string;
+  location: string | null;
 }
 
 interface VehicleGridProps {
@@ -22,6 +27,37 @@ interface VehicleGridProps {
 }
 
 export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGridProps) => {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Subscribe to real-time location updates
+    const channel = supabase
+      .channel('vehicle-locations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'vehicles',
+          filter: 'location=neq.null'
+        },
+        (payload: any) => {
+          const updatedVehicle = payload.new;
+          if (updatedVehicle.location) {
+            toast({
+              title: "Location Updated",
+              description: `${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
+
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -78,6 +114,12 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
             <p className="text-sm text-muted-foreground">
               License: {vehicle.license_plate}
             </p>
+            {vehicle.location && (
+              <p className="text-sm text-muted-foreground flex items-center mt-2">
+                <MapPin className="h-4 w-4 mr-1" />
+                {vehicle.location}
+              </p>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <p className="text-lg font-semibold">
