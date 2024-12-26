@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
-// Lazy load components
 const Auth = lazy(() => import("@/pages/Auth"));
 const Dashboard = lazy(() => import("@/pages/Index"));
 const Vehicles = lazy(() => import("@/pages/Vehicles"));
