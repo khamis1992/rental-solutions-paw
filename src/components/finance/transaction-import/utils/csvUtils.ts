@@ -15,13 +15,17 @@ export const parseCSV = (content: string) => {
       'payment_number',
       'payment_description',
       'license_plate',
-      'vehicle'
+      'vehicle',
+      'customer_name'
     ];
 
     // Validate headers
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
     if (missingHeaders.length > 0) {
-      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}\n\nExpected headers are: ${requiredHeaders.join(', ')}`);
+      throw new Error(
+        `Missing required headers: ${missingHeaders.join(', ')}\n\n` +
+        `Expected CSV format:\n${requiredHeaders.join(',')}`
+      );
     }
 
     return lines.slice(1)
@@ -31,7 +35,11 @@ export const parseCSV = (content: string) => {
         
         // Check if we have enough values for all headers
         if (values.length !== headers.length) {
-          throw new Error(`Row ${index + 2} has ${values.length} values but should have ${headers.length} values`);
+          throw new Error(
+            `Row ${index + 2} has ${values.length} values but should have ${headers.length} values.\n\n` +
+            `Problem row: ${line}\n\n` +
+            `Please ensure each row has values for: ${requiredHeaders.join(', ')}`
+          );
         }
 
         const row = headers.reduce((obj, header, index) => {
@@ -51,7 +59,11 @@ export const parseCSV = (content: string) => {
         // Validate required fields
         for (const field of requiredHeaders) {
           if (row[field] === undefined || row[field] === null) {
-            throw new Error(`Missing required field "${field}" in row ${index + 2}: ${line}`);
+            throw new Error(
+              `Missing required field "${field}" in row ${index + 2}.\n` +
+              `Row data: ${line}\n\n` +
+              `All fields are required: ${requiredHeaders.join(', ')}`
+            );
           }
         }
 
