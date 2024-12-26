@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { StatsDisplay } from "./components/StatsDisplay";
+import { ReconcileButton } from "./components/ReconcileButton";
 
 interface TrafficFineStatsProps {
   agreementId?: string;
@@ -62,7 +64,6 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
   const handleBulkAssignment = async () => {
     setIsReconciling(true);
     try {
-      // Get all unassigned fines
       const { data: unassignedFines, error: finesError } = await supabase
         .from('traffic_fines')
         .select('id, violation_date, vehicle_id, license_plate')
@@ -73,18 +74,15 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
       let assignedCount = 0;
       let errorCount = 0;
 
-      // Process each fine
       for (const fine of unassignedFines || []) {
         try {
           let query = supabase
             .from('leases')
             .select('id');
 
-          // Try to match by vehicle_id if available
           if (fine.vehicle_id) {
             query = query.eq('vehicle_id', fine.vehicle_id);
           } else if (fine.license_plate) {
-            // If no vehicle_id, try to find vehicle by license plate first
             const { data: vehicles } = await supabase
               .from('vehicles')
               .select('id')
@@ -104,7 +102,6 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
             continue;
           }
 
-          // Add date conditions
           if (fine.violation_date) {
             query = query
               .lte('start_date', fine.violation_date)
@@ -120,7 +117,6 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
           }
 
           if (leases && leases.length > 0) {
-            // Assign the fine to the lease
             const { error: updateError } = await supabase
               .from('traffic_fines')
               .update({ 
@@ -164,42 +160,17 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
 
   return (
     <div className="flex justify-between items-center">
-      <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4 flex-1">
-        <Card className="p-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
-            <p className="text-2xl font-bold">{paymentCount}</p>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Unassigned Fines</p>
-            <p className="text-2xl font-bold">{unassignedCount}</p>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Unassigned Amount</p>
-            <p className="text-2xl font-bold">{formatCurrency(unassignedAmount)}</p>
-          </div>
-        </Card>
-      </div>
-      <div className="ml-4">
-        <Button
-          onClick={handleBulkAssignment}
-          disabled={isReconciling || !unassignedCount}
-          className="whitespace-nowrap"
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
-          Auto-Assign All
-        </Button>
-      </div>
+      <StatsDisplay 
+        paymentCount={paymentCount}
+        unassignedCount={unassignedCount}
+        totalAmount={totalAmount}
+        unassignedAmount={unassignedAmount}
+      />
+      <ReconcileButton 
+        isReconciling={isReconciling}
+        unassignedCount={unassignedCount}
+        onReconcile={handleBulkAssignment}
+      />
     </div>
   );
 }

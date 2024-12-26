@@ -3,28 +3,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, AlertTriangle, CheckCircle, FileText } from "lucide-react";
-import { analyzeCsvContent, generateErrorReport } from "./utils/csvAnalyzer";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ImportAnalysisCard } from "./components/ImportAnalysisCard";
-import { ImportActions } from "./components/ImportActions";
-import { ImportErrorReport } from "./components/ImportErrorReport";
-
-const REQUIRED_HEADERS = [
-  "serial_number",
-  "violation_number",
-  "violation_date",
-  "license_plate",
-  "fine_location",
-  "violation_charge",
-  "fine_amount",
-  "violation_points"
-];
+import { Upload } from "lucide-react";
 
 export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,25 +24,6 @@ export const TrafficFineImport = () => {
 
     setIsUploading(true);
     try {
-      console.log('Starting file analysis...');
-      
-      // Read and analyze the file
-      const content = await file.text();
-      const analysis = analyzeCsvContent(content, REQUIRED_HEADERS);
-      setAnalysisResult(analysis);
-      
-      console.log('Analysis complete:', analysis);
-
-      if (!analysis.isValid && analysis.validRows === 0) {
-        toast({
-          title: "Validation Failed",
-          description: "No valid records found to import. Please review the analysis report.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Upload file to storage
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("imports")
@@ -68,47 +31,17 @@ export const TrafficFineImport = () => {
 
       if (uploadError) throw uploadError;
 
-      try {
-        console.log('Invoking edge function with:', { fileName, repairedRows: analysis.repairedRows, validRows: analysis.validRows });
-        
-        const { data: processingData, error: processingError } = await supabase.functions
-          .invoke("process-traffic-fine-import", {
-            body: { 
-              fileName,
-              repairedRows: analysis.repairedRows || 0,
-              validRows: analysis.validRows || 0
-            }
-          });
-
-        console.log('Edge function response:', { processingData, processingError });
-
-        if (processingError) {
-          console.error('Processing error:', processingError);
-          throw new Error(processingError.message || 'Failed to process file');
-        }
-
-        if (!processingData?.success) {
-          throw new Error(processingData?.error || 'Failed to process file');
-        }
-
-        toast({
-          title: "Success",
-          description: `Successfully imported ${processingData.processed} traffic fines${
-            processingData.errors?.length ? ` with ${processingData.errors.length} errors` : ''
-          }`,
+      const { data: processingData, error: processingError } = await supabase.functions
+        .invoke("process-traffic-fine-import", {
+          body: { fileName }
         });
 
-        if (processingData.errors?.length) {
-          console.error('Import errors:', processingData.errors);
-        }
-      } catch (error: any) {
-        console.error('Edge function error:', error);
-        toast({
-          title: "Import Processing Failed",
-          description: error.message || "Failed to process the imported file. Please try again.",
-          variant: "destructive",
-        });
-      }
+      if (processingError) throw processingError;
+
+      toast({
+        title: "Success",
+        description: "Traffic fines imported successfully",
+      });
 
     } catch (error: any) {
       console.error("Import error:", error);
@@ -124,30 +57,28 @@ export const TrafficFineImport = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Import Traffic Fines</CardTitle>
-          <CardDescription>
-            Upload a CSV file containing traffic fine records. The file should include serial number,
-            violation number, date (YYYY-MM-DD), license plate, location, charge, amount, and points.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ImportActions 
-            onFileUpload={handleFileUpload}
-            isUploading={isUploading}
-            requiredHeaders={REQUIRED_HEADERS}
-          />
-        </CardContent>
-      </Card>
-
-      {analysisResult && (
-        <>
-          <ImportAnalysisCard analysis={analysisResult} />
-          <ImportErrorReport analysis={analysisResult} />
-        </>
-      )}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Import Traffic Fines</CardTitle>
+        <CardDescription>
+          Upload a CSV file containing traffic fine records
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild disabled={isUploading}>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+            />
+            <Upload className="mr-2 h-4 w-4" />
+            {isUploading ? "Importing..." : "Import CSV"}
+          </label>
+        </Button>
+      </CardContent>
+    </Card>
   );
-};
+}
