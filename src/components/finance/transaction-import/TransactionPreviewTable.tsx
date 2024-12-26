@@ -116,14 +116,14 @@ export const TransactionPreviewTable = ({
               <TableCell>{formatCurrency(row.amount)}</TableCell>
               <TableCell>
                 <Select
-                  value={selectedCustomers[index] || ''}
+                  value={selectedCustomers[index] || 'unassigned'}
                   onValueChange={(value) => handleCustomerChange(index, value)}
                 >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {customers?.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id}>
                         {customer.full_name}
@@ -134,13 +134,14 @@ export const TransactionPreviewTable = ({
               </TableCell>
               <TableCell>
                 <Select
-                  value={row.category_id || ''}
+                  value={row.category_id || 'uncategorized'}
                   onValueChange={(value) => handleCategoryChange(index, value)}
                 >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="uncategorized">Uncategorized</SelectItem>
                     {categories?.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
