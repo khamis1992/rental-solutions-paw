@@ -69,7 +69,9 @@ export const TransactionImport = () => {
           amount: row.amount,
           description: row.payment_description,
           type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
-          status: row.status || 'pending'
+          status: row.status || 'pending',
+          reference_type: 'agreement',
+          reference_id: row.agreement_number
         })));
 
       if (error) throw error;
@@ -95,8 +97,8 @@ export const TransactionImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Payment_Number,Payment_Description,License_Plate,Vehicle,Customer_Name\n" +
-                      "1000.00,2024-03-20,credit_card,completed,INV001,Monthly payment,ABC123,Toyota Camry,John Doe";
+    const csvContent = "Agreement_Number,Customer_Name,Amount,License_Plate,Vehicle,Payment_Date,Payment_Method,Payment_Number,Payment_Description\n" +
+                      "AGR-001,John Doe,1000.00,ABC123,Toyota Camry,2024-03-20,credit_card,INV001,Monthly payment";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

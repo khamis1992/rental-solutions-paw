@@ -5,19 +5,21 @@ export const parseCSV = (content: string) => {
       throw new Error('CSV file is empty');
     }
 
-    // Normalize headers by removing spaces and making lowercase
-    const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/\s+/g, '_'));
+    // Define headers in the exact order expected
     const requiredHeaders = [
+      'agreement_number',
+      'customer_name',
       'amount',
-      'payment_date',
-      'payment_method',
-      'status',
-      'payment_number',
-      'payment_description',
       'license_plate',
       'vehicle',
-      'customer_name'
+      'payment_date',
+      'payment_method',
+      'payment_number',
+      'payment_description'
     ];
+
+    // Normalize headers by removing spaces and making lowercase
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
     // Validate headers
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
@@ -47,7 +49,7 @@ export const parseCSV = (content: string) => {
           if (header === 'amount') {
             const amount = parseFloat(values[index]);
             if (isNaN(amount)) {
-              throw new Error(`Invalid amount format in row ${index + 2}: ${line}`);
+              throw new Error(`Invalid amount format in row ${index + 2}: ${values[index]}`);
             }
             obj[header] = amount;
           } else {
