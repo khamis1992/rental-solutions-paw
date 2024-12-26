@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface TrafficFineTableRowProps {
   fine: any;
@@ -16,6 +17,7 @@ export const TrafficFineTableRow = ({
   onMarkAsPaid,
 }: TrafficFineTableRowProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const getStatusColor = (status: string): string => {
     const statusColors = {
@@ -28,10 +30,12 @@ export const TrafficFineTableRow = ({
   };
 
   const handleLicensePlateClick = () => {
-    if (fine.license_plate) {
-      navigator.clipboard.writeText(fine.license_plate);
+    if (fine.vehicle_id) {
+      navigate(`/vehicles/${fine.vehicle_id}`);
+    } else {
       toast({
-        description: "License plate copied to clipboard",
+        description: "No vehicle associated with this fine",
+        variant: "destructive",
       });
     }
   };
