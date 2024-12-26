@@ -3,11 +3,28 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { FileUploadSection } from "./components/FileUploadSection";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Query to fetch existing imported transactions
+  const { data: importedData = [], isLoading } = useQuery({
+    queryKey: ['imported-transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('raw_transaction_imports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data.map(item => item.raw_data) || [];
+    }
+  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -36,8 +53,6 @@ export const TransactionImport = () => {
           })
           .filter((row, index) => index > 0); // Skip header row
 
-        setImportedData(rows);
-
         // Save to Supabase
         const { error: functionError } = await supabase.functions
           .invoke('process-transaction-import', {
@@ -59,12 +74,8 @@ export const TransactionImport = () => {
           description: `Successfully imported ${rows.length} transactions`,
         });
 
-        // Invalidate queries to refresh the data
-        await Promise.all([
-          supabase.from('accounting_transactions').select('*'),
-          supabase.from('raw_transaction_imports').select('*')
-        ]);
-
+        // Refresh the data
+        queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
       };
 
       reader.onerror = () => {
@@ -88,16 +99,55 @@ export const TransactionImport = () => {
     }
   };
 
+  const handleDeleteAll = async () => {
+    try {
+      const { error } = await supabase
+        .from('raw_transaction_imports')
+        .delete()
+        .neq('id', ''); // Delete all records
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "All imported transactions have been deleted",
+      });
+
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transactions",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <FileUploadSection 
-        onFileUpload={handleFileUpload}
-        isUploading={isUploading}
-      />
-      {importedData.length > 0 && (
+      <div className="flex justify-between items-center">
+        <FileUploadSection 
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+        />
+        {importedData.length > 0 && (
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAll}
+            className="ml-4"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete All
+          </Button>
+        )}
+      </div>
+      
+      {!isLoading && importedData.length > 0 && (
         <TransactionPreviewTable 
           data={importedData}
-          onDataChange={setImportedData}
+          onDataChange={() => {}}
         />
       )}
     </div>
