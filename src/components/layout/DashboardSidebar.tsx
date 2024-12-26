@@ -106,12 +106,16 @@ export const DashboardSidebar = ({ isOpen, onToggle, companyName, logoUrl }: Das
 
   if (isLoading) {
     return (
-      <Sidebar>
+      <Sidebar className="animate-pulse">
         <SidebarContent>
-          <div className="flex h-14 items-center border-b px-6">
-            <span className="font-semibold">Rental Solutions</span>
+          <div className="flex h-14 items-center border-b border-border/40 px-6">
+            <div className="h-8 w-32 rounded bg-muted"></div>
           </div>
-          <div className="p-4">Loading...</div>
+          <div className="p-4 space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 rounded bg-muted"></div>
+            ))}
+          </div>
         </SidebarContent>
       </Sidebar>
     );
@@ -120,11 +124,11 @@ export const DashboardSidebar = ({ isOpen, onToggle, companyName, logoUrl }: Das
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="flex h-14 items-center border-b px-6">
+        <div className="flex h-14 items-center border-b border-border/40 px-6 bg-sidebar-accent/5">
           {logoUrl && (
             <img src={logoUrl} alt="Company Logo" className="h-8 w-auto mr-2" />
           )}
-          <span className="font-semibold">{companyName || 'Rental Solutions'}</span>
+          <span className="font-semibold text-sidebar-primary">{companyName || 'Rental Solutions'}</span>
         </div>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -134,10 +138,10 @@ export const DashboardSidebar = ({ isOpen, onToggle, companyName, logoUrl }: Das
                   <SidebarMenuButton asChild>
                     <a
                       href={item.href}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-sidebar-accent/10 text-sidebar-foreground"
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
+                      <item.icon className="h-4 w-4 text-sidebar-primary" />
+                      <span className="font-medium">{item.label}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

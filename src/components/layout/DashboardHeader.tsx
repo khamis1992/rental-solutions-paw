@@ -17,10 +17,10 @@ export const DashboardHeader = ({ isSidebarOpen, onToggleSidebar, companyName }:
         <Button
           variant="ghost"
           size="icon"
-          className="mr-4"
+          className="mr-4 hover:bg-accent/10"
           onClick={onToggleSidebar}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5 text-muted-foreground" />
           <span className="sr-only">Toggle sidebar</span>
         </Button>
         
@@ -29,8 +29,9 @@ export const DashboardHeader = ({ isSidebarOpen, onToggleSidebar, companyName }:
             <SearchBox />
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <NotificationsButton />
+            <div className="h-5 w-px bg-border/40" /> {/* Separator */}
             <UserProfileMenu />
           </div>
         </div>
