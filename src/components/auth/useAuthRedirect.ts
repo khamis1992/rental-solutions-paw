@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useAuthRedirect = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, isLoading } = useSessionContext();
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -13,10 +14,6 @@ export const useAuthRedirect = () => {
     const initializeAuth = async () => {
       try {
         console.log("Initializing auth state...");
-        console.log("LocalStorage state:", {
-          accessToken: localStorage.getItem('sb-vqdlsidkucrownbfuouq-auth-token'),
-          refreshToken: localStorage.getItem('sb-vqdlsidkucrownbfuouq-auth-refresh-token')
-        });
         
         const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
         
@@ -25,13 +22,6 @@ export const useAuthRedirect = () => {
           toast.error("Failed to check authentication status");
           return;
         }
-
-        console.log("Current session state:", {
-          session: existingSession,
-          hasSession: !!existingSession,
-          userId: existingSession?.user?.id,
-          tokenExpiry: existingSession?.expires_at
-        });
 
         if (existingSession) {
           console.log("Existing session found, validating session...");
@@ -70,8 +60,6 @@ export const useAuthRedirect = () => {
                 await supabase.auth.signOut();
                 return;
               }
-              
-              console.log("New profile created successfully");
             } else {
               console.error("Profile fetch error:", profileError);
               toast.error("Failed to load user profile");
@@ -81,8 +69,11 @@ export const useAuthRedirect = () => {
           }
 
           if (profile?.role === 'admin' || profile?.role === 'staff') {
-            console.log("Valid role found, redirecting to dashboard");
-            navigate('/');
+            // Only redirect to dashboard if we're on the auth page
+            if (location.pathname === '/auth') {
+              console.log("Valid role found, redirecting to dashboard");
+              navigate('/');
+            }
           } else {
             console.log("Invalid role, signing out");
             toast.error("Access denied. Only staff and admin users can access this system.");
@@ -119,8 +110,11 @@ export const useAuthRedirect = () => {
         console.log("Profile validation result:", { profile, profileError });
 
         if (profile?.role === 'admin' || profile?.role === 'staff') {
-          console.log("Valid role confirmed, redirecting to dashboard");
-          navigate('/');
+          // Only redirect to dashboard if we're on the auth page
+          if (location.pathname === '/auth') {
+            console.log("Valid role confirmed, redirecting to dashboard");
+            navigate('/');
+          }
         } else {
           console.log("Invalid role detected, signing out");
           toast.error("Access denied. Only staff and admin users can access this system.");
@@ -133,7 +127,7 @@ export const useAuthRedirect = () => {
       console.log("Cleaning up auth subscriptions");
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   return { isInitializing, isLoading };
 };

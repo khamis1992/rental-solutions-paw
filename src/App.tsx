@@ -24,13 +24,16 @@ export default function App() {
           throw sessionError;
         }
 
+        // Only attempt refresh if there's no active session
         if (!session) {
+          console.log("No active session, attempting refresh...");
           const { data: { session: refreshedSession }, error: refreshError } = 
             await supabase.auth.refreshSession();
           
           if (refreshError) {
-            console.error("Refresh error:", refreshError);
-            throw refreshError;
+            console.error("Session refresh failed:", refreshError);
+            // Don't redirect on refresh failure, just return null
+            return null;
           }
           
           return refreshedSession;
@@ -39,13 +42,18 @@ export default function App() {
         return session;
       } catch (error) {
         console.error("Auth error:", error);
-        await supabase.auth.signOut();
-        navigate('/auth');
+        // Only redirect to auth page if we're certain the session is invalid
+        if (error.message?.includes('JWT expired') || error.message?.includes('invalid token')) {
+          await supabase.auth.signOut();
+          navigate('/auth');
+        }
         return null;
       }
     },
     retry: 1,
-    refetchOnWindowFocus: false,
+    refetchInterval: 5 * 60 * 1000, // Check session every 5 minutes instead of continuous polling
+    refetchOnWindowFocus: true, // Only refetch on window focus
+    refetchOnReconnect: true, // Refetch on reconnect to ensure session is still valid
   });
 
   useEffect(() => {
@@ -57,7 +65,10 @@ export default function App() {
           title: "Welcome back!",
           variant: "default",
         });
-        navigate('/');
+        // Only navigate to dashboard if we're on the auth page
+        if (window.location.pathname === '/auth') {
+          navigate('/');
+        }
       } else if (event === "SIGNED_OUT") {
         toast({
           title: "You have been logged out.",
