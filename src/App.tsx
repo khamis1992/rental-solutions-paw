@@ -1,35 +1,19 @@
-import { lazy, Suspense, useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-
-// Lazy load components
-const Auth = lazy(() => import("@/pages/Auth"));
-const Dashboard = lazy(() => import("@/pages/Index"));
-const Vehicles = lazy(() => import("@/pages/Vehicles"));
-const VehicleDetails = lazy(() => import("@/components/vehicles/VehicleDetails"));
-const Customers = lazy(() => import("@/pages/Customers"));
-const CustomerProfile = lazy(() => import("@/pages/CustomerProfile"));
-const Agreements = lazy(() => import("@/pages/Agreements"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const Maintenance = lazy(() => import("@/pages/Maintenance"));
-const TrafficFines = lazy(() => import("@/pages/TrafficFines"));
-const Reports = lazy(() => import("@/pages/Reports"));
-const Finance = lazy(() => import("@/pages/Finance"));
-const Help = lazy(() => import("@/pages/Help"));
-const Legal = lazy(() => import("@/pages/Legal"));
-const Audit = lazy(() => import("@/pages/Audit"));
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import * as LazyComponents from "@/routes/routes";
 
 export default function App() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const { data: session, isLoading: loadingSession, error } = useQuery({
+  const { data: session, isLoading: loadingSession } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       try {
@@ -97,11 +81,12 @@ export default function App() {
       <div className="min-h-screen bg-background">
         <Toaster />
         <Routes>
+          {/* Public Routes */}
           <Route
             path="/auth"
             element={
               <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <Auth />
+                <LazyComponents.Auth />
               </Suspense>
             }
           />
@@ -110,211 +95,126 @@ export default function App() {
           <Route
             path="/"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Dashboard />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Dashboard />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/vehicles"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Vehicles />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Vehicles />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/vehicles/:id"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <VehicleDetails />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.VehicleDetails />
+              </ProtectedRoute>
             }
           />
 
-          {/* Other protected routes */}
           <Route
             path="/customers"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Customers />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Customers />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/customers/:id"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <CustomerProfile />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.CustomerProfile />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/agreements"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Agreements />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Agreements />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/settings"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Settings />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Settings />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/maintenance/*"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Maintenance />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Maintenance />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/traffic-fines"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <TrafficFines />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.TrafficFines />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/reports"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Reports />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Reports />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/finance"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Finance />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Finance />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/help"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Help />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Help />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/legal"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Legal />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Legal />
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/audit"
             element={
-              session ? (
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <RouteWrapper>
-                    <Audit />
-                  </RouteWrapper>
-                </Suspense>
-              ) : (
-                <Navigate to="/auth" replace />
-              )
+              <ProtectedRoute session={session}>
+                <LazyComponents.Audit />
+              </ProtectedRoute>
             }
           />
 
