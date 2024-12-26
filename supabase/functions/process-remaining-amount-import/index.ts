@@ -51,15 +51,15 @@ serve(async (req) => {
     // Split by newlines and clean up each line
     const lines = fileContent.split('\n').map(line => 
       line.trim()
-        .replace(/\r/g, '') // Remove carriage returns but keep tabs
+        .replace(/\r/g, '') // Remove carriage returns
     ).filter(line => line.length > 0); // Remove empty lines
     
     if (lines.length < 2) {
       throw new Error('File is empty or contains only headers');
     }
 
-    // Split headers by tab and clean them
-    const headers = lines[0].split('\t').map(h => 
+    // Split headers by comma and clean them
+    const headers = lines[0].split(',').map(h => 
       h.trim()
         .replace(/^"|"$/g, '') // Remove quotes
         .replace(/\s+/g, ' ') // Normalize spaces
@@ -78,7 +78,7 @@ serve(async (req) => {
 
     // Process each line (skip header)
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split('\t').map(v => 
+      const values = lines[i].split(',').map(v => 
         v.trim()
           .replace(/^"|"$/g, '') // Remove quotes
       );

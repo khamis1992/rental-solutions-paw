@@ -72,7 +72,7 @@ export const RemainingAmountImport = () => {
     // Headers exactly matching what the Edge Function expects
     const headers = [
       "Agreement Number",
-      "License Plate", 
+      "License Plate",
       "rent amount",
       "final price",
       "amout paid",
