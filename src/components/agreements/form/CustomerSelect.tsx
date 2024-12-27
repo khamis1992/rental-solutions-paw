@@ -11,14 +11,10 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialog";
-import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
 import { CustomerSelectProps } from "./types/customerSelect.types";
 
 export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
 
   const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ["customers", searchTerm],
@@ -79,14 +75,6 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
                 }}
                 className="mb-2"
               />
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateCustomer(true)}
-                className="w-full"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                Create New Customer
-              </Button>
             </div>
             {isLoading ? (
               <SelectItem value="loading" disabled>
@@ -125,11 +113,6 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
           </SelectGroup>
         </SelectContent>
       </Select>
-
-      <CreateCustomerDialog 
-        open={showCreateCustomer} 
-        onOpenChange={setShowCreateCustomer}
-      />
     </div>
   );
 };
