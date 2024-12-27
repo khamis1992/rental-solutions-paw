@@ -20,6 +20,16 @@ import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
 import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
 import { PaymentMethodType } from "@/types/database/agreement.types";
 
+const PAYMENT_CATEGORIES = [
+  { id: 'late_payment_fee', name: 'LATE PAYMENT FEE' },
+  { id: 'administrative_fees', name: 'Administrative Fees' },
+  { id: 'vehicle_damage_charge', name: 'Vehicle Damage Charge' },
+  { id: 'traffic_fine', name: 'Traffic Fine' },
+  { id: 'rental_fee', name: 'RENTAL FEE' },
+  { id: 'advance_payment', name: 'Advance Payment' },
+  { id: 'other', name: 'Other' }
+];
+
 interface TransactionFormData {
   type: 'income' | 'expense' | 'payment';
   amount: number;
@@ -29,6 +39,7 @@ interface TransactionFormData {
   intervalValue?: string;
   intervalUnit?: string;
   category_id?: string;
+  payment_category?: string;
 }
 
 export function TransactionForm() {
@@ -46,7 +57,7 @@ export function TransactionForm() {
         const paymentData = {
           amount: data.amount,
           payment_method: data.payment_method,
-          description: data.description,
+          description: `${data.payment_category}: ${data.description || ''}`.trim(),
           payment_date: new Date().toISOString(),
           is_recurring: isRecurring,
           recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
@@ -70,7 +81,7 @@ export function TransactionForm() {
         const transactionData = {
           type: data.type,
           amount: data.amount,
-          description: data.description,
+          description: `${data.payment_category}: ${data.description || ''}`.trim(),
           transaction_date: data.transaction_date,
           category_id: data.category_id,
         };
@@ -126,6 +137,22 @@ export function TransactionForm() {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="payment_category">Payment Category</Label>
+          <Select onValueChange={(value) => setValue('payment_category', value)} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {PAYMENT_CATEGORIES.map((category) => (
+                <SelectItem key={category.id} value={category.name}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="amount">Amount</Label>
           <Input
             id="amount"
@@ -166,20 +193,6 @@ export function TransactionForm() {
               />
             )}
           </>
-        )}
-
-        {transactionType !== 'payment' && (
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select onValueChange={(value) => setValue('category_id', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Fetch and display categories here */}
-              </SelectContent>
-            </Select>
-          </div>
         )}
 
         <div className="space-y-2">
