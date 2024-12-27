@@ -15,6 +15,9 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
+// Get the trusted origin from window
+const TRUSTED_ORIGIN = window.TRUSTED_ORIGIN || window.location.origin;
+
 // Configure query client with optimized caching settings
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +32,23 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Add event listener for postMessage
+window.addEventListener('message', (event) => {
+  // Verify the origin
+  if (event.origin !== TRUSTED_ORIGIN) {
+    console.warn('Received message from untrusted origin:', event.origin);
+    return;
+  }
+  // Process the message
+  try {
+    if (event.data && typeof event.data === 'object') {
+      console.log('Received trusted message:', event.data);
+    }
+  } catch (error) {
+    console.error('Error processing message:', error);
+  }
+}, false);
 
 root.render(
   <React.StrictMode>
