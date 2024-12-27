@@ -13,7 +13,6 @@ import { VehicleParts } from "./profile/VehicleParts";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
-import { retryOperation } from "@/components/agreements/utils/retryUtils";
 
 const VehicleDetails = () => {
   const { id } = useParams();
@@ -25,30 +24,23 @@ const VehicleDetails = () => {
       
       if (!id) throw new Error("Vehicle ID is required");
 
-      try {
-        const { data, error } = await retryOperation(() => 
-          supabase
-            .from("vehicles")
-            .select("*")
-            .eq("id", id)
-            .single()
-        );
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-        if (error) {
-          console.error("Supabase error:", error); // Debug log
-          throw error;
-        }
-
-        if (!data) {
-          throw new Error("Vehicle not found");
-        }
-        
-        console.log("Vehicle data:", data); // Debug log
-        return data;
-      } catch (error) {
-        console.error("Failed to fetch vehicle:", error);
+      if (error) {
+        console.error("Supabase error:", error); // Debug log
         throw error;
       }
+
+      if (!data) {
+        throw new Error("Vehicle not found");
+      }
+      
+      console.log("Vehicle data:", data); // Debug log
+      return data;
     },
     enabled: !!id, // Only run query if id exists
     retry: 3, // Retry failed requests 3 times
