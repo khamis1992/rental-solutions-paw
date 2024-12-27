@@ -1,11 +1,13 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { AuditRecordsDashboard } from "@/components/finance/audit/AuditRecordsDashboard";
 
 const Audit = () => {
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6">
-        <AuditRecordsDashboard />
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Audit</h1>
+        <p className="text-muted-foreground">
+          This feature has been temporarily removed as part of the Finance module refactoring.
+        </p>
       </div>
     </DashboardLayout>
   );
