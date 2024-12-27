@@ -2512,33 +2512,6 @@ export type Database = {
         }
         Relationships: []
       }
-      permission_audit_logs: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          new_permissions: Json | null
-          old_permissions: Json | null
-          user_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          new_permissions?: Json | null
-          old_permissions?: Json | null
-          user_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          new_permissions?: Json | null
-          old_permissions?: Json | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       permissions: {
         Row: {
           action: string
@@ -2569,27 +2542,20 @@ export type Database = {
           ai_confidence_score: number | null
           ai_generated_fields: Json | null
           analysis_confidence_score: number | null
-          avatar_url: string | null
           contract_document_url: string | null
           created_at: string
-          department: string | null
           document_analysis_status: string | null
           driver_license: string | null
           email: string | null
-          employee_id: string | null
           extracted_data: Json | null
           full_name: string | null
           id: string
           id_document_url: string | null
           is_ai_generated: boolean | null
-          last_login: string | null
           license_document_url: string | null
           nationality: string | null
           needs_review: boolean | null
-          permissions: Json | null
           phone_number: string | null
-          position: string | null
-          preferences: Json | null
           role: Database["public"]["Enums"]["user_role"] | null
           status: Database["public"]["Enums"]["customer_status_type"] | null
           status_notes: string | null
@@ -2601,27 +2567,20 @@ export type Database = {
           ai_confidence_score?: number | null
           ai_generated_fields?: Json | null
           analysis_confidence_score?: number | null
-          avatar_url?: string | null
           contract_document_url?: string | null
           created_at?: string
-          department?: string | null
           document_analysis_status?: string | null
           driver_license?: string | null
           email?: string | null
-          employee_id?: string | null
           extracted_data?: Json | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
-          last_login?: string | null
           license_document_url?: string | null
           nationality?: string | null
           needs_review?: boolean | null
-          permissions?: Json | null
           phone_number?: string | null
-          position?: string | null
-          preferences?: Json | null
           role?: Database["public"]["Enums"]["user_role"] | null
           status?: Database["public"]["Enums"]["customer_status_type"] | null
           status_notes?: string | null
@@ -2633,27 +2592,20 @@ export type Database = {
           ai_confidence_score?: number | null
           ai_generated_fields?: Json | null
           analysis_confidence_score?: number | null
-          avatar_url?: string | null
           contract_document_url?: string | null
           created_at?: string
-          department?: string | null
           document_analysis_status?: string | null
           driver_license?: string | null
           email?: string | null
-          employee_id?: string | null
           extracted_data?: Json | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
-          last_login?: string | null
           license_document_url?: string | null
           nationality?: string | null
           needs_review?: boolean | null
-          permissions?: Json | null
           phone_number?: string | null
-          position?: string | null
-          preferences?: Json | null
           role?: Database["public"]["Enums"]["user_role"] | null
           status?: Database["public"]["Enums"]["customer_status_type"] | null
           status_notes?: string | null
@@ -2995,33 +2947,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      role_permissions: {
-        Row: {
-          actions: Json
-          created_at: string
-          id: string
-          resource: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-        }
-        Insert: {
-          actions: Json
-          created_at?: string
-          id?: string
-          resource: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-        }
-        Update: {
-          actions?: Json
-          created_at?: string
-          id?: string
-          resource?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-        }
-        Relationships: []
       }
       security_deposits: {
         Row: {

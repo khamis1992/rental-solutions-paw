@@ -1,12 +1,45 @@
-import { Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import * as LazyComponents from "@/routes/routes";
 
 export default function App() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      
+      if (event === "SIGNED_IN") {
+        toast({
+          title: "Welcome back!",
+          variant: "default",
+        });
+        // Only navigate to dashboard if we're on the auth page
+        if (window.location.pathname === '/auth') {
+          navigate('/');
+        }
+      } else if (event === "SIGNED_OUT") {
+        toast({
+          title: "You have been logged out.",
+          variant: "default",
+        });
+        navigate('/auth');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast, navigate]);
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
       <div className="min-h-screen bg-background">
