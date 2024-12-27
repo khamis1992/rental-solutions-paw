@@ -1,179 +1,131 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-// Define a simpler, explicit type for table names based on actual tables
 type TableNames = 
-  | 'ai_payment_analysis'
-  | 'document_analysis_logs'
-  | 'expense_categories'
-  | 'expense_transactions'
-  | 'financial_forecasts'
-  | 'financial_insights'
-  | 'fixed_costs'
-  | 'installment_analytics'
-  | 'payment_reconciliation'
-  | 'rent_payments'
-  | 'traffic_fines'
-  | 'variable_costs';
+  | "profiles"
+  | "accounting_categories"
+  | "leases"
+  | "vehicles"
+  | "import_logs"
+  | "payments"
+  | "promotional_codes"
+  | "help_guide_categories"
+  | "legal_cases"
+  | "legal_document_templates"
+  | "legal_notification_templates"
+  | "maintenance"
+  | "maintenance_categories"
+  | "vehicle_statuses";
 
-interface TestResult {
-  table: TableNames;
-  operation: 'select' | 'insert' | 'update' | 'delete';
-  success: boolean;
-  error?: string;
+export async function testTableAccess(tableName: TableNames) {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(1);
+
+    if (error) {
+      console.error(`Error accessing ${tableName}:`, error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+
+    return {
+      success: true,
+      data
+    };
+  } catch (error: any) {
+    console.error(`Error testing ${tableName}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 }
 
-export const testRlsPolicies = async (): Promise<TestResult[]> => {
-  const results: TestResult[] = [];
-  
-  // Test tables with RLS
-  const tablesToTest: TableNames[] = [
-    'ai_payment_analysis',
-    'document_analysis_logs',
-    'expense_categories',
-    'expense_transactions',
-    'financial_forecasts',
-    'financial_insights',
-    'fixed_costs',
-    'installment_analytics',
-    'payment_reconciliation',
-    'rent_payments',
-    'traffic_fines',
-    'variable_costs'
-  ];
+export async function testInsertAccess(tableName: TableNames, testData: any) {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .insert([testData])
+      .select();
 
-  // Test SELECT operations
-  for (const table of tablesToTest) {
-    try {
-      const { data, error } = await supabase
-        .from(table)
-        .select('*')
-        .limit(1);
-
-      results.push({
-        table,
-        operation: 'select',
-        success: !error,
-        error: error?.message
-      });
-
-      if (error) {
-        console.error(`SELECT test failed for ${table}:`, error);
-      }
-    } catch (err: any) {
-      results.push({
-        table,
-        operation: 'select',
+    if (error) {
+      console.error(`Error inserting into ${tableName}:`, error);
+      return {
         success: false,
-        error: err.message
-      });
-    }
-  }
-
-  // Test INSERT operations
-  for (const table of tablesToTest) {
-    try {
-      // Create a minimal test record
-      const testRecord = {
-        id: crypto.randomUUID(), // Add id field
-        name: 'Test Record',
-        amount: 100,
-        created_at: new Date().toISOString()
+        error: error.message
       };
-
-      const { error } = await supabase
-        .from(table)
-        .insert([testRecord])
-        .select()
-        .single();
-
-      results.push({
-        table,
-        operation: 'insert',
-        success: !error,
-        error: error?.message
-      });
-
-      if (error) {
-        console.error(`INSERT test failed for ${table}:`, error);
-      }
-    } catch (err: any) {
-      results.push({
-        table,
-        operation: 'insert',
-        success: false,
-        error: err.message
-      });
     }
+
+    return {
+      success: true,
+      data
+    };
+  } catch (error: any) {
+    console.error(`Error testing insert for ${tableName}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
+}
 
-  // Test UPDATE operations
-  for (const table of tablesToTest) {
-    try {
-      const { error } = await supabase
-        .from(table)
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', 'test-id'); // Use a non-existent ID to avoid actual updates
+export async function testUpdateAccess(tableName: TableNames, id: string, updates: any) {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .update(updates)
+      .eq('id', id)
+      .select();
 
-      results.push({
-        table,
-        operation: 'update',
-        success: !error,
-        error: error?.message
-      });
-
-      if (error) {
-        console.error(`UPDATE test failed for ${table}:`, error);
-      }
-    } catch (err: any) {
-      results.push({
-        table,
-        operation: 'update',
+    if (error) {
+      console.error(`Error updating ${tableName}:`, error);
+      return {
         success: false,
-        error: err.message
-      });
+        error: error.message
+      };
     }
+
+    return {
+      success: true,
+      data
+    };
+  } catch (error: any) {
+    console.error(`Error testing update for ${tableName}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
+}
 
-  // Test DELETE operations
-  for (const table of tablesToTest) {
-    try {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq('id', 'test-id'); // Use a non-existent ID to avoid actual deletions
+export async function testDeleteAccess(tableName: TableNames, id: string) {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .delete()
+      .eq('id', id)
+      .select();
 
-      results.push({
-        table,
-        operation: 'delete',
-        success: !error,
-        error: error?.message
-      });
-
-      if (error) {
-        console.error(`DELETE test failed for ${table}:`, error);
-      }
-    } catch (err: any) {
-      results.push({
-        table,
-        operation: 'delete',
+    if (error) {
+      console.error(`Error deleting from ${tableName}:`, error);
+      return {
         success: false,
-        error: err.message
-      });
+        error: error.message
+      };
     }
-  }
 
-  // Log summary
-  const failedTests = results.filter(r => !r.success);
-  if (failedTests.length > 0) {
-    console.error('Failed RLS policy tests:', failedTests);
-    toast.error(`${failedTests.length} RLS policy tests failed`, {
-      description: 'Check console for details'
-    });
-  } else {
-    console.log('All RLS policy tests passed successfully!');
-    toast.success('All RLS policy tests passed!');
+    return {
+      success: true,
+      data
+    };
+  } catch (error: any) {
+    console.error(`Error testing delete for ${tableName}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
-
-  return results;
-};
+}
