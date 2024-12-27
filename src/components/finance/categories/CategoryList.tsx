@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, FolderPlus, Pencil, Trash2, CalendarRange } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
 import { BudgetProgress } from "./budget/BudgetProgress";
 import { toast } from "sonner";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { ImportExportCategories } from "./ImportExportCategories";
+import type { DateRange } from "react-day-picker";
 
 interface Category {
   id: string;
@@ -34,7 +36,7 @@ export const CategoryList = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(addMonths(new Date(), -1)),
     to: endOfMonth(new Date())
   });
@@ -42,7 +44,6 @@ export const CategoryList = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories", dateRange],
     queryFn: async () => {
-      // First get categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from("accounting_categories")
         .select("*")
@@ -50,7 +51,6 @@ export const CategoryList = () => {
 
       if (categoriesError) throw categoriesError;
 
-      // Then get transactions for spending calculation within date range
       const { data: transactions, error: transactionsError } = await supabase
         .from("accounting_transactions")
         .select("amount, category_id, transaction_date")
@@ -59,7 +59,6 @@ export const CategoryList = () => {
 
       if (transactionsError) throw transactionsError;
 
-      // Calculate current spending for each category
       const categoriesWithSpending = categoriesData.map((category: Category) => {
         const categoryTransactions = transactions.filter(
           (t) => t.category_id === category.id
@@ -80,22 +79,6 @@ export const CategoryList = () => {
     },
   });
 
-  const handleDelete = async (categoryId: string) => {
-    try {
-      const { error } = await supabase
-        .from("accounting_categories")
-        .delete()
-        .eq("id", categoryId);
-
-      if (error) throw error;
-
-      toast.success("Category deleted successfully");
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      toast.error("Failed to delete category");
-    }
-  };
-
   const filteredCategories = categories?.filter((category) =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -104,10 +87,13 @@ export const CategoryList = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Categories</h2>
-        <Button onClick={() => setShowDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Category
-        </Button>
+        <div className="flex gap-2">
+          <ImportExportCategories />
+          <Button onClick={() => setShowDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Category
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4">
@@ -121,7 +107,10 @@ export const CategoryList = () => {
         </div>
         <DateRangePicker
           value={dateRange}
-          onChange={setDateRange}
+          onChange={(value) => setDateRange(value || { 
+            from: startOfMonth(addMonths(new Date(), -1)),
+            to: endOfMonth(new Date())
+          })}
         />
       </div>
 
@@ -199,7 +188,7 @@ export const CategoryList = () => {
           setShowDialog(open);
           if (!open) setEditingCategory(null);
         }}
-        category={editingCategory}
+        editCategory={editingCategory}
       />
     </div>
   );
