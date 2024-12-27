@@ -69,13 +69,14 @@ export function TransactionForm() {
       } else {
         // Regular transaction handling
         const transactionData = {
-          type: data.type,
+          type: data.payment_category as TransactionType, // Convert payment category to TransactionType
           amount: data.amount,
           description: `${data.payment_category}: ${data.description || ''}`.trim(),
           transaction_date: data.transaction_date,
           category_id: data.category_id,
         };
 
+        console.log("Transaction data to be inserted:", transactionData);
         const { error: transactionError } = await supabase
           .from("accounting_transactions")
           .insert(transactionData);
@@ -133,13 +134,13 @@ export function TransactionForm() {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="late_payment_fee">Late Payment Fee</SelectItem>
-              <SelectItem value="administrative_fees">Administrative Fees</SelectItem>
-              <SelectItem value="vehicle_damage_charge">Vehicle Damage Charge</SelectItem>
-              <SelectItem value="traffic_fine">Traffic Fine</SelectItem>
-              <SelectItem value="rental_fee">Rental Fee</SelectItem>
-              <SelectItem value="advance_payment">Advance Payment</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="LATE_PAYMENT_FEE">Late Payment Fee</SelectItem>
+              <SelectItem value="ADMINISTRATIVE_FEES">Administrative Fees</SelectItem>
+              <SelectItem value="VEHICLE_DAMAGE_CHARGE">Vehicle Damage Charge</SelectItem>
+              <SelectItem value="TRAFFIC_FINE">Traffic Fine</SelectItem>
+              <SelectItem value="RENTAL_FEE">Rental Fee</SelectItem>
+              <SelectItem value="ADVANCE_PAYMENT">Advance Payment</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
