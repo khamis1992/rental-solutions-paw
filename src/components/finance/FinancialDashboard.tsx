@@ -4,6 +4,7 @@ import { FinancialMetricsCard } from "./charts/FinancialMetricsCard";
 import { RevenueChart } from "./charts/RevenueChart";
 import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
+import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { Loader2 } from "lucide-react";
 
 export const FinancialDashboard = () => {
@@ -12,7 +13,15 @@ export const FinancialDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounting_transactions")
-        .select("*")
+        .select(`
+          *,
+          category:accounting_categories(
+            name,
+            type,
+            budget_limit,
+            budget_period
+          )
+        `)
         .order("transaction_date", { ascending: true });
 
       if (error) throw error;
@@ -29,27 +38,93 @@ export const FinancialDashboard = () => {
   }
 
   // Process data for different visualizations
-  const currentMonthRevenue = 50000; // Example value - replace with actual calculation
-  const previousMonthRevenue = 45000; // Example value - replace with actual calculation
-  const percentageChange = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
 
-  const revenueData = [
-    { date: "2024-01-01", revenue: 45000 },
-    { date: "2024-02-01", revenue: 50000 },
-    // Add more data points
-  ];
+  const currentMonthTransactions = financialData?.filter(transaction => {
+    const transactionDate = new Date(transaction.transaction_date);
+    return transactionDate.getMonth() === currentMonth && 
+           transactionDate.getFullYear() === currentYear;
+  });
 
-  const expenseData = [
-    { category: "Maintenance", amount: 15000 },
-    { category: "Salaries", amount: 25000 },
-    // Add more categories
-  ];
+  const previousMonthTransactions = financialData?.filter(transaction => {
+    const transactionDate = new Date(transaction.transaction_date);
+    return transactionDate.getMonth() === (currentMonth - 1) && 
+           transactionDate.getFullYear() === currentYear;
+  });
 
-  const profitLossData = [
-    { period: "Jan", revenue: 45000, expenses: 35000, profit: 10000 },
-    { period: "Feb", revenue: 50000, expenses: 38000, profit: 12000 },
-    // Add more periods
-  ];
+  const currentMonthRevenue = currentMonthTransactions?.reduce(
+    (sum, transaction) => transaction.type === 'INCOME' ? sum + transaction.amount : sum, 
+    0
+  ) || 0;
+
+  const previousMonthRevenue = previousMonthTransactions?.reduce(
+    (sum, transaction) => transaction.type === 'INCOME' ? sum + transaction.amount : sum, 
+    0
+  ) || 0;
+
+  const currentMonthExpenses = currentMonthTransactions?.reduce(
+    (sum, transaction) => transaction.type === 'EXPENSE' ? sum + transaction.amount : sum, 
+    0
+  ) || 0;
+
+  const previousMonthExpenses = previousMonthTransactions?.reduce(
+    (sum, transaction) => transaction.type === 'EXPENSE' ? sum + transaction.amount : sum, 
+    0
+  ) || 0;
+
+  const percentageChangeRevenue = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+  const percentageChangeExpenses = ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
+
+  const revenueData = financialData
+    ?.filter(t => t.type === 'INCOME')
+    ?.reduce((acc, transaction) => {
+      const date = transaction.transaction_date.split('T')[0];
+      const existing = acc.find(item => item.date === date);
+      if (existing) {
+        existing.revenue += transaction.amount;
+      } else {
+        acc.push({ date, revenue: transaction.amount });
+      }
+      return acc;
+    }, [] as { date: string; revenue: number }[]) || [];
+
+  const expenseData = financialData
+    ?.filter(t => t.type === 'EXPENSE')
+    ?.reduce((acc, transaction) => {
+      const category = transaction.category?.name || 'Uncategorized';
+      const existing = acc.find(item => item.category === category);
+      if (existing) {
+        existing.amount += transaction.amount;
+      } else {
+        acc.push({ category, amount: transaction.amount });
+      }
+      return acc;
+    }, [] as { category: string; amount: number }[]) || [];
+
+  const profitLossData = financialData?.reduce((acc, transaction) => {
+    const date = new Date(transaction.transaction_date);
+    const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    const existing = acc.find(item => item.period === period);
+    if (existing) {
+      if (transaction.type === 'INCOME') {
+        existing.revenue += transaction.amount;
+      } else {
+        existing.expenses += transaction.amount;
+      }
+      existing.profit = existing.revenue - existing.expenses;
+    } else {
+      acc.push({
+        period,
+        revenue: transaction.type === 'INCOME' ? transaction.amount : 0,
+        expenses: transaction.type === 'EXPENSE' ? transaction.amount : 0,
+        profit: transaction.type === 'INCOME' ? transaction.amount : -transaction.amount
+      });
+    }
+    return acc;
+  }, [] as { period: string; revenue: number; expenses: number; profit: number }[]) || [];
 
   return (
     <div className="space-y-8">
@@ -58,21 +133,33 @@ export const FinancialDashboard = () => {
           title="Monthly Revenue"
           value={currentMonthRevenue}
           previousValue={previousMonthRevenue}
-          percentageChange={percentageChange}
+          percentageChange={percentageChangeRevenue}
         />
         <FinancialMetricsCard
           title="Monthly Expenses"
-          value={38000}
-          previousValue={35000}
-          percentageChange={8.57}
+          value={currentMonthExpenses}
+          previousValue={previousMonthExpenses}
+          percentageChange={percentageChangeExpenses}
         />
         <FinancialMetricsCard
           title="Net Profit"
-          value={12000}
-          previousValue={10000}
-          percentageChange={20}
+          value={currentMonthRevenue - currentMonthExpenses}
+          previousValue={previousMonthRevenue - previousMonthExpenses}
+          percentageChange={
+            ((currentMonthRevenue - currentMonthExpenses) - (previousMonthRevenue - previousMonthExpenses)) / 
+            Math.abs(previousMonthRevenue - previousMonthExpenses) * 100
+          }
         />
       </div>
+
+      <BudgetTrackingSection 
+        transactions={currentMonthTransactions || []}
+        categories={financialData
+          ?.filter(t => t.category)
+          .map(t => t.category)
+          .filter((c, i, arr) => arr.findIndex(t => t.id === c.id) === i) || []
+        }
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <RevenueChart data={revenueData} />
