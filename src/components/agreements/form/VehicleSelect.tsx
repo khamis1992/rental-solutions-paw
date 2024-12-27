@@ -12,7 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Vehicle } from "@/types/vehicle";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 
 interface VehicleSelectProps {
   register: any;
@@ -71,7 +71,7 @@ export const VehicleSelect = ({ register, onVehicleSelect }: VehicleSelectProps)
         <SelectContent>
           <SelectGroup>
             <div className="px-3 py-2">
-              <Input
+              <SearchInput
                 placeholder="Search vehicles..."
                 value={searchTerm}
                 onChange={(e) => {

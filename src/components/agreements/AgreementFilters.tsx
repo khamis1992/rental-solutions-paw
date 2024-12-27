@@ -1,5 +1,4 @@
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
@@ -22,14 +21,11 @@ export const AgreementFilters = ({
 }: AgreementFiltersProps) => {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center">
-      <div className="relative flex-1">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search agreements..."
-          className="pl-8 md:w-[300px] lg:w-[400px]"
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        placeholder="Search agreements..."
+        className="md:w-[300px] lg:w-[400px]"
+        onChange={(e) => onSearchChange(e.target.value)}
+      />
       <div className="flex gap-2">
         <Select defaultValue="all" onValueChange={onStatusChange}>
           <SelectTrigger className="w-[180px]">
