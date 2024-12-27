@@ -5,6 +5,7 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useAuthState } from "@/hooks/use-auth-state";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
@@ -41,10 +42,69 @@ const SystemChatbot = lazyLoadComponent(
   () => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })),
   "SystemChatbot"
 );
+const AdminDashboard = lazyLoadComponent(
+  () => import("@/components/dashboard/AdminDashboard").then(module => ({ default: module.AdminDashboard })),
+  "AdminDashboard"
+);
+const StaffDashboard = lazyLoadComponent(
+  () => import("@/components/dashboard/StaffDashboard").then(module => ({ default: module.StaffDashboard })),
+  "StaffDashboard"
+);
 
 const Index = () => {
   usePerformanceMonitoring();
   useDashboardSubscriptions();
+  const { userRole } = useAuthState();
+
+  const renderDashboardContent = () => {
+    switch (userRole) {
+      case 'admin':
+        return (
+          <>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Admin Dashboard" />}>
+                <AdminDashboard />
+              </Suspense>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
+                <DashboardStats />
+              </Suspense>
+            </ErrorBoundary>
+          </>
+        );
+      case 'staff':
+        return (
+          <>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Staff Dashboard" />}>
+                <StaffDashboard />
+              </Suspense>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
+                <QuickActions />
+              </Suspense>
+            </ErrorBoundary>
+          </>
+        );
+      default:
+        return (
+          <>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
+                <DashboardStats />
+              </Suspense>
+            </ErrorBoundary>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
+                <QuickActions />
+              </Suspense>
+            </ErrorBoundary>
+          </>
+        );
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -55,17 +115,7 @@ const Index = () => {
           </Suspense>
         </ErrorBoundary>
 
-        <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-            <DashboardStats />
-          </Suspense>
-        </ErrorBoundary>
-
-        <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
-            <QuickActions />
-          </Suspense>
-        </ErrorBoundary>
+        {renderDashboardContent()}
         
         <div className="grid gap-8 lg:grid-cols-7">
           <div className="lg:col-span-7">
@@ -98,7 +148,6 @@ const Index = () => {
   );
 };
 
-// Improved loading component with better visual feedback
 const ComponentLoader = ({ componentName }: { componentName: string }) => (
   <div className="w-full h-[200px] space-y-4 p-4">
     <div className="h-4 w-1/4">

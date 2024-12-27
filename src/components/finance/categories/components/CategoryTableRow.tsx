@@ -14,6 +14,7 @@ interface CategoryTableRowProps {
     budget_limit: number | null;
     budget_period: string | null;
     is_active: boolean;
+    currentSpending: number;
   };
   currentSpending: number;
   onEdit: (id: string) => void;
@@ -23,7 +24,6 @@ interface CategoryTableRowProps {
 
 export const CategoryTableRow = ({
   category,
-  currentSpending,
   onEdit,
   onDelete,
   onToggleActive,
@@ -41,7 +41,7 @@ export const CategoryTableRow = ({
         {category.budget_limit ? (
           <BudgetProgress
             budgetLimit={category.budget_limit}
-            currentSpending={currentSpending}
+            currentSpending={category.currentSpending}
             period={category.budget_period}
           />
         ) : (

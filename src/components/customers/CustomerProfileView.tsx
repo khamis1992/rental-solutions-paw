@@ -18,15 +18,26 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["customer", customerId],
     queryFn: async () => {
+      console.log("Fetching customer profile for ID:", customerId); // Debug log
+      
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", customerId)
-        .single();
+        .select()
+        .eq('id', customerId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching customer profile:", error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Customer not found");
+      }
+
       return data;
     },
+    enabled: !!customerId,
   });
 
   if (isLoadingProfile) {
