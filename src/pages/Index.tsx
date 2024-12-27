@@ -1,165 +1,49 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Suspense, lazy } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
-import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { Suspense } from "react";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { useAuthState } from "@/hooks/use-auth-state";
+import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
 
-const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
-  return lazy(() => 
-    importFn().catch(error => {
-      console.error(`Error loading ${componentName}:`, error);
-      toast.error(`Failed to load ${componentName}. Please refresh the page.`);
-      return Promise.reject(error);
-    })
-  );
-};
+export default function Index() {
+  const { userRole, isLoading } = useAuthState();
 
-// Lazy load components with improved error handling
-const DashboardStats = lazyLoadComponent(
-  () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
-  "DashboardStats"
-);
-const DashboardAlerts = lazyLoadComponent(
-  () => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })),
-  "DashboardAlerts"
-);
-const QuickActions = lazyLoadComponent(
-  () => import("@/components/dashboard/QuickActions").then(module => ({ default: module.QuickActions })),
-  "QuickActions"
-);
-const WelcomeHeader = lazyLoadComponent(
-  () => import("@/components/dashboard/WelcomeHeader").then(module => ({ default: module.WelcomeHeader })),
-  "WelcomeHeader"
-);
-const RecentActivity = lazyLoadComponent(
-  () => import("@/components/dashboard/RecentActivity").then(module => ({ default: module.RecentActivity })),
-  "RecentActivity"
-);
-const SystemChatbot = lazyLoadComponent(
-  () => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })),
-  "SystemChatbot"
-);
-const AdminDashboard = lazyLoadComponent(
-  () => import("@/components/dashboard/AdminDashboard").then(module => ({ default: module.AdminDashboard })),
-  "AdminDashboard"
-);
-const StaffDashboard = lazyLoadComponent(
-  () => import("@/components/dashboard/StaffDashboard").then(module => ({ default: module.StaffDashboard })),
-  "StaffDashboard"
-);
+  if (isLoading) {
+    return <Skeleton className="h-screen w-screen" />;
+  }
 
-const Index = () => {
-  usePerformanceMonitoring();
-  useDashboardSubscriptions();
-  const { userRole } = useAuthState();
+  // Render different dashboard based on user role
+  if (userRole === 'admin') {
+    return <AdminDashboard />;
+  }
 
-  const renderDashboardContent = () => {
-    switch (userRole) {
-      case 'admin':
-        return (
-          <>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Admin Dashboard" />}>
-                <AdminDashboard />
-              </Suspense>
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                <DashboardStats />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        );
-      case 'staff':
-        return (
-          <>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Staff Dashboard" />}>
-                <StaffDashboard />
-              </Suspense>
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
-                <QuickActions />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        );
-      default:
-        return (
-          <>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                <DashboardStats />
-              </Suspense>
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
-                <QuickActions />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        );
-    }
-  };
+  if (userRole === 'staff') {
+    return <StaffDashboard />;
+  }
 
+  // Default dashboard for other roles
   return (
-    <DashboardLayout>
-      <div className="space-y-8 px-2 py-6 w-full max-w-[1920px] mx-auto">
-        <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
-            <WelcomeHeader />
-          </Suspense>
-        </ErrorBoundary>
+    <div className="container mx-auto p-6 space-y-6">
+      <ErrorBoundary>
+        <Suspense fallback={<Skeleton className="h-24" />}>
+          <WelcomeHeader />
+        </Suspense>
+      </ErrorBoundary>
 
-        {renderDashboardContent()}
-        
-        <div className="grid gap-8 lg:grid-cols-7">
-          <div className="lg:col-span-7">
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
-                <DashboardAlerts />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-        </div>
-        
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-          <div className="lg:col-span-4">
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
-                <RecentActivity />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-          <div className="lg:col-span-3">
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
-                <SystemChatbot />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-        </div>
-      </div>
-    </DashboardLayout>
+      <ErrorBoundary>
+        <Suspense fallback={<Skeleton className="h-48" />}>
+          <QuickActions />
+        </Suspense>
+      </ErrorBoundary>
+
+      <ErrorBoundary>
+        <Suspense fallback={<Skeleton className="h-96" />}>
+          <DashboardStats />
+        </Suspense>
+      </ErrorBoundary>
+    </div>
   );
-};
-
-const ComponentLoader = ({ componentName }: { componentName: string }) => (
-  <div className="w-full h-[200px] space-y-4 p-4">
-    <div className="h-4 w-1/4">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="h-[160px]">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="text-sm text-muted-foreground text-center">
-      Loading {componentName}...
-    </div>
-  </div>
-);
-
-export default Index;
+}
