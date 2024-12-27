@@ -23,5 +23,4 @@ export interface TransactionFormData {
   paymentMethod?: PaymentMethodType;
   intervalValue?: number;
   intervalUnit?: 'days' | 'weeks' | 'months';
-  payment_category?: PaymentCategoryType;
 }
