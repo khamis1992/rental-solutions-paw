@@ -1,25 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
-import { BudgetProgress } from "./budget/BudgetProgress";
-import { toast } from "sonner";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ImportExportCategories } from "./ImportExportCategories";
-import { Checkbox } from "@/components/ui/checkbox";
 import type { DateRange } from "react-day-picker";
+import { toast } from "sonner";
+import { CategoryTableHeader } from "./components/CategoryTableHeader";
+import { CategoryTableRow } from "./components/CategoryTableRow";
 
 interface Category {
   id: string;
@@ -77,7 +70,7 @@ export const CategoryList = () => {
         };
       });
 
-      return categoriesWithSpending as Category[];
+      return categoriesWithSpending;
     },
   });
 
@@ -186,66 +179,26 @@ export const CategoryList = () => {
       ) : (
         <div className="border rounded-lg">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={filteredCategories?.length === selectedCategories.length}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Budget</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+            <CategoryTableHeader
+              onSelectAll={handleSelectAll}
+              allSelected={
+                filteredCategories?.length === selectedCategories.length &&
+                filteredCategories?.length > 0
+              }
+            />
             <TableBody>
               {filteredCategories?.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedCategories.includes(category.id)}
-                      onCheckedChange={(checked) => handleSelectCategory(category.id, checked)}
-                    />
-                  </TableCell>
-                  <TableCell>{category.name}</TableCell>
-                  <TableCell>{category.type}</TableCell>
-                  <TableCell>{category.description}</TableCell>
-                  <TableCell>
-                    {category.budget_limit ? (
-                      <BudgetProgress
-                        budgetLimit={category.budget_limit}
-                        currentSpending={category.current_spending || 0}
-                        period={category.budget_period}
-                      />
-                    ) : (
-                      "-"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setEditingCategory(category);
-                          setShowDialog(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(category.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <CategoryTableRow
+                  key={category.id}
+                  category={category}
+                  isSelected={selectedCategories.includes(category.id)}
+                  onSelect={(checked) => handleSelectCategory(category.id, checked)}
+                  onEdit={() => {
+                    setEditingCategory(category);
+                    setShowDialog(true);
+                  }}
+                  onDelete={() => handleDelete(category.id)}
+                />
               ))}
               {!filteredCategories?.length && (
                 <TableRow>
