@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
+import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Finance = () => {
@@ -12,6 +13,7 @@ const Finance = () => {
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="categorization">Categorization</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
           </TabsList>
 
@@ -21,6 +23,10 @@ const Finance = () => {
 
           <TabsContent value="transactions">
             {/* Transaction management components will go here */}
+          </TabsContent>
+
+          <TabsContent value="categorization">
+            <TransactionCategorization />
           </TabsContent>
 
           <TabsContent value="receipts">
