@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface CategoryDialogProps {
@@ -29,6 +30,9 @@ interface CategoryDialogProps {
     type: string;
     description: string;
     budget_limit: number | null;
+    parent_id: string | null;
+    budget_period: string | null;
+    is_active?: boolean;
   };
 }
 
@@ -40,6 +44,9 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
     type: "",
     description: "",
     budget_limit: "",
+    budget_period: "",
+    is_active: true,
+    parent_id: "",
   });
 
   useEffect(() => {
@@ -49,6 +56,9 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
         type: editCategory.type,
         description: editCategory.description || "",
         budget_limit: editCategory.budget_limit?.toString() || "",
+        budget_period: editCategory.budget_period || "",
+        is_active: editCategory.is_active ?? true,
+        parent_id: editCategory.parent_id || "",
       });
     } else {
       setFormData({
@@ -56,6 +66,9 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
         type: "",
         description: "",
         budget_limit: "",
+        budget_period: "",
+        is_active: true,
+        parent_id: "",
       });
     }
   }, [editCategory]);
@@ -73,6 +86,9 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
             type: formData.type,
             description: formData.description,
             budget_limit: formData.budget_limit ? Number(formData.budget_limit) : null,
+            budget_period: formData.budget_period || null,
+            is_active: formData.is_active,
+            parent_id: formData.parent_id || null,
           })
           .eq("id", editCategory.id);
 
@@ -85,6 +101,9 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
             type: formData.type,
             description: formData.description,
             budget_limit: formData.budget_limit ? Number(formData.budget_limit) : null,
+            budget_period: formData.budget_period || null,
+            is_active: formData.is_active,
+            parent_id: formData.parent_id || null,
           },
         ]);
 
@@ -94,7 +113,15 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
 
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       onOpenChange(false);
-      setFormData({ name: "", type: "", description: "", budget_limit: "" });
+      setFormData({
+        name: "",
+        type: "",
+        description: "",
+        budget_limit: "",
+        budget_period: "",
+        is_active: true,
+        parent_id: "",
+      });
     } catch (error) {
       console.error("Error saving category:", error);
       toast.error(editCategory ? "Failed to update category" : "Failed to create category");
@@ -163,6 +190,36 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
               }
               placeholder="Optional"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="budget_period">Budget Period</Label>
+            <Select
+              value={formData.budget_period}
+              onValueChange={(value) =>
+                setFormData({ ...formData, budget_period: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_active"
+              checked={formData.is_active}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, is_active: checked })
+              }
+            />
+            <Label htmlFor="is_active">Active</Label>
           </div>
 
           <div className="flex justify-end gap-2">
