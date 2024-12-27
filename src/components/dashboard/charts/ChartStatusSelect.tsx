@@ -1,11 +1,4 @@
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup,
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { CommandSelect } from "@/components/ui/command-select";
 
 interface ChartStatusSelectProps {
   selectedStatus: string;
@@ -21,24 +14,21 @@ export const ChartStatusSelect = ({
   onStatusChange, 
   statusData 
 }: ChartStatusSelectProps) => {
+  const items = [
+    { value: "all", label: "All Vehicle Types" },
+    ...statusData.map(status => ({
+      value: status.name.toLowerCase(),
+      label: status.name
+    }))
+  ];
+
   return (
-    <Select 
-      value={selectedStatus} 
+    <CommandSelect
+      items={items}
+      value={selectedStatus}
       onValueChange={onStatusChange}
-    >
-      <SelectTrigger className="w-[200px]">
-        <SelectValue placeholder="All Vehicle Types" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectItem value="all">All Vehicle Types</SelectItem>
-          {statusData?.map((status) => (
-            <SelectItem key={status.name} value={status.name.toLowerCase()}>
-              {status.name}
-            </SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+      placeholder="All Vehicle Types"
+      className="w-[200px]"
+    />
   );
 };

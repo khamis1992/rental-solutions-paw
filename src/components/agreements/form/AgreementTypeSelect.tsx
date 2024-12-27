@@ -1,39 +1,28 @@
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { CommandSelect } from "@/components/ui/command-select";
 
 interface AgreementTypeSelectProps {
   register: any;
 }
 
+const agreementTypeOptions = [
+  { value: "lease_to_own", label: "Lease to Own" },
+  { value: "short_term", label: "Short Term Rental" },
+];
+
 export const AgreementTypeSelect = ({ register }: AgreementTypeSelectProps) => {
   return (
     <div className="space-y-2">
       <Label htmlFor="agreementType">Agreement Type</Label>
-      <Select
-        {...register("agreementType")}
+      <CommandSelect
+        items={agreementTypeOptions}
+        placeholder="Select type"
         onValueChange={(value) =>
           register("agreementType").onChange({
             target: { value },
           })
         }
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-            <SelectItem value="short_term">Short Term Rental</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      />
     </div>
   );
 };
