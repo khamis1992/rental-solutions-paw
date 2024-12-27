@@ -43,7 +43,9 @@ const queryClient = new QueryClient({
 
 // Add event listener for postMessage with origin verification
 window.addEventListener('message', (event) => {
-  // Verify the origin is in our allowed list
+  console.log('Received message from origin:', event.origin);
+  
+  // Check if origin is in allowed list
   if (!ALLOWED_ORIGINS.includes(event.origin)) {
     console.warn('Received message from untrusted origin:', event.origin);
     return;
@@ -52,17 +54,21 @@ window.addEventListener('message', (event) => {
   // Process the message
   try {
     if (event.data && typeof event.data === 'object') {
-      console.log('Received trusted message:', event.data);
-      // Handle the message based on its type
+      console.log('Processing trusted message:', event.data);
+      
+      // Handle gptengineer specific messages
       if (event.data.type === 'gptengineer') {
-        // Handle gptengineer specific messages
         console.log('Processing gptengineer message:', event.data);
+        // Add specific handling for gptengineer messages if needed
       }
     }
   } catch (error) {
     console.error('Error processing message:', error);
   }
 }, false);
+
+// Initialize Supabase realtime
+supabase.realtime.setAuth(supabase.auth.session()?.access_token || null);
 
 root.render(
   <React.StrictMode>

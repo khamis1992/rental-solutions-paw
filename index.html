@@ -12,14 +12,21 @@
   <body>
     <div id="root"></div>
     <script>
-      // Define allowed origins before loading any other scripts
+      // Define allowed origins and trusted origin before any other scripts
       window.ALLOWED_ORIGINS = [
         'https://preview--rental-solutions.lovable.app',
         'https://lovable.dev',
         'http://localhost:3000',
-        'https://gptengineer.app'
+        'https://gptengineer.app',
+        window.location.origin // Add current origin to allowed list
       ];
       window.TRUSTED_ORIGIN = window.location.origin;
+      
+      // Add debug logging
+      console.log('Initialized with:', {
+        allowedOrigins: window.ALLOWED_ORIGINS,
+        trustedOrigin: window.TRUSTED_ORIGIN
+      });
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
