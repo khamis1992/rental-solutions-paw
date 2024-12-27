@@ -1,7 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
 import { Vehicle } from "@/types/database/vehicle.types";
 import { useState, useEffect } from "react";
 import { VehicleLocationCell } from "./VehicleLocationCell";
@@ -31,7 +30,7 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
         (payload: any) => {
           const updatedVehicle = payload.new;
           if (updatedVehicle.location) {
-            toast(`${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`);
+            toast(`Vehicle location updated to ${updatedVehicle.location}`);
           }
         }
       )
@@ -45,25 +44,6 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
   const handleClick = (vehicleId: string) => {
     console.log("Button clicked for vehicle:", vehicleId);
     onVehicleClick?.(vehicleId);
-  };
-
-  const handleLocationUpdate = async () => {
-    if (!locationValue.trim() || !editingLocation) return;
-
-    try {
-      const { error } = await supabase
-        .from('vehicles')
-        .update({ location: locationValue })
-        .eq('id', editingLocation);
-
-      if (error) throw error;
-
-      toast("Location updated successfully");
-      setEditingLocation(null);
-    } catch (error) {
-      console.error('Error updating location:', error);
-      toast("Failed to update location");
-    }
   };
 
   return (
@@ -120,12 +100,12 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
                   onLocationChange={setLocationValue}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
-                      handleLocationUpdate();
+                      setEditingLocation(null);
                     } else if (e.key === 'Escape') {
                       setEditingLocation(null);
                     }
                   }}
-                  onBlur={handleLocationUpdate}
+                  onBlur={() => setEditingLocation(null)}
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingLocation(vehicle.id);
