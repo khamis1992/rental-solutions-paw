@@ -59,16 +59,6 @@ export const VehicleAgreementDetails = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="downPayment">Down Payment</Label>
-          <Input
-            type="number"
-            step="0.01"
-            {...register("downPayment")}
-            placeholder="Enter down payment amount"
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="initialMileage">Initial Mileage</Label>
           <Input
             type="number"
