@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { TransactionType } from "@/types/database/agreement.types";
+import { TransactionType } from "@/components/finance/accounting/types/transaction.types";
 
 interface TransactionDialogProps {
   open: boolean;
