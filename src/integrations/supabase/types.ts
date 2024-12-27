@@ -174,7 +174,7 @@ export type Database = {
           reference_type: string | null
           status: string | null
           transaction_date: string
-          type: string
+          type: Database["public"]["Enums"]["transaction_type"]
           updated_at: string
         }
         Insert: {
@@ -192,7 +192,7 @@ export type Database = {
           reference_type?: string | null
           status?: string | null
           transaction_date: string
-          type: string
+          type: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
         }
         Update: {
@@ -210,7 +210,7 @@ export type Database = {
           reference_type?: string | null
           status?: string | null
           transaction_date?: string
-          type?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
         }
         Relationships: [
@@ -4098,6 +4098,16 @@ export type Database = {
         | "accepted"
         | "rejected"
       transaction_amount_type: "income" | "expense" | "refund"
+      transaction_type:
+        | "LATE_PAYMENT_FEE"
+        | "ADMINISTRATIVE_FEES"
+        | "VEHICLE_DAMAGE_CHARGE"
+        | "TRAFFIC_FINE"
+        | "RENTAL_FEE"
+        | "ADVANCE_PAYMENT"
+        | "OTHER"
+        | "INCOME"
+        | "EXPENSE"
       user_role: "admin" | "staff" | "customer" | "manager"
       vehicle_status:
         | "available"
