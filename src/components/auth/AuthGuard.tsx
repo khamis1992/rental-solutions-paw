@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthState } from "@/hooks/use-auth-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface AuthGuardProps {
   children: ReactNode;
