@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { VehicleGrid } from "./VehicleGrid";
 import { AdvancedVehicleFilters, VehicleFilters } from "./filters/AdvancedVehicleFilters";
-import { Vehicle } from "@/types/vehicle";
-import { toast } from "sonner";
+import { Vehicle } from "@/types/database/vehicle.types";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
