@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -18,54 +17,56 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { rows } = await req.json()
-    console.log('Processing transactions:', rows.length)
+    const { transactions } = await req.json()
+    console.log('Processing transactions:', transactions.length)
 
-    // Save raw import data
-    const { error: rawDataError } = await supabaseClient
-      .from('raw_transaction_imports')
-      .insert(rows.map((row: any) => ({
-        raw_data: row,
-        is_valid: true
-      })))
-
-    if (rawDataError) {
-      console.error('Error saving raw data:', rawDataError)
-      throw rawDataError
-    }
-
-    // Process and save transactions
-    const transactions = rows.map((row: any) => ({
-      type: 'income',
-      amount: row.amount,
-      description: row.description,
-      transaction_date: row.payment_date,
-      status: 'completed',
-      reference_type: 'import',
-      metadata: {
-        agreement_number: row.agreement_number,
-        customer_name: row.customer_name,
-        license_plate: row.license_plate,
-        vehicle: row.vehicle,
-        payment_method: row.payment_method,
-        payment_number: row.payment_number
+    // Validate transactions
+    const validatedTransactions = transactions.filter(transaction => {
+      const isValid = 
+        transaction.amount > 0 &&
+        !isNaN(new Date(transaction.transaction_date).getTime()) &&
+        transaction.metadata?.agreement_number;
+      
+      if (!isValid) {
+        console.warn('Invalid transaction:', transaction);
       }
-    }))
+      
+      return isValid;
+    });
 
+    // Save validated transactions
     const { error: transactionError } = await supabaseClient
       .from('accounting_transactions')
-      .insert(transactions)
+      .insert(validatedTransactions);
 
     if (transactionError) {
-      console.error('Error saving transactions:', transactionError)
-      throw transactionError
+      console.error('Error saving transactions:', transactionError);
+      throw transactionError;
+    }
+
+    // Update financial metrics in real-time
+    const { error: metricsError } = await supabaseClient
+      .from('financial_insights')
+      .insert({
+        category: 'income',
+        insight: 'New transactions imported',
+        data_points: {
+          transaction_count: validatedTransactions.length,
+          total_amount: validatedTransactions.reduce((sum, t) => sum + t.amount, 0)
+        }
+      });
+
+    if (metricsError) {
+      console.warn('Error updating metrics:', metricsError);
+      // Don't throw here as it's not critical
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `Successfully processed ${rows.length} transactions`,
-        data: rows 
+        processed: validatedTransactions.length,
+        total: transactions.length,
+        skipped: transactions.length - validatedTransactions.length
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
