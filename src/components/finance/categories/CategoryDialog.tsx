@@ -34,6 +34,16 @@ interface CategoryDialogProps {
     budget_period: string | null;
     is_active?: boolean;
   };
+  category?: {
+    id: string;
+    name: string;
+    type: string;
+    description: string;
+    budget_limit: number | null;
+    parent_id: string | null;
+    budget_period: string | null;
+    is_active?: boolean;
+  };
 }
 
 export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDialogProps) => {

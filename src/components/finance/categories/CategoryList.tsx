@@ -13,10 +13,11 @@ interface Category {
   id: string;
   name: string;
   type: string;
-  description: string | null;
+  description: string;
   budget_limit: number | null;
+  parent_id: string | null;
   budget_period: string | null;
-  is_active: boolean;
+  is_active?: boolean;
   current_spending?: number;
 }
 
@@ -115,7 +116,7 @@ export const CategoryList = () => {
       <CategoryDialog
         open={showDialog}
         onOpenChange={setShowDialog}
-        category={editingCategory}
+        editCategory={editingCategory || undefined}
       />
     </div>
   );
