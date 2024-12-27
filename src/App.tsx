@@ -64,7 +64,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
+          
           <Route
             path="/vehicles"
             element={
