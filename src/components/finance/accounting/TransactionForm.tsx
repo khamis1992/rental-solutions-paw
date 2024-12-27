@@ -69,7 +69,7 @@ export function TransactionForm() {
       } else {
         // Regular transaction handling
         const transactionData = {
-          type: data.payment_category as TransactionType, // Convert payment category to TransactionType
+          type: data.type, // Use the selected transaction type directly
           amount: data.amount,
           description: `${data.payment_category}: ${data.description || ''}`.trim(),
           transaction_date: data.transaction_date,
