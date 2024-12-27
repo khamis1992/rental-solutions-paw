@@ -9,23 +9,20 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import App from './App.tsx';
 import './index.css';
 
-// Create root element once
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Configure query client with optimized caching settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 15, // Data remains fresh for 15 minutes
-      gcTime: 1000 * 60 * 30, // Cache is garbage collected after 30 minutes
-      retry: 1, // Only retry failed requests once
+      staleTime: 1000 * 60 * 15,
+      gcTime: 1000 * 60 * 30,
+      retry: 1,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
-      networkMode: 'offlineFirst',
     },
   },
 });
