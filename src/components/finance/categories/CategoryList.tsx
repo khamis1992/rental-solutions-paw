@@ -1,225 +1,121 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
-import { addMonths, startOfMonth, endOfMonth } from "date-fns";
-import { ImportExportCategories } from "./ImportExportCategories";
-import type { DateRange } from "react-day-picker";
-import { toast } from "sonner";
 import { CategoryTableHeader } from "./components/CategoryTableHeader";
 import { CategoryTableRow } from "./components/CategoryTableRow";
-import { BudgetProgress } from "./budget/BudgetProgress";
+import { Table, TableBody } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Category {
   id: string;
   name: string;
   type: string;
-  description: string;
+  description: string | null;
   budget_limit: number | null;
-  parent_id: string | null;
   budget_period: string | null;
-  is_active?: boolean;
+  is_active: boolean;
   current_spending?: number;
 }
 
 export const CategoryList = () => {
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: startOfMonth(addMonths(new Date(), -1)),
-    to: endOfMonth(new Date())
-  });
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories", dateRange],
+    queryKey: ["categories"],
     queryFn: async () => {
-      const { data: categoriesData, error: categoriesError } = await supabase
+      const { data, error } = await supabase
         .from("accounting_categories")
-        .select("*")
-        .order("name");
+        .select("*");
 
-      if (categoriesError) throw categoriesError;
+      if (error) {
+        toast.error("Failed to load categories");
+        throw error;
+      }
 
-      const { data: transactions, error: transactionsError } = await supabase
-        .from("accounting_transactions")
-        .select("amount, category_id, transaction_date")
-        .gte("transaction_date", dateRange.from.toISOString())
-        .lte("transaction_date", dateRange.to.toISOString());
-
-      if (transactionsError) throw transactionsError;
-
-      const categoriesWithSpending = categoriesData.map((category: Category) => {
-        const categoryTransactions = transactions.filter(
-          (t) => t.category_id === category.id
-        );
-        
-        const currentSpending = categoryTransactions.reduce(
-          (sum, t) => sum + (t.amount || 0),
-          0
-        );
-
-        return {
-          ...category,
-          current_spending: currentSpending,
-        };
-      });
-
-      return categoriesWithSpending;
+      return data as Category[];
     },
   });
 
-  const filteredCategories = categories?.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleSelectAll = (checked: boolean) => {
-    if (checked && filteredCategories) {
-      setSelectedCategories(filteredCategories.map(cat => cat.id));
+    if (checked && categories) {
+      setSelectedCategories(new Set(categories.map(cat => cat.id)));
     } else {
-      setSelectedCategories([]);
+      setSelectedCategories(new Set());
     }
   };
 
-  const handleSelectCategory = (categoryId: string, checked: boolean) => {
+  const handleSelect = (categoryId: string, checked: boolean) => {
+    const newSelected = new Set(selectedCategories);
     if (checked) {
-      setSelectedCategories([...selectedCategories, categoryId]);
+      newSelected.add(categoryId);
     } else {
-      setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+      newSelected.delete(categoryId);
     }
+    setSelectedCategories(newSelected);
   };
 
-  const handleBulkDelete = async () => {
-    if (!selectedCategories.length) return;
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    setShowDialog(true);
+  };
 
+  const handleDelete = async (categoryId: string) => {
     try {
       const { error } = await supabase
         .from("accounting_categories")
         .delete()
-        .in("id", selectedCategories);
-
-      if (error) throw error;
-
-      toast.success(`Successfully deleted ${selectedCategories.length} categories`);
-      setSelectedCategories([]);
-    } catch (error) {
-      console.error("Error deleting categories:", error);
-      toast.error("Failed to delete categories");
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("accounting_categories")
-        .delete()
-        .eq("id", id);
+        .eq("id", categoryId);
 
       if (error) throw error;
       toast.success("Category deleted successfully");
     } catch (error) {
-      console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
+      console.error("Error deleting category:", error);
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Categories</h2>
-        <div className="flex gap-2">
-          <ImportExportCategories />
-          <Button onClick={() => setShowDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Category
-          </Button>
-        </div>
+        <Button onClick={() => setShowDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Category
+        </Button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Input
-            placeholder="Search categories..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        <DateRangePicker
-          value={dateRange}
-          onChange={(value) => setDateRange(value || { 
-            from: startOfMonth(addMonths(new Date(), -1)),
-            to: endOfMonth(new Date())
-          })}
+      <Table>
+        <CategoryTableHeader 
+          onSelectAll={handleSelectAll}
+          allSelected={categories ? selectedCategories.size === categories.length : false}
         />
-      </div>
-
-      {selectedCategories.length > 0 && (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDelete}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Selected ({selectedCategories.length})
-          </Button>
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center items-center h-32">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      ) : (
-        <div className="border rounded-lg">
-          <Table>
-            <CategoryTableHeader
-              onSelectAll={handleSelectAll}
-              allSelected={
-                filteredCategories?.length === selectedCategories.length &&
-                filteredCategories?.length > 0
-              }
+        <TableBody>
+          {categories?.map((category) => (
+            <CategoryTableRow
+              key={category.id}
+              category={category}
+              isSelected={selectedCategories.has(category.id)}
+              onSelect={(checked) => handleSelect(category.id, checked)}
+              onEdit={() => handleEdit(category)}
+              onDelete={() => handleDelete(category.id)}
             />
-            <TableBody>
-              {filteredCategories?.map((category) => (
-                <CategoryTableRow
-                  key={category.id}
-                  category={category}
-                  isSelected={selectedCategories.includes(category.id)}
-                  onSelect={(checked) => handleSelectCategory(category.id, checked)}
-                  onEdit={() => {
-                    setEditingCategory(category);
-                    setShowDialog(true);
-                  }}
-                  onDelete={() => handleDelete(category.id)}
-                />
-              ))}
-              {!filteredCategories?.length && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
-                    No categories found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+          ))}
+        </TableBody>
+      </Table>
 
       <CategoryDialog
         open={showDialog}
-        onOpenChange={(open) => {
-          setShowDialog(open);
-          if (!open) setEditingCategory(null);
-        }}
-        editCategory={editingCategory}
+        onOpenChange={setShowDialog}
+        category={editingCategory}
       />
     </div>
   );
