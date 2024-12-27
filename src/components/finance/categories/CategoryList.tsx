@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
 import { BudgetProgress } from "./budget/BudgetProgress";
 import { toast } from "sonner";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ImportExportCategories } from "./ImportExportCategories";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { DateRange } from "react-day-picker";
 
 interface Category {
@@ -36,6 +37,7 @@ export const CategoryList = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(addMonths(new Date(), -1)),
     to: endOfMonth(new Date())
@@ -83,6 +85,56 @@ export const CategoryList = () => {
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && filteredCategories) {
+      setSelectedCategories(filteredCategories.map(cat => cat.id));
+    } else {
+      setSelectedCategories([]);
+    }
+  };
+
+  const handleSelectCategory = (categoryId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedCategories([...selectedCategories, categoryId]);
+    } else {
+      setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedCategories.length) return;
+
+    try {
+      const { error } = await supabase
+        .from("accounting_categories")
+        .delete()
+        .in("id", selectedCategories);
+
+      if (error) throw error;
+
+      toast.success(`Successfully deleted ${selectedCategories.length} categories`);
+      setSelectedCategories([]);
+    } catch (error) {
+      console.error("Error deleting categories:", error);
+      toast.error("Failed to delete categories");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("accounting_categories")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("Category deleted successfully");
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Failed to delete category");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -114,6 +166,19 @@ export const CategoryList = () => {
         />
       </div>
 
+      {selectedCategories.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Selected ({selectedCategories.length})
+          </Button>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center items-center h-32">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -123,6 +188,12 @@ export const CategoryList = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={filteredCategories?.length === selectedCategories.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
@@ -133,6 +204,12 @@ export const CategoryList = () => {
             <TableBody>
               {filteredCategories?.map((category) => (
                 <TableRow key={category.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedCategories.includes(category.id)}
+                      onCheckedChange={(checked) => handleSelectCategory(category.id, checked)}
+                    />
+                  </TableCell>
                   <TableCell>{category.name}</TableCell>
                   <TableCell>{category.type}</TableCell>
                   <TableCell>{category.description}</TableCell>
@@ -172,7 +249,7 @@ export const CategoryList = () => {
               ))}
               {!filteredCategories?.length && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
+                  <TableCell colSpan={6} className="text-center py-4">
                     No categories found
                   </TableCell>
                 </TableRow>
