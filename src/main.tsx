@@ -15,7 +15,15 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Get the trusted origin from window
+// Get the allowed origins from window
+declare global {
+  interface Window {
+    ALLOWED_ORIGINS?: string[];
+    TRUSTED_ORIGIN?: string;
+  }
+}
+
+const ALLOWED_ORIGINS = window.ALLOWED_ORIGINS || [];
 const TRUSTED_ORIGIN = window.TRUSTED_ORIGIN || window.location.origin;
 
 // Configure query client with optimized caching settings
@@ -33,17 +41,23 @@ const queryClient = new QueryClient({
   },
 });
 
-// Add event listener for postMessage
+// Add event listener for postMessage with origin verification
 window.addEventListener('message', (event) => {
-  // Verify the origin
-  if (event.origin !== TRUSTED_ORIGIN) {
+  // Verify the origin is in our allowed list
+  if (!ALLOWED_ORIGINS.includes(event.origin)) {
     console.warn('Received message from untrusted origin:', event.origin);
     return;
   }
+
   // Process the message
   try {
     if (event.data && typeof event.data === 'object') {
       console.log('Received trusted message:', event.data);
+      // Handle the message based on its type
+      if (event.data.type === 'gptengineer') {
+        // Handle gptengineer specific messages
+        console.log('Processing gptengineer message:', event.data);
+      }
     }
   } catch (error) {
     console.error('Error processing message:', error);

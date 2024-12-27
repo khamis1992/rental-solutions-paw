@@ -8,7 +8,14 @@
     <meta name="author" content="Lovable" />
     <meta property="og:image" content="/og-image.png" />
     <script>
-      // Get the current origin for postMessage security
+      // Define allowed origins
+      window.ALLOWED_ORIGINS = [
+        'https://preview--rental-solutions.lovable.app',
+        'https://lovable.dev',
+        'http://localhost:3000',
+        'https://gptengineer.app'
+      ];
+      // Get the current origin
       window.TRUSTED_ORIGIN = window.location.origin;
     </script>
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
