@@ -5,6 +5,7 @@ import { AdvancedVehicleFilters, VehicleFilters } from "./filters/AdvancedVehicl
 import { Vehicle } from "@/types/database/vehicle.types";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
@@ -12,6 +13,7 @@ interface VehicleListProps {
 }
 
 export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<VehicleFilters>({
     search: "",
     status: "all",
@@ -24,6 +26,11 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const handleVehicleClick = (vehicleId: string) => {
+    console.log("Navigating to vehicle:", vehicleId); // Debug log
+    navigate(`/vehicles/${vehicleId}`);
+  };
 
   if (isLoading) {
     return <div className="text-center py-4">Loading vehicles...</div>;
@@ -55,7 +62,10 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
       {viewMode === 'grid' ? (
         <VehicleGrid vehicles={vehicles || []} />
       ) : (
-        <VehicleListView vehicles={vehicles || []} />
+        <VehicleListView 
+          vehicles={vehicles || []} 
+          onVehicleClick={handleVehicleClick}
+        />
       )}
     </div>
   );

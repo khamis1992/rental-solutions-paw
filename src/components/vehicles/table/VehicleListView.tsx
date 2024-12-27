@@ -10,8 +10,8 @@ interface VehicleListViewProps {
 }
 
 export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewProps) => {
-  const handleClick = (e: React.MouseEvent, vehicleId: string) => {
-    e.stopPropagation(); // Prevent row click from firing
+  const handleClick = (vehicleId: string) => {
+    console.log("Button clicked for vehicle:", vehicleId); // Debug log
     onVehicleClick?.(vehicleId);
   };
 
@@ -74,7 +74,7 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={(e) => handleClick(e, vehicle.id)}
+                  onClick={() => handleClick(vehicle.id)}
                 >
                   View Details
                 </Button>
