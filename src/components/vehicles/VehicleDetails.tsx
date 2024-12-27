@@ -20,15 +20,25 @@ const VehicleDetails = () => {
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", id],
     queryFn: async () => {
+      console.log("Fetching vehicle with ID:", id); // Debug log
+      
+      if (!id) throw new Error("Vehicle ID is required");
+
       const { data, error } = await supabase
         .from("vehicles")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error); // Debug log
+        throw error;
+      }
+      
+      console.log("Vehicle data:", data); // Debug log
       return data;
     },
+    enabled: !!id, // Only run query if id exists
   });
 
   const handlePrint = () => {
