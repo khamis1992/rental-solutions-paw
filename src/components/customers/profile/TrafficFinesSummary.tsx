@@ -41,7 +41,7 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
       }
 
       // Filter out any fines where lease is null (shouldn't happen with proper join)
-      const validFines = data?.filter(fine => fine.lease) || [];
+      const validFines = data?.filter(fine => fine.lease && fine.lease.customer_id === customerId) || [];
       console.log("Filtered traffic fines:", validFines);
       return validFines as TrafficFine[];
     },
