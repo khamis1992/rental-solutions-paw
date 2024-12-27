@@ -1,10 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Table, TableBody } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Plus } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { ImportExportCategories } from "./ImportExportCategories";
+import type { DateRange } from "react-day-picker";
+import { toast } from "sonner";
 import { CategoryTableHeader } from "./components/CategoryTableHeader";
 import { CategoryTableRow } from "./components/CategoryTableRow";
-import { toast } from "sonner";
 
 interface Category {
   id: string;
@@ -15,118 +23,158 @@ interface Category {
   parent_id: string | null;
   budget_period: string | null;
   is_active: boolean;
-  current_spending?: number;
 }
 
-interface CategoryTableHeaderProps {
-  onSelectAll: (checked: boolean) => void;
-  allSelected: boolean;
-}
-
-export function CategoryList() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+export const CategoryList = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfMonth(addMonths(new Date(), -1)),
+    to: endOfMonth(new Date())
+  });
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCategories(categories.map((category) => category.id));
-    } else {
-      setSelectedCategories([]);
-    }
-  };
+  const { data: categoriesWithSpending, isLoading } = useQuery({
+    queryKey: ["categories", dateRange],
+    queryFn: async () => {
+      // Fetch categories
+      const { data: categories, error: categoriesError } = await supabase
+        .from("accounting_categories")
+        .select("*")
+        .order("name");
 
-  const handleSelectCategory = (categoryId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCategories([...selectedCategories, categoryId]);
-    } else {
-      setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
-    }
-  };
+      if (categoriesError) throw categoriesError;
 
-  const handleEdit = (category: Category) => {
-    setEditingCategory(category);
-    setShowDialog(true);
-  };
+      // Fetch transactions for the date range
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("accounting_transactions")
+        .select("amount, category_id, transaction_date")
+        .gte("transaction_date", dateRange.from?.toISOString())
+        .lte("transaction_date", dateRange.to?.toISOString());
 
-  const handleDelete = async (categoryId: string) => {
+      if (transactionsError) throw transactionsError;
+
+      // Calculate spending for each category
+      const categoriesWithSpending = categories.map((category: Category) => {
+        const categoryTransactions = transactions.filter(
+          (t) => t.category_id === category.id
+        );
+        
+        const currentSpending = categoryTransactions.reduce(
+          (sum, t) => sum + (t.amount || 0),
+          0
+        );
+
+        return {
+          ...category,
+          currentSpending
+        };
+      });
+
+      return categoriesWithSpending;
+    },
+  });
+
+  const filteredCategories = categoriesWithSpending?.filter((category) =>
+    category.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleDelete = async (id: string) => {
     try {
-      // Delete logic here
+      const { error } = await supabase
+        .from("accounting_categories")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
       toast.success("Category deleted successfully");
-      setCategories(categories.filter((category) => category.id !== categoryId));
     } catch (error) {
+      console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleToggleActive = async (id: string, isActive: boolean) => {
     try {
-      // Bulk delete logic here
-      toast.success("Categories deleted successfully");
-      setCategories(
-        categories.filter((category) => !selectedCategories.includes(category.id))
-      );
-      setSelectedCategories([]);
+      const { error } = await supabase
+        .from("accounting_categories")
+        .update({ is_active: isActive })
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success(`Category ${isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
-      toast.error("Failed to delete categories");
+      console.error("Error updating category status:", error);
+      toast.error("Failed to update category status");
     }
   };
-
-  useEffect(() => {
-    // Fetch categories logic here
-  }, []);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Categories</h2>
-        <div className="space-x-2">
-          {selectedCategories.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={handleBulkDelete}
-              className="mr-2"
-            >
-              Delete Selected
-            </Button>
-          )}
+        <div className="flex gap-2">
+          <ImportExportCategories />
           <Button onClick={() => setShowDialog(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Add Category
           </Button>
         </div>
       </div>
 
-      <div className="border rounded-lg">
-        <table className="w-full">
-          <CategoryTableHeader
-            onSelectAll={handleSelectAll}
-            allSelected={
-              categories.length > 0 &&
-              selectedCategories.length === categories.length
-            }
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Input
+            placeholder="Search categories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
           />
-          <tbody>
-            {categories.map((category) => (
-              <CategoryTableRow
-                key={category.id}
-                category={category}
-                selected={selectedCategories.includes(category.id)}
-                onSelect={handleSelectCategory}
-                onEdit={() => handleEdit(category)}
-                onDelete={() => handleDelete(category.id)}
-              />
-            ))}
-          </tbody>
-        </table>
+        </div>
+        <DateRangePicker
+          value={dateRange}
+          onChange={(value) => setDateRange(value || { 
+            from: startOfMonth(addMonths(new Date(), -1)),
+            to: endOfMonth(new Date())
+          })}
+        />
       </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-32">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : (
+        <div className="border rounded-lg">
+          <Table>
+            <CategoryTableHeader />
+            <TableBody>
+              {filteredCategories?.map((category) => (
+                <CategoryTableRow
+                  key={category.id}
+                  category={category}
+                  currentSpending={category.currentSpending}
+                  onEdit={() => {
+                    setEditingCategory(category);
+                    setShowDialog(true);
+                  }}
+                  onDelete={handleDelete}
+                  onToggleActive={handleToggleActive}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <CategoryDialog
         open={showDialog}
-        onOpenChange={setShowDialog}
-        editCategory={editingCategory || undefined}
+        onOpenChange={(open) => {
+          setShowDialog(open);
+          if (!open) setEditingCategory(null);
+        }}
+        editCategory={editingCategory}
       />
     </div>
   );
-}
+};

@@ -1,28 +1,16 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { MapPin } from "lucide-react";
-
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  status: string;
-  daily_rate: number;
-  image_url: string;
-  license_plate: string;
-  location: string | null;
-}
+import { Vehicle } from "@/types/database/vehicle.types";
 
 interface VehicleGridProps {
   vehicles: Vehicle[];
-  isLoading: boolean;
+  isLoading?: boolean;
   onVehicleClick?: (vehicleId: string) => void;
 }
 
@@ -121,10 +109,7 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
               </p>
             )}
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <p className="text-lg font-semibold">
-              {formatCurrency(vehicle.daily_rate)}/day
-            </p>
+          <CardFooter className="flex justify-end">
             <Button variant="ghost" size="sm">
               View Details
             </Button>
