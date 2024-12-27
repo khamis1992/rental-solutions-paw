@@ -28,37 +28,6 @@ export const VehicleAgreementDetails = ({
         <VehicleSelect register={register} onVehicleSelect={handleVehicleSelect} />
 
         <div className="space-y-2">
-          <Label htmlFor="agreementDuration">Agreement Duration (months)</Label>
-          <Input
-            type="number"
-            {...register("agreementDuration", {
-              required: "Duration is required",
-              min: { value: 1, message: "Duration must be at least 1 month" }
-            })}
-            placeholder="Enter duration in months"
-          />
-          {errors.agreementDuration && (
-            <span className="text-sm text-red-500">{errors.agreementDuration.message}</span>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="rentAmount">Rent Amount</Label>
-          <Input
-            type="number"
-            step="0.01"
-            {...register("rentAmount", {
-              required: "Rent amount is required",
-              min: { value: 0, message: "Rent amount must be positive" }
-            })}
-            placeholder="Enter rent amount"
-          />
-          {errors.rentAmount && (
-            <span className="text-sm text-red-500">{errors.rentAmount.message}</span>
-          )}
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="initialMileage">Initial Mileage</Label>
           <Input
             type="number"

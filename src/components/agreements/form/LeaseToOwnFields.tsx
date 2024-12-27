@@ -37,20 +37,6 @@ export const LeaseToOwnFields = ({ register, updateMonthlyPayment, watch }: Leas
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="interestRate">Interest Rate (%)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          placeholder="0.00"
-          {...register("interestRate")}
-          onChange={(e) => {
-            register("interestRate").onChange(e);
-            updateMonthlyPayment();
-          }}
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="leaseDuration">Lease Duration (months)</Label>
         <Input
           type="number"
@@ -58,6 +44,23 @@ export const LeaseToOwnFields = ({ register, updateMonthlyPayment, watch }: Leas
           {...register("leaseDuration")}
           onChange={(e) => {
             register("leaseDuration").onChange(e);
+            updateMonthlyPayment();
+          }}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="rentAmount">Rent Amount</Label>
+        <Input
+          type="number"
+          step="0.01"
+          {...register("rentAmount", {
+            required: "Rent amount is required",
+            min: { value: 0, message: "Rent amount must be positive" }
+          })}
+          placeholder="Enter rent amount"
+          onChange={(e) => {
+            register("rentAmount").onChange(e);
             updateMonthlyPayment();
           }}
         />
