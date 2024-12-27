@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, FolderPlus, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Plus, FolderPlus, Pencil, Trash2, CalendarRange } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
 import { BudgetProgress } from "./budget/BudgetProgress";
 import { toast } from "sonner";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { addMonths, startOfMonth, endOfMonth } from "date-fns";
 
 interface Category {
   id: string;
@@ -29,12 +31,16 @@ interface Category {
 }
 
 export const CategoryList = () => {
-  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [editCategory, setEditCategory] = useState<Category | undefined>();
+  const [dateRange, setDateRange] = useState({
+    from: startOfMonth(addMonths(new Date(), -1)),
+    to: endOfMonth(new Date())
+  });
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", dateRange],
     queryFn: async () => {
       // First get categories
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -44,10 +50,12 @@ export const CategoryList = () => {
 
       if (categoriesError) throw categoriesError;
 
-      // Then get transactions for spending calculation
+      // Then get transactions for spending calculation within date range
       const { data: transactions, error: transactionsError } = await supabase
         .from("accounting_transactions")
-        .select("amount, category_id, transaction_date");
+        .select("amount, category_id, transaction_date")
+        .gte("transaction_date", dateRange.from.toISOString())
+        .lte("transaction_date", dateRange.to.toISOString());
 
       if (transactionsError) throw transactionsError;
 
@@ -72,30 +80,19 @@ export const CategoryList = () => {
     },
   });
 
-  const handleEdit = (category: Category) => {
-    setEditCategory(category);
-    setShowCategoryDialog(true);
-  };
-
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (categoryId: string) => {
     try {
       const { error } = await supabase
         .from("accounting_categories")
         .delete()
-        .eq("id", id);
+        .eq("id", categoryId);
 
       if (error) throw error;
+
       toast.success("Category deleted successfully");
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
-    }
-  };
-
-  const handleCloseDialog = (open: boolean) => {
-    setShowCategoryDialog(open);
-    if (!open) {
-      setEditCategory(undefined);
     }
   };
 
@@ -106,25 +103,30 @@ export const CategoryList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Transaction Categories</h2>
-        <Button onClick={() => setShowCategoryDialog(true)}>
-          <FolderPlus className="h-4 w-4 mr-2" />
+        <h2 className="text-2xl font-bold">Categories</h2>
+        <Button onClick={() => setShowDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
           Add Category
         </Button>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="flex-1">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
           <Input
             placeholder="Search categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
           />
         </div>
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+        />
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-32">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
@@ -161,7 +163,10 @@ export const CategoryList = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleEdit(category)}
+                        onClick={() => {
+                          setEditingCategory(category);
+                          setShowDialog(true);
+                        }}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -170,7 +175,7 @@ export const CategoryList = () => {
                         size="icon"
                         onClick={() => handleDelete(category.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>
@@ -178,10 +183,7 @@ export const CategoryList = () => {
               ))}
               {!filteredCategories?.length && (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
-                  >
+                  <TableCell colSpan={5} className="text-center py-4">
                     No categories found
                   </TableCell>
                 </TableRow>
@@ -192,9 +194,12 @@ export const CategoryList = () => {
       )}
 
       <CategoryDialog
-        open={showCategoryDialog}
-        onOpenChange={handleCloseDialog}
-        editCategory={editCategory}
+        open={showDialog}
+        onOpenChange={(open) => {
+          setShowDialog(open);
+          if (!open) setEditingCategory(null);
+        }}
+        category={editingCategory}
       />
     </div>
   );
