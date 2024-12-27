@@ -1,15 +1,14 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Suspense, lazy } from "react";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
     importFn().catch(error => {
       console.error(`Error loading ${componentName}:`, error);
-      toast.error(`Failed to load ${componentName}. Please refresh the page.`);
       return Promise.reject(error);
     })
   );
