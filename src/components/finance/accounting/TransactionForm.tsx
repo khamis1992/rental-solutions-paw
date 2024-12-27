@@ -9,15 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
 import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
+import { TransactionTypeSelect } from "./components/TransactionTypeSelect";
+import { PaymentCategorySelect } from "./components/PaymentCategorySelect";
 import { PaymentMethodType, TransactionType } from "./types/transaction.types";
 
 interface TransactionFormData {
@@ -67,9 +62,8 @@ export function TransactionForm() {
           throw paymentError;
         }
       } else {
-        // Regular transaction handling
         const transactionData = {
-          type: data.type, // Use the selected transaction type directly
+          type: data.type,
           amount: data.amount,
           description: `${data.payment_category}: ${data.description || ''}`.trim(),
           transaction_date: data.transaction_date,
@@ -107,42 +101,23 @@ export function TransactionForm() {
     return value * milliseconds[unit as keyof typeof milliseconds];
   };
 
-  const handlePaymentMethodChange = (value: PaymentMethodType) => {
-    setValue('payment_method', value);
-  };
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="type">Transaction Type</Label>
-          <Select onValueChange={(value: TransactionType) => setValue('type', value)} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="INCOME">Income</SelectItem>
-              <SelectItem value="EXPENSE">Expense</SelectItem>
-            </SelectContent>
-          </Select>
+          <TransactionTypeSelect 
+            value={transactionType}
+            onChange={(value) => setValue('type', value)}
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="payment_category">Payment Category</Label>
-          <Select onValueChange={(value) => setValue('payment_category', value)} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LATE_PAYMENT_FEE">Late Payment Fee</SelectItem>
-              <SelectItem value="ADMINISTRATIVE_FEES">Administrative Fees</SelectItem>
-              <SelectItem value="VEHICLE_DAMAGE_CHARGE">Vehicle Damage Charge</SelectItem>
-              <SelectItem value="TRAFFIC_FINE">Traffic Fine</SelectItem>
-              <SelectItem value="RENTAL_FEE">Rental Fee</SelectItem>
-              <SelectItem value="ADVANCE_PAYMENT">Advance Payment</SelectItem>
-              <SelectItem value="OTHER">Other</SelectItem>
-            </SelectContent>
-          </Select>
+          <PaymentCategorySelect
+            value={watch('payment_category')}
+            onChange={(value) => setValue('payment_category', value)}
+          />
         </div>
 
         <div className="space-y-2">
@@ -163,7 +138,7 @@ export function TransactionForm() {
               <Label htmlFor="paymentMethod">Payment Method</Label>
               <PaymentMethodSelect
                 value={watch('payment_method')}
-                onChange={handlePaymentMethodChange}
+                onChange={(value) => setValue('payment_method', value)}
               />
             </div>
 
