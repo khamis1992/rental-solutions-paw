@@ -4,10 +4,10 @@ import { componentTagger } from "lovable-tagger";
 import react from "@vitejs/plugin-react-swc";
 
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), componentTagger()],
+  plugins: [react(), mode === 'development' && componentTagger()].filter(Boolean),
   server: {
     host: "::",
-    port: 3000,
+    port: 8080,
     watch: {
       usePolling: true,
     },
@@ -35,7 +35,12 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: [
+      'react', 
+      'react-dom',
+      '@supabase/auth-helpers-react',
+      '@tanstack/react-query'
+    ],
     exclude: ['lovable-tagger']
   },
   esbuild: {
