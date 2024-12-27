@@ -26,9 +26,9 @@ const VehicleDetails = () => {
 
       const { data, error } = await supabase
         .from("vehicles")
-        .select("*")
-        .eq("id", id)
-        .single();
+        .select()
+        .eq('id', id)
+        .maybeSingle();
 
       if (error) {
         console.error("Supabase error:", error); // Debug log
