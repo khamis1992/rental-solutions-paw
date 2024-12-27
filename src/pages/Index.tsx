@@ -4,8 +4,6 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { useAuthState } from "@/hooks/use-auth-state";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
@@ -17,7 +15,6 @@ const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) 
   );
 };
 
-// Lazy load components with improved error handling
 const DashboardStats = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })),
   "DashboardStats"
@@ -25,10 +22,6 @@ const DashboardStats = lazyLoadComponent(
 const DashboardAlerts = lazyLoadComponent(
   () => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })),
   "DashboardAlerts"
-);
-const QuickActions = lazyLoadComponent(
-  () => import("@/components/dashboard/QuickActions").then(module => ({ default: module.QuickActions })),
-  "QuickActions"
 );
 const WelcomeHeader = lazyLoadComponent(
   () => import("@/components/dashboard/WelcomeHeader").then(module => ({ default: module.WelcomeHeader })),
@@ -42,69 +35,10 @@ const SystemChatbot = lazyLoadComponent(
   () => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })),
   "SystemChatbot"
 );
-const AdminDashboard = lazyLoadComponent(
-  () => import("@/components/dashboard/AdminDashboard").then(module => ({ default: module.AdminDashboard })),
-  "AdminDashboard"
-);
-const StaffDashboard = lazyLoadComponent(
-  () => import("@/components/dashboard/StaffDashboard").then(module => ({ default: module.StaffDashboard })),
-  "StaffDashboard"
-);
 
 const Index = () => {
   usePerformanceMonitoring();
   useDashboardSubscriptions();
-  const { userRole } = useAuthState();
-
-  const renderDashboardContent = () => {
-    switch (userRole) {
-      case 'admin':
-        return (
-          <>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Admin Dashboard" />}>
-                <AdminDashboard />
-              </Suspense>
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                <DashboardStats />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        );
-      case 'staff':
-        return (
-          <>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Staff Dashboard" />}>
-                <StaffDashboard />
-              </Suspense>
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
-                <QuickActions />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        );
-      default:
-        return (
-          <>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                <DashboardStats />
-              </Suspense>
-            </ErrorBoundary>
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
-                <QuickActions />
-              </Suspense>
-            </ErrorBoundary>
-          </>
-        );
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -115,7 +49,11 @@ const Index = () => {
           </Suspense>
         </ErrorBoundary>
 
-        {renderDashboardContent()}
+        <ErrorBoundary>
+          <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
+            <DashboardStats />
+          </Suspense>
+        </ErrorBoundary>
         
         <div className="grid gap-8 lg:grid-cols-7">
           <div className="lg:col-span-7">
