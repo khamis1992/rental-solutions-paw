@@ -2,7 +2,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { BudgetProgress } from "../budget/BudgetProgress";
+import { BudgetProgress } from "@/components/finance/categories/budget/BudgetProgress";
 import { Badge } from "@/components/ui/badge";
 
 interface CategoryTableRowProps {
