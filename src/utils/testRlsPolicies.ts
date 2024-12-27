@@ -16,7 +16,7 @@ type TableNames =
   | "maintenance_categories"
   | "vehicle_statuses";
 
-export async function testTableAccess(tableName: TableNames) {
+async function testTableAccess(tableName: TableNames) {
   try {
     const { data, error } = await supabase
       .from(tableName)
@@ -44,7 +44,7 @@ export async function testTableAccess(tableName: TableNames) {
   }
 }
 
-export async function testInsertAccess(tableName: TableNames, testData: any) {
+async function testInsertAccess(tableName: TableNames, testData: any) {
   try {
     const { data, error } = await supabase
       .from(tableName)
@@ -72,7 +72,7 @@ export async function testInsertAccess(tableName: TableNames, testData: any) {
   }
 }
 
-export async function testUpdateAccess(tableName: TableNames, id: string, updates: any) {
+async function testUpdateAccess(tableName: TableNames, id: string, updates: any) {
   try {
     const { data, error } = await supabase
       .from(tableName)
@@ -101,7 +101,7 @@ export async function testUpdateAccess(tableName: TableNames, id: string, update
   }
 }
 
-export async function testDeleteAccess(tableName: TableNames, id: string) {
+async function testDeleteAccess(tableName: TableNames, id: string) {
   try {
     const { data, error } = await supabase
       .from(tableName)
@@ -128,4 +128,38 @@ export async function testDeleteAccess(tableName: TableNames, id: string) {
       error: error.message
     };
   }
+}
+
+export async function testRlsPolicies() {
+  const tables: TableNames[] = [
+    "profiles",
+    "accounting_categories",
+    "leases",
+    "vehicles",
+    "import_logs",
+    "payments",
+    "promotional_codes",
+    "help_guide_categories",
+    "legal_cases",
+    "legal_document_templates",
+    "legal_notification_templates",
+    "maintenance",
+    "maintenance_categories",
+    "vehicle_statuses"
+  ];
+
+  const results = [];
+
+  for (const table of tables) {
+    // Test SELECT
+    const selectResult = await testTableAccess(table);
+    results.push({
+      table,
+      operation: 'select' as const,
+      success: selectResult.success,
+      error: selectResult.error
+    });
+  }
+
+  return results;
 }
