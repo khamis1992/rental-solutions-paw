@@ -5,17 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
 
 interface VehicleStatusProps {
   vehicleId: string;
-  currentStatus: string;
+  currentStatus: VehicleStatusType;
 }
 
 export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) => {
-  const [status, setStatus] = useState(currentStatus);
+  const [status, setStatus] = useState<VehicleStatusType>(currentStatus);
   const { toast } = useToast();
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: VehicleStatusType) => {
     switch (status) {
       case "available":
         return "bg-green-500";
@@ -32,7 +33,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: VehicleStatusType) => {
     switch (status) {
       case "available":
         return <CheckCircle2 className="h-4 w-4" />;
@@ -45,7 +46,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
     }
   };
 
-  const updateStatus = async (newStatus: string) => {
+  const updateStatus = async (newStatus: VehicleStatusType) => {
     try {
       const { error } = await supabase
         .from("vehicles")
