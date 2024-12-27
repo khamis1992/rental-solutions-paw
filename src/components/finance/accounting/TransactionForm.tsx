@@ -31,11 +31,20 @@ export function TransactionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, watch, setValue } = useForm<TransactionFormData>();
+  const { register, handleSubmit, reset, watch, setValue } = useForm<TransactionFormData>({
+    defaultValues: {
+      type: 'INCOME' // Set a default value for type
+    }
+  });
   const transactionType = watch('type');
 
   const onSubmit = async (data: TransactionFormData) => {
     console.log("Submitting form with data:", data);
+    if (!data.type) {
+      toast.error("Transaction type is required");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (data.type === 'INCOME') {
