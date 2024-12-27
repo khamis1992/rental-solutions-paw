@@ -28,6 +28,23 @@ export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => 
           {...register("monthlyPayment")}
         />
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="agreementDuration">Agreement Duration (months)</Label>
+        <Input
+          type="number"
+          min="1"
+          step="1"
+          placeholder="12"
+          {...register("agreementDuration", {
+            required: "Agreement duration is required",
+            min: {
+              value: 1,
+              message: "Duration must be at least 1 month"
+            }
+          })}
+        />
+      </div>
     </>
   );
 };
