@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Calendar, Info, Shield } from "lucide-react";
+import { Car, Calendar, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { VehicleStatus } from "./VehicleStatus";
 
 interface VehicleOverviewProps {
   vehicle: {
@@ -93,6 +94,9 @@ export const VehicleOverview = ({ vehicle }: VehicleOverviewProps) => {
           </dl>
         </CardContent>
       </Card>
+
+      {/* Add the new status management component */}
+      <VehicleStatus vehicleId={vehicle.id} currentStatus={vehicle.status || 'available'} />
 
       {/* Insurance Information Card */}
       <Card>
