@@ -259,6 +259,13 @@ export type Database = {
             foreignKeyName: "agreement_documents_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_documents_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -485,6 +492,13 @@ export type Database = {
           promo_code_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "applied_discounts_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "applied_discounts_lease_id_fkey"
             columns: ["lease_id"]
@@ -1016,6 +1030,13 @@ export type Database = {
             foreignKeyName: "damages_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "damages_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -1308,6 +1329,13 @@ export type Database = {
             foreignKeyName: "installment_analytics_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installment_analytics_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -1330,6 +1358,7 @@ export type Database = {
           id: string
           initial_mileage: number
           interest_rate: number | null
+          last_payment_date: string | null
           late_fee_grace_period: unknown | null
           late_fee_rate: number | null
           late_return_fee: number | null
@@ -1337,8 +1366,11 @@ export type Database = {
           license_no: string | null
           license_number: string | null
           monthly_payment: number | null
+          next_payment_date: string | null
           notes: string | null
           ownership_transferred: boolean | null
+          payment_frequency: string | null
+          payment_status: string | null
           rent_amount: number | null
           rent_due_day: number | null
           return_date: string | null
@@ -1366,6 +1398,7 @@ export type Database = {
           id?: string
           initial_mileage: number
           interest_rate?: number | null
+          last_payment_date?: string | null
           late_fee_grace_period?: unknown | null
           late_fee_rate?: number | null
           late_return_fee?: number | null
@@ -1373,8 +1406,11 @@ export type Database = {
           license_no?: string | null
           license_number?: string | null
           monthly_payment?: number | null
+          next_payment_date?: string | null
           notes?: string | null
           ownership_transferred?: boolean | null
+          payment_frequency?: string | null
+          payment_status?: string | null
           rent_amount?: number | null
           rent_due_day?: number | null
           return_date?: string | null
@@ -1402,6 +1438,7 @@ export type Database = {
           id?: string
           initial_mileage?: number
           interest_rate?: number | null
+          last_payment_date?: string | null
           late_fee_grace_period?: unknown | null
           late_fee_rate?: number | null
           late_return_fee?: number | null
@@ -1409,8 +1446,11 @@ export type Database = {
           license_no?: string | null
           license_number?: string | null
           monthly_payment?: number | null
+          next_payment_date?: string | null
           notes?: string | null
           ownership_transferred?: boolean | null
+          payment_frequency?: string | null
+          payment_status?: string | null
           rent_amount?: number | null
           rent_due_day?: number | null
           return_date?: string | null
@@ -2103,6 +2143,13 @@ export type Database = {
             foreignKeyName: "payment_history_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_history_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -2232,6 +2279,13 @@ export type Database = {
             foreignKeyName: "payment_reconciliation_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reconciliation_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -2285,6 +2339,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_schedules_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_schedules_lease_id_fkey"
             columns: ["lease_id"]
@@ -2351,6 +2412,13 @@ export type Database = {
             foreignKeyName: "payments_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -2398,6 +2466,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "penalties_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "penalties_lease_id_fkey"
             columns: ["lease_id"]
@@ -2690,6 +2765,13 @@ export type Database = {
             foreignKeyName: "recurring_revenue_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_revenue_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -2743,6 +2825,13 @@ export type Database = {
             foreignKeyName: "remaining_amounts_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remaining_amounts_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -2783,6 +2872,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "rent_payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rent_payments_lease_id_fkey"
             columns: ["lease_id"]
@@ -2884,6 +2980,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "security_deposits_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "security_deposits_lease_id_fkey"
             columns: ["lease_id"]
@@ -3018,6 +3121,13 @@ export type Database = {
           violation_points?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "traffic_fines_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "traffic_fines_lease_id_fkey"
             columns: ["lease_id"]
@@ -3326,6 +3436,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicle_inspections_lease_id_fkey"
             columns: ["lease_id"]
@@ -3659,6 +3776,20 @@ export type Database = {
       }
     }
     Views: {
+      agreement_overview: {
+        Row: {
+          agreement_number: string | null
+          customer_name: string | null
+          id: string | null
+          next_payment_date: string | null
+          payment_status: string | null
+          status: Database["public"]["Enums"]["lease_status"] | null
+          total_amount: number | null
+          total_paid_amount: number | null
+          vehicle_details: string | null
+        }
+        Relationships: []
+      }
       customer_statuses: {
         Row: {
           full_name: string | null
