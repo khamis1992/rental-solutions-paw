@@ -15,6 +15,8 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
   const { data: fines, isLoading } = useQuery<TrafficFine[]>({
     queryKey: ["customer-traffic-fines", customerId],
     queryFn: async () => {
+      console.log("Fetching traffic fines for customer:", customerId);
+      
       const { data, error } = await supabase
         .from("traffic_fines")
         .select(`
@@ -22,10 +24,6 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
           lease:leases(
             id,
             customer_id,
-            customer:profiles(
-              id,
-              full_name
-            ),
             vehicle:vehicles(
               make,
               model,
@@ -42,17 +40,18 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
         throw error;
       }
 
+      console.log("Fetched traffic fines:", data);
       return data as TrafficFine[];
     },
   });
 
   const calculateTotalFines = (fines: TrafficFine[] | undefined): number => {
-    return fines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0;
+    return fines?.reduce((sum, fine) => sum + (fine.fine_amount || 0), 0) || 0;
   };
 
   const calculateUnpaidFines = (fines: TrafficFine[] | undefined): { count: number; total: number } => {
     const unpaidFines = fines?.filter((fine) => fine.payment_status === "pending") || [];
-    const total = unpaidFines.reduce((sum, fine) => sum + fine.fine_amount, 0);
+    const total = unpaidFines.reduce((sum, fine) => sum + (fine.fine_amount || 0), 0);
     return { count: unpaidFines.length, total };
   };
 
@@ -105,7 +104,7 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
               <div key={fine.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-all">
                 <div className="space-y-1">
                   <div className="font-medium text-primary">
-                    {fine.lease?.vehicle.year} {fine.lease?.vehicle.make} {fine.lease?.vehicle.model}
+                    {fine.lease?.vehicle?.year} {fine.lease?.vehicle?.make} {fine.lease?.vehicle?.model}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {format(new Date(fine.violation_date), "PP")} - {fine.fine_type}
@@ -117,7 +116,7 @@ export const TrafficFinesSummary = ({ customerId }: TrafficFinesSummaryProps) =>
                   )}
                 </div>
                 <div className="text-right space-y-2">
-                  <div className="font-medium">{formatCurrency(fine.fine_amount)}</div>
+                  <div className="font-medium">{formatCurrency(fine.fine_amount || 0)}</div>
                   <Badge variant="secondary" className={getStatusBadgeStyle(fine.payment_status)}>
                     {fine.payment_status}
                   </Badge>
