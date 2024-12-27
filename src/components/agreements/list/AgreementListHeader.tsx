@@ -14,14 +14,14 @@ export const AgreementListHeader = ({
   isDeleting 
 }: AgreementListHeaderProps) => {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-start">
       <h1 className="text-3xl font-bold">Agreements</h1>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2">
         <CreateAgreementDialog />
         <Button
           variant="outline"
           onClick={onImportClick}
-          className="flex items-center"
+          className="w-full flex items-center"
         >
           <FileUp className="h-4 w-4 mr-2" />
           Import Agreements
@@ -30,7 +30,7 @@ export const AgreementListHeader = ({
           variant="destructive"
           onClick={onDeleteClick}
           disabled={isDeleting}
-          className="flex items-center"
+          className="w-full flex items-center"
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Delete All
