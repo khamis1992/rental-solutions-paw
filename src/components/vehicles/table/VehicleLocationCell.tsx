@@ -1,7 +1,11 @@
 import { MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VehicleLocationCellProps {
+  vehicleId: string;
   isEditing: boolean;
   location: string | null;
   locationValue: string;
@@ -12,6 +16,7 @@ interface VehicleLocationCellProps {
 }
 
 export const VehicleLocationCell = ({
+  vehicleId,
   isEditing,
   location,
   locationValue,
@@ -20,14 +25,53 @@ export const VehicleLocationCell = ({
   onBlur,
   onClick,
 }: VehicleLocationCellProps) => {
+  const [updating, setUpdating] = useState(false);
+
+  const handleLocationUpdate = async () => {
+    if (!locationValue.trim()) return;
+    
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ location: locationValue })
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+
+      toast.success("Location updated successfully");
+    } catch (error) {
+      console.error('Error updating location:', error);
+      toast.error("Failed to update location");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleKeyPress = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      await handleLocationUpdate();
+      onBlur();
+    } else if (e.key === 'Escape') {
+      onBlur();
+    }
+    onKeyPress(e);
+  };
+
+  const handleBlur = async () => {
+    await handleLocationUpdate();
+    onBlur();
+  };
+
   if (isEditing) {
     return (
       <div className="flex items-center" onClick={e => e.stopPropagation()}>
         <Input
           value={locationValue}
           onChange={(e) => onLocationChange(e.target.value)}
-          onKeyDown={onKeyPress}
-          onBlur={onBlur}
+          onKeyDown={handleKeyPress}
+          onBlur={handleBlur}
+          disabled={updating}
           autoFocus
           className="w-full"
           placeholder="Enter location"

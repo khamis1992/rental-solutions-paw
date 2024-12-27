@@ -2,11 +2,12 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { MapPin } from "lucide-react";
 import { Vehicle } from "@/types/database/vehicle.types";
+import { Input } from "@/components/ui/input";
 
 interface VehicleGridProps {
   vehicles: Vehicle[];
@@ -15,7 +16,8 @@ interface VehicleGridProps {
 }
 
 export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGridProps) => {
-  const { toast } = useToast();
+  const [editingLocation, setEditingLocation] = useState<string | null>(null);
+  const [locationValue, setLocationValue] = useState("");
 
   useEffect(() => {
     // Subscribe to real-time location updates
@@ -44,7 +46,7 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -62,8 +64,39 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
     );
   }
 
+  const handleLocationUpdate = async (vehicleId: string) => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ location: locationValue })
+        .eq('id', vehicleId);
+
+      if (error) throw error;
+
+      toast.success("Location updated successfully");
+      setEditingLocation(null);
+    } catch (error) {
+      console.error('Error updating location:', error);
+      toast.error("Failed to update location");
+    }
+  };
+
+  const handleLocationClick = (e: React.MouseEvent, vehicleId: string, currentLocation: string | null) => {
+    e.stopPropagation();
+    setEditingLocation(vehicleId);
+    setLocationValue(currentLocation || "");
+  };
+
+  const handleKeyPress = async (e: React.KeyboardEvent, vehicleId: string) => {
+    if (e.key === 'Enter') {
+      await handleLocationUpdate(vehicleId);
+    } else if (e.key === 'Escape') {
+      setEditingLocation(null);
+    }
+  };
+
   const handleClick = (vehicleId: string) => {
-    console.log("Grid view button clicked for vehicle:", vehicleId); // Debug log
+    console.log("Grid view button clicked for vehicle:", vehicleId);
     onVehicleClick?.(vehicleId);
   };
 
@@ -106,12 +139,28 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
             <p className="text-sm text-muted-foreground">
               License: {vehicle.license_plate}
             </p>
-            {vehicle.location && (
-              <p className="text-sm text-muted-foreground flex items-center mt-2">
-                <MapPin className="h-4 w-4 mr-1" />
-                {vehicle.location}
-              </p>
-            )}
+            <div 
+              className="text-sm text-muted-foreground mt-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+              onClick={(e) => handleLocationClick(e, vehicle.id, vehicle.location)}
+            >
+              {editingLocation === vehicle.id ? (
+                <Input
+                  value={locationValue}
+                  onChange={(e) => setLocationValue(e.target.value)}
+                  onKeyDown={(e) => handleKeyPress(e, vehicle.id)}
+                  onBlur={() => handleLocationUpdate(vehicle.id)}
+                  autoFocus
+                  className="w-full"
+                  placeholder="Enter location"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <div className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {vehicle.location || "Not available"}
+                </div>
+              )}
+            </div>
           </CardContent>
           <CardFooter className="flex justify-end">
             <Button 
