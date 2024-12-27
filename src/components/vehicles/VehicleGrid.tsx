@@ -62,13 +62,17 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
     );
   }
 
+  const handleClick = (vehicleId: string) => {
+    console.log("Grid view button clicked for vehicle:", vehicleId); // Debug log
+    onVehicleClick?.(vehicleId);
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {vehicles.map((vehicle) => (
         <Card
           key={vehicle.id}
-          className="overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer"
-          onClick={() => onVehicleClick?.(vehicle.id)}
+          className="overflow-hidden group hover:shadow-lg transition-shadow"
         >
           <div className="relative h-48 bg-muted">
             {vehicle.image_url ? (
@@ -110,7 +114,11 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
             )}
           </CardContent>
           <CardFooter className="flex justify-end">
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => handleClick(vehicle.id)}
+            >
               View Details
             </Button>
           </CardFooter>

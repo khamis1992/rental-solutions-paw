@@ -60,7 +60,10 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         </div>
       </div>
       {viewMode === 'grid' ? (
-        <VehicleGrid vehicles={vehicles || []} />
+        <VehicleGrid 
+          vehicles={vehicles || []} 
+          onVehicleClick={handleVehicleClick}
+        />
       ) : (
         <VehicleListView 
           vehicles={vehicles || []} 
