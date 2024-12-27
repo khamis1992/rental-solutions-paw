@@ -3,6 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { Vehicle } from "@/types/database/vehicle.types";
+import { useState, useEffect } from "react";
+import { VehicleLocationCell } from "./VehicleLocationCell";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VehicleListViewProps {
   vehicles: Vehicle[];
@@ -10,9 +14,56 @@ interface VehicleListViewProps {
 }
 
 export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewProps) => {
+  const [editingLocation, setEditingLocation] = useState<string | null>(null);
+  const [locationValue, setLocationValue] = useState("");
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('vehicle-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'vehicles',
+          filter: 'location=neq.null'
+        },
+        (payload: any) => {
+          const updatedVehicle = payload.new;
+          if (updatedVehicle.location) {
+            toast(`${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const handleClick = (vehicleId: string) => {
-    console.log("Button clicked for vehicle:", vehicleId); // Debug log
+    console.log("Button clicked for vehicle:", vehicleId);
     onVehicleClick?.(vehicleId);
+  };
+
+  const handleLocationUpdate = async () => {
+    if (!locationValue.trim() || !editingLocation) return;
+
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ location: locationValue })
+        .eq('id', editingLocation);
+
+      if (error) throw error;
+
+      toast("Location updated successfully");
+      setEditingLocation(null);
+    } catch (error) {
+      console.error('Error updating location:', error);
+      toast("Failed to update location");
+    }
   };
 
   return (
@@ -61,14 +112,26 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
                 </Badge>
               </TableCell>
               <TableCell>
-                {vehicle.location ? (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{vehicle.location}</span>
-                  </div>
-                ) : (
-                  "Not available"
-                )}
+                <VehicleLocationCell
+                  vehicleId={vehicle.id}
+                  isEditing={editingLocation === vehicle.id}
+                  location={vehicle.location}
+                  locationValue={locationValue}
+                  onLocationChange={setLocationValue}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleLocationUpdate();
+                    } else if (e.key === 'Escape') {
+                      setEditingLocation(null);
+                    }
+                  }}
+                  onBlur={handleLocationUpdate}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingLocation(vehicle.id);
+                    setLocationValue(vehicle.location || "");
+                  }}
+                />
               </TableCell>
               <TableCell>
                 <Button 

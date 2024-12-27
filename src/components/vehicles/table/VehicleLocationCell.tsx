@@ -39,15 +39,10 @@ export const VehicleLocationCell = ({
 
       if (error) throw error;
 
-      toast({
-        description: "Location updated successfully"
-      });
+      toast("Location updated successfully");
     } catch (error) {
       console.error('Error updating location:', error);
-      toast({
-        description: "Failed to update location",
-        variant: "destructive"
-      });
+      toast("Failed to update location");
     } finally {
       setUpdating(false);
     }
