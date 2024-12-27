@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { RevenueChart } from "./charts/RevenueChart";
 import { ExpenseChart } from "./charts/ExpenseChart";
+import { PayrollManagement } from "./PayrollManagement";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 
 export const FinancialReports = () => {
@@ -114,15 +116,28 @@ export const FinancialReports = () => {
   }
 
   return (
-    <div className="grid gap-6">
-      <RevenueChart 
-        data={revenueData} 
-        onExport={() => exportData(revenueData, "revenue-by-type")} 
-      />
-      <ExpenseChart 
-        data={expenseData} 
-        onExport={() => exportData(expenseData, "monthly-expenses")} 
-      />
-    </div>
+    <Tabs defaultValue="overview" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="payroll">Payroll</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="overview">
+        <div className="grid gap-6">
+          <RevenueChart 
+            data={revenueData} 
+            onExport={() => exportData(revenueData, "revenue-by-type")} 
+          />
+          <ExpenseChart 
+            data={expenseData} 
+            onExport={() => exportData(expenseData, "monthly-expenses")} 
+          />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="payroll">
+        <PayrollManagement />
+      </TabsContent>
+    </Tabs>
   );
 };
