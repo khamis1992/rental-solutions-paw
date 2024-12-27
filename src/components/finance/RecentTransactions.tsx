@@ -12,6 +12,21 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { TransactionType } from "./accounting/types/transaction.types";
+
+interface Transaction {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  description: string;
+  transaction_date: string;
+  receipt_url: string | null;
+  status: string;
+  accounting_categories: {
+    name: string;
+    type: string;
+  } | null;
+}
 
 export function RecentTransactions() {
   const { data: transactions, isLoading } = useQuery({
@@ -33,10 +48,10 @@ export function RecentTransactions() {
         console.error("Error fetching transactions:", error);
         throw error;
       }
-      return data;
+      return data as Transaction[];
     },
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
   });
 
   if (isLoading) {
@@ -68,10 +83,10 @@ export function RecentTransactions() {
               </TableCell>
               <TableCell>
                 <Badge
-                  variant={transaction.type === "income" ? "default" : "destructive"}
+                  variant={transaction.type === 'INCOME' ? "default" : "destructive"}
                   aria-label={`Transaction type: ${transaction.type}`}
                 >
-                  {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                  {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1).toLowerCase()}
                 </Badge>
               </TableCell>
               <TableCell>{transaction.accounting_categories?.name || "Uncategorized"}</TableCell>
@@ -79,7 +94,7 @@ export function RecentTransactions() {
               <TableCell className="text-right">
                 <span
                   className={
-                    transaction.type === "income"
+                    transaction.type === 'INCOME'
                       ? "text-green-600"
                       : "text-red-600"
                   }

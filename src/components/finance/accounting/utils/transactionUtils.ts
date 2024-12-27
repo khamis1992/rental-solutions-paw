@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { TransactionFormData } from "../types/transaction.types";
+import { TransactionFormData, TransactionType } from "../types/transaction.types";
 
 export async function uploadReceipt(receipt: File): Promise<string | null> {
   const fileExt = receipt.name.split('.').pop();
@@ -20,7 +20,7 @@ export async function uploadReceipt(receipt: File): Promise<string | null> {
 
 export async function saveTransaction(data: TransactionFormData, receiptUrl: string | null) {
   const transactionData = {
-    type: data.type,
+    type: data.type as TransactionType,
     amount: data.amount,
     category_id: data.category_id,
     description: data.description,
@@ -31,14 +31,12 @@ export async function saveTransaction(data: TransactionFormData, receiptUrl: str
     recurrence_interval: data.cost_type === 'fixed' ? '1 month' : null,
   };
 
-  // Insert into accounting_transactions
   const { error: transactionError } = await supabase
     .from("accounting_transactions")
     .insert(transactionData);
 
   if (transactionError) throw transactionError;
 
-  // If it's a fixed cost, also add to fixed_costs table
   if (data.cost_type === 'fixed') {
     const { error: fixedCostError } = await supabase
       .from("fixed_costs")
@@ -50,7 +48,6 @@ export async function saveTransaction(data: TransactionFormData, receiptUrl: str
     if (fixedCostError) throw fixedCostError;
   }
 
-  // If it's a variable cost, add to variable_costs table
   if (data.cost_type === 'variable') {
     const { error: variableCostError } = await supabase
       .from("variable_costs")
