@@ -11,12 +11,22 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, FolderPlus } from "lucide-react";
+import { Loader2, Plus, FolderPlus, Pencil, Trash2 } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
+import { toast } from "sonner";
+
+interface Category {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  budget_limit: number | null;
+}
 
 export const CategoryList = () => {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [editCategory, setEditCategory] = useState<Category | undefined>();
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
@@ -27,9 +37,36 @@ export const CategoryList = () => {
         .order("name");
 
       if (error) throw error;
-      return data;
+      return data as Category[];
     },
   });
+
+  const handleEdit = (category: Category) => {
+    setEditCategory(category);
+    setShowCategoryDialog(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("accounting_categories")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("Category deleted successfully");
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Failed to delete category");
+    }
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    setShowCategoryDialog(open);
+    if (!open) {
+      setEditCategory(undefined);
+    }
+  };
 
   const filteredCategories = categories?.filter((category) =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -68,6 +105,7 @@ export const CategoryList = () => {
                 <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Budget Limit</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,12 +122,30 @@ export const CategoryList = () => {
                         }).format(category.budget_limit)
                       : "-"}
                   </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(category)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(category.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
               {!filteredCategories?.length && (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No categories found
@@ -103,7 +159,8 @@ export const CategoryList = () => {
 
       <CategoryDialog
         open={showCategoryDialog}
-        onOpenChange={setShowCategoryDialog}
+        onOpenChange={handleCloseDialog}
+        editCategory={editCategory}
       />
     </div>
   );
