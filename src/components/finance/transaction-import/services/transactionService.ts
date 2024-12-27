@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/types/database/database.types";
 import { TransactionType } from "../../accounting/types/transaction.types";
 
 export interface TransactionRow {
@@ -12,6 +11,24 @@ export interface TransactionRow {
   status: string;
   notes: string;
 }
+
+const mapTransactionTypeToAmountType = (type: TransactionType): "income" | "expense" | "refund" => {
+  // Map the new enum values to the transaction_amounts table types
+  switch (type) {
+    case "INCOME":
+    case "RENTAL_FEE":
+    case "LATE_PAYMENT_FEE":
+    case "ADMINISTRATIVE_FEES":
+    case "VEHICLE_DAMAGE_CHARGE":
+    case "TRAFFIC_FINE":
+    case "ADVANCE_PAYMENT":
+      return "income";
+    case "EXPENSE":
+      return "expense";
+    default:
+      return "income"; // Default to income for other types
+  }
+};
 
 export const saveTransactions = async (rows: TransactionRow[]) => {
   try {
@@ -43,10 +60,10 @@ export const saveTransactions = async (rows: TransactionRow[]) => {
       throw error;
     }
 
-    // Save to transaction_amounts
+    // Save to transaction_amounts with proper type mapping
     const transactionAmounts = processedRows.map(row => ({
       amount: row.amount,
-      type: 'INCOME' as TransactionType,
+      type: mapTransactionTypeToAmountType(row.type),
       recorded_date: row.transaction_date
     }));
 
