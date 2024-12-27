@@ -35,7 +35,6 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
           const updatedVehicle = payload.new;
           if (updatedVehicle.location) {
             toast({
-              title: "Location Updated",
               description: `${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`,
             });
           }
@@ -73,11 +72,16 @@ export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGrid
 
       if (error) throw error;
 
-      toast.success("Location updated successfully");
+      toast({
+        description: "Location updated successfully"
+      });
       setEditingLocation(null);
     } catch (error) {
       console.error('Error updating location:', error);
-      toast.error("Failed to update location");
+      toast({
+        description: "Failed to update location",
+        variant: "destructive"
+      });
     }
   };
 

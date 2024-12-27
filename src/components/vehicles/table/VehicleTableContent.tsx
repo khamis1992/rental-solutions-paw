@@ -190,6 +190,7 @@ export const VehicleTableContent = ({
             </TableCell>
             <TableCell>
               <VehicleLocationCell
+                vehicleId={vehicle.id}
                 isEditing={editingLocation === vehicle.id}
                 location={vehicle.location}
                 locationValue={locationValue}
