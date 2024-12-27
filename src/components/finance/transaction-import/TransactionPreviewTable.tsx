@@ -4,7 +4,6 @@ import { formatCurrency } from "@/lib/utils";
 
 interface TransactionPreviewTableProps {
   data: any[];
-  onDataChange?: (data: any[]) => void;
 }
 
 export const TransactionPreviewTable = ({ data }: TransactionPreviewTableProps) => {
@@ -15,24 +14,24 @@ export const TransactionPreviewTable = ({ data }: TransactionPreviewTableProps) 
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Amount</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Agreement Number</TableHead>
             <TableHead>Description</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((row, index) => (
             <TableRow key={index}>
-              <TableCell>{new Date(row.payment_date).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(row.date).toLocaleDateString()}</TableCell>
               <TableCell>{formatCurrency(row.amount)}</TableCell>
+              <TableCell>{row.description}</TableCell>
+              <TableCell>{row.category}</TableCell>
               <TableCell>
-                <Badge variant="secondary" className="bg-green-500/10 text-green-500">
-                  Income
+                <Badge variant={row.type === 'income' ? 'success' : 'destructive'}>
+                  {row.type}
                 </Badge>
               </TableCell>
-              <TableCell>{row.agreement_number}</TableCell>
-              <TableCell>{row.description}</TableCell>
               <TableCell>
                 <Badge variant="outline">Pending Import</Badge>
               </TableCell>
