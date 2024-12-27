@@ -4,6 +4,7 @@ import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Printer, FileText, Trash2 } from "lucide-react";
 import type { Agreement } from "../hooks/useAgreements";
+import { PaymentStatusBadge } from "./PaymentStatusBadge";
 
 export interface AgreementTableRowProps {
   agreement: Agreement;
@@ -49,6 +50,16 @@ export const AgreementTableRow = ({
         <Badge variant="outline" className="capitalize">
           {agreement.status}
         </Badge>
+      </TableCell>
+      <TableCell>
+        <PaymentStatusBadge status={agreement.payment_status || 'pending'} />
+      </TableCell>
+      <TableCell>
+        {agreement.next_payment_date ? (
+          formatDateToDisplay(agreement.next_payment_date)
+        ) : (
+          <span className="text-gray-500">-</span>
+        )}
       </TableCell>
       <TableCell className="text-right space-x-2">
         <Button
