@@ -10,6 +10,11 @@ interface VehicleListViewProps {
 }
 
 export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewProps) => {
+  const handleClick = (e: React.MouseEvent, vehicleId: string) => {
+    e.stopPropagation(); // Prevent row click from firing
+    onVehicleClick?.(vehicleId);
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -24,7 +29,7 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
         </TableHeader>
         <TableBody>
           {vehicles.map((vehicle) => (
-            <TableRow key={vehicle.id} onClick={() => onVehicleClick?.(vehicle.id)} className="cursor-pointer">
+            <TableRow key={vehicle.id}>
               <TableCell>
                 <div className="flex items-center gap-2">
                   {vehicle.image_url && (
@@ -66,7 +71,11 @@ export const VehicleListView = ({ vehicles, onVehicleClick }: VehicleListViewPro
                 )}
               </TableCell>
               <TableCell>
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={(e) => handleClick(e, vehicle.id)}
+                >
                   View Details
                 </Button>
               </TableCell>
