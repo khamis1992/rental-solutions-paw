@@ -3075,6 +3075,7 @@ export type Database = {
         Row: {
           assignment_status: string | null
           created_at: string | null
+          entry_type: string | null
           fine_amount: number | null
           fine_location: string | null
           fine_type: string | null
@@ -3084,6 +3085,7 @@ export type Database = {
           payment_status: string | null
           serial_number: string | null
           updated_at: string | null
+          validation_status: string | null
           vehicle_id: string | null
           violation_charge: string | null
           violation_date: string | null
@@ -3093,6 +3095,7 @@ export type Database = {
         Insert: {
           assignment_status?: string | null
           created_at?: string | null
+          entry_type?: string | null
           fine_amount?: number | null
           fine_location?: string | null
           fine_type?: string | null
@@ -3102,6 +3105,7 @@ export type Database = {
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
+          validation_status?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
           violation_date?: string | null
@@ -3111,6 +3115,7 @@ export type Database = {
         Update: {
           assignment_status?: string | null
           created_at?: string | null
+          entry_type?: string | null
           fine_amount?: number | null
           fine_location?: string | null
           fine_type?: string | null
@@ -3120,6 +3125,7 @@ export type Database = {
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
+          validation_status?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
           violation_date?: string | null
