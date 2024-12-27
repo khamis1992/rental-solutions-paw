@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Plus, FolderPlus, Pencil, Trash2 } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
+import { BudgetProgress } from "./budget/BudgetProgress";
 import { toast } from "sonner";
 
 interface Category {
@@ -21,6 +22,10 @@ interface Category {
   type: string;
   description: string;
   budget_limit: number | null;
+  parent_id: string | null;
+  budget_period: string | null;
+  is_active?: boolean;
+  current_spending?: number;
 }
 
 export const CategoryList = () => {
@@ -31,13 +36,39 @@ export const CategoryList = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get categories
+      const { data: categoriesData, error: categoriesError } = await supabase
         .from("accounting_categories")
         .select("*")
         .order("name");
 
-      if (error) throw error;
-      return data as Category[];
+      if (categoriesError) throw categoriesError;
+
+      // Then get transactions for spending calculation
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("accounting_transactions")
+        .select("amount, category_id, transaction_date");
+
+      if (transactionsError) throw transactionsError;
+
+      // Calculate current spending for each category
+      const categoriesWithSpending = categoriesData.map((category: Category) => {
+        const categoryTransactions = transactions.filter(
+          (t) => t.category_id === category.id
+        );
+        
+        const currentSpending = categoryTransactions.reduce(
+          (sum, t) => sum + (t.amount || 0),
+          0
+        );
+
+        return {
+          ...category,
+          current_spending: currentSpending,
+        };
+      });
+
+      return categoriesWithSpending as Category[];
     },
   });
 
@@ -104,7 +135,7 @@ export const CategoryList = () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Budget Limit</TableHead>
+                <TableHead>Budget</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -115,12 +146,15 @@ export const CategoryList = () => {
                   <TableCell>{category.type}</TableCell>
                   <TableCell>{category.description}</TableCell>
                   <TableCell>
-                    {category.budget_limit
-                      ? new Intl.NumberFormat("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        }).format(category.budget_limit)
-                      : "-"}
+                    {category.budget_limit ? (
+                      <BudgetProgress
+                        budgetLimit={category.budget_limit}
+                        currentSpending={category.current_spending || 0}
+                        period={category.budget_period}
+                      />
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
