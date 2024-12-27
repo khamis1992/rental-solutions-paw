@@ -7,6 +7,22 @@ import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { Loader2 } from "lucide-react";
 
+interface Category {
+  id: string;
+  name: string;
+  type: string;
+  budget_limit: number | null;
+  budget_period: string | null;
+}
+
+interface Transaction {
+  id: string;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+  category: Category;
+  transaction_date: string;
+}
+
 export const FinancialDashboard = () => {
   const { data: financialData, isLoading } = useQuery({
     queryKey: ["financial-metrics"],
@@ -15,17 +31,12 @@ export const FinancialDashboard = () => {
         .from("accounting_transactions")
         .select(`
           *,
-          category:accounting_categories(
-            name,
-            type,
-            budget_limit,
-            budget_period
-          )
+          category:accounting_categories(*)
         `)
         .order("transaction_date", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as Transaction[];
     },
   });
 
@@ -153,12 +164,9 @@ export const FinancialDashboard = () => {
       </div>
 
       <BudgetTrackingSection 
-        transactions={currentMonthTransactions || []}
-        categories={financialData
-          ?.filter(t => t.category)
-          .map(t => t.category)
-          .filter((c, i, arr) => arr.findIndex(t => t.id === c.id) === i) || []
-        }
+        transactions={financialData || []}
+        categories={Array.from(new Set(financialData?.map(t => t.category)
+          .filter(Boolean))) as Category[]}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

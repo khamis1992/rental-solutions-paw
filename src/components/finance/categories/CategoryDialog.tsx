@@ -74,6 +74,11 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
     }
   };
 
+  const formattedEditCategory = editCategory ? {
+    ...editCategory,
+    budget_limit: editCategory.budget_limit?.toString() || ''
+  } : undefined;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -81,7 +86,7 @@ export const CategoryDialog = ({ open, onOpenChange, editCategory }: CategoryDia
           <DialogTitle>{editCategory ? "Edit Category" : "Add Category"}</DialogTitle>
         </DialogHeader>
         <CategoryForm
-          defaultValues={editCategory}
+          defaultValues={formattedEditCategory}
           isSubmitting={isSubmitting}
           onSubmit={handleSubmit}
           onCancel={() => onOpenChange(false)}
