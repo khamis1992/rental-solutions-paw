@@ -13,6 +13,7 @@ import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { CategoryTableHeader } from "./components/CategoryTableHeader";
 import { CategoryTableRow } from "./components/CategoryTableRow";
+import { BudgetProgress } from "./budget/BudgetProgress";
 
 interface Category {
   id: string;
