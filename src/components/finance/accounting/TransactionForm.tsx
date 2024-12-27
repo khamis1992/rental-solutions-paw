@@ -18,20 +18,10 @@ import {
 } from "@/components/ui/select";
 import { PaymentMethodSelect } from "./components/PaymentMethodSelect";
 import { RecurringPaymentFields } from "./components/RecurringPaymentFields";
-import { PaymentMethodType } from "@/types/database/agreement.types";
-
-const PAYMENT_CATEGORIES = [
-  { id: 'late_payment_fee', name: 'LATE PAYMENT FEE' },
-  { id: 'administrative_fees', name: 'Administrative Fees' },
-  { id: 'vehicle_damage_charge', name: 'Vehicle Damage Charge' },
-  { id: 'traffic_fine', name: 'Traffic Fine' },
-  { id: 'rental_fee', name: 'RENTAL FEE' },
-  { id: 'advance_payment', name: 'Advance Payment' },
-  { id: 'other', name: 'Other' }
-];
+import { PaymentMethodType, TransactionType } from "./types/transaction.types";
 
 interface TransactionFormData {
-  type: 'income' | 'expense' | 'payment';
+  type: TransactionType;
   amount: number;
   description?: string;
   transaction_date: string;
@@ -53,7 +43,7 @@ export function TransactionForm() {
     console.log("Submitting form with data:", data);
     setIsSubmitting(true);
     try {
-      if (data.type === 'payment') {
+      if (data.type === 'INCOME') {
         const paymentData = {
           amount: data.amount,
           payment_method: data.payment_method,
@@ -96,7 +86,7 @@ export function TransactionForm() {
         }
       }
 
-      toast.success(data.type === 'payment' ? "Payment added successfully" : "Transaction added successfully");
+      toast.success(data.type === 'INCOME' ? "Payment added successfully" : "Transaction added successfully");
       reset();
       queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
     } catch (error) {
@@ -125,13 +115,13 @@ export function TransactionForm() {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="type">Transaction Type</Label>
-          <Select {...register("type")} required>
+          <Select onValueChange={(value: TransactionType) => setValue('type', value)} required>
             <SelectTrigger>
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="income">Income</SelectItem>
-              <SelectItem value="expense">Expense</SelectItem>
+              <SelectItem value="INCOME">Income</SelectItem>
+              <SelectItem value="EXPENSE">Expense</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -143,11 +133,13 @@ export function TransactionForm() {
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_CATEGORIES.map((category) => (
-                <SelectItem key={category.id} value={category.name}>
-                  {category.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="late_payment_fee">Late Payment Fee</SelectItem>
+              <SelectItem value="administrative_fees">Administrative Fees</SelectItem>
+              <SelectItem value="vehicle_damage_charge">Vehicle Damage Charge</SelectItem>
+              <SelectItem value="traffic_fine">Traffic Fine</SelectItem>
+              <SelectItem value="rental_fee">Rental Fee</SelectItem>
+              <SelectItem value="advance_payment">Advance Payment</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -164,7 +156,7 @@ export function TransactionForm() {
           />
         </div>
 
-        {transactionType === 'payment' && (
+        {transactionType === 'INCOME' && (
           <>
             <div className="space-y-2">
               <Label htmlFor="paymentMethod">Payment Method</Label>
@@ -218,10 +210,10 @@ export function TransactionForm() {
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {transactionType === 'payment' ? 'Adding Payment...' : 'Adding Transaction...'}
+            {transactionType === 'INCOME' ? 'Adding Payment...' : 'Adding Transaction...'}
           </>
         ) : (
-          transactionType === 'payment' ? 'Add Payment' : 'Add Transaction'
+          transactionType === 'INCOME' ? 'Add Payment' : 'Add Transaction'
         )}
       </Button>
     </form>

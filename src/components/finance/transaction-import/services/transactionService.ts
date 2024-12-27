@@ -19,7 +19,7 @@ export const saveTransactions = async (rows: TransactionRow[]) => {
     
     // Process transactions with income type and validation
     const processedRows = rows.map(row => ({
-      type: 'income' as TransactionType, // Explicitly type as TransactionType
+      type: 'INCOME' as TransactionType,
       amount: parseFloat(row.amount),
       description: row.description,
       transaction_date: new Date(row.transaction_date).toISOString(),
@@ -46,7 +46,7 @@ export const saveTransactions = async (rows: TransactionRow[]) => {
     // Save to transaction_amounts
     const transactionAmounts = processedRows.map(row => ({
       amount: row.amount,
-      type: 'income' as TransactionType,
+      type: 'INCOME' as TransactionType,
       recorded_date: row.transaction_date
     }));
 
