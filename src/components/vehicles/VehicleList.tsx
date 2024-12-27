@@ -11,7 +11,7 @@ interface VehicleListProps {
   isLoading: boolean;
 }
 
-export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
+export const VehicleList = ({ vehicles = [], isLoading }: VehicleListProps) => {
   const [filters, setFilters] = useState<VehicleFilters>({
     search: "",
     status: "all",
@@ -25,9 +25,20 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Add console logs for debugging
+  console.log("VehicleList rendering with:", {
+    vehiclesLength: vehicles?.length,
+    isLoading,
+    viewMode,
+    filters
+  });
+
   if (isLoading) {
     return <div className="text-center py-4">Loading vehicles...</div>;
   }
+
+  // Ensure vehicles is always an array
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
   return (
     <div className="space-y-4">
@@ -53,9 +64,9 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         </div>
       </div>
       {viewMode === 'grid' ? (
-        <VehicleGrid vehicles={vehicles || []} />
+        <VehicleGrid vehicles={safeVehicles} isLoading={isLoading} />
       ) : (
-        <VehicleListView vehicles={vehicles || []} />
+        <VehicleListView vehicles={safeVehicles} />
       )}
     </div>
   );
