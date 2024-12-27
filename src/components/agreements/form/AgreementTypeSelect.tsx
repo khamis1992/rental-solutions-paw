@@ -1,10 +1,4 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { EnhancedSelect } from "@/components/ui/enhanced-select";
 import { Label } from "@/components/ui/label";
 
 interface AgreementTypeSelectProps {
@@ -12,25 +6,23 @@ interface AgreementTypeSelectProps {
 }
 
 export const AgreementTypeSelect = ({ register }: AgreementTypeSelectProps) => {
+  const agreementTypes = [
+    { value: "lease_to_own", label: "Lease to Own" },
+    { value: "short_term", label: "Short Term Rental" },
+  ];
+
   return (
     <div className="space-y-2">
       <Label htmlFor="agreementType">Agreement Type</Label>
-      <Select
-        {...register("agreementType")}
+      <EnhancedSelect
+        options={agreementTypes}
+        placeholder="Select type"
         onValueChange={(value) =>
           register("agreementType").onChange({
             target: { value },
           })
         }
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-          <SelectItem value="short_term">Short Term Rental</SelectItem>
-        </SelectContent>
-      </Select>
+      />
     </div>
   );
 };
