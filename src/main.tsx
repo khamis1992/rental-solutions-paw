@@ -67,8 +67,11 @@ window.addEventListener('message', (event) => {
   }
 }, false);
 
-// Initialize Supabase realtime
-supabase.realtime.setAuth(supabase.auth.session()?.access_token || null);
+// Initialize Supabase realtime with async session check
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  supabase.realtime.setAuth(session?.access_token || null);
+})();
 
 root.render(
   <React.StrictMode>
