@@ -1,6 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetProgress } from "./BudgetProgress";
-import { Category, Transaction } from "../types/transaction.types";
+
+interface Category {
+  id: string;
+  name: string;
+  type: string;
+  budget_limit: number | null;
+  budget_period: string | null;
+}
+
+interface Transaction {
+  amount: number;
+  category: Category;
+  type: 'INCOME' | 'EXPENSE';
+}
 
 interface BudgetTrackingSectionProps {
   transactions: Transaction[];
@@ -8,13 +21,25 @@ interface BudgetTrackingSectionProps {
 }
 
 export const BudgetTrackingSection = ({ transactions, categories }: BudgetTrackingSectionProps) => {
-  const calculateCategorySpending = (categoryId: string): number => {
-    return transactions
-      .filter(t => t.category_id === categoryId && t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + t.amount, 0);
-  };
+  const categoriesWithSpending = categories.map(category => {
+    const categoryTransactions = transactions.filter(
+      t => t.category?.id === category.id && t.type === 'EXPENSE'
+    );
+    
+    const currentSpending = categoryTransactions.reduce(
+      (sum, t) => sum + (t.amount || 0),
+      0
+    );
 
-  const categoriesWithBudgets = categories.filter(c => c.budget_limit > 0);
+    return {
+      ...category,
+      currentSpending
+    };
+  });
+
+  const categoriesWithBudgets = categoriesWithSpending.filter(
+    c => c.budget_limit !== null && c.type === 'EXPENSE'
+  );
 
   if (categoriesWithBudgets.length === 0) {
     return null;
@@ -25,14 +50,16 @@ export const BudgetTrackingSection = ({ transactions, categories }: BudgetTracki
       <CardHeader>
         <CardTitle>Budget Tracking</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="grid gap-4">
         {categoriesWithBudgets.map(category => (
-          <BudgetProgress
-            key={category.id}
-            label={category.name}
-            current={calculateCategorySpending(category.id)}
-            limit={category.budget_limit}
-          />
+          <div key={category.id} className="space-y-2">
+            <div className="font-medium">{category.name}</div>
+            <BudgetProgress
+              budgetLimit={category.budget_limit || 0}
+              currentSpending={category.currentSpending}
+              period={category.budget_period}
+            />
+          </div>
         ))}
       </CardContent>
     </Card>

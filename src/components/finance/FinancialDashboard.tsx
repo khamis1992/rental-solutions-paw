@@ -6,7 +6,6 @@ import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { Loader2 } from "lucide-react";
-import { Transaction, Category } from "./types/transaction.types";
 
 export const FinancialDashboard = () => {
   const { data: financialData, isLoading } = useQuery({
@@ -17,7 +16,6 @@ export const FinancialDashboard = () => {
         .select(`
           *,
           category:accounting_categories(
-            id,
             name,
             type,
             budget_limit,
@@ -27,7 +25,7 @@ export const FinancialDashboard = () => {
         .order("transaction_date", { ascending: true });
 
       if (error) throw error;
-      return data as Transaction[];
+      return data;
     },
   });
 
@@ -155,10 +153,10 @@ export const FinancialDashboard = () => {
       </div>
 
       <BudgetTrackingSection 
-        transactions={financialData || []}
+        transactions={currentMonthTransactions || []}
         categories={financialData
           ?.filter(t => t.category)
-          .map(t => t.category as Category)
+          .map(t => t.category)
           .filter((c, i, arr) => arr.findIndex(t => t.id === c.id) === i) || []
         }
       />
