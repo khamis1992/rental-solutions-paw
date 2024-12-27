@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_active: boolean | null
           name: string
           parent_id: string | null
           type: string
@@ -72,6 +73,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean | null
           name: string
           parent_id?: string | null
           type: string
@@ -83,6 +85,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean | null
           name?: string
           parent_id?: string | null
           type?: string
