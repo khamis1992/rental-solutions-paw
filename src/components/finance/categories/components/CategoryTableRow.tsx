@@ -4,32 +4,43 @@ import { Edit, Trash } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { BudgetProgress } from "../budget/BudgetProgress";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface Category {
+  id: string;
+  name: string;
+  type: string;
+  description: string | null;
+  budget_limit: number | null;
+  budget_period: string | null;
+  is_active?: boolean;
+  current_spending?: number;
+}
 
 interface CategoryTableRowProps {
-  category: {
-    id: string;
-    name: string;
-    type: string;
-    description: string | null;
-    budget_limit: number | null;
-    budget_period: string | null;
-    is_active: boolean;
-  };
-  currentSpending: number;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onToggleActive: (id: string, isActive: boolean) => void;
+  category: Category;
+  isSelected: boolean;
+  onSelect: (checked: boolean) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 export const CategoryTableRow = ({
   category,
-  currentSpending,
+  isSelected,
+  onSelect,
   onEdit,
   onDelete,
-  onToggleActive,
 }: CategoryTableRowProps) => {
   return (
     <TableRow>
+      <TableCell>
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={onSelect}
+          aria-label={`Select ${category.name}`}
+        />
+      </TableCell>
       <TableCell>{category.name}</TableCell>
       <TableCell>
         <Badge variant={category.type === 'INCOME' ? 'default' : 'secondary'}>
@@ -41,7 +52,7 @@ export const CategoryTableRow = ({
         {category.budget_limit ? (
           <BudgetProgress
             budgetLimit={category.budget_limit}
-            currentSpending={currentSpending}
+            currentSpending={category.current_spending || 0}
             period={category.budget_period}
           />
         ) : (
@@ -50,8 +61,9 @@ export const CategoryTableRow = ({
       </TableCell>
       <TableCell>
         <Switch
-          checked={category.is_active}
-          onCheckedChange={(checked) => onToggleActive(category.id, checked)}
+          checked={category.is_active ?? true}
+          disabled
+          aria-label="Category status"
         />
       </TableCell>
       <TableCell className="text-right">
@@ -59,14 +71,14 @@ export const CategoryTableRow = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onEdit(category.id)}
+            onClick={onEdit}
           >
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onDelete(category.id)}
+            onClick={onDelete}
           >
             <Trash className="h-4 w-4" />
           </Button>
