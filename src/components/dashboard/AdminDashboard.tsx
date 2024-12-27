@@ -16,7 +16,7 @@ export const AdminDashboard = () => {
       return {
         totalUsers: usersResponse.count || 0,
         totalTransactions: transactionsResponse.count || 0,
-        pendingMaintenance: maintenanceResponse.data?.filter(m => m.status === 'pending').length || 0
+        pendingMaintenance: maintenanceResponse.data?.filter(m => m.status === 'scheduled').length || 0
       };
     }
   });
@@ -45,7 +45,7 @@ export const AdminDashboard = () => {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pending Maintenance</CardTitle>
+          <CardTitle className="text-sm font-medium">Scheduled Maintenance</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats?.pendingMaintenance}</div>
