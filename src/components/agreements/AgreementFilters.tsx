@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -35,11 +36,13 @@ export const AgreementFilters = ({
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="expired">Expired</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectGroup>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
         <Select defaultValue="newest" onValueChange={onSortChange}>
@@ -47,10 +50,12 @@ export const AgreementFilters = ({
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest First</SelectItem>
-            <SelectItem value="oldest">Oldest First</SelectItem>
-            <SelectItem value="amount-high">Amount (High-Low)</SelectItem>
-            <SelectItem value="amount-low">Amount (Low-High)</SelectItem>
+            <SelectGroup>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="amount-high">Amount (High-Low)</SelectItem>
+              <SelectItem value="amount-low">Amount (Low-High)</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>

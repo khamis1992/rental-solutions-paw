@@ -1,4 +1,11 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup,
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface ChartStatusSelectProps {
   selectedStatus: string;
@@ -23,12 +30,14 @@ export const ChartStatusSelect = ({
         <SelectValue placeholder="All Vehicle Types" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All Vehicle Types</SelectItem>
-        {statusData?.map((status) => (
-          <SelectItem key={status.name} value={status.name.toLowerCase()}>
-            {status.name}
-          </SelectItem>
-        ))}
+        <SelectGroup>
+          <SelectItem value="all">All Vehicle Types</SelectItem>
+          {statusData?.map((status) => (
+            <SelectItem key={status.name} value={status.name.toLowerCase()}>
+              {status.name}
+            </SelectItem>
+          ))}
+        </SelectGroup>
       </SelectContent>
     </Select>
   );
