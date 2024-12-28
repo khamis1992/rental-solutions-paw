@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { saveTransactions, TransactionRow } from "../services/transactionService";
-import Papa from 'papaparse';
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export const useTransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
     if (file.type !== "text/csv") {
       toast({
-        title: "Error",
+        title: "Invalid File Type",
         description: "Please upload a CSV file",
         variant: "destructive",
       });
@@ -24,46 +24,56 @@ export const useTransactionImport = () => {
 
     setIsUploading(true);
     try {
-      const text = await file.text();
+      const fileName = `transactions/${Date.now()}_${file.name}`;
       
-      Papa.parse(text, {
-        header: true,
-        complete: async (results) => {
-          try {
-            await saveTransactions(results.data as TransactionRow[]);
-            
-            toast({
-              title: "Success",
-              description: `Successfully imported ${results.data.length} transactions.`,
-            });
-            
-            await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-          } catch (error: any) {
-            console.error('Import error:', error);
-            toast({
-              title: "Error",
-              description: error.message || "Failed to import transactions",
-              variant: "destructive",
-            });
-          } finally {
-            setIsUploading(false);
-          }
-        },
-        error: (error) => {
-          console.error('CSV parsing error:', error);
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Show success notification
+      toast({
+        title: "Import Started",
+        description: "Your import has been initiated. You'll be redirected to the dashboard.",
+      });
+
+      // Start processing in the background
+      const processingPromise = supabase.functions
+        .invoke("process-transaction-import", {
+          body: { fileName }
+        })
+        .then(async ({ data, error }) => {
+          if (error) throw error;
+          
+          await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          
           toast({
-            title: "Error",
-            description: "Failed to parse CSV file",
+            title: "Import Complete",
+            description: "Your transactions have been processed successfully.",
+          });
+        })
+        .catch((error) => {
+          console.error("Import error:", error);
+          toast({
+            title: "Import Error",
+            description: error.message || "Failed to process import",
             variant: "destructive",
           });
+        })
+        .finally(() => {
           setIsUploading(false);
-        }
-      });
+        });
+
+      // Redirect to dashboard immediately after starting the import
+      navigate("/finance?tab=dashboard");
+
     } catch (error: any) {
-      console.error('File reading error:', error);
+      console.error("Upload error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to read file",
+        title: "Upload Failed",
+        description: error.message || "Failed to upload file",
         variant: "destructive",
       });
       setIsUploading(false);

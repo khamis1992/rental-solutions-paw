@@ -10,10 +10,8 @@ interface FileUploadSectionProps {
 }
 
 export const FileUploadSection = ({ onFileUpload, isUploading }: FileUploadSectionProps) => {
-  // Create a reference to the file input
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Handle button click
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
