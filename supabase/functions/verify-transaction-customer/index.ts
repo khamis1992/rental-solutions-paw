@@ -23,54 +23,32 @@ serve(async (req) => {
       throw new Error('Agreement number and payment date are required')
     }
 
-    console.log('Verifying customer for:', { agreementNumber, paymentDate });
-
     // Query to get customer details and verify active contract
-    const { data: agreements, error: agreementError } = await supabaseClient
+    const { data: agreement, error: agreementError } = await supabaseClient
       .from('leases')
       .select(`
         id,
         agreement_number,
         start_date,
         end_date,
-        customer:profiles!leases_customer_id_fkey (
+        customer:customer_id (
           id,
           full_name
         )
       `)
       .eq('agreement_number', agreementNumber)
-      .lte('start_date', paymentDate)
-      .gte('end_date', paymentDate)
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .single()
 
-    if (agreementError) {
-      console.error('Agreement query error:', agreementError);
-      throw agreementError;
-    }
+    if (agreementError) throw agreementError
+    if (!agreement) throw new Error('Agreement not found')
 
-    if (!agreements || agreements.length === 0) {
-      console.log('No active agreement found for:', { agreementNumber, paymentDate });
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'No active agreement found for this period'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 404
-        }
-      );
-    }
-
-    const agreement = agreements[0];
-    const paymentDateObj = new Date(paymentDate);
-    const startDate = new Date(agreement.start_date);
-    const endDate = agreement.end_date ? new Date(agreement.end_date) : null;
+    const paymentDateObj = new Date(paymentDate)
+    const startDate = new Date(agreement.start_date)
+    const endDate = agreement.end_date ? new Date(agreement.end_date) : null
 
     // Verify if payment date falls within contract period
     const isValidDate = paymentDateObj >= startDate && 
-      (!endDate || paymentDateObj <= endDate);
+      (!endDate || paymentDateObj <= endDate)
 
     return new Response(
       JSON.stringify({
@@ -85,10 +63,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
-    );
+    )
 
   } catch (error) {
-    console.error('Error verifying customer:', error);
+    console.error('Error verifying customer:', error)
     return new Response(
       JSON.stringify({ 
         success: false, 
@@ -98,6 +76,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 
       }
-    );
+    )
   }
 })
