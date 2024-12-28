@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
@@ -12,6 +12,7 @@ import * as LazyComponents from "@/routes/routes";
 export default function App() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -23,7 +24,7 @@ export default function App() {
           variant: "default",
         });
         // Only navigate to dashboard if we're on the auth page
-        if (window.location.pathname === '/auth') {
+        if (location.pathname === '/auth') {
           navigate('/');
         }
       } else if (event === "SIGNED_OUT") {
@@ -38,7 +39,7 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast, navigate]);
+  }, [toast, navigate, location.pathname]);
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
