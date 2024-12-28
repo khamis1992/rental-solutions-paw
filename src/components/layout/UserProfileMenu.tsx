@@ -25,6 +25,7 @@ export const UserProfileMenu = () => {
           return null;
         }
 
+        console.log('Fetching profile for user:', user.id);
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -36,6 +37,7 @@ export const UserProfileMenu = () => {
           return null;
         }
 
+        console.log('Profile data:', profile);
         return profile;
       } catch (error) {
         console.error('Unexpected error in profile fetch:', error);

@@ -1,51 +1,30 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
+import { FileUploadSection } from "./components/FileUploadSection";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-
-interface ImportedTransaction {
-  agreement_number: string;
-  payment_date: string;
-  amount: number;
-  description: string;
-  customer_name?: string;
-  is_valid_date?: boolean;
-}
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<ImportedTransaction[]>([]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const verifyCustomer = async (agreementNumber: string, paymentDate: string) => {
-    try {
-      const { data: verificationData, error: verificationError } = await supabase.functions
-        .invoke('verify-transaction-customer', {
-          body: { agreementNumber, paymentDate }
-        });
+  // Query to fetch existing imported transactions
+  const { data: importedData = [], isLoading } = useQuery({
+    queryKey: ['imported-transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('raw_transaction_imports')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (verificationError) throw verificationError;
-      
-      // Handle both successful and "no agreement" cases
-      return {
-        customerName: verificationData.data?.customerName || 'Unknown',
-        isValidDate: verificationData.data?.isValidDate || false,
-        message: verificationData.data?.message
-      };
-    } catch (error) {
-      console.error('Customer verification error:', error);
-      return {
-        customerName: 'Error',
-        isValidDate: false,
-        message: error.message
-      };
+      if (error) throw error;
+      return data.map(item => item.raw_data) || [];
     }
-  };
+  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,60 +37,53 @@ export const TransactionImport = () => {
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
         const rows = csvContent.split('\n')
-          .filter((row) => row.trim().length > 0) // Filter out empty rows
           .map(row => {
             const values = row.split(',').map(value => value.trim());
             return {
               agreement_number: values[0] || '',
-              payment_date: values[5] || '',
+              customer_name: values[1] || '',
               amount: parseFloat(values[2]) || 0,
+              license_plate: values[3] || '',
+              vehicle: values[4] || '',
+              payment_date: values[5] || '',
+              payment_method: values[6] || '',
+              payment_number: values[7] || '',
               description: values[8] || ''
             };
           })
-          .filter((row, index) => index > 0 && row.agreement_number); // Skip header row and empty rows
+          .filter((row, index) => index > 0); // Skip header row
 
-        console.log('Parsed rows:', rows); // Debug log
-
-        // Verify customer for each row
-        const enrichedRows = await Promise.all(
-          rows.map(async (row) => {
-            const customerInfo = await verifyCustomer(
-              row.agreement_number, 
-              row.payment_date
-            );
-            
-            return {
-              ...row,
-              customer_name: customerInfo.customerName,
-              is_valid_date: customerInfo.isValidDate,
-              verification_message: customerInfo.message
-            };
-          })
-        );
-
-        console.log('Enriched rows:', enrichedRows); // Debug log
-
-        // Update the state with the enriched data
-        setImportedData(enrichedRows);
-
-        // Process the enriched data
+        // Save to Supabase
         const { error: functionError } = await supabase.functions
           .invoke('process-transaction-import', {
-            body: { rows: enrichedRows }
+            body: { rows }
           });
 
-        if (functionError) throw functionError;
+        if (functionError) {
+          console.error('Import error:', functionError);
+          toast({
+            title: "Error",
+            description: "Failed to import transactions. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
 
         toast({
           title: "Success",
-          description: `Successfully processed ${enrichedRows.length} transactions`,
+          description: `Successfully imported ${rows.length} transactions`,
         });
 
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        // Refresh the data
+        queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
       };
 
       reader.onerror = () => {
-        throw new Error('Failed to read file');
+        toast({
+          title: "Error",
+          description: "Failed to read file",
+          variant: "destructive",
+        });
       };
 
       reader.readAsText(file);
@@ -127,35 +99,57 @@ export const TransactionImport = () => {
     }
   };
 
-  const handleClearData = () => {
-    setImportedData([]);
+  const handleDeleteAll = async () => {
+    try {
+      const { error } = await supabase
+        .from('raw_transaction_imports')
+        .delete()
+        .neq('id', ''); // Delete all records
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "All imported transactions have been deleted",
+      });
+
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transactions",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="space-y-4">
-      <FileUploadSection 
-        onFileUpload={handleFileUpload}
-        isUploading={isUploading}
-      />
-      
-      {importedData.length > 0 && (
-        <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <FileUploadSection 
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+        />
+        {importedData.length > 0 && (
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearData}
-            className="text-destructive"
+            variant="destructive"
+            onClick={handleDeleteAll}
+            className="ml-4"
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear Data
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete All
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       
-      <TransactionPreviewTable 
-        data={importedData}
-        onDataChange={setImportedData}
-      />
+      {!isLoading && importedData.length > 0 && (
+        <TransactionPreviewTable 
+          data={importedData}
+          onDataChange={() => {}}
+        />
+      )}
     </div>
   );
 };
