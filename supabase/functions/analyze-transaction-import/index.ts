@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,7 +22,6 @@ serve(async (req) => {
     const lines = csvContent.split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
 
-    // Required fields for transaction imports
     const requiredFields = [
       'Agreement Number',
       'Customer Name',
@@ -55,33 +52,42 @@ serve(async (req) => {
       );
     }
 
-    // Analyze the data
+    // Parse and analyze the data
     const rows = lines.slice(1).filter(line => line.trim() !== '');
     let validRows = 0;
     let invalidRows = 0;
     let totalAmount = 0;
     const issues: string[] = [];
-    const suggestions: string[] = [];
 
     // Get column indices
+    const agreementNumberIndex = headers.findIndex(h => h.toLowerCase() === 'agreement number');
     const amountIndex = headers.findIndex(h => h.toLowerCase() === 'amount');
     const paymentDateIndex = headers.findIndex(h => h.toLowerCase() === 'payment date');
     const typeIndex = headers.findIndex(h => h.toLowerCase() === 'type');
 
     rows.forEach((row, index) => {
-      const values = row.split(',').map(v => v.trim());
-      
-      // Check if we have all required values
+      // Use regex to properly handle quoted values and special characters
+      const values = row.match(/(?:^|,)("(?:[^"]*(?:""[^"]*)*)"|\d+|[^,]*)/g)
+        ?.map(v => v.replace(/^,?"?|"?$/g, '').replace(/""/g, '"').trim()) || [];
+
       if (values.length < headers.length) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Missing values - row has ${values.length} values but needs ${headers.length}`);
-        return; // Skip further validation for this row
+        return;
       }
 
+      const agreementNumber = values[agreementNumberIndex];
       const amount = parseFloat(values[amountIndex]);
       const paymentDate = values[paymentDateIndex];
       const type = values[typeIndex];
-      
+
+      // Validate agreement number exists
+      if (!agreementNumber || agreementNumber.trim() === '') {
+        invalidRows++;
+        issues.push(`Row ${index + 2}: Agreement Number cannot be empty`);
+        return;
+      }
+
       if (isNaN(amount)) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid amount format`);
@@ -97,19 +103,11 @@ serve(async (req) => {
       }
 
       // Validate transaction type
-      if (!type || !['INCOME', 'EXPENSE'].includes(type.toUpperCase())) {
+      if (!type || !['INCOME', 'EXPENSE'].includes(type?.toUpperCase())) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid transaction type. Use INCOME or EXPENSE`);
       }
     });
-
-    if (validRows === 0) {
-      suggestions.push('No valid transactions found. Please check the file format.');
-    }
-
-    if (invalidRows > 0) {
-      suggestions.push('Consider reviewing the file for formatting issues before importing.');
-    }
 
     return new Response(
       JSON.stringify({
@@ -118,7 +116,7 @@ serve(async (req) => {
         invalidRows,
         totalAmount,
         issues,
-        suggestions,
+        suggestions: invalidRows > 0 ? ['Please review the file for formatting issues before importing.'] : [],
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
