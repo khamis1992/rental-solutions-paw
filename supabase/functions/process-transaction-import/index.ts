@@ -7,11 +7,14 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting transaction import process...');
+    
     const formData = await req.formData();
     const file = formData.get('file');
 
@@ -32,11 +35,14 @@ serve(async (req) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
     
+    console.log('Uploading file to storage:', fileName);
+    
     const { error: uploadError } = await supabase.storage
       .from('imports')
       .upload(fileName, file);
 
     if (uploadError) {
+      console.error('Storage upload error:', uploadError);
       throw uploadError;
     }
 
@@ -51,6 +57,7 @@ serve(async (req) => {
       .single();
 
     if (logError) {
+      console.error('Import log creation error:', logError);
       throw logError;
     }
 
@@ -66,9 +73,7 @@ serve(async (req) => {
 
     for (const row of rows) {
       try {
-        const values = row.match(/(?:^|,)("(?:[^"]*(?:""[^"]*)*)"|\d+|[^,]*)/g)
-          ?.map(v => v.replace(/^,?"?|"?$/g, '').replace(/""/g, '"').trim()) || [];
-
+        const values = row.split(',').map(v => v.trim());
         const rowData = headers.reduce((obj, header, index) => {
           obj[header] = values[index] || '';
           return obj;
@@ -84,7 +89,7 @@ serve(async (req) => {
             payment_description: rowData['Payment Description'],
             license_plate: rowData['License Plate'],
             vehicle_details: rowData['Vehicle'],
-            payment_method: rowData['Payment Method'].toLowerCase(),
+            payment_method: rowData['Payment Method']?.toLowerCase(),
             is_valid: true
           });
 
