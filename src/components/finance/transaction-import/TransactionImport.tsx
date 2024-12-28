@@ -1,117 +1,156 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
+import { FileUploadSection } from "./components/FileUploadSection";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImportedTransaction, RawTransactionImport } from "./types/transaction.types";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<any[]>([]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const navigate = useNavigate();
+
+  // Query to fetch existing imported transactions
+  const { data: importedData = [], isLoading } = useQuery<ImportedTransaction[]>({
+    queryKey: ['imported-transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('raw_transaction_imports')
+        .select('*')
+        .order('created_at', { ascending: false }) as { data: RawTransactionImport[] | null, error: any };
+
+      if (error) throw error;
+      return (data || []).map(item => item.raw_data);
+    }
+  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "text/csv") {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsUploading(true);
     try {
-      const fileName = `transactions/${Date.now()}_${file.name}`;
+      const reader = new FileReader();
       
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      reader.onload = async (e) => {
+        const csvContent = e.target?.result as string;
+        const rows: ImportedTransaction[] = csvContent.split('\n')
+          .map(row => {
+            const values = row.split(',').map(value => value.trim());
+            return {
+              agreement_number: values[0] || '',
+              customer_name: values[1] || '',
+              amount: parseFloat(values[2]) || 0,
+              license_plate: values[3] || '',
+              vehicle: values[4] || '',
+              payment_date: values[5] || '',
+              payment_method: values[6] || '',
+              payment_number: values[7] || '',
+              description: values[8] || ''
+            };
+          })
+          .filter((row, index) => index > 0); // Skip header row
 
-      if (uploadError) throw uploadError;
-
-      // Show success notification
-      toast({
-        title: "Import Started",
-        description: "Your import has been initiated. You'll be redirected to the dashboard.",
-      });
-
-      // Start processing in the background
-      const processingPromise = supabase.functions
-        .invoke("process-transaction-import", {
-          body: { 
-            transactions: [{
-              amount: 100, // Example amount
-              transaction_date: new Date().toISOString(),
-              metadata: {
-                agreement_number: "TEST-001"
-              }
-            }]
-          }
-        })
-        .then(async ({ data, error }) => {
-          if (error) throw error;
-          
-          await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-          
-          toast({
-            title: "Import Complete",
-            description: "Your transactions have been processed successfully.",
+        // Save to Supabase
+        const { error: functionError } = await supabase.functions
+          .invoke('process-transaction-import', {
+            body: { rows }
           });
-        })
-        .catch((error) => {
-          console.error("Import error:", error);
+
+        if (functionError) {
+          console.error('Import error:', functionError);
           toast({
-            title: "Import Error",
-            description: error.message || "Failed to process import",
+            title: "Error",
+            description: "Failed to import transactions. Please try again.",
             variant: "destructive",
           });
-        })
-        .finally(() => {
-          setIsUploading(false);
+          return;
+        }
+
+        toast({
+          title: "Success",
+          description: `Successfully imported ${rows.length} transactions`,
         });
 
-      // Redirect to dashboard immediately after starting the import
-      navigate("/finance?tab=dashboard");
+        // Refresh the data
+        queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+      };
 
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to read file",
+          variant: "destructive",
+        });
+      };
+
+      reader.readAsText(file);
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error('Import error:', error);
       toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload file",
+        title: "Error",
+        description: error.message || "Failed to import transactions",
         variant: "destructive",
       });
+    } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      const { error } = await supabase
+        .from('raw_transaction_imports')
+        .delete()
+        .neq('id', ''); // Delete all records
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "All imported transactions have been deleted",
+      });
+
+      // Refresh the data
+      queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transactions",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <div className="space-y-4">
-      <FileUploadSection 
-        onFileUpload={handleFileUpload}
-        isUploading={isUploading}
-      />
+      <div className="flex justify-between items-center">
+        <FileUploadSection 
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+        />
+        {importedData.length > 0 && (
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAll}
+            className="ml-4"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete All
+          </Button>
+        )}
+      </div>
       
-      {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Processing file...
-        </div>
+      {!isLoading && importedData.length > 0 && (
+        <TransactionPreviewTable 
+          data={importedData}
+          onDataChange={() => {}}
+        />
       )}
-      
-      <TransactionPreviewTable 
-        data={importedData}
-        onDataChange={setImportedData}
-      />
     </div>
   );
 };

@@ -11,15 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Eye, Pencil, Plus, Trash } from "lucide-react";
+import { Eye, Pencil, Trash } from "lucide-react";
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog";
-import { TransactionDialog } from "./TransactionDialog";
 import { toast } from "sonner";
 
 export const TransactionList = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["transactions"],
@@ -55,13 +53,6 @@ export const TransactionList = () => {
 
   return (
     <div>
-      <div className="mb-4">
-        <Button onClick={() => setIsAddOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Transaction
-        </Button>
-      </div>
-
       <Table>
         <TableHeader>
           <TableRow>
@@ -106,11 +97,6 @@ export const TransactionList = () => {
           ))}
         </TableBody>
       </Table>
-
-      <TransactionDialog
-        open={isAddOpen}
-        onOpenChange={setIsAddOpen}
-      />
 
       <TransactionDetailsDialog
         isOpen={isDetailsOpen}

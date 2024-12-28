@@ -6,11 +6,12 @@ import { AuthGuard } from "./AuthGuard";
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  requiredRoles?: string[];
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   return (
-    <AuthGuard>
+    <AuthGuard requiredRoles={requiredRoles}>
       <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
         <RouteWrapper>{children}</RouteWrapper>
       </Suspense>

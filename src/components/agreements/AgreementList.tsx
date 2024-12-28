@@ -18,6 +18,7 @@ export const AgreementList = () => {
   const [selectedDetailsId, setSelectedDetailsId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
+  const [showAgreementImport, setShowAgreementImport] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const {
@@ -60,7 +61,7 @@ export const AgreementList = () => {
   return (
     <div className="space-y-4">
       <AgreementListHeader
-        onImportClick={() => setShowDeleteDialog(true)}
+        onImportClick={() => setShowAgreementImport(true)}
         onDeleteClick={() => setShowDeleteDialog(true)}
         isDeleting={isDeleting}
       />

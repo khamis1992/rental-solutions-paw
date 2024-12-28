@@ -170,7 +170,6 @@ export type Database = {
           description: string | null
           id: string
           is_recurring: boolean | null
-          meta_data: Json | null
           receipt_url: string | null
           recurrence_interval: unknown | null
           recurring_schedule: Json | null
@@ -189,7 +188,6 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
-          meta_data?: Json | null
           receipt_url?: string | null
           recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
@@ -208,7 +206,6 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
-          meta_data?: Json | null
           receipt_url?: string | null
           recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
@@ -2555,7 +2552,6 @@ export type Database = {
           id: string
           id_document_url: string | null
           is_ai_generated: boolean | null
-          last_login: string | null
           license_document_url: string | null
           nationality: string | null
           needs_review: boolean | null
@@ -2581,7 +2577,6 @@ export type Database = {
           id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
-          last_login?: string | null
           license_document_url?: string | null
           nationality?: string | null
           needs_review?: boolean | null
@@ -2607,7 +2602,6 @@ export type Database = {
           id?: string
           id_document_url?: string | null
           is_ai_generated?: boolean | null
-          last_login?: string | null
           license_document_url?: string | null
           nationality?: string | null
           needs_review?: boolean | null
@@ -3078,7 +3072,6 @@ export type Database = {
         Row: {
           assignment_status: string | null
           created_at: string | null
-          entry_type: string | null
           fine_amount: number | null
           fine_location: string | null
           fine_type: string | null
@@ -3088,7 +3081,6 @@ export type Database = {
           payment_status: string | null
           serial_number: string | null
           updated_at: string | null
-          validation_status: string | null
           vehicle_id: string | null
           violation_charge: string | null
           violation_date: string | null
@@ -3098,7 +3090,6 @@ export type Database = {
         Insert: {
           assignment_status?: string | null
           created_at?: string | null
-          entry_type?: string | null
           fine_amount?: number | null
           fine_location?: string | null
           fine_type?: string | null
@@ -3108,7 +3099,6 @@ export type Database = {
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
-          validation_status?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
           violation_date?: string | null
@@ -3118,7 +3108,6 @@ export type Database = {
         Update: {
           assignment_status?: string | null
           created_at?: string | null
-          entry_type?: string | null
           fine_amount?: number | null
           fine_location?: string | null
           fine_type?: string | null
@@ -3128,7 +3117,6 @@ export type Database = {
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
-          validation_status?: string | null
           vehicle_id?: string | null
           violation_charge?: string | null
           violation_date?: string | null
@@ -3276,8 +3264,6 @@ export type Database = {
       }
       transaction_imports: {
         Row: {
-          assignment_details: Json | null
-          auto_assigned: boolean | null
           created_at: string | null
           errors: Json | null
           file_name: string
@@ -3287,8 +3273,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          assignment_details?: Json | null
-          auto_assigned?: boolean | null
           created_at?: string | null
           errors?: Json | null
           file_name: string
@@ -3298,8 +3282,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          assignment_details?: Json | null
-          auto_assigned?: boolean | null
           created_at?: string | null
           errors?: Json | null
           file_name?: string

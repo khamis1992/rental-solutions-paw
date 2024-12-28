@@ -1,24 +1,38 @@
-import { useEffect, useState } from "react";
-import { Vehicle } from "@/types/database/vehicle.types";
-import { Card } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
+import { MapPin } from "lucide-react";
+
+interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  status: string;
+  daily_rate: number;
+  image_url: string;
+  license_plate: string;
+  location: string | null;
+}
 
 interface VehicleGridProps {
   vehicles: Vehicle[];
+  isLoading: boolean;
   onVehicleClick?: (vehicleId: string) => void;
 }
 
-export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
-  const [editingLocation, setEditingLocation] = useState<string | null>(null);
-  const [locationValue, setLocationValue] = useState("");
+export const VehicleGrid = ({ vehicles, isLoading, onVehicleClick }: VehicleGridProps) => {
+  const { toast } = useToast();
 
   useEffect(() => {
+    // Subscribe to real-time location updates
     const channel = supabase
-      .channel('vehicle-updates')
+      .channel('vehicle-locations')
       .on(
         'postgres_changes',
         {
@@ -30,7 +44,10 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
         (payload: any) => {
           const updatedVehicle = payload.new;
           if (updatedVehicle.location) {
-            toast(`${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`);
+            toast({
+              title: "Location Updated",
+              description: `${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`,
+            });
           }
         }
       )
@@ -39,85 +56,79 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [toast]);
 
-  const handleLocationClick = (e: React.MouseEvent, vehicleId: string, currentLocation: string) => {
-    e.stopPropagation();
-    setEditingLocation(vehicleId);
-    setLocationValue(currentLocation || "");
-  };
-
-  const handleLocationKeyPress = async (e: React.KeyboardEvent, vehicleId: string) => {
-    if (e.key === 'Enter') {
-      await handleLocationUpdate(vehicleId);
-    } else if (e.key === 'Escape') {
-      setEditingLocation(null);
-    }
-  };
-
-  const handleLocationUpdate = async (vehicleId: string) => {
-    if (!locationValue.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('vehicles')
-        .update({ location: locationValue })
-        .eq('id', vehicleId);
-
-      if (error) throw error;
-
-      toast("Location updated successfully");
-      setEditingLocation(null);
-    } catch (error) {
-      console.error('Error updating location:', error);
-      toast("Failed to update location");
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="overflow-hidden">
+            <Skeleton className="h-48 rounded-b-none" />
+            <CardContent className="mt-4">
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {vehicles.map((vehicle) => (
         <Card
           key={vehicle.id}
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+          className="overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer"
           onClick={() => onVehicleClick?.(vehicle.id)}
         >
-          {vehicle.image_url && (
-            <img
-              src={vehicle.image_url}
-              alt={`${vehicle.make} ${vehicle.model}`}
-              className="w-full h-48 object-cover rounded-md mb-4"
-            />
-          )}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">
+          <div className="relative h-48 bg-muted">
+            {vehicle.image_url ? (
+              <img
+                src={vehicle.image_url || `https://picsum.photos/seed/${vehicle.id}/800/400`}
+                alt={`${vehicle.make} ${vehicle.model}`}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                No image available
+              </div>
+            )}
+            <Badge
+              className="absolute top-2 right-2"
+              variant={
+                vehicle.status === "available"
+                  ? "default"
+                  : vehicle.status === "rented"
+                  ? "secondary"
+                  : "destructive"
+              }
+            >
+              {vehicle.status}
+            </Badge>
+          </div>
+          <CardContent className="mt-4">
+            <h3 className="text-lg font-semibold">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h3>
             <p className="text-sm text-muted-foreground">
-              License Plate: {vehicle.license_plate}
+              License: {vehicle.license_plate}
             </p>
-            <div 
-              className="flex items-center text-sm cursor-pointer hover:bg-gray-100 p-2 rounded"
-              onClick={(e) => handleLocationClick(e, vehicle.id, vehicle.location || "")}
-            >
-              {editingLocation === vehicle.id ? (
-                <Input
-                  value={locationValue}
-                  onChange={(e) => setLocationValue(e.target.value)}
-                  onKeyDown={(e) => handleLocationKeyPress(e, vehicle.id)}
-                  onBlur={() => handleLocationUpdate(vehicle.id)}
-                  autoFocus
-                  className="w-full"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <>
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {vehicle.location || "Not available"}
-                </>
-              )}
-            </div>
-          </div>
+            {vehicle.location && (
+              <p className="text-sm text-muted-foreground flex items-center mt-2">
+                <MapPin className="h-4 w-4 mr-1" />
+                {vehicle.location}
+              </p>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <p className="text-lg font-semibold">
+              {formatCurrency(vehicle.daily_rate)}/day
+            </p>
+            <Button variant="ghost" size="sm">
+              View Details
+            </Button>
+          </CardFooter>
         </Card>
       ))}
     </div>
