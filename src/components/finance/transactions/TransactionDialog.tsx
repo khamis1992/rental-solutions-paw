@@ -35,6 +35,7 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      console.log("Submitting transaction with data:", data); // Debug log
       const { error } = await supabase.from("accounting_transactions").insert({
         amount: parseFloat(data.amount),
         type: data.type as TransactionType,

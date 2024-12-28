@@ -25,6 +25,7 @@ export const TransactionList = () => {
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
+      console.log("Fetching transactions"); // Debug log
       const { data, error } = await supabase
         .from("accounting_transactions")
         .select(`
@@ -41,6 +42,7 @@ export const TransactionList = () => {
         throw error;
       }
 
+      console.log("Fetched transactions:", data); // Debug log
       return data;
     },
   });
