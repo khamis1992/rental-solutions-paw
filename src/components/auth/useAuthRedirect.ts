@@ -35,8 +35,9 @@ export const useAuthRedirect = () => {
             return;
           }
 
+          // Only redirect to dashboard if explicitly on the auth page
           if (location.pathname === '/auth') {
-            console.log("Valid session found, redirecting to dashboard");
+            console.log("Valid session found on auth page, redirecting to dashboard");
             navigate('/');
           }
         }
@@ -55,12 +56,14 @@ export const useAuthRedirect = () => {
         event, 
         session,
         userId: session?.user?.id,
-        tokenExpiry: session?.expires_at
+        tokenExpiry: session?.expires_at,
+        currentPath: location.pathname
       });
       
       if (event === 'SIGNED_IN' && session) {
+        // Only redirect if on auth page
         if (location.pathname === '/auth') {
-          console.log("Sign in detected, redirecting to dashboard");
+          console.log("Sign in detected on auth page, redirecting to dashboard");
           navigate('/');
         }
       }
