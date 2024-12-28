@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Wand2 } from "lucide-react";
 
 interface ImportedTransaction {
   agreement_number: string;
@@ -13,29 +13,14 @@ interface ImportedTransaction {
   amount: number;
   description: string;
   customer_name?: string;
-  is_valid_date?: boolean;
 }
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
   const [importedData, setImportedData] = useState<ImportedTransaction[]>([]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  const verifyCustomer = async (agreementNumber: string, paymentDate: string) => {
-    try {
-      const { data: verificationData, error: verificationError } = await supabase.functions
-        .invoke('verify-transaction-customer', {
-          body: { agreementNumber, paymentDate }
-        });
-
-      if (verificationError) throw verificationError;
-      return verificationData.data;
-    } catch (error) {
-      console.error('Customer verification error:', error);
-      return null;
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,41 +42,32 @@ export const TransactionImport = () => {
               description: values[8] || ''
             };
           })
-          .filter((row, index) => index > 0 && row.agreement_number); // Skip header row and empty rows
+          .filter((row, index) => index > 0 && row.agreement_number);
 
         // Verify customer for each row
         const enrichedRows = await Promise.all(
           rows.map(async (row) => {
-            const customerInfo = await verifyCustomer(
-              row.agreement_number, 
-              row.payment_date
-            );
+            const { data: verificationData } = await supabase.functions
+              .invoke('verify-transaction-customer', {
+                body: { 
+                  agreementNumber: row.agreement_number,
+                  paymentDate: row.payment_date
+                }
+              });
             
             return {
               ...row,
-              customer_name: customerInfo?.customerName || 'Unknown',
-              is_valid_date: customerInfo?.isValidDate || false
+              customer_name: verificationData?.customerName || 'Unknown'
             };
           })
         );
 
-        // Update the state with the enriched data
         setImportedData(enrichedRows);
-
-        // Process the enriched data
-        const { error: functionError } = await supabase.functions
-          .invoke('process-transaction-import', {
-            body: { rows: enrichedRows }
-          });
-
-        if (functionError) throw functionError;
-
         toast({
           title: "Success",
-          description: `Successfully processed ${enrichedRows.length} transactions`,
+          description: "File processed successfully",
         });
 
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
       };
 
       reader.onerror = () => {
@@ -111,6 +87,49 @@ export const TransactionImport = () => {
     }
   };
 
+  const handleAutoAssign = async () => {
+    if (importedData.length === 0) {
+      toast({
+        title: "Error",
+        description: "No transactions to assign",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAssigning(true);
+    try {
+      const { error } = await supabase.functions
+        .invoke('process-transaction-import', {
+          body: { transactions: importedData }
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Transactions assigned successfully",
+      });
+
+      // Refresh relevant queries
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['customer-profiles'] });
+      
+      // Clear the imported data
+      setImportedData([]);
+
+    } catch (error: any) {
+      console.error('Auto-assign error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign transactions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   const handleClearData = () => {
     setImportedData([]);
   };
@@ -123,7 +142,16 @@ export const TransactionImport = () => {
       />
       
       {importedData.length > 0 && (
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <Button
+            onClick={handleAutoAssign}
+            disabled={isAssigning || importedData.length === 0}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Wand2 className="h-4 w-4 mr-2" />
+            {isAssigning ? "Assigning..." : "Auto Assign"}
+          </Button>
+
           <Button
             variant="ghost"
             size="sm"
