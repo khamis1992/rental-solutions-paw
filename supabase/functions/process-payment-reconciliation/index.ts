@@ -6,6 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface PaymentRecord {
+  agreement_number: string;
+  customer_name: string;
+  amount: number;
+  license_plate: string;
+  vehicle: string;
+  payment_date: string;
+  payment_method: string;
+  payment_number: string;
+  description: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,21 +25,83 @@ serve(async (req) => {
   }
 
   try {
-    const { paymentId, agreementId } = await req.json()
+    const { paymentId, agreementId, csvData } = await req.json()
     
-    // Validate that at least one ID is provided
-    if (!paymentId && !agreementId) {
-      console.error('Validation Error: Neither Payment ID nor Agreement ID provided')
-      throw new Error('Either Payment ID or Agreement ID must be provided for reconciliation')
+    // Validate that at least one required parameter is provided
+    if (!paymentId && !agreementId && !csvData) {
+      console.error('Validation Error: No valid input provided')
+      throw new Error('Either Payment ID, Agreement ID, or CSV data must be provided for reconciliation')
     }
 
-    console.log('Starting payment reconciliation:', { paymentId, agreementId })
+    console.log('Starting payment reconciliation process with:', { 
+      paymentId, 
+      agreementId,
+      hasCsvData: !!csvData 
+    })
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Handle CSV data import if provided
+    if (csvData) {
+      console.log('Processing CSV data import')
+      const records = csvData as PaymentRecord[]
+      
+      for (const record of records) {
+        try {
+          // Find the lease using agreement number
+          const { data: lease, error: leaseError } = await supabase
+            .from('leases')
+            .select('id, customer_id')
+            .eq('agreement_number', record.agreement_number)
+            .single()
+
+          if (leaseError) {
+            console.error('Error finding lease:', leaseError)
+            continue
+          }
+
+          if (!lease) {
+            console.error('No lease found for agreement number:', record.agreement_number)
+            continue
+          }
+
+          // Create payment record
+          const { error: paymentError } = await supabase
+            .from('payments')
+            .insert({
+              lease_id: lease.id,
+              amount: record.amount,
+              payment_date: record.payment_date,
+              payment_method: record.payment_method,
+              status: 'completed',
+              transaction_id: record.payment_number,
+            })
+
+          if (paymentError) {
+            console.error('Error creating payment:', paymentError)
+            continue
+          }
+
+          console.log('Successfully processed payment for agreement:', record.agreement_number)
+        } catch (error) {
+          console.error('Error processing record:', error)
+          continue
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Processed ${records.length} payment records` 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Handle single payment or agreement reconciliation
     if (agreementId) {
       // Get all pending payments for the agreement
       const { data: payments, error: paymentsError } = await supabase
