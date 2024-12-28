@@ -14,6 +14,7 @@ interface ImportedTransaction {
   description: string;
   customer_name?: string;
   is_valid_date?: boolean;
+  verification_message?: string;
 }
 
 export const TransactionImport = () => {
@@ -31,7 +32,6 @@ export const TransactionImport = () => {
 
       if (verificationError) throw verificationError;
       
-      // Handle both successful and "no agreement" cases
       return {
         customerName: verificationData.data?.customerName || 'Unknown',
         isValidDate: verificationData.data?.isValidDate || false,
@@ -47,6 +47,26 @@ export const TransactionImport = () => {
     }
   };
 
+  const saveTransactionsToDatabase = async (transactions: ImportedTransaction[]) => {
+    const { error } = await supabase
+      .from('accounting_transactions')
+      .insert(transactions.map(transaction => ({
+        type: 'INCOME',
+        amount: transaction.amount,
+        description: transaction.description,
+        transaction_date: transaction.payment_date,
+        reference_type: 'import',
+        status: 'completed',
+        metadata: {
+          agreement_number: transaction.agreement_number,
+          customer_name: transaction.customer_name,
+          verification_message: transaction.verification_message
+        }
+      })));
+
+    if (error) throw error;
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -58,7 +78,7 @@ export const TransactionImport = () => {
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
         const rows = csvContent.split('\n')
-          .filter((row) => row.trim().length > 0) // Filter out empty rows
+          .filter((row) => row.trim().length > 0)
           .map(row => {
             const values = row.split(',').map(value => value.trim());
             return {
@@ -68,11 +88,10 @@ export const TransactionImport = () => {
               description: values[8] || ''
             };
           })
-          .filter((row, index) => index > 0 && row.agreement_number); // Skip header row and empty rows
+          .filter((row, index) => index > 0 && row.agreement_number);
 
-        console.log('Parsed rows:', rows); // Debug log
+        console.log('Parsed rows:', rows);
 
-        // Verify customer for each row
         const enrichedRows = await Promise.all(
           rows.map(async (row) => {
             const customerInfo = await verifyCustomer(
@@ -89,22 +108,17 @@ export const TransactionImport = () => {
           })
         );
 
-        console.log('Enriched rows:', enrichedRows); // Debug log
+        console.log('Enriched rows:', enrichedRows);
+
+        // Save transactions to database
+        await saveTransactionsToDatabase(enrichedRows);
 
         // Update the state with the enriched data
         setImportedData(enrichedRows);
 
-        // Process the enriched data
-        const { error: functionError } = await supabase.functions
-          .invoke('process-transaction-import', {
-            body: { rows: enrichedRows }
-          });
-
-        if (functionError) throw functionError;
-
         toast({
           title: "Success",
-          description: `Successfully processed ${enrichedRows.length} transactions`,
+          description: `Successfully imported ${enrichedRows.length} transactions`,
         });
 
         queryClient.invalidateQueries({ queryKey: ['transactions'] });
