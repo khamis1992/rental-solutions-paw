@@ -21,7 +21,7 @@ export const TransactionImport = () => {
 
     if (file.type !== "text/csv") {
       toast({
-        title: "Error",
+        title: "Invalid File Type",
         description: "Please upload a CSV file with the following headers: Amount, Date, Type, Description, Category",
         variant: "destructive",
       });
@@ -47,11 +47,11 @@ export const TransactionImport = () => {
         title: "Analysis Complete",
         description: "AI has analyzed your file. Please review the suggestions.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Analysis error:', error);
       toast({
         title: "Error",
-        description: "Failed to analyze file. Please ensure it follows the correct format.",
+        description: error.message || "Failed to analyze file. Please ensure it follows the correct format.",
         variant: "destructive",
       });
     } finally {
@@ -99,7 +99,8 @@ export const TransactionImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = "Amount,Date,Type,Description,Category\n" +
-                      "1000,2024-03-20,income,Monthly revenue,Sales";
+                      "1000.00,2024-03-20,INCOME,Monthly revenue,Sales\n" +
+                      "500.00,2024-03-21,EXPENSE,Office supplies,Operations";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
