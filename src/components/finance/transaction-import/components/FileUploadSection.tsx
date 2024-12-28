@@ -9,6 +9,14 @@ interface FileUploadSectionProps {
 }
 
 export const FileUploadSection = ({ onFileUpload, isUploading }: FileUploadSectionProps) => {
+  // Create a reference to the file input
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Handle button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -17,22 +25,22 @@ export const FileUploadSection = ({ onFileUpload, isUploading }: FileUploadSecti
       <CardContent>
         <div className="flex items-center gap-4">
           <Input
+            ref={fileInputRef}
             type="file"
             accept=".csv"
             onChange={onFileUpload}
             disabled={isUploading}
-            className="flex-1"
+            className="hidden"
           />
-          {isUploading && (
-            <Button disabled>
+          {isUploading ? (
+            <Button disabled className="w-full">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Uploading...
             </Button>
-          )}
-          {!isUploading && (
-            <Button>
+          ) : (
+            <Button onClick={handleUploadClick} className="w-full">
               <Upload className="mr-2 h-4 w-4" />
-              Upload
+              Upload CSV
             </Button>
           )}
         </div>
