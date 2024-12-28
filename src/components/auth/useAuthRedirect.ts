@@ -35,8 +35,8 @@ export const useAuthRedirect = () => {
             return;
           }
 
-          // Only redirect to dashboard if explicitly on the auth page
-          if (location.pathname === '/auth') {
+          // Only redirect to dashboard if explicitly on the auth page and not in the middle of an import
+          if (location.pathname === '/auth' && !sessionStorage.getItem('importInProgress')) {
             console.log("Valid session found on auth page, redirecting to dashboard");
             navigate('/');
           }
@@ -57,12 +57,13 @@ export const useAuthRedirect = () => {
         session,
         userId: session?.user?.id,
         tokenExpiry: session?.expires_at,
-        currentPath: location.pathname
+        currentPath: location.pathname,
+        importInProgress: sessionStorage.getItem('importInProgress')
       });
       
       if (event === 'SIGNED_IN' && session) {
-        // Only redirect if on auth page
-        if (location.pathname === '/auth') {
+        // Only redirect if on auth page and not in the middle of an import
+        if (location.pathname === '/auth' && !sessionStorage.getItem('importInProgress')) {
           console.log("Sign in detected on auth page, redirecting to dashboard");
           navigate('/');
         }

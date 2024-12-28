@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -14,6 +14,20 @@ export const TransactionImport = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Set import flag when starting import
+  useEffect(() => {
+    if (isUploading || isAnalyzing) {
+      sessionStorage.setItem('importInProgress', 'true');
+    } else {
+      sessionStorage.removeItem('importInProgress');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      sessionStorage.removeItem('importInProgress');
+    };
+  }, [isUploading, isAnalyzing]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

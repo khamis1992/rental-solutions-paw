@@ -23,8 +23,8 @@ export default function App() {
           title: "Welcome back!",
           variant: "default",
         });
-        // Only navigate to dashboard if we're on the auth page
-        if (location.pathname === '/auth') {
+        // Only navigate to dashboard if we're on the auth page and not importing
+        if (location.pathname === '/auth' && !sessionStorage.getItem('importInProgress')) {
           navigate('/');
         }
       } else if (event === "SIGNED_OUT") {
