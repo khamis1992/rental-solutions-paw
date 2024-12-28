@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Vehicle } from "@/types/vehicle";
 
 const Vehicles = () => {
   const [filters, setFilters] = useState({
@@ -22,7 +23,7 @@ const Vehicles = () => {
     queryFn: async () => {
       console.log("Current filters:", filters);
 
-      let query = supabase.from("vehicles").select("*");
+      let query = supabase.from("vehicles").select();
 
       if (filters.status !== "all") {
         console.log("Filtering by status:", filters.status);
@@ -45,7 +46,7 @@ const Vehicles = () => {
 
       console.log("Raw Supabase response:", data);
       
-      return data || [];
+      return (data || []) as Vehicle[];
     },
   });
 

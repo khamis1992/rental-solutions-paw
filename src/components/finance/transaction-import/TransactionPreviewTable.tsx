@@ -17,6 +17,7 @@ export const TransactionPreviewTable = ({ data }: TransactionPreviewTableProps) 
             <TableHead>Amount</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Agreement Number</TableHead>
+            <TableHead>Customer Name</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
@@ -32,6 +33,7 @@ export const TransactionPreviewTable = ({ data }: TransactionPreviewTableProps) 
                 </Badge>
               </TableCell>
               <TableCell>{row.agreement_number}</TableCell>
+              <TableCell>{row.customer_name || 'N/A'}</TableCell>
               <TableCell>{row.description}</TableCell>
               <TableCell>
                 <Badge variant="outline">Pending Import</Badge>
@@ -40,7 +42,7 @@ export const TransactionPreviewTable = ({ data }: TransactionPreviewTableProps) 
           ))}
           {!data.length && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
                 No transactions to display
               </TableCell>
             </TableRow>

@@ -170,7 +170,6 @@ export type Database = {
           description: string | null
           id: string
           is_recurring: boolean | null
-          meta_data: Json | null
           receipt_url: string | null
           recurrence_interval: unknown | null
           recurring_schedule: Json | null
@@ -189,7 +188,6 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
-          meta_data?: Json | null
           receipt_url?: string | null
           recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
@@ -208,7 +206,6 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
-          meta_data?: Json | null
           receipt_url?: string | null
           recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
@@ -3276,8 +3273,6 @@ export type Database = {
       }
       transaction_imports: {
         Row: {
-          assignment_details: Json | null
-          auto_assigned: boolean | null
           created_at: string | null
           errors: Json | null
           file_name: string
@@ -3287,8 +3282,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          assignment_details?: Json | null
-          auto_assigned?: boolean | null
           created_at?: string | null
           errors?: Json | null
           file_name: string
@@ -3298,8 +3291,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          assignment_details?: Json | null
-          auto_assigned?: boolean | null
           created_at?: string | null
           errors?: Json | null
           file_name?: string
