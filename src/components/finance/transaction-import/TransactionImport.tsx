@@ -67,7 +67,6 @@ export const TransactionImport = () => {
           title: "Success",
           description: "File processed successfully",
         });
-
       };
 
       reader.onerror = () => {
