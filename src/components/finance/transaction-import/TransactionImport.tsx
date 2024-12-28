@@ -59,7 +59,7 @@ export const TransactionImport = () => {
     const { error } = await supabase
       .from('accounting_transactions')
       .insert(transactions.map(transaction => ({
-        type: TransactionType.INCOME,
+        type: TransactionType.INCOME, // Using the correct enum value
         amount: transaction.amount,
         description: transaction.description,
         transaction_date: transaction.payment_date,
