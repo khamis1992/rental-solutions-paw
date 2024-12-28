@@ -2,12 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { TrafficFineStats } from "./TrafficFineStats";
 import { TrafficFineImport } from "./TrafficFineImport";
 import { TrafficFinesList } from "./TrafficFinesList";
-import { ManualTrafficFineDialog } from "./ManualTrafficFineDialog";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { supabase } from "@/integrations/supabase/client";
 
 export function TrafficFinesDashboard() {
-  const { data: finesCount, refetch } = useQuery({
+  const { data: finesCount } = useQuery({
     queryKey: ["traffic-fines-count"],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -21,12 +20,9 @@ export function TrafficFinesDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <ErrorBoundary>
-          <TrafficFineStats paymentCount={finesCount || 0} />
-        </ErrorBoundary>
-        <ManualTrafficFineDialog onFineAdded={refetch} />
-      </div>
+      <ErrorBoundary>
+        <TrafficFineStats paymentCount={finesCount || 0} />
+      </ErrorBoundary>
       
       <ErrorBoundary>
         <TrafficFineImport />

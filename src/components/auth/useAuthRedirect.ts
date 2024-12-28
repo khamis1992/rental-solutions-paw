@@ -35,9 +35,49 @@ export const useAuthRedirect = () => {
             return;
           }
 
-          if (location.pathname === '/auth') {
-            console.log("Valid session found, redirecting to dashboard");
-            navigate('/');
+          console.log("Session validated, checking profile...");
+          
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', existingSession.user.id)
+            .single();
+
+          if (profileError) {
+            if (profileError.code === 'PGRST116') {
+              console.log("Profile not found, creating new profile...");
+              const { error: createError } = await supabase
+                .from('profiles')
+                .insert([{ 
+                  id: existingSession.user.id,
+                  full_name: existingSession.user.user_metadata.full_name,
+                  role: 'customer'
+                }]);
+
+              if (createError) {
+                console.error("Failed to create profile:", createError);
+                toast.error("Failed to create user profile");
+                await supabase.auth.signOut();
+                return;
+              }
+            } else {
+              console.error("Profile fetch error:", profileError);
+              toast.error("Failed to load user profile");
+              await supabase.auth.signOut();
+              return;
+            }
+          }
+
+          if (profile?.role === 'admin' || profile?.role === 'staff') {
+            // Only redirect to dashboard if we're on the auth page
+            if (location.pathname === '/auth') {
+              console.log("Valid role found, redirecting to dashboard");
+              navigate('/');
+            }
+          } else {
+            console.log("Invalid role, signing out");
+            toast.error("Access denied. Only staff and admin users can access this system.");
+            await supabase.auth.signOut();
           }
         }
       } catch (error) {
@@ -59,9 +99,26 @@ export const useAuthRedirect = () => {
       });
       
       if (event === 'SIGNED_IN' && session) {
-        if (location.pathname === '/auth') {
-          console.log("Sign in detected, redirecting to dashboard");
-          navigate('/');
+        console.log("Sign in detected, validating profile and role...");
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        console.log("Profile validation result:", { profile, profileError });
+
+        if (profile?.role === 'admin' || profile?.role === 'staff') {
+          // Only redirect to dashboard if we're on the auth page
+          if (location.pathname === '/auth') {
+            console.log("Valid role confirmed, redirecting to dashboard");
+            navigate('/');
+          }
+        } else {
+          console.log("Invalid role detected, signing out");
+          toast.error("Access denied. Only staff and admin users can access this system.");
+          await supabase.auth.signOut();
         }
       }
     });
