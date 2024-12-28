@@ -6,6 +6,7 @@ import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { TransactionType } from "../accounting/types/transaction.types";
 
 interface ImportedTransaction {
   agreement_number: string;
@@ -51,7 +52,7 @@ export const TransactionImport = () => {
     const { error } = await supabase
       .from('accounting_transactions')
       .insert(transactions.map(transaction => ({
-        type: 'INCOME',
+        type: 'INCOME' as TransactionType,
         amount: transaction.amount,
         description: transaction.description,
         transaction_date: transaction.payment_date,
