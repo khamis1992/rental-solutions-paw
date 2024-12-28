@@ -15,11 +15,13 @@ serve(async (req) => {
   try {
     const { paymentId, agreementId } = await req.json()
     
+    // Validate that at least one ID is provided
     if (!paymentId && !agreementId) {
-      throw new Error('Either Payment ID or Agreement ID is required')
+      console.error('Validation Error: Neither Payment ID nor Agreement ID provided')
+      throw new Error('Either Payment ID or Agreement ID must be provided for reconciliation')
     }
 
-    console.log('Processing payment reconciliation:', { paymentId, agreementId })
+    console.log('Starting payment reconciliation:', { paymentId, agreementId })
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -39,7 +41,19 @@ serve(async (req) => {
         throw paymentsError
       }
 
-      console.log('Found payments:', payments)
+      if (!payments || payments.length === 0) {
+        console.log('No pending payments found for agreement:', agreementId)
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'No pending payments found for reconciliation',
+            data: [] 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`Found ${payments.length} payments to reconcile for agreement:`, agreementId)
 
       // Process each payment
       const reconciliations = await Promise.all(payments.map(async (payment) => {
@@ -83,7 +97,7 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
-    } else {
+    } else if (paymentId) {
       // Single payment reconciliation logic
       const { data: payment, error: paymentError } = await supabase
         .from('payments')
@@ -96,7 +110,11 @@ serve(async (req) => {
         throw paymentError
       }
 
-      console.log('Found payment:', payment)
+      if (!payment) {
+        throw new Error(`Payment not found with ID: ${paymentId}`)
+      }
+
+      console.log('Processing single payment:', payment)
 
       const { data: reconciliation, error: reconciliationError } = await supabase
         .from('payment_reconciliation')
