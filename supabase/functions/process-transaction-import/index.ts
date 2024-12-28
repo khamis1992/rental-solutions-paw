@@ -6,6 +6,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const isValidDate = (dateValue: string): boolean => {
+  const timestamp = Date.parse(dateValue);
+  return !isNaN(timestamp);
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -19,54 +24,74 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Parse and validate request body
-    const { fileName } = await req.json()
-    console.log('Processing file:', fileName)
+    const { fileName, transactions } = await req.json()
+    console.log('Processing request:', { fileName, transactionCount: transactions?.length })
 
-    if (!fileName) {
-      throw new Error('fileName is required')
-    }
+    let processedTransactions = []
 
-    // Download the file from storage
-    const { data: fileData, error: downloadError } = await supabaseClient
-      .storage
-      .from('imports')
-      .download(fileName)
+    if (fileName) {
+      // Download and process file
+      const { data: fileData, error: downloadError } = await supabaseClient
+        .storage
+        .from('imports')
+        .download(fileName)
 
-    if (downloadError) {
-      console.error('Error downloading file:', downloadError)
-      throw downloadError
-    }
+      if (downloadError) {
+        console.error('Error downloading file:', downloadError)
+        throw downloadError
+      }
 
-    // Parse CSV content
-    const text = await fileData.text()
-    const rows = text.split('\n').slice(1) // Skip header row
-    
-    // Process each row into a transaction
-    const transactions = rows
-      .filter(row => row.trim()) // Skip empty rows
-      .map(row => {
-        const [date, amount, description, agreement_number] = row.split(',')
-        return {
-          type: 'INCOME',
-          amount: parseFloat(amount),
-          description: description?.trim(),
-          transaction_date: new Date(date).toISOString(),
-          reference_type: 'import',
-          status: 'completed',
-          metadata: {
-            agreement_number: agreement_number?.trim(),
+      const text = await fileData.text()
+      const rows = text.split('\n').slice(1) // Skip header row
+      
+      processedTransactions = rows
+        .filter(row => row.trim()) // Skip empty rows
+        .map(row => {
+          const [date, amount, description, agreement_number] = row.split(',')
+          
+          // Validate date before processing
+          if (!isValidDate(date)) {
+            console.error('Invalid date value in row:', { date, row })
+            return null
           }
-        }
-      })
-      .filter(t => !isNaN(t.amount) && t.amount > 0) // Validate amounts
 
-    console.log('Processed transactions:', transactions.length)
+          return {
+            type: 'INCOME',
+            amount: parseFloat(amount),
+            description: description?.trim(),
+            transaction_date: new Date(date).toISOString(),
+            reference_type: 'import',
+            status: 'completed',
+            metadata: {
+              agreement_number: agreement_number?.trim(),
+            }
+          }
+        })
+        .filter(t => t !== null && !isNaN(t.amount) && t.amount > 0)
+
+    } else if (Array.isArray(transactions)) {
+      // Process provided transactions array
+      processedTransactions = transactions.filter(t => {
+        if (!isValidDate(t.transaction_date)) {
+          console.error('Invalid transaction date:', t)
+          return false
+        }
+        return true
+      })
+    } else {
+      throw new Error('Either fileName or transactions array is required')
+    }
+
+    console.log('Processed transactions:', processedTransactions.length)
+
+    if (processedTransactions.length === 0) {
+      throw new Error('No valid transactions found to process')
+    }
 
     // Save to accounting_transactions
     const { error: transactionError } = await supabaseClient
       .from('accounting_transactions')
-      .insert(transactions)
+      .insert(processedTransactions)
 
     if (transactionError) {
       console.error('Error saving transactions:', transactionError)
@@ -76,7 +101,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        processed: transactions.length,
+        processed: processedTransactions.length,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

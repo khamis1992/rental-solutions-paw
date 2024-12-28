@@ -8,6 +8,7 @@ import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import Papa from 'papaparse';
+import { formatDateToISO, isValidDate } from './utils/dateUtils';
 
 interface Transaction {
   amount: number;
@@ -38,7 +39,7 @@ export const TransactionImport = () => {
         typeof transaction.amount === 'number' &&
         transaction.amount > 0 &&
         transaction.transaction_date &&
-        !isNaN(new Date(transaction.transaction_date).getTime());
+        isValidDate(transaction.transaction_date);
 
       if (!isValid) {
         console.warn('Invalid transaction:', transaction);
@@ -52,17 +53,28 @@ export const TransactionImport = () => {
       Papa.parse(file, {
         header: true,
         complete: (results) => {
-          const transactions = results.data.map((row: any) => ({
-            type: 'INCOME',
-            amount: parseFloat(row.amount),
-            description: row.description?.trim(),
-            transaction_date: new Date(row.date).toISOString(),
-            reference_type: 'import',
-            status: 'completed',
-            metadata: {
-              agreement_number: row.agreement_number?.trim(),
-            }
-          }));
+          const transactions = results.data
+            .map((row: any) => {
+              const formattedDate = formatDateToISO(row.date);
+              if (!formattedDate) {
+                console.error('Invalid date in row:', row);
+                return null;
+              }
+
+              return {
+                type: 'INCOME',
+                amount: parseFloat(row.amount),
+                description: row.description?.trim(),
+                transaction_date: formattedDate,
+                reference_type: 'import',
+                status: 'completed',
+                metadata: {
+                  agreement_number: row.agreement_number?.trim(),
+                }
+              };
+            })
+            .filter(Boolean); // Remove null entries from invalid dates
+          
           resolve(transactions);
         },
         error: (error) => {
