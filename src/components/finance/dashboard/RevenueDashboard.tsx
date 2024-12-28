@@ -18,7 +18,7 @@ export const RevenueDashboard = () => {
       const { data: currentMonthData, error: currentError } = await supabase
         .from("accounting_transactions")
         .select("amount")
-        .eq("type", "INCOME")  // Changed from lowercase to uppercase
+        .eq("type", "income")
         .gte("transaction_date", firstDayOfMonth.toISOString())
         .lte("transaction_date", lastDayOfMonth.toISOString());
 
@@ -31,7 +31,7 @@ export const RevenueDashboard = () => {
       const { data: lastMonthData, error: lastError } = await supabase
         .from("accounting_transactions")
         .select("amount")
-        .eq("type", "INCOME")  // Changed from lowercase to uppercase
+        .eq("type", "income")
         .gte("transaction_date", lastMonthStart.toISOString())
         .lte("transaction_date", lastMonthEnd.toISOString());
 
@@ -41,7 +41,7 @@ export const RevenueDashboard = () => {
       const { data: trendData, error: trendError } = await supabase
         .from("accounting_transactions")
         .select("amount, transaction_date")
-        .eq("type", "INCOME")  // Changed from lowercase to uppercase
+        .eq("type", "income")
         .order("transaction_date", { ascending: true })
         .limit(30);
 
