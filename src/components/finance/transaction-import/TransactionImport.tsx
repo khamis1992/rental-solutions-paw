@@ -3,10 +3,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { FileUploadSection } from "./components/FileUploadSection";
+import { ImportActions } from "./components/ImportActions";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
+  const [currentImportId, setCurrentImportId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,12 +36,12 @@ export const TransactionImport = () => {
               description: values[8] || ''
             };
           })
-          .filter((row, index) => index > 0); // Skip header row
+          .filter((row, index) => index > 0);
 
         setImportedData(rows);
 
         // Save to Supabase
-        const { error: functionError } = await supabase.functions
+        const { data, error: functionError } = await supabase.functions
           .invoke('process-transaction-import', {
             body: { rows }
           });
@@ -54,16 +56,12 @@ export const TransactionImport = () => {
           return;
         }
 
+        setCurrentImportId(data?.importId);
+
         toast({
           title: "Success",
           description: `Successfully imported ${rows.length} transactions`,
         });
-
-        // Invalidate queries to refresh the data
-        await Promise.all([
-          supabase.from('accounting_transactions').select('*'),
-          supabase.from('raw_transaction_imports').select('*')
-        ]);
 
       };
 
@@ -88,12 +86,24 @@ export const TransactionImport = () => {
     }
   };
 
+  const handleAssigned = () => {
+    // Refresh the preview table or other relevant data
+    // This will be called after auto-assignment completes
+  };
+
   return (
     <div className="space-y-4">
       <FileUploadSection 
         onFileUpload={handleFileUpload}
         isUploading={isUploading}
       />
+      {currentImportId && (
+        <ImportActions
+          importId={currentImportId}
+          onAssigned={handleAssigned}
+          disabled={isUploading}
+        />
+      )}
       {importedData.length > 0 && (
         <TransactionPreviewTable 
           data={importedData}
