@@ -7,8 +7,9 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -25,7 +26,6 @@ serve(async (req) => {
 
     console.log('Verifying customer for:', { agreementNumber, paymentDate });
 
-    // Query to get customer details and verify active contract
     const { data: agreements, error: agreementError } = await supabaseClient
       .from('leases')
       .select(`
@@ -63,7 +63,7 @@ serve(async (req) => {
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 // Changed from 404 to 200
+          status: 200
         }
       );
     }
@@ -73,7 +73,6 @@ serve(async (req) => {
     const startDate = new Date(agreement.start_date);
     const endDate = agreement.end_date ? new Date(agreement.end_date) : null;
 
-    // Verify if payment date falls within contract period
     const isValidDate = paymentDateObj >= startDate && 
       (!endDate || paymentDateObj <= endDate);
 
@@ -102,7 +101,7 @@ serve(async (req) => {
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 // Only use non-200 status for actual errors
+        status: 400
       }
     );
   }
