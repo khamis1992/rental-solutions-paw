@@ -9,6 +9,7 @@ import { TrafficFinesSummary } from "./profile/TrafficFinesSummary";
 import { CredibilityScore } from "./profile/CredibilityScore";
 import { CreditAssessment } from "./profile/CreditAssessment";
 import { CustomerNotes } from "./profile/CustomerNotes";
+import { CustomerDocuments } from "../agreements/CustomerDocuments";
 
 interface CustomerProfileViewProps {
   customerId: string;
@@ -18,15 +19,26 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["customer", customerId],
     queryFn: async () => {
+      console.log("Fetching customer profile for ID:", customerId);
+      
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", customerId)
-        .single();
+        .select()
+        .eq('id', customerId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching customer profile:", error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Customer not found");
+      }
+
       return data;
     },
+    enabled: !!customerId,
   });
 
   if (isLoadingProfile) {
@@ -42,7 +54,14 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{profile?.full_name}</h1>
+        <div>
+          <h1 className="text-3xl font-bold">{profile?.full_name}</h1>
+          <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+            <span>{profile?.email}</span>
+            <span>•</span>
+            <span>{profile?.phone_number}</span>
+          </div>
+        </div>
         <Badge variant={profile?.role === "customer" ? "secondary" : "default"}>
           {profile?.role}
         </Badge>
@@ -57,6 +76,7 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <RentDueManagement customerId={customerId} />
+        <CustomerDocuments customerId={customerId} />
       </div>
 
       <Tabs defaultValue="payments" className="space-y-4">
