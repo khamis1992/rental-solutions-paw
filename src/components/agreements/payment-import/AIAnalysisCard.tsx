@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface AIAnalysisCardProps {
   analysisResult: any;
@@ -19,7 +20,7 @@ export const AIAnalysisCard = ({ analysisResult, onImplementChanges, isUploading
           <p>Total Rows: {analysisResult.totalRows}</p>
           <p>Valid Rows: {analysisResult.validRows}</p>
           <p>Invalid Rows: {analysisResult.invalidRows}</p>
-          <p>Total Amount: ${analysisResult.totalAmount?.toFixed(2)}</p>
+          <p>Total Amount: {formatCurrency(analysisResult.totalAmount || 0)}</p>
         </div>
 
         {analysisResult.issues?.length > 0 && (
