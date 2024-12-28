@@ -41,7 +41,7 @@ export const YearOverYearComparison = () => {
         }
 
         const yearData = year === currentYear ? 'currentYear' : 'previousYear';
-        if (transaction.type === 'income') {
+        if (transaction.type === 'INCOME') {
           acc[key][yearData].revenue += transaction.amount;
         } else {
           acc[key][yearData].expenses += transaction.amount;
