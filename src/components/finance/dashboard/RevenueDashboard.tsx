@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Loader2, TrendingUp, DollarSign, ArrowUpRight, CreditCard } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
+import { TransactionType } from "@/components/finance/accounting/types/transaction.types";
 
 export const RevenueDashboard = () => {
   const { data: revenueStats, isLoading } = useQuery({
@@ -18,7 +19,7 @@ export const RevenueDashboard = () => {
       const { data: currentMonthData, error: currentError } = await supabase
         .from("accounting_transactions")
         .select("amount")
-        .eq("type", "income")
+        .eq("type", TransactionType.INCOME)
         .gte("transaction_date", firstDayOfMonth.toISOString())
         .lte("transaction_date", lastDayOfMonth.toISOString());
 
@@ -31,7 +32,7 @@ export const RevenueDashboard = () => {
       const { data: lastMonthData, error: lastError } = await supabase
         .from("accounting_transactions")
         .select("amount")
-        .eq("type", "income")
+        .eq("type", TransactionType.INCOME)
         .gte("transaction_date", lastMonthStart.toISOString())
         .lte("transaction_date", lastMonthEnd.toISOString());
 
@@ -41,7 +42,7 @@ export const RevenueDashboard = () => {
       const { data: trendData, error: trendError } = await supabase
         .from("accounting_transactions")
         .select("amount, transaction_date")
-        .eq("type", "income")
+        .eq("type", TransactionType.INCOME)
         .order("transaction_date", { ascending: true })
         .limit(30);
 
