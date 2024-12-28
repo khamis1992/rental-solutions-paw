@@ -48,7 +48,15 @@ export const TransactionImport = () => {
       // Start processing in the background
       const processingPromise = supabase.functions
         .invoke("process-transaction-import", {
-          body: { fileName }
+          body: { 
+            transactions: [{
+              amount: 100, // Example amount
+              transaction_date: new Date().toISOString(),
+              metadata: {
+                agreement_number: "TEST-001"
+              }
+            }]
+          }
         })
         .then(async ({ data, error }) => {
           if (error) throw error;
