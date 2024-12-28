@@ -7,8 +7,18 @@ import { TransactionPreviewTable } from "./TransactionPreviewTable";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
+interface ImportedTransaction {
+  agreement_number: string;
+  payment_date: string;
+  amount: number;
+  description: string;
+  customer_name?: string;
+  is_valid_date?: boolean;
+}
+
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [importedData, setImportedData] = useState<ImportedTransaction[]>([]);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -47,7 +57,7 @@ export const TransactionImport = () => {
               description: values[8] || ''
             };
           })
-          .filter((row, index) => index > 0); // Skip header row
+          .filter((row, index) => index > 0 && row.agreement_number); // Skip header row and empty rows
 
         // Verify customer for each row
         const enrichedRows = await Promise.all(
@@ -64,6 +74,9 @@ export const TransactionImport = () => {
             };
           })
         );
+
+        // Update the state with the enriched data
+        setImportedData(enrichedRows);
 
         // Process the enriched data
         const { error: functionError } = await supabase.functions
@@ -98,6 +111,10 @@ export const TransactionImport = () => {
     }
   };
 
+  const handleClearData = () => {
+    setImportedData([]);
+  };
+
   return (
     <div className="space-y-4">
       <FileUploadSection 
@@ -105,9 +122,23 @@ export const TransactionImport = () => {
         isUploading={isUploading}
       />
       
+      {importedData.length > 0 && (
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearData}
+            className="text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear Data
+          </Button>
+        </div>
+      )}
+      
       <TransactionPreviewTable 
-        data={[]} // This will be populated when files are imported
-        onDataChange={() => {}}
+        data={importedData}
+        onDataChange={setImportedData}
       />
     </div>
   );
