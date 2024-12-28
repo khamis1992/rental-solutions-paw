@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { FileUploadSection } from "./payment-import/FileUploadSection";
 import { AIAnalysisCard } from "./payment-import/AIAnalysisCard";
-import { validateAndMapCSVContent } from "./utils/paymentImportUtils";
 import { 
   uploadImportFile, 
   createImportLog, 
@@ -29,7 +28,7 @@ export const PaymentImport = () => {
     if (file.type !== "text/csv") {
       toast({
         title: "Error",
-        description: "Please upload a CSV file with the following headers: Amount, Payment_Date, Payment_Method, Status, Agreement_Number",
+        description: "Please upload a CSV file with the following headers: Amount, Payment_Date, Payment_Method, Status, Lease_ID",
         variant: "destructive",
       });
       return;
@@ -39,19 +38,11 @@ export const PaymentImport = () => {
     setIsAnalyzing(true);
     
     try {
-      // Read and validate CSV content
-      const content = await file.text();
-      const validation = validateAndMapCSVContent(content);
-      
-      if (!validation.isValid) {
-        throw new Error(`CSV validation failed:\n${validation.errors.join('\n')}`);
-      }
-
       // Create FormData and append file
       const formData = new FormData();
       formData.append('file', file);
       
-      // Call the analyze-payment-import function
+      // Call the analyze-payment-import function with proper configuration
       const { data: aiAnalysis, error: analysisError } = await supabase.functions
         .invoke('analyze-payment-import', {
           body: formData,
@@ -71,7 +62,7 @@ export const PaymentImport = () => {
       console.error('Analysis error:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to analyze file",
+        description: "Failed to analyze file. Make sure the CSV includes a Lease_ID column.",
         variant: "destructive",
       });
     } finally {
