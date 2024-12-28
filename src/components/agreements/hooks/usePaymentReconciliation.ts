@@ -8,11 +8,11 @@ export const usePaymentReconciliation = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const reconcilePayments = async (paymentId: string) => {
+  const reconcilePayments = async (agreementId: string) => {
     setIsReconciling(true);
     try {
       const { data, error } = await supabase.functions.invoke('process-payment-reconciliation', {
-        body: { paymentId }
+        body: { agreementId }
       });
 
       if (error) throw error;
