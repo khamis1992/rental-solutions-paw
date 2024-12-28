@@ -72,8 +72,8 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
                 <SelectValue placeholder="Select transaction type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="INCOME">Income</SelectItem>
-                <SelectItem value="EXPENSE">Expense</SelectItem>
+                <SelectItem value={TransactionType.INCOME}>Income</SelectItem>
+                <SelectItem value={TransactionType.EXPENSE}>Expense</SelectItem>
               </SelectContent>
             </Select>
           </div>

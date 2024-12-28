@@ -15,6 +15,7 @@ import { Eye, Pencil, Plus, Trash } from "lucide-react";
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog";
 import { TransactionDialog } from "./TransactionDialog";
 import { toast } from "sonner";
+import { TransactionType } from "../accounting/types/transaction.types";
 
 export const TransactionList = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -83,7 +84,7 @@ export const TransactionList = () => {
               <TableCell>{transaction.category?.name || "Uncategorized"}</TableCell>
               <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
               <TableCell>
-                {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                {transaction.type === TransactionType.INCOME ? "Income" : "Expense"}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
