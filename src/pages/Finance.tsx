@@ -1,11 +1,12 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { TransactionList } from "@/components/finance/transactions/TransactionList";
+import { TransactionImport } from "@/components/finance/transaction-import/TransactionImport";
 
 const Finance = () => {
   return (
     <DashboardLayout>
-      <div className="container py-6">
-        <TransactionList />
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold" tabIndex={0}>Import Transactions</h1>
+        <TransactionImport />
       </div>
     </DashboardLayout>
   );

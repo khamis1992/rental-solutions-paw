@@ -1,20 +1,22 @@
 import { ReactNode } from "react";
-import { Suspense } from "react";
+import { Navigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RouteWrapper } from "@/components/layout/RouteWrapper";
-import { AuthGuard } from "./AuthGuard";
+import { Suspense } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRoles?: string[];
+  session: any | null;
 }
 
-export const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, session }: ProtectedRouteProps) => {
+  if (!session) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
-    <AuthGuard requiredRoles={requiredRoles}>
-      <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-        <RouteWrapper>{children}</RouteWrapper>
-      </Suspense>
-    </AuthGuard>
+    <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+      <RouteWrapper>{children}</RouteWrapper>
+    </Suspense>
   );
 };
