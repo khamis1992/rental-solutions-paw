@@ -30,10 +30,20 @@ export const TransactionImport = () => {
         });
 
       if (verificationError) throw verificationError;
-      return verificationData.data;
+      
+      // Handle both successful and "no agreement" cases
+      return {
+        customerName: verificationData.data?.customerName || 'Unknown',
+        isValidDate: verificationData.data?.isValidDate || false,
+        message: verificationData.data?.message
+      };
     } catch (error) {
       console.error('Customer verification error:', error);
-      return null;
+      return {
+        customerName: 'Error',
+        isValidDate: false,
+        message: error.message
+      };
     }
   };
 
@@ -72,8 +82,9 @@ export const TransactionImport = () => {
             
             return {
               ...row,
-              customer_name: customerInfo?.customerName || 'Unknown',
-              is_valid_date: customerInfo?.isValidDate || false
+              customer_name: customerInfo.customerName,
+              is_valid_date: customerInfo.isValidDate,
+              verification_message: customerInfo.message
             };
           })
         );

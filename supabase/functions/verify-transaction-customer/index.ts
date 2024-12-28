@@ -54,11 +54,16 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'No active agreement found for this period'
+          data: {
+            customerId: null,
+            customerName: null,
+            isValidDate: false,
+            message: 'No active agreement found for this period'
+          }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 404
+          status: 200 // Changed from 404 to 200
         }
       );
     }
@@ -92,11 +97,12 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message,
+        data: null
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 400 // Only use non-200 status for actual errors
       }
     );
   }
