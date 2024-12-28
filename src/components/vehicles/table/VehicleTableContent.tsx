@@ -6,20 +6,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, MapPin, Building2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VehicleStatusCell } from "./VehicleStatusCell";
+import { VehicleLocationCell } from "./VehicleLocationCell";
+import { VehicleInsuranceCell } from "./VehicleInsuranceCell";
 
 interface Vehicle {
   id: string;
@@ -58,7 +52,6 @@ export const VehicleTableContent = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    // Subscribe to real-time updates for vehicle location and insurance changes
     const channel = supabase
       .channel('vehicle-updates')
       .on(
@@ -91,16 +84,6 @@ export const VehicleTableContent = ({
       supabase.removeChannel(channel);
     };
   }, [toast]);
-
-  const handleLocationClick = (vehicle: Vehicle) => {
-    setEditingLocation(vehicle.id);
-    setLocationValue(vehicle.location || "");
-  };
-
-  const handleInsuranceClick = (vehicle: Vehicle) => {
-    setEditingInsurance(vehicle.id);
-    setInsuranceValue(vehicle.insurance_company || "");
-  };
 
   const handleLocationUpdate = async (vehicleId: string) => {
     try {
@@ -199,83 +182,42 @@ export const VehicleTableContent = ({
               {vehicle.year} {vehicle.make} {vehicle.model}
             </TableCell>
             <TableCell>
-              <Select
-                value={vehicle.status}
-                onValueChange={(value) => onStatusChange(vehicle.id, value)}
-              >
-                <SelectTrigger className="w-[140px]" onClick={(e) => e.stopPropagation()}>
-                  <SelectValue>
-                    <Badge
-                      className="text-white"
-                      style={{
-                        backgroundColor: STATUS_COLORS[vehicle.status] || "#CBD5E1"
-                      }}
-                    >
-                      {vehicle.status}
-                    </Badge>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.keys(STATUS_COLORS).map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <Badge
-                        className="text-white"
-                        style={{
-                          backgroundColor: STATUS_COLORS[status]
-                        }}
-                      >
-                        {status}
-                      </Badge>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <VehicleStatusCell
+                status={vehicle.status}
+                onStatusChange={(value) => onStatusChange(vehicle.id, value)}
+                statusColors={STATUS_COLORS}
+              />
             </TableCell>
-            <TableCell onClick={(e) => {
-              e.stopPropagation();
-              handleLocationClick(vehicle);
-            }}>
-              {editingLocation === vehicle.id ? (
-                <div className="flex items-center" onClick={e => e.stopPropagation()}>
-                  <Input
-                    value={locationValue}
-                    onChange={(e) => setLocationValue(e.target.value)}
-                    onKeyDown={(e) => handleKeyPress(e, vehicle.id, 'location')}
-                    onBlur={() => handleLocationUpdate(vehicle.id)}
-                    autoFocus
-                    className="w-full"
-                    placeholder="Enter location"
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center hover:bg-gray-100 p-2 rounded">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {vehicle.location || <span className="text-muted-foreground">Not available</span>}
-                </div>
-              )}
+            <TableCell>
+              <VehicleLocationCell
+                vehicleId={vehicle.id}
+                isEditing={editingLocation === vehicle.id}
+                location={vehicle.location}
+                locationValue={locationValue}
+                onLocationChange={setLocationValue}
+                onKeyPress={(e) => handleKeyPress(e, vehicle.id, 'location')}
+                onBlur={() => handleLocationUpdate(vehicle.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingLocation(vehicle.id);
+                  setLocationValue(vehicle.location || "");
+                }}
+              />
             </TableCell>
-            <TableCell onClick={(e) => {
-              e.stopPropagation();
-              handleInsuranceClick(vehicle);
-            }}>
-              {editingInsurance === vehicle.id ? (
-                <div className="flex items-center" onClick={e => e.stopPropagation()}>
-                  <Input
-                    value={insuranceValue}
-                    onChange={(e) => setInsuranceValue(e.target.value)}
-                    onKeyDown={(e) => handleKeyPress(e, vehicle.id, 'insurance')}
-                    onBlur={() => handleInsuranceUpdate(vehicle.id)}
-                    autoFocus
-                    className="w-full"
-                    placeholder="Enter insurance company"
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center hover:bg-gray-100 p-2 rounded">
-                  <Building2 className="h-4 w-4 mr-1" />
-                  {vehicle.insurance_company || <span className="text-muted-foreground">Not available</span>}
-                </div>
-              )}
+            <TableCell>
+              <VehicleInsuranceCell
+                isEditing={editingInsurance === vehicle.id}
+                insurance={vehicle.insurance_company}
+                insuranceValue={insuranceValue}
+                onInsuranceChange={setInsuranceValue}
+                onKeyPress={(e) => handleKeyPress(e, vehicle.id, 'insurance')}
+                onBlur={() => handleInsuranceUpdate(vehicle.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingInsurance(vehicle.id);
+                  setInsuranceValue(vehicle.insurance_company || "");
+                }}
+              />
             </TableCell>
             <TableCell>{vehicle.vin}</TableCell>
             <TableCell>{vehicle.mileage?.toLocaleString() || 0} km</TableCell>
