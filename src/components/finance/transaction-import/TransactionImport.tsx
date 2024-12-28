@@ -52,7 +52,7 @@ export const TransactionImport = () => {
     const { error } = await supabase
       .from('accounting_transactions')
       .insert(transactions.map(transaction => ({
-        type: 'INCOME' as TransactionType,
+        type: TransactionType.INCOME,
         amount: transaction.amount,
         description: transaction.description,
         transaction_date: transaction.payment_date,
