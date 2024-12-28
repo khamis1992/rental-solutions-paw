@@ -1,26 +1,26 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    const { agreementNumber, paymentDate } = await req.json()
+    const { agreementNumber, paymentDate } = await req.json();
 
     if (!agreementNumber || !paymentDate) {
-      throw new Error('Agreement number and payment date are required')
+      throw new Error('Agreement number and payment date are required');
     }
 
     console.log('Verifying customer for:', { agreementNumber, paymentDate });
@@ -100,4 +100,4 @@ serve(async (req) => {
       }
     );
   }
-})
+});
