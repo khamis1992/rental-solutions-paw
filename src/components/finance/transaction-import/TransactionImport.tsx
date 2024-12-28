@@ -26,12 +26,19 @@ export const TransactionImport = () => {
 
   const verifyCustomer = async (agreementNumber: string, paymentDate: string) => {
     try {
+      console.log('Verifying customer:', { agreementNumber, paymentDate });
+      
       const { data: verificationData, error: verificationError } = await supabase.functions
         .invoke('verify-transaction-customer', {
           body: { agreementNumber, paymentDate }
         });
 
-      if (verificationError) throw verificationError;
+      if (verificationError) {
+        console.error('Verification error:', verificationError);
+        throw verificationError;
+      }
+      
+      console.log('Verification response:', verificationData);
       
       return {
         customerName: verificationData.data?.customerName || 'Unknown',

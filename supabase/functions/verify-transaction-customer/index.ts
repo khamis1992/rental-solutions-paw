@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.fresh.dev/std@v9.6.2/http/server.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { agreementNumber, paymentDate } = await req.json();
+    console.log('Received request:', { agreementNumber, paymentDate });
 
     if (!agreementNumber || !paymentDate) {
       console.error('Missing required parameters:', { agreementNumber, paymentDate });
@@ -29,11 +30,15 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing environment variables');
+      throw new Error('Server configuration error');
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
     console.log('Verifying customer for:', { agreementNumber, paymentDate });
 
     const { data: agreements, error: agreementError } = await supabaseClient
@@ -82,24 +87,23 @@ serve(async (req) => {
       );
     }
 
-    const agreement = agreements;
     const paymentDateObj = new Date(paymentDate);
-    const startDate = new Date(agreement.start_date);
-    const endDate = agreement.end_date ? new Date(agreement.end_date) : null;
+    const startDate = new Date(agreements.start_date);
+    const endDate = agreements.end_date ? new Date(agreements.end_date) : null;
 
     const isValidDate = paymentDateObj >= startDate && 
       (!endDate || paymentDateObj <= endDate);
 
     console.log('Validation result:', {
-      customerName: agreement.profiles?.full_name || 'Unknown',
+      customerName: agreements.profiles?.full_name || 'Unknown',
       isValidDate,
-      agreement: agreement
+      agreement: agreements
     });
 
     return new Response(
       JSON.stringify({
         data: {
-          customerName: agreement.profiles?.full_name || 'Unknown',
+          customerName: agreements.profiles?.full_name || 'Unknown',
           isValidDate,
           message: isValidDate ? 
             'Payment date is within agreement period' : 
@@ -121,7 +125,7 @@ serve(async (req) => {
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 500
       }
     );
   }
