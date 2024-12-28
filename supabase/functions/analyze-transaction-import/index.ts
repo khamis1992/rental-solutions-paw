@@ -63,11 +63,24 @@ serve(async (req) => {
     const issues: string[] = [];
     const suggestions: string[] = [];
 
+    // Get column indices
+    const amountIndex = headers.findIndex(h => h.toLowerCase() === 'amount');
+    const paymentDateIndex = headers.findIndex(h => h.toLowerCase() === 'payment date');
+    const typeIndex = headers.findIndex(h => h.toLowerCase() === 'type');
+
     rows.forEach((row, index) => {
       const values = row.split(',').map(v => v.trim());
-      const amount = parseFloat(values[headers.findIndex(h => h.toLowerCase() === 'amount')]);
-      const paymentDate = values[headers.findIndex(h => h.toLowerCase() === 'payment date')];
-      const type = values[headers.findIndex(h => h.toLowerCase() === 'type')];
+      
+      // Check if we have all required values
+      if (values.length < headers.length) {
+        invalidRows++;
+        issues.push(`Row ${index + 2}: Missing values - row has ${values.length} values but needs ${headers.length}`);
+        return; // Skip further validation for this row
+      }
+
+      const amount = parseFloat(values[amountIndex]);
+      const paymentDate = values[paymentDateIndex];
+      const type = values[typeIndex];
       
       if (isNaN(amount)) {
         invalidRows++;
@@ -84,7 +97,7 @@ serve(async (req) => {
       }
 
       // Validate transaction type
-      if (!['INCOME', 'EXPENSE'].includes(type.toUpperCase())) {
+      if (!type || !['INCOME', 'EXPENSE'].includes(type.toUpperCase())) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid transaction type. Use INCOME or EXPENSE`);
       }
