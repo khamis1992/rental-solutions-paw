@@ -14,34 +14,34 @@ export const RevenueDashboard = () => {
       const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
-      // Get current month's revenue - Note the type is now 'INCOME' (uppercase)
+      // Get current month's revenue
       const { data: currentMonthData, error: currentError } = await supabase
         .from("accounting_transactions")
         .select("amount")
-        .eq("type", "INCOME")
+        .eq("type", "income")
         .gte("transaction_date", firstDayOfMonth.toISOString())
         .lte("transaction_date", lastDayOfMonth.toISOString());
 
       if (currentError) throw currentError;
 
-      // Get last month's revenue for comparison - Note the type is now 'INCOME' (uppercase)
+      // Get last month's revenue for comparison
       const lastMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
       const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
       
       const { data: lastMonthData, error: lastError } = await supabase
         .from("accounting_transactions")
         .select("amount")
-        .eq("type", "INCOME")
+        .eq("type", "income")
         .gte("transaction_date", lastMonthStart.toISOString())
         .lte("transaction_date", lastMonthEnd.toISOString());
 
       if (lastError) throw lastError;
 
-      // Get revenue trend data for the chart - Note the type is now 'INCOME' (uppercase)
+      // Get revenue trend data for the chart
       const { data: trendData, error: trendError } = await supabase
         .from("accounting_transactions")
         .select("amount, transaction_date")
-        .eq("type", "INCOME")
+        .eq("type", "income")
         .order("transaction_date", { ascending: true })
         .limit(30);
 
