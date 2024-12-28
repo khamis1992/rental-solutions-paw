@@ -20,46 +20,53 @@ serve(async (req) => {
     )
 
     // Parse and validate request body
-    const requestData = await req.json()
-    console.log('Received request data:', requestData)
+    const { fileName } = await req.json()
+    console.log('Processing file:', fileName)
 
-    // Validate transactions array exists
-    if (!requestData.transactions || !Array.isArray(requestData.transactions)) {
-      console.error('Invalid request: transactions array is missing or not an array')
-      throw new Error('Invalid request: transactions array is required')
+    if (!fileName) {
+      throw new Error('fileName is required')
     }
 
-    const transactions = requestData.transactions
-    console.log('Processing transactions:', transactions.length)
+    // Download the file from storage
+    const { data: fileData, error: downloadError } = await supabaseClient
+      .storage
+      .from('imports')
+      .download(fileName)
 
-    // Validate each transaction
-    const validatedTransactions = transactions.filter(transaction => {
-      // Validate required fields
-      const isValid = 
-        transaction &&
-        typeof transaction.amount === 'number' &&
-        transaction.amount > 0 &&
-        transaction.transaction_date &&
-        !isNaN(new Date(transaction.transaction_date).getTime()) &&
-        transaction.metadata?.agreement_number;
-      
-      if (!isValid) {
-        console.warn('Invalid transaction:', transaction);
-      }
-      
-      return isValid;
-    });
-
-    console.log('Validated transactions count:', validatedTransactions.length)
-
-    if (validatedTransactions.length === 0) {
-      throw new Error('No valid transactions found in the request')
+    if (downloadError) {
+      console.error('Error downloading file:', downloadError)
+      throw downloadError
     }
 
-    // Save validated transactions
+    // Parse CSV content
+    const text = await fileData.text()
+    const rows = text.split('\n').slice(1) // Skip header row
+    
+    // Process each row into a transaction
+    const transactions = rows
+      .filter(row => row.trim()) // Skip empty rows
+      .map(row => {
+        const [date, amount, description, agreement_number] = row.split(',')
+        return {
+          type: 'INCOME',
+          amount: parseFloat(amount),
+          description: description?.trim(),
+          transaction_date: new Date(date).toISOString(),
+          reference_type: 'import',
+          status: 'completed',
+          metadata: {
+            agreement_number: agreement_number?.trim(),
+          }
+        }
+      })
+      .filter(t => !isNaN(t.amount) && t.amount > 0) // Validate amounts
+
+    console.log('Processed transactions:', transactions.length)
+
+    // Save to accounting_transactions
     const { error: transactionError } = await supabaseClient
       .from('accounting_transactions')
-      .insert(validatedTransactions);
+      .insert(transactions)
 
     if (transactionError) {
       console.error('Error saving transactions:', transactionError)
@@ -69,9 +76,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        processed: validatedTransactions.length,
-        total: transactions.length,
-        skipped: transactions.length - validatedTransactions.length
+        processed: transactions.length,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
