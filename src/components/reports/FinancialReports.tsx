@@ -6,6 +6,7 @@ import { ExpenseChart } from "./charts/ExpenseChart";
 import { PayrollManagement } from "./PayrollManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { TransactionType } from "@/components/finance/accounting/types/transaction.types";
 
 export const FinancialReports = () => {
   const { toast } = useToast();
@@ -39,6 +40,22 @@ export const FinancialReports = () => {
         .from("maintenance")
         .select("*")
         .order('created_at');
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Update the query to use the correct enum value
+  const { data: transactionData } = useQuery({
+    queryKey: ["transaction-data"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("accounting_transactions")
+        .select("amount")
+        .eq("type", TransactionType.INCOME)  // Use the enum value instead of string
+        .gte("transaction_date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .lte("transaction_date", new Date().toISOString());
 
       if (error) throw error;
       return data;
