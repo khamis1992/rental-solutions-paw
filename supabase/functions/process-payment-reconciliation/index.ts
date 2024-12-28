@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -18,6 +19,8 @@ serve(async (req) => {
       throw new Error('Payment ID is required')
     }
 
+    console.log('Processing payment reconciliation for payment:', paymentId)
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -26,11 +29,20 @@ serve(async (req) => {
     // Get payment details
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
-      .select('*')
+      .select('*, lease:leases(*)')
       .eq('id', paymentId)
       .single()
 
-    if (paymentError) throw paymentError
+    if (paymentError) {
+      console.error('Error fetching payment:', paymentError)
+      throw paymentError
+    }
+
+    if (!payment) {
+      throw new Error('Payment not found')
+    }
+
+    console.log('Found payment:', payment)
 
     // Create reconciliation record
     const { data: reconciliation, error: reconciliationError } = await supabase
@@ -45,7 +57,10 @@ serve(async (req) => {
       .select()
       .single()
 
-    if (reconciliationError) throw reconciliationError
+    if (reconciliationError) {
+      console.error('Error creating reconciliation:', reconciliationError)
+      throw reconciliationError
+    }
 
     // Update payment status
     const { error: updateError } = await supabase
@@ -53,17 +68,40 @@ serve(async (req) => {
       .update({ status: 'completed' })
       .eq('id', paymentId)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('Error updating payment:', updateError)
+      throw updateError
+    }
+
+    console.log('Successfully reconciled payment:', paymentId)
 
     return new Response(
-      JSON.stringify({ success: true, data: reconciliation }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        success: true, 
+        data: reconciliation 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
 
   } catch (error) {
+    console.error('Error in payment reconciliation:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
+        status: 400 
+      }
     )
   }
 })
