@@ -6,6 +6,7 @@ import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { Loader2 } from "lucide-react";
+import { TransactionType } from "./accounting/types/transaction.types";
 
 interface Category {
   id: string;
@@ -18,7 +19,7 @@ interface Category {
 interface Transaction {
   id: string;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: TransactionType;
   category: Category;
   transaction_date: string;
 }
@@ -66,22 +67,22 @@ export const FinancialDashboard = () => {
   });
 
   const currentMonthRevenue = currentMonthTransactions?.reduce(
-    (sum, transaction) => transaction.type === 'INCOME' ? sum + transaction.amount : sum, 
+    (sum, transaction) => transaction.type === TransactionType.INCOME ? sum + transaction.amount : sum, 
     0
   ) || 0;
 
   const previousMonthRevenue = previousMonthTransactions?.reduce(
-    (sum, transaction) => transaction.type === 'INCOME' ? sum + transaction.amount : sum, 
+    (sum, transaction) => transaction.type === TransactionType.INCOME ? sum + transaction.amount : sum, 
     0
   ) || 0;
 
   const currentMonthExpenses = currentMonthTransactions?.reduce(
-    (sum, transaction) => transaction.type === 'EXPENSE' ? sum + transaction.amount : sum, 
+    (sum, transaction) => transaction.type === TransactionType.EXPENSE ? sum + transaction.amount : sum, 
     0
   ) || 0;
 
   const previousMonthExpenses = previousMonthTransactions?.reduce(
-    (sum, transaction) => transaction.type === 'EXPENSE' ? sum + transaction.amount : sum, 
+    (sum, transaction) => transaction.type === TransactionType.EXPENSE ? sum + transaction.amount : sum, 
     0
   ) || 0;
 
@@ -89,7 +90,7 @@ export const FinancialDashboard = () => {
   const percentageChangeExpenses = ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
 
   const revenueData = financialData
-    ?.filter(t => t.type === 'INCOME')
+    ?.filter(t => t.type === TransactionType.INCOME)
     ?.reduce((acc, transaction) => {
       const date = transaction.transaction_date.split('T')[0];
       const existing = acc.find(item => item.date === date);
@@ -102,7 +103,7 @@ export const FinancialDashboard = () => {
     }, [] as { date: string; revenue: number }[]) || [];
 
   const expenseData = financialData
-    ?.filter(t => t.type === 'EXPENSE')
+    ?.filter(t => t.type === TransactionType.EXPENSE)
     ?.reduce((acc, transaction) => {
       const category = transaction.category?.name || 'Uncategorized';
       const existing = acc.find(item => item.category === category);
@@ -120,7 +121,7 @@ export const FinancialDashboard = () => {
     
     const existing = acc.find(item => item.period === period);
     if (existing) {
-      if (transaction.type === 'INCOME') {
+      if (transaction.type === TransactionType.INCOME) {
         existing.revenue += transaction.amount;
       } else {
         existing.expenses += transaction.amount;
@@ -129,9 +130,9 @@ export const FinancialDashboard = () => {
     } else {
       acc.push({
         period,
-        revenue: transaction.type === 'INCOME' ? transaction.amount : 0,
-        expenses: transaction.type === 'EXPENSE' ? transaction.amount : 0,
-        profit: transaction.type === 'INCOME' ? transaction.amount : -transaction.amount
+        revenue: transaction.type === TransactionType.INCOME ? transaction.amount : 0,
+        expenses: transaction.type === TransactionType.EXPENSE ? transaction.amount : 0,
+        profit: transaction.type === TransactionType.INCOME ? transaction.amount : -transaction.amount
       });
     }
     return acc;
