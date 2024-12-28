@@ -7,25 +7,41 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { rows } = await req.json()
-    console.log('Processing transactions:', rows.length)
+    // Parse and validate request body
+    const requestData = await req.json()
+    console.log('Received request data:', requestData)
 
-    // Validate transactions
-    const validatedTransactions = rows.filter(transaction => {
+    // Validate transactions array exists
+    if (!requestData.transactions || !Array.isArray(requestData.transactions)) {
+      console.error('Invalid request: transactions array is missing or not an array')
+      throw new Error('Invalid request: transactions array is required')
+    }
+
+    const transactions = requestData.transactions
+    console.log('Processing transactions:', transactions.length)
+
+    // Validate each transaction
+    const validatedTransactions = transactions.filter(transaction => {
+      // Validate required fields
       const isValid = 
+        transaction &&
+        typeof transaction.amount === 'number' &&
         transaction.amount > 0 &&
-        !isNaN(new Date(transaction.payment_date).getTime()) &&
-        transaction.agreement_number;
+        transaction.transaction_date &&
+        !isNaN(new Date(transaction.transaction_date).getTime()) &&
+        transaction.metadata?.agreement_number;
       
       if (!isValid) {
         console.warn('Invalid transaction:', transaction);
@@ -34,47 +50,45 @@ serve(async (req) => {
       return isValid;
     });
 
+    console.log('Validated transactions count:', validatedTransactions.length)
+
+    if (validatedTransactions.length === 0) {
+      throw new Error('No valid transactions found in the request')
+    }
+
     // Save validated transactions
     const { error: transactionError } = await supabaseClient
       .from('accounting_transactions')
-      .insert(validatedTransactions.map(transaction => ({
-        type: 'INCOME',
-        amount: transaction.amount,
-        description: transaction.description,
-        transaction_date: new Date(transaction.payment_date).toISOString(),
-        reference_type: 'import',
-        status: 'completed',
-        meta_data: {
-          agreement_number: transaction.agreement_number,
-          payment_method: transaction.payment_method,
-          payment_number: transaction.payment_number
-        }
-      })));
+      .insert(validatedTransactions);
 
     if (transactionError) {
-      console.error('Error saving transactions:', transactionError);
-      throw transactionError;
+      console.error('Error saving transactions:', transactionError)
+      throw transactionError
     }
 
-    // Save raw import data for reference
-    const { error: rawImportError } = await supabaseClient
-      .from('raw_transaction_imports')
-      .insert(validatedTransactions.map(transaction => ({
-        raw_data: transaction,
-        is_valid: true
-      })));
+    // Update financial metrics
+    const { error: metricsError } = await supabaseClient
+      .from('financial_insights')
+      .insert({
+        category: 'income',
+        insight: 'New transactions imported',
+        data_points: {
+          transaction_count: validatedTransactions.length,
+          total_amount: validatedTransactions.reduce((sum, t) => sum + t.amount, 0)
+        }
+      });
 
-    if (rawImportError) {
-      console.error('Error saving raw imports:', rawImportError);
-      // Don't throw here as the main transactions were saved successfully
+    if (metricsError) {
+      console.warn('Error updating metrics:', metricsError)
+      // Don't throw here as it's not critical
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
         processed: validatedTransactions.length,
-        total: rows.length,
-        skipped: rows.length - validatedTransactions.length
+        total: transactions.length,
+        skipped: transactions.length - validatedTransactions.length
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -85,7 +99,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing transactions:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400

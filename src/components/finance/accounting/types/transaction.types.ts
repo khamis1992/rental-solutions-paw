@@ -1,13 +1,14 @@
-export type TransactionType = 
-  | 'LATE_PAYMENT_FEE'
-  | 'ADMINISTRATIVE_FEES'
-  | 'VEHICLE_DAMAGE_CHARGE'
-  | 'TRAFFIC_FINE'
-  | 'RENTAL_FEE'
-  | 'ADVANCE_PAYMENT'
-  | 'OTHER'
-  | 'INCOME'
-  | 'EXPENSE';
+export enum TransactionType {
+  LATE_PAYMENT_FEE = 'LATE_PAYMENT_FEE',
+  ADMINISTRATIVE_FEES = 'ADMINISTRATIVE_FEES',
+  VEHICLE_DAMAGE_CHARGE = 'VEHICLE_DAMAGE_CHARGE',
+  TRAFFIC_FINE = 'TRAFFIC_FINE',
+  RENTAL_FEE = 'RENTAL_FEE',
+  ADVANCE_PAYMENT = 'ADVANCE_PAYMENT',
+  OTHER = 'OTHER',
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE'
+}
 
 export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 
