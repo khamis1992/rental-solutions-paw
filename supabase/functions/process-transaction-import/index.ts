@@ -6,118 +6,190 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const isValidDate = (dateValue: string): boolean => {
-  if (!dateValue) return false;
-  const timestamp = Date.parse(dateValue);
-  return !isNaN(timestamp);
-};
+interface Transaction {
+  transaction_date: string;
+  amount: number;
+  description?: string;
+  type: 'INCOME' | 'EXPENSE';
+  reference_type?: string;
+  reference_id?: string;
+  metadata?: Record<string, unknown>;
+}
 
-const formatDateToISO = (dateValue: string): string | null => {
+const validateDate = (dateStr: string): boolean => {
   try {
-    if (!isValidDate(dateValue)) {
-      console.error('Invalid date value:', dateValue);
+    const timestamp = Date.parse(dateStr);
+    return !isNaN(timestamp);
+  } catch (error) {
+    console.error(`Date validation error for ${dateStr}:`, error);
+    return false;
+  }
+}
+
+const formatDateToISO = (dateStr: string): string | null => {
+  try {
+    if (!validateDate(dateStr)) {
+      console.error('Invalid date value:', dateStr);
       return null;
     }
-    return new Date(dateValue).toISOString();
+    return new Date(dateStr).toISOString();
   } catch (error) {
-    console.error('Error formatting date:', dateValue, error);
+    console.error('Date formatting error:', error);
     return null;
   }
-};
+}
+
+const validateTransaction = (transaction: any): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  // Required fields
+  if (!transaction.transaction_date) {
+    errors.push('Missing transaction_date');
+  } else if (!validateDate(transaction.transaction_date)) {
+    errors.push(`Invalid transaction_date: ${transaction.transaction_date}`);
+  }
+
+  if (typeof transaction.amount !== 'number' || isNaN(transaction.amount)) {
+    errors.push(`Invalid amount: ${transaction.amount}`);
+  }
+
+  if (!transaction.type || !['INCOME', 'EXPENSE'].includes(transaction.type)) {
+    errors.push(`Invalid transaction type: ${transaction.type}`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting transaction import process...');
+    
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    const { fileName, transactions } = await req.json()
-    console.log('Processing request:', { fileName, transactionCount: transactions?.length })
+    const { fileName, transactions } = await req.json();
+    console.log('Request payload:', { fileName, transactionCount: transactions?.length });
 
-    let processedTransactions = []
+    if (!transactions && !fileName) {
+      throw new Error('Either fileName or transactions array is required');
+    }
+
+    let processedTransactions: Transaction[] = [];
 
     if (fileName) {
-      // Download and process file
+      console.log('Processing file:', fileName);
       const { data: fileData, error: downloadError } = await supabaseClient
         .storage
         .from('imports')
-        .download(fileName)
+        .download(fileName);
 
       if (downloadError) {
-        console.error('Error downloading file:', downloadError)
-        throw downloadError
+        console.error('File download error:', downloadError);
+        throw downloadError;
       }
 
-      const text = await fileData.text()
-      const rows = text.split('\n').slice(1) // Skip header row
+      const text = await fileData.text();
+      const rows = text.split('\n').slice(1); // Skip header row
+      
+      console.log(`Processing ${rows.length} rows from CSV`);
       
       processedTransactions = rows
-        .filter(row => row.trim()) // Skip empty rows
-        .map(row => {
-          const [date, amount, description, agreement_number] = row.split(',')
-          
-          // Validate and format date
-          const formattedDate = formatDateToISO(date);
-          if (!formattedDate) {
-            console.error('Invalid date in row:', { date, row });
+        .filter(row => row.trim())
+        .map((row, index) => {
+          try {
+            const [date, amount, description, type] = row.split(',').map(val => val.trim());
+            const formattedDate = formatDateToISO(date);
+            
+            if (!formattedDate) {
+              console.error(`Invalid date in row ${index + 1}:`, date);
+              return null;
+            }
+
+            const transaction = {
+              transaction_date: formattedDate,
+              amount: parseFloat(amount),
+              description: description?.trim(),
+              type: type?.toUpperCase() as 'INCOME' | 'EXPENSE',
+              reference_type: 'import',
+              metadata: { source: 'csv_import', row_number: index + 1 }
+            };
+
+            const validation = validateTransaction(transaction);
+            if (!validation.isValid) {
+              console.error(`Validation failed for row ${index + 1}:`, validation.errors);
+              return null;
+            }
+
+            return transaction;
+          } catch (error) {
+            console.error(`Error processing row ${index + 1}:`, error);
             return null;
           }
-
-          return {
-            type: 'INCOME',
-            amount: parseFloat(amount),
-            description: description?.trim(),
-            transaction_date: formattedDate,
-            reference_type: 'import',
-            status: 'completed',
-            metadata: {
-              agreement_number: agreement_number?.trim(),
-            }
-          }
         })
-        .filter(t => t !== null && !isNaN(t.amount) && t.amount > 0)
+        .filter((t): t is Transaction => t !== null);
 
     } else if (Array.isArray(transactions)) {
-      // Process provided transactions array
+      console.log('Processing transactions array');
+      
       processedTransactions = transactions
-        .map(t => {
-          // Validate and format transaction date
-          const formattedDate = formatDateToISO(t.transaction_date);
-          if (!formattedDate) {
-            console.error('Invalid transaction date:', t);
+        .map((t, index) => {
+          try {
+            const formattedDate = formatDateToISO(t.transaction_date);
+            if (!formattedDate) return null;
+
+            const transaction = {
+              ...t,
+              transaction_date: formattedDate,
+              metadata: { 
+                ...t.metadata,
+                processed_at: new Date().toISOString(),
+                source: 'direct_import'
+              }
+            };
+
+            const validation = validateTransaction(transaction);
+            if (!validation.isValid) {
+              console.error(`Validation failed for transaction ${index}:`, validation.errors);
+              return null;
+            }
+
+            return transaction;
+          } catch (error) {
+            console.error(`Error processing transaction ${index}:`, error);
             return null;
           }
-          return {
-            ...t,
-            transaction_date: formattedDate
-          };
         })
-        .filter(t => t !== null); // Remove transactions with invalid dates
-    } else {
-      throw new Error('Either fileName or transactions array is required')
+        .filter((t): t is Transaction => t !== null);
     }
 
-    console.log('Processed transactions:', processedTransactions.length)
+    console.log(`Processed ${processedTransactions.length} valid transactions`);
 
     if (processedTransactions.length === 0) {
-      throw new Error('No valid transactions found to process')
+      throw new Error('No valid transactions found to process');
     }
 
     // Save to accounting_transactions
     const { error: transactionError } = await supabaseClient
       .from('accounting_transactions')
-      .insert(processedTransactions)
+      .insert(processedTransactions.map(t => ({
+        ...t,
+        status: 'completed',
+      })));
 
     if (transactionError) {
-      console.error('Error saving transactions:', transactionError)
-      throw transactionError
+      console.error('Database insertion error:', transactionError);
+      throw transactionError;
     }
 
     return new Response(
@@ -129,10 +201,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error processing transactions:', error)
+    console.error('Transaction processing error:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
@@ -142,6 +214,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400
       }
-    )
+    );
   }
-})
+});
