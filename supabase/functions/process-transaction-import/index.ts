@@ -66,23 +66,6 @@ serve(async (req) => {
       throw transactionError
     }
 
-    // Update financial metrics
-    const { error: metricsError } = await supabaseClient
-      .from('financial_insights')
-      .insert({
-        category: 'income',
-        insight: 'New transactions imported',
-        data_points: {
-          transaction_count: validatedTransactions.length,
-          total_amount: validatedTransactions.reduce((sum, t) => sum + t.amount, 0)
-        }
-      });
-
-    if (metricsError) {
-      console.warn('Error updating metrics:', metricsError)
-      // Don't throw here as it's not critical
-    }
-
     return new Response(
       JSON.stringify({ 
         success: true,

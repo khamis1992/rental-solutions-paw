@@ -18,7 +18,6 @@ const Finance = () => {
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="categorization">Categorization</TabsTrigger>
             <TabsTrigger value="import">Import</TabsTrigger>
-            <TabsTrigger value="receipts">Receipts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -39,10 +38,6 @@ const Finance = () => {
 
           <TabsContent value="import">
             <TransactionImport />
-          </TabsContent>
-
-          <TabsContent value="receipts">
-            {/* Receipt management components will go here */}
           </TabsContent>
         </Tabs>
       </div>
