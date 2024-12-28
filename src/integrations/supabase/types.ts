@@ -170,6 +170,7 @@ export type Database = {
           description: string | null
           id: string
           is_recurring: boolean | null
+          meta_data: Json | null
           receipt_url: string | null
           recurrence_interval: unknown | null
           recurring_schedule: Json | null
@@ -188,6 +189,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          meta_data?: Json | null
           receipt_url?: string | null
           recurrence_interval?: unknown | null
           recurring_schedule?: Json | null
@@ -206,6 +208,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          meta_data?: Json | null
           receipt_url?: string | null
           recurrence_interval?: unknown | null
           recurring_schedule?: Json | null

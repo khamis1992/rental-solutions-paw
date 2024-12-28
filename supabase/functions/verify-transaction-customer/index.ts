@@ -13,9 +13,11 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body
     const { agreementNumber, paymentDate } = await req.json();
     console.log('Received request:', { agreementNumber, paymentDate });
 
+    // Validate required parameters
     if (!agreementNumber || !paymentDate) {
       console.error('Missing required parameters:', { agreementNumber, paymentDate });
       return new Response(
@@ -30,6 +32,7 @@ serve(async (req) => {
       );
     }
 
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -41,6 +44,7 @@ serve(async (req) => {
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
     console.log('Verifying customer for:', { agreementNumber, paymentDate });
 
+    // Query the database
     const { data: agreements, error: agreementError } = await supabaseClient
       .from('leases')
       .select(`
@@ -87,6 +91,7 @@ serve(async (req) => {
       );
     }
 
+    // Validate payment date against agreement dates
     const paymentDateObj = new Date(paymentDate);
     const startDate = new Date(agreements.start_date);
     const endDate = agreements.end_date ? new Date(agreements.end_date) : null;
@@ -100,6 +105,7 @@ serve(async (req) => {
       agreement: agreements
     });
 
+    // Return response with CORS headers
     return new Response(
       JSON.stringify({
         data: {
