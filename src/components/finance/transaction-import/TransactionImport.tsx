@@ -48,6 +48,7 @@ export const TransactionImport = () => {
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
         const rows = csvContent.split('\n')
+          .filter((row) => row.trim().length > 0) // Filter out empty rows
           .map(row => {
             const values = row.split(',').map(value => value.trim());
             return {
@@ -58,6 +59,8 @@ export const TransactionImport = () => {
             };
           })
           .filter((row, index) => index > 0 && row.agreement_number); // Skip header row and empty rows
+
+        console.log('Parsed rows:', rows); // Debug log
 
         // Verify customer for each row
         const enrichedRows = await Promise.all(
@@ -74,6 +77,8 @@ export const TransactionImport = () => {
             };
           })
         );
+
+        console.log('Enriched rows:', enrichedRows); // Debug log
 
         // Update the state with the enriched data
         setImportedData(enrichedRows);
