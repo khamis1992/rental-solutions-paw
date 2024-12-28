@@ -25,7 +25,19 @@ serve(async (req) => {
     const headers = lines[0].split(',').map(h => h.trim());
 
     // Required fields for transaction imports
-    const requiredFields = ['Amount', 'Date', 'Type', 'Description', 'Category'];
+    const requiredFields = [
+      'Agreement Number',
+      'Customer Name',
+      'Amount',
+      'License Plate',
+      'Vehicle',
+      'Payment Date',
+      'Payment Method',
+      'Payment Number',
+      'Payment Description',
+      'Type'
+    ];
+    
     const missingFields = requiredFields.filter(field => 
       !headers.some(h => h.toLowerCase() === field.toLowerCase())
     );
@@ -54,6 +66,8 @@ serve(async (req) => {
     rows.forEach((row, index) => {
       const values = row.split(',').map(v => v.trim());
       const amount = parseFloat(values[headers.findIndex(h => h.toLowerCase() === 'amount')]);
+      const paymentDate = values[headers.findIndex(h => h.toLowerCase() === 'payment date')];
+      const type = values[headers.findIndex(h => h.toLowerCase() === 'type')];
       
       if (isNaN(amount)) {
         invalidRows++;
@@ -64,10 +78,15 @@ serve(async (req) => {
       }
 
       // Check date format
-      const dateStr = values[headers.findIndex(h => h.toLowerCase() === 'date')];
-      if (!isValidDate(dateStr)) {
+      if (!isValidDate(paymentDate)) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid date format. Use YYYY-MM-DD`);
+      }
+
+      // Validate transaction type
+      if (!['INCOME', 'EXPENSE'].includes(type.toUpperCase())) {
+        invalidRows++;
+        issues.push(`Row ${index + 2}: Invalid transaction type. Use INCOME or EXPENSE`);
       }
     });
 

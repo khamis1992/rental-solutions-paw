@@ -22,7 +22,7 @@ export const TransactionImport = () => {
     if (file.type !== "text/csv") {
       toast({
         title: "Invalid File Type",
-        description: "Please upload a CSV file with the following headers: Amount, Date, Type, Description, Category",
+        description: "Please upload a CSV file with the required headers",
         variant: "destructive",
       });
       return;
@@ -98,9 +98,25 @@ export const TransactionImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Amount,Date,Type,Description,Category\n" +
-                      "1000.00,2024-03-20,INCOME,Monthly revenue,Sales\n" +
-                      "500.00,2024-03-21,EXPENSE,Office supplies,Operations";
+    const headers = [
+      "Agreement Number",
+      "Customer Name",
+      "Amount",
+      "License Plate",
+      "Vehicle",
+      "Payment Date",
+      "Payment Method",
+      "Payment Number",
+      "Payment Description",
+      "Type"
+    ].join(",");
+    
+    const exampleData = [
+      "AGR-202403-0001,John Doe,1000.00,ABC123,Toyota Camry,2024-03-20,Cash,PMT001,Monthly Payment,INCOME",
+      "AGR-202403-0002,Jane Smith,500.00,XYZ789,Honda Civic,2024-03-21,WireTransfer,PMT002,Deposit Payment,INCOME"
+    ].join("\n");
+    
+    const csvContent = `${headers}\n${exampleData}`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

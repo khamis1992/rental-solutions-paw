@@ -2707,7 +2707,12 @@ export type Database = {
           id: string
           import_id: string | null
           is_valid: boolean | null
+          license_plate: string | null
+          payment_description: string | null
+          payment_method: string | null
+          payment_number: string | null
           raw_data: Json
+          vehicle_details: string | null
         }
         Insert: {
           created_at?: string | null
@@ -2715,7 +2720,12 @@ export type Database = {
           id?: string
           import_id?: string | null
           is_valid?: boolean | null
+          license_plate?: string | null
+          payment_description?: string | null
+          payment_method?: string | null
+          payment_number?: string | null
           raw_data: Json
+          vehicle_details?: string | null
         }
         Update: {
           created_at?: string | null
@@ -2723,7 +2733,12 @@ export type Database = {
           id?: string
           import_id?: string | null
           is_valid?: boolean | null
+          license_plate?: string | null
+          payment_description?: string | null
+          payment_method?: string | null
+          payment_number?: string | null
           raw_data?: Json
+          vehicle_details?: string | null
         }
         Relationships: [
           {
