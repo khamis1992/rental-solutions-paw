@@ -7,8 +7,22 @@ const corsHeaders = {
 }
 
 const isValidDate = (dateValue: string): boolean => {
+  if (!dateValue) return false;
   const timestamp = Date.parse(dateValue);
   return !isNaN(timestamp);
+};
+
+const formatDateToISO = (dateValue: string): string | null => {
+  try {
+    if (!isValidDate(dateValue)) {
+      console.error('Invalid date value:', dateValue);
+      return null;
+    }
+    return new Date(dateValue).toISOString();
+  } catch (error) {
+    console.error('Error formatting date:', dateValue, error);
+    return null;
+  }
 };
 
 serve(async (req) => {
@@ -49,17 +63,18 @@ serve(async (req) => {
         .map(row => {
           const [date, amount, description, agreement_number] = row.split(',')
           
-          // Validate date before processing
-          if (!isValidDate(date)) {
-            console.error('Invalid date value in row:', { date, row })
-            return null
+          // Validate and format date
+          const formattedDate = formatDateToISO(date);
+          if (!formattedDate) {
+            console.error('Invalid date in row:', { date, row });
+            return null;
           }
 
           return {
             type: 'INCOME',
             amount: parseFloat(amount),
             description: description?.trim(),
-            transaction_date: new Date(date).toISOString(),
+            transaction_date: formattedDate,
             reference_type: 'import',
             status: 'completed',
             metadata: {
@@ -71,13 +86,20 @@ serve(async (req) => {
 
     } else if (Array.isArray(transactions)) {
       // Process provided transactions array
-      processedTransactions = transactions.filter(t => {
-        if (!isValidDate(t.transaction_date)) {
-          console.error('Invalid transaction date:', t)
-          return false
-        }
-        return true
-      })
+      processedTransactions = transactions
+        .map(t => {
+          // Validate and format transaction date
+          const formattedDate = formatDateToISO(t.transaction_date);
+          if (!formattedDate) {
+            console.error('Invalid transaction date:', t);
+            return null;
+          }
+          return {
+            ...t,
+            transaction_date: formattedDate
+          };
+        })
+        .filter(t => t !== null); // Remove transactions with invalid dates
     } else {
       throw new Error('Either fileName or transactions array is required')
     }
