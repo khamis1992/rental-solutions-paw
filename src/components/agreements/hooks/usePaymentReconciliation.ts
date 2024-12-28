@@ -9,8 +9,19 @@ export const usePaymentReconciliation = () => {
   const queryClient = useQueryClient();
 
   const reconcilePayments = async (agreementId: string) => {
+    if (!agreementId) {
+      toast({
+        title: "Error",
+        description: "Agreement ID is required for reconciliation",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsReconciling(true);
     try {
+      console.log('Calling reconciliation with agreementId:', agreementId);
+      
       const { data, error } = await supabase.functions.invoke('process-payment-reconciliation', {
         body: { agreementId }
       });
