@@ -1,208 +1,89 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import Papa from 'papaparse';
-import { formatDateToISO, isValidDate } from './utils/dateUtils';
-
-interface Transaction {
-  amount: number;
-  transaction_date: string;
-  description?: string;
-  metadata: {
-    agreement_number?: string;
-  };
-}
+import { FileUploadSection } from "./components/FileUploadSection";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
-  const [fallbackData, setFallbackData] = useState<Transaction[]>([]);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const validateTransactions = (transactions: Transaction[]): boolean => {
-    if (!Array.isArray(transactions) || transactions.length === 0) {
-      console.error('Invalid transactions array:', transactions);
-      return false;
-    }
-
-    return transactions.every(transaction => {
-      const isValid = 
-        transaction &&
-        typeof transaction.amount === 'number' &&
-        transaction.amount > 0 &&
-        transaction.transaction_date &&
-        isValidDate(transaction.transaction_date);
-
-      if (!isValid) {
-        console.warn('Invalid transaction:', transaction);
-      }
-      return isValid;
-    });
-  };
-
-  const processFileLocally = async (file: File): Promise<Transaction[]> => {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        complete: (results) => {
-          const transactions = results.data
-            .map((row: any) => {
-              const formattedDate = formatDateToISO(row.date);
-              if (!formattedDate) {
-                console.error('Invalid date in row:', row);
-                return null;
-              }
-
-              return {
-                type: 'INCOME',
-                amount: parseFloat(row.amount),
-                description: row.description?.trim(),
-                transaction_date: formattedDate,
-                reference_type: 'import',
-                status: 'completed',
-                metadata: {
-                  agreement_number: row.agreement_number?.trim(),
-                }
-              };
-            })
-            .filter(Boolean); // Remove null entries from invalid dates
-          
-          resolve(transactions);
-        },
-        error: (error) => {
-          reject(error);
-        }
-      });
-    });
-  };
-
-  const retryImport = async (transactions: Transaction[]) => {
-    try {
-      console.log('Retrying import with transactions:', transactions);
-      
-      const { data, error } = await supabase.functions
-        .invoke("process-transaction-import", {
-          body: { transactions }
-        });
-
-      if (error) throw error;
-      
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      
-      toast({
-        title: "Import Complete",
-        description: "Your transactions have been processed successfully.",
-      });
-
-      setFallbackData([]);
-      navigate("/finance?tab=dashboard");
-    } catch (error: any) {
-      console.error("Retry import error:", error);
-      toast({
-        title: "Import Error",
-        description: error.message || "Failed to process import",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "text/csv") {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsUploading(true);
     try {
-      // Process file locally first
-      const transactions = await processFileLocally(file);
-      console.log('Processed transactions:', transactions);
-
-      // Validate transactions
-      if (!validateTransactions(transactions)) {
-        throw new Error('Invalid transaction data in file');
-      }
-
-      // Store as fallback
-      setFallbackData(transactions);
-
-      const fileName = `transactions/${Date.now()}_${file.name}`;
+      const reader = new FileReader();
       
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      reader.onload = async (e) => {
+        const csvContent = e.target?.result as string;
+        const rows = csvContent.split('\n')
+          .map(row => {
+            const values = row.split(',').map(value => value.trim());
+            return {
+              agreement_number: values[0] || '',
+              customer_name: values[1] || '',
+              amount: parseFloat(values[2]) || 0,
+              license_plate: values[3] || '',
+              vehicle: values[4] || '',
+              payment_date: values[5] || '',
+              payment_method: values[6] || '',
+              payment_number: values[7] || '',
+              description: values[8] || ''
+            };
+          })
+          .filter((row, index) => index > 0); // Skip header row
 
-      if (uploadError) throw uploadError;
+        setImportedData(rows);
 
-      // Show success notification
-      toast({
-        title: "Import Started",
-        description: "Your import has been initiated. You'll be redirected to the dashboard.",
-      });
-
-      // Start processing in the background
-      const processingPromise = supabase.functions
-        .invoke("process-transaction-import", {
-          body: { fileName }
-        })
-        .then(async ({ data, error }) => {
-          if (error) throw error;
-          
-          await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-          
-          toast({
-            title: "Import Complete",
-            description: "Your transactions have been processed successfully.",
+        // Save to Supabase
+        const { error: functionError } = await supabase.functions
+          .invoke('process-transaction-import', {
+            body: { rows }
           });
-        })
-        .catch((error) => {
-          console.error("Import error:", error);
-          
-          // If we have fallback data, attempt retry
-          if (fallbackData.length > 0) {
-            toast({
-              title: "Retrying Import",
-              description: "Attempting to process transactions again...",
-            });
-            return retryImport(fallbackData);
-          }
 
+        if (functionError) {
+          console.error('Import error:', functionError);
           toast({
-            title: "Import Error",
-            description: error.message || "Failed to process import",
+            title: "Error",
+            description: "Failed to import transactions. Please try again.",
             variant: "destructive",
           });
-        })
-        .finally(() => {
-          setIsUploading(false);
+          return;
+        }
+
+        toast({
+          title: "Success",
+          description: `Successfully imported ${rows.length} transactions`,
         });
 
-      // Redirect to dashboard immediately after starting the import
-      navigate("/finance?tab=dashboard");
+        // Invalidate queries to refresh the data
+        await Promise.all([
+          supabase.from('accounting_transactions').select('*'),
+          supabase.from('raw_transaction_imports').select('*')
+        ]);
 
+      };
+
+      reader.onerror = () => {
+        toast({
+          title: "Error",
+          description: "Failed to read file",
+          variant: "destructive",
+        });
+      };
+
+      reader.readAsText(file);
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error('Import error:', error);
       toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload file",
+        title: "Error",
+        description: error.message || "Failed to import transactions",
         variant: "destructive",
       });
+    } finally {
       setIsUploading(false);
     }
   };
@@ -213,18 +94,12 @@ export const TransactionImport = () => {
         onFileUpload={handleFileUpload}
         isUploading={isUploading}
       />
-      
-      {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Processing file...
-        </div>
+      {importedData.length > 0 && (
+        <TransactionPreviewTable 
+          data={importedData}
+          onDataChange={setImportedData}
+        />
       )}
-      
-      <TransactionPreviewTable 
-        data={importedData}
-        onDataChange={setImportedData}
-      />
     </div>
   );
 };
