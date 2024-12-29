@@ -5,41 +5,47 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
-  'Access-Control-Allow-Credentials': 'true'
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      }
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting transaction import process...');
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    // Get and validate request body
-    const text = await req.text();
-    console.log('Raw request body:', text);
-
+    // Parse request body
     let body;
     try {
+      const text = await req.text();
+      console.log('Raw request body:', text);
       body = JSON.parse(text);
     } catch (e) {
       console.error('JSON parse error:', e);
-      throw new Error(`Invalid JSON in request body: ${e.message}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Invalid JSON in request body: ${e.message}`
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    const { fileName } = body;
-    
-    if (!fileName) {
-      throw new Error('No fileName provided');
+    // Validate request body
+    if (!body?.fileName) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing fileName in request body'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -54,7 +60,7 @@ serve(async (req) => {
     // Create import record first
     const { data: importRecord, error: importError } = await supabase.rpc(
       'create_transaction_import',
-      { p_file_name: fileName }
+      { p_file_name: body.fileName }
     );
 
     if (importError) {
@@ -68,23 +74,26 @@ serve(async (req) => {
     // Download file from storage
     const { data: fileData, error: downloadError } = await supabase.storage
       .from('imports')
-      .download(fileName);
+      .download(body.fileName);
 
     if (downloadError) {
       console.error('Storage download error:', downloadError);
       throw downloadError;
     }
 
-    // Convert file to text
+    // Process the file
     const fileText = await fileData.text();
     const lines = fileText.split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
-    
-    // Process each row
     const rows = lines.slice(1).filter(line => line.trim());
-    let processedCount = 0;
-    const errors = [];
 
+    let totalAmount = 0;
+    let validRows = 0;
+    let invalidRows = 0;
+    const issues = [];
+    const suggestions = [];
+
+    // Process each row
     for (const row of rows) {
       try {
         const values = row.split(',').map(v => v.trim());
@@ -93,35 +102,30 @@ serve(async (req) => {
           return obj;
         }, {} as Record<string, string>);
 
-        // Store raw import data with the import_id
+        // Store raw import data
         const { error: rawError } = await supabase
           .from('raw_transaction_imports')
           .insert({
             import_id: importId,
             raw_data: rowData,
-            payment_number: rowData['Payment Number'],
-            payment_description: rowData['Payment Description'],
-            license_plate: rowData['License Plate'],
-            vehicle_details: rowData['Vehicle'],
-            payment_method: rowData['Payment Method']?.toLowerCase(),
             is_valid: true
           });
 
         if (rawError) {
           console.error('Error storing raw import:', rawError);
-          errors.push({
-            row: processedCount + 1,
-            error: rawError.message
-          });
+          invalidRows++;
+          issues.push(`Error storing row: ${rawError.message}`);
         } else {
-          processedCount++;
+          validRows++;
+          const amount = parseFloat(rowData.Amount || '0');
+          if (!isNaN(amount)) {
+            totalAmount += amount;
+          }
         }
       } catch (error) {
         console.error('Error processing row:', error);
-        errors.push({
-          row: processedCount + 1,
-          error: error.message
-        });
+        invalidRows++;
+        issues.push(`Error processing row: ${error.message}`);
       }
     }
 
@@ -129,9 +133,9 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('transaction_imports')
       .update({
-        status: errors.length > 0 ? 'completed_with_errors' : 'completed',
-        records_processed: processedCount,
-        errors: errors.length > 0 ? errors : null
+        status: issues.length > 0 ? 'completed_with_errors' : 'completed',
+        records_processed: validRows,
+        errors: issues.length > 0 ? issues : null
       })
       .eq('id', importId);
 
@@ -143,15 +147,15 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        importId,
-        processed: processedCount,
-        errors: errors
+        totalRows: rows.length,
+        validRows,
+        invalidRows,
+        totalAmount,
+        issues,
+        suggestions
       }),
       {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json'
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
@@ -163,11 +167,8 @@ serve(async (req) => {
         error: error.message
       }),
       {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json'
-        },
-        status: 500
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
