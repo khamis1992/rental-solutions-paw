@@ -13,17 +13,16 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting raw transaction import processing...');
+    console.log('Starting transaction import processing...');
     
-    // Parse request body
-    const { fileName } = await req.json();
+    const { fileName, timestamp } = await req.json();
     
     if (!fileName) {
       throw new Error('Missing fileName in request body');
     }
 
     // Initialize Supabase client
-    const supabaseClient = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
@@ -31,7 +30,7 @@ serve(async (req) => {
     console.log('Downloading file:', fileName);
 
     // Download file from storage
-    const { data: fileData, error: downloadError } = await supabaseClient.storage
+    const { data: fileData, error: downloadError } = await supabaseAdmin.storage
       .from('imports')
       .download(fileName);
 
@@ -40,92 +39,94 @@ serve(async (req) => {
       throw downloadError;
     }
 
-    // Process the file content
-    const fileContent = await fileData.text();
-    const lines = fileContent.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+    const text = await fileData.text();
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    if (lines.length < 2) {
+      throw new Error('File is empty or contains only headers');
+    }
 
     console.log(`Processing ${lines.length} lines from CSV...`);
 
-    // Create import record
-    const importId = crypto.randomUUID();
-    const { error: importError } = await supabaseClient
-      .from('transaction_imports')
-      .insert({
-        id: importId,
-        file_name: fileName,
-        status: 'processing',
-        records_processed: 0
-      });
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+    const requiredHeaders = [
+      'amount',
+      'payment_date',
+      'payment_method',
+      'status',
+      'description',
+      'transaction_id',
+      'lease_id'
+    ];
 
-    if (importError) {
-      console.error('Error creating import record:', importError);
-      throw importError;
+    // Validate headers
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    if (missingHeaders.length > 0) {
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
-    // Get headers from first line
-    const headers = lines[0].split(',').map(h => h.trim());
-    console.log('CSV Headers:', headers);
+    // Process each data row
+    const processedRows = [];
+    const errors = [];
 
-    // Process each line (skip header)
-    let processedCount = 0;
     for (let i = 1; i < lines.length; i++) {
       try {
         const values = lines[i].split(',').map(v => v.trim());
-        const rowData: Record<string, any> = {};
         
-        // Map values to headers
-        headers.forEach((header, index) => {
-          rowData[header] = values[index] || null;
-        });
-
-        console.log(`Processing row ${i}:`, rowData);
-
-        // Store raw data without validation
-        const { error: rawError } = await supabaseClient
-          .from('raw_transaction_imports')
-          .insert({
-            import_id: importId,
-            raw_data: rowData
-          });
-
-        if (rawError) {
-          console.error(`Error storing row ${i}:`, rawError);
+        // Skip rows with incorrect number of columns
+        if (values.length !== headers.length) {
+          errors.push(`Row ${i + 1}: Invalid number of columns`);
           continue;
         }
 
-        processedCount++;
+        const rowData = {};
+        headers.forEach((header, index) => {
+          rowData[header] = values[index];
+        });
+
+        // Store in raw_transaction_imports
+        const { error: insertError } = await supabaseAdmin
+          .from('raw_transaction_imports')
+          .insert({
+            raw_data: rowData,
+            payment_number: rowData['transaction_id'],
+            payment_description: rowData['description'],
+            payment_method: rowData['payment_method'],
+            is_valid: true
+          });
+
+        if (insertError) {
+          console.error(`Error storing row ${i}:`, insertError);
+          errors.push(`Row ${i + 1}: ${insertError.message}`);
+          continue;
+        }
+
+        processedRows.push(rowData);
       } catch (error) {
         console.error(`Error processing row ${i}:`, error);
-        continue;
+        errors.push(`Row ${i + 1}: ${error.message}`);
       }
     }
 
-    // Update import record with results
-    const { error: updateError } = await supabaseClient
-      .from('transaction_imports')
-      .update({
-        status: 'completed',
-        records_processed: processedCount
-      })
-      .eq('id', importId);
-
-    if (updateError) {
-      console.error('Error updating import record:', updateError);
-      throw updateError;
-    }
-
-    console.log(`Import completed. Processed ${processedCount} rows.`);
+    console.log('Import completed:', {
+      totalRows: lines.length - 1,
+      processedRows: processedRows.length,
+      errors: errors.length
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        importId,
         totalRows: lines.length - 1,
-        processedRows: processedCount
+        processedRows: processedRows.length,
+        errors: errors
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        } 
+      }
     );
 
   } catch (error) {
@@ -135,9 +136,12 @@ serve(async (req) => {
         success: false,
         error: error.message
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      { 
+        status: 400,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
   }
