@@ -1,5 +1,6 @@
-import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { Coins, FileWarning, AlertCircle, DollarSign } from "lucide-react";
 
 interface StatsDisplayProps {
   paymentCount: number;
@@ -15,31 +16,27 @@ export function StatsDisplay({
   unassignedAmount 
 }: StatsDisplayProps) {
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="p-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
-          <p className="text-2xl font-bold tracking-tight">{paymentCount}</p>
-        </div>
-      </Card>
-      <Card className="p-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Unassigned Fines</p>
-          <p className="text-2xl font-bold tracking-tight">{unassignedCount}</p>
-        </div>
-      </Card>
-      <Card className="p-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-          <p className="text-2xl font-bold tracking-tight">{formatCurrency(totalAmount)}</p>
-        </div>
-      </Card>
-      <Card className="p-6">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Unassigned Amount</p>
-          <p className="text-2xl font-bold tracking-tight">{formatCurrency(unassignedAmount)}</p>
-        </div>
-      </Card>
+    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <StatsCard
+        title="Total Fines"
+        value={paymentCount.toString()}
+        icon={FileWarning}
+      />
+      <StatsCard
+        title="Unassigned Fines"
+        value={unassignedCount.toString()}
+        icon={AlertCircle}
+      />
+      <StatsCard
+        title="Total Amount"
+        value={formatCurrency(totalAmount)}
+        icon={Coins}
+      />
+      <StatsCard
+        title="Unassigned Amount"
+        value={formatCurrency(unassignedAmount)}
+        icon={DollarSign}
+      />
     </div>
   );
 }
