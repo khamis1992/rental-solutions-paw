@@ -13,15 +13,15 @@ serve(async (req) => {
   }
 
   try {
-    const { validRows, totalRows, totalAmount } = await req.json();
+    const { rows } = await req.json();
     
-    // Validate that validRows is an array
-    if (!Array.isArray(validRows)) {
-      console.error('Invalid validRows format:', validRows);
+    // Validate that rows is an array
+    if (!Array.isArray(rows)) {
+      console.error('Invalid rows format:', rows);
       throw new Error('Valid rows must be an array');
     }
 
-    console.log('Processing payment import with rows:', validRows.length);
+    console.log('Processing payment import with rows:', rows.length);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -32,7 +32,7 @@ serve(async (req) => {
     // Process each valid row
     const { data, error } = await supabaseClient
       .from('financial_imports')
-      .insert(validRows.map((row: any) => ({
+      .insert(rows.map((row: any) => ({
         lease_id: row.lease_id,
         customer_name: row.customer_name,
         amount: row.amount,
@@ -56,7 +56,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully imported ${validRows.length} payments`,
+        message: `Successfully imported ${rows.length} payments`,
         data
       }),
       {

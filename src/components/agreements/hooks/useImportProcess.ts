@@ -39,17 +39,10 @@ export const useImportProcess = () => {
         throw new Error('No valid rows data available');
       }
 
-      // Filter out only the valid rows
-      const validRows = analysisResult.rows.filter((row: any) => !row.error);
-      console.log('Processing valid rows:', validRows);
-
+      // Process the valid rows
       const { error } = await supabase.functions
         .invoke("process-payment-import", {
-          body: { 
-            validRows,
-            totalRows: analysisResult.totalRows,
-            totalAmount: analysisResult.totalAmount
-          }
+          body: { rows: analysisResult.rows }
         });
 
       if (error) throw error;
