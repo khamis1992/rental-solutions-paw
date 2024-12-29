@@ -46,6 +46,15 @@ const validateCSVFile = async (file: File): Promise<boolean> => {
       return false;
     }
 
+    // Validate first data row to ensure format
+    if (lines.length > 1) {
+      const firstRow = lines[1].split(',');
+      if (firstRow.length !== requiredHeaders.length) {
+        toast.error("Data row does not match header count");
+        return false;
+      }
+    }
+
     return true;
   } catch (error) {
     console.error("CSV validation error:", error);
@@ -66,6 +75,8 @@ export const useImportProcess = () => {
       // Validate file first
       const isValid = await validateCSVFile(file);
       if (!isValid) {
+        setIsUploading(false);
+        setIsAnalyzing(false);
         return false;
       }
 

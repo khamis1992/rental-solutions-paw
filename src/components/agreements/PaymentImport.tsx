@@ -13,6 +13,7 @@ export const PaymentImport = () => {
   } = useImportProcess();
 
   const downloadTemplate = () => {
+    // Updated CSV template with all required headers
     const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
                       "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
