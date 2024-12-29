@@ -16,28 +16,30 @@ export const OperationalReportSection = ({
 }: OperationalReportSectionProps) => {
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Operational Reports
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Select onValueChange={value => setSelectedReport(value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select report type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="operational-active">Active Rentals Report</SelectItem>
-              <SelectItem value="operational-maintenance">Maintenance Schedule</SelectItem>
-              <SelectItem value="operational-returns">Upcoming Returns</SelectItem>
-              <SelectItem value="operational-late">Late Returns Report</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button className="w-full" onClick={generateReport}>Generate Report</Button>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Operational Reports
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Select onValueChange={value => setSelectedReport(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select report type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="operational-active">Active Rentals Report</SelectItem>
+                <SelectItem value="operational-maintenance">Maintenance Schedule</SelectItem>
+                <SelectItem value="operational-returns">Upcoming Returns</SelectItem>
+                <SelectItem value="operational-late">Late Returns Report</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button className="w-full" onClick={generateReport}>Generate Report</Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
