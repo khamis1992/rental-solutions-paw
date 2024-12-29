@@ -20,12 +20,12 @@ export const useImportProcess = () => {
       const rows = lines.slice(1)
         .filter(line => line.trim())
         .map(line => {
-          const values = line.split(',').map(v => v.trim());
+          const values = line.split(',');
           const row: Record<string, string> = {};
           
           // Handle cases where we might have more or fewer columns than headers
           headers.forEach((header, index) => {
-            row[header] = values[index] || ''; // Use empty string for missing values
+            row[header] = values[index]?.trim() || ''; // Use empty string for missing values
           });
           
           return row;
@@ -41,7 +41,7 @@ export const useImportProcess = () => {
         .from('raw_payment_imports')
         .insert([
           {
-            raw_data: rows.map(row => ({ ...row })),
+            raw_data: rows,
             is_valid: true
           }
         ])
@@ -60,7 +60,8 @@ export const useImportProcess = () => {
             fileContent,
             headers,
             rows,
-            importId: rawImport.id
+            importId: rawImport.id,
+            forceImport: true // Add force import flag
           }
         });
 
@@ -105,7 +106,10 @@ export const useImportProcess = () => {
 
       const { data, error } = await supabase.functions
         .invoke('process-payment-import', {
-          body: { analysisResult }
+          body: { 
+            analysisResult,
+            forceImport: true // Add force import flag
+          }
         });
 
       if (error) {
