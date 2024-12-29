@@ -72,10 +72,30 @@ serve(async (req) => {
 
     console.log('Headers validated successfully');
 
+    // First, create the transaction import record
+    const importId = crypto.randomUUID();
+    const { error: importError } = await supabaseClient
+      .from('transaction_imports')
+      .insert({
+        id: importId,
+        file_name: fileName,
+        status: 'pending',
+        records_processed: 0,
+        auto_assigned: false
+      });
+
+    if (importError) {
+      console.error('Error creating transaction import:', importError);
+      throw importError;
+    }
+
+    console.log('Created transaction import record with ID:', importId);
+
     // Process rows
     const validRows = [];
     const errors = [];
     let totalAmount = 0;
+    let recordsProcessed = 0;
 
     for (let i = 1; i < lines.length; i++) {
       try {
@@ -99,7 +119,7 @@ serve(async (req) => {
         const { error: insertError } = await supabaseClient
           .from('raw_transaction_imports')
           .insert({
-            import_id: crypto.randomUUID(),
+            import_id: importId,
             raw_data: rowData,
             is_valid: true,
             payment_method: rowData.Payment_Method,
@@ -115,6 +135,7 @@ serve(async (req) => {
 
         validRows.push(rowData);
         totalAmount += Number(rowData.Amount);
+        recordsProcessed++;
 
       } catch (error) {
         console.error(`Error processing row ${i}:`, error);
@@ -126,10 +147,26 @@ serve(async (req) => {
       }
     }
 
+    // Update the transaction import record with results
+    const { error: updateError } = await supabaseClient
+      .from('transaction_imports')
+      .update({
+        status: errors.length > 0 ? 'completed_with_errors' : 'completed',
+        records_processed: recordsProcessed,
+        errors: errors.length > 0 ? errors : null
+      })
+      .eq('id', importId);
+
+    if (updateError) {
+      console.error('Error updating transaction import:', updateError);
+      throw updateError;
+    }
+
     console.log('Processing complete:', {
       totalRows: lines.length - 1,
       validRows: validRows.length,
-      errorCount: errors.length
+      errorCount: errors.length,
+      importId
     });
 
     return new Response(
@@ -139,6 +176,7 @@ serve(async (req) => {
         validRows: validRows.length,
         invalidRows: errors.length,
         totalAmount,
+        importId,
         errors: errors.length > 0 ? errors : null,
         suggestions: errors.length > 0 ? [
           'Review and correct invalid rows before proceeding',
