@@ -6,8 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export const PaymentImport = () => {
+  const { toast } = useToast();
   const {
     isUploading,
     isAnalyzing,
@@ -55,7 +57,11 @@ export const PaymentImport = () => {
       refetch(); // Refresh the table data
     } catch (error: any) {
       console.error('Import error:', error);
-      toast.error(error.message || 'Failed to import file');
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to import file',
+        variant: "destructive",
+      });
     }
   };
 
