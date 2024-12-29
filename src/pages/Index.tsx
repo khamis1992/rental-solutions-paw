@@ -1,7 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Suspense, lazy } from "react";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
-import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
@@ -37,7 +36,6 @@ const SystemChatbot = lazyLoadComponent(
 
 const Index = () => {
   usePerformanceMonitoring();
-  useDashboardSubscriptions();
 
   return (
     <DashboardLayout>
