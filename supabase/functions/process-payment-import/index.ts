@@ -16,7 +16,16 @@ serve(async (req) => {
     console.log('Processing import with analysis result:', analysisResult);
 
     if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
-      throw new Error('Valid rows must be an array');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Valid rows must be an array',
+          received: analysisResult
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
     const supabaseClient = createClient(

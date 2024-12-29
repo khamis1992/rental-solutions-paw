@@ -89,7 +89,6 @@ export const PaymentImport = () => {
         </div>
       )}
 
-      {/* Display imported transactions */}
       {importedData && importedData.length > 0 && (
         <Card>
           <CardHeader>

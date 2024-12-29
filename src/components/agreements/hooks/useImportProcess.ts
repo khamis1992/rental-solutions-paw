@@ -16,17 +16,38 @@ export const useImportProcess = () => {
       const lines = fileContent.split('\n').map(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim());
       
+      // Create raw data array
+      const rows = lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim());
+        return headers.reduce((obj, header, index) => {
+          obj[header] = values[index];
+          return obj;
+        }, {} as Record<string, string>);
+      });
+
+      // Log the payload for debugging
+      console.log('Sending payload to analyze-payment-import:', {
+        fileContent,
+        headers,
+        totalRows: lines.length - 1,
+        rows
+      });
+      
       // Send raw data for analysis
       const { data: analysis, error: analysisError } = await supabase.functions
         .invoke('analyze-payment-import', {
           body: { 
             fileContent,
             headers,
-            totalRows: lines.length - 1
+            totalRows: lines.length - 1,
+            rows
           }
         });
 
-      if (analysisError) throw analysisError;
+      if (analysisError) {
+        console.error('Analysis error:', analysisError);
+        throw analysisError;
+      }
       
       console.log('Analysis completed:', analysis);
       setAnalysisResult(analysis);
@@ -44,16 +65,23 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
-      if (!analysisResult) {
-        throw new Error('No analysis result available');
+      if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
+        throw new Error('Invalid analysis result: rows must be an array');
       }
+
+      console.log('Implementing changes with payload:', {
+        analysisResult
+      });
 
       const { data, error } = await supabase.functions
         .invoke('process-payment-import', {
           body: { analysisResult }
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Implementation error:', error);
+        throw error;
+      }
 
       console.log('Import processing successful:', data);
       toast.success(`Successfully imported ${data.processed} records`);
