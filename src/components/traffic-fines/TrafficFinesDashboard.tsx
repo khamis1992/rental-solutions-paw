@@ -22,6 +22,12 @@ export function TrafficFinesDashboard() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex flex-col space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Traffic Fines Management</h1>
+          <div className="flex items-center gap-3">
+            <ManualTrafficFineDialog onFineAdded={() => refetch()} />
+          </div>
+        </div>
         <ErrorBoundary>
           <TrafficFineStats paymentCount={finesCount || 0} />
         </ErrorBoundary>
