@@ -13,11 +13,7 @@ serve(async (req) => {
 
   try {
     const { analysisResult } = await req.json();
-    console.log('Processing import with analysis result:', {
-      totalRows: analysisResult?.validRows?.length,
-      totalInvalid: analysisResult?.invalidRows?.length
-    });
-
+    
     if (!analysisResult?.validRows || !Array.isArray(analysisResult.validRows)) {
       return new Response(
         JSON.stringify({ 
@@ -30,6 +26,11 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Processing import with analysis result:', {
+      validRowsCount: analysisResult.validRows.length,
+      totalInvalid: analysisResult.invalidRows?.length || 0
+    });
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',

@@ -17,13 +17,15 @@ export const useImportProcess = () => {
       const headers = lines[0].split(',').map(h => h.trim());
       
       // Create raw data array
-      const rows = lines.slice(1).filter(line => line.trim()).map(line => {
-        const values = line.split(',').map(v => v.trim());
-        return headers.reduce((obj, header, index) => {
-          obj[header] = values[index];
-          return obj;
-        }, {} as Record<string, string>);
-      });
+      const rows = lines.slice(1)
+        .filter(line => line.trim())
+        .map(line => {
+          const values = line.split(',').map(v => v.trim());
+          return headers.reduce((obj, header, index) => {
+            obj[header] = values[index];
+            return obj;
+          }, {} as Record<string, string>);
+        });
 
       console.log('Sending payload to analyze-payment-import:', {
         totalRows: rows.length,

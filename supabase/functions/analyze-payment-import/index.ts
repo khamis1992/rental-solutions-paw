@@ -8,7 +8,7 @@ const corsHeaders = {
 interface ValidationResult {
   isValid: boolean;
   errors: string[];
-  sanitizedData?: any;
+  data?: Record<string, any>;
 }
 
 function validateRow(row: any, headers: string[]): ValidationResult {
@@ -17,7 +17,7 @@ function validateRow(row: any, headers: string[]): ValidationResult {
   
   // Check column count
   if (Object.keys(row).length !== expectedColumnCount) {
-    errors.push(`Expected ${expectedColumnCount} columns but found ${Object.keys(row).length}`);
+    errors.push(`Invalid number of columns`);
     return { isValid: false, errors };
   }
 
@@ -34,19 +34,17 @@ function validateRow(row: any, headers: string[]): ValidationResult {
     return { isValid: false, errors };
   }
 
-  // Sanitize and transform data
-  const sanitizedData = {
-    amount: parseFloat(row.amount),
-    payment_date: paymentDate.toISOString(),
-    payment_method: row.payment_method || null,
-    description: row.description || null,
-    status: 'pending'
-  };
-
+  // Return sanitized data
   return {
     isValid: true,
     errors: [],
-    sanitizedData
+    data: {
+      amount: parseFloat(row.amount),
+      payment_date: paymentDate.toISOString(),
+      payment_method: row.payment_method || null,
+      description: row.description || null,
+      status: 'pending'
+    }
   };
 }
 
@@ -74,9 +72,9 @@ serve(async (req) => {
     rows.forEach((row, index) => {
       const validation = validateRow(row, headers);
       
-      if (validation.isValid && validation.sanitizedData) {
-        validRows.push(validation.sanitizedData);
-        totalAmount += validation.sanitizedData.amount;
+      if (validation.isValid && validation.data) {
+        validRows.push(validation.data);
+        totalAmount += validation.data.amount;
       } else {
         invalidRows.push({
           row: index + 1,
@@ -87,30 +85,20 @@ serve(async (req) => {
 
     // Generate suggestions based on common errors
     const suggestions = [];
-    const columnErrors = invalidRows.filter(r => 
-      r.errors.some(e => e.includes('columns'))
-    ).length;
-    const amountErrors = invalidRows.filter(r => 
-      r.errors.some(e => e.includes('amount'))
-    ).length;
-    const dateErrors = invalidRows.filter(r => 
-      r.errors.some(e => e.includes('date'))
-    ).length;
-
-    if (columnErrors > 0) {
-      suggestions.push(`Fix ${columnErrors} rows with incorrect column counts`);
-    }
-    if (amountErrors > 0) {
-      suggestions.push(`Correct ${amountErrors} rows with invalid amount formats`);
-    }
-    if (dateErrors > 0) {
-      suggestions.push(`Update ${dateErrors} rows with invalid date formats`);
+    if (invalidRows.length > 0) {
+      suggestions.push("Please review and correct the errors before proceeding");
+      if (invalidRows.some(r => r.errors.includes('Invalid amount format'))) {
+        suggestions.push("Ensure all amounts are valid numbers");
+      }
+      if (invalidRows.some(r => r.errors.includes('Invalid payment date format'))) {
+        suggestions.push("Verify date formats are correct");
+      }
     }
 
     console.log('Analysis complete:', {
       totalRows: rows.length,
-      validRows: validRows.length,
-      invalidRows: invalidRows.length,
+      validRowsCount: validRows.length,
+      invalidRowsCount: invalidRows.length,
       totalAmount
     });
 
@@ -118,14 +106,15 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         totalRows: rows.length,
-        validRows: validRows,
+        validRows: validRows, // Now this is an array of sanitized data
         invalidRows: invalidRows,
         totalAmount,
         suggestions,
         errorSummary: {
-          columnErrors,
-          amountErrors,
-          dateErrors
+          totalErrors: invalidRows.length,
+          columnErrors: invalidRows.filter(r => r.errors.includes('Invalid number of columns')).length,
+          amountErrors: invalidRows.filter(r => r.errors.includes('Invalid amount format')).length,
+          dateErrors: invalidRows.filter(r => r.errors.includes('Invalid payment date format')).length
         }
       }),
       {
