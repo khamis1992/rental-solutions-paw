@@ -1,10 +1,25 @@
-import { useAuthRedirect } from "@/components/auth/useAuthRedirect";
+import { useState, useEffect } from "react";
 import { AuthContainer } from "@/components/auth/AuthContainer";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
-  const { isInitializing, isLoading } = useAuthRedirect();
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-  if (isInitializing || isLoading) {
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/");
+      }
+      setIsLoading(false);
+    };
+
+    checkSession();
+  }, [navigate]);
+
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
