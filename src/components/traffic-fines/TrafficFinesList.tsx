@@ -118,3 +118,6 @@ export function TrafficFinesList() {
     </Card>
   );
 }
+
+// Make sure we're exporting the component with both names for backward compatibility
+export const TrafficFineTable = TrafficFinesList;
