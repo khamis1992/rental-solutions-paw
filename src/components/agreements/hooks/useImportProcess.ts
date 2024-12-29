@@ -34,8 +34,13 @@ export const useImportProcess = () => {
     try {
       console.log('Implementing changes with analysis result:', analysisResult);
 
-      // Format the valid rows from the analysis result
-      const validRows = analysisResult.validRows || [];
+      // Make sure we have the rows data
+      if (!analysisResult || !analysisResult.rows || !Array.isArray(analysisResult.rows)) {
+        throw new Error('No valid rows data available');
+      }
+
+      // Filter out only the valid rows
+      const validRows = analysisResult.rows.filter((row: any) => !row.error);
       console.log('Processing valid rows:', validRows);
 
       const { error } = await supabase.functions

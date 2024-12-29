@@ -17,6 +17,7 @@ serve(async (req) => {
     
     // Validate that validRows is an array
     if (!Array.isArray(validRows)) {
+      console.error('Invalid validRows format:', validRows);
       throw new Error('Valid rows must be an array');
     }
 
