@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { rows } = await req.json();
+    const { rows, batchSize = 50 } = await req.json();
     
     // Validate that rows is an array
     if (!Array.isArray(rows)) {
@@ -30,7 +30,6 @@ serve(async (req) => {
     );
 
     // Process rows in batches
-    const batchSize = 50;
     const results = [];
     const errors = [];
 
@@ -38,32 +37,40 @@ serve(async (req) => {
       const batch = rows.slice(i, i + batchSize);
       console.log(`Processing batch ${i / batchSize + 1}:`, batch.length, 'rows');
 
-      const { data, error } = await supabaseClient
-        .from('financial_imports')
-        .insert(batch.map((row: any) => ({
-          lease_id: row.lease_id,
-          customer_name: row.customer_name,
-          amount: row.amount,
-          license_plate: row.license_plate,
-          vehicle: row.vehicle,
-          payment_date: row.payment_date,
-          payment_method: row.payment_method,
-          transaction_id: row.transaction_id,
-          description: row.description,
-          type: row.type,
-          status: row.status
-        })))
-        .select();
+      try {
+        const { data, error } = await supabaseClient
+          .from('financial_imports')
+          .insert(batch.map((row: any) => ({
+            lease_id: row.lease_id,
+            customer_name: row.customer_name,
+            amount: row.amount,
+            license_plate: row.license_plate,
+            vehicle: row.vehicle,
+            payment_date: row.payment_date,
+            payment_method: row.payment_method,
+            transaction_id: row.transaction_id,
+            description: row.description,
+            type: row.type,
+            status: row.status
+          })))
+          .select();
 
-      if (error) {
-        console.error('Batch insert error:', error);
+        if (error) {
+          console.error('Batch insert error:', error);
+          errors.push({
+            batch: i / batchSize + 1,
+            error: error.message,
+            details: error.details
+          });
+        } else {
+          results.push(...(data || []));
+        }
+      } catch (batchError) {
+        console.error('Batch processing error:', batchError);
         errors.push({
           batch: i / batchSize + 1,
-          error: error.message,
-          details: error.details
+          error: batchError.message
         });
-      } else {
-        results.push(...(data || []));
       }
     }
 

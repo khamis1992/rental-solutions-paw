@@ -32,42 +32,48 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
-      console.log('Implementing changes with analysis result:', analysisResult);
+      console.log('Starting implementation with analysis result:', analysisResult);
 
-      // Make sure we have the rows data
       if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
-        throw new Error('No valid rows data available');
+        throw new Error('Invalid data format: rows must be an array');
       }
 
       // Format the rows data properly
       const formattedRows = analysisResult.rows.map((row: any) => {
-        // Ensure all required fields are present with proper types
-        const formattedRow = {
+        // Convert and validate each field
+        const amount = typeof row.amount === 'string' ? parseFloat(row.amount) : row.amount;
+        if (isNaN(amount)) {
+          throw new Error(`Invalid amount value: ${row.amount}`);
+        }
+
+        return {
           lease_id: row.lease_id || null,
-          customer_name: String(row.customer_name || ''),
-          amount: typeof row.amount === 'number' ? row.amount : parseFloat(row.amount) || 0,
-          license_plate: String(row.license_plate || ''),
-          vehicle: String(row.vehicle || ''),
+          customer_name: String(row.customer_name || '').trim(),
+          amount: amount,
+          license_plate: String(row.license_plate || '').trim(),
+          vehicle: String(row.vehicle || '').trim(),
           payment_date: row.payment_date || null,
-          payment_method: String(row.payment_method || '').toLowerCase(),
+          payment_method: String(row.payment_method || '').toLowerCase().trim(),
           transaction_id: row.transaction_id || null,
-          description: String(row.description || ''),
-          type: String(row.type || '').toUpperCase(),
-          status: String(row.status || '').toLowerCase()
+          description: String(row.description || '').trim(),
+          type: String(row.type || '').toUpperCase().trim(),
+          status: String(row.status || 'pending').toLowerCase().trim()
         };
-        return formattedRow;
       });
 
       console.log('Formatted rows for import:', formattedRows);
 
-      if (!Array.isArray(formattedRows) || formattedRows.length === 0) {
+      if (formattedRows.length === 0) {
         throw new Error('No valid rows to import');
       }
 
       // Process the valid rows
       const { data, error } = await supabase.functions
         .invoke("process-payment-import", {
-          body: { rows: formattedRows }
+          body: { 
+            rows: formattedRows,
+            batchSize: 50
+          }
         });
 
       if (error) {
@@ -76,7 +82,7 @@ export const useImportProcess = () => {
       }
 
       console.log('Import processing successful:', data);
-      toast.success("Transactions imported successfully");
+      toast.success(`Successfully imported ${formattedRows.length} records`);
       setAnalysisResult(null);
     } catch (error: any) {
       console.error("Implementation error:", error);
