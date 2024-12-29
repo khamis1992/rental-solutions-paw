@@ -12,20 +12,31 @@ export const useImportProcess = () => {
     setIsAnalyzing(true);
     try {
       const fileName = `payments/${Date.now()}_${file.name}`;
+      
+      console.log('Starting file upload:', fileName);
+      
+      // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from("imports")
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: analysisData, error: analysisError } = await supabase.functions
-        .invoke("analyze-payment-import", {
-          body: { fileName }
+      console.log('File uploaded successfully, processing import...');
+
+      // Process the import using Edge Function
+      const { data, error: processError } = await supabase.functions
+        .invoke("process-transaction-import", {
+          body: { fileName },
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
-      if (analysisError) throw analysisError;
+      if (processError) throw processError;
 
-      setAnalysisResult(analysisData);
+      console.log('Import processed successfully:', data);
+      setAnalysisResult(data);
       return true;
     } catch (error: any) {
       console.error("Import error:", error);
