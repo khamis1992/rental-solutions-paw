@@ -15,14 +15,18 @@ serve(async (req) => {
   try {
     console.log('Starting payment import processing...');
     
-    // Parse the JSON body
     const { analysisResult } = await req.json();
     
     if (!analysisResult) {
       throw new Error('Missing analysis result data');
     }
 
-    console.log('Processing analysis result:', analysisResult);
+    console.log('Received analysis result:', analysisResult);
+
+    // Validate that validRows is an array
+    if (!Array.isArray(analysisResult.validRows)) {
+      throw new Error('Valid rows must be an array');
+    }
 
     // Initialize Supabase client
     const supabaseClient = createClient(
