@@ -1,6 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PerformanceInsights } from "@/components/performance/PerformanceInsights";
 import { Car, Users, FileSpreadsheet, Brain, Code } from "lucide-react";
 import { useState } from "react";
 import { FleetReportSection } from "@/components/reports/sections/FleetReportSection";
@@ -8,20 +7,9 @@ import { CustomerReportSection } from "@/components/reports/sections/CustomerRep
 import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
 import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDashboard";
-import { toast } from "sonner";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState("");
-
-  const generateReport = () => {
-    if (!selectedReport) {
-      toast.error("Please select a report type first");
-      return;
-    }
-    
-    toast.success(`Generating ${selectedReport} report...`);
-    console.log("Generating report:", selectedReport);
-  };
 
   return (
     <DashboardLayout>
@@ -33,7 +21,7 @@ const Reports = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="fleet" className="space-y-6">
+        <Tabs defaultValue="fleet" className="space-y-10">
           <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
             <TabsTrigger value="fleet" className="flex items-center gap-2 text-base font-medium">
               <Car className="h-4 w-4" />
@@ -61,12 +49,12 @@ const Reports = () => {
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-6">
+          <div>
             <TabsContent value="fleet">
               <FleetReportSection
                 selectedReport={selectedReport}
                 setSelectedReport={setSelectedReport}
-                generateReport={generateReport}
+                generateReport={() => {}}
               />
             </TabsContent>
 
@@ -74,7 +62,7 @@ const Reports = () => {
               <CustomerReportSection
                 selectedReport={selectedReport}
                 setSelectedReport={setSelectedReport}
-                generateReport={generateReport}
+                generateReport={() => {}}
               />
             </TabsContent>
 
@@ -82,7 +70,7 @@ const Reports = () => {
               <OperationalReportSection
                 selectedReport={selectedReport}
                 setSelectedReport={setSelectedReport}
-                generateReport={generateReport}
+                generateReport={() => {}}
               />
             </TabsContent>
 
