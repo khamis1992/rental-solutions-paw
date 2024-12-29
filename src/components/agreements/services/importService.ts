@@ -8,9 +8,6 @@ export const analyzeImportFile = async (file: File) => {
   const { data: aiAnalysis, error: analysisError } = await supabase.functions
     .invoke('analyze-payment-import', {
       body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
     });
 
   if (analysisError) throw analysisError;
