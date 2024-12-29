@@ -2,12 +2,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface ValidationError {
-  row: number;
-  message: string;
-  data?: any;
-}
-
 const validateCSVFile = async (file: File): Promise<boolean> => {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
   if (file.size > maxFileSize) {
