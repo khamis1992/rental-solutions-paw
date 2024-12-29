@@ -52,7 +52,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex justify-between items-center">
         <AdvancedVehicleFilters onFilterChange={setFilters} />
         <div className="flex gap-2">
@@ -75,26 +75,26 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         </div>
       </div>
 
-      {viewMode === 'grid' ? (
-        <VehicleGrid 
-          vehicles={currentVehicles} 
-          onVehicleClick={handleVehicleClick}
-        />
-      ) : (
-        <VehicleListView 
-          vehicles={currentVehicles} 
-          onVehicleClick={handleVehicleClick}
-        />
-      )}
+      <div className={viewMode === 'grid' ? 'grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : ''}>
+        {viewMode === 'grid' ? (
+          <VehicleGrid 
+            vehicles={currentVehicles} 
+            onVehicleClick={handleVehicleClick}
+          />
+        ) : (
+          <VehicleListView 
+            vehicles={currentVehicles} 
+            onVehicleClick={handleVehicleClick}
+          />
+        )}
+      </div>
 
       {vehicles.length > ITEMS_PER_PAGE && (
-        <div className="mt-4 flex justify-center">
-          <VehicleTablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
+        <VehicleTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );
