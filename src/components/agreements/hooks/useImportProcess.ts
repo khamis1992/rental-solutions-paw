@@ -86,6 +86,7 @@ export const useImportProcess = () => {
 
       console.log('Starting file upload with payload:', {
         fileName: file.name,
+        fileContent: fileContent,  // Make sure fileContent is included
         headers: headers,
         totalRows: lines.length - 1
       });
@@ -95,7 +96,7 @@ export const useImportProcess = () => {
         .invoke('process-transaction-import', {
           body: { 
             fileName: file.name,
-            fileContent: fileContent,
+            fileContent: fileContent,  // Include fileContent in the payload
             headers: headers,
             totalRows: lines.length - 1
           }

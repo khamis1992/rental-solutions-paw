@@ -27,7 +27,8 @@ serve(async (req) => {
       console.log('Request body received:', {
         fileName: body.fileName,
         headersReceived: body.headers,
-        totalRows: body.totalRows
+        totalRows: body.totalRows,
+        hasFileContent: !!body.fileContent
       });
     } catch (error) {
       console.error('Error parsing request body:', error);
