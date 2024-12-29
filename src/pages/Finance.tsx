@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
 import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
@@ -7,17 +6,6 @@ import { TransactionImport } from "@/components/finance/transactions/Transaction
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Finance = () => {
-  // Clear importInProgress when component unmounts or when import is complete
-  useEffect(() => {
-    return () => {
-      const importInProgress = sessionStorage.getItem('importInProgress');
-      if (importInProgress === 'completed') {
-        console.log('Clearing import progress state');
-        sessionStorage.removeItem('importInProgress');
-      }
-    };
-  }, []);
-
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6">

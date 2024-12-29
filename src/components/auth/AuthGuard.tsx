@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuthState } from "@/hooks/use-auth-state";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AuthGuardProps {
@@ -8,14 +8,14 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { isAuthenticated, isLoading } = useAuthState();
+  const { session, isLoading } = useSessionContext();
   const location = useLocation();
 
   if (isLoading) {
     return <Skeleton className="h-screen w-screen" />;
   }
 
-  if (!isAuthenticated) {
+  if (!session) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 

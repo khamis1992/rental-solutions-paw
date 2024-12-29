@@ -1,14 +1,23 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuthRedirect } from "./useAuthRedirect";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 
 export const AuthContainer = () => {
-  const { isInitializing, isLoading } = useAuthRedirect();
+  const navigate = useNavigate();
+  const { session, isLoading } = useSessionContext();
 
-  if (isInitializing || isLoading) {
+  useEffect(() => {
+    if (session) {
+      navigate('/');
+    }
+  }, [session, navigate]);
+
+  if (isLoading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <div className="m-auto w-full max-w-md">
