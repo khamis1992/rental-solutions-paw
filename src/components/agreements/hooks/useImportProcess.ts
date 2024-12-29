@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { analyzeImportFile, processImportFile } from "../services/importService";
 
 export const useImportProcess = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -12,12 +11,25 @@ export const useImportProcess = () => {
     setIsUploading(true);
     setIsAnalyzing(true);
     try {
-      // Analyze the file first
-      const analysis = await analyzeImportFile(file);
-      console.log('File analysis completed:', analysis);
+      // Read file content
+      const fileContent = await file.text();
+      const lines = fileContent.split('\n').map(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim());
       
+      // Send raw data for analysis
+      const { data: analysis, error: analysisError } = await supabase.functions
+        .invoke('analyze-payment-import', {
+          body: { 
+            fileContent,
+            headers,
+            totalRows: lines.length - 1
+          }
+        });
+
+      if (analysisError) throw analysisError;
+      
+      console.log('Analysis completed:', analysis);
       setAnalysisResult(analysis);
-      
       return true;
     } catch (error: any) {
       console.error("Import error:", error);
@@ -32,10 +44,8 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
-      console.log('Starting implementation with analysis result:', analysisResult);
-
-      if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
-        throw new Error('Invalid data format: rows must be an array');
+      if (!analysisResult) {
+        throw new Error('No analysis result available');
       }
 
       const { data, error } = await supabase.functions
@@ -43,10 +53,7 @@ export const useImportProcess = () => {
           body: { analysisResult }
         });
 
-      if (error) {
-        console.error('Import processing error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       console.log('Import processing successful:', data);
       toast.success(`Successfully imported ${data.processed} records`);
