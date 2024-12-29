@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 
 export const analyzeImportFile = async (file: File) => {
   console.log('Starting file analysis...');
@@ -33,6 +32,21 @@ export const processImportFile = async (file: File, fileName: string) => {
   }
 
   console.log('File uploaded successfully:', fileName);
+  
+  // Process the file using Edge Function
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('fileName', fileName);
+  
+  const { error: processError } = await supabase.functions
+    .invoke('process-payment-import', {
+      body: formData
+    });
+
+  if (processError) {
+    console.error('Processing error:', processError);
+    throw processError;
+  }
 };
 
 export const createImportLog = async (fileName: string) => {
