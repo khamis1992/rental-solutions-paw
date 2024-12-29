@@ -2,10 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Allow all origins for development
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400', // 24 hours cache for preflight requests
+  'Access-Control-Max-Age': '86400',
 };
 
 serve(async (req) => {
@@ -20,9 +20,11 @@ serve(async (req) => {
   try {
     console.log('Starting transaction import processing...');
     
-    const { fileName, timestamp } = await req.json();
-    
-    if (!fileName) {
+    // Parse the request body
+    const body = await req.json();
+    console.log('Request body:', body);
+
+    if (!body.fileName) {
       throw new Error('Missing fileName in request body');
     }
 
@@ -32,12 +34,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Downloading file:', fileName);
+    console.log('Downloading file:', body.fileName);
 
     // Download file from storage
     const { data: fileData, error: downloadError } = await supabaseAdmin.storage
       .from('imports')
-      .download(fileName);
+      .download(body.fileName);
 
     if (downloadError) {
       console.error('Storage download error:', downloadError);
