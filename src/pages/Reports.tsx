@@ -22,30 +22,34 @@ const Reports = () => {
         </div>
 
         <Tabs defaultValue="fleet" className="space-y-10">
-          <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
-            <TabsTrigger value="fleet" className="flex items-center gap-2 text-base font-medium">
-              <Car className="h-4 w-4" />
-              Fleet Reports
-            </TabsTrigger>
-            <TabsTrigger value="customer" className="flex items-center gap-2 text-base font-medium">
-              <Users className="h-4 w-4" />
-              Customer Reports
-            </TabsTrigger>
-            <TabsTrigger value="operational" className="flex items-center gap-2 text-base font-medium">
-              <FileSpreadsheet className="h-4 w-4" />
-              Operational Reports
-            </TabsTrigger>
-            <TabsTrigger value="financial" className="flex items-center gap-2 text-base font-medium">
-              <FileSpreadsheet className="h-4 w-4" />
-              Financial Reports
-            </TabsTrigger>
-            <TabsTrigger value="code-analysis" className="flex items-center gap-2 text-base font-medium">
-              <Code className="h-4 w-4" />
-              Code Analysis
-            </TabsTrigger>
-          </TabsList>
+          <div className="bg-background sticky top-0 z-10 pb-4">
+            <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
+              <TabsTrigger value="fleet" className="flex items-center gap-2 text-base font-medium">
+                <Car className="h-4 w-4" />
+                Fleet Reports
+              </TabsTrigger>
+              <TabsTrigger value="customer" className="flex items-center gap-2 text-base font-medium">
+                <Users className="h-4 w-4" />
+                Customer Reports
+              </TabsTrigger>
+              <TabsTrigger value="operational" className="flex items-center gap-2 text-base font-medium">
+                <FileSpreadsheet className="h-4 w-4" />
+                Operational Reports
+              </TabsTrigger>
+              <TabsTrigger value="financial" className="flex items-center gap-2 text-base font-medium">
+                <FileSpreadsheet className="h-4 w-4" />
+                Financial Reports
+              </TabsTrigger>
+              <TabsTrigger value="code-analysis" className="flex items-center gap-2 text-base font-medium">
+                <Code className="h-4 w-4" />
+                Code Analysis
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <div>
+          <hr className="border-t border-muted-foreground/20" />
+
+          <div className="mt-16">
             <TabsContent value="fleet">
               <FleetReportSection
                 selectedReport={selectedReport}
