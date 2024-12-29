@@ -1,80 +1,43 @@
-import { createBrowserRouter } from "react-router-dom";
-import Finance from "@/pages/Finance";
-import Dashboard from "@/pages/Dashboard";
-import Vehicles from "@/pages/Vehicles";
-import Customers from "@/pages/Customers";
-import Agreements from "@/pages/Agreements";
-import Maintenance from "@/pages/Maintenance";
-import Reports from "@/pages/Reports";
-import Settings from "@/pages/Settings";
-import RemainingAmount from "@/pages/RemainingAmount";
-import { AuthLayout } from "@/components/layout/AuthLayout";
-import { Login } from "@/pages/auth/Login";
-import { Register } from "@/pages/auth/Register";
-import { ForgotPassword } from "@/pages/auth/ForgotPassword";
-import { ResetPassword } from "@/pages/auth/ResetPassword";
-import { VerifyEmail } from "@/pages/auth/VerifyEmail";
+import { lazy, LazyExoticComponent, ComponentType } from "react";
 
-export const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Dashboard />,
-  },
-  {
-    path: "/finance",
-    element: <Finance />,
-  },
-  {
-    path: "/vehicles",
-    element: <Vehicles />,
-  },
-  {
-    path: "/customers",
-    element: <Customers />,
-  },
-  {
-    path: "/agreements",
-    element: <Agreements />,
-  },
-  {
-    path: "/maintenance",
-    element: <Maintenance />,
-  },
-  {
-    path: "/reports",
-    element: <Reports />,
-  },
-  {
-    path: "/settings",
-    element: <Settings />,
-  },
-  {
-    path: "/remaining-amount",
-    element: <RemainingAmount />,
-  },
-  {
-    element: <AuthLayout />,
-    children: [
-      {
-        path: "/login",
-        element: <Login />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
-        path: "/forgot-password",
-        element: <ForgotPassword />,
-      },
-      {
-        path: "/reset-password",
-        element: <ResetPassword />,
-      },
-      {
-        path: "/verify-email",
-        element: <VerifyEmail />,
-      },
-    ],
-  },
-]);
+interface RouteComponent {
+  [key: string]: LazyExoticComponent<ComponentType<any>>;
+}
+
+const routes: RouteComponent = {
+  Auth: lazy(() => import("@/pages/Auth")),
+  Dashboard: lazy(() => import("@/pages/Index")),
+  Vehicles: lazy(() => import("@/pages/Vehicles")),
+  VehicleDetails: lazy(() => import("@/components/vehicles/VehicleDetails")),
+  Customers: lazy(() => import("@/pages/Customers")),
+  CustomerProfile: lazy(() => import("@/pages/CustomerProfile")),
+  Agreements: lazy(() => import("@/pages/Agreements")),
+  Settings: lazy(() => import("@/pages/Settings")),
+  Maintenance: lazy(() => import("@/pages/Maintenance")),
+  TrafficFines: lazy(() => import("@/pages/TrafficFines")),
+  Reports: lazy(() => import("@/pages/Reports")),
+  Finance: lazy(() => import("@/pages/Finance")),
+  Help: lazy(() => import("@/pages/Help")),
+  Legal: lazy(() => import("@/pages/Legal")),
+  Audit: lazy(() => import("@/pages/Audit")),
+  RemainingAmount: lazy(() => import("@/pages/RemainingAmount"))
+};
+
+export const {
+  Auth,
+  Dashboard,
+  Vehicles,
+  VehicleDetails,
+  Customers,
+  CustomerProfile,
+  Agreements,
+  Settings,
+  Maintenance,
+  TrafficFines,
+  Reports,
+  Finance,
+  Help,
+  Legal,
+  Audit,
+  RemainingAmount
+} = routes;
