@@ -1,82 +1,84 @@
-export const requiredHeaders = [
-  'Amount',
-  'Payment_Date',
-  'Payment_Method',
-  'Status',
-  'Description',
-  'Transaction_ID',
-  'Lease_ID'
-];
+export const validateCSVStructure = (headers: string[]) => {
+  const requiredHeaders = [
+    'Lease_ID',
+    'Customer_Name',
+    'Amount',
+    'License_Plate',
+    'Vehicle',
+    'Payment_Date',
+    'Payment_Method',
+    'Transaction_ID',
+    'Description',
+    'Type',
+    'Status'
+  ];
 
-export interface ValidationResult {
-  isValid: boolean;
-  errors: Array<{
-    row: number;
-    message: string;
-    data?: any;
-  }>;
-}
-
-export const validateCSVStructure = (headers: string[]): { 
-  isValid: boolean; 
-  missingHeaders: string[];
-} => {
-  const normalizedHeaders = headers.map(h => h.trim());
   const missingHeaders = requiredHeaders.filter(
-    required => !normalizedHeaders.includes(required)
+    header => !headers.includes(header)
   );
-  
+
   return {
     isValid: missingHeaders.length === 0,
-    missingHeaders
+    missingHeaders,
+    headers
   };
 };
 
-export const validateRow = (
-  row: string[], 
-  headers: string[], 
-  rowIndex: number
-): ValidationResult => {
+export const validateRow = (values: string[], headers: string[], rowIndex: number) => {
   const errors = [];
   const rowData: Record<string, string> = {};
 
-  // Map row values to headers
+  // Map values to headers
   headers.forEach((header, index) => {
-    rowData[header.trim()] = row[index]?.trim() || '';
+    rowData[header] = values[index]?.trim() || '';
   });
 
-  // Validate Amount
+  // Required field validations
   if (!rowData.Amount || isNaN(Number(rowData.Amount))) {
     errors.push({
       row: rowIndex,
-      message: 'Invalid amount value',
-      data: rowData.Amount
+      field: 'Amount',
+      message: 'Amount must be a valid number'
     });
   }
 
-  // Validate Payment_Date
-  const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
-  if (!rowData.Payment_Date || !dateRegex.test(rowData.Payment_Date)) {
+  if (!rowData.Payment_Date || !isValidDate(rowData.Payment_Date)) {
     errors.push({
       row: rowIndex,
-      message: 'Invalid date format. Expected DD-MM-YYYY',
-      data: rowData.Payment_Date
+      field: 'Payment_Date',
+      message: 'Payment_Date must be a valid date'
     });
   }
 
-  // Validate required fields
-  requiredHeaders.forEach(header => {
-    if (!rowData[header]) {
-      errors.push({
-        row: rowIndex,
-        message: `Missing required field: ${header}`,
-        data: rowData
-      });
-    }
-  });
+  if (!rowData.Status || !isValidStatus(rowData.Status)) {
+    errors.push({
+      row: rowIndex,
+      field: 'Status',
+      message: 'Status must be one of: pending, completed, failed, refunded'
+    });
+  }
+
+  if (!rowData.Lease_ID) {
+    errors.push({
+      row: rowIndex,
+      field: 'Lease_ID',
+      message: 'Lease_ID is required'
+    });
+  }
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
+    data: rowData
   };
+};
+
+const isValidDate = (dateStr: string): boolean => {
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date.getTime());
+};
+
+const isValidStatus = (status: string): boolean => {
+  const validStatuses = ['pending', 'completed', 'failed', 'refunded'];
+  return validStatuses.includes(status.toLowerCase());
 };

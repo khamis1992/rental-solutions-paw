@@ -59,19 +59,17 @@ export const processCSVContent = async (
         continue;
       }
 
-      // Create row data object
-      const rowData = headers.reduce((obj, header, index) => {
-        obj[header] = values[index] || '';
-        return obj;
-      }, {} as Record<string, string>);
-
       // Store raw import data
       const { error: rawError } = await supabase
         .from('raw_transaction_imports')
         .insert({
           import_id: importId,
-          raw_data: rowData,
-          is_valid: true
+          raw_data: validation.data,
+          is_valid: true,
+          payment_method: validation.data.Payment_Method,
+          payment_description: validation.data.Description,
+          license_plate: validation.data.License_Plate,
+          vehicle_details: validation.data.Vehicle
         });
 
       if (rawError) {
@@ -80,15 +78,15 @@ export const processCSVContent = async (
         errors.push({
           row: i,
           message: `Database error: ${rawError.message}`,
-          data: rowData
+          data: validation.data
         });
       } else {
         validRows++;
-        const amount = parseFloat(rowData.Amount || '0');
+        const amount = parseFloat(validation.data.Amount || '0');
         if (!isNaN(amount)) {
           totalAmount += amount;
         }
-        processedRows.push(rowData);
+        processedRows.push(validation.data);
       }
     } catch (error) {
       console.error(`Error processing row ${i}:`, error);
@@ -124,7 +122,8 @@ export const processCSVContent = async (
     suggestions: errors.length > 0 ? [
       'Review and correct invalid rows before proceeding',
       'Ensure all amounts are valid numbers',
-      'Verify date format (DD-MM-YYYY) for all entries'
+      'Verify date format (YYYY-MM-DD) for all entries',
+      'Check that Status values are one of: pending, completed, failed, refunded'
     ] : []
   };
 };
