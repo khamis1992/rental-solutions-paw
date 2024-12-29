@@ -6,10 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
+import { TransactionFilters } from "./TransactionFilters";
+import { TransactionTable } from "./TransactionTable";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortField, setSortField] = useState<string>("payment_date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +73,28 @@ export const TransactionImport = () => {
           <Progress value={progress} className="h-2" />
         </div>
       )}
+
+      <TransactionFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+      />
+
+      <TransactionTable
+        searchQuery={searchQuery}
+        statusFilter={statusFilter}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={(field) => {
+          if (field === sortField) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+          } else {
+            setSortField(field);
+            setSortDirection("desc");
+          }
+        }}
+      />
     </div>
   );
 };

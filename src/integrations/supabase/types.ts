@@ -1106,6 +1106,72 @@ export type Database = {
           },
         ]
       }
+      financial_imports: {
+        Row: {
+          amount: number
+          created_at: string | null
+          customer_name: string
+          description: string | null
+          id: string
+          lease_id: string | null
+          license_plate: string | null
+          payment_date: string
+          payment_method: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string
+          updated_at: string | null
+          vehicle: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          customer_name: string
+          description?: string | null
+          id?: string
+          lease_id?: string | null
+          license_plate?: string | null
+          payment_date: string
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type: string
+          updated_at?: string | null
+          vehicle?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          customer_name?: string
+          description?: string | null
+          id?: string
+          lease_id?: string | null
+          license_plate?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string
+          updated_at?: string | null
+          vehicle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_imports_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_imports_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fleet_optimization_recommendations: {
         Row: {
           confidence_score: number | null
