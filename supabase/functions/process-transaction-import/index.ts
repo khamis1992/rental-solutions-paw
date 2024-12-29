@@ -20,11 +20,17 @@ serve(async (req) => {
   try {
     console.log('Starting transaction import processing...');
     
-    // Parse the request body
-    const body = await req.json();
-    console.log('Request body:', body);
+    // Safely parse the request body
+    let body;
+    try {
+      body = await req.json();
+      console.log('Request body:', body);
+    } catch (error) {
+      console.error('Error parsing request body:', error);
+      throw new Error('Invalid request body format');
+    }
 
-    if (!body.fileName) {
+    if (!body || !body.fileName) {
       throw new Error('Missing fileName in request body');
     }
 
@@ -44,6 +50,10 @@ serve(async (req) => {
     if (downloadError) {
       console.error('Storage download error:', downloadError);
       throw downloadError;
+    }
+
+    if (!fileData) {
+      throw new Error('No file data received');
     }
 
     const text = await fileData.text();
@@ -88,7 +98,9 @@ serve(async (req) => {
 
         const rowData = {};
         headers.forEach((header, index) => {
-          rowData[header] = values[index];
+          if (values[index] !== undefined) {
+            rowData[header] = values[index];
+          }
         });
 
         // Store in raw_transaction_imports
