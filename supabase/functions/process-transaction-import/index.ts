@@ -51,6 +51,20 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Create import record first
+    const { data: importRecord, error: importError } = await supabase.rpc(
+      'create_transaction_import',
+      { p_file_name: fileName }
+    );
+
+    if (importError) {
+      console.error('Error creating import record:', importError);
+      throw importError;
+    }
+
+    const importId = importRecord;
+    console.log('Created import record with ID:', importId);
+
     // Download file from storage
     const { data: fileData, error: downloadError } = await supabase.storage
       .from('imports')
@@ -79,11 +93,11 @@ serve(async (req) => {
           return obj;
         }, {} as Record<string, string>);
 
-        // Store raw import data
+        // Store raw import data with the import_id
         const { error: rawError } = await supabase
           .from('raw_transaction_imports')
           .insert({
-            import_id: crypto.randomUUID(),
+            import_id: importId,
             raw_data: rowData,
             payment_number: rowData['Payment Number'],
             payment_description: rowData['Payment Description'],
@@ -111,24 +125,25 @@ serve(async (req) => {
       }
     }
 
-    // Create import log
-    const { error: logError } = await supabase
+    // Update import record with results
+    const { error: updateError } = await supabase
       .from('transaction_imports')
-      .insert({
-        file_name: fileName,
+      .update({
         status: errors.length > 0 ? 'completed_with_errors' : 'completed',
         records_processed: processedCount,
         errors: errors.length > 0 ? errors : null
-      });
+      })
+      .eq('id', importId);
 
-    if (logError) {
-      console.error('Error creating import log:', logError);
-      throw logError;
+    if (updateError) {
+      console.error('Error updating import record:', updateError);
+      throw updateError;
     }
 
     return new Response(
       JSON.stringify({
         success: true,
+        importId,
         processed: processedCount,
         errors: errors
       }),
