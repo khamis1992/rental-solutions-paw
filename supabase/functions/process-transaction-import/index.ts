@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req) => {
@@ -16,11 +16,11 @@ serve(async (req) => {
   try {
     console.log('Starting transaction import process...');
     
-    const formData = await req.formData();
-    const file = formData.get('file');
-
-    if (!file || !(file instanceof File)) {
-      throw new Error('No file uploaded');
+    // Get request body
+    const { fileName } = await req.json();
+    
+    if (!fileName) {
+      throw new Error('No fileName provided');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -32,38 +32,18 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Upload file to storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    
-    console.log('Uploading file to storage:', fileName);
-    
-    const { error: uploadError } = await supabase.storage
+    // Download file from storage
+    const { data: fileData, error: downloadError } = await supabase.storage
       .from('imports')
-      .upload(fileName, file);
+      .download(fileName);
 
-    if (uploadError) {
-      console.error('Storage upload error:', uploadError);
-      throw uploadError;
+    if (downloadError) {
+      console.error('Storage download error:', downloadError);
+      throw downloadError;
     }
 
-    // Create import log
-    const { data: importLog, error: logError } = await supabase
-      .from('transaction_imports')
-      .insert({
-        file_name: fileName,
-        status: 'pending',
-      })
-      .select()
-      .single();
-
-    if (logError) {
-      console.error('Import log creation error:', logError);
-      throw logError;
-    }
-
-    // Process the file content
-    const text = await file.text();
+    // Convert file to text
+    const text = await fileData.text();
     const lines = text.split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     
@@ -84,7 +64,7 @@ serve(async (req) => {
         const { error: rawError } = await supabase
           .from('raw_transaction_imports')
           .insert({
-            import_id: importLog.id,
+            import_id: crypto.randomUUID(),
             raw_data: rowData,
             payment_number: rowData['Payment Number'],
             payment_description: rowData['Payment Description'],
@@ -112,15 +92,20 @@ serve(async (req) => {
       }
     }
 
-    // Update import status
-    await supabase
+    // Create import log
+    const { error: logError } = await supabase
       .from('transaction_imports')
-      .update({
-        status: 'completed',
+      .insert({
+        file_name: fileName,
+        status: errors.length > 0 ? 'completed_with_errors' : 'completed',
         records_processed: processedCount,
         errors: errors.length > 0 ? errors : null
-      })
-      .eq('id', importLog.id);
+      });
+
+    if (logError) {
+      console.error('Error creating import log:', logError);
+      throw logError;
+    }
 
     return new Response(
       JSON.stringify({
