@@ -3,6 +3,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface GuideStep {
+  step: string;
+}
+
+interface Guide {
+  id: string;
+  title: string;
+  category_id: string;
+  steps: GuideStep[] | string[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export const StepByStepGuides = () => {
   const { data: categories } = useQuery({
     queryKey: ['guide-categories'],
@@ -12,7 +29,7 @@ export const StepByStepGuides = () => {
         .select('*');
       
       if (error) throw error;
-      return data;
+      return data as Category[];
     }
   });
 
@@ -24,7 +41,7 @@ export const StepByStepGuides = () => {
         .select('*');
       
       if (error) throw error;
-      return data;
+      return data as Guide[];
     }
   });
 
@@ -54,14 +71,14 @@ export const StepByStepGuides = () => {
           >
             <div className="space-y-4">
               {guides?.filter(guide => guide.category_id === category.id)
-                .map((guide, index) => (
-                  <Card key={index} className="p-6">
+                .map((guide) => (
+                  <Card key={guide.id} className="p-6">
                     <h3 className="text-lg font-medium mb-4">{guide.title}</h3>
                     <ol className="space-y-2">
-                      {guide.steps.map((step: string, stepIndex: number) => (
+                      {Array.isArray(guide.steps) && guide.steps.map((step, stepIndex) => (
                         <li key={stepIndex} className="flex gap-3">
                           <span className="text-primary font-medium">{stepIndex + 1}.</span>
-                          <span>{step}</span>
+                          <span>{typeof step === 'string' ? step : step.step}</span>
                         </li>
                       ))}
                     </ol>
