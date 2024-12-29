@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { FileUploadSection } from "./FileUploadSection";
+import { AIAnalysisCard } from "./AIAnalysisCard";
+import { Loader2 } from "lucide-react";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -108,6 +107,7 @@ export const TransactionImport = () => {
       });
     } finally {
       setIsUploading(false);
+      sessionStorage.removeItem('importInProgress');
     }
   };
 
@@ -145,71 +145,19 @@ export const TransactionImport = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          disabled={isUploading || isAnalyzing}
-        />
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
-          disabled={isUploading || isAnalyzing}
-        >
-          Download Template
-        </Button>
-      </div>
-      
-      {isAnalyzing && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Analyzing file with AI...
-        </div>
-      )}
+      <FileUploadSection
+        onFileUpload={handleFileUpload}
+        onDownloadTemplate={downloadTemplate}
+        isUploading={isUploading}
+        isAnalyzing={isAnalyzing}
+      />
 
       {analysisResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Analysis Results</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <p>Total Rows: {analysisResult.totalRows}</p>
-              <p>Valid Rows: {analysisResult.validRows}</p>
-              <p>Invalid Rows: {analysisResult.invalidRows}</p>
-              <p>Total Amount: ${analysisResult.totalAmount?.toFixed(2)}</p>
-            </div>
-
-            {analysisResult.issues?.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">Issues Found:</h4>
-                <ul className="list-disc pl-5 space-y-1">
-                  {analysisResult.issues.map((issue: string, index: number) => (
-                    <li key={index} className="text-sm text-muted-foreground">
-                      {issue}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <Button
-              onClick={handleImplementChanges}
-              disabled={isUploading}
-              className="w-full"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                'Import Transactions'
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+        <AIAnalysisCard
+          analysisResult={analysisResult}
+          onImplementChanges={handleImplementChanges}
+          isUploading={isUploading}
+        />
       )}
 
       {isUploading && !analysisResult && (
