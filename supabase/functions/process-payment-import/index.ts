@@ -36,7 +36,7 @@ serve(async (req) => {
 
     for (let i = 0; i < rows.length; i += batchSize) {
       const batch = rows.slice(i, i + batchSize);
-      console.log(`Processing batch ${i / batchSize + 1}:`, batch);
+      console.log(`Processing batch ${i / batchSize + 1}:`, batch.length, 'rows');
 
       const { data, error } = await supabaseClient
         .from('financial_imports')

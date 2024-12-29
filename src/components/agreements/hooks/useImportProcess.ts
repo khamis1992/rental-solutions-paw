@@ -40,21 +40,29 @@ export const useImportProcess = () => {
       }
 
       // Format the rows data properly
-      const formattedRows = analysisResult.rows.map((row: any) => ({
-        lease_id: row.lease_id || null,
-        customer_name: row.customer_name || '',
-        amount: parseFloat(row.amount) || 0,
-        license_plate: row.license_plate || '',
-        vehicle: row.vehicle || '',
-        payment_date: row.payment_date || null,
-        payment_method: (row.payment_method || '').toLowerCase(),
-        transaction_id: row.transaction_id || null,
-        description: row.description || '',
-        type: (row.type || '').toUpperCase(),
-        status: (row.status || '').toLowerCase()
-      }));
+      const formattedRows = analysisResult.rows.map((row: any) => {
+        // Ensure all required fields are present with proper types
+        const formattedRow = {
+          lease_id: row.lease_id || null,
+          customer_name: String(row.customer_name || ''),
+          amount: typeof row.amount === 'number' ? row.amount : parseFloat(row.amount) || 0,
+          license_plate: String(row.license_plate || ''),
+          vehicle: String(row.vehicle || ''),
+          payment_date: row.payment_date || null,
+          payment_method: String(row.payment_method || '').toLowerCase(),
+          transaction_id: row.transaction_id || null,
+          description: String(row.description || ''),
+          type: String(row.type || '').toUpperCase(),
+          status: String(row.status || '').toLowerCase()
+        };
+        return formattedRow;
+      });
 
       console.log('Formatted rows for import:', formattedRows);
+
+      if (!Array.isArray(formattedRows) || formattedRows.length === 0) {
+        throw new Error('No valid rows to import');
+      }
 
       // Process the valid rows
       const { data, error } = await supabase.functions
