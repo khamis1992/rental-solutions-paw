@@ -22,12 +22,12 @@ export const StatsCard = ({
     <Card className={cn("", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className={cn("h-4 w-4", iconClassName)} />
+        <Icon className={cn("h-5 w-5", iconClassName)} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold tracking-tight">{value}</div>
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="text-xs text-muted-foreground mt-1.5">{description}</p>
         )}
       </CardContent>
     </Card>
