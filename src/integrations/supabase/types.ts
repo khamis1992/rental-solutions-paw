@@ -3357,6 +3357,7 @@ export type Database = {
       }
       transaction_imports: {
         Row: {
+          amount: number | null
           assignment_details: Json | null
           auto_assigned: boolean | null
           created_at: string | null
@@ -3368,6 +3369,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          amount?: number | null
           assignment_details?: Json | null
           auto_assigned?: boolean | null
           created_at?: string | null
@@ -3379,6 +3381,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          amount?: number | null
           assignment_details?: Json | null
           auto_assigned?: boolean | null
           created_at?: string | null
