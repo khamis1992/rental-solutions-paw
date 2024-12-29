@@ -57,7 +57,7 @@ export const StepByStepGuides = () => {
 
       <Tabs defaultValue={categories?.[0]?.slug} className="w-full space-y-6">
         <div className="sticky top-0 z-10 bg-background pb-2 w-full">
-          <ScrollArea className="w-full" orientation="horizontal">
+          <ScrollArea className="w-full">
             <TabsList className="w-full justify-start inline-flex">
               {categories?.map((category) => (
                 <TabsTrigger 

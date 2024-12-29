@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Users, FileSpreadsheet, Brain, Code } from "lucide-react";
+import { Car, Users, FileSpreadsheet, Code } from "lucide-react";
 import { useState } from "react";
 import { FleetReportSection } from "@/components/reports/sections/FleetReportSection";
 import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
@@ -39,10 +39,6 @@ const Reports = () => {
               <FileSpreadsheet className="h-4 w-4" />
               Financial Reports
             </TabsTrigger>
-            <TabsTrigger value="performance" className="flex items-center gap-2 text-base font-medium">
-              <Brain className="h-4 w-4" />
-              Performance Insights
-            </TabsTrigger>
             <TabsTrigger value="code-analysis" className="flex items-center gap-2 text-base font-medium">
               <Code className="h-4 w-4" />
               Code Analysis
@@ -76,10 +72,6 @@ const Reports = () => {
 
             <TabsContent value="financial">
               <FinancialReportSection />
-            </TabsContent>
-
-            <TabsContent value="performance">
-              <PerformanceInsights />
             </TabsContent>
 
             <TabsContent value="code-analysis">
