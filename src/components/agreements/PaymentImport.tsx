@@ -52,16 +52,26 @@ export const PaymentImport = () => {
     if (!file) return;
 
     try {
+      console.log('Starting file upload process...', file.name);
+      
       const formData = new FormData();
       formData.append('file', file);
 
-      const { error } = await supabase.functions
-        .invoke('process-raw-financial-import', {
-          body: formData,
+      console.log('Calling Edge Function...');
+      const { data, error } = await supabase.functions
+        .invoke('process-transaction-import', {
+          body: { 
+            fileName: file.name,
+            fileContent: await file.text() // Send file content directly
+          }
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw error;
+      }
 
+      console.log('Edge Function response:', data);
       toast.success('File imported successfully');
       refetch(); // Refresh the table data
     } catch (error: any) {

@@ -24,14 +24,14 @@ serve(async (req) => {
     let body;
     try {
       body = await req.json();
-      console.log('Request body:', body);
+      console.log('Request body received:', { fileName: body.fileName });
     } catch (error) {
       console.error('Error parsing request body:', error);
       throw new Error('Invalid request body format');
     }
 
-    if (!body || !body.fileName) {
-      throw new Error('Missing fileName in request body');
+    if (!body || !body.fileName || !body.fileContent) {
+      throw new Error('Missing required fields in request body');
     }
 
     // Initialize Supabase client
@@ -40,24 +40,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Downloading file:', body.fileName);
-
-    // Download file from storage
-    const { data: fileData, error: downloadError } = await supabaseAdmin.storage
-      .from('imports')
-      .download(body.fileName);
-
-    if (downloadError) {
-      console.error('Storage download error:', downloadError);
-      throw downloadError;
-    }
-
-    if (!fileData) {
-      throw new Error('No file data received');
-    }
-
-    const text = await fileData.text();
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    console.log('Processing file content...');
+    const lines = body.fileContent.split('\n').map(line => 
+      line.trim()
+    ).filter(line => line.length > 0);
     
     if (lines.length < 2) {
       throw new Error('File is empty or contains only headers');
