@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const PaymentImport = () => {
   const {
@@ -17,15 +18,12 @@ export const PaymentImport = () => {
   } = useImportProcess();
 
   // Query to fetch imported transactions
-  const { data: importedData } = useQuery({
+  const { data: importedData, refetch } = useQuery({
     queryKey: ["imported-transactions"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("raw_transaction_imports")
-        .select(`
-          *,
-          import:transaction_imports(*)
-        `)
+        .from("financial_imports")
+        .select("*")
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -35,7 +33,6 @@ export const PaymentImport = () => {
   });
 
   const downloadTemplate = () => {
-    // Updated CSV template with all required headers
     const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
                       "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
@@ -52,8 +49,24 @@ export const PaymentImport = () => {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      await startImport(file);
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { error } = await supabase.functions
+        .invoke('process-raw-financial-import', {
+          body: formData,
+        });
+
+      if (error) throw error;
+
+      toast.success('File imported successfully');
+      refetch(); // Refresh the table data
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast.error(error.message || 'Failed to import file');
     }
   };
 
@@ -97,7 +110,7 @@ export const PaymentImport = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium">
-                        Import ID: {item.import_id}
+                        Transaction ID: {item.transaction_id || 'N/A'}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Created: {new Date(item.created_at).toLocaleString()}
@@ -105,16 +118,16 @@ export const PaymentImport = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-medium">
-                        {item.raw_data?.Amount ? formatCurrency(item.raw_data.Amount) : 'N/A'}
+                        {formatCurrency(item.amount)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Status: {item.raw_data?.Status || 'N/A'}
+                        Status: {item.status || 'N/A'}
                       </p>
                     </div>
                   </div>
                   <div className="text-sm">
-                    <p>Transaction ID: {item.raw_data?.Transaction_ID || 'N/A'}</p>
-                    <p>Description: {item.raw_data?.Description || 'N/A'}</p>
+                    <p>Description: {item.description || 'N/A'}</p>
+                    <p>Payment Method: {item.payment_method || 'N/A'}</p>
                   </div>
                 </div>
               ))}
