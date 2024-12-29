@@ -59,12 +59,6 @@ export const AgreementList = () => {
 
   return (
     <div className="space-y-6">
-      <AgreementListHeader
-        onImportClick={() => setShowDeleteDialog(true)}
-        onDeleteClick={() => setShowDeleteDialog(true)}
-        isDeleting={isDeleting}
-      />
-
       <AgreementFilters
         onSearchChange={setSearchQuery}
         onStatusChange={setStatusFilter}
