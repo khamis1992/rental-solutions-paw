@@ -112,7 +112,7 @@ export const useImportProcess = () => {
           } else if (importStatus?.status === "error") {
             completed = true;
             clearInterval(pollInterval);
-            throw new Error(importStatus.error || "Import failed");
+            throw new Error(importStatus.errors ? JSON.stringify(importStatus.errors) : "Import failed");
           }
         } catch (error) {
           console.error('Polling error:', error);
