@@ -24,8 +24,19 @@ serve(async (req) => {
     console.log('Starting transaction import process...');
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    // Get request body
-    const { fileName } = await req.json();
+    // Get and validate request body
+    const text = await req.text();
+    console.log('Raw request body:', text);
+
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      throw new Error(`Invalid JSON in request body: ${e.message}`);
+    }
+
+    const { fileName } = body;
     
     if (!fileName) {
       throw new Error('No fileName provided');
@@ -51,8 +62,8 @@ serve(async (req) => {
     }
 
     // Convert file to text
-    const text = await fileData.text();
-    const lines = text.split('\n');
+    const fileText = await fileData.text();
+    const lines = fileText.split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     
     // Process each row
