@@ -16,9 +16,12 @@ export const useImportProcess = () => {
       const analysis = await analyzeImportFile(file);
       console.log('File analysis completed:', analysis);
       
+      // Ensure validRows is an array
+      const validRows = Array.isArray(analysis.validRows) ? analysis.validRows : [];
+      
       setAnalysisResult({
         ...analysis,
-        validRows: Array.isArray(analysis.validRows) ? analysis.validRows : []
+        validRows
       });
       
       return true;
@@ -37,13 +40,17 @@ export const useImportProcess = () => {
     try {
       console.log('Implementing changes with analysis result:', analysisResult);
       
+      // Ensure we have valid rows to process
+      if (!Array.isArray(analysisResult?.validRows)) {
+        throw new Error('No valid rows to process');
+      }
+
       const { error } = await supabase.functions
         .invoke("process-payment-import", {
           body: { 
-            analysisResult: {
-              ...analysisResult,
-              validRows: Array.isArray(analysisResult.validRows) ? analysisResult.validRows : []
-            }
+            validRows: analysisResult.validRows,
+            totalRows: analysisResult.totalRows,
+            totalAmount: analysisResult.totalAmount
           }
         });
 

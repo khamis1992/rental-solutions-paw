@@ -13,20 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting payment import processing...');
+    const { validRows, totalRows, totalAmount } = await req.json();
     
-    const { analysisResult } = await req.json();
-    
-    if (!analysisResult) {
-      throw new Error('Missing analysis result data');
-    }
-
-    console.log('Received analysis result:', analysisResult);
-
     // Validate that validRows is an array
-    if (!Array.isArray(analysisResult.validRows)) {
+    if (!Array.isArray(validRows)) {
       throw new Error('Valid rows must be an array');
     }
+
+    console.log('Processing payment import with rows:', validRows.length);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -34,10 +28,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Process the valid rows from analysis
+    // Process each valid row
     const { data, error } = await supabaseClient
       .from('financial_imports')
-      .insert(analysisResult.validRows.map((row: any) => ({
+      .insert(validRows.map((row: any) => ({
         lease_id: row.lease_id,
         customer_name: row.customer_name,
         amount: row.amount,
@@ -61,7 +55,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully imported ${analysisResult.validRows.length} payments`,
+        message: `Successfully imported ${validRows.length} payments`,
         data
       }),
       {
