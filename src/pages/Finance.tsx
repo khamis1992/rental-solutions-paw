@@ -7,41 +7,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Finance = () => {
   return (
-    <DashboardLayout>
-      <div className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
-        
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="import">Import</TabsTrigger>
-            <TabsTrigger value="categorization">Categorization</TabsTrigger>
-          </TabsList>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
+      
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
+          <TabsTrigger value="categorization">Categorization</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <RevenueDashboard />
-          </TabsContent>
+        <TabsContent value="dashboard" className="space-y-6">
+          <RevenueDashboard />
+        </TabsContent>
 
-          <TabsContent value="payments" className="space-y-6">
-            <PaymentManagement />
-          </TabsContent>
+        <TabsContent value="payments" className="space-y-6">
+          <PaymentManagement />
+        </TabsContent>
 
-          <TabsContent value="transactions">
-            {/* Transaction management components will go here */}
-          </TabsContent>
+        <TabsContent value="transactions">
+          {/* Transaction management components will go here */}
+        </TabsContent>
 
-          <TabsContent value="import" className="space-y-6">
-            <TransactionImport />
-          </TabsContent>
+        <TabsContent value="import" className="space-y-6">
+          <TransactionImport />
+        </TabsContent>
 
-          <TabsContent value="categorization">
-            <TransactionCategorization />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+        <TabsContent value="categorization">
+          <TransactionCategorization />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
