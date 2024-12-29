@@ -4,12 +4,14 @@ import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AuthStateHandler } from "@/components/auth/AuthStateHandler";
 import * as LazyComponents from "@/routes/routes";
 
 export default function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
       <div className="min-h-screen bg-background">
+        <AuthStateHandler />
         <Toaster />
         <Routes>
           {/* Public Routes */}
