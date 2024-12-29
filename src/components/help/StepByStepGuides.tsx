@@ -3,16 +3,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { guides } from "./guides/data";
 
 interface GuideStep {
   step: string;
 }
 
 interface Guide {
-  id: string;
   title: string;
-  category_id: string;
-  steps: GuideStep[] | string[];
+  steps: string[];
 }
 
 interface Category {
@@ -34,67 +33,53 @@ export const StepByStepGuides = () => {
     }
   });
 
-  const { data: guides } = useQuery({
-    queryKey: ['guides'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('help_guides')
-        .select('*');
-      
-      if (error) throw error;
-      return data as Guide[];
-    }
-  });
+  // Get module guides for the different sections
+  const moduleGuides = guides.module;
 
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col space-y-2">
         <h2 className="text-2xl font-semibold">Step-by-Step Guides</h2>
         <p className="text-muted-foreground">
-          Comprehensive guides for operational, technical, and administrative procedures
+          Comprehensive guides for system features and operations
         </p>
       </div>
 
-      <Tabs defaultValue={categories?.[0]?.slug} className="w-full space-y-6">
-        <div className="sticky top-0 z-10 bg-background pb-2 w-full">
-          <ScrollArea className="w-full">
-            <TabsList className="w-full justify-start inline-flex">
-              {categories?.map((category) => (
-                <TabsTrigger 
-                  key={category.id}
-                  value={category.slug} 
-                  className="min-w-[120px]"
-                >
-                  {category.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </ScrollArea>
-        </div>
+      <Tabs defaultValue="dashboard" className="w-full space-y-6">
+        <ScrollArea className="w-full">
+          <TabsList className="w-full justify-start inline-flex">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="agreements">Agreements</TabsTrigger>
+            <TabsTrigger value="finance">Finance</TabsTrigger>
+            <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
+            <TabsTrigger value="legal">Legal</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+        </ScrollArea>
 
-        {categories?.map((category) => (
+        {Object.entries(moduleGuides).map(([section, guides]) => (
           <TabsContent 
-            key={category.id}
-            value={category.slug} 
-            className="space-y-6 focus-visible:outline-none focus-visible:ring-0 w-full"
+            key={section}
+            value={section} 
+            className="space-y-6 focus-visible:outline-none focus-visible:ring-0"
           >
             <div className="space-y-4">
-              {guides?.filter(guide => guide.category_id === category.id)
-                .map((guide) => (
-                  <Card key={guide.id} className="p-6">
-                    <h3 className="text-lg font-medium mb-4">{guide.title}</h3>
-                    <ol className="space-y-3">
-                      {Array.isArray(guide.steps) && guide.steps.map((step, stepIndex) => (
-                        <li key={stepIndex} className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
-                            {stepIndex + 1}
-                          </span>
-                          <span className="text-sm">{typeof step === 'string' ? step : step.step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </Card>
-                ))}
+              {guides.map((guide, index) => (
+                <Card key={index} className="p-6">
+                  <h3 className="text-lg font-medium mb-4">{guide.title}</h3>
+                  <ol className="space-y-3">
+                    {guide.steps.map((step, stepIndex) => (
+                      <li key={stepIndex} className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+                          {stepIndex + 1}
+                        </span>
+                        <span className="text-sm">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </Card>
+              ))}
             </div>
           </TabsContent>
         ))}
