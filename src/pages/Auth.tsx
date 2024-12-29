@@ -1,10 +1,19 @@
-import { useAuthRedirect } from "@/components/auth/useAuthRedirect";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { AuthContainer } from "@/components/auth/AuthContainer";
 
 const Auth = () => {
-  const { isInitializing, isLoading } = useAuthRedirect();
+  const navigate = useNavigate();
+  const { isLoading, session } = useSessionContext();
 
-  if (isInitializing || isLoading) {
+  useEffect(() => {
+    if (session) {
+      navigate('/');
+    }
+  }, [session, navigate]);
+
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
