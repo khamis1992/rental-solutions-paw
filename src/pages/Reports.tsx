@@ -33,7 +33,7 @@ const Reports = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="fleet" className="space-y-8">
+        <Tabs defaultValue="fleet" className="space-y-6">
           <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
             <TabsTrigger value="fleet" className="flex items-center gap-2 text-base font-medium">
               <Car className="h-4 w-4" />
