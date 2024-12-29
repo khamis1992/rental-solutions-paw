@@ -16,13 +16,7 @@ export const useImportProcess = () => {
       const analysis = await analyzeImportFile(file);
       console.log('File analysis completed:', analysis);
       
-      // Ensure validRows is an array
-      const validRows = Array.isArray(analysis.validRows) ? analysis.validRows : [];
-      
-      setAnalysisResult({
-        ...analysis,
-        validRows
-      });
+      setAnalysisResult(analysis);
       
       return true;
     } catch (error: any) {
@@ -39,16 +33,24 @@ export const useImportProcess = () => {
     setIsUploading(true);
     try {
       console.log('Implementing changes with analysis result:', analysisResult);
-      
-      // Ensure we have valid rows to process
-      if (!Array.isArray(analysisResult?.validRows)) {
-        throw new Error('No valid rows to process');
+
+      // Extract the actual rows data from the analysis result
+      const { data: rowsData } = await supabase.functions
+        .invoke("analyze-payment-import", {
+          body: { analysisResult },
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+      if (!Array.isArray(rowsData)) {
+        throw new Error('Invalid data format received from analysis');
       }
 
       const { error } = await supabase.functions
         .invoke("process-payment-import", {
           body: { 
-            validRows: analysisResult.validRows,
+            validRows: rowsData,
             totalRows: analysisResult.totalRows,
             totalAmount: analysisResult.totalAmount
           }
