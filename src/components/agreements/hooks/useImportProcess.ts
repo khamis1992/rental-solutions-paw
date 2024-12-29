@@ -34,7 +34,7 @@ export const useImportProcess = () => {
     setIsAnalyzing(true);
     
     try {
-      console.log('Starting file analysis...');
+      console.log('Starting file analysis...', file.name);
       const aiAnalysis = await analyzeImportFile(file);
       console.log('Analysis completed:', aiAnalysis);
       setAnalysisResult(aiAnalysis);
@@ -49,13 +49,17 @@ export const useImportProcess = () => {
         description: "Failed to analyze file. Make sure it follows the correct format.",
         variant: "destructive",
       });
+      setSelectedFile(null);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
   const handleImplementChanges = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      console.error('No file selected');
+      return;
+    }
     
     setIsUploading(true);
     try {
@@ -64,11 +68,17 @@ export const useImportProcess = () => {
       
       // Upload file to storage
       console.log('Uploading file to storage:', fileName);
-      await processImportFile(selectedFile, fileName);
+      const processResult = await processImportFile(selectedFile, fileName);
+      console.log('Process result:', processResult);
+      
+      if (!processResult) {
+        throw new Error('Failed to process file');
+      }
       
       // Create import log
       console.log('Creating import log...');
-      await createImportLog(fileName);
+      const importLog = await createImportLog(fileName);
+      console.log('Import log created:', importLog);
 
       let completed = false;
       let attempts = 0;
@@ -92,17 +102,17 @@ export const useImportProcess = () => {
         console.log(`Polling attempt ${attempts}/${maxAttempts}`);
 
         try {
-          const importLog = await pollImportStatus(fileName);
-          console.log('Poll response:', importLog);
+          const importStatus = await pollImportStatus(fileName);
+          console.log('Poll response:', importStatus);
           
-          if (importLog?.status === "completed") {
+          if (importStatus?.status === "completed") {
             completed = true;
             clearInterval(pollInterval);
-            handleImportCompletion(importLog);
-          } else if (importLog?.status === "error") {
+            handleImportCompletion(importStatus);
+          } else if (importStatus?.status === "error") {
             completed = true;
             clearInterval(pollInterval);
-            throw new Error("Import failed");
+            throw new Error(importStatus.error || "Import failed");
           }
         } catch (error) {
           console.error('Polling error:', error);
@@ -145,10 +155,13 @@ export const useImportProcess = () => {
   };
 
   const handleImportError = (error?: any) => {
+    console.error('Import error:', error);
     setIsUploading(false);
+    setSelectedFile(null);
+    setAnalysisResult(null);
     toast({
       title: "Error",
-      description: error?.message || "Failed to process import",
+      description: error?.message || "Failed to process import. Please try again.",
       variant: "destructive",
     });
   };
