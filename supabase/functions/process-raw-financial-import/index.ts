@@ -40,8 +40,51 @@ serve(async (req) => {
     const importData = rows.map(row => {
       const rowData: Record<string, any> = {};
       headers.forEach((header: string, index: number) => {
-        rowData[header.trim()] = row[index]?.trim() || null;
+        // Map CSV headers to database columns (case-insensitive)
+        const headerKey = header.trim();
+        const value = row[index]?.trim() || null;
+
+        // Map the headers to database columns
+        switch (headerKey.toLowerCase()) {
+          case 'lease_id':
+            rowData.lease_id = value;
+            break;
+          case 'customer_name':
+            rowData.customer_name = value;
+            break;
+          case 'amount':
+            rowData.amount = value ? parseFloat(value) : null;
+            break;
+          case 'license_plate':
+            rowData.license_plate = value;
+            break;
+          case 'vehicle':
+            rowData.vehicle = value;
+            break;
+          case 'payment_date':
+            rowData.payment_date = value;
+            break;
+          case 'payment_method':
+            rowData.payment_method = value;
+            break;
+          case 'transaction_id':
+            rowData.transaction_id = value;
+            break;
+          case 'description':
+            rowData.description = value;
+            break;
+          case 'type':
+            rowData.type = value;
+            break;
+          case 'status':
+            rowData.status = value;
+            break;
+          default:
+            // Ignore any unrecognized headers
+            console.log(`Ignoring unrecognized header: ${headerKey}`);
+        }
       });
+
       return rowData;
     });
 
