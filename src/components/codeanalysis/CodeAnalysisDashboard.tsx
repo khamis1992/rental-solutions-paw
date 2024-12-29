@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CodeQualityMetrics } from "./CodeQualityMetrics";
 import { SecurityVulnerabilities } from "./SecurityVulnerabilities";
-import { PerformanceInsights } from "./PerformanceInsights";
 import { RecommendationsList } from "./RecommendationsList";
 import { toast } from "sonner";
 import { Brain } from "lucide-react";
@@ -160,7 +159,6 @@ export const CodeAnalysisDashboard = () => {
         <TabsList>
           <TabsTrigger value="quality">Code Quality</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
         </TabsList>
 
@@ -170,10 +168,6 @@ export const CodeAnalysisDashboard = () => {
 
         <TabsContent value="security">
           <SecurityVulnerabilities data={analysisData} />
-        </TabsContent>
-
-        <TabsContent value="performance">
-          <PerformanceInsights data={analysisData} />
         </TabsContent>
 
         <TabsContent value="recommendations">

@@ -33,8 +33,15 @@ export const StepByStepGuides = () => {
     }
   });
 
-  // Get module guides for the different sections
-  const moduleGuides = guides.module;
+  // Get all guides from different modules
+  const {
+    operational,
+    technical,
+    administrative,
+    module: moduleGuides,
+    financial,
+    legal
+  } = guides;
 
   return (
     <div className="w-full space-y-6">
