@@ -39,11 +39,11 @@ export function StatsDisplay({
           <CardHeader className="p-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Count</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 space-y-4">
+          <CardContent className="p-0">
             <div className="text-2xl font-bold">{paymentCount}</div>
-            <ManualTrafficFineDialog onFineAdded={() => {}} />
           </CardContent>
         </Card>
+        <ManualTrafficFineDialog onFineAdded={() => {}} />
       </div>
 
       <div className="space-y-6">
@@ -62,20 +62,20 @@ export function StatsDisplay({
           <CardHeader className="p-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Unassigned Count</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 space-y-4">
+          <CardContent className="p-0">
             <div className="text-2xl font-bold">{unassignedCount}</div>
-            <Button
-              onClick={onReconcile}
-              disabled={isReconciling || !unassignedCount}
-              variant="default"
-              size="sm"
-              className="w-full text-sm font-medium"
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
-              Auto-Assign All
-            </Button>
           </CardContent>
         </Card>
+        <Button
+          onClick={onReconcile}
+          disabled={isReconciling || !unassignedCount}
+          variant="default"
+          size="sm"
+          className="w-full text-sm font-medium"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
+          Auto-Assign All
+        </Button>
       </div>
     </div>
   );
