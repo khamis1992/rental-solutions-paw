@@ -27,10 +27,17 @@ export const PaymentImport = () => {
     document.body.removeChild(a);
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await startImport(file);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <FileUploadSection
-        onFileUpload={startImport}
+        onFileUpload={handleFileUpload}
         onDownloadTemplate={downloadTemplate}
         isUploading={isUploading}
         isAnalyzing={isAnalyzing}
