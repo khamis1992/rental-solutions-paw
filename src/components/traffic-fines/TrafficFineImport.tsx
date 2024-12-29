@@ -1,26 +1,51 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileUploadSection } from "./components/FileUploadSection";
-import { AIAnalysisCard } from "@/components/agreements/payment-import/AIAnalysisCard";
-import { useImportProcess } from "@/components/agreements/hooks/useImportProcess";
 import { TrafficFineFilters } from "./TrafficFineFilters";
-import { TrafficFineTable } from "./TrafficFinesList";
+import { TrafficFinesList } from "./TrafficFinesList";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TrafficFineImport = () => {
+  const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortField, setSortField] = useState<string>("violation_date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const queryClient = useQueryClient();
-  const { isUploading, isAnalyzing, analysisResult, startImport, implementChanges } = useImportProcess();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const success = await startImport(file);
-    if (success) {
-      queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
+    setIsUploading(true);
+    try {
+      const fileName = `traffic-fines/${Date.now()}_${file.name}`;
+      
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Process the import using Edge Function
+      const { data, error: processError } = await supabase.functions
+        .invoke("process-raw-traffic-fine-import", {
+          body: { fileName }
+        });
+
+      if (processError) throw processError;
+
+      if (data.success) {
+        toast.success(`Successfully imported ${data.processed} records`);
+        queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
+      } else {
+        throw new Error("Import failed");
+      }
+    } catch (error: any) {
+      console.error("Import error:", error);
+      toast.error(error.message || "Failed to import file");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -52,16 +77,8 @@ export const TrafficFineImport = () => {
         onFileUpload={handleFileUpload}
         onDownloadTemplate={handleDownloadTemplate}
         isUploading={isUploading}
-        isAnalyzing={isAnalyzing}
+        isAnalyzing={false}
       />
-      
-      {analysisResult && (
-        <AIAnalysisCard
-          analysisResult={analysisResult}
-          onImplementChanges={implementChanges}
-          isUploading={isUploading}
-        />
-      )}
 
       <TrafficFineFilters
         searchQuery={searchQuery}
@@ -70,19 +87,9 @@ export const TrafficFineImport = () => {
         onStatusFilterChange={setStatusFilter}
       />
 
-      <TrafficFineTable
+      <TrafficFinesList
         searchQuery={searchQuery}
         statusFilter={statusFilter}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={(field) => {
-          if (field === sortField) {
-            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-          } else {
-            setSortField(field);
-            setSortDirection("desc");
-          }
-        }}
       />
     </div>
   );

@@ -1,120 +1,99 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { TrafficFineFilters } from "./TrafficFineFilters";
 
-export function TrafficFinesList() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+interface TrafficFinesListProps {
+  searchQuery: string;
+  statusFilter: string;
+}
 
+export const TrafficFinesList = ({
+  searchQuery,
+  statusFilter,
+}: TrafficFinesListProps) => {
   const { data: fines, isLoading } = useQuery({
-    queryKey: ["traffic-fines"],
+    queryKey: ["traffic-fines", statusFilter, searchQuery],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('traffic_fines')
-        .select(`
-          *,
-          lease:leases(
-            id,
-            customer:profiles(
-              id,
-              full_name
-            ),
-            vehicle:vehicles(
-              make,
-              model,
-              year,
-              license_plate
-            )
-          )
-        `)
-        .order('violation_date', { ascending: false });
+      let query = supabase
+        .from("traffic_fines")
+        .select("*")
+        .order('created_at', { ascending: false });
 
+      if (statusFilter !== "all") {
+        query = query.eq("payment_status", statusFilter);
+      }
+
+      if (searchQuery) {
+        query = query.or(
+          `license_plate.ilike.%${searchQuery}%,violation_number.ilike.%${searchQuery}%`
+        );
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
   });
 
-  const filteredFines = fines?.filter((fine) => {
-    const matchesSearch = searchQuery.toLowerCase() === "" || 
-      fine.license_plate?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      fine.violation_number?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = statusFilter === "all" || fine.payment_status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
   if (isLoading) {
-    return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </Card>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
-    <Card>
-      <div className="p-6">
-        <TrafficFineFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-        />
-      </div>
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[120px] font-semibold">License Plate</TableHead>
-            <TableHead className="w-[140px] font-semibold">Violation Number</TableHead>
-            <TableHead className="w-[120px] font-semibold">Date</TableHead>
-            <TableHead className="w-[180px] font-semibold">Fine Type</TableHead>
-            <TableHead className="w-[120px] font-semibold">Amount</TableHead>
-            <TableHead className="w-[120px] font-semibold">Status</TableHead>
-            <TableHead className="w-[180px] font-semibold">Customer</TableHead>
+            <TableHead>License Plate</TableHead>
+            <TableHead>Violation Number</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>Charge</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Points</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredFines?.map((fine) => (
+          {fines?.map((fine) => (
             <TableRow key={fine.id}>
-              <TableCell className="min-w-[120px]">
-                {fine.license_plate}
+              <TableCell>{fine.license_plate}</TableCell>
+              <TableCell>{fine.violation_number}</TableCell>
+              <TableCell>
+                {fine.violation_date ? format(new Date(fine.violation_date), "PPP") : "N/A"}
               </TableCell>
-              <TableCell className="min-w-[140px]">{fine.violation_number}</TableCell>
-              <TableCell className="min-w-[120px]">
-                {format(new Date(fine.violation_date), 'dd/MM/yyyy')}
-              </TableCell>
-              <TableCell className="min-w-[180px]">{fine.fine_type}</TableCell>
-              <TableCell className="min-w-[120px]">{formatCurrency(fine.fine_amount)}</TableCell>
-              <TableCell className="min-w-[120px]">
+              <TableCell>{fine.fine_location}</TableCell>
+              <TableCell>{fine.violation_charge}</TableCell>
+              <TableCell>{formatCurrency(fine.fine_amount)}</TableCell>
+              <TableCell>{fine.violation_points}</TableCell>
+              <TableCell>
                 <Badge 
-                  variant={fine.payment_status === 'completed' ? 'success' : 'warning'}
+                  variant={fine.payment_status === "completed" ? "success" : "secondary"}
                 >
                   {fine.payment_status}
                 </Badge>
               </TableCell>
-              <TableCell className="min-w-[180px]">
-                {fine.lease?.customer?.full_name || 'Unassigned'}
-              </TableCell>
             </TableRow>
           ))}
-          {!filteredFines?.length && (
+          {!fines?.length && (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-4">
+              <TableCell colSpan={8} className="h-24 text-center">
                 No traffic fines found
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-    </Card>
+    </div>
   );
-}
+};
