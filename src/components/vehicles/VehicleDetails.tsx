@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
 
-const VehicleDetails = () => {
+export const VehicleDetails = () => {
   const { id } = useParams();
 
   const { data: vehicle, isLoading } = useQuery({
@@ -149,5 +149,3 @@ const VehicleDetails = () => {
     </div>
   );
 };
-
-export default VehicleDetails;

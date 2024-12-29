@@ -8,8 +8,8 @@ export const PaymentImport = () => {
     isUploading,
     isAnalyzing,
     analysisResult,
-    handleFileUpload,
-    handleImplementChanges,
+    startImport,
+    implementChanges
   } = useImportProcess();
 
   const downloadTemplate = () => {
@@ -30,7 +30,7 @@ export const PaymentImport = () => {
   return (
     <div className="space-y-4">
       <FileUploadSection
-        onFileUpload={handleFileUpload}
+        onFileUpload={startImport}
         onDownloadTemplate={downloadTemplate}
         isUploading={isUploading}
         isAnalyzing={isAnalyzing}
@@ -39,7 +39,7 @@ export const PaymentImport = () => {
       {analysisResult && (
         <AIAnalysisCard
           analysisResult={analysisResult}
-          onImplementChanges={handleImplementChanges}
+          onImplementChanges={implementChanges}
           isUploading={isUploading}
         />
       )}
