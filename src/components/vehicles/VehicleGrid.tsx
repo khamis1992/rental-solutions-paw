@@ -90,9 +90,7 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
               />
             </div>
           ) : (
-            <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-400">No image available</span>
-            </div>
+            <div className="w-full h-48 bg-gray-50" />
           )}
           <div className="p-4 flex flex-col flex-grow">
             <h3 className="text-lg font-medium truncate">
