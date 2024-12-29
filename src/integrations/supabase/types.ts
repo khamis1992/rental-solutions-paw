@@ -3871,6 +3871,12 @@ export type Database = {
         }
         Returns: number
       }
+      create_transaction_import: {
+        Args: {
+          p_file_name: string
+        }
+        Returns: string
+      }
       delete_all_agreements: {
         Args: Record<PropertyKey, never>
         Returns: undefined
