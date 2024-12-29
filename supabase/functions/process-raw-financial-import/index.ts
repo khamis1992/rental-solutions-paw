@@ -1,25 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { parse } from 'https://deno.land/std@0.181.0/encoding/csv.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const expectedHeaders = [
-  'Lease_ID',
-  'Customer_Name',
-  'Amount',
-  'License_Plate',
-  'Vehicle',
-  'Payment_Date',
-  'Payment_Method',
-  'Transaction_ID',
-  'Description',
-  'Type',
-  'Status'
-];
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -32,7 +17,7 @@ serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get('file');
 
-    if (!file) {
+    if (!file || !(file instanceof File)) {
       throw new Error('No file uploaded');
     }
 
@@ -44,48 +29,49 @@ serve(async (req) => {
 
     // Read and parse CSV content
     const csvContent = await file.text();
-    
-    // Parse CSV with options to handle empty lines and trim whitespace
-    const parsedRows = parse(csvContent, { 
-      skipFirstRow: false,
-      trimLeadingSpace: true,
-      skipEmptyLines: true 
-    });
+    const lines = csvContent.split('\n').map(line => 
+      line.trim()
+        .replace(/\r/g, '') // Remove carriage returns
+    ).filter(line => line.length > 0); // Remove empty lines
 
-    // Validate and normalize headers
-    const headers = parsedRows[0].map(h => h.trim());
-    console.log('CSV Headers:', headers);
-
-    // Validate that all required headers are present
-    const missingHeaders = expectedHeaders.filter(
-      expected => !headers.some(h => h.toLowerCase() === expected.toLowerCase())
-    );
-
-    if (missingHeaders.length > 0) {
-      console.error('Missing required headers:', missingHeaders);
-      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    if (lines.length < 2) {
+      throw new Error('File is empty or contains only headers');
     }
 
+    // Parse headers and validate
+    const headers = lines[0].split(',').map(h => h.trim());
+    console.log('CSV Headers:', headers);
+
     // Process each row and prepare for insertion
-    const importData = parsedRows.slice(1).map((row, rowIndex) => {
+    const importData = lines.slice(1).map((row, rowIndex) => {
       try {
-        const rowData: Record<string, any> = {};
-        
-        // Fill missing values with null and ignore extra columns
-        expectedHeaders.forEach((header, index) => {
-          const headerIndex = headers.findIndex(h => 
-            h.toLowerCase() === header.toLowerCase()
-          );
+        // Split the row by comma, handling quoted values
+        const values = row.match(/(?:^|,)("(?:[^"]*(?:""[^"]*)*)"|\d+|[^,]*)/g)
+          ?.map(v => v.replace(/^,?"?|"?$/g, '').replace(/""/g, '"').trim()) || [];
+
+        // Create an object with all possible fields
+        const rowData: Record<string, any> = {
+          lease_id: null,
+          customer_name: null,
+          amount: null,
+          license_plate: null,
+          vehicle: null,
+          payment_date: null,
+          payment_method: null,
+          transaction_id: null,
+          description: null,
+          type: null,
+          status: 'pending'
+        };
+
+        // Map values to fields based on headers
+        headers.forEach((header, index) => {
+          const value = values[index];
+          const normalizedHeader = header.toLowerCase().replace(/[^a-z0-9_]/g, '_');
           
-          let value = headerIndex >= 0 && row[headerIndex] 
-            ? row[headerIndex].trim() 
-            : null;
+          if (value === undefined || value === '') return;
 
-          // Convert empty strings to null
-          if (value === '') value = null;
-
-          // Special handling for specific fields
-          switch (header.toLowerCase()) {
+          switch (normalizedHeader) {
             case 'lease_id':
               rowData.lease_id = value;
               break;
@@ -93,7 +79,7 @@ serve(async (req) => {
               rowData.customer_name = value;
               break;
             case 'amount':
-              rowData.amount = value ? parseFloat(value) : null;
+              rowData.amount = parseFloat(value) || null;
               break;
             case 'license_plate':
               rowData.license_plate = value;
@@ -102,14 +88,11 @@ serve(async (req) => {
               rowData.vehicle = value;
               break;
             case 'payment_date':
-              // Try to parse the date in various formats
               try {
-                const date = value ? new Date(value) : null;
-                rowData.payment_date = date && !isNaN(date.getTime()) 
-                  ? date.toISOString() 
-                  : null;
+                const date = new Date(value);
+                rowData.payment_date = !isNaN(date.getTime()) ? date.toISOString() : null;
               } catch {
-                console.warn(`Invalid date format in row ${rowIndex + 2}: ${value}`);
+                console.warn(`Invalid date in row ${rowIndex + 2}: ${value}`);
                 rowData.payment_date = null;
               }
               break;
