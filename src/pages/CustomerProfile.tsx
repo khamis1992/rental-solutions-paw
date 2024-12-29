@@ -1,18 +1,13 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { CustomerProfileView } from "@/components/customers/CustomerProfileView";
 import { useParams } from "react-router-dom";
+import { CustomerProfileView } from "@/components/customers/CustomerProfileView";
 
 const CustomerProfile = () => {
   const { id } = useParams();
 
-  if (!id) {
-    return <div>Customer ID not found</div>;
-  }
-
   return (
-    <DashboardLayout>
-      <CustomerProfileView customerId={id} />
-    </DashboardLayout>
+    <div className="container mx-auto p-6">
+      <CustomerProfileView customerId={id!} />
+    </div>
   );
 };
 
