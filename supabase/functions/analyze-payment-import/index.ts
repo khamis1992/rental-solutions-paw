@@ -11,72 +11,72 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, headers, totalRows } = await req.json();
-    console.log('Analyzing file content with headers:', headers);
+    const { fileContent, headers, rows } = await req.json();
+    console.log('Analyzing payment import with payload:', { headers, totalRows: rows?.length });
 
-    const lines = fileContent.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-
-    // Basic validation of required fields
-    const requiredFields = [
-      'Agreement_Number',
-      'License_Plate',
-      'Rent_Amount',
-      'Final_Price',
-      'Amount_Paid',
-      'Remaining_Amount',
-      'Agreement_Duration'
-    ];
-
-    const missingFields = requiredFields.filter(field => 
-      !headers.some(h => h.toLowerCase() === field.toLowerCase())
-    );
-
-    if (missingFields.length > 0) {
-      return new Response(
-        JSON.stringify({
-          error: `Missing required fields: ${missingFields.join(', ')}`,
-          issues: [`The CSV file is missing the following required fields: ${missingFields.join(', ')}`],
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
+    // Validate the input data
+    if (!Array.isArray(rows)) {
+      throw new Error('Rows must be an array');
     }
 
-    // Process the rows to create structured data
-    const rows = lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
-      const row: Record<string, any> = {};
-      
-      headers.forEach((header, index) => {
-        row[header] = values[index];
-      });
-      
-      return row;
+    const validRows = [];
+    const errors = [];
+    let totalAmount = 0;
+
+    // Process each row
+    rows.forEach((row, index) => {
+      try {
+        // Basic validation
+        if (!row.amount || isNaN(parseFloat(row.amount))) {
+          errors.push(`Row ${index + 1}: Invalid amount format`);
+          return;
+        }
+
+        // Add to valid rows with proper type conversion
+        validRows.push({
+          amount: parseFloat(row.amount),
+          payment_date: row.payment_date || null,
+          payment_method: row.payment_method || null,
+          description: row.description || null,
+          status: 'pending'
+        });
+
+        totalAmount += parseFloat(row.amount);
+      } catch (error) {
+        errors.push(`Row ${index + 1}: ${error.message}`);
+      }
     });
 
     return new Response(
       JSON.stringify({
+        success: true,
         totalRows: rows.length,
-        rows: rows,
-        headers: headers,
-        suggestions: rows.length > 0 ? ['Ready to import data'] : ['No valid rows found to import'],
+        validRows: validRows,
+        invalidRows: errors.length,
+        totalAmount,
+        errors,
+        suggestions: [
+          "Please review and correct the errors before proceeding",
+          "Ensure all amounts are valid numbers",
+          "Verify date formats are correct"
+        ]
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
 
   } catch (error) {
-    console.error('Error processing file:', error);
+    console.error('Error analyzing payment import:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: error.message,
+        success: false
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 400
       }
     );
   }

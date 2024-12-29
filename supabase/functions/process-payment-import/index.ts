@@ -15,7 +15,7 @@ serve(async (req) => {
     const { analysisResult } = await req.json();
     console.log('Processing import with analysis result:', analysisResult);
 
-    if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
+    if (!analysisResult?.validRows || !Array.isArray(analysisResult.validRows)) {
       return new Response(
         JSON.stringify({ 
           error: 'Valid rows must be an array',
@@ -33,30 +33,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Format the rows for insertion
-    const formattedRows = analysisResult.rows.map((row: any) => ({
-      agreement_number: String(row.Agreement_Number || '').trim(),
-      license_plate: String(row.License_Plate || '').trim(),
-      rent_amount: parseFloat(row.Rent_Amount) || 0,
-      final_price: parseFloat(row.Final_Price) || 0,
-      amount_paid: parseFloat(row.Amount_Paid) || 0,
-      remaining_amount: parseFloat(row.Remaining_Amount) || 0,
-      agreement_duration: row.Agreement_Duration || null,
-      import_status: 'pending'
-    }));
-
-    console.log('Formatted rows for import:', formattedRows);
-
     // Process in batches of 100
     const batchSize = 100;
     const results = [];
     const errors = [];
 
-    for (let i = 0; i < formattedRows.length; i += batchSize) {
-      const batch = formattedRows.slice(i, i + batchSize);
+    for (let i = 0; i < analysisResult.validRows.length; i += batchSize) {
+      const batch = analysisResult.validRows.slice(i, i + batchSize);
       try {
         const { data, error } = await supabaseClient
-          .from('remaining_amounts')
+          .from('payments')
           .insert(batch)
           .select();
 

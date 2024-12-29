@@ -65,8 +65,8 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
-      if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
-        throw new Error('Invalid analysis result: rows must be an array');
+      if (!analysisResult?.validRows || !Array.isArray(analysisResult.validRows)) {
+        throw new Error('Invalid analysis result: validRows must be an array');
       }
 
       console.log('Implementing changes with payload:', {
