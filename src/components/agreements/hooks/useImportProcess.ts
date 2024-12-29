@@ -17,7 +17,7 @@ export const useImportProcess = () => {
       const headers = lines[0].split(',').map(h => h.trim());
       
       // Create raw data array
-      const rows = lines.slice(1).map(line => {
+      const rows = lines.slice(1).filter(line => line.trim()).map(line => {
         const values = line.split(',').map(v => v.trim());
         return headers.reduce((obj, header, index) => {
           obj[header] = values[index];
@@ -25,21 +25,16 @@ export const useImportProcess = () => {
         }, {} as Record<string, string>);
       });
 
-      // Log the payload for debugging
       console.log('Sending payload to analyze-payment-import:', {
-        fileContent,
-        headers,
-        totalRows: lines.length - 1,
-        rows
+        totalRows: rows.length,
+        sampleRow: rows[0]
       });
       
-      // Send raw data for analysis
       const { data: analysis, error: analysisError } = await supabase.functions
         .invoke('analyze-payment-import', {
           body: { 
             fileContent,
             headers,
-            totalRows: lines.length - 1,
             rows
           }
         });
@@ -50,6 +45,16 @@ export const useImportProcess = () => {
       }
       
       console.log('Analysis completed:', analysis);
+
+      // Show summary toast with analysis results
+      toast.info('File Analysis Complete', {
+        description: `Found ${analysis.validRows.length} valid rows and ${analysis.invalidRows.length} invalid rows.`
+      });
+
+      if (analysis.invalidRows.length > 0) {
+        console.log('Invalid rows detected:', analysis.invalidRows);
+      }
+
       setAnalysisResult(analysis);
       return true;
     } catch (error: any) {
@@ -70,7 +75,7 @@ export const useImportProcess = () => {
       }
 
       console.log('Implementing changes with payload:', {
-        analysisResult
+        validRowsCount: analysisResult.validRows.length
       });
 
       const { data, error } = await supabase.functions
@@ -84,7 +89,13 @@ export const useImportProcess = () => {
       }
 
       console.log('Import processing successful:', data);
-      toast.success(`Successfully imported ${data.processed} records`);
+      
+      // Show detailed success message
+      toast.success('Import Complete', {
+        description: `Successfully processed ${data.processed} records${data.report.failedBatches > 0 ? 
+          `. ${data.report.failedBatches} batches failed.` : ''}`
+      });
+
       setAnalysisResult(null);
     } catch (error: any) {
       console.error("Implementation error:", error);

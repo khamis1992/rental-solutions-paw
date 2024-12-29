@@ -13,7 +13,10 @@ serve(async (req) => {
 
   try {
     const { analysisResult } = await req.json();
-    console.log('Processing import with analysis result:', analysisResult);
+    console.log('Processing import with analysis result:', {
+      totalRows: analysisResult?.validRows?.length,
+      totalInvalid: analysisResult?.invalidRows?.length
+    });
 
     if (!analysisResult?.validRows || !Array.isArray(analysisResult.validRows)) {
       return new Response(
@@ -37,10 +40,13 @@ serve(async (req) => {
     const batchSize = 100;
     const results = [];
     const errors = [];
+    const validRows = analysisResult.validRows;
 
-    for (let i = 0; i < analysisResult.validRows.length; i += batchSize) {
-      const batch = analysisResult.validRows.slice(i, i + batchSize);
+    for (let i = 0; i < validRows.length; i += batchSize) {
+      const batch = validRows.slice(i, i + batchSize);
       try {
+        console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(validRows.length / batchSize)}`);
+        
         const { data, error } = await supabaseClient
           .from('payments')
           .insert(batch)
@@ -50,24 +56,39 @@ serve(async (req) => {
           console.error('Batch insert error:', error);
           errors.push({
             batch: Math.floor(i / batchSize) + 1,
-            error: error.message
+            error: error.message,
+            failedRows: batch.length
           });
         } else {
           results.push(...(data || []));
+          console.log(`Successfully processed ${data?.length || 0} rows in batch`);
         }
       } catch (batchError) {
         console.error('Batch processing error:', batchError);
         errors.push({
           batch: Math.floor(i / batchSize) + 1,
-          error: batchError.message
+          error: batchError.message,
+          failedRows: batch.length
         });
       }
     }
+
+    // Create detailed processing report
+    const processingReport = {
+      totalProcessed: results.length,
+      successfulBatches: Math.floor(results.length / batchSize),
+      failedBatches: errors.length,
+      totalErrors: errors.reduce((sum, err) => sum + err.failedRows, 0),
+      errorDetails: errors
+    };
+
+    console.log('Processing complete:', processingReport);
 
     return new Response(
       JSON.stringify({
         success: true,
         processed: results.length,
+        report: processingReport,
         errors: errors.length > 0 ? errors : undefined
       }),
       {
@@ -81,6 +102,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: error.message || 'An error occurred during processing',
+        success: false
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
