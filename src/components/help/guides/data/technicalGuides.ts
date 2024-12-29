@@ -3,21 +3,21 @@ export const technicalGuides = {
     {
       title: "Initial System Configuration",
       steps: [
-        "Access the Settings menu from the main navigation",
-        "Configure company information and branding",
+        "Access system settings",
+        "Configure company information",
         "Set up user roles and permissions",
         "Configure notification preferences",
         "Test system functionality"
       ]
     },
     {
-      title: "Database Backup and Maintenance",
+      title: "Database Management",
       steps: [
-        "Schedule regular database backups",
-        "Monitor system performance metrics",
-        "Clean up temporary files and old logs",
-        "Verify data integrity",
-        "Test backup restoration procedures"
+        "Schedule regular backups",
+        "Monitor system performance",
+        "Maintain data integrity",
+        "Optimize database operations",
+        "Implement security measures"
       ]
     }
   ],
@@ -25,21 +25,21 @@ export const technicalGuides = {
     {
       title: "Common Technical Issues",
       steps: [
-        "Identify the specific error message or issue",
-        "Check system logs for related errors",
-        "Verify network connectivity",
-        "Clear browser cache if needed",
-        "Contact technical support if issue persists"
+        "Identify the problem",
+        "Check error logs",
+        "Apply known solutions",
+        "Test the fix",
+        "Document the solution"
       ]
     },
     {
-      title: "System Updates and Maintenance",
+      title: "System Maintenance",
       steps: [
-        "Review update documentation",
-        "Back up system data before updates",
-        "Schedule maintenance window",
-        "Apply system updates",
-        "Verify system functionality after updates"
+        "Plan maintenance window",
+        "Backup system data",
+        "Apply updates",
+        "Test functionality",
+        "Document changes"
       ]
     }
   ]

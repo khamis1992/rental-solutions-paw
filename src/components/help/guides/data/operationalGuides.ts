@@ -1,45 +1,45 @@
 export const operationalGuides = {
   daily_operations: [
     {
-      title: "Getting Started with Daily Operations",
+      title: "Daily Opening Procedures",
       steps: [
-        "Log in to the Rental Solutions system using your credentials",
-        "Review the Dashboard for important metrics and notifications",
-        "Check the calendar for today's scheduled rentals and returns",
-        "Process any pending customer documents or payments",
-        "Review and respond to any maintenance alerts"
+        "Log in to the system",
+        "Review pending tasks and notifications",
+        "Check vehicle availability status",
+        "Process any overnight returns",
+        "Prepare daily schedule"
       ]
     },
     {
-      title: "End of Day Procedures",
+      title: "Daily Closing Procedures",
       steps: [
-        "Generate daily reports from the Reports section",
-        "Reconcile all payments received during the day",
-        "Review and update vehicle status for returned vehicles",
-        "Process pending maintenance requests",
-        "Back up important documents and data"
+        "Reconcile daily transactions",
+        "Process end-of-day reports",
+        "Update vehicle statuses",
+        "Back up important data",
+        "Secure system logout"
       ]
     }
   ],
   customer_service: [
     {
-      title: "Handling Customer Inquiries",
+      title: "Customer Interaction Protocol",
       steps: [
-        "Listen carefully to the customer's request or concern",
-        "Access customer information through the search function",
-        "Review customer history and previous interactions",
-        "Provide accurate information and solutions",
-        "Document the interaction in customer notes"
+        "Greet customer professionally",
+        "Verify customer identity",
+        "Address customer needs",
+        "Document interaction details",
+        "Follow up as needed"
       ]
     },
     {
-      title: "Managing Customer Complaints",
+      title: "Handling Customer Complaints",
       steps: [
-        "Record the complaint details in the system",
-        "Assign appropriate priority level",
-        "Investigate the issue using system records",
-        "Take necessary corrective actions",
-        "Follow up with the customer and document resolution"
+        "Listen to customer concerns",
+        "Document complaint details",
+        "Escalate if necessary",
+        "Resolve and follow up",
+        "Update customer records"
       ]
     }
   ]
