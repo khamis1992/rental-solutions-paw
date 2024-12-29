@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,15 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const { rows, batchSize = 50 } = await req.json();
-    
-    // Validate that rows is an array
-    if (!Array.isArray(rows)) {
-      console.error('Invalid rows format:', rows);
+    const { analysisResult } = await req.json();
+    console.log('Received analysis result:', analysisResult);
+
+    // Validate that rows exist and is an array
+    if (!analysisResult?.rows || !Array.isArray(analysisResult.rows)) {
+      console.error('Invalid data format:', analysisResult);
       throw new Error('Valid rows must be an array');
     }
-
-    console.log('Processing payment import with rows:', rows.length);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -29,38 +28,54 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Process rows in batches
+    // Format the rows data properly
+    const formattedRows = analysisResult.rows.map((row: any) => {
+      // Convert and validate numeric fields
+      const rentAmount = typeof row.rent_amount === 'string' ? parseFloat(row.rent_amount) : row.rent_amount;
+      const finalPrice = typeof row.final_price === 'string' ? parseFloat(row.final_price) : row.final_price;
+      const amountPaid = typeof row.amount_paid === 'string' ? parseFloat(row.amount_paid) : row.amount_paid;
+      const remainingAmount = typeof row.remaining_amount === 'string' ? parseFloat(row.remaining_amount) : row.remaining_amount;
+
+      if (isNaN(rentAmount) || isNaN(finalPrice) || isNaN(amountPaid) || isNaN(remainingAmount)) {
+        throw new Error('Invalid numeric values in the data');
+      }
+
+      return {
+        agreement_number: String(row.agreement_number || '').trim(),
+        license_plate: String(row.license_plate || '').trim(),
+        rent_amount: rentAmount,
+        final_price: finalPrice,
+        amount_paid: amountPaid,
+        remaining_amount: remainingAmount,
+        agreement_duration: row.agreement_duration || null,
+        import_status: 'pending'
+      };
+    });
+
+    console.log('Formatted rows for import:', formattedRows);
+
+    if (formattedRows.length === 0) {
+      throw new Error('No valid rows to import');
+    }
+
+    // Process the rows in batches of 100
+    const batchSize = 100;
     const results = [];
     const errors = [];
 
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const batch = rows.slice(i, i + batchSize);
-      console.log(`Processing batch ${i / batchSize + 1}:`, batch.length, 'rows');
-
+    for (let i = 0; i < formattedRows.length; i += batchSize) {
+      const batch = formattedRows.slice(i, i + batchSize);
       try {
         const { data, error } = await supabaseClient
-          .from('financial_imports')
-          .insert(batch.map((row: any) => ({
-            lease_id: row.lease_id,
-            customer_name: row.customer_name,
-            amount: row.amount,
-            license_plate: row.license_plate,
-            vehicle: row.vehicle,
-            payment_date: row.payment_date,
-            payment_method: row.payment_method,
-            transaction_id: row.transaction_id,
-            description: row.description,
-            type: row.type,
-            status: row.status
-          })))
+          .from('remaining_amounts')
+          .insert(batch)
           .select();
 
         if (error) {
           console.error('Batch insert error:', error);
           errors.push({
-            batch: i / batchSize + 1,
-            error: error.message,
-            details: error.details
+            batch: Math.floor(i / batchSize) + 1,
+            error: error.message
           });
         } else {
           results.push(...(data || []));
@@ -68,17 +83,11 @@ serve(async (req) => {
       } catch (batchError) {
         console.error('Batch processing error:', batchError);
         errors.push({
-          batch: i / batchSize + 1,
+          batch: Math.floor(i / batchSize) + 1,
           error: batchError.message
         });
       }
     }
-
-    // Log the final results
-    console.log('Import completed:', {
-      totalProcessed: results.length,
-      errors: errors.length
-    });
 
     return new Response(
       JSON.stringify({
