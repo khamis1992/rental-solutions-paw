@@ -1,6 +1,5 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { Coins, FileWarning, AlertCircle, DollarSign } from "lucide-react";
 
 interface StatsDisplayProps {
   paymentCount: number;
@@ -17,26 +16,45 @@ export function StatsDisplay({
 }: StatsDisplayProps) {
   return (
     <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      <StatsCard
-        title="Total Fines"
-        value={paymentCount.toString()}
-        icon={FileWarning}
-      />
-      <StatsCard
-        title="Unassigned Fines"
-        value={unassignedCount.toString()}
-        icon={AlertCircle}
-      />
-      <StatsCard
-        title="Total Amount"
-        value={formatCurrency(totalAmount)}
-        icon={Coins}
-      />
-      <StatsCard
-        title="Unassigned Amount"
-        value={formatCurrency(unassignedAmount)}
-        icon={DollarSign}
-      />
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Fines</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">
+            QAR {formatCurrency(totalAmount).replace('$', '')}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Unassigned Fines</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">
+            QAR {formatCurrency(unassignedAmount).replace('$', '')}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Count</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">{paymentCount}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">Unassigned Count</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="text-2xl font-bold">{unassignedCount}</div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
