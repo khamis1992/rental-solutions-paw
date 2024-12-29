@@ -27,13 +27,17 @@ serve(async (req) => {
     const headers = lines[0].split(',').map(h => h.trim());
 
     const requiredFields = [
+      'Lease_ID',
+      'Customer_Name',
       'Amount',
+      'License_Plate',
+      'Vehicle',
       'Payment_Date',
       'Payment_Method',
-      'Status',
-      'Description',
       'Transaction_ID',
-      'Lease_ID'
+      'Description',
+      'Type',
+      'Status'
     ];
     
     const missingFields = requiredFields.filter(field => 
@@ -53,14 +57,20 @@ serve(async (req) => {
       );
     }
 
-    // Get column indices
-    const amountIndex = headers.findIndex(h => h.toLowerCase() === 'amount');
-    const dateIndex = headers.findIndex(h => h.toLowerCase() === 'payment_date');
-    const methodIndex = headers.findIndex(h => h.toLowerCase() === 'payment_method');
-    const statusIndex = headers.findIndex(h => h.toLowerCase() === 'status');
-    const descriptionIndex = headers.findIndex(h => h.toLowerCase() === 'description');
-    const transactionIdIndex = headers.findIndex(h => h.toLowerCase() === 'transaction_id');
-    const leaseIdIndex = headers.findIndex(h => h.toLowerCase() === 'lease_id');
+    // Get column indices for all required fields
+    const columnIndices = {
+      lease_id: headers.findIndex(h => h.toLowerCase() === 'lease_id'),
+      customer_name: headers.findIndex(h => h.toLowerCase() === 'customer_name'),
+      amount: headers.findIndex(h => h.toLowerCase() === 'amount'),
+      license_plate: headers.findIndex(h => h.toLowerCase() === 'license_plate'),
+      vehicle: headers.findIndex(h => h.toLowerCase() === 'vehicle'),
+      payment_date: headers.findIndex(h => h.toLowerCase() === 'payment_date'),
+      payment_method: headers.findIndex(h => h.toLowerCase() === 'payment_method'),
+      transaction_id: headers.findIndex(h => h.toLowerCase() === 'transaction_id'),
+      description: headers.findIndex(h => h.toLowerCase() === 'description'),
+      type: headers.findIndex(h => h.toLowerCase() === 'type'),
+      status: headers.findIndex(h => h.toLowerCase() === 'status')
+    };
 
     // Parse and analyze the data
     const rows = lines.slice(1).filter(line => line.trim() !== '');
@@ -83,7 +93,7 @@ serve(async (req) => {
       }
 
       // Parse amount
-      const amount = parseFloat(values[amountIndex]);
+      const amount = parseFloat(values[columnIndices.amount]);
       if (isNaN(amount)) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid amount format`);
@@ -93,40 +103,38 @@ serve(async (req) => {
         rowData.amount = amount;
       }
 
-      // Validate date format (DD-MM-YYYY)
-      const date = values[dateIndex];
-      if (!/^\d{2}-\d{2}-\d{4}$/.test(date)) {
-        invalidRows++;
-        issues.push(`Row ${index + 2}: Invalid date format. Use DD-MM-YYYY`);
-        rowError = true;
-      } else {
-        rowData.payment_date = date;
-      }
+      // Add all fields to rowData
+      rowData.lease_id = values[columnIndices.lease_id];
+      rowData.customer_name = values[columnIndices.customer_name];
+      rowData.license_plate = values[columnIndices.license_plate];
+      rowData.vehicle = values[columnIndices.vehicle];
+      rowData.payment_date = values[columnIndices.payment_date];
+      rowData.payment_method = values[columnIndices.payment_method]?.toLowerCase();
+      rowData.transaction_id = values[columnIndices.transaction_id];
+      rowData.description = values[columnIndices.description];
+      rowData.type = values[columnIndices.type]?.toUpperCase();
+      rowData.status = values[columnIndices.status]?.toLowerCase();
 
       // Validate payment method
-      const method = values[methodIndex];
-      if (!['cash', 'credit_card', 'bank_transfer', 'cheque'].includes(method?.toLowerCase())) {
+      if (!['cash', 'credit_card', 'bank_transfer', 'cheque'].includes(rowData.payment_method)) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid payment method`);
         rowError = true;
-      } else {
-        rowData.payment_method = method.toLowerCase();
       }
 
       // Validate status
-      const status = values[statusIndex];
-      if (!['pending', 'completed', 'failed'].includes(status?.toLowerCase())) {
+      if (!['pending', 'completed', 'failed'].includes(rowData.status)) {
         invalidRows++;
         issues.push(`Row ${index + 2}: Invalid status`);
         rowError = true;
-      } else {
-        rowData.status = status.toLowerCase();
       }
 
-      // Add other fields
-      rowData.description = values[descriptionIndex];
-      rowData.transaction_id = values[transactionIdIndex];
-      rowData.lease_id = values[leaseIdIndex];
+      // Validate type
+      if (!['INCOME', 'EXPENSE'].includes(rowData.type)) {
+        invalidRows++;
+        issues.push(`Row ${index + 2}: Invalid type (must be INCOME or EXPENSE)`);
+        rowError = true;
+      }
 
       if (!rowError) {
         validRows++;
@@ -143,6 +151,7 @@ serve(async (req) => {
     }
 
     console.log('Analysis completed successfully');
+    console.log(`Found ${validRows} valid rows and ${invalidRows} invalid rows`);
 
     return new Response(
       JSON.stringify({
