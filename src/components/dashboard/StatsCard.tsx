@@ -25,7 +25,7 @@ export const StatsCard = ({
         <Icon className={cn("h-4 w-4", iconClassName)} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold tracking-tight">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}
