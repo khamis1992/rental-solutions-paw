@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FileUploadSection } from "./FileUploadSection";
 import { AIAnalysisCard } from "./AIAnalysisCard";
+import { Loader2 } from "lucide-react";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
