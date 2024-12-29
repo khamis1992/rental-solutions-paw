@@ -52,17 +52,34 @@ export const PaymentImport = () => {
     if (!file) return;
 
     try {
-      console.log('Starting file upload process...', file.name);
+      console.log('Starting file upload process...', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
       
-      const formData = new FormData();
-      formData.append('file', file);
+      // Read file content
+      const fileContent = await file.text();
+      console.log('File content loaded, first 100 chars:', fileContent.substring(0, 100));
 
-      console.log('Calling Edge Function...');
+      // Validate basic file structure
+      const lines = fileContent.split('\n');
+      if (lines.length < 2) {
+        throw new Error('File must contain at least a header row and one data row');
+      }
+
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+      console.log('CSV Headers:', headers);
+
+      // Call Edge Function with validated data
+      console.log('Calling Edge Function with payload...');
       const { data, error } = await supabase.functions
         .invoke('process-transaction-import', {
           body: { 
             fileName: file.name,
-            fileContent: await file.text() // Send file content directly
+            fileContent: fileContent,
+            headers: headers,
+            totalRows: lines.length - 1 // Excluding header row
           }
         });
 

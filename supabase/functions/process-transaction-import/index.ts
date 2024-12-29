@@ -24,14 +24,23 @@ serve(async (req) => {
     let body;
     try {
       body = await req.json();
-      console.log('Request body received:', { fileName: body.fileName });
+      console.log('Request body received:', {
+        fileName: body.fileName,
+        headersReceived: body.headers,
+        totalRows: body.totalRows
+      });
     } catch (error) {
       console.error('Error parsing request body:', error);
       throw new Error('Invalid request body format');
     }
 
-    if (!body || !body.fileName || !body.fileContent) {
-      throw new Error('Missing required fields in request body');
+    // Validate required fields
+    const requiredFields = ['fileName', 'fileContent', 'headers'];
+    const missingFields = requiredFields.filter(field => !body[field]);
+    
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields);
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
     // Initialize Supabase client
@@ -65,6 +74,7 @@ serve(async (req) => {
     // Validate headers
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
     if (missingHeaders.length > 0) {
+      console.error('Missing required headers:', missingHeaders);
       throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
     }
 
@@ -78,6 +88,7 @@ serve(async (req) => {
         
         // Skip rows with incorrect number of columns
         if (values.length !== headers.length) {
+          console.error(`Row ${i + 1}: Invalid number of columns`);
           errors.push(`Row ${i + 1}: Invalid number of columns`);
           continue;
         }
@@ -88,6 +99,8 @@ serve(async (req) => {
             rowData[header] = values[index];
           }
         });
+
+        console.log(`Processing row ${i}:`, rowData);
 
         // Store in raw_transaction_imports
         const { error: insertError } = await supabaseAdmin
