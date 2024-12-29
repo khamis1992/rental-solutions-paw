@@ -84,22 +84,22 @@ export const useImportProcess = () => {
       const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
       const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
-      console.log('Starting file upload with payload:', {
+      const payload = {
         fileName: file.name,
-        fileContent: fileContent,  // Make sure fileContent is included
+        fileContent: fileContent,
         headers: headers,
         totalRows: lines.length - 1
+      };
+
+      console.log('Starting file upload with payload:', {
+        ...payload,
+        fileContentLength: fileContent.length
       });
 
       // Call Edge Function with validated data
       const { data, error } = await supabase.functions
         .invoke('process-transaction-import', {
-          body: { 
-            fileName: file.name,
-            fileContent: fileContent,  // Include fileContent in the payload
-            headers: headers,
-            totalRows: lines.length - 1
-          }
+          body: payload
         });
 
       if (error) {
