@@ -23,9 +23,6 @@ serve(async (req) => {
 
     // Parse CSV content
     const lines = fileContent.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-    
     const headers = lines[0].split(',').map((h: string) => h.trim())
     
     // Validate headers
@@ -61,25 +58,35 @@ serve(async (req) => {
       if (!line) continue
 
       const values = line.split(',').map((v: string) => v.trim())
-      const rowData: Record<string, any> = {}
+      const transaction: Record<string, any> = {}
       
       headers.forEach((header: string, index: number) => {
-        rowData[header] = values[index]
+        // Convert Amount to numeric
+        if (header === 'Amount') {
+          transaction[header] = parseFloat(values[index])
+        } 
+        // Keep Payment_Date as is
+        else if (header === 'Payment_Date') {
+          transaction[header] = values[index]
+        }
+        // Handle other fields
+        else {
+          transaction[header] = values[index]
+        }
       })
 
       transactions.push({
-        file_name: fileName,
-        lease_id: rowData.Lease_ID,
-        customer_name: rowData.Customer_Name,
-        amount: parseFloat(rowData.Amount),
-        license_plate: rowData.License_Plate,
-        vehicle: rowData.Vehicle,
-        payment_date: rowData.Payment_Date,
-        payment_method: rowData.Payment_Method,
-        transaction_id: rowData.Transaction_ID,
-        description: rowData.Description,
-        type: rowData.Type,
-        status: rowData.Status || 'pending'
+        lease_id: transaction.Lease_ID,
+        customer_name: transaction.Customer_Name,
+        amount: transaction.Amount,
+        license_plate: transaction.License_Plate,
+        vehicle: transaction.Vehicle,
+        payment_date: transaction.Payment_Date,
+        payment_method: transaction.Payment_Method,
+        transaction_id: transaction.Transaction_ID,
+        description: transaction.Description,
+        type: transaction.Type,
+        status: transaction.Status || 'pending'
       })
     }
 
