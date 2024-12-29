@@ -27,12 +27,20 @@ export const AuthStateHandler = () => {
           variant: "default",
         });
         
-        // Only redirect to dashboard if we're on the auth page and not importing
-        if (location.pathname === '/auth' && !sessionStorage.getItem('importInProgress')) {
-          console.log("Redirecting to dashboard after sign in");
-          navigate('/');
+        // Only redirect to dashboard from auth page
+        if (location.pathname === '/auth') {
+          // Check if we're not in the middle of an import
+          const importInProgress = sessionStorage.getItem('importInProgress');
+          if (!importInProgress || importInProgress === 'completed') {
+            console.log("Redirecting to dashboard after sign in");
+            navigate('/');
+          } else {
+            console.log("Import in progress, skipping redirect");
+          }
         }
       } else if (event === "SIGNED_OUT") {
+        // Clear any import progress when signing out
+        sessionStorage.removeItem('importInProgress');
         toast({
           title: "You have been logged out.",
           variant: "default",
