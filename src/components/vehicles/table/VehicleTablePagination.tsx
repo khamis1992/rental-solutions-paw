@@ -7,7 +7,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface VehicleTablePaginationProps {

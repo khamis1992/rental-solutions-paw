@@ -6,14 +6,18 @@ import { Vehicle } from "@/types/database/vehicle.types";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { VehicleTablePagination } from "./table/VehicleTablePagination";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
   isLoading: boolean;
 }
 
+const ITEMS_PER_PAGE = 9; // Divisible by 3 for grid layout
+
 export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<VehicleFilters>({
     search: "",
     status: "all",
@@ -28,8 +32,19 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const handleVehicleClick = (vehicleId: string) => {
-    console.log("Navigating to vehicle:", vehicleId); // Debug log
+    console.log("Navigating to vehicle:", vehicleId);
     navigate(`/vehicles/${vehicleId}`);
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(vehicles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentVehicles = vehicles.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -59,16 +74,27 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
           </Button>
         </div>
       </div>
+
       {viewMode === 'grid' ? (
         <VehicleGrid 
-          vehicles={vehicles || []} 
+          vehicles={currentVehicles} 
           onVehicleClick={handleVehicleClick}
         />
       ) : (
         <VehicleListView 
-          vehicles={vehicles || []} 
+          vehicles={currentVehicles} 
           onVehicleClick={handleVehicleClick}
         />
+      )}
+
+      {vehicles.length > ITEMS_PER_PAGE && (
+        <div className="mt-4 flex justify-center">
+          <VehicleTablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       )}
     </div>
   );
