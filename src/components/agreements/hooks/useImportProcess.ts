@@ -27,9 +27,9 @@ export const useImportProcess = () => {
       // Process the import using Edge Function
       const { data, error: processError } = await supabase.functions
         .invoke("process-transaction-import", {
-          body: { fileName }, // Send as object, not string
-          headers: {
-            'Content-Type': 'application/json',
+          body: { 
+            fileName,
+            timestamp: Date.now() 
           }
         });
 
@@ -53,10 +53,7 @@ export const useImportProcess = () => {
     try {
       const { error } = await supabase.functions
         .invoke("process-payment-import", {
-          body: { analysisResult }, // Send as object, not string
-          headers: {
-            'Content-Type': 'application/json',
-          }
+          body: { analysisResult }
         });
 
       if (error) throw error;
