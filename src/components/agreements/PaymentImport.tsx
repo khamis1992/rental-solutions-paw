@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { toast } from "sonner";
 
 export const PaymentImport = () => {
   const {
@@ -22,7 +21,7 @@ export const PaymentImport = () => {
     queryKey: ["imported-transactions"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financial_imports")
+        .from("remaining_amounts")
         .select("*")
         .order('created_at', { ascending: false })
         .limit(50);
@@ -33,15 +32,15 @@ export const PaymentImport = () => {
   });
 
   const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+    const csvContent = "Agreement_Number,License_Plate,Rent_Amount,Final_Price,Amount_Paid,Remaining_Amount,Agreement_Duration\n" +
+                      "AGR-001,ABC123,1000,12000,3000,9000,12";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'payment_import_template.csv');
+    a.setAttribute('download', 'remaining_amounts_template.csv');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -80,7 +79,7 @@ export const PaymentImport = () => {
       {isUploading && !analysisResult && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Importing payments...
+          Importing remaining amounts...
         </div>
       )}
 
@@ -100,24 +99,24 @@ export const PaymentImport = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-medium">
-                        Transaction ID: {item.transaction_id || 'N/A'}
+                        Agreement: {item.agreement_number || 'N/A'}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Created: {new Date(item.created_at).toLocaleString()}
+                        License Plate: {item.license_plate || 'N/A'}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.remaining_amount)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Status: {item.status || 'N/A'}
+                        Total Paid: {formatCurrency(item.amount_paid)}
                       </p>
                     </div>
                   </div>
                   <div className="text-sm">
-                    <p>Description: {item.description || 'N/A'}</p>
-                    <p>Payment Method: {item.payment_method || 'N/A'}</p>
+                    <p>Final Price: {formatCurrency(item.final_price)}</p>
+                    <p>Rent Amount: {formatCurrency(item.rent_amount)}</p>
                   </div>
                 </div>
               ))}

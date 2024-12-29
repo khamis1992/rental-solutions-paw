@@ -46,18 +46,24 @@ export const useImportProcess = () => {
           throw new Error(`Invalid amount value: ${row.amount}`);
         }
 
+        const rentAmount = typeof row.rent_amount === 'string' ? parseFloat(row.rent_amount) : row.rent_amount;
+        const finalPrice = typeof row.final_price === 'string' ? parseFloat(row.final_price) : row.final_price;
+        const amountPaid = typeof row.amount_paid === 'string' ? parseFloat(row.amount_paid) : row.amount_paid;
+        const remainingAmount = typeof row.remaining_amount === 'string' ? parseFloat(row.remaining_amount) : row.remaining_amount;
+
+        if (isNaN(rentAmount) || isNaN(finalPrice) || isNaN(amountPaid) || isNaN(remainingAmount)) {
+          throw new Error('Invalid numeric values in the data');
+        }
+
         return {
-          lease_id: row.lease_id || null,
-          customer_name: String(row.customer_name || '').trim(),
-          amount: amount,
+          agreement_number: String(row.agreement_number || '').trim(),
           license_plate: String(row.license_plate || '').trim(),
-          vehicle: String(row.vehicle || '').trim(),
-          payment_date: row.payment_date || null,
-          payment_method: String(row.payment_method || '').toLowerCase().trim(),
-          transaction_id: row.transaction_id || null,
-          description: String(row.description || '').trim(),
-          type: String(row.type || '').toUpperCase().trim(),
-          status: String(row.status || 'pending').toLowerCase().trim()
+          rent_amount: rentAmount,
+          final_price: finalPrice,
+          amount_paid: amountPaid,
+          remaining_amount: remainingAmount,
+          agreement_duration: row.agreement_duration || null,
+          import_status: 'pending'
         };
       });
 
@@ -68,13 +74,10 @@ export const useImportProcess = () => {
       }
 
       // Process the valid rows
-      const { data, error } = await supabase.functions
-        .invoke("process-payment-import", {
-          body: { 
-            rows: formattedRows,
-            batchSize: 50
-          }
-        });
+      const { data, error } = await supabase
+        .from('remaining_amounts')
+        .insert(formattedRows)
+        .select();
 
       if (error) {
         console.error('Import processing error:', error);
