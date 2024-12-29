@@ -16,15 +16,19 @@ export const useImportProcess = () => {
       const lines = fileContent.split('\n').map(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim());
       
-      // Create raw data array
+      // Create raw data array, filtering out empty lines
       const rows = lines.slice(1)
         .filter(line => line.trim())
         .map(line => {
           const values = line.split(',').map(v => v.trim());
-          return headers.reduce((obj, header, index) => {
-            obj[header] = values[index];
-            return obj;
-          }, {} as Record<string, string>);
+          const row: Record<string, string> = {};
+          
+          // Handle cases where we might have more or fewer columns than headers
+          headers.forEach((header, index) => {
+            row[header] = values[index] || ''; // Use empty string for missing values
+          });
+          
+          return row;
         });
 
       console.log('Sending payload to analyze-payment-import:', {
@@ -32,12 +36,31 @@ export const useImportProcess = () => {
         sampleRow: rows[0]
       });
       
+      // First, store raw data
+      const { data: rawImport, error: rawError } = await supabase
+        .from('raw_payment_imports')
+        .insert([
+          {
+            raw_data: rows.map(row => ({ ...row })),
+            is_valid: true
+          }
+        ])
+        .select()
+        .single();
+
+      if (rawError) {
+        console.error('Error storing raw import:', rawError);
+        throw rawError;
+      }
+
+      // Then proceed with analysis
       const { data: analysis, error: analysisError } = await supabase.functions
         .invoke('analyze-payment-import', {
           body: { 
             fileContent,
             headers,
-            rows
+            rows,
+            importId: rawImport.id
           }
         });
 
@@ -50,10 +73,10 @@ export const useImportProcess = () => {
 
       // Show summary toast with analysis results
       toast.info('File Analysis Complete', {
-        description: `Found ${analysis.validRows.length} valid rows and ${analysis.invalidRows.length} invalid rows.`
+        description: `Found ${analysis.validRows?.length || 0} valid rows and ${analysis.invalidRows?.length || 0} invalid rows.`
       });
 
-      if (analysis.invalidRows.length > 0) {
+      if (analysis.invalidRows?.length > 0) {
         console.log('Invalid rows detected:', analysis.invalidRows);
       }
 
@@ -72,12 +95,12 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
-      if (!analysisResult?.validRows || !Array.isArray(analysisResult.validRows)) {
-        throw new Error('Invalid analysis result: validRows must be an array');
+      if (!analysisResult) {
+        throw new Error('No analysis result available');
       }
 
       console.log('Implementing changes with payload:', {
-        validRowsCount: analysisResult.validRows.length
+        analysisResult
       });
 
       const { data, error } = await supabase.functions
@@ -94,7 +117,7 @@ export const useImportProcess = () => {
       
       // Show detailed success message
       toast.success('Import Complete', {
-        description: `Successfully processed ${data.processed} records${data.report.failedBatches > 0 ? 
+        description: `Successfully processed ${data.processed} records${data.report?.failedBatches > 0 ? 
           `. ${data.report.failedBatches} batches failed.` : ''}`
       });
 

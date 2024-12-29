@@ -13,39 +13,44 @@ interface ValidationResult {
 
 function validateRow(row: any, headers: string[]): ValidationResult {
   const errors: string[] = [];
-  const expectedColumnCount = headers.length;
+  let data: Record<string, any> = {};
   
-  // Check column count
-  if (Object.keys(row).length !== expectedColumnCount) {
-    errors.push(`Invalid number of columns`);
-    return { isValid: false, errors };
-  }
-
-  // Validate amount format
-  if (isNaN(parseFloat(row.amount))) {
-    errors.push('Invalid amount format');
-    return { isValid: false, errors };
-  }
-
-  // Validate date format
-  const paymentDate = new Date(row.payment_date);
-  if (isNaN(paymentDate.getTime())) {
-    errors.push('Invalid payment date format');
-    return { isValid: false, errors };
-  }
-
-  // Return sanitized data
-  return {
-    isValid: true,
-    errors: [],
-    data: {
-      amount: parseFloat(row.amount),
-      payment_date: paymentDate.toISOString(),
-      payment_method: row.payment_method || null,
-      description: row.description || null,
-      status: 'pending'
+  try {
+    // Basic data validation
+    if (!row.amount || isNaN(parseFloat(row.amount))) {
+      errors.push('Invalid amount format');
+    } else {
+      data.amount = parseFloat(row.amount);
     }
-  };
+
+    if (row.payment_date) {
+      const date = new Date(row.payment_date);
+      if (isNaN(date.getTime())) {
+        errors.push('Invalid payment date format');
+      } else {
+        data.payment_date = date.toISOString();
+      }
+    }
+
+    // Copy other fields directly
+    headers.forEach(header => {
+      if (header !== 'amount' && header !== 'payment_date') {
+        data[header] = row[header] || null;
+      }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      data: errors.length === 0 ? data : undefined
+    };
+  } catch (error) {
+    console.error('Row validation error:', error);
+    return {
+      isValid: false,
+      errors: ['Row validation failed: ' + error.message]
+    };
+  }
 }
 
 serve(async (req) => {
@@ -54,10 +59,11 @@ serve(async (req) => {
   }
 
   try {
-    const { fileContent, headers, rows } = await req.json();
+    const { fileContent, headers, rows, importId } = await req.json();
     console.log('Starting analysis of payment import data:', { 
       totalRows: rows?.length,
-      headers 
+      headers,
+      importId 
     });
 
     if (!Array.isArray(rows)) {
@@ -74,7 +80,7 @@ serve(async (req) => {
       
       if (validation.isValid && validation.data) {
         validRows.push(validation.data);
-        totalAmount += validation.data.amount;
+        totalAmount += validation.data.amount || 0;
       } else {
         invalidRows.push({
           row: index + 1,
@@ -106,13 +112,13 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         totalRows: rows.length,
-        validRows: validRows, // Now this is an array of sanitized data
-        invalidRows: invalidRows,
+        validRows,
+        invalidRows,
         totalAmount,
         suggestions,
+        importId,
         errorSummary: {
           totalErrors: invalidRows.length,
-          columnErrors: invalidRows.filter(r => r.errors.includes('Invalid number of columns')).length,
           amountErrors: invalidRows.filter(r => r.errors.includes('Invalid amount format')).length,
           dateErrors: invalidRows.filter(r => r.errors.includes('Invalid payment date format')).length
         }

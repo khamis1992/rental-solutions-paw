@@ -15,6 +15,7 @@ serve(async (req) => {
     const { analysisResult } = await req.json();
     
     if (!analysisResult?.validRows || !Array.isArray(analysisResult.validRows)) {
+      console.error('Invalid analysis result:', analysisResult);
       return new Response(
         JSON.stringify({ 
           error: 'Valid rows must be an array',
@@ -48,9 +49,18 @@ serve(async (req) => {
       try {
         console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(validRows.length / batchSize)}`);
         
+        // Prepare the batch data
+        const processedBatch = batch.map(row => ({
+          amount: parseFloat(row.amount),
+          payment_date: row.payment_date,
+          payment_method: row.payment_method,
+          transaction_id: row.transaction_id,
+          status: 'pending'
+        }));
+
         const { data, error } = await supabaseClient
           .from('payments')
-          .insert(batch)
+          .insert(processedBatch)
           .select();
 
         if (error) {
