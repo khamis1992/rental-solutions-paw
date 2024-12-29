@@ -32,7 +32,7 @@ const Reports = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="fleet" className="space-y-6">
+      <Tabs defaultValue="fleet" className="space-y-8">
         <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
           <TabsTrigger value="fleet" className="flex items-center gap-2 text-base font-medium">
             <Car className="h-4 w-4" />
@@ -60,41 +60,43 @@ const Reports = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="fleet">
-          <FleetReportSection
-            selectedReport={selectedReport}
-            setSelectedReport={setSelectedReport}
-            generateReport={generateReport}
-          />
-        </TabsContent>
+        <div className="mt-6">
+          <TabsContent value="fleet">
+            <FleetReportSection
+              selectedReport={selectedReport}
+              setSelectedReport={setSelectedReport}
+              generateReport={generateReport}
+            />
+          </TabsContent>
 
-        <TabsContent value="customer">
-          <CustomerReportSection
-            selectedReport={selectedReport}
-            setSelectedReport={setSelectedReport}
-            generateReport={generateReport}
-          />
-        </TabsContent>
+          <TabsContent value="customer">
+            <CustomerReportSection
+              selectedReport={selectedReport}
+              setSelectedReport={setSelectedReport}
+              generateReport={generateReport}
+            />
+          </TabsContent>
 
-        <TabsContent value="operational">
-          <OperationalReportSection
-            selectedReport={selectedReport}
-            setSelectedReport={setSelectedReport}
-            generateReport={generateReport}
-          />
-        </TabsContent>
+          <TabsContent value="operational">
+            <OperationalReportSection
+              selectedReport={selectedReport}
+              setSelectedReport={setSelectedReport}
+              generateReport={generateReport}
+            />
+          </TabsContent>
 
-        <TabsContent value="financial">
-          <FinancialReportSection />
-        </TabsContent>
+          <TabsContent value="financial">
+            <FinancialReportSection />
+          </TabsContent>
 
-        <TabsContent value="performance">
-          <PerformanceInsights />
-        </TabsContent>
+          <TabsContent value="performance">
+            <PerformanceInsights />
+          </TabsContent>
 
-        <TabsContent value="code-analysis">
-          <CodeAnalysisDashboard />
-        </TabsContent>
+          <TabsContent value="code-analysis">
+            <CodeAnalysisDashboard />
+          </TabsContent>
+        </div>
       </Tabs>
     </DashboardLayout>
   );
