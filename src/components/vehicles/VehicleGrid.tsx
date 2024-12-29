@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Vehicle } from "@/types/database/vehicle.types";
 import { Card } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -75,29 +74,35 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <>
       {vehicles.map((vehicle) => (
         <Card
           key={vehicle.id}
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+          className="flex flex-col h-[320px] cursor-pointer hover:shadow-md transition-shadow bg-white"
           onClick={() => onVehicleClick?.(vehicle.id)}
         >
-          {vehicle.image_url && (
-            <img
-              src={vehicle.image_url}
-              alt={`${vehicle.make} ${vehicle.model}`}
-              className="w-full h-48 object-cover rounded-md mb-4"
-            />
+          {vehicle.image_url ? (
+            <div className="relative w-full h-48">
+              <img
+                src={vehicle.image_url}
+                alt={`${vehicle.make} ${vehicle.model}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400">No image available</span>
+            </div>
           )}
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">
+          <div className="p-4 flex flex-col flex-grow">
+            <h3 className="text-lg font-medium truncate">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-2">
               License Plate: {vehicle.license_plate}
             </p>
             <div 
-              className="flex items-center text-sm cursor-pointer hover:bg-gray-100 p-2 rounded"
+              className="flex items-center text-sm cursor-pointer hover:bg-gray-100 p-2 rounded mt-auto"
               onClick={(e) => handleLocationClick(e, vehicle.id, vehicle.location || "")}
             >
               {editingLocation === vehicle.id ? (
@@ -120,6 +125,6 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
           </div>
         </Card>
       ))}
-    </div>
+    </>
   );
 };
