@@ -80,30 +80,33 @@ export const useImportProcess = () => {
         return false;
       }
 
-      const fileName = `payments/${Date.now()}_${file.name}`;
-      console.log('Starting file upload:', fileName);
-      
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      const fileContent = await file.text();
+      const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
-      if (uploadError) throw uploadError;
+      console.log('Starting file upload with payload:', {
+        fileName: file.name,
+        headers: headers,
+        totalRows: lines.length - 1
+      });
 
-      console.log('File uploaded successfully, processing import...');
-
-      // Process the import using Edge Function
-      const { data, error: processError } = await supabase.functions
-        .invoke("process-transaction-import", {
+      // Call Edge Function with validated data
+      const { data, error } = await supabase.functions
+        .invoke('process-transaction-import', {
           body: { 
-            fileName,
-            timestamp: Date.now() 
+            fileName: file.name,
+            fileContent: fileContent,
+            headers: headers,
+            totalRows: lines.length - 1
           }
         });
 
-      if (processError) throw processError;
+      if (error) {
+        console.error('Edge Function error:', error);
+        throw error;
+      }
 
-      console.log('Import processed successfully:', data);
+      console.log('Edge Function response:', data);
       setAnalysisResult(data);
       return true;
     } catch (error: any) {
