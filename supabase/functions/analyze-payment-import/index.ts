@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const csvContent = await file.text();
     const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
     const requiredFields = [
       'lease_id',
@@ -87,48 +87,16 @@ serve(async (req) => {
       // Parse and validate each field
       requiredFields.forEach(field => {
         const value = values[columnIndices[field]];
+        rowData[field] = value;
         
-        switch (field) {
-          case 'amount':
-            const amount = parseFloat(value);
-            if (isNaN(amount)) {
-              rowError = true;
-              issues.push(`Row ${index + 2}: Invalid amount format`);
-            } else {
-              rowData.amount = amount;
-              totalAmount += amount;
-            }
-            break;
-
-          case 'payment_method':
-            const method = value.toLowerCase();
-            if (!['cash', 'credit_card', 'bank_transfer', 'cheque'].includes(method)) {
-              rowError = true;
-              issues.push(`Row ${index + 2}: Invalid payment method`);
-            }
-            rowData.payment_method = method;
-            break;
-
-          case 'status':
-            const status = value.toLowerCase();
-            if (!['pending', 'completed', 'failed'].includes(status)) {
-              rowError = true;
-              issues.push(`Row ${index + 2}: Invalid status`);
-            }
-            rowData.status = status;
-            break;
-
-          case 'type':
-            const type = value.toUpperCase();
-            if (!['INCOME', 'EXPENSE'].includes(type)) {
-              rowError = true;
-              issues.push(`Row ${index + 2}: Invalid type (must be INCOME or EXPENSE)`);
-            }
-            rowData.type = type;
-            break;
-
-          default:
-            rowData[field] = value;
+        if (field === 'amount') {
+          const amount = parseFloat(value);
+          if (isNaN(amount)) {
+            rowError = true;
+            issues.push(`Row ${index + 2}: Invalid amount format`);
+          } else {
+            totalAmount += amount;
+          }
         }
       });
 
