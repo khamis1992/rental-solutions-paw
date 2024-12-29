@@ -58,7 +58,7 @@ export const AgreementList = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <AgreementListHeader
         onImportClick={() => setShowDeleteDialog(true)}
         onDeleteClick={() => setShowDeleteDialog(true)}
