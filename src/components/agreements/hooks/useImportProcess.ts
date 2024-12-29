@@ -125,7 +125,7 @@ export const useImportProcess = () => {
     try {
       const { error } = await supabase.functions
         .invoke("process-payment-import", {
-          body: { analysisResult }
+          body: JSON.stringify({ analysisResult }) // Properly stringify the JSON payload
         });
 
       if (error) throw error;
