@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { fileName, fileContent } = await req.json()
+    console.log('Processing file:', fileName)
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -39,8 +40,11 @@ serve(async (req) => {
       'Status'
     ]
 
+    console.log('Validating headers:', headers)
+
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
     if (missingHeaders.length > 0) {
+      console.error('Missing headers:', missingHeaders)
       return new Response(
         JSON.stringify({ error: `Missing required headers: ${missingHeaders.join(', ')}` }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -57,43 +61,74 @@ serve(async (req) => {
       const transaction: Record<string, any> = {}
       
       headers.forEach((header: string, index: number) => {
-        transaction[header] = values[index]
+        // Convert Amount to numeric
+        if (header === 'Amount') {
+          transaction[header] = parseFloat(values[index])
+        } 
+        // Keep Payment_Date as is
+        else if (header === 'Payment_Date') {
+          transaction[header] = values[index]
+        }
+        // Handle other fields
+        else {
+          transaction[header] = values[index]
+        }
       })
 
       transactions.push({
         lease_id: transaction.Lease_ID,
         customer_name: transaction.Customer_Name,
-        amount: parseFloat(transaction.Amount),
+        amount: transaction.Amount,
         license_plate: transaction.License_Plate,
         vehicle: transaction.Vehicle,
-        payment_date: transaction.Payment_Date, // Use the date directly from CSV
+        payment_date: transaction.Payment_Date,
         payment_method: transaction.Payment_Method,
         transaction_id: transaction.Transaction_ID,
         description: transaction.Description,
         type: transaction.Type,
-        status: transaction.Status
+        status: transaction.Status || 'pending'
       })
     }
 
-    // Insert transactions
-    const { error: insertError } = await supabase
-      .from('transaction_imports')
-      .insert(transactions)
+    console.log(`Processing ${transactions.length} transactions`)
 
-    if (insertError) {
-      console.error('Insert error:', insertError)
-      throw insertError
+    // Insert transactions in batches of 100
+    const batchSize = 100
+    for (let i = 0; i < transactions.length; i += batchSize) {
+      const batch = transactions.slice(i, i + batchSize)
+      const { error: insertError } = await supabase
+        .from('transaction_imports')
+        .insert(batch)
+
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw insertError
+      }
     }
 
     return new Response(
-      JSON.stringify({ message: 'Transactions imported successfully', count: transactions.length }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        message: 'Transactions imported successfully', 
+        count: transactions.length 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error processing import:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }, 
+        status: 500 
+      }
     )
   }
 })
