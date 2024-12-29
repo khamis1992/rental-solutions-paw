@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { validateCSVStructure, validateRow } from './validators.ts';
+import { validateCSVHeaders, validateRow } from './validators.ts';
 
 export const processCSVContent = async (
   supabase: ReturnType<typeof createClient>,
@@ -18,44 +18,50 @@ export const processCSVContent = async (
 
   // Validate headers
   const headers = lines[0].split(',').map(h => h.trim());
-  const headerValidation = validateCSVStructure(headers);
+  const headerValidation = validateCSVHeaders(headers);
   
   if (!headerValidation.isValid) {
     throw new Error(`Missing required headers: ${headerValidation.missingHeaders.join(', ')}`);
   }
 
   // Create import record
-  const { data: importRecord, error: importError } = await supabase.rpc(
-    'create_transaction_import',
-    { p_file_name: fileName }
-  );
+  const importId = crypto.randomUUID();
+  const { error: importError } = await supabase
+    .from('transaction_imports')
+    .insert({
+      id: importId,
+      file_name: fileName,
+      status: 'pending',
+      records_processed: 0,
+      auto_assigned: false
+    });
 
   if (importError) {
     console.error('Error creating import record:', importError);
     throw importError;
   }
 
-  const importId = importRecord;
   console.log('Created import record with ID:', importId);
 
-  // Process each row
+  // Process rows
   let validRows = 0;
-  let invalidRows = 0;
   let totalAmount = 0;
-  const errors = [];
-  const processedRows = [];
+  const errors: any[] = [];
 
   // Process rows (skip header)
   for (let i = 1; i < lines.length; i++) {
     try {
       const values = lines[i].split(',').map(v => v.trim());
+      const rowData: Record<string, string> = {};
       
-      // Validate row
-      const validation = validateRow(values, headers, i);
-      
-      if (!validation.isValid) {
-        invalidRows++;
-        errors.push(...validation.errors);
+      headers.forEach((header, index) => {
+        rowData[header] = values[index];
+      });
+
+      // Validate row data
+      const rowErrors = validateRow(rowData, i);
+      if (rowErrors.length > 0) {
+        errors.push(...rowErrors);
         continue;
       }
 
@@ -64,35 +70,31 @@ export const processCSVContent = async (
         .from('raw_transaction_imports')
         .insert({
           import_id: importId,
-          raw_data: validation.data,
+          raw_data: rowData,
           is_valid: true,
-          payment_method: validation.data.Payment_Method,
-          payment_description: validation.data.Description,
-          license_plate: validation.data.License_Plate,
-          vehicle_details: validation.data.Vehicle
+          payment_method: rowData.Payment_Method,
+          payment_description: rowData.Description,
+          license_plate: rowData.License_Plate,
+          vehicle_details: rowData.Vehicle
         });
 
       if (rawError) {
         console.error('Error storing raw import:', rawError);
-        invalidRows++;
         errors.push({
           row: i,
+          field: 'database',
           message: `Database error: ${rawError.message}`,
-          data: validation.data
+          data: rowData
         });
       } else {
         validRows++;
-        const amount = parseFloat(validation.data.Amount || '0');
-        if (!isNaN(amount)) {
-          totalAmount += amount;
-        }
-        processedRows.push(validation.data);
+        totalAmount += Number(rowData.Amount);
       }
     } catch (error) {
       console.error(`Error processing row ${i}:`, error);
-      invalidRows++;
       errors.push({
         row: i,
+        field: 'processing',
         message: `Processing error: ${error.message}`
       });
     }
@@ -116,14 +118,14 @@ export const processCSVContent = async (
   return {
     totalRows: lines.length - 1,
     validRows,
-    invalidRows,
+    invalidRows: errors.length,
     totalAmount,
+    importId,
     errors: errors.length > 0 ? errors : null,
     suggestions: errors.length > 0 ? [
       'Review and correct invalid rows before proceeding',
-      'Ensure all amounts are valid numbers',
-      'Verify date format (YYYY-MM-DD) for all entries',
-      'Check that Status values are one of: pending, completed, failed, refunded'
+      'Ensure all amounts are positive numbers',
+      'Verify status values are one of: pending, completed, failed, refunded'
     ] : []
   };
 };
