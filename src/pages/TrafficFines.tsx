@@ -5,8 +5,8 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 export default function TrafficFines() {
   return (
     <DashboardLayout>
-      <div className="container py-6 space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="py-6 space-y-6">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold">Traffic Fines Management</h1>
         </div>
         <ErrorBoundary>

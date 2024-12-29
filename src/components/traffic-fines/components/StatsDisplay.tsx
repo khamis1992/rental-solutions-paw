@@ -15,29 +15,29 @@ export function StatsDisplay({
   unassignedAmount 
 }: StatsDisplayProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4 flex-1">
-      <Card className="p-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <Card className="p-6">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Total Fines</p>
-          <p className="text-2xl font-bold">{paymentCount}</p>
+          <p className="text-2xl font-bold tracking-tight">{paymentCount}</p>
         </div>
       </Card>
-      <Card className="p-4">
+      <Card className="p-6">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Unassigned Fines</p>
-          <p className="text-2xl font-bold">{unassignedCount}</p>
+          <p className="text-2xl font-bold tracking-tight">{unassignedCount}</p>
         </div>
       </Card>
-      <Card className="p-4">
+      <Card className="p-6">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-          <p className="text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+          <p className="text-2xl font-bold tracking-tight">{formatCurrency(totalAmount)}</p>
         </div>
       </Card>
-      <Card className="p-4">
+      <Card className="p-6">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">Unassigned Amount</p>
-          <p className="text-2xl font-bold">{formatCurrency(unassignedAmount)}</p>
+          <p className="text-2xl font-bold tracking-tight">{formatCurrency(unassignedAmount)}</p>
         </div>
       </Card>
     </div>
