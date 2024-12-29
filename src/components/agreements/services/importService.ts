@@ -8,6 +8,9 @@ export const analyzeImportFile = async (file: File) => {
   const { data: aiAnalysis, error: analysisError } = await supabase.functions
     .invoke('analyze-payment-import', {
       body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
     });
 
   if (analysisError) {
@@ -38,34 +41,42 @@ export const processImportFile = async (file: File, fileName: string) => {
   formData.append('file', file);
   formData.append('fileName', fileName);
   
-  const { error: processError } = await supabase.functions
+  const { data, error: processError } = await supabase.functions
     .invoke('process-payment-import', {
-      body: formData
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
     });
 
   if (processError) {
     console.error('Processing error:', processError);
     throw processError;
   }
+
+  return data;
 };
 
 export const createImportLog = async (fileName: string) => {
   console.log('Creating import log...');
   
-  const { error: logError } = await supabase
+  const { data, error: logError } = await supabase
     .from("import_logs")
     .insert({
       file_name: fileName,
       import_type: "payments",
       status: "pending",
-    });
+    })
+    .select()
+    .single();
 
   if (logError) {
     console.error('Import log creation error:', logError);
     throw logError;
   }
   
-  console.log('Import log created successfully');
+  console.log('Import log created successfully:', data);
+  return data;
 };
 
 export const pollImportStatus = async (fileName: string) => {
