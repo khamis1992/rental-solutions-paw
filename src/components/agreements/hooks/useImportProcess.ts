@@ -34,23 +34,14 @@ export const useImportProcess = () => {
     try {
       console.log('Implementing changes with analysis result:', analysisResult);
 
-      // Extract the actual rows data from the analysis result
-      const { data: rowsData } = await supabase.functions
-        .invoke("analyze-payment-import", {
-          body: { analysisResult },
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-      if (!Array.isArray(rowsData)) {
-        throw new Error('Invalid data format received from analysis');
-      }
+      // Format the valid rows from the analysis result
+      const validRows = analysisResult.validRows || [];
+      console.log('Processing valid rows:', validRows);
 
       const { error } = await supabase.functions
         .invoke("process-payment-import", {
           body: { 
-            validRows: rowsData,
+            validRows,
             totalRows: analysisResult.totalRows,
             totalAmount: analysisResult.totalAmount
           }
