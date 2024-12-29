@@ -78,11 +78,11 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
       {vehicles.map((vehicle) => (
         <Card
           key={vehicle.id}
-          className="flex flex-col h-[320px] cursor-pointer hover:shadow-md transition-shadow bg-white"
+          className="flex flex-col h-[200px] cursor-pointer hover:shadow-md transition-shadow bg-white"
           onClick={() => onVehicleClick?.(vehicle.id)}
         >
           {vehicle.image_url ? (
-            <div className="relative w-full h-48">
+            <div className="relative w-full h-24">
               <img
                 src={vehicle.image_url}
                 alt={`${vehicle.make} ${vehicle.model}`}
@@ -90,17 +90,17 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
               />
             </div>
           ) : (
-            <div className="w-full h-48 bg-gray-50" />
+            <div className="w-full h-24 bg-gray-50" />
           )}
-          <div className="p-4 flex flex-col flex-grow">
-            <h3 className="text-lg font-medium truncate">
+          <div className="p-3 flex flex-col flex-grow">
+            <h3 className="text-base font-medium truncate">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h3>
-            <p className="text-sm text-muted-foreground mb-2">
+            <p className="text-xs text-muted-foreground mb-1">
               License Plate: {vehicle.license_plate}
             </p>
             <div 
-              className="flex items-center text-sm cursor-pointer hover:bg-gray-100 p-2 rounded mt-auto"
+              className="flex items-center text-xs cursor-pointer hover:bg-gray-100 p-1.5 rounded mt-auto"
               onClick={(e) => handleLocationClick(e, vehicle.id, vehicle.location || "")}
             >
               {editingLocation === vehicle.id ? (
@@ -110,12 +110,12 @@ export const VehicleGrid = ({ vehicles, onVehicleClick }: VehicleGridProps) => {
                   onKeyDown={(e) => handleLocationKeyPress(e, vehicle.id)}
                   onBlur={() => handleLocationUpdate(vehicle.id)}
                   autoFocus
-                  className="w-full"
+                  className="w-full text-xs"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
                 <>
-                  <MapPin className="h-4 w-4 mr-1" />
+                  <MapPin className="h-3 w-3 mr-1" />
                   {vehicle.location || "Not available"}
                 </>
               )}
