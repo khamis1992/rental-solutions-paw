@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export const analyzeImportFile = async (file: File) => {
+  console.log('Starting file analysis...');
   const formData = new FormData();
   formData.append('file', file);
   
@@ -10,7 +11,12 @@ export const analyzeImportFile = async (file: File) => {
       body: formData,
     });
 
-  if (analysisError) throw analysisError;
+  if (analysisError) {
+    console.error('Analysis error:', analysisError);
+    throw analysisError;
+  }
+  
+  console.log('Analysis completed:', aiAnalysis);
   return aiAnalysis;
 };
 
@@ -30,6 +36,8 @@ export const processImportFile = async (file: File, fileName: string) => {
 };
 
 export const createImportLog = async (fileName: string) => {
+  console.log('Creating import log...');
+  
   const { error: logError } = await supabase
     .from("import_logs")
     .insert({
@@ -42,15 +50,24 @@ export const createImportLog = async (fileName: string) => {
     console.error('Import log creation error:', logError);
     throw logError;
   }
+  
+  console.log('Import log created successfully');
 };
 
 export const pollImportStatus = async (fileName: string) => {
+  console.log('Polling import status for:', fileName);
+  
   const { data: importLog, error } = await supabase
     .from("import_logs")
     .select("*")
     .eq("file_name", fileName)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Poll status error:', error);
+    throw error;
+  }
+  
+  console.log('Import status:', importLog);
   return importLog;
 };
