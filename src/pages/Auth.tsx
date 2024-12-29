@@ -1,10 +1,10 @@
-import { useAuthRedirect } from "@/components/auth/useAuthRedirect";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { AuthContainer } from "@/components/auth/AuthContainer";
 
 const Auth = () => {
-  const { isInitializing, isLoading } = useAuthRedirect();
+  const { isLoading } = useSessionContext();
 
-  if (isInitializing || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
