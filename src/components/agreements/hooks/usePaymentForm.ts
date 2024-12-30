@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { PaymentMethodType } from "@/types/database/payment.types";
+import { addMonths, startOfMonth } from "date-fns";
 
 interface PaymentFormData {
   amount: number;
@@ -21,6 +22,12 @@ export const usePaymentForm = (agreementId: string) => {
   
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<PaymentFormData>();
 
+  const calculateNextPaymentDate = () => {
+    // Get the first day of next month
+    const nextMonth = addMonths(new Date(), 1);
+    return startOfMonth(nextMonth).toISOString();
+  };
+
   const onSubmit = async (data: PaymentFormData) => {
     setIsSubmitting(true);
     try {
@@ -35,9 +42,7 @@ export const usePaymentForm = (agreementId: string) => {
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? 
           `${data.intervalValue} ${data.intervalUnit}` : null,
-        next_payment_date: isRecurring ? 
-          new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue!, data.intervalUnit!)).toISOString() : 
-          null
+        next_payment_date: isRecurring ? calculateNextPaymentDate() : null
       };
 
       console.log('Submitting payment:', paymentData);
@@ -64,15 +69,6 @@ export const usePaymentForm = (agreementId: string) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const getIntervalInMilliseconds = (value: number, unit: string) => {
-    const milliseconds = {
-      days: 24 * 60 * 60 * 1000,
-      weeks: 7 * 24 * 60 * 60 * 1000,
-      months: 30 * 24 * 60 * 60 * 1000
-    };
-    return value * milliseconds[unit as keyof typeof milliseconds];
   };
 
   return {
