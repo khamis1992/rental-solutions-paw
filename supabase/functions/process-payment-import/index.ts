@@ -13,10 +13,18 @@ serve(async (req) => {
   }
 
   try {
-    const { rows, importId, skipValidation = false } = await req.json();
-    console.log('Received request:', { rowCount: rows?.length, importId, skipValidation });
+    const requestData = await req.json();
+    console.log('Received request data:', requestData);
 
-    // Validate input
+    // Validate input structure
+    if (!requestData || typeof requestData !== 'object') {
+      throw new Error('Invalid request format');
+    }
+
+    const { rows, importId, skipValidation = false } = requestData;
+    console.log('Parsed request:', { rowCount: rows?.length, importId, skipValidation });
+
+    // Validate rows is an array
     if (!Array.isArray(rows)) {
       console.error('Invalid rows format:', rows);
       return new Response(
@@ -67,7 +75,6 @@ serve(async (req) => {
               lease_id: row.lease_id || null
             };
           } catch (rowError) {
-            // Log error but continue processing other rows
             console.error('Row processing error:', rowError, row);
             errors.push({
               row: i + batch.indexOf(row),
