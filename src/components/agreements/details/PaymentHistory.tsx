@@ -43,6 +43,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   const { overduePayment, isLoading: isLoadingOverdue } = useOverduePayments(agreementId);
 
+  // Calculate total balance from all payments
+  const totalBalance = payments?.reduce((sum, payment) => sum + (payment.balance || 0), 0) || 0;
+
   if (isLoadingPayments || isLoadingOverdue) {
     return <div>Loading payment history...</div>;
   }
@@ -53,7 +56,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
         <CardTitle>Payment History</CardTitle>
       </CardHeader>
       <CardContent>
-        {overduePayment && overduePayment.balance > 0 && (
+        {overduePayment && totalBalance > 0 && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-600 mb-2">
               <AlertTriangle className="h-5 w-5" />
@@ -61,7 +64,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             </div>
             <div className="space-y-1 text-sm">
               <p>Days Overdue: {overduePayment.days_overdue}</p>
-              <p>Outstanding Balance: {formatCurrency(overduePayment.balance)}</p>
+              <p>Outstanding Balance: {formatCurrency(totalBalance)}</p>
               <p>Last Payment: {overduePayment.last_payment_date ? 
                 format(new Date(overduePayment.last_payment_date), 'PP') : 
                 'No payments recorded'}

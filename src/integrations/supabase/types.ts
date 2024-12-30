@@ -2217,14 +2217,14 @@ export type Database = {
           {
             foreignKeyName: "overdue_payments_agreement_id_fkey"
             columns: ["agreement_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "agreement_overview"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "overdue_payments_agreement_id_fkey"
             columns: ["agreement_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
@@ -4045,14 +4045,14 @@ export type Database = {
           {
             foreignKeyName: "overdue_payments_agreement_id_fkey"
             columns: ["agreement_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "agreement_overview"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "overdue_payments_agreement_id_fkey"
             columns: ["agreement_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
