@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RevenueChart } from "../charts/RevenueChart";
-import { ExpenseChart } from "../charts/ExpenseChart";
 import { Loader2 } from "lucide-react";
 
 export const RevenueDashboard = () => {
@@ -116,15 +115,6 @@ export const RevenueDashboard = () => {
         </CardHeader>
         <CardContent>
           <RevenueChart data={revenueData} onExport={() => {}} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Expense Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExpenseChart data={[]} onExport={() => {}} />
         </CardContent>
       </Card>
     </div>
