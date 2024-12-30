@@ -1249,6 +1249,119 @@ export type Database = {
           },
         ]
       }
+      help_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          order_index: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_features: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_guide_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      help_guides: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          steps: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          steps: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          steps?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_guides_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "help_guide_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_logs: {
         Row: {
           created_at: string | null
@@ -2309,11 +2422,14 @@ export type Database = {
           amount: number
           created_at: string
           id: string
-          lease_id: string
+          is_recurring: boolean | null
+          lease_id: string | null
+          next_payment_date: string | null
           payment_date: string | null
           payment_method:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          recurring_interval: unknown | null
           security_deposit_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           transaction_id: string | null
@@ -2323,11 +2439,14 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
-          lease_id: string
+          is_recurring?: boolean | null
+          lease_id?: string | null
+          next_payment_date?: string | null
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          recurring_interval?: unknown | null
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
@@ -2337,11 +2456,14 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
-          lease_id?: string
+          is_recurring?: boolean | null
+          lease_id?: string | null
+          next_payment_date?: string | null
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          recurring_interval?: unknown | null
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
@@ -3576,6 +3698,17 @@ export type Database = {
         }
         Returns: number
       }
+      calculate_detailed_credit_score: {
+        Args: {
+          p_monthly_income: number
+          p_employment_status: string
+          p_debt_to_income_ratio: number
+          p_payment_history_score: number
+          p_credit_utilization: number
+          p_credit_history_length: number
+        }
+        Returns: Json
+      }
       calculate_risk_score: {
         Args: {
           p_customer_id: string
@@ -3605,6 +3738,10 @@ export type Database = {
           p_changes: Json
           p_ip_address: string
         }
+        Returns: undefined
+      }
+      process_recurring_payments: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       process_recurring_transactions: {

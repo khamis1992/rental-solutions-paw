@@ -23,60 +23,91 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // First, count the expense transactions
-    const { count: expenseCount, error: countExpenseError } = await supabaseClient
-      .from('expense_transactions')
-      .select('*', { count: 'exact', head: true });
+    // Delete in correct order to handle foreign key constraints
+    
+    // 1. First delete payment history records
+    const { error: paymentHistoryError } = await supabaseClient
+      .from('payment_history')
+      .delete()
+      .gte('created_at', '2000-01-01');
 
-    if (countExpenseError) {
-      console.error("Error counting expense transactions:", countExpenseError);
-      throw countExpenseError;
+    if (paymentHistoryError) {
+      console.error("Error deleting payment history:", paymentHistoryError);
+      throw paymentHistoryError;
     }
 
-    // Then delete expense transactions with a WHERE clause that matches all records
+    // 2. Delete payment reconciliation records
+    const { error: reconciliationError } = await supabaseClient
+      .from('payment_reconciliation')
+      .delete()
+      .gte('created_at', '2000-01-01');
+
+    if (reconciliationError) {
+      console.error("Error deleting payment reconciliation:", reconciliationError);
+      throw reconciliationError;
+    }
+
+    // 3. Delete payment matching logs
+    const { error: matchingLogsError } = await supabaseClient
+      .from('payment_matching_logs')
+      .delete()
+      .gte('created_at', '2000-01-01');
+
+    if (matchingLogsError) {
+      console.error("Error deleting payment matching logs:", matchingLogsError);
+      throw matchingLogsError;
+    }
+
+    // 4. Delete AI payment analysis
+    const { error: aiAnalysisError } = await supabaseClient
+      .from('ai_payment_analysis')
+      .delete()
+      .gte('created_at', '2000-01-01');
+
+    if (aiAnalysisError) {
+      console.error("Error deleting AI payment analysis:", aiAnalysisError);
+      throw aiAnalysisError;
+    }
+
+    // 5. Finally delete the payments themselves
+    const { error: paymentsError } = await supabaseClient
+      .from('payments')
+      .delete()
+      .gte('created_at', '2000-01-01');
+
+    if (paymentsError) {
+      console.error("Error deleting payments:", paymentsError);
+      throw paymentsError;
+    }
+
+    // 6. Delete expense transactions
     const { error: expenseError } = await supabaseClient
       .from('expense_transactions')
       .delete()
-      .gte('created_at', '2000-01-01'); // This will match all records since this is a past date
+      .gte('created_at', '2000-01-01');
 
     if (expenseError) {
       console.error("Error deleting expense transactions:", expenseError);
       throw expenseError;
     }
 
-    console.log(`Successfully deleted ${expenseCount} expense transactions`);
-
-    // Count accounting transactions
-    const { count: accountingCount, error: countAccountingError } = await supabaseClient
-      .from('accounting_transactions')
-      .select('*', { count: 'exact', head: true });
-
-    if (countAccountingError) {
-      console.error("Error counting accounting transactions:", countAccountingError);
-      throw countAccountingError;
-    }
-
-    // Delete accounting transactions with a WHERE clause that matches all records
+    // 7. Delete accounting transactions
     const { error: accountingError } = await supabaseClient
       .from('accounting_transactions')
       .delete()
-      .gte('created_at', '2000-01-01'); // This will match all records since this is a past date
+      .gte('created_at', '2000-01-01');
 
     if (accountingError) {
       console.error("Error deleting accounting transactions:", accountingError);
       throw accountingError;
     }
 
-    console.log(`Successfully deleted ${accountingCount} accounting transactions`);
     console.log("Successfully deleted all transactions in edge function");
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        deletedCounts: {
-          expenses: expenseCount || 0,
-          accounting: accountingCount || 0
-        }
+        message: "All transactions and related data have been deleted successfully"
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
