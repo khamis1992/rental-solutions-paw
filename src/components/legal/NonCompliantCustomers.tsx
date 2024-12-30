@@ -18,6 +18,21 @@ import { formatCurrency } from "@/lib/utils";
 import { format, subDays } from "date-fns";
 import { LegalDocumentDialog } from "./LegalDocumentDialog";
 
+interface NonCompliantCustomer {
+  id: string;
+  full_name: string | null;
+  phone_number: string | null;
+  leases: {
+    id: string;
+    payment_schedules: {
+      id: string;
+      due_date: string;
+      amount: number;
+      status: string;
+    }[];
+  }[];
+}
+
 export function NonCompliantCustomers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
@@ -25,33 +40,18 @@ export function NonCompliantCustomers() {
   const { data: nonCompliantCustomers, isLoading } = useQuery({
     queryKey: ["non-compliant-customers"],
     queryFn: async () => {
-      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
-      const tenthOfMonth = new Date();
-      tenthOfMonth.setDate(10);
-
       const { data: customers, error } = await supabase
         .from("profiles")
         .select(`
           id,
           full_name,
+          phone_number,
           leases (
             id,
             payment_schedules (
               id,
               due_date,
               amount,
-              status
-            ),
-            traffic_fines (
-              id,
-              violation_date,
-              fine_amount,
-              payment_status
-            ),
-            damages (
-              id,
-              description,
-              repair_cost,
               status
             )
           )
@@ -60,27 +60,29 @@ export function NonCompliantCustomers() {
 
       if (error) throw error;
 
-      return customers.filter(customer => {
+      return customers.filter((customer: NonCompliantCustomer) => {
         const hasOverduePayments = customer.leases?.some(lease =>
           lease.payment_schedules?.some(payment =>
-            payment.status === 'pending' && new Date(payment.due_date) < tenthOfMonth
+            payment.status === 'pending' && new Date(payment.due_date) < new Date()
           )
         );
 
-        const hasUnpaidFines = customer.leases?.some(lease =>
-          lease.traffic_fines?.some(fine =>
-            fine.payment_status === 'pending' && new Date(fine.violation_date) < new Date(thirtyDaysAgo)
-          )
-        );
-
-        const hasUnresolvedDamages = customer.leases?.some(lease =>
-          lease.damages?.some(damage => damage.status === 'pending')
-        );
-
-        return hasOverduePayments || hasUnpaidFines || hasUnresolvedDamages;
-      });
+        return hasOverduePayments;
+      }) as NonCompliantCustomer[];
     },
   });
+
+  const calculateOverdueAmount = (customer: NonCompliantCustomer) => {
+    let totalOverdue = 0;
+    customer.leases?.forEach(lease => {
+      lease.payment_schedules?.forEach(payment => {
+        if (payment.status === 'pending' && new Date(payment.due_date) < new Date()) {
+          totalOverdue += payment.amount;
+        }
+      });
+    });
+    return totalOverdue;
+  };
 
   const filteredCustomers = nonCompliantCustomers?.filter(customer =>
     customer.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -116,52 +118,22 @@ export function NonCompliantCustomers() {
             <TableHeader>
               <TableRow>
                 <TableHead>Customer Name</TableHead>
+                <TableHead>Phone Number</TableHead>
                 <TableHead>Overdue Payments</TableHead>
-                <TableHead>Unpaid Fines</TableHead>
-                <TableHead>Damages</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCustomers?.map((customer) => {
-                const overduePayments = customer.leases?.flatMap(lease => 
-                  lease.payment_schedules?.filter(payment => 
-                    payment.status === 'pending'
-                  ) || []
-                );
-
-                const unpaidFines = customer.leases?.flatMap(lease =>
-                  lease.traffic_fines?.filter(fine =>
-                    fine.payment_status === 'pending'
-                  ) || []
-                );
-
-                const unresolvedDamages = customer.leases?.flatMap(lease =>
-                  lease.damages?.filter(damage =>
-                    damage.status === 'pending'
-                  ) || []
-                );
-
-                const totalOverdue = overduePayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
-                const totalFines = unpaidFines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0;
-                const totalDamages = unresolvedDamages?.reduce((sum, damage) => sum + (damage.repair_cost || 0), 0) || 0;
+                const overdueAmount = calculateOverdueAmount(customer);
 
                 return (
                   <TableRow key={customer.id}>
                     <TableCell>{customer.full_name}</TableCell>
+                    <TableCell>{customer.phone_number}</TableCell>
                     <TableCell>
                       <Badge variant="destructive">
-                        {formatCurrency(totalOverdue)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">
-                        {formatCurrency(totalFines)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">
-                        {formatCurrency(totalDamages)}
+                        {formatCurrency(overdueAmount)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -179,7 +151,7 @@ export function NonCompliantCustomers() {
               })}
               {!isLoading && (!filteredCustomers || filteredCustomers.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     No non-compliant customers found
                   </TableCell>
                 </TableRow>
