@@ -114,7 +114,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-2 print:py-1">Description</th>
-                <th className="text-right py-2 print:py-1">Contract Value</th>
+                <th className="text-right py-2 print:py-1">Balance</th>
               </tr>
             </thead>
             <tbody>
