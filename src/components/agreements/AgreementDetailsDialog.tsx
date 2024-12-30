@@ -44,11 +44,15 @@ export const AgreementDetailsDialog = ({
         .eq("lease_id", agreementId)
         .order("payment_date", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
+      
       console.log("Fetched payments:", data);
       return data as Payment[];
     },
-    enabled: open,
+    enabled: open && !!agreementId,
   });
 
   if (!open) return null;
