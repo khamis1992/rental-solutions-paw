@@ -71,6 +71,8 @@ export function PaymentHistoryDialog({
           throw error;
         }
 
+        console.log("Fetched payments:", data); // Add this line to debug
+
         const transformedData = data.map(payment => ({
           ...payment,
           customer: payment.leases?.profiles || null,
@@ -78,7 +80,7 @@ export function PaymentHistoryDialog({
           invoice: payment.accounting_invoices?.[0] || null
         }));
 
-        console.log("Fetched payments with customer and invoice info:", transformedData);
+        console.log("Transformed payment data:", transformedData); // Add this line to debug
         return transformedData;
       } catch (err) {
         console.error("Error in payment history query:", err);
