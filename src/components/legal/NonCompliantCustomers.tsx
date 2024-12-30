@@ -17,12 +17,27 @@ import { LegalDocumentDialog } from "./LegalDocumentDialog";
 import { useOverduePayments } from "./hooks/useOverduePayments";
 import { Loader2 } from "lucide-react";
 
+interface OverduePayment {
+  id: string;
+  amount: number;
+  dueDate: string;
+  agreementNumber?: string;
+}
+
+interface NonCompliantCustomer {
+  customerId: string;
+  customerName: string;
+  phoneNumber: string;
+  totalOverdue: number;
+  payments: OverduePayment[];
+}
+
 export function NonCompliantCustomers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const { overduePayments, isLoading } = useOverduePayments();
 
-  const filteredCustomers = overduePayments?.filter(customer =>
+  const filteredCustomers = overduePayments?.filter((customer: NonCompliantCustomer) =>
     customer.customerName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -71,7 +86,7 @@ export function NonCompliantCustomers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCustomers?.map((customer) => (
+              {filteredCustomers?.map((customer: NonCompliantCustomer) => (
                 <TableRow key={customer.customerId}>
                   <TableCell>{customer.customerName}</TableCell>
                   <TableCell>{customer.phoneNumber}</TableCell>
