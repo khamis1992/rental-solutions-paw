@@ -10,7 +10,11 @@ import {
 import { format } from "date-fns";
 
 interface CaseStatusReportProps {
-  data: any[];
+  data: Array<{
+    status: string;
+    created_at: string;
+    [key: string]: any;
+  }>;
 }
 
 export const CaseStatusReport = ({ data }: CaseStatusReportProps) => {

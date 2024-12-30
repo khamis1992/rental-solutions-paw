@@ -7,10 +7,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
 
 interface ComplianceReportProps {
-  data: any[];
+  data: Array<{
+    status: string;
+    priority: string;
+    due_date: string;
+    [key: string]: any;
+  }>;
 }
 
 export const ComplianceReport = ({ data }: ComplianceReportProps) => {

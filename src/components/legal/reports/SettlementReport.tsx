@@ -11,7 +11,12 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 
 interface SettlementReportProps {
-  data: any[];
+  data: Array<{
+    total_amount: number;
+    paid_amount: number;
+    created_at: string;
+    [key: string]: any;
+  }>;
 }
 
 export const SettlementReport = ({ data }: SettlementReportProps) => {
