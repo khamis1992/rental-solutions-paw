@@ -28,11 +28,6 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
             model,
             year,
             license_plate
-          ),
-          remainingAmount:remaining_amounts (
-            rent_amount,
-            final_price,
-            remaining_amount
           )
         `)
         .eq('id', agreementId)
@@ -48,9 +43,21 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
         return null;
       }
 
+      // Fetch remaining amounts using agreement_number
+      const { data: remainingAmount, error: remainingError } = await supabase
+        .from('remaining_amounts')
+        .select('*')
+        .eq('agreement_number', agreement.agreement_number)
+        .maybeSingle();
+
+      if (remainingError) {
+        console.error('Error fetching remaining amount:', remainingError);
+      }
+
       console.log('Fetched agreement:', agreement);
+      console.log('Fetched remaining amount:', remainingAmount);
       
-      // Handle the case where remainingAmount is an empty array or undefined
+      // Handle the case where remainingAmount is null or undefined
       const defaultRemainingAmount = {
         rent_amount: 0,
         final_price: 0,
@@ -59,9 +66,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
 
       return {
         ...agreement,
-        remainingAmount: Array.isArray(agreement.remainingAmount) && agreement.remainingAmount.length > 0 
-          ? agreement.remainingAmount[0] 
-          : defaultRemainingAmount
+        remainingAmount: remainingAmount || defaultRemainingAmount
       };
     },
     enabled: !!agreementId && open,
