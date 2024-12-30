@@ -51,11 +51,16 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           null
       };
 
+      console.log('Submitting payment:', paymentData);
       await submitPayment(paymentData);
       
-      // Invalidate and refetch payment-related queries
-      await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
-      await queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] });
+      // Invalidate and refetch ALL relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] }),
+        queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] }),
+        queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] }),
+        queryClient.invalidateQueries({ queryKey: ['agreements'] })
+      ]);
       
       toast.success("Payment added successfully");
       reset();
