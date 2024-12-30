@@ -3,7 +3,6 @@ import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -23,7 +22,6 @@ interface PaymentFormProps {
 interface PaymentFormData {
   amount: number;
   paymentMethod: PaymentMethodType;
-  description?: string;
   isRecurring?: boolean;
   intervalValue?: number;
   intervalUnit?: 'days' | 'weeks' | 'months';
@@ -41,7 +39,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         lease_id: agreementId,
         amount: Number(data.amount),
         payment_method: data.paymentMethod,
-        description: data.description,
         payment_date: new Date().toISOString(),
         status: 'pending' as const,
         is_recurring: isRecurring,
@@ -172,15 +169,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           </div>
         </div>
       )}
-
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          placeholder="Add payment notes or description..."
-          {...register("description")}
-        />
-      </div>
 
       <Button 
         type="submit" 

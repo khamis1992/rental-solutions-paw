@@ -5,7 +5,6 @@ interface PaymentData {
   lease_id: string;
   amount: number;
   payment_method: PaymentMethodType;
-  description?: string;
   payment_date: string;
   status: PaymentStatus;
   is_recurring: boolean;
