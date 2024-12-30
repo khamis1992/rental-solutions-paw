@@ -46,11 +46,11 @@ export const PaymentImport = () => {
             setHeaders(results.meta.fields || []);
             setImportedData(results.data);
 
-            // Store raw data in Supabase
+            // Store raw data in Supabase with proper typing
             const { error } = await supabase
               .from('raw_transaction_imports')
               .insert({
-                raw_data: results.data,
+                raw_data: JSON.parse(JSON.stringify(results.data)), // Convert to proper JSON
                 is_valid: true,
                 created_at: new Date().toISOString()
               });
