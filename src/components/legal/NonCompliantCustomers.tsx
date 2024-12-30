@@ -13,60 +13,82 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Printer, FileText, Filter, Loader2 } from "lucide-react";
+import { Printer, FileText, Filter } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { format, differenceInDays } from "date-fns";
+import { format, subDays } from "date-fns";
 import { LegalDocumentDialog } from "./LegalDocumentDialog";
 
 export function NonCompliantCustomers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
 
-  const { data: overduePayments, isLoading } = useQuery({
-    queryKey: ["overdue-payments"],
+  const { data: nonCompliantCustomers, isLoading } = useQuery({
+    queryKey: ["non-compliant-customers"],
     queryFn: async () => {
-      const { data: payments, error } = await supabase
-        .from("payment_schedules")
+      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+      const tenthOfMonth = new Date();
+      tenthOfMonth.setDate(10);
+
+      const { data: customers, error } = await supabase
+        .from("profiles")
         .select(`
           id,
-          due_date,
-          amount,
-          status,
-          lease:leases (
+          full_name,
+          leases (
             id,
-            agreement_number,
-            customer:profiles (
+            payment_schedules (
               id,
-              full_name,
-              email,
-              phone_number
+              due_date,
+              amount,
+              status
+            ),
+            traffic_fines (
+              id,
+              violation_date,
+              fine_amount,
+              payment_status
+            ),
+            damages (
+              id,
+              description,
+              repair_cost,
+              status
             )
           )
         `)
-        .eq("status", "pending")
-        .lt("due_date", new Date().toISOString())
-        .order("due_date");
+        .eq("role", "customer");
 
       if (error) throw error;
-      return payments;
+
+      return customers.filter(customer => {
+        const hasOverduePayments = customer.leases?.some(lease =>
+          lease.payment_schedules?.some(payment =>
+            payment.status === 'pending' && new Date(payment.due_date) < tenthOfMonth
+          )
+        );
+
+        const hasUnpaidFines = customer.leases?.some(lease =>
+          lease.traffic_fines?.some(fine =>
+            fine.payment_status === 'pending' && new Date(fine.violation_date) < new Date(thirtyDaysAgo)
+          )
+        );
+
+        const hasUnresolvedDamages = customer.leases?.some(lease =>
+          lease.damages?.some(damage => damage.status === 'pending')
+        );
+
+        return hasOverduePayments || hasUnpaidFines || hasUnresolvedDamages;
+      });
     },
   });
 
-  const filteredPayments = overduePayments?.filter(payment =>
-    payment.lease?.customer?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCustomers = nonCompliantCustomers?.filter(customer =>
+    customer.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handlePrint = () => {
     window.print();
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -94,60 +116,71 @@ export function NonCompliantCustomers() {
             <TableHeader>
               <TableRow>
                 <TableHead>Customer Name</TableHead>
-                <TableHead>Agreement Number</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Days Overdue</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Late Fees</TableHead>
-                <TableHead>Total Due</TableHead>
+                <TableHead>Overdue Payments</TableHead>
+                <TableHead>Unpaid Fines</TableHead>
+                <TableHead>Damages</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPayments?.map((payment) => {
-                const daysOverdue = differenceInDays(
-                  new Date(),
-                  new Date(payment.due_date)
+              {filteredCustomers?.map((customer) => {
+                const overduePayments = customer.leases?.flatMap(lease => 
+                  lease.payment_schedules?.filter(payment => 
+                    payment.status === 'pending'
+                  ) || []
                 );
-                const lateFees = Math.max(0, daysOverdue) * 120; // 120 QAR daily late fee
-                const totalDue = payment.amount + lateFees;
+
+                const unpaidFines = customer.leases?.flatMap(lease =>
+                  lease.traffic_fines?.filter(fine =>
+                    fine.payment_status === 'pending'
+                  ) || []
+                );
+
+                const unresolvedDamages = customer.leases?.flatMap(lease =>
+                  lease.damages?.filter(damage =>
+                    damage.status === 'pending'
+                  ) || []
+                );
+
+                const totalOverdue = overduePayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+                const totalFines = unpaidFines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0;
+                const totalDamages = unresolvedDamages?.reduce((sum, damage) => sum + (damage.repair_cost || 0), 0) || 0;
 
                 return (
-                  <TableRow key={payment.id}>
-                    <TableCell>{payment.lease?.customer?.full_name}</TableCell>
-                    <TableCell>{payment.lease?.agreement_number}</TableCell>
-                    <TableCell>
-                      {format(new Date(payment.due_date), "MMM d, yyyy")}
-                    </TableCell>
+                  <TableRow key={customer.id}>
+                    <TableCell>{customer.full_name}</TableCell>
                     <TableCell>
                       <Badge variant="destructive">
-                        {daysOverdue} days
+                        {formatCurrency(totalOverdue)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell>{formatCurrency(lateFees)}</TableCell>
                     <TableCell>
                       <Badge variant="destructive">
-                        {formatCurrency(totalDue)}
+                        {formatCurrency(totalFines)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="destructive">
+                        {formatCurrency(totalDamages)}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedCustomer(payment.lease?.customer?.id)}
+                        onClick={() => setSelectedCustomer(customer.id)}
                       >
                         <FileText className="h-4 w-4 mr-2" />
-                        Generate Notice
+                        Generate Document
                       </Button>
                     </TableCell>
                   </TableRow>
                 );
               })}
-              {!isLoading && (!filteredPayments || filteredPayments.length === 0) && (
+              {!isLoading && (!filteredCustomers || filteredCustomers.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    No overdue payments found
+                  <TableCell colSpan={5} className="text-center">
+                    No non-compliant customers found
                   </TableCell>
                 </TableRow>
               )}
