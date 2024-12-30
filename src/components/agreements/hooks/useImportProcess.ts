@@ -59,11 +59,13 @@ export const useImportProcess = () => {
         throw rawError;
       }
 
-      // Process the data
+      // Process the data - ensure we're sending an array
+      console.log('Sending to edge function:', { rows, importId: rawImport.id });
+      
       const { data, error: processError } = await supabase.functions
         .invoke('process-payment-import', {
           body: { 
-            rows,
+            rows: Array.isArray(rows) ? rows : [],
             importId: rawImport.id,
             skipValidation: true
           }
