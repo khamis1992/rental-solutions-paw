@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { PaymentMethodType } from "@/types/database/agreement.types";
 import { submitPayment } from "./services/paymentService";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -30,6 +31,7 @@ interface PaymentFormData {
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
+  const queryClient = useQueryClient();
   const { control, register, handleSubmit, reset, formState: { errors } } = useForm<PaymentFormData>();
 
   const onSubmit = async (data: PaymentFormData) => {
@@ -50,6 +52,11 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       };
 
       await submitPayment(paymentData);
+      
+      // Invalidate and refetch payment-related queries
+      await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
+      await queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] });
+      
       toast.success("Payment added successfully");
       reset();
       setIsRecurring(false);
