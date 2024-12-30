@@ -18,8 +18,8 @@ export const SettlementMetrics = () => {
 
       return data.map(settlement => ({
         date: new Date(settlement.created_at).toLocaleDateString(),
-        totalAmount: settlement.total_amount,
-        paidAmount: settlement.paid_amount || 0
+        totalAmount: Number(settlement.total_amount),
+        paidAmount: Number(settlement.paid_amount) || 0
       }));
     }
   });
@@ -48,8 +48,8 @@ export const SettlementMetrics = () => {
             <LineChart data={settlements}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis tickFormatter={(value) => formatCurrency(value)} />
-              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <YAxis tickFormatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
               <Line type="monotone" dataKey="totalAmount" stroke="#8884d8" name="Total Amount" />
               <Line type="monotone" dataKey="paidAmount" stroke="#82ca9d" name="Paid Amount" />
             </LineChart>

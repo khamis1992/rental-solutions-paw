@@ -77,7 +77,7 @@ export const SettlementsList = ({ caseId }: SettlementsListProps) => {
             <div className="text-sm">
               <p className="font-medium">Payment Plan:</p>
               <p className="text-muted-foreground whitespace-pre-wrap">
-                {settlement.payment_plan.description}
+                {(settlement.payment_plan as { description?: string })?.description || 'No description available'}
               </p>
             </div>
           )}
