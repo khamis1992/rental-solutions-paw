@@ -38,6 +38,22 @@ export const AgreementDetailsDialog = ({
     queryKey: ["agreement-payments", agreementId],
     queryFn: async () => {
       console.log("Fetching payments for agreement:", agreementId);
+      
+      // First verify if the agreement exists
+      const { data: agreementCheck, error: agreementError } = await supabase
+        .from("leases")
+        .select("id")
+        .eq("id", agreementId)
+        .single();
+
+      if (agreementError) {
+        console.error("Error verifying agreement:", agreementError);
+        throw agreementError;
+      }
+
+      console.log("Agreement exists:", agreementCheck);
+
+      // Now fetch the payments
       const { data, error } = await supabase
         .from("payments")
         .select("*")
