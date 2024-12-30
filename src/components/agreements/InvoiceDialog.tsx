@@ -29,7 +29,7 @@ export const InvoiceDialog = ({ agreementId, open, onOpenChange }: InvoiceDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Invoice</DialogTitle>
           <DialogDescription>
@@ -41,7 +41,9 @@ export const InvoiceDialog = ({ agreementId, open, onOpenChange }: InvoiceDialog
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : invoiceData ? (
-          <InvoiceView data={invoiceData} onPrint={handlePrint} />
+          <div className="flex-1 overflow-hidden">
+            <InvoiceView data={invoiceData} onPrint={handlePrint} />
+          </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
             Failed to load invoice data
