@@ -17,4 +17,6 @@ export interface Payment {
   recurring_interval: string | null;
   next_payment_date: string | null;
   type: string;
+  late_fine_amount: number;
+  days_overdue: number;
 }

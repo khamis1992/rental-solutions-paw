@@ -33,7 +33,6 @@ export const usePaymentForm = (agreementId: string) => {
 
   const calculateLateFine = useCallback(async () => {
     try {
-      // Get agreement details to check daily late fine amount
       const { data: agreement } = await supabase
         .from('leases')
         .select('rent_amount, daily_late_fine')
@@ -76,7 +75,7 @@ export const usePaymentForm = (agreementId: string) => {
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
-        status: 'pending' as const,
+        status: 'completed' as const, // Set status to completed by default
         type: 'Income',
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? 
