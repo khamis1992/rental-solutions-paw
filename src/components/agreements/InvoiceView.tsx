@@ -169,7 +169,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
               <span>Balance:</span>
-              <span>{formatCurrency(totalBalance)}</span>
+              <span className="text-red-600">{formatCurrency(-Math.abs(totalBalance))}</span>
             </div>
             <div className="flex justify-between w-48 print:w-40">
               <span>Amount Paid:</span>
