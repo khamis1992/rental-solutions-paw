@@ -7,24 +7,19 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { rows, importId, skipValidation = false } = await req.json();
-    
+    console.log('Received request:', { rowCount: rows?.length, importId, skipValidation });
+
+    // Validate input
     if (!Array.isArray(rows)) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Invalid data format',
-          details: 'Rows must be an array'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      );
+      console.error('Invalid rows format:', rows);
+      throw new Error('Rows must be an array');
     }
 
     const supabaseClient = createClient(
@@ -36,33 +31,56 @@ serve(async (req) => {
     const batchSize = 100;
     const results = [];
     const errors = [];
+    let processedCount = 0;
 
     for (let i = 0; i < rows.length; i += batchSize) {
       const batch = rows.slice(i, i + batchSize);
       try {
-        // Prepare the batch data with minimal processing
-        const processedBatch = batch.map(row => ({
-          amount: parseFloat(row.amount) || 0,
-          payment_date: row.payment_date || null,
-          payment_method: row.payment_method || 'unknown',
-          transaction_id: row.transaction_id || null,
-          status: 'pending'
-        }));
+        // Process each row in the batch
+        const processedBatch = batch.map(row => {
+          try {
+            // Basic data validation and cleaning
+            const amount = parseFloat(row.amount);
+            if (isNaN(amount)) {
+              throw new Error('Invalid amount format');
+            }
 
-        const { data, error } = await supabaseClient
-          .from('payments')
-          .insert(processedBatch)
-          .select();
+            return {
+              amount,
+              payment_date: row.payment_date || null,
+              payment_method: row.payment_method || 'unknown',
+              transaction_id: row.transaction_id || null,
+              status: 'pending',
+              lease_id: row.lease_id || null
+            };
+          } catch (rowError) {
+            // Log error but continue processing other rows
+            errors.push({
+              row: i + batch.indexOf(row),
+              error: rowError.message,
+              data: row
+            });
+            return null;
+          }
+        }).filter(row => row !== null);
 
-        if (error) {
-          console.error('Batch insert error:', error);
-          errors.push({
-            batch: Math.floor(i / batchSize) + 1,
-            error: error.message,
-            failedRows: batch.length
-          });
-        } else {
-          results.push(...(data || []));
+        if (processedBatch.length > 0) {
+          const { data, error: insertError } = await supabaseClient
+            .from('payments')
+            .insert(processedBatch)
+            .select();
+
+          if (insertError) {
+            console.error('Batch insert error:', insertError);
+            errors.push({
+              batch: Math.floor(i / batchSize) + 1,
+              error: insertError.message,
+              failedRows: processedBatch.length
+            });
+          } else {
+            results.push(...(data || []));
+            processedCount += processedBatch.length;
+          }
         }
       } catch (batchError) {
         console.error('Batch processing error:', batchError);
@@ -74,11 +92,26 @@ serve(async (req) => {
       }
     }
 
+    // Log import results
+    const { error: logError } = await supabaseClient
+      .from('import_logs')
+      .update({
+        status: errors.length > 0 ? 'completed_with_errors' : 'completed',
+        records_processed: processedCount,
+        errors: errors.length > 0 ? errors : null
+      })
+      .eq('id', importId);
+
+    if (logError) {
+      console.error('Error updating import log:', logError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        processed: results.length,
-        errors: errors.length > 0 ? errors : undefined
+        processed: processedCount,
+        errors: errors.length > 0 ? errors : undefined,
+        details: `Successfully processed ${processedCount} records with ${errors.length} errors`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

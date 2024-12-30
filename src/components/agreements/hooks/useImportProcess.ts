@@ -20,12 +20,23 @@ export const useImportProcess = () => {
         .filter(line => line.trim())
         .map(line => {
           const values = line.split(',');
+          if (values.length !== headers.length) {
+            console.warn('Invalid column count:', { 
+              expected: headers.length, 
+              got: values.length, 
+              line 
+            });
+            return null;
+          }
           const row: Record<string, string> = {};
           headers.forEach((header, index) => {
             row[header] = values[index]?.trim() || '';
           });
           return row;
-        });
+        })
+        .filter((row): row is Record<string, string> => row !== null);
+
+      console.log('Processed rows:', { total: rows.length, headers });
 
       // Store raw data directly
       const { data: rawImport, error: rawError } = await supabase
@@ -40,10 +51,11 @@ export const useImportProcess = () => {
         .single();
 
       if (rawError) {
+        console.error('Raw import error:', rawError);
         throw rawError;
       }
 
-      // Directly process the data without validation
+      // Process the data with validation
       const { data, error: processError } = await supabase.functions
         .invoke('process-payment-import', {
           body: { 
@@ -54,12 +66,22 @@ export const useImportProcess = () => {
         });
 
       if (processError) {
+        console.error('Process error:', processError);
         throw processError;
       }
 
-      toast.success('Import Complete', {
-        description: `Successfully processed ${data.processed} records`
-      });
+      console.log('Import response:', data);
+
+      // Show appropriate toast message
+      if (data.errors && data.errors.length > 0) {
+        toast.warning(`Imported ${data.processed} records with ${data.errors.length} errors`, {
+          description: 'Some records could not be processed. Check the console for details.'
+        });
+      } else {
+        toast.success('Import Complete', {
+          description: `Successfully processed ${data.processed} records`
+        });
+      }
 
       return true;
     } catch (error: any) {
