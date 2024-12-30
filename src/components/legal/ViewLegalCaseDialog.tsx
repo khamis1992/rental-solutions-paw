@@ -9,6 +9,7 @@ import { SettlementDialog } from "./settlements/SettlementDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface ViewLegalCaseDialogProps {
   caseId: string;
@@ -24,9 +25,13 @@ export const ViewLegalCaseDialog = ({
   const [showSettlementDialog, setShowSettlementDialog] = useState(false);
   const queryClient = useQueryClient();
   
-  const { data: legalCase, isLoading } = useQuery({
+  const { data: legalCase, isLoading, error } = useQuery({
     queryKey: ["legal-case", caseId],
     queryFn: async () => {
+      if (!caseId) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("legal_cases")
         .select(`
@@ -39,18 +44,33 @@ export const ViewLegalCaseDialog = ({
           )
         `)
         .eq("id", caseId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching legal case:", error);
+        toast.error("Failed to load case details");
+        throw error;
+      }
+
+      if (!data) {
+        toast.error("Case not found");
+        return null;
+      }
+
       return data;
     },
+    enabled: !!caseId && open,
   });
 
   const handleStatusChange = () => {
     queryClient.invalidateQueries({ queryKey: ["legal-case", caseId] });
   };
 
-  if (isLoading) {
+  if (error) {
+    return null;
+  }
+
+  if (isLoading || !legalCase) {
     return null;
   }
 
