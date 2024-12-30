@@ -14,16 +14,10 @@ import { toast } from "sonner";
 import { CaseBasicInfo } from "./case-form/CaseBasicInfo";
 import { CaseFinancialInfo } from "./case-form/CaseFinancialInfo";
 import { CasePrioritySelect } from "./case-form/CasePrioritySelect";
+import { Plus } from "lucide-react";
 
-interface CreateLegalCaseDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export function CreateLegalCaseDialog({
-  open,
-  onOpenChange,
-}: CreateLegalCaseDialogProps) {
+export function CreateLegalCaseDialog() {
+  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm({
@@ -51,7 +45,8 @@ export function CreateLegalCaseDialog({
 
       toast.success("Legal case created successfully");
       queryClient.invalidateQueries({ queryKey: ["legal-cases"] });
-      onOpenChange(false);
+      setOpen(false);
+      form.reset();
     } catch (error) {
       console.error("Error creating legal case:", error);
       toast.error("Failed to create legal case");
@@ -61,33 +56,40 @@ export function CreateLegalCaseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create New Legal Case</DialogTitle>
-        </DialogHeader>
+    <>
+      <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Create Case
+      </Button>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <CaseBasicInfo form={form} />
-            <CaseFinancialInfo form={form} />
-            <CasePrioritySelect form={form} />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Legal Case</DialogTitle>
+          </DialogHeader>
 
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                Create Case
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <CaseBasicInfo form={form} />
+              <CaseFinancialInfo form={form} />
+              <CasePrioritySelect form={form} />
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  Create Case
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
