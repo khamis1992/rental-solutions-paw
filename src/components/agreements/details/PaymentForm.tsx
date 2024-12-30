@@ -33,7 +33,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     daysOverdue,
     baseAmount,
     totalAmount,
-    calculateLateFine
+    calculateLateFine,
+    setBaseAmount
   } = usePaymentForm(agreementId);
 
   useEffect(() => {

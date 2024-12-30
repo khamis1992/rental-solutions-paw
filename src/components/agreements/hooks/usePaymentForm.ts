@@ -1,111 +1,140 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { PaymentMethodType } from "@/types/database/payment.types";
-import { addMonths, startOfMonth, differenceInDays } from "date-fns";
-
-interface PaymentFormData {
-  amount: number;
-  paymentMethod: PaymentMethodType;
-  description?: string;
-  isRecurring?: boolean;
-  intervalValue?: number;
-  intervalUnit?: 'days' | 'weeks' | 'months';
-}
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const usePaymentForm = (agreementId: string) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
+  const [baseAmount, setBaseAmount] = useState(0);
   const [lateFineAmount, setLateFineAmount] = useState(0);
   const [daysOverdue, setDaysOverdue] = useState(0);
-  const [baseAmount, setBaseAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const queryClient = useQueryClient();
-  
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<PaymentFormData>();
 
-  const calculateNextPaymentDate = () => {
-    const nextMonth = addMonths(new Date(), 1);
-    return startOfMonth(nextMonth).toISOString();
-  };
-
-  const calculateLateFine = useCallback(async () => {
-    try {
-      const { data: agreement } = await supabase
+  const { data: agreement } = useQuery({
+    queryKey: ['agreement-details', agreementId],
+    queryFn: async () => {
+      const { data: agreement, error } = await supabase
         .from('leases')
-        .select('rent_amount, daily_late_fine')
+        .select(`
+          *,
+          remainingAmount:remaining_amounts!remaining_amounts_lease_id_fkey (
+            rent_amount
+          )
+        `)
         .eq('id', agreementId)
         .single();
 
-      if (agreement) {
-        const today = new Date();
-        const firstOfMonth = startOfMonth(today);
-        const overdueDays = Math.max(0, differenceInDays(today, firstOfMonth));
+      if (error) throw error;
+      return agreement;
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm({
+    defaultValues: {
+      amount: 0,
+      paymentMethod: "",
+      description: "",
+      isRecurring: false,
+      recurringInterval: "",
+    },
+  });
+
+  // Set base amount when agreement data is loaded
+  useEffect(() => {
+    if (agreement?.remainingAmount?.rent_amount) {
+      setBaseAmount(agreement.remainingAmount.rent_amount);
+      setValue("amount", agreement.remainingAmount.rent_amount);
+    }
+  }, [agreement, setValue]);
+
+  const calculateLateFine = useCallback(async () => {
+    if (!agreementId) return;
+
+    try {
+      const { data: leaseData, error: leaseError } = await supabase
+        .from('leases')
+        .select('daily_late_fine, late_fine_start_day, rent_due_day')
+        .eq('id', agreementId)
+        .single();
+
+      if (leaseError) throw leaseError;
+
+      const today = new Date();
+      const dueDay = leaseData.rent_due_day || 1;
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      
+      // Create due date for current month
+      const dueDate = new Date(currentYear, currentMonth, dueDay);
+      
+      // If today is past the due date
+      if (today > dueDate) {
+        const diffTime = Math.abs(today.getTime() - dueDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        setDaysOverdue(overdueDays);
-        setBaseAmount(agreement.rent_amount);
+        // Only start counting after late_fine_start_day
+        const effectiveLateDays = Math.max(0, diffDays - (leaseData.late_fine_start_day - 1));
         
-        if (overdueDays > 0) {
-          const fineAmount = overdueDays * (agreement.daily_late_fine || 120);
+        if (effectiveLateDays > 0) {
+          const fineAmount = effectiveLateDays * (leaseData.daily_late_fine || 0);
           setLateFineAmount(fineAmount);
-          setTotalAmount(agreement.rent_amount + fineAmount);
+          setDaysOverdue(effectiveLateDays);
+          setTotalAmount(baseAmount + fineAmount);
         } else {
           setLateFineAmount(0);
-          setTotalAmount(agreement.rent_amount);
+          setDaysOverdue(0);
+          setTotalAmount(baseAmount);
         }
+      } else {
+        setLateFineAmount(0);
+        setDaysOverdue(0);
+        setTotalAmount(baseAmount);
       }
     } catch (error) {
       console.error('Error calculating late fine:', error);
-      toast.error('Error calculating late fine');
+      toast.error('Failed to calculate late fine');
     }
-  }, [agreementId]);
+  }, [agreementId, baseAmount]);
 
-  useEffect(() => {
-    calculateLateFine();
-  }, [calculateLateFine]);
-
-  const onSubmit = async (data: PaymentFormData) => {
-    setIsSubmitting(true);
+  const onSubmit = async (data: any) => {
     try {
-      const paymentData = {
-        lease_id: agreementId,
-        amount: totalAmount,
-        payment_method: data.paymentMethod,
-        description: data.description,
-        payment_date: new Date().toISOString(),
-        status: 'completed' as const, // Set status to completed by default
-        type: 'Income',
-        is_recurring: isRecurring,
-        recurring_interval: isRecurring ? 
-          `${data.intervalValue} ${data.intervalUnit}` : null,
-        next_payment_date: calculateNextPaymentDate(),
-        late_fine_amount: lateFineAmount,
-        days_overdue: daysOverdue
-      };
-
-      const { error } = await supabase
-        .from("payments")
-        .insert(paymentData);
+      const { error } = await supabase.from("payments").insert([
+        {
+          lease_id: agreementId,
+          amount: totalAmount,
+          payment_method: data.paymentMethod,
+          status: "completed",
+          payment_date: new Date().toISOString(),
+          description: data.description,
+          is_recurring: isRecurring,
+          recurring_interval: isRecurring ? data.recurringInterval : null,
+          type: "Income",
+          late_fine_amount: lateFineAmount,
+          days_overdue: daysOverdue,
+        },
+      ]);
 
       if (error) throw error;
-      
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['agreements'] })
-      ]);
-      
+
       toast.success("Payment added successfully");
       reset();
-      setIsRecurring(false);
-    } catch (error: any) {
+      
+      // Invalidate relevant queries
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+      await queryClient.invalidateQueries({ queryKey: ['agreement-details'] });
+      
+    } catch (error) {
       console.error("Error adding payment:", error);
-      toast.error(error.message || "Failed to add payment. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Failed to add payment");
     }
   };
 
@@ -117,11 +146,12 @@ export const usePaymentForm = (agreementId: string) => {
     isRecurring,
     setIsRecurring,
     errors,
-    isSubmitting,
+    isSubmitting: false,
     lateFineAmount,
     daysOverdue,
     baseAmount,
     totalAmount,
-    calculateLateFine
+    calculateLateFine,
+    setBaseAmount
   };
 };
