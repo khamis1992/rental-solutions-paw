@@ -34,21 +34,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     },
   });
 
-  const { data: remainingAmount } = useQuery({
-    queryKey: ["remaining-amount", data.agreementId],
-    queryFn: async () => {
-      const { data: remainingData, error } = await supabase
-        .from("remaining_amounts")
-        .select("remaining_amount")
-        .eq("lease_id", data.agreementId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return remainingData?.remaining_amount || 0;
-    },
-    enabled: !!data.agreementId,
-  });
-
   const handlePrint = () => {
     if (onPrint) {
       onPrint();
@@ -174,10 +159,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             <div className="flex justify-between w-48 print:w-40">
               <span>Amount Paid:</span>
               <span>{formatCurrency(totalPaidAmount)}</span>
-            </div>
-            <div className="flex justify-between w-48 print:w-40 font-bold">
-              <span>Remaining Amount:</span>
-              <span>{formatCurrency(remainingAmount)}</span>
             </div>
           </div>
         </div>
