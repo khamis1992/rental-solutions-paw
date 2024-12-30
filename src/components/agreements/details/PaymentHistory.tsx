@@ -15,13 +15,26 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const { data: payments, isLoading: isLoadingPayments } = useQuery({
     queryKey: ['payment-history', agreementId],
     queryFn: async () => {
+      console.log('Fetching payment history for agreement:', agreementId);
       const { data, error } = await supabase
-        .from('payment_history')
-        .select('*')
+        .from('payments')
+        .select(`
+          id,
+          amount,
+          payment_date,
+          status,
+          payment_method,
+          description
+        `)
         .eq('lease_id', agreementId)
-        .order('original_due_date', { ascending: true });
+        .order('payment_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching payment history:', error);
+        throw error;
+      }
+
+      console.log('Fetched payment history:', data);
       return data;
     },
   });
@@ -56,40 +69,44 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
         )}
 
         <div className="space-y-4">
-          {payments?.map((payment) => (
-            <div
-              key={payment.id}
-              className="flex items-center justify-between p-4 border rounded-lg"
-            >
-              <div>
-                <div className="font-medium">
-                  Due: {format(new Date(payment.original_due_date), 'PP')}
-                </div>
-                {payment.actual_payment_date && (
-                  <div className="text-sm text-muted-foreground">
-                    Paid: {format(new Date(payment.actual_payment_date), 'PP')}
+          {payments && payments.length > 0 ? (
+            payments.map((payment) => (
+              <div
+                key={payment.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div>
+                  <div className="font-medium">
+                    {payment.payment_date && format(new Date(payment.payment_date), 'PP')}
                   </div>
-                )}
+                  <div className="text-sm text-muted-foreground">
+                    {payment.payment_method} - {payment.description || 'Payment'}
+                  </div>
+                </div>
+                <div className="text-right space-y-1">
+                  <div>{formatCurrency(payment.amount)}</div>
+                  <Badge 
+                    variant="outline" 
+                    className={payment.status === 'completed' ? 
+                      'bg-green-50 text-green-600 border-green-200' : 
+                      'bg-yellow-50 text-yellow-600 border-yellow-200'
+                    }
+                  >
+                    {payment.status === 'completed' ? (
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                    ) : (
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                    )}
+                    {payment.status}
+                  </Badge>
+                </div>
               </div>
-              <div className="text-right space-y-1">
-                <div>{formatCurrency(payment.amount_due)}</div>
-                <Badge 
-                  variant="outline" 
-                  className={payment.status === 'completed' ? 
-                    'bg-green-50 text-green-600 border-green-200' : 
-                    'bg-yellow-50 text-yellow-600 border-yellow-200'
-                  }
-                >
-                  {payment.status === 'completed' ? (
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                  ) : (
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                  )}
-                  {payment.status}
-                </Badge>
-              </div>
+            ))
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              No payment history found
             </div>
-          ))}
+          )}
         </div>
       </CardContent>
     </Card>
