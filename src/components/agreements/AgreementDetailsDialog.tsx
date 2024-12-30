@@ -17,9 +17,6 @@ import { CustomerInfoCard } from "./details/CustomerInfoCard";
 import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Payment } from "@/types/database/payment.types";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -33,50 +30,6 @@ export const AgreementDetailsDialog = ({
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
-
-  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
-    queryKey: ["agreement-payments", agreementId],
-    queryFn: async () => {
-      console.log("Fetching payments for agreement:", agreementId);
-      
-      const { data: payments, error } = await supabase
-        .from("payments")
-        .select(`
-          *,
-          security_deposits (
-            amount,
-            status
-          ),
-          leases (
-            agreement_number,
-            customer_id,
-            profiles:customer_id (
-              id,
-              full_name,
-              phone_number
-            )
-          ),
-          accounting_invoices (
-            id,
-            invoice_number,
-            status,
-            issued_date,
-            paid_date
-          )
-        `)
-        .eq("lease_id", agreementId)
-        .order("payment_date", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching payments:", error);
-        throw error;
-      }
-      
-      console.log("Fetched payments:", payments);
-      return payments as Payment[];
-    },
-    enabled: open && !!agreementId,
-  });
 
   if (!open) return null;
 
@@ -123,7 +76,7 @@ export const AgreementDetailsDialog = ({
                 <PaymentForm agreementId={agreementId} />
               </TabsContent>
               <TabsContent value="payment-history">
-                <PaymentHistory payments={payments} isLoading={isLoadingPayments} />
+                <PaymentHistory agreementId={agreementId} />
               </TabsContent>
               <TabsContent value="invoices">
                 <InvoiceList agreementId={agreementId} />
