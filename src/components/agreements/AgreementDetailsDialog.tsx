@@ -17,6 +17,9 @@ import { CustomerInfoCard } from "./details/CustomerInfoCard";
 import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Payment } from "@/types/database/payment.types";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -30,6 +33,23 @@ export const AgreementDetailsDialog = ({
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ["agreement-payments", agreementId],
+    queryFn: async () => {
+      console.log("Fetching payments for agreement:", agreementId);
+      const { data, error } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("lease_id", agreementId)
+        .order("payment_date", { ascending: false });
+
+      if (error) throw error;
+      console.log("Fetched payments:", data);
+      return data as Payment[];
+    },
+    enabled: open,
+  });
 
   if (!open) return null;
 
@@ -76,7 +96,7 @@ export const AgreementDetailsDialog = ({
                 <PaymentForm agreementId={agreementId} />
               </TabsContent>
               <TabsContent value="payment-history">
-                <PaymentHistory agreementId={agreementId} />
+                <PaymentHistory payments={payments} />
               </TabsContent>
               <TabsContent value="invoices">
                 <InvoiceList agreementId={agreementId} />
