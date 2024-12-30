@@ -2440,6 +2440,7 @@ export type Database = {
           days_overdue: number | null
           description: string | null
           id: string
+          include_in_calculation: boolean | null
           is_recurring: boolean | null
           late_fine_amount: number | null
           lease_id: string | null
@@ -2461,6 +2462,7 @@ export type Database = {
           days_overdue?: number | null
           description?: string | null
           id?: string
+          include_in_calculation?: boolean | null
           is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
@@ -2482,6 +2484,7 @@ export type Database = {
           days_overdue?: number | null
           description?: string | null
           id?: string
+          include_in_calculation?: boolean | null
           is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
@@ -3951,6 +3954,12 @@ export type Database = {
           p_credit_history_length: number
         }
         Returns: Json
+      }
+      calculate_remaining_amount: {
+        Args: {
+          lease_id: string
+        }
+        Returns: number
       }
       calculate_risk_score: {
         Args: {

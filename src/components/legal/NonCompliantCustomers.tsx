@@ -1,199 +1,110 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Printer, FileText, Filter } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { format, subDays } from "date-fns";
-import { LegalDocumentDialog } from "./LegalDocumentDialog";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 
-export function NonCompliantCustomers() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+interface NonCompliantCustomer {
+  id: string;
+  agreement_number: string;
+  customer_name: string;
+  remaining_amount: number;
+  last_payment_date: string | null;
+  next_payment_date: string | null;
+  days_overdue: number;
+  total_late_fees: number;
+}
 
-  const { data: nonCompliantCustomers, isLoading } = useQuery({
-    queryKey: ["non-compliant-customers"],
+export const NonCompliantCustomers = () => {
+  const { data: overdueCustomers, isLoading } = useQuery({
+    queryKey: ["overdue-customers"],
     queryFn: async () => {
-      const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
-      const tenthOfMonth = new Date();
-      tenthOfMonth.setDate(10);
-
-      const { data: customers, error } = await supabase
-        .from("profiles")
+      const { data, error } = await supabase
+        .from('leases')
         .select(`
           id,
-          full_name,
-          leases (
-            id,
-            payment_schedules (
-              id,
-              due_date,
-              amount,
-              status
-            ),
-            traffic_fines (
-              id,
-              violation_date,
-              fine_amount,
-              payment_status
-            ),
-            damages (
-              id,
-              description,
-              repair_cost,
-              status
-            )
+          agreement_number,
+          last_payment_date,
+          next_payment_date,
+          profiles:customer_id (
+            full_name
+          ),
+          remaining_amounts (
+            remaining_amount
           )
         `)
-        .eq("role", "customer");
+        .eq('status', 'active')
+        .order('next_payment_date');
 
       if (error) throw error;
 
-      return customers.filter(customer => {
-        const hasOverduePayments = customer.leases?.some(lease =>
-          lease.payment_schedules?.some(payment =>
-            payment.status === 'pending' && new Date(payment.due_date) < tenthOfMonth
-          )
-        );
+      const processedData = data.map(lease => {
+        const daysOverdue = lease.next_payment_date 
+          ? Math.max(0, Math.floor((new Date().getTime() - new Date(lease.next_payment_date).getTime()) / (1000 * 60 * 60 * 24)))
+          : 0;
 
-        const hasUnpaidFines = customer.leases?.some(lease =>
-          lease.traffic_fines?.some(fine =>
-            fine.payment_status === 'pending' && new Date(fine.violation_date) < new Date(thirtyDaysAgo)
-          )
-        );
-
-        const hasUnresolvedDamages = customer.leases?.some(lease =>
-          lease.damages?.some(damage => damage.status === 'pending')
-        );
-
-        return hasOverduePayments || hasUnpaidFines || hasUnresolvedDamages;
+        return {
+          id: lease.id,
+          agreement_number: lease.agreement_number,
+          customer_name: lease.profiles?.full_name || 'Unknown',
+          remaining_amount: lease.remaining_amounts?.[0]?.remaining_amount || 0,
+          last_payment_date: lease.last_payment_date,
+          next_payment_date: lease.next_payment_date,
+          days_overdue: daysOverdue,
+          total_late_fees: daysOverdue * 120 // 120 QAR daily late fee
+        };
       });
-    },
+
+      return processedData as NonCompliantCustomer[];
+    }
   });
 
-  const filteredCustomers = nonCompliantCustomers?.filter(customer =>
-    customer.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  return (
-    <div className="space-y-4">
+  if (isLoading) {
+    return (
       <Card className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <Input
-              placeholder="Search customers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-[300px]"
-            />
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
-          <Button onClick={handlePrint}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print List
-          </Button>
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer Name</TableHead>
-                <TableHead>Overdue Payments</TableHead>
-                <TableHead>Unpaid Fines</TableHead>
-                <TableHead>Damages</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers?.map((customer) => {
-                const overduePayments = customer.leases?.flatMap(lease => 
-                  lease.payment_schedules?.filter(payment => 
-                    payment.status === 'pending'
-                  ) || []
-                );
-
-                const unpaidFines = customer.leases?.flatMap(lease =>
-                  lease.traffic_fines?.filter(fine =>
-                    fine.payment_status === 'pending'
-                  ) || []
-                );
-
-                const unresolvedDamages = customer.leases?.flatMap(lease =>
-                  lease.damages?.filter(damage =>
-                    damage.status === 'pending'
-                  ) || []
-                );
-
-                const totalOverdue = overduePayments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
-                const totalFines = unpaidFines?.reduce((sum, fine) => sum + fine.fine_amount, 0) || 0;
-                const totalDamages = unresolvedDamages?.reduce((sum, damage) => sum + (damage.repair_cost || 0), 0) || 0;
-
-                return (
-                  <TableRow key={customer.id}>
-                    <TableCell>{customer.full_name}</TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">
-                        {formatCurrency(totalOverdue)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">
-                        {formatCurrency(totalFines)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="destructive">
-                        {formatCurrency(totalDamages)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedCustomer(customer.id)}
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Generate Document
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {!isLoading && (!filteredCustomers || filteredCustomers.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    No non-compliant customers found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </Card>
+    );
+  }
 
-      <LegalDocumentDialog
-        customerId={selectedCustomer}
-        open={!!selectedCustomer}
-        onOpenChange={(open) => !open && setSelectedCustomer(null)}
-      />
-    </div>
+  return (
+    <Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Agreement Number</TableHead>
+            <TableHead>Customer Name</TableHead>
+            <TableHead className="text-right">Remaining Amount</TableHead>
+            <TableHead>Last Payment</TableHead>
+            <TableHead>Next Payment</TableHead>
+            <TableHead className="text-right">Days Overdue</TableHead>
+            <TableHead className="text-right">Late Fees</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {overdueCustomers?.map((customer) => (
+            <TableRow key={customer.id}>
+              <TableCell>{customer.agreement_number}</TableCell>
+              <TableCell>{customer.customer_name}</TableCell>
+              <TableCell className="text-right">{formatCurrency(customer.remaining_amount)}</TableCell>
+              <TableCell>{customer.last_payment_date ? formatDateToDisplay(customer.last_payment_date) : '-'}</TableCell>
+              <TableCell>{customer.next_payment_date ? formatDateToDisplay(customer.next_payment_date) : '-'}</TableCell>
+              <TableCell className="text-right">{customer.days_overdue}</TableCell>
+              <TableCell className="text-right">{formatCurrency(customer.total_late_fees)}</TableCell>
+            </TableRow>
+          ))}
+          {!overdueCustomers?.length && (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-4">
+                No overdue payments found
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
   );
-}
+};
