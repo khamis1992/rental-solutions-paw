@@ -50,13 +50,18 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
 
       console.log('Fetched agreement:', agreement);
       
+      // Handle the case where remainingAmount is an empty array or undefined
+      const defaultRemainingAmount = {
+        rent_amount: 0,
+        final_price: 0,
+        remaining_amount: 0
+      };
+
       return {
         ...agreement,
-        remainingAmount: agreement?.remainingAmount?.[0] || {
-          rent_amount: 0,
-          final_price: 0,
-          remaining_amount: 0
-        }
+        remainingAmount: Array.isArray(agreement.remainingAmount) && agreement.remainingAmount.length > 0 
+          ? agreement.remainingAmount[0] 
+          : defaultRemainingAmount
       };
     },
     enabled: !!agreementId && open,
