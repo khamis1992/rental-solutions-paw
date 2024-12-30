@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PaymentMethodType, PaymentStatus } from "@/types/database/agreement.types";
+import { PaymentMethodType } from "@/types/database/agreement.types";
+import { submitPayment } from "./services/paymentService";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -37,15 +37,13 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const onSubmit = async (data: PaymentFormData) => {
     setIsSubmitting(true);
     try {
-      console.log('Submitting payment:', { agreementId, ...data });
-      
       const paymentData = {
         lease_id: agreementId,
-        amount: data.amount,
+        amount: Number(data.amount),
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
-        status: 'pending' as PaymentStatus,
+        status: 'pending' as const,
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? 
           `${data.intervalValue} ${data.intervalUnit}` : null,
@@ -54,18 +52,13 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           null
       };
 
-      const { error } = await supabase
-        .from("payments")
-        .insert(paymentData);
-
-      if (error) throw error;
-
+      await submitPayment(paymentData);
       toast.success("Payment added successfully");
       reset();
       setIsRecurring(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding payment:", error);
-      toast.error("Failed to add payment. Please try again.");
+      toast.error(error.message || "Failed to add payment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
