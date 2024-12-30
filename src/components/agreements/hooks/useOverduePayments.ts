@@ -12,7 +12,7 @@ export const useOverduePayments = (agreementId?: string) => {
         .from('overdue_payments_view')
         .select('*')
         .eq('agreement_id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching overdue payment:', error);
@@ -27,7 +27,9 @@ export const useOverduePayments = (agreementId?: string) => {
 
   const processOverduePayments = async () => {
     try {
-      const { error } = await supabase.functions.invoke('process-overdue-payments');
+      const { error } = await supabase.functions.invoke('process-overdue-payments', {
+        body: { agreementId }
+      });
       
       if (error) throw error;
       
