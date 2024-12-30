@@ -49,13 +49,6 @@ export function PaymentHistoryDialog({
                 full_name,
                 phone_number
               )
-            ),
-            accounting_invoices (
-              id,
-              invoice_number,
-              status,
-              issued_date,
-              paid_date
             )
           `)
           .order("created_at", { ascending: false });
@@ -76,8 +69,7 @@ export function PaymentHistoryDialog({
         const transformedData = data.map(payment => ({
           ...payment,
           customer: payment.leases?.profiles || null,
-          agreement_number: payment.leases?.agreement_number || null,
-          invoice: payment.accounting_invoices?.[0] || null
+          agreement_number: payment.leases?.agreement_number || null
         }));
 
         console.log("Transformed payment data:", transformedData); // Add this line to debug

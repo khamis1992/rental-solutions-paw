@@ -2517,6 +2517,7 @@ export type Database = {
           description: string | null
           id: string
           include_in_calculation: boolean | null
+          invoice_id: string | null
           is_recurring: boolean | null
           late_fine_amount: number | null
           lease_id: string | null
@@ -2541,6 +2542,7 @@ export type Database = {
           description?: string | null
           id?: string
           include_in_calculation?: boolean | null
+          invoice_id?: string | null
           is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
@@ -2565,6 +2567,7 @@ export type Database = {
           description?: string | null
           id?: string
           include_in_calculation?: boolean | null
+          invoice_id?: string | null
           is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
@@ -2581,6 +2584,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_lease_id_fkey"
             columns: ["lease_id"]
