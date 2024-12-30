@@ -29,14 +29,25 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     .select(`
       *,
       customer:profiles(*),
-      vehicle:vehicles(*),
-      applied_discounts(*)
+      vehicle:vehicles(*)
     `)
     .eq("id", leaseId)
     .single();
 
   if (leaseError || !lease) {
     console.error("Error fetching lease data:", leaseError);
+    return null;
+  }
+
+  // Fetch remaining amount data for the agreement
+  const { data: remainingAmount, error: remainingError } = await supabase
+    .from("remaining_amounts")
+    .select("*")
+    .eq("agreement_number", lease.agreement_number)
+    .maybeSingle();
+
+  if (remainingError) {
+    console.error("Error fetching remaining amount:", remainingError);
     return null;
   }
 
@@ -56,7 +67,7 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
   if (lease.agreement_type === "short_term") {
     items.push({
       description: `Short-term rental (${format(new Date(lease.start_date), "PP")} - ${format(new Date(lease.end_date), "PP")})`,
-      amount: lease.total_amount
+      amount: remainingAmount?.final_price || lease.total_amount || 0
     });
   } else {
     items.push({
@@ -71,10 +82,8 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     }
   }
 
-  const totalDiscount = lease.applied_discounts?.reduce((sum, discount) => 
-    sum + (discount.discount_amount || 0), 0) || 0;
-
   const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const totalDiscount = 0; // Add discount logic if needed
   const total = subtotal - totalDiscount;
 
   return {
@@ -85,7 +94,7 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     agreementType: lease.agreement_type === "short_term" ? "Short-term Rental" : "Lease-to-Own",
     startDate: format(new Date(lease.start_date), "PP"),
     endDate: format(new Date(lease.end_date), "PP"),
-    amount: lease.total_amount,
+    amount: remainingAmount?.final_price || lease.total_amount || 0,
     items,
     subtotal,
     discount: totalDiscount,
