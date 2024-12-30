@@ -1,50 +1,48 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 interface AIAnalysisCardProps {
-  analysisResult: {
-    summary: string;
-    warnings?: string[];
-    suggestions?: string[];
-  };
+  analysisResult: any;
   onImplementChanges: () => void;
   isUploading: boolean;
 }
 
-export const AIAnalysisCard = ({ 
-  analysisResult, 
-  onImplementChanges, 
-  isUploading 
-}: AIAnalysisCardProps) => {
+export const AIAnalysisCard = ({ analysisResult, onImplementChanges, isUploading }: AIAnalysisCardProps) => {
   return (
-    <Card className="mt-4">
+    <Card>
       <CardHeader>
         <CardTitle>AI Analysis Results</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <h4 className="font-medium">Summary:</h4>
-          <p>{analysisResult.summary}</p>
+          <p>Total Rows: {analysisResult.totalRows}</p>
+          <p>Valid Rows: {analysisResult.validRows}</p>
+          <p>Invalid Rows: {analysisResult.invalidRows}</p>
+          <p>Total Amount: ${analysisResult.totalAmount?.toFixed(2)}</p>
         </div>
-        
-        {analysisResult.warnings?.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-yellow-600">Warnings:</h4>
-            <ul className="list-disc pl-4 space-y-1">
-              {analysisResult.warnings.map((warning: string, index: number) => (
-                <li key={index} className="text-sm">{warning}</li>
+
+        {analysisResult.issues?.length > 0 && (
+          <div>
+            <h4 className="font-semibold mb-2">Issues Found:</h4>
+            <ul className="list-disc pl-5 space-y-1">
+              {analysisResult.issues.map((issue: string, index: number) => (
+                <li key={index} className="text-sm text-muted-foreground">
+                  {issue}
+                </li>
               ))}
             </ul>
           </div>
         )}
-        
+
         {analysisResult.suggestions?.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-blue-600">Suggestions:</h4>
-            <ul className="list-disc pl-4 space-y-1">
+          <div>
+            <h4 className="font-semibold mb-2">Suggestions:</h4>
+            <ul className="list-disc pl-5 space-y-1">
               {analysisResult.suggestions.map((suggestion: string, index: number) => (
-                <li key={index} className="text-sm">{suggestion}</li>
+                <li key={index} className="text-sm text-muted-foreground">
+                  {suggestion}
+                </li>
               ))}
             </ul>
           </div>
@@ -53,15 +51,15 @@ export const AIAnalysisCard = ({
         <Button
           onClick={onImplementChanges}
           disabled={isUploading}
-          className="w-full mt-4"
+          className="w-full"
         >
           {isUploading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Implementing Changes...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Importing...
             </>
           ) : (
-            'Implement Changes'
+            'Import Data'
           )}
         </Button>
       </CardContent>

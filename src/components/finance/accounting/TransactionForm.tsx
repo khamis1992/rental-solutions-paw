@@ -121,7 +121,6 @@ export function TransactionForm() {
             <SelectContent>
               <SelectItem value="income">Income</SelectItem>
               <SelectItem value="expense">Expense</SelectItem>
-              <SelectItem value="payment">Payment</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -30,12 +30,11 @@ export function CreateAgreementDialog() {
     handleSubmit,
     onSubmit,
     agreementType,
-    updateMonthlyPayment,
     watch,
     setValue,
     errors,
+    calculateAndUpdateMonthlyPayment
   } = useAgreementForm(() => {
-    // Callback after successful creation
     setOpen(false);
     setSelectedCustomerId("");
     toast.success("Agreement created successfully");
@@ -92,7 +91,7 @@ export function CreateAgreementDialog() {
           {agreementType === "lease_to_own" && (
             <LeaseToOwnFields
               register={register}
-              updateMonthlyPayment={updateMonthlyPayment}
+              updateMonthlyPayment={calculateAndUpdateMonthlyPayment}
               watch={watch}
             />
           )}

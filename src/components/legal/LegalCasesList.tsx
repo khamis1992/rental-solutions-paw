@@ -146,9 +146,9 @@ export function LegalCasesList() {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
       />
-
+      
       <ViewLegalCaseDialog
-        caseId={selectedCase}
+        legalCaseId={selectedCase}
         open={!!selectedCase}
         onOpenChange={(open) => !open && setSelectedCase(null)}
       />

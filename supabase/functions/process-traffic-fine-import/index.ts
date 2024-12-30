@@ -1,12 +1,88 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { parseCSVRow, validateRow, validateDate, validateNumeric } from './csvParser.ts'
-import { insertTrafficFine, logImport } from './dbOperations.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const processCSVContent = (content: string) => {
+  const lines = content.split('\n').filter(line => line.trim());
+  const processedRows = [];
+  let currentRow = '';
+  let insideQuotes = false;
+
+  for (let i = 1; i < lines.length; i++) { // Skip header row
+    const line = lines[i].trim();
+    
+    for (let char of line) {
+      if (char === '"') {
+        insideQuotes = !insideQuotes;
+      }
+      currentRow += char;
+    }
+
+    if (!insideQuotes) {
+      if (currentRow) {
+        // Process the complete row
+        const values = currentRow.split(',').map(val => {
+          // Clean up quotes and trim
+          return val.replace(/^"|"$/g, '').trim();
+        });
+
+        // Only process rows that have all required fields
+        if (values.length >= 8) {
+          try {
+            const [
+              serial_number,
+              violation_number,
+              violation_date,
+              license_plate,
+              fine_location,
+              violation_charge,
+              fine_amount,
+              violation_points
+            ] = values;
+
+            // Parse date (assuming DD/MM/YYYY format)
+            const [day, month, year] = violation_date.split('/');
+            const parsedDate = new Date(
+              parseInt(year),
+              parseInt(month) - 1,
+              parseInt(day)
+            );
+
+            // Create fine object
+            const fine = {
+              serial_number,
+              violation_number,
+              violation_date: parsedDate.toISOString(),
+              license_plate,
+              fine_location: fine_location.replace(/^"|"$/g, ''),
+              fine_type: violation_charge.replace(/^"|"$/g, ''),
+              fine_amount: parseFloat(fine_amount),
+              violation_points: parseInt(violation_points),
+              payment_status: 'pending',
+              assignment_status: 'pending',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+
+            processedRows.push(fine);
+          } catch (error) {
+            console.error('Error processing row:', currentRow, error);
+          }
+        }
+      }
+      currentRow = '';
+    } else {
+      // Add a space for line breaks within quotes
+      currentRow += ' ';
+    }
+  }
+
+  return processedRows;
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -14,23 +90,15 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting traffic fine import process...');
-    
     const { fileName } = await req.json();
-    
-    if (!fileName) {
-      throw new Error('fileName is required');
-    }
-
     console.log('Processing file:', fileName);
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: fileData, error: downloadError } = await supabaseClient
-      .storage
+    // Download file content
+    const { data: fileData, error: downloadError } = await supabase.storage
       .from('imports')
       .download(fileName);
 
@@ -39,96 +107,61 @@ serve(async (req) => {
       throw new Error(`Failed to download file: ${downloadError.message}`);
     }
 
-    const text = await fileData.text();
-    const rows = text.split('\n')
-      .map(row => row.trim())
-      .filter(row => row.length > 0);
+    const content = await fileData.text();
+    console.log('File content loaded');
 
-    if (rows.length < 2) {
-      throw new Error('File is empty or contains only headers');
-    }
+    // Process CSV content
+    const processedRows = processCSVContent(content);
+    console.log(`Processed ${processedRows.length} valid rows`);
 
-    const headers = rows[0].toLowerCase().split(',').map(h => h.trim());
-    const expectedColumns = 8;
-    
-    console.log('Processing CSV with headers:', headers);
-    console.log(`Expected columns: ${expectedColumns}, Found: ${headers.length}`);
-
-    if (headers.length !== expectedColumns) {
-      throw new Error(`Invalid header count. Expected ${expectedColumns} columns, found ${headers.length}`);
-    }
-
-    let processed = 0;
+    // Insert data in batches
+    const batchSize = 50;
+    const results = [];
     const errors = [];
 
-    // Process each row (skip header)
-    for (let i = 1; i < rows.length; i++) {
-      try {
-        const row = rows[i];
-        
-        if (!row.trim()) {
-          console.log(`Skipping empty row ${i}`);
-          continue;
-        }
+    for (let i = 0; i < processedRows.length; i += batchSize) {
+      const batch = processedRows.slice(i, i + batchSize);
+      const { data, error } = await supabase
+        .from('traffic_fines')
+        .insert(batch)
+        .select();
 
-        const values = parseCSVRow(row);
-        validateRow(i, values, expectedColumns, row);
-
-        // Validate date and numeric values
-        const violationDate = validateDate(values[2], i);
-        const amount = validateNumeric(values[6], 'amount', i);
-        const points = validateNumeric(values[7], 'points', i);
-
-        await insertTrafficFine(supabaseClient, {
-          serial_number: values[0],
-          violation_number: values[1],
-          violation_date: violationDate.toISOString(),
-          license_plate: values[3],
-          fine_location: values[4],
-          violation_charge: values[5],
-          fine_amount: amount,
-          violation_points: points
+      if (error) {
+        console.error('Batch insert error:', error);
+        errors.push({
+          batch: i / batchSize + 1,
+          error: error.message,
+          details: error.details
         });
-
-        processed++;
-      } catch (error) {
-        console.error(`Error processing row ${i}:`, error);
-        errors.push({ row: i, error: error.message });
+      } else {
+        results.push(...(data || []));
       }
     }
-
-    await logImport(supabaseClient, fileName, processed, errors);
-
-    console.log('Import completed:', { processed, errors: errors.length });
 
     return new Response(
       JSON.stringify({
         success: true,
-        processed,
-        errors: errors.length > 0 ? errors : null
+        processed: results.length,
+        errors: errors.length > 0 ? errors : undefined
       }),
       { 
         headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
     );
 
   } catch (error) {
-    console.error('Import process failed:', error);
-    
+    console.error('Processing error:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
       }),
       { 
         status: 400,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

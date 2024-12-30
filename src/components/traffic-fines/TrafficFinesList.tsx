@@ -1,204 +1,120 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-} from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { AIAssignmentDialog } from "./AIAssignmentDialog";
-import { TrafficFineTableHeader } from "./table/TrafficFineTableHeader";
-import { TrafficFineTableRow } from "./table/TrafficFineTableRow";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { Loader2 } from "lucide-react";
+import { TrafficFineFilters } from "./TrafficFineFilters";
 
-export const TrafficFinesList = () => {
-  const { toast } = useToast();
-  const [aiDialogOpen, setAiDialogOpen] = useState(false);
-  const [selectedFine, setSelectedFine] = useState<any>(null);
-  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+export function TrafficFinesList() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: fines, isLoading, error } = useQuery({
+  const { data: fines, isLoading } = useQuery({
     queryKey: ["traffic-fines"],
     queryFn: async () => {
-      console.log('Fetching traffic fines...');
       const { data, error } = await supabase
         .from('traffic_fines')
         .select(`
           *,
           lease:leases(
+            id,
             customer:profiles(
               id,
               full_name
+            ),
+            vehicle:vehicles(
+              make,
+              model,
+              year,
+              license_plate
             )
-          ),
-          vehicle:vehicles(
-            make,
-            model,
-            license_plate
           )
         `)
         .order('violation_date', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching traffic fines:', error);
-        throw error;
-      }
-      
-      console.log('Fetched traffic fines:', data);
+      if (error) throw error;
       return data;
     },
   });
 
-  const handleAiAssignment = async (fineId: string) => {
-    try {
-      setIsAnalyzing(true);
-      setSelectedFine(fines?.find(f => f.id === fineId));
-      setAiDialogOpen(true);
+  const filteredFines = fines?.filter((fine) => {
+    const matchesSearch = searchQuery.toLowerCase() === "" || 
+      fine.license_plate?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fine.violation_number?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const response = await fetch('/functions/v1/analyze-traffic-fine', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ fineId }),
-      });
+    const matchesStatus = statusFilter === "all" || fine.payment_status === statusFilter;
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      setAiSuggestions(data.suggestions);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to analyze fine",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleAssignCustomer = async (fineId: string, customerId: string) => {
-    try {
-      const { data: leases, error: leaseError } = await supabase
-        .from('leases')
-        .select('id')
-        .eq('customer_id', customerId)
-        .eq('status', 'active')
-        .limit(1);
-
-      if (leaseError) throw leaseError;
-      
-      if (!leases?.length) {
-        toast({
-          title: "No Active Lease",
-          description: "Customer must have an active lease to assign fines",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('traffic_fines')
-        .update({ 
-          lease_id: leases[0].id,
-          assignment_status: 'assigned'
-        })
-        .eq('id', fineId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Fine assigned successfully",
-      });
-      
-      setAiDialogOpen(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to assign fine",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleMarkAsPaid = async (fineId: string) => {
-    try {
-      const { error } = await supabase
-        .from('traffic_fines')
-        .update({ payment_status: 'completed' })
-        .eq('id', fineId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Fine marked as paid",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update fine status",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (error) {
-    return (
-      <div className="p-4 text-red-500">
-        Error loading traffic fines: {error.message}
-      </div>
-    );
-  }
+    return matchesSearch && matchesStatus;
+  });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Card className="p-6">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <ErrorBoundary>
-      <div className="space-y-4">
-        <Table>
-          <TrafficFineTableHeader />
-          <TableBody>
-            {fines?.map((fine) => (
-              <ErrorBoundary key={fine.id}>
-                <TrafficFineTableRow
-                  fine={fine}
-                  onAssignCustomer={handleAssignCustomer}
-                  onAiAssignment={handleAiAssignment}
-                  onMarkAsPaid={handleMarkAsPaid}
-                />
-              </ErrorBoundary>
-            ))}
-            {!fines?.length && (
-              <tr>
-                <td colSpan={11} className="text-center py-8 text-muted-foreground">
-                  No traffic fines recorded
-                </td>
-              </tr>
-            )}
-          </TableBody>
-        </Table>
+    <Card>
+      <div className="p-6">
+        <TrafficFineFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
       </div>
-
-      <AIAssignmentDialog
-        open={aiDialogOpen}
-        onOpenChange={setAiDialogOpen}
-        selectedFine={selectedFine}
-        onAssignCustomer={handleAssignCustomer}
-        isAnalyzing={isAnalyzing}
-        aiSuggestions={aiSuggestions}
-      />
-    </ErrorBoundary>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[120px] font-semibold">License Plate</TableHead>
+            <TableHead className="w-[140px] font-semibold">Violation Number</TableHead>
+            <TableHead className="w-[120px] font-semibold">Date</TableHead>
+            <TableHead className="w-[180px] font-semibold">Fine Type</TableHead>
+            <TableHead className="w-[120px] font-semibold">Amount</TableHead>
+            <TableHead className="w-[120px] font-semibold">Status</TableHead>
+            <TableHead className="w-[180px] font-semibold">Customer</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredFines?.map((fine) => (
+            <TableRow key={fine.id}>
+              <TableCell className="min-w-[120px]">
+                {fine.license_plate}
+              </TableCell>
+              <TableCell className="min-w-[140px]">{fine.violation_number}</TableCell>
+              <TableCell className="min-w-[120px]">
+                {format(new Date(fine.violation_date), 'dd/MM/yyyy')}
+              </TableCell>
+              <TableCell className="min-w-[180px]">{fine.fine_type}</TableCell>
+              <TableCell className="min-w-[120px]">{formatCurrency(fine.fine_amount)}</TableCell>
+              <TableCell className="min-w-[120px]">
+                <Badge 
+                  variant={fine.payment_status === 'completed' ? 'success' : 'warning'}
+                >
+                  {fine.payment_status}
+                </Badge>
+              </TableCell>
+              <TableCell className="min-w-[180px]">
+                {fine.lease?.customer?.full_name || 'Unassigned'}
+              </TableCell>
+            </TableRow>
+          ))}
+          {!filteredFines?.length && (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-4">
+                No traffic fines found
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
   );
-};
+}

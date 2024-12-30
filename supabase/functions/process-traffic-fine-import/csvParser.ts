@@ -53,11 +53,33 @@ export const validateRow = (
 }
 
 export const validateDate = (dateValue: string, rowNumber: number): Date => {
-  const date = new Date(dateValue);
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid date format in row ${rowNumber}: ${dateValue}`);
+  // Try parsing as ISO date first
+  const isoDate = new Date(dateValue);
+  if (!isNaN(isoDate.getTime())) {
+    return isoDate;
   }
-  return date;
+
+  // Try parsing different date formats
+  const formats = [
+    // YYYY-MM-DD
+    /^\d{4}-\d{2}-\d{2}$/,
+    // DD/MM/YYYY
+    /^\d{2}\/\d{2}\/\d{4}$/,
+    // MM/DD/YYYY
+    /^\d{2}\/\d{2}\/\d{4}$/
+  ];
+
+  for (const format of formats) {
+    if (format.test(dateValue)) {
+      const [year, month, day] = dateValue.split(/[-\/]/).map(Number);
+      const date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+  }
+
+  throw new Error(`Invalid date format in row ${rowNumber}: ${dateValue}. Expected YYYY-MM-DD or DD/MM/YYYY`);
 }
 
 export const validateNumeric = (value: string, field: string, rowNumber: number): number => {

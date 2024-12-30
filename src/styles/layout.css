@@ -1,0 +1,65 @@
+@layer components {
+  /* Grid System */
+  .auto-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--min-column-width, 300px)), 1fr));
+  }
+
+  .flex-grid {
+    @apply flex flex-wrap gap-4;
+  }
+
+  /* Content Containers */
+  .content-container {
+    @apply mx-auto px-4 w-full max-w-[var(--content-max-width)];
+  }
+
+  .section-container {
+    @apply py-[var(--section-spacing)] space-y-[var(--component-spacing)];
+  }
+
+  /* Card Layouts */
+  .card-grid {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+  }
+
+  .stats-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  }
+
+  /* Form Layouts */
+  .form-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
+
+  .form-section {
+    @apply space-y-4 max-w-[var(--text-block-width)] mx-auto;
+  }
+}
+
+/* Responsive Containers */
+@media (max-width: 640px) {
+  .content-container {
+    @apply px-4;
+  }
+  
+  :root {
+    --section-spacing: 1.5rem;
+    --component-spacing: 0.75rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .content-container {
+    @apply px-6;
+  }
+}
+
+@media (min-width: 1025px) {
+  .content-container {
+    @apply px-8;
+  }
+}

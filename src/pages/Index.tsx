@@ -5,7 +5,6 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { CustomerProfileManagement } from "@/components/customers/CustomerProfileManagement";
 
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
@@ -43,21 +42,6 @@ const SystemChatbot = lazyLoadComponent(
   "SystemChatbot"
 );
 
-// Improved loading component with better visual feedback
-const ComponentLoader = ({ componentName }: { componentName: string }) => (
-  <div className="w-full h-[200px] space-y-4 p-4">
-    <div className="h-4 w-1/4">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="h-[160px]">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="text-sm text-muted-foreground text-center">
-      Loading {componentName}...
-    </div>
-  </div>
-);
-
 const Index = () => {
   usePerformanceMonitoring();
   useDashboardSubscriptions();
@@ -80,12 +64,6 @@ const Index = () => {
         <ErrorBoundary>
           <Suspense fallback={<ComponentLoader componentName="Quick Actions" />}>
             <QuickActions />
-          </Suspense>
-        </ErrorBoundary>
-        
-        <ErrorBoundary>
-          <Suspense fallback={<ComponentLoader componentName="Customer Profiles" />}>
-            <CustomerProfileManagement />
           </Suspense>
         </ErrorBoundary>
         
@@ -119,5 +97,20 @@ const Index = () => {
     </DashboardLayout>
   );
 };
+
+// Improved loading component with better visual feedback
+const ComponentLoader = ({ componentName }: { componentName: string }) => (
+  <div className="w-full h-[200px] space-y-4 p-4">
+    <div className="h-4 w-1/4">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="h-[160px]">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="text-sm text-muted-foreground text-center">
+      Loading {componentName}...
+    </div>
+  </div>
+);
 
 export default Index;

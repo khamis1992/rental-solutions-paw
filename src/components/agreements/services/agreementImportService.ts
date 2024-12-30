@@ -1,26 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { retryOperation } from "../utils/retryUtils";
 
-export const createAgreement = async (agreementData: any) => {
-  const { data, error } = await supabase
-    .from("leases")
-    .insert({
-      customer_id: agreementData.customer_id,
-      vehicle_id: agreementData.vehicle_id,
-      start_date: agreementData.start_date,
-      end_date: agreementData.end_date,
-      total_amount: agreementData.total_amount,
-      agreement_number: agreementData.agreement_number,
-      status: agreementData.status || 'pending_payment',
-      initial_mileage: 0 // Adding the required field with a default value
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
 export const uploadImportFile = async (file: File) => {
   const fileExt = file.name.split(".").pop();
   const fileName = `${crypto.randomUUID()}.${fileExt}`;

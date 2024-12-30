@@ -1,111 +1,86 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { fileName } = await req.json();
-    
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    )
 
-    // Download the file from storage
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from('imports')
-      .download(fileName);
+    const { rows } = await req.json()
+    console.log('Processing transactions:', rows.length)
 
-    if (downloadError) throw downloadError;
+    // Save raw import data
+    const { error: rawDataError } = await supabaseClient
+      .from('raw_transaction_imports')
+      .insert(rows.map((row: any) => ({
+        raw_data: row,
+        is_valid: true
+      })))
 
-    // Parse CSV content
-    const text = await fileData.text();
-    const lines = text.split('\n');
-    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-    
-    // Process each line
-    const processedRows = [];
-    let errorRows = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      
-      const values = lines[i].split(',').map(v => v.trim());
-      const row = headers.reduce((obj: any, header, index) => {
-        obj[header] = values[index];
-        return obj;
-      }, {});
-
-      try {
-        // Validate required fields
-        if (!row.date || !row.amount || isNaN(parseFloat(row.amount))) {
-          throw new Error('Invalid date or amount format');
-        }
-
-        processedRows.push({
-          transaction_date: row.date,
-          amount: parseFloat(row.amount),
-          description: row.description,
-          status: 'pending'
-        });
-      } catch (error) {
-        errorRows.push({
-          row_number: i,
-          error: error.message,
-          data: row
-        });
-      }
+    if (rawDataError) {
+      console.error('Error saving raw data:', rawDataError)
+      throw rawDataError
     }
 
-    // Update import log with results
-    const { error: updateError } = await supabase
-      .from('transaction_imports')
-      .update({
-        status: errorRows.length > 0 ? 'completed_with_errors' : 'completed',
-        records_processed: processedRows.length,
-        errors: errorRows.length > 0 ? errorRows : null
-      })
-      .eq('file_name', fileName);
+    // Process and save transactions
+    const transactions = rows.map((row: any) => ({
+      type: 'income',
+      amount: row.amount,
+      description: row.description,
+      transaction_date: row.payment_date,
+      status: 'completed',
+      reference_type: 'import',
+      metadata: {
+        agreement_number: row.agreement_number,
+        customer_name: row.customer_name,
+        license_plate: row.license_plate,
+        vehicle: row.vehicle,
+        payment_method: row.payment_method,
+        payment_number: row.payment_number
+      }
+    }))
 
-    if (updateError) throw updateError;
+    const { error: transactionError } = await supabaseClient
+      .from('accounting_transactions')
+      .insert(transactions)
 
-    // Insert processed rows
-    if (processedRows.length > 0) {
-      const { error: insertError } = await supabase
-        .from('transaction_import_items')
-        .insert(processedRows);
-
-      if (insertError) throw insertError;
+    if (transactionError) {
+      console.error('Error saving transactions:', transactionError)
+      throw transactionError
     }
 
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: true,
-        processed: processedRows.length,
-        errors: errorRows.length
+        message: `Successfully processed ${rows.length} transactions`,
+        data: rows 
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
+    )
 
   } catch (error) {
-    console.error('Error processing import:', error);
+    console.error('Error processing transactions:', error)
     return new Response(
-      JSON.stringify({
-        error: 'Failed to process import',
-        details: error.message
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400
       }
-    );
+    )
   }
-});
+})

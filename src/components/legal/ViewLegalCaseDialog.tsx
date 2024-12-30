@@ -1,150 +1,126 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LegalCase, LegalCaseStatus } from "@/types/legal";
+import { toast } from "sonner";
+import type { LegalCase, LegalCaseStatus } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
-  caseId: string | null;
+  legalCaseId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ViewLegalCaseDialog({
-  caseId,
-  open,
-  onOpenChange,
-}: ViewLegalCaseDialogProps) {
-  const queryClient = useQueryClient();
+export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLegalCaseDialogProps) => {
+  const [legalCase, setLegalCase] = useState<LegalCase | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<LegalCaseStatus>("pending_reminder");
 
-  const { data: legalCase } = useQuery({
-    queryKey: ["legal-case", caseId],
-    queryFn: async () => {
-      if (!caseId) return null;
+  useEffect(() => {
+    const fetchLegalCase = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from("legal_cases")
+          .select(`
+            *,
+            customer:profiles!legal_cases_customer_id_fkey (
+              full_name
+            ),
+            assigned_to_user:profiles!legal_cases_assigned_to_fkey (
+              full_name
+            )
+          `)
+          .eq("id", legalCaseId)
+          .single();
 
-      const { data, error } = await supabase
-        .from("legal_cases")
-        .select(`
-          *,
-          customer:profiles!legal_cases_customer_id_fkey(full_name),
-          assigned_to_user:profiles!legal_cases_assigned_to_fkey(full_name)
-        `)
-        .eq("id", caseId)
-        .single();
+        if (error) throw error;
 
-      if (error) throw error;
-      return data as LegalCase;
-    },
-    enabled: !!caseId,
-  });
+        const legalCaseData = data as LegalCase;
+        setLegalCase(legalCaseData);
+        setStatus(legalCaseData.status);
+      } catch (error) {
+        console.error("Error fetching legal case:", error);
+        setError("Failed to load legal case.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const updateStatus = async (newStatus: LegalCaseStatus) => {
+    if (open && legalCaseId) {
+      fetchLegalCase();
+    }
+  }, [legalCaseId, open]);
+
+  const handleStatusChange = async (newStatus: LegalCaseStatus) => {
     try {
       const { error } = await supabase
         .from("legal_cases")
         .update({ status: newStatus })
-        .eq("id", caseId);
+        .eq("id", legalCaseId);
 
       if (error) throw error;
 
-      toast.success("Case status updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["legal-cases"] });
-      queryClient.invalidateQueries({ queryKey: ["legal-case", caseId] });
+      setStatus(newStatus);
+      toast.success("Legal case status updated successfully.");
     } catch (error) {
-      console.error("Error updating case status:", error);
-      toast.error("Failed to update case status");
+      console.error("Error updating legal case status:", error);
+      toast.error("Failed to update legal case status.");
     }
   };
 
-  if (!legalCase) return null;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Legal Case Details</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium text-sm">Customer</h4>
-              <p>{legalCase.customer.full_name}</p>
+        {legalCase && (
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <h3 className="font-semibold">Case Type: {legalCase.case_type}</h3>
+              <p>Status: {status}</p>
+              <p>Amount Owed: ${legalCase.amount_owed.toFixed(2)}</p>
+              <p>Description: {legalCase.description}</p>
             </div>
-            <div>
-              <h4 className="font-medium text-sm">Case Type</h4>
-              <p>{legalCase.case_type}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm">Amount Owed</h4>
-              <p>${legalCase.amount_owed.toFixed(2)}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm">Created Date</h4>
-              <p>{format(new Date(legalCase.created_at), 'MMM d, yyyy')}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm">Status</h4>
-              <Badge variant={
-                legalCase.status === 'resolved' ? 'default' :
-                legalCase.status === 'in_legal_process' ? 'destructive' :
-                'secondary'
-              }>
-                {legalCase.status.replace('_', ' ')}
-              </Badge>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm">Assigned To</h4>
-              <p>{legalCase.assigned_to_user?.full_name || 'Unassigned'}</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-sm mb-2">Description</h4>
-            <p className="text-sm">{legalCase.description}</p>
-          </div>
-
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-sm mb-2">Update Status</h4>
-            <div className="flex gap-4">
-              <Select
-                onValueChange={updateStatus}
-                defaultValue={legalCase.status}
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange("in_legal_process")}
+                disabled={status === "in_legal_process"}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending_reminder">Pending Reminder</SelectItem>
-                  <SelectItem value="in_legal_process">In Legal Process</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+                Set to In Legal Process
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange("resolved")}
+                disabled={status === "resolved"}
               >
-                Close
+                Set to Resolved
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange("escalated")}
+                disabled={status === "escalated"}
+              >
+                Set to Escalated
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleStatusChange("pending_reminder")}
+                disabled={status === "pending_reminder"}
+              >
+                Set to Pending Reminder
               </Button>
             </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
-}
+};
