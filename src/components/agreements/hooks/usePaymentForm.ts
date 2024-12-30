@@ -6,6 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface RemainingAmount {
   rent_amount: number;
+  final_price: number;
+  remaining_amount: number;
 }
 
 export const usePaymentForm = (agreementId: string) => {
@@ -24,7 +26,9 @@ export const usePaymentForm = (agreementId: string) => {
         .select(`
           *,
           remainingAmount:remaining_amounts!remaining_amounts_lease_id_fkey (
-            rent_amount
+            rent_amount,
+            final_price,
+            remaining_amount
           )
         `)
         .eq('id', agreementId)
