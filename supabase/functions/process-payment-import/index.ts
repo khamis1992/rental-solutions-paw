@@ -1,152 +1,107 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-}
-
-interface PaymentRow {
-  amount: number;
-  payment_date: string;
-  payment_method: string;
-  status: string;
-  description?: string;
-  transaction_id?: string;
-  lease_id: string;
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204,
+    })
   }
 
   try {
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-          detectSessionInUrl: false
-        }
-      }
-    )
+    console.log('Starting payment import processing...')
+    const formData = await req.formData()
+    const file = formData.get('file')
+    const fileName = formData.get('fileName')
 
-    // Get request body
-    const { fileName } = await req.json()
+    if (!file || !fileName) {
+      throw new Error('Missing required fields')
+    }
+
     console.log('Processing file:', fileName)
 
-    if (!fileName) {
-      throw new Error('No file name provided')
-    }
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // Download file from storage
-    const { data: fileData, error: downloadError } = await supabaseClient
-      .storage
-      .from('imports')
-      .download(fileName)
+    // Process the file content
+    const fileContent = await file.text()
+    console.log('File content received, processing...')
 
-    if (downloadError) {
-      console.error('Download error:', downloadError)
-      throw downloadError
-    }
-
-    const text = await fileData.text()
-    const lines = text.split('\n')
+    // Parse CSV content
+    const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line.length > 0)
     const headers = lines[0].toLowerCase().split(',').map(h => h.trim())
+    const rows = lines.slice(1)
 
-    // Validate required headers
-    const requiredHeaders = ['amount', 'payment_date', 'payment_method', 'status', 'lease_id']
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
-
-    if (missingHeaders.length > 0) {
-      return new Response(
-        JSON.stringify({
-          error: 'Missing required headers',
-          details: `Missing headers: ${missingHeaders.join(', ')}. The lease_id column is required.`
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      )
+    // Validate required fields
+    const requiredFields = ['amount', 'payment_date', 'payment_method', 'lease_id']
+    const missingFields = requiredFields.filter(field => !headers.includes(field))
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
     }
-
-    const errors = []
-    const processedRows = []
 
     // Process each row
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue
+    let successCount = 0
+    let errorCount = 0
+    const errors = []
+    const batchSize = 50
+    const payments = []
 
-      const values = lines[i].split(',').map(v => v.trim())
-      const row = headers.reduce((obj: any, header, index) => {
-        obj[header] = values[index]
-        return obj
-      }, {}) as PaymentRow
-
+    for (let i = 0; i < rows.length; i++) {
       try {
-        // Validate lease_id
-        if (!row.lease_id) {
-          throw new Error(`Missing lease_id in row ${i}`)
+        const values = rows[i].split(',').map(v => v.trim())
+        const payment = {
+          lease_id: values[headers.indexOf('lease_id')],
+          amount: parseFloat(values[headers.indexOf('amount')]),
+          payment_date: values[headers.indexOf('payment_date')],
+          payment_method: values[headers.indexOf('payment_method')],
+          status: 'completed',
+          transaction_id: values[headers.indexOf('transaction_id')] || null,
         }
 
-        // Verify lease exists
-        const { data: leaseExists, error: leaseError } = await supabaseClient
-          .from('leases')
-          .select('id')
-          .eq('id', row.lease_id)
-          .single()
-
-        if (leaseError || !leaseExists) {
-          throw new Error(`Invalid lease_id in row ${i}: ${row.lease_id}`)
+        // Validate payment data
+        if (!payment.lease_id || isNaN(payment.amount) || !payment.payment_date) {
+          throw new Error('Invalid payment data')
         }
 
-        // Validate and parse date
-        const paymentDate = new Date(row.payment_date)
-        if (isNaN(paymentDate.getTime())) {
-          throw new Error(`Invalid date format in row ${i}`)
+        payments.push(payment)
+
+        // Process in batches
+        if (payments.length === batchSize || i === rows.length - 1) {
+          const { error: insertError } = await supabaseClient
+            .from('payments')
+            .insert(payments)
+
+          if (insertError) {
+            errorCount += payments.length
+            errors.push({
+              rows: `${i - payments.length + 1} to ${i}`,
+              error: insertError.message
+            })
+          } else {
+            successCount += payments.length
+          }
+
+          payments.length = 0 // Clear the batch
         }
 
-        // Validate amount
-        const amount = parseFloat(row.amount.toString())
-        if (isNaN(amount)) {
-          throw new Error(`Invalid amount in row ${i}`)
-        }
-
-        processedRows.push({
-          amount,
-          payment_date: paymentDate.toISOString(),
-          payment_method: row.payment_method,
-          status: row.status,
-          description: row.description || null,
-          transaction_id: row.transaction_id || null,
-          lease_id: row.lease_id
-        })
       } catch (error) {
-        console.error(`Error processing row ${i}:`, error)
+        errorCount++
         errors.push({
-          row: i,
-          error: error.message,
-          data: row
+          row: i + 1,
+          error: error.message
         })
-      }
-    }
-
-    // Insert valid rows
-    if (processedRows.length > 0) {
-      const { error: insertError } = await supabaseClient
-        .from('payments')
-        .insert(processedRows)
-
-      if (insertError) {
-        console.error('Insert error:', insertError)
-        throw insertError
       }
     }
 
@@ -154,34 +109,45 @@ serve(async (req) => {
     await supabaseClient
       .from('import_logs')
       .update({
-        status: errors.length === 0 ? 'completed' : 'completed_with_errors',
-        records_processed: processedRows.length,
+        status: 'completed',
+        records_processed: successCount + errorCount,
         errors: errors.length > 0 ? errors : null
       })
       .eq('file_name', fileName)
 
+    const result = {
+      success: true,
+      message: `Successfully processed ${successCount} payments with ${errorCount} errors`,
+      processed: successCount,
+      errors: errorCount,
+      errorDetails: errors
+    }
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        processed: processedRows.length,
-        errors
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      JSON.stringify(result),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 200,
+      },
     )
 
   } catch (error) {
-    console.error('Error processing import:', error)
+    console.error('Error processing payment import:', error)
+    
     return new Response(
       JSON.stringify({
-        error: error.message
+        error: error.message || 'An error occurred during processing',
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 400,
+      },
     )
   }
 })

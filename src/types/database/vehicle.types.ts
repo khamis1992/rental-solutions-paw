@@ -1,4 +1,4 @@
-import { Database } from "./database.types";
+import { Database } from "@/integrations/supabase/types";
 
 export type VehicleStatus = Database['public']['Enums']['vehicle_status'];
 
@@ -44,20 +44,6 @@ export interface VehicleInsurance {
   start_date: string;
   end_date: string;
   status: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
-export interface VehiclePart {
-  id: string;
-  vehicle_id: string | null;
-  maintenance_id: string | null;
-  part_name: string;
-  part_number: string | null;
-  quantity: number;
-  unit_cost: number | null;
-  status: string | null;
-  supplier: string | null;
   created_at: string | null;
   updated_at: string | null;
 }

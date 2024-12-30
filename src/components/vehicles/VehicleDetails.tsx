@@ -14,21 +14,36 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
 
-const VehicleDetails = () => {
+export const VehicleDetails = () => {
   const { id } = useParams();
 
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", id],
     queryFn: async () => {
+      console.log("Fetching vehicle with ID:", id); // Debug log
+      
+      if (!id) throw new Error("Vehicle ID is required");
+
       const { data, error } = await supabase
         .from("vehicles")
-        .select("*")
-        .eq("id", id)
-        .single();
+        .select()
+        .eq('id', id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error); // Debug log
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Vehicle not found");
+      }
+      
+      console.log("Vehicle data:", data); // Debug log
       return data;
     },
+    enabled: !!id, // Only run query if id exists
+    retry: 3, // Retry failed requests 3 times
   });
 
   const handlePrint = () => {
@@ -134,5 +149,3 @@ const VehicleDetails = () => {
     </div>
   );
 };
-
-export default VehicleDetails;

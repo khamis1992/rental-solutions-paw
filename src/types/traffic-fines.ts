@@ -17,10 +17,6 @@ export interface TrafficFine {
   lease?: {
     id: string;
     customer_id: string;
-    customer: {
-      id: string;
-      full_name: string;
-    };
     vehicle: {
       make: string;
       model: string;

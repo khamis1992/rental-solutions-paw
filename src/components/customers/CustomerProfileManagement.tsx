@@ -53,14 +53,16 @@ export const CustomerProfileManagement = () => {
 
   if (error) {
     return (
-      <div className="p-4 text-red-500">
-        Error loading customer profiles. Please try again.
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="p-4 text-red-500">
+          Error loading customer profiles. Please try again.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Customer Profiles</h2>
         <Button onClick={() => setShowCreateDialog(true)}>
@@ -68,7 +70,7 @@ export const CustomerProfileManagement = () => {
         </Button>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -95,7 +97,7 @@ export const CustomerProfileManagement = () => {
             ) : (
               profiles?.map((profile) => (
                 <TableRow key={profile.id}>
-                  <TableCell>{profile.full_name}</TableCell>
+                  <TableCell className="font-medium">{profile.full_name}</TableCell>
                   <TableCell>{profile.phone_number}</TableCell>
                   <TableCell>
                     <Badge variant={profile.status === 'active' ? 'success' : 'secondary'}>
