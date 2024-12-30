@@ -1,123 +1,99 @@
-import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import type { LegalCase, LegalCaseStatus } from "@/types/legal";
+import { CaseWorkflowManager } from "./workflow/CaseWorkflowManager";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2 } from "lucide-react";
 
 interface ViewLegalCaseDialogProps {
-  legalCaseId: string | null;
+  caseId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const ViewLegalCaseDialog = ({ legalCaseId, open, onOpenChange }: ViewLegalCaseDialogProps) => {
-  const [legalCase, setLegalCase] = useState<LegalCase | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<LegalCaseStatus>("pending_reminder");
+export const ViewLegalCaseDialog = ({
+  caseId,
+  open,
+  onOpenChange,
+}: ViewLegalCaseDialogProps) => {
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchLegalCase = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data, error } = await supabase
-          .from("legal_cases")
-          .select(`
-            *,
-            customer:profiles!legal_cases_customer_id_fkey (
-              full_name
-            ),
-            assigned_to_user:profiles!legal_cases_assigned_to_fkey (
-              full_name
-            )
-          `)
-          .eq("id", legalCaseId)
-          .single();
-
-        if (error) throw error;
-
-        const legalCaseData = data as LegalCase;
-        setLegalCase(legalCaseData);
-        setStatus(legalCaseData.status);
-      } catch (error) {
-        console.error("Error fetching legal case:", error);
-        setError("Failed to load legal case.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (open && legalCaseId) {
-      fetchLegalCase();
-    }
-  }, [legalCaseId, open]);
-
-  const handleStatusChange = async (newStatus: LegalCaseStatus) => {
-    try {
-      const { error } = await supabase
+  const { data: caseDetails, isLoading } = useQuery({
+    queryKey: ["legal-case", caseId],
+    queryFn: async () => {
+      if (!caseId) return null;
+      
+      const { data, error } = await supabase
         .from("legal_cases")
-        .update({ status: newStatus })
-        .eq("id", legalCaseId);
+        .select(`
+          *,
+          customer:profiles (
+            full_name,
+            phone_number,
+            email
+          )
+        `)
+        .eq("id", caseId)
+        .single();
 
       if (error) throw error;
+      return data;
+    },
+    enabled: !!caseId && open,
+  });
 
-      setStatus(newStatus);
-      toast.success("Legal case status updated successfully.");
-    } catch (error) {
-      console.error("Error updating legal case status:", error);
-      toast.error("Failed to update legal case status.");
-    }
+  const handleStatusChange = () => {
+    queryClient.invalidateQueries({ queryKey: ["legal-case", caseId] });
+    queryClient.invalidateQueries({ queryKey: ["legal-cases"] });
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Legal Case Details</DialogTitle>
+          <DialogTitle>Case Details</DialogTitle>
         </DialogHeader>
-        {legalCase && (
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <h3 className="font-semibold">Case Type: {legalCase.case_type}</h3>
-              <p>Status: {status}</p>
-              <p>Amount Owed: ${legalCase.amount_owed.toFixed(2)}</p>
-              <p>Description: {legalCase.description}</p>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : caseDetails ? (
+          <ScrollArea className="flex-1">
+            <div className="space-y-6 p-6">
+              <div className="grid gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold">Customer Information</h3>
+                  <div className="mt-2 space-y-2">
+                    <p>Name: {caseDetails.customer?.full_name}</p>
+                    <p>Phone: {caseDetails.customer?.phone_number}</p>
+                    <p>Email: {caseDetails.customer?.email}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold">Case Information</h3>
+                  <div className="mt-2 space-y-2">
+                    <p>Case Type: {caseDetails.case_type}</p>
+                    <p>Amount Owed: ${caseDetails.amount_owed}</p>
+                    <p>Priority: {caseDetails.priority}</p>
+                    <p>Description: {caseDetails.description}</p>
+                  </div>
+                </div>
+
+                <CaseWorkflowManager
+                  caseId={caseDetails.id}
+                  currentStatus={caseDetails.status}
+                  onStatusChange={handleStatusChange}
+                />
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => handleStatusChange("in_legal_process")}
-                disabled={status === "in_legal_process"}
-              >
-                Set to In Legal Process
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => handleStatusChange("resolved")}
-                disabled={status === "resolved"}
-              >
-                Set to Resolved
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => handleStatusChange("escalated")}
-                disabled={status === "escalated"}
-              >
-                Set to Escalated
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => handleStatusChange("pending_reminder")}
-                disabled={status === "pending_reminder"}
-              >
-                Set to Pending Reminder
-              </Button>
-            </div>
+          </ScrollArea>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            Case not found
           </div>
         )}
       </DialogContent>
