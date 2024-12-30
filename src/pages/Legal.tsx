@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { NonCompliantCustomers } from "@/components/legal/NonCompliantCustomers";
 import { LegalCasesList } from "@/components/legal/LegalCasesList";
 import { LegalAnalyticsDashboard } from "@/components/legal/analytics/LegalAnalyticsDashboard";
+import { LegalReportsDashboard } from "@/components/legal/reports/LegalReportsDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Legal() {
@@ -16,6 +17,7 @@ export default function Legal() {
           <TabsList>
             <TabsTrigger value="cases">Legal Cases</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="non-compliant">Non-Compliant Customers</TabsTrigger>
           </TabsList>
 
@@ -25,6 +27,10 @@ export default function Legal() {
 
           <TabsContent value="analytics">
             <LegalAnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <LegalReportsDashboard />
           </TabsContent>
 
           <TabsContent value="non-compliant">
