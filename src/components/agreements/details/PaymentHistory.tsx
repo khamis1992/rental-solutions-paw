@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { Payment } from "@/types/database/payment.types";
 
 interface PaymentHistoryProps {
   agreementId: string;
@@ -25,7 +26,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
       if (error) throw error;
       console.log("Fetched payments:", data);
-      return data;
+      return data as Payment[];
     },
   });
 
@@ -82,7 +83,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     : format(new Date(payment.created_at), 'dd/MM/yyyy')}
                 </TableCell>
                 <TableCell>{payment.amount} QAR</TableCell>
-                <TableCell>{payment.description || '-'}</TableCell>
+                <TableCell>-</TableCell>
                 <TableCell className="capitalize">
                   {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
                 </TableCell>
