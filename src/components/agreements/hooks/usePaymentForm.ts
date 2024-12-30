@@ -3,10 +3,11 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { PaymentMethodType } from "@/types/database/payment.types";
 
 interface PaymentFormData {
   amount: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethodType;
   description?: string;
   isRecurring?: boolean;
   intervalValue?: number;
@@ -30,7 +31,7 @@ export const usePaymentForm = (agreementId: string) => {
         description: data.description,
         payment_date: new Date().toISOString(),
         status: 'pending' as const,
-        type: 'Income', // Set default type as Income
+        type: 'Income',
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? 
           `${data.intervalValue} ${data.intervalUnit}` : null,
