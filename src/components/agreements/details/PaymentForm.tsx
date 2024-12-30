@@ -20,29 +20,43 @@ interface PaymentFormProps {
   agreementId: string;
 }
 
+interface PaymentFormData {
+  amount: number;
+  paymentMethod: PaymentMethodType;
+  description?: string;
+  isRecurring?: boolean;
+  intervalValue?: number;
+  intervalUnit?: 'days' | 'weeks' | 'months';
+}
+
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<PaymentFormData>();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PaymentFormData) => {
     setIsSubmitting(true);
     try {
+      console.log('Submitting payment:', { agreementId, ...data });
+      
       const paymentData = {
         lease_id: agreementId,
         amount: data.amount,
-        payment_method: data.paymentMethod as PaymentMethodType,
+        payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
+        status: 'pending' as PaymentStatus,
         is_recurring: isRecurring,
-        recurring_interval: isRecurring ? `${data.intervalValue} ${data.intervalUnit}` : null,
+        recurring_interval: isRecurring ? 
+          `${data.intervalValue} ${data.intervalUnit}` : null,
         next_payment_date: isRecurring ? 
-          new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue, data.intervalUnit)).toISOString() : 
-          null,
-        status: 'pending' as PaymentStatus
+          new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue!, data.intervalUnit!)).toISOString() : 
+          null
       };
 
-      const { error } = await supabase.from("payments").insert(paymentData);
+      const { error } = await supabase
+        .from("payments")
+        .insert(paymentData);
 
       if (error) throw error;
 
@@ -51,7 +65,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       setIsRecurring(false);
     } catch (error) {
       console.error("Error adding payment:", error);
-      toast.error("Failed to add payment");
+      toast.error("Failed to add payment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -74,14 +88,20 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           id="amount"
           type="number"
           step="0.01"
-          {...register("amount", { required: true })}
-          aria-required="true"
+          {...register("amount", { 
+            required: "Amount is required",
+            min: { value: 0.01, message: "Amount must be greater than 0" }
+          })}
+          aria-invalid={errors.amount ? "true" : "false"}
         />
+        {errors.amount && (
+          <p className="text-sm text-red-500 mt-1">{errors.amount.message}</p>
+        )}
       </div>
       
       <div>
         <Label htmlFor="paymentMethod">Payment Method</Label>
-        <Select {...register("paymentMethod", { required: true })}>
+        <Select {...register("paymentMethod", { required: "Payment method is required" })}>
           <SelectTrigger>
             <SelectValue placeholder="Select payment method" />
           </SelectTrigger>
@@ -94,6 +114,9 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             <SelectItem value="Cheque">Cheque</SelectItem>
           </SelectContent>
         </Select>
+        {errors.paymentMethod && (
+          <p className="text-sm text-red-500 mt-1">{errors.paymentMethod.message}</p>
+        )}
       </div>
 
       <div className="flex items-center space-x-2">
@@ -114,9 +137,15 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
               id="intervalValue"
               type="number"
               min="1"
-              {...register("intervalValue", { required: isRecurring })}
-              aria-label="Interval value"
+              {...register("intervalValue", { 
+                required: isRecurring ? "Interval value is required" : false,
+                min: { value: 1, message: "Interval must be at least 1" }
+              })}
+              aria-invalid={errors.intervalValue ? "true" : "false"}
             />
+            {errors.intervalValue && (
+              <p className="text-sm text-red-500 mt-1">{errors.intervalValue.message}</p>
+            )}
           </div>
           <div className="flex-1">
             <Label htmlFor="intervalUnit">Unit</Label>
@@ -130,6 +159,9 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
                 <SelectItem value="months">Months</SelectItem>
               </SelectContent>
             </Select>
+            {errors.intervalUnit && (
+              <p className="text-sm text-red-500 mt-1">{errors.intervalUnit.message}</p>
+            )}
           </div>
         </div>
       )}
@@ -140,14 +172,13 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           id="description"
           placeholder="Add payment notes or description..."
           {...register("description")}
-          aria-label="Payment description"
         />
       </div>
 
       <Button 
         type="submit" 
         disabled={isSubmitting}
-        aria-label={isSubmitting ? "Adding payment..." : "Add payment"}
+        className="w-full"
       >
         {isSubmitting ? "Adding Payment..." : "Add Payment"}
       </Button>
