@@ -1,13 +1,13 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CaseDetails } from "./case-details/CaseDetails";
 import { CaseWorkflowManager } from "./workflow/CaseWorkflowManager";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
-import { LegalCaseStatus } from "@/types/legal";
+import { CommunicationsList } from "./communications/CommunicationsList";
 
 interface ViewLegalCaseDialogProps {
-  caseId: string | null;
+  caseId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -17,21 +17,18 @@ export const ViewLegalCaseDialog = ({
   open,
   onOpenChange,
 }: ViewLegalCaseDialogProps) => {
-  const queryClient = useQueryClient();
-
-  const { data: caseDetails, isLoading } = useQuery({
+  const { data: legalCase, isLoading } = useQuery({
     queryKey: ["legal-case", caseId],
     queryFn: async () => {
-      if (!caseId) return null;
-      
       const { data, error } = await supabase
         .from("legal_cases")
         .select(`
           *,
-          customer:profiles!customer_id (
+          customer:profiles!legal_cases_customer_id_fkey (
             full_name,
             phone_number,
-            email
+            email,
+            address
           )
         `)
         .eq("id", caseId)
@@ -40,63 +37,37 @@ export const ViewLegalCaseDialog = ({
       if (error) throw error;
       return data;
     },
-    enabled: !!caseId && open,
   });
 
-  const handleStatusChange = () => {
-    queryClient.invalidateQueries({ queryKey: ["legal-case", caseId] });
-    queryClient.invalidateQueries({ queryKey: ["legal-cases"] });
-  };
-
-  if (!open) return null;
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Case Details</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="details">Case Details</TabsTrigger>
+            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+            <TabsTrigger value="communications">Communications</TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : caseDetails ? (
-          <ScrollArea className="flex-1">
-            <div className="space-y-6 p-6">
-              <div className="grid gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold">Customer Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <p>Name: {caseDetails.customer?.full_name}</p>
-                    <p>Phone: {caseDetails.customer?.phone_number}</p>
-                    <p>Email: {caseDetails.customer?.email}</p>
-                  </div>
-                </div>
+          <TabsContent value="details">
+            <CaseDetails legalCase={legalCase} />
+          </TabsContent>
 
-                <div>
-                  <h3 className="text-lg font-semibold">Case Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <p>Case Type: {caseDetails.case_type}</p>
-                    <p>Amount Owed: ${caseDetails.amount_owed}</p>
-                    <p>Priority: {caseDetails.priority}</p>
-                    <p>Description: {caseDetails.description}</p>
-                  </div>
-                </div>
+          <TabsContent value="workflow">
+            <CaseWorkflowManager
+              caseId={caseId}
+              currentStatus={legalCase?.status}
+            />
+          </TabsContent>
 
-                <CaseWorkflowManager
-                  caseId={caseDetails.id}
-                  currentStatus={caseDetails.status as LegalCaseStatus}
-                  onStatusChange={handleStatusChange}
-                />
-              </div>
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            Case not found
-          </div>
-        )}
+          <TabsContent value="communications">
+            <CommunicationsList caseId={caseId} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
