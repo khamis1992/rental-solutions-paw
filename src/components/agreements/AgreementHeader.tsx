@@ -53,7 +53,7 @@ export const AgreementHeader = ({ agreement, remainingAmount }: AgreementHeaderP
           <div>
             <Label>Rent Amount</Label>
             <p className="text-lg font-medium">
-              {formatCurrency(remainingAmount?.rent_amount || agreement.rent_amount || 0)}
+              {formatCurrency(remainingAmount?.rent_amount || 0)}
             </p>
           </div>
           <div>
