@@ -35,7 +35,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
   };
 
   // Calculate total paid amount from payments
-  const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+  const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)] w-full">
@@ -124,7 +124,8 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
                   <tr className="border-b">
                     <th className="text-left py-2 print:py-1">Date</th>
                     <th className="text-left py-2 print:py-1">Description</th>
-                    <th className="text-right py-2 print:py-1">Amount</th>
+                    <th className="text-right py-2 print:py-1">Total Amount</th>
+                    <th className="text-right py-2 print:py-1">Amount Paid</th>
                     <th className="text-right py-2 print:py-1">Method</th>
                   </tr>
                 </thead>
@@ -138,6 +139,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
                       </td>
                       <td className="py-2 print:py-1">{payment.description || '-'}</td>
                       <td className="text-right py-2 print:py-1">{formatCurrency(payment.amount)}</td>
+                      <td className="text-right py-2 print:py-1">{formatCurrency(payment.amount_paid)}</td>
                       <td className="text-right py-2 print:py-1 capitalize">
                         {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
                       </td>
@@ -148,10 +150,14 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </div>
           )}
 
-          {/* Totals Section - Only showing paid amount */}
+          {/* Totals Section - Only showing total paid amount */}
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
-              <span>Total Paid:</span>
+              <span>Total Amount:</span>
+              <span>{formatCurrency(data.amount)}</span>
+            </div>
+            <div className="flex justify-between w-48 print:w-40">
+              <span>Amount Paid:</span>
               <span>{formatCurrency(totalPaidAmount)}</span>
             </div>
           </div>
