@@ -2436,6 +2436,8 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          amount_paid: number | null
+          balance: number | null
           created_at: string
           days_overdue: number | null
           description: string | null
@@ -2458,6 +2460,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_paid?: number | null
+          balance?: number | null
           created_at?: string
           days_overdue?: number | null
           description?: string | null
@@ -2480,6 +2484,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_paid?: number | null
+          balance?: number | null
           created_at?: string
           days_overdue?: number | null
           description?: string | null
