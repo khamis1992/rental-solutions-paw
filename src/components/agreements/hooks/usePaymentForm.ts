@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { PaymentMethodType } from "@/types/database/payment.types";
-import { addMonths, startOfMonth, differenceInDays } from "date-fns";
+import { addMonths, startOfMonth, differenceInDays, format } from "date-fns";
 
 interface PaymentFormData {
   amount: number;
@@ -29,6 +29,12 @@ export const usePaymentForm = (agreementId: string) => {
   const calculateNextPaymentDate = () => {
     const nextMonth = addMonths(new Date(), 1);
     return startOfMonth(nextMonth).toISOString();
+  };
+
+  const generateTransactionId = () => {
+    const timestamp = format(new Date(), 'yyyyMMddHHmmss');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `TXN-${timestamp}-${random}`;
   };
 
   const calculateLateFine = useCallback(async () => {
@@ -69,20 +75,23 @@ export const usePaymentForm = (agreementId: string) => {
   const onSubmit = async (data: PaymentFormData) => {
     setIsSubmitting(true);
     try {
+      const transactionId = generateTransactionId();
+      
       const paymentData = {
         lease_id: agreementId,
         amount: totalAmount,
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
-        status: 'completed' as const, // Set status to completed by default
+        status: 'completed' as const,
         type: 'Income',
         is_recurring: isRecurring,
         recurring_interval: isRecurring ? 
           `${data.intervalValue} ${data.intervalUnit}` : null,
         next_payment_date: calculateNextPaymentDate(),
         late_fine_amount: lateFineAmount,
-        days_overdue: daysOverdue
+        days_overdue: daysOverdue,
+        transaction_id: transactionId
       };
 
       const { error } = await supabase
