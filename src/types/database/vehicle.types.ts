@@ -17,8 +17,6 @@ export interface Vehicle {
   created_at: string;
   updated_at: string;
   is_test_data?: boolean;
-  location: string | null;
-  insurance_company: string | null;
 }
 
 export interface VehicleDocument {

@@ -1,98 +1,46 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
-import { FileUploadSection } from "./components/FileUploadSection";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImportedTransaction, RawTransactionImport } from "./types/transaction.types";
+import { parseCSV } from "./utils/csvUtils";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const queryClient = useQueryClient();
+  const [previewData, setPreviewData] = useState<any[]>([]);
   const { toast } = useToast();
-
-  // Query to fetch existing imported transactions
-  const { data: importedData = [], isLoading } = useQuery<ImportedTransaction[]>({
-    queryKey: ['imported-transactions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('raw_transaction_imports')
-        .select('*')
-        .order('created_at', { ascending: false }) as { data: RawTransactionImport[] | null, error: any };
-
-      if (error) throw error;
-      return (data || []).map(item => item.raw_data);
-    }
-  });
+  const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    try {
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        const csvContent = e.target?.result as string;
-        const rows: ImportedTransaction[] = csvContent.split('\n')
-          .map(row => {
-            const values = row.split(',').map(value => value.trim());
-            return {
-              agreement_number: values[0] || '',
-              customer_name: values[1] || '',
-              amount: parseFloat(values[2]) || 0,
-              license_plate: values[3] || '',
-              vehicle: values[4] || '',
-              payment_date: values[5] || '',
-              payment_method: values[6] || '',
-              payment_number: values[7] || '',
-              description: values[8] || ''
-            };
-          })
-          .filter((row, index) => index > 0); // Skip header row
-
-        // Save to Supabase
-        const { error: functionError } = await supabase.functions
-          .invoke('process-transaction-import', {
-            body: { rows }
-          });
-
-        if (functionError) {
-          console.error('Import error:', functionError);
-          toast({
-            title: "Error",
-            description: "Failed to import transactions. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        toast({
-          title: "Success",
-          description: `Successfully imported ${rows.length} transactions`,
-        });
-
-        // Refresh the data
-        queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
-      };
-
-      reader.onerror = () => {
-        toast({
-          title: "Error",
-          description: "Failed to read file",
-          variant: "destructive",
-        });
-      };
-
-      reader.readAsText(file);
-    } catch (error: any) {
-      console.error('Import error:', error);
+    if (file.type !== "text/csv") {
       toast({
         title: "Error",
-        description: error.message || "Failed to import transactions",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const text = await file.text();
+      const parsedData = parseCSV(text);
+      setPreviewData(parsedData);
+      
+      toast({
+        title: "Success",
+        description: "CSV file parsed successfully. Please review the transactions.",
+      });
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+      toast({
+        title: "Error",
+        description: "Failed to parse CSV file. Please check the format.",
         variant: "destructive",
       });
     } finally {
@@ -100,57 +48,128 @@ export const TransactionImport = () => {
     }
   };
 
-  const handleDeleteAll = async () => {
+  const handleImport = async () => {
+    if (previewData.length === 0) return;
+
+    setIsUploading(true);
     try {
-      const { error } = await supabase
-        .from('raw_transaction_imports')
-        .delete()
-        .neq('id', ''); // Delete all records
+      const { data: importLog, error: createError } = await supabase
+        .from('transaction_imports')
+        .insert([{
+          file_name: 'manual_import.csv',
+          status: 'processing'
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (createError) throw createError;
 
+      const importItems = previewData.map((item, index) => ({
+        import_id: importLog.id,
+        transaction_date: item.date,
+        amount: parseFloat(item.amount),
+        description: item.description,
+        customer_id: item.customer_id,
+        category_id: item.category_id,
+        row_number: index + 1
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('transaction_import_items')
+        .insert(importItems);
+
+      if (itemsError) throw itemsError;
+
+      await queryClient.invalidateQueries({ queryKey: ['accounting-transactions'] });
+      
       toast({
         title: "Success",
-        description: "All imported transactions have been deleted",
+        description: `Successfully imported ${previewData.length} transactions`,
       });
-
-      // Refresh the data
-      queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
-    } catch (error: any) {
-      console.error('Delete error:', error);
+      
+      setPreviewData([]);
+    } catch (error) {
+      console.error('Import error:', error);
       toast({
         title: "Error",
-        description: "Failed to delete transactions",
+        description: "Failed to import transactions",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const downloadTemplate = () => {
+    const csvContent = "Date,Amount,Description,Category\n2024-03-20,1000.00,Monthly Revenue,Income";
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'transaction_import_template.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <FileUploadSection 
-          onFileUpload={handleFileUpload}
-          isUploading={isUploading}
-        />
-        {importedData.length > 0 && (
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold tracking-tight">Import Transactions</h2>
+          <p className="text-sm text-muted-foreground">
+            Upload a CSV file to import multiple transactions at once
+          </p>
+        </div>
+        <Button onClick={downloadTemplate} variant="outline">
+          Download Template
+        </Button>
+      </div>
+
+      <div className="grid gap-4">
+        <div className="flex items-center gap-4">
           <Button
-            variant="destructive"
-            onClick={handleDeleteAll}
-            className="ml-4"
+            variant="outline"
+            className="w-[200px]"
+            disabled={isUploading}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete All
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Upload className="h-4 w-4" />
+              Upload CSV
+            </label>
           </Button>
+
+          {previewData.length > 0 && (
+            <Button 
+              onClick={handleImport}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                'Import Transactions'
+              )}
+            </Button>
+          )}
+        </div>
+
+        {previewData.length > 0 && (
+          <TransactionPreviewTable 
+            data={previewData} 
+            onDataChange={setPreviewData}
+          />
         )}
       </div>
-      
-      {!isLoading && importedData.length > 0 && (
-        <TransactionPreviewTable 
-          data={importedData}
-          onDataChange={() => {}}
-        />
-      )}
     </div>
   );
 };

@@ -1,9 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Define a simpler, explicit type for table names based on actual tables
+// Define a simpler, explicit type for table names
 type TableNames = 
   | 'ai_payment_analysis'
+  | 'csv_import_mappings'
   | 'document_analysis_logs'
   | 'expense_categories'
   | 'expense_transactions'
@@ -13,6 +14,8 @@ type TableNames =
   | 'installment_analytics'
   | 'payment_reconciliation'
   | 'rent_payments'
+  | 'traffic_fine_audit_logs'
+  | 'traffic_fine_imports'
   | 'traffic_fines'
   | 'variable_costs';
 
@@ -29,6 +32,7 @@ export const testRlsPolicies = async (): Promise<TestResult[]> => {
   // Test tables with RLS
   const tablesToTest: TableNames[] = [
     'ai_payment_analysis',
+    'csv_import_mappings',
     'document_analysis_logs',
     'expense_categories',
     'expense_transactions',
@@ -38,6 +42,8 @@ export const testRlsPolicies = async (): Promise<TestResult[]> => {
     'installment_analytics',
     'payment_reconciliation',
     'rent_payments',
+    'traffic_fine_audit_logs',
+    'traffic_fine_imports',
     'traffic_fines',
     'variable_costs'
   ];
@@ -75,7 +81,6 @@ export const testRlsPolicies = async (): Promise<TestResult[]> => {
     try {
       // Create a minimal test record
       const testRecord = {
-        id: crypto.randomUUID(), // Add id field
         name: 'Test Record',
         amount: 100,
         created_at: new Date().toISOString()

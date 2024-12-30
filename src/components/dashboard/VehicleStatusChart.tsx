@@ -96,21 +96,17 @@ export const VehicleStatusChart = () => {
           />
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-          <div className="w-full md:w-2/3 flex justify-center">
-            <DonutChart
-              data={filteredData || []}
-              config={config}
-              primaryValue={totalVehicles}
-              primaryLabel="Total Vehicles"
-            />
-          </div>
-          <div className="w-full md:w-1/3">
-            <ChartLegend
-              data={vehicleCounts || []}
-              onStatusSelect={setSelectedStatus}
-            />
-          </div>
+        <div className="flex gap-8">
+          <DonutChart
+            data={filteredData || []}
+            config={config}
+            primaryValue={totalVehicles}
+            primaryLabel="Total Vehicles"
+          />
+          <ChartLegend
+            data={vehicleCounts || []}
+            onStatusSelect={setSelectedStatus}
+          />
         </div>
       </CardContent>
     </Card>

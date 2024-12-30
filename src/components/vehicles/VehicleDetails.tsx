@@ -1,4 +1,3 @@
-import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,21 +8,23 @@ import { DamageHistory } from "./profile/DamageHistory";
 import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
 import { VehicleInsurance } from "./profile/VehicleInsurance";
-import { VehicleParts } from "./profile/VehicleParts";
+import { VehicleParts } from "./profile/VehicleParts"; // Added this import
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
 
-const VehicleDetails = () => {
-  const { id } = useParams();
+interface VehicleDetailsProps {
+  vehicleId: string;
+}
 
+const VehicleDetails = ({ vehicleId }: VehicleDetailsProps) => {
   const { data: vehicle, isLoading } = useQuery({
-    queryKey: ["vehicle", id],
+    queryKey: ["vehicle", vehicleId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
         .select("*")
-        .eq("id", id)
+        .eq("id", vehicleId)
         .single();
 
       if (error) throw error;
@@ -93,27 +94,27 @@ const VehicleDetails = () => {
         </TabsContent>
 
         <TabsContent value="insurance" className="mt-6">
-          <VehicleInsurance vehicleId={id!} />
+          <VehicleInsurance vehicleId={vehicleId} />
         </TabsContent>
 
         <TabsContent value="maintenance" className="mt-6 print:hidden">
-          <MaintenanceHistory vehicleId={id!} />
+          <MaintenanceHistory vehicleId={vehicleId} />
         </TabsContent>
 
         <TabsContent value="damages" className="mt-6 print:hidden">
-          <DamageHistory vehicleId={id!} />
+          <DamageHistory vehicleId={vehicleId} />
         </TabsContent>
 
         <TabsContent value="agreements" className="mt-6 print:hidden">
-          <AssociatedAgreements vehicleId={id!} />
+          <AssociatedAgreements vehicleId={vehicleId} />
         </TabsContent>
 
         <TabsContent value="documents" className="mt-6 print:hidden">
-          <VehicleDocuments vehicleId={id!} />
+          <VehicleDocuments vehicleId={vehicleId} />
         </TabsContent>
 
         <TabsContent value="parts" className="mt-6 print:hidden">
-          <VehicleParts vehicleId={id!} />
+          <VehicleParts vehicleId={vehicleId} />
         </TabsContent>
       </Tabs>
 

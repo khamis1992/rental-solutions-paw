@@ -65,8 +65,8 @@ export const RentManagement = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64" role="status" aria-label="Loading rent management data">
-        <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -74,38 +74,32 @@ export const RentManagement = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle tabIndex={0}>Rent Management</CardTitle>
+        <CardTitle>Rent Management</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-3 mb-6">
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold" tabIndex={0} aria-label={`Total Rent Collected: ${formatCurrency(totalRentCollected)}`}>
-                {formatCurrency(totalRentCollected)}
-              </div>
+              <div className="text-2xl font-bold">{formatCurrency(totalRentCollected)}</div>
               <p className="text-muted-foreground">Total Rent Collected</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold" tabIndex={0} aria-label={`Pending Rent: ${formatCurrency(totalPendingRent)}`}>
-                {formatCurrency(totalPendingRent)}
-              </div>
+              <div className="text-2xl font-bold">{formatCurrency(totalPendingRent)}</div>
               <p className="text-muted-foreground">Pending Rent</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold" tabIndex={0} aria-label={`Total Late Fees: ${formatCurrency(totalFines)}`}>
-                {formatCurrency(totalFines)}
-              </div>
+              <div className="text-2xl font-bold">{formatCurrency(totalFines)}</div>
               <p className="text-muted-foreground">Total Late Fees</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="rounded-md border">
-          <Table aria-label="Rent payments table">
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Agreement</TableHead>

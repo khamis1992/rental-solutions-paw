@@ -24,10 +24,10 @@ export const DeleteTransactionsDialog = ({
 }: DeleteTransactionsDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent role="alertdialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle id="dialog-title">Delete All Transactions</DialogTitle>
-          <DialogDescription id="dialog-description">
+          <DialogTitle>Delete All Transactions</DialogTitle>
+          <DialogDescription>
             Are you sure you want to delete all transactions? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
@@ -36,7 +36,6 @@ export const DeleteTransactionsDialog = ({
             variant="outline"
             onClick={onClose}
             disabled={isDeleting}
-            aria-label="Cancel deletion"
           >
             Cancel
           </Button>
@@ -44,12 +43,11 @@ export const DeleteTransactionsDialog = ({
             variant="destructive"
             onClick={onConfirm}
             disabled={isDeleting}
-            aria-label={isDeleting ? "Deleting transactions..." : "Confirm delete all transactions"}
           >
             {isDeleting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                <span>Deleting...</span>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
               </>
             ) : (
               'Delete All'

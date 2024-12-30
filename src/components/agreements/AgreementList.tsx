@@ -13,7 +13,6 @@ import type { Agreement } from "./hooks/useAgreements";
 import { AgreementDetailsDialog } from "./AgreementDetailsDialog";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { AgreementFilters } from "./AgreementFilters";
-import { DeleteAgreementDialog } from "./DeleteAgreementDialog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -27,10 +26,8 @@ export const AgreementList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
 
-  const { data: agreements = [], isLoading, error, refetch } = useAgreements();
+  const { data: agreements = [], isLoading, error } = useAgreements();
 
   const handleViewContract = async (agreementId: string) => {
     try {
@@ -175,10 +172,6 @@ export const AgreementList = () => {
     return <div className="text-center py-4">No agreements found. Try importing some agreements first.</div>;
   }
 
-  const handleAgreementDeleted = () => {
-    refetch();
-  };
-
   return (
     <div className="space-y-4">
       <AgreementFilters
@@ -199,11 +192,6 @@ export const AgreementList = () => {
                 onPrintContract={handlePrintContract}
                 onAgreementClick={setSelectedAgreementId}
                 onNameClick={setSelectedDetailsId}
-                onDeleted={handleAgreementDeleted}
-                onDeleteClick={() => {
-                  setAgreementToDelete(agreement.id);
-                  setShowDeleteDialog(true);
-                }}
               />
             ))}
           </TableBody>
@@ -240,13 +228,6 @@ export const AgreementList = () => {
         agreementId={selectedDetailsId || ""}
         open={!!selectedDetailsId}
         onOpenChange={(open) => !open && setSelectedDetailsId(null)}
-      />
-
-      <DeleteAgreementDialog
-        agreementId={agreementToDelete || ""}
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onDeleted={handleAgreementDeleted}
       />
     </div>
   );

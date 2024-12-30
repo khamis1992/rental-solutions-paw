@@ -6,6 +6,7 @@ import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
+// Improved lazy loading with better error handling
 const lazyLoadComponent = (importFn: () => Promise<any>, componentName: string) => {
   return lazy(() => 
     importFn().catch(error => {
@@ -40,6 +41,21 @@ const RecentActivity = lazyLoadComponent(
 const SystemChatbot = lazyLoadComponent(
   () => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })),
   "SystemChatbot"
+);
+
+// Improved loading component with better visual feedback
+const ComponentLoader = ({ componentName }: { componentName: string }) => (
+  <div className="w-full h-[200px] space-y-4 p-4">
+    <div className="h-4 w-1/4">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="h-[160px]">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="text-sm text-muted-foreground text-center">
+      Loading {componentName}...
+    </div>
+  </div>
 );
 
 const Index = () => {
@@ -97,20 +113,5 @@ const Index = () => {
     </DashboardLayout>
   );
 };
-
-// Improved loading component with better visual feedback
-const ComponentLoader = ({ componentName }: { componentName: string }) => (
-  <div className="w-full h-[200px] space-y-4 p-4">
-    <div className="h-4 w-1/4">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="h-[160px]">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="text-sm text-muted-foreground text-center">
-      Loading {componentName}...
-    </div>
-  </div>
-);
 
 export default Index;

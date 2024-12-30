@@ -29,27 +29,22 @@ export function RecentTransactions() {
         .order("transaction_date", { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error("Error fetching transactions:", error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64" role="status" aria-label="Loading transactions">
-        <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <Table aria-label="Recent transactions">
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
@@ -69,7 +64,6 @@ export function RecentTransactions() {
               <TableCell>
                 <Badge
                   variant={transaction.type === "income" ? "default" : "destructive"}
-                  aria-label={`Transaction type: ${transaction.type}`}
                 >
                   {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </Badge>
@@ -83,16 +77,12 @@ export function RecentTransactions() {
                       ? "text-green-600"
                       : "text-red-600"
                   }
-                  aria-label={`Amount: ${formatCurrency(transaction.amount)}`}
                 >
                   {formatCurrency(transaction.amount)}
                 </span>
               </TableCell>
               <TableCell>
-                <Badge 
-                  variant="secondary"
-                  aria-label={`Status: ${transaction.status}`}
-                >
+                <Badge variant="secondary">
                   {transaction.status.charAt(0).toUpperCase() +
                     transaction.status.slice(1)}
                 </Badge>

@@ -8,11 +8,13 @@ export const TrafficFineTableHeader = () => {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead>License Plate</TableHead>
-        <TableHead>Violation Number</TableHead>
+        <TableHead>Serial</TableHead>
+        <TableHead>Violation No.</TableHead>
         <TableHead>Violation Date</TableHead>
-        <TableHead>Violation Charge</TableHead>
-        <TableHead>Fine Amount</TableHead>
+        <TableHead>Plate Number</TableHead>
+        <TableHead>Location</TableHead>
+        <TableHead>Charge</TableHead>
+        <TableHead>Fine</TableHead>
         <TableHead>Points</TableHead>
         <TableHead>Status</TableHead>
         <TableHead>Customer</TableHead>

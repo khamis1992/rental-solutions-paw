@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { VehicleTableContent } from "./table/VehicleTableContent";
 import { VehicleTablePagination } from "./table/VehicleTablePagination";
-import { Vehicle } from "@/types/vehicle"; // Import the correct Vehicle type
 
 type VehicleStatus = "maintenance" | "available" | "rented" | "retired" | "police_station" | "accident" | "reserve" | "stolen";
 
@@ -21,6 +20,17 @@ const STATUS_COLORS = {
   reserve: "#8B5CF6",
   rented: "#22C55E"
 } as const;
+
+interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  status: VehicleStatus;
+  vin: string;
+  mileage: number;
+  license_plate: string;
+}
 
 interface VehicleListProps {
   vehicles: Vehicle[];
@@ -88,35 +98,6 @@ export const VehicleList = ({ vehicles, isLoading, onVehicleClick }: VehicleList
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  useEffect(() => {
-    // Subscribe to real-time location updates
-    const channel = supabase
-      .channel('vehicle-locations')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'vehicles',
-          filter: 'location=neq.null'
-        },
-        (payload: any) => {
-          const updatedVehicle = payload.new;
-          if (updatedVehicle.location) {
-            toast({
-              title: "Location Updated",
-              description: `${updatedVehicle.make} ${updatedVehicle.model} location updated to ${updatedVehicle.location}`,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [toast]);
 
   if (isLoading) {
     return (

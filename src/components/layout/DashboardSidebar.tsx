@@ -1,9 +1,4 @@
-import { 
-  Home, Car, Users, FileText, Settings, 
-  HelpCircle, Wrench, FilePen, BarChart3, 
-  Gavel, Wallet, FileText as AuditIcon,
-  AlertTriangle, DollarSign
-} from "lucide-react";
+import { Home, Car, Users, FileText, Settings, HelpCircle, Wrench, FilePen, BarChart3, Gavel, Wallet, FileText as AuditIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +9,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -26,8 +21,6 @@ const baseMenuItems = [
   { icon: Wrench, label: "Maintenance", href: "/maintenance" },
   { icon: Users, label: "Customers", href: "/customers" },
   { icon: FilePen, label: "Agreements", href: "/agreements" },
-  { icon: AlertTriangle, label: "Traffic Fines", href: "/traffic-fines" },
-  { icon: DollarSign, label: "Remaining Amount", href: "/remaining-amount" },
   { icon: Wallet, label: "Finance", href: "/finance" },
   { icon: AuditIcon, label: "Audit", href: "/audit" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
@@ -39,7 +32,7 @@ const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" 
 
 export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
-  const location = useLocation();
+  const navigate = useNavigate();
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -49,6 +42,7 @@ export const DashboardSidebar = () => {
       if (isLoading) return;
 
       if (!session) {
+        navigate('/auth');
         return;
       }
 
@@ -85,8 +79,23 @@ export const DashboardSidebar = () => {
       }
     };
 
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+      } else if (event === 'SIGNED_IN') {
+        checkSession();
+      }
+    });
+
+    // Initial check
     checkSession();
-  }, [session, isLoading, toast]);
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [session, isLoading, navigate, toast]);
 
   if (isLoading) {
     return (
@@ -112,17 +121,14 @@ export const DashboardSidebar = () => {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={location.pathname === item.href}
-                  >
-                    <Link
-                      to={item.href}
-                      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent"
+                  <SidebarMenuButton asChild>
+                    <a
+                      href={item.href}
+                      className="flex items-center gap-2"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
-                    </Link>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

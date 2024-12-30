@@ -1,131 +1,145 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { calculateMonthlyPayment } from "../utils/paymentCalculations";
+import { Agreement, AgreementType } from "@/types/database/agreement.types";
 
 export interface AgreementFormData {
+  agreementType: AgreementType;
   agreementNumber: string;
-  agreementType: "lease_to_own" | "short_term";
+  customerId: string;
+  vehicleId: string;
   nationality: string;
   drivingLicense: string;
   phoneNumber: string;
   email: string;
   address: string;
-  vehicleId: string;
-  customerId: string;
+  startDate: string;
+  endDate: string;
   agreementDuration: number;
   rentAmount: number;
-  downPayment?: number;
+  totalAmount: number;
   initialMileage: number;
-  notes?: string;
-  interestRate?: number;
+  downPayment?: number;
   monthlyPayment?: number;
+  interestRate?: number;
+  leaseDuration?: string;
+  notes?: string;
+  lateFeeRate?: number;
+  lateFeeGracePeriod?: number;
+  damagePenaltyRate?: number;
+  fuelPenaltyRate?: number;
+  lateReturnFee?: number;
 }
 
-export const useAgreementForm = (onSuccess?: () => void) => {
+export const useAgreementForm = (onSuccess: () => void) => {
   const [open, setOpen] = useState(false);
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<AgreementFormData>();
-  const [agreementType, setAgreementType] = useState<"lease_to_own" | "short_term">("lease_to_own");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<AgreementFormData>();
+  
+  const agreementType = watch("agreementType");
+  const totalAmount = watch("totalAmount");
+  const downPayment = watch("downPayment");
+  const interestRate = watch("interestRate");
+  const leaseDuration = watch("leaseDuration");
 
-  const calculateAndUpdateMonthlyPayment = () => {
-    const totalAmount = watch('rentAmount') || 0;
-    const downPayment = watch('downPayment') || 0;
-    const interestRate = watch('interestRate') || 0;
-    const leaseDuration = watch('agreementDuration') || 12;
-
-    const monthlyPayment = calculateMonthlyPayment(
-      totalAmount,
-      downPayment,
-      interestRate,
-      leaseDuration
-    );
-
-    setValue('monthlyPayment', monthlyPayment);
+  const updateMonthlyPayment = () => {
+    if (agreementType === "lease_to_own" && totalAmount && leaseDuration) {
+      const monthlyPayment = calculateMonthlyPayment(
+        totalAmount,
+        downPayment || 0,
+        interestRate || 0,
+        Number(leaseDuration)
+      );
+      setValue("monthlyPayment", monthlyPayment);
+    }
   };
 
   const onSubmit = async (data: AgreementFormData) => {
+    console.log("Submitting agreement data:", data);
+    
     try {
-      console.log('Submitting agreement form with data:', data);
-      setIsSubmitting(true);
-      
-      const { data: agreement, error: agreementError } = await supabase
-        .from('leases')
+      // First, update customer profile with any new information
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          nationality: data.nationality,
+          phone_number: data.phoneNumber,
+          email: data.email,
+          address: data.address,
+          driver_license: data.drivingLicense
+        })
+        .eq("id", data.customerId);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        throw profileError;
+      }
+
+      // Convert empty strings to null or 0 for numeric fields
+      const numericFields = {
+        total_amount: data.totalAmount || 0,
+        initial_mileage: data.initialMileage || 0,
+        down_payment: data.downPayment || null,
+        monthly_payment: data.monthlyPayment || null,
+        interest_rate: data.interestRate || null,
+        late_fee_rate: data.lateFeeRate || 0,
+        damage_penalty_rate: data.damagePenaltyRate || 0,
+        fuel_penalty_rate: data.fuelPenaltyRate || 0,
+        late_return_fee: data.lateReturnFee || 0,
+        rent_amount: data.rentAmount || 0,
+      };
+
+      // Create the lease record
+      const { error: leaseError } = await supabase
+        .from("leases")
         .insert({
+          agreement_type: data.agreementType,
           customer_id: data.customerId,
           vehicle_id: data.vehicleId,
-          agreement_type: data.agreementType,
-          initial_mileage: data.initialMileage,
-          total_amount: data.rentAmount,
-          rent_amount: data.rentAmount,
-          status: 'pending_payment',
-          down_payment: data.downPayment,
-          notes: data.notes
-        })
-        .select()
-        .single();
-
-      if (agreementError) throw agreementError;
-
-      console.log('Created agreement:', agreement);
-
-      const { data: vehicle, error: vehicleError } = await supabase
-        .from('vehicles')
-        .select('license_plate')
-        .eq('id', data.vehicleId)
-        .single();
-
-      if (vehicleError) throw vehicleError;
-
-      console.log('Retrieved vehicle:', vehicle);
-
-      const { error: remainingAmountError } = await supabase
-        .from('remaining_amounts')
-        .insert({
-          agreement_number: agreement.agreement_number,
-          license_plate: vehicle.license_plate,
-          rent_amount: data.rentAmount,
-          final_price: data.rentAmount,
-          amount_paid: 0,
-          remaining_amount: data.rentAmount,
-          agreement_duration: `${data.agreementDuration} months`,
-          lease_id: agreement.id
+          start_date: data.startDate,
+          end_date: data.endDate,
+          ...numericFields,
+          lease_duration: data.leaseDuration ? `${data.leaseDuration} months` : null,
+          late_fee_grace_period: data.lateFeeGracePeriod ? `${data.lateFeeGracePeriod} days` : null,
+          notes: data.notes || null,
         });
 
-      if (remainingAmountError) {
-        console.error('Error creating remaining amount:', remainingAmountError);
-        throw remainingAmountError;
+      if (leaseError) {
+        console.error("Error creating lease:", leaseError);
+        throw leaseError;
       }
 
-      if (onSuccess) {
-        onSuccess();
+      // Update vehicle status to 'rented'
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "rented" })
+        .eq("id", data.vehicleId);
+
+      if (vehicleError) {
+        console.error("Error updating vehicle status:", vehicleError);
+        throw vehicleError;
       }
-      
-      toast.success('Agreement created successfully');
-      setOpen(false);
-    } catch (error) {
-      console.error('Error in form submission:', error);
-      toast.error('Failed to create agreement');
-      throw error;
-    } finally {
-      setIsSubmitting(false);
+
+      reset();
+      onSuccess();
+    } catch (error: any) {
+      console.error("Error in agreement creation:", error);
+      throw new Error(error.message || "Failed to create agreement");
     }
   };
 
   return {
+    open,
+    setOpen,
     register,
     handleSubmit,
     onSubmit,
     agreementType,
-    setAgreementType,
+    updateMonthlyPayment,
     watch,
     setValue,
     errors,
-    isSubmitting,
-    setIsSubmitting,
-    calculateAndUpdateMonthlyPayment,
-    open,
-    setOpen
   };
 };

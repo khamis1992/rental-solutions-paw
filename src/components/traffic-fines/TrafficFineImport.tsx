@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 
 export const TrafficFineImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -13,9 +13,9 @@ export const TrafficFineImport = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "text/csv") {
+    if (!file.name.endsWith('.csv')) {
       toast({
-        title: "Invalid File Type",
+        title: "Invalid File",
         description: "Please upload a CSV file",
         variant: "destructive",
       });
@@ -25,14 +25,17 @@ export const TrafficFineImport = () => {
     setIsUploading(true);
     try {
       const fileName = `traffic-fines/${Date.now()}_${file.name}`;
+      
+      // Upload file to storage
       const { error: uploadError } = await supabase.storage
-        .from("imports")
+        .from('imports')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
+      // Process the file
       const { data: processingData, error: processingError } = await supabase.functions
-        .invoke("process-traffic-fine-import", {
+        .invoke('process-traffic-fine-import', {
           body: { fileName }
         });
 
@@ -40,11 +43,11 @@ export const TrafficFineImport = () => {
 
       toast({
         title: "Success",
-        description: "Traffic fines imported successfully",
+        description: `Successfully imported ${processingData.processed} fines`,
       });
 
     } catch (error: any) {
-      console.error("Import error:", error);
+      console.error('Import error:', error);
       toast({
         title: "Import Failed",
         description: error.message || "Failed to import traffic fines",
@@ -52,21 +55,25 @@ export const TrafficFineImport = () => {
       });
     } finally {
       setIsUploading(false);
-      event.target.value = "";
+      // Reset the file input
+      event.target.value = '';
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Import Traffic Fines</CardTitle>
-        <CardDescription>
-          Upload a CSV file containing traffic fine records
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button asChild disabled={isUploading}>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h3 className="text-lg font-medium">Import Traffic Fines</h3>
+        <p className="text-sm text-muted-foreground">
+          Upload a CSV file containing traffic fine records.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <Button disabled={isUploading} asChild>
           <label className="cursor-pointer">
+            <Upload className="mr-2 h-4 w-4" />
+            {isUploading ? "Importing..." : "Import CSV"}
             <input
               type="file"
               accept=".csv"
@@ -74,11 +81,16 @@ export const TrafficFineImport = () => {
               onChange={handleFileUpload}
               disabled={isUploading}
             />
-            <Upload className="mr-2 h-4 w-4" />
-            {isUploading ? "Importing..." : "Import CSV"}
           </label>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+
+      {isUploading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Processing file...
+        </div>
+      )}
+    </div>
   );
-}
+};
