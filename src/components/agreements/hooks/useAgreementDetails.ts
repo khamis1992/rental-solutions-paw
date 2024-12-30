@@ -12,35 +12,31 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
     queryFn: async () => {
       console.log('Fetching agreement details for:', agreementId);
       
-      const [
-        { data: agreement, error: agreementError }
-      ] = await Promise.all([
-        supabase
-          .from('leases')
-          .select(`
-            *,
-            customer:profiles (
-              id,
-              full_name,
-              phone_number,
-              address
-            ),
-            vehicle:vehicles (
-              id,
-              make,
-              model,
-              year,
-              license_plate
-            ),
-            remainingAmount:remaining_amounts!lease_id (
-              rent_amount,
-              final_price,
-              remaining_amount
-            )
-          `)
-          .eq('id', agreementId)
-          .single()
-      ]);
+      const { data: agreement, error: agreementError } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          customer:profiles (
+            id,
+            full_name,
+            phone_number,
+            address
+          ),
+          vehicle:vehicles (
+            id,
+            make,
+            model,
+            year,
+            license_plate
+          ),
+          remainingAmount:remaining_amounts!inner (
+            rent_amount,
+            final_price,
+            remaining_amount
+          )
+        `)
+        .eq('id', agreementId)
+        .single();
 
       if (agreementError) {
         console.error('Error fetching agreement:', agreementError);
@@ -51,7 +47,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
       
       return {
         ...agreement,
-        remainingAmount: agreement.remainingAmount?.[0] || {
+        remainingAmount: agreement?.remainingAmount?.[0] || {
           rent_amount: 0,
           final_price: 0,
           remaining_amount: 0
