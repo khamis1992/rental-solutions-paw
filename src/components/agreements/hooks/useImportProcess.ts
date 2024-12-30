@@ -61,7 +61,7 @@ export const useImportProcess = () => {
             headers,
             rows,
             importId: rawImport.id,
-            forceImport: true // Add force import flag
+            forceImport: true
           }
         });
 
@@ -81,7 +81,10 @@ export const useImportProcess = () => {
         console.log('Invalid rows detected:', analysis.invalidRows);
       }
 
-      setAnalysisResult(analysis);
+      setAnalysisResult({
+        ...analysis,
+        rows: rows // Include the original rows in the analysis result
+      });
       return true;
     } catch (error: any) {
       console.error("Import error:", error);
@@ -108,7 +111,7 @@ export const useImportProcess = () => {
         .invoke('process-payment-import', {
           body: { 
             analysisResult,
-            forceImport: true // Add force import flag
+            forceImport: true
           }
         });
 

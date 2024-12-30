@@ -15,8 +15,8 @@ serve(async (req) => {
     const { analysisResult, forceImport = false } = await req.json();
     
     // When force import is true, we'll process all rows that have the minimum required data
-    const rowsToProcess = forceImport ? 
-      (analysisResult.rows || []).filter((row: any) => row.amount && row.payment_date) :
+    const rowsToProcess = forceImport && analysisResult.rows ? 
+      analysisResult.rows.filter((row: any) => row.amount && row.payment_date) :
       (analysisResult.validRows || []);
 
     if (!Array.isArray(rowsToProcess)) {
@@ -35,7 +35,8 @@ serve(async (req) => {
 
     console.log('Processing import with rows:', {
       totalRows: rowsToProcess.length,
-      forceImport
+      forceImport,
+      sampleRow: rowsToProcess[0]
     });
 
     const supabaseClient = createClient(
