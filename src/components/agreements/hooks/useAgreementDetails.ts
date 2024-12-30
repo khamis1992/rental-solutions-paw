@@ -13,8 +13,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
       console.log('Fetching agreement details for:', agreementId);
       
       const [
-        { data: agreement, error: agreementError }, 
-        { data: remainingAmount, error: remainingError }
+        { data: agreement, error: agreementError }
       ] = await Promise.all([
         supabase
           .from('leases')
@@ -32,36 +31,30 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
               model,
               year,
               license_plate
+            ),
+            remainingAmount:remaining_amounts!lease_id (
+              rent_amount,
+              final_price,
+              remaining_amount
             )
           `)
           .eq('id', agreementId)
-          .single(),
-        supabase
-          .from('remaining_amounts')
-          .select('*')
-          .eq('lease_id', agreementId)
-          .maybeSingle()
+          .single()
       ]);
 
       if (agreementError) {
         console.error('Error fetching agreement:', agreementError);
         throw agreementError;
       }
-      
-      if (remainingError) {
-        console.error('Error fetching remaining amount:', remainingError);
-      }
 
       console.log('Fetched agreement:', agreement);
-      console.log('Fetched remaining amount:', remainingAmount);
       
       return {
         ...agreement,
-        remainingAmount: remainingAmount || {
-          rent_amount: agreement.rent_amount || 0,
-          final_price: agreement.total_amount || 0,
-          remaining_amount: (agreement.total_amount || 0) - 0, // Initial remaining amount is total amount
-          amount_paid: 0
+        remainingAmount: agreement.remainingAmount?.[0] || {
+          rent_amount: 0,
+          final_price: 0,
+          remaining_amount: 0
         }
       };
     },
