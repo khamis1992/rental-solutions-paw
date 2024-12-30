@@ -38,6 +38,10 @@ export const useImportProcess = () => {
 
       console.log('Processed rows:', { total: rows.length, headers });
 
+      if (rows.length === 0) {
+        throw new Error('No valid rows found in the file');
+      }
+
       // Store raw data directly
       const { data: rawImport, error: rawError } = await supabase
         .from('raw_payment_imports')
@@ -55,7 +59,7 @@ export const useImportProcess = () => {
         throw rawError;
       }
 
-      // Process the data with validation
+      // Process the data
       const { data, error: processError } = await supabase.functions
         .invoke('process-payment-import', {
           body: { 

@@ -19,7 +19,16 @@ serve(async (req) => {
     // Validate input
     if (!Array.isArray(rows)) {
       console.error('Invalid rows format:', rows);
-      throw new Error('Rows must be an array');
+      return new Response(
+        JSON.stringify({
+          error: "Rows must be an array",
+          success: false
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
     const supabaseClient = createClient(
@@ -39,6 +48,10 @@ serve(async (req) => {
         // Process each row in the batch
         const processedBatch = batch.map(row => {
           try {
+            if (!row || typeof row !== 'object') {
+              throw new Error('Invalid row format');
+            }
+
             // Basic data validation and cleaning
             const amount = parseFloat(row.amount);
             if (isNaN(amount)) {
@@ -55,6 +68,7 @@ serve(async (req) => {
             };
           } catch (rowError) {
             // Log error but continue processing other rows
+            console.error('Row processing error:', rowError, row);
             errors.push({
               row: i + batch.indexOf(row),
               error: rowError.message,
@@ -93,17 +107,19 @@ serve(async (req) => {
     }
 
     // Log import results
-    const { error: logError } = await supabaseClient
-      .from('import_logs')
-      .update({
-        status: errors.length > 0 ? 'completed_with_errors' : 'completed',
-        records_processed: processedCount,
-        errors: errors.length > 0 ? errors : null
-      })
-      .eq('id', importId);
+    if (importId) {
+      const { error: logError } = await supabaseClient
+        .from('import_logs')
+        .update({
+          status: errors.length > 0 ? 'completed_with_errors' : 'completed',
+          records_processed: processedCount,
+          errors: errors.length > 0 ? errors : null
+        })
+        .eq('id', importId);
 
-    if (logError) {
-      console.error('Error updating import log:', logError);
+      if (logError) {
+        console.error('Error updating import log:', logError);
+      }
     }
 
     return new Response(
