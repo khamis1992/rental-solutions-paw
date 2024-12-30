@@ -83,7 +83,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     : format(new Date(payment.created_at), 'dd/MM/yyyy')}
                 </TableCell>
                 <TableCell>{payment.amount} QAR</TableCell>
-                <TableCell>-</TableCell>
+                <TableCell>{payment.description || '-'}</TableCell>
                 <TableCell className="capitalize">
                   {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
                 </TableCell>

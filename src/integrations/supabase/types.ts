@@ -2431,6 +2431,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          description: string | null
           id: string
           is_recurring: boolean | null
           lease_id: string | null
@@ -2448,6 +2449,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          description?: string | null
           id?: string
           is_recurring?: boolean | null
           lease_id?: string | null
@@ -2465,6 +2467,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          description?: string | null
           id?: string
           is_recurring?: boolean | null
           lease_id?: string | null
