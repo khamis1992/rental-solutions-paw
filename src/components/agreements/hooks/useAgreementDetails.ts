@@ -29,18 +29,23 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
             year,
             license_plate
           ),
-          remainingAmount:remaining_amounts!inner (
+          remainingAmount:remaining_amounts (
             rent_amount,
             final_price,
             remaining_amount
           )
         `)
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (agreementError) {
         console.error('Error fetching agreement:', agreementError);
         throw agreementError;
+      }
+
+      if (!agreement) {
+        console.error('Agreement not found');
+        return null;
       }
 
       console.log('Fetched agreement:', agreement);
