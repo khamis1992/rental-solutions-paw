@@ -54,8 +54,8 @@ export const usePaymentForm = (agreementId: string) => {
 
   // Set base amount when agreement data is loaded
   useEffect(() => {
-    if (agreement?.remainingAmount) {
-      const rentAmount = (agreement.remainingAmount as RemainingAmount).rent_amount;
+    if (agreement?.remainingAmount?.[0]) {
+      const rentAmount = agreement.remainingAmount[0].rent_amount;
       setBaseAmount(rentAmount);
       setValue("amount", rentAmount);
       setTotalAmount(rentAmount);
@@ -138,7 +138,7 @@ export const usePaymentForm = (agreementId: string) => {
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       await queryClient.invalidateQueries({ queryKey: ['agreement-details'] });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding payment:", error);
       toast.error("Failed to add payment");
     }
