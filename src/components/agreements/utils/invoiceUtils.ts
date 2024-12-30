@@ -21,6 +21,7 @@ export type InvoiceData = {
   total: number;
   dueDate?: string;
   payments?: Payment[];
+  agreementId: string; // Added this field
 };
 
 export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData | null> => {
@@ -102,6 +103,7 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     dueDate: lease.agreement_type === "lease_to_own" 
       ? format(new Date(lease.start_date), "PP") 
       : undefined,
-    payments: payments || []
+    payments: payments || [],
+    agreementId: lease.id // Added this field
   };
 };
