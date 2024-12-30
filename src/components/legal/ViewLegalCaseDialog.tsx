@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CaseWorkflowManager } from "./workflow/CaseWorkflowManager";
 import { CommunicationsList } from "./communications/CommunicationsList";
@@ -22,6 +22,8 @@ export const ViewLegalCaseDialog = ({
   onOpenChange,
 }: ViewLegalCaseDialogProps) => {
   const [showSettlementDialog, setShowSettlementDialog] = useState(false);
+  const queryClient = useQueryClient();
+  
   const { data: legalCase, isLoading } = useQuery({
     queryKey: ["legal-case", caseId],
     queryFn: async () => {
@@ -45,7 +47,6 @@ export const ViewLegalCaseDialog = ({
   });
 
   const handleStatusChange = () => {
-    // Refetch case data when status changes
     queryClient.invalidateQueries({ queryKey: ["legal-case", caseId] });
   };
 

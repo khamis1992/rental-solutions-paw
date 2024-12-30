@@ -73,7 +73,7 @@ export const SettlementsList = ({ caseId }: SettlementsListProps) => {
               {settlement.terms}
             </p>
           </div>
-          {settlement.payment_plan && (
+          {settlement.payment_plan && typeof settlement.payment_plan === 'object' && (
             <div className="text-sm">
               <p className="font-medium">Payment Plan:</p>
               <p className="text-muted-foreground whitespace-pre-wrap">
