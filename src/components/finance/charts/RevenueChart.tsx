@@ -7,44 +7,36 @@ interface RevenueChartProps {
     date: string;
     revenue: number;
   }>;
-  title?: string;
+  onExport: () => void;
 }
 
-export const RevenueChart = ({ data, title = "Revenue Over Time" }: RevenueChartProps) => {
+export const RevenueChart = ({ data, onExport }: RevenueChartProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="date" 
-                className="text-xs"
-                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-              />
-              <YAxis
-                className="text-xs"
-                tickFormatter={(value) => formatCurrency(value)}
-              />
-              <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                labelFormatter={(label) => new Date(label).toLocaleDateString()}
-              />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#4ade80"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis 
+            dataKey="date" 
+            className="text-xs"
+          />
+          <YAxis
+            className="text-xs"
+            tickFormatter={(value) => formatCurrency(value)}
+          />
+          <Tooltip
+            formatter={(value: number) => formatCurrency(value)}
+            labelFormatter={(label) => label}
+          />
+          <Line
+            type="monotone"
+            dataKey="revenue"
+            stroke="#4ade80"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };

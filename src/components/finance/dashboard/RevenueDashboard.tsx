@@ -6,6 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RevenueChart } from "../charts/RevenueChart";
 import { Loader2 } from "lucide-react";
 
+interface MonthlyRevenue {
+  month: string;
+  shortTerm: number;
+  leaseToOwn: number;
+  total: number;
+}
+
+interface Payment {
+  created_at: string;
+  amount_paid: number;
+  lease?: {
+    agreement_type: 'short_term' | 'lease_to_own';
+  };
+}
+
 export const RevenueDashboard = () => {
   const queryClient = useQueryClient();
 
@@ -27,8 +42,8 @@ export const RevenueDashboard = () => {
         .order('created_at');
 
       if (error) throw error;
-      return data;
-    },
+      return data as Payment[];
+    }
   });
 
   useEffect(() => {
@@ -80,7 +95,7 @@ export const RevenueDashboard = () => {
   }
 
   // Process data for visualizations
-  const monthlyRevenue = financialData?.reduce((acc: any, payment) => {
+  const monthlyRevenue = financialData?.reduce<Record<string, MonthlyRevenue>>((acc, payment) => {
     const date = new Date(payment.created_at);
     const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
     
@@ -89,7 +104,7 @@ export const RevenueDashboard = () => {
         month: monthYear,
         shortTerm: 0,
         leaseToOwn: 0,
-        total: 0,
+        total: 0
       };
     }
 
@@ -105,7 +120,10 @@ export const RevenueDashboard = () => {
     return acc;
   }, {});
 
-  const revenueData = Object.values(monthlyRevenue || {});
+  const revenueData = Object.values(monthlyRevenue || {}).map(data => ({
+    date: data.month,
+    revenue: data.total
+  }));
 
   return (
     <div className="space-y-6">
