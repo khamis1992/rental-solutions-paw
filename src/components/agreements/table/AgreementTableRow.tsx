@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Eye, Printer, FileText, Trash2 } from "lucide-react";
 import type { Agreement } from "../hooks/useAgreements";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface AgreementTableRowProps {
   agreement: Agreement;
@@ -24,6 +26,37 @@ export const AgreementTableRow = ({
   onNameClick,
   onDeleteClick,
 }: AgreementTableRowProps) => {
+  const handleViewContract = async () => {
+    try {
+      // Get the latest contract document
+      const { data: documents, error } = await supabase
+        .from('agreement_documents')
+        .select('document_url')
+        .eq('lease_id', agreement.id)
+        .eq('document_type', 'contract')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!documents || documents.length === 0) {
+        toast.error('No contract document found');
+        return;
+      }
+
+      // Get the public URL for the document
+      const { data: { publicUrl } } = supabase.storage
+        .from('agreement_documents')
+        .getPublicUrl(documents[0].document_url);
+
+      // Open the document in a new tab
+      window.open(publicUrl, '_blank');
+    } catch (error) {
+      console.error('Error viewing contract:', error);
+      toast.error('Failed to view contract');
+    }
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -65,7 +98,7 @@ export const AgreementTableRow = ({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onViewContract(agreement.id)}
+          onClick={() => handleViewContract()}
           title="View Contract"
         >
           <Eye className="h-4 w-4 text-primary hover:text-primary/80" />

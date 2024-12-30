@@ -5,6 +5,7 @@ import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { Button } from "@/components/ui/button";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 import { AgreementImport } from "@/components/agreements/AgreementImport";
+import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
 import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ export default function Agreements() {
           <h1 className="text-3xl font-bold">Agreements</h1>
           <div className="flex items-center gap-3">
             <CreateAgreementDialog />
+            <AgreementPDFImport />
             <Button
               variant="outline"
               onClick={() => setShowAgreementImport(true)}
