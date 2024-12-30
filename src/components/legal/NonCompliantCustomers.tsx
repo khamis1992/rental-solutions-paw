@@ -2,13 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
 
 interface NonCompliantCustomer {
   id: string;
   agreement_number: string;
   customer_name: string;
-  remaining_amount: number;
 }
 
 export const NonCompliantCustomers = () => {
@@ -22,9 +20,6 @@ export const NonCompliantCustomers = () => {
           agreement_number,
           profiles:customer_id (
             full_name
-          ),
-          remaining_amounts (
-            remaining_amount
           )
         `)
         .eq('status', 'active')
@@ -35,8 +30,7 @@ export const NonCompliantCustomers = () => {
       const processedData = data.map(lease => ({
         id: lease.id,
         agreement_number: lease.agreement_number,
-        customer_name: lease.profiles?.full_name || 'Unknown',
-        remaining_amount: lease.remaining_amounts?.[0]?.remaining_amount || 0
+        customer_name: lease.profiles?.full_name || 'Unknown'
       }));
 
       return processedData as NonCompliantCustomer[];
@@ -60,7 +54,6 @@ export const NonCompliantCustomers = () => {
           <TableRow>
             <TableHead>Agreement Number</TableHead>
             <TableHead>Customer Name</TableHead>
-            <TableHead className="text-right">Remaining Amount</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,12 +61,11 @@ export const NonCompliantCustomers = () => {
             <TableRow key={customer.id}>
               <TableCell>{customer.agreement_number}</TableCell>
               <TableCell>{customer.customer_name}</TableCell>
-              <TableCell className="text-right">{formatCurrency(customer.remaining_amount)}</TableCell>
             </TableRow>
           ))}
           {!overdueCustomers?.length && (
             <TableRow>
-              <TableCell colSpan={3} className="text-center py-4">
+              <TableCell colSpan={2} className="text-center py-4">
                 No overdue payments found
               </TableCell>
             </TableRow>
