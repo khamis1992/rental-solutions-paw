@@ -53,6 +53,7 @@ export const usePaymentForm = (agreementId: string) => {
     if (agreement?.remainingAmount?.rent_amount) {
       setBaseAmount(agreement.remainingAmount.rent_amount);
       setValue("amount", agreement.remainingAmount.rent_amount);
+      setTotalAmount(agreement.remainingAmount.rent_amount);
     }
   }, [agreement, setValue]);
 
