@@ -2,12 +2,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { Payment } from "@/types/database/payment.types";
+import { Loader2 } from "lucide-react";
 
 interface PaymentHistoryProps {
   payments: Payment[];
+  isLoading?: boolean;
 }
 
-export const PaymentHistory = ({ payments }: PaymentHistoryProps) => {
+export const PaymentHistory = ({ payments, isLoading }: PaymentHistoryProps) => {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   // Calculate total balance
   const totalBalance = payments.reduce((sum, payment) => sum + payment.balance, 0);
 

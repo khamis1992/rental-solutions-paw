@@ -34,29 +34,36 @@ export const AgreementDetailsDialog = ({
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
 
-  const { data: payments = [] } = useQuery({
+  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
     queryKey: ["agreement-payments", agreementId],
     queryFn: async () => {
       console.log("Fetching payments for agreement:", agreementId);
       
-      // First verify if the agreement exists
-      const { data: agreementCheck, error: agreementError } = await supabase
-        .from("leases")
-        .select("id")
-        .eq("id", agreementId)
-        .single();
-
-      if (agreementError) {
-        console.error("Error verifying agreement:", agreementError);
-        throw agreementError;
-      }
-
-      console.log("Agreement exists:", agreementCheck);
-
-      // Now fetch the payments
-      const { data, error } = await supabase
+      const { data: payments, error } = await supabase
         .from("payments")
-        .select("*")
+        .select(`
+          *,
+          security_deposits (
+            amount,
+            status
+          ),
+          leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              id,
+              full_name,
+              phone_number
+            )
+          ),
+          accounting_invoices (
+            id,
+            invoice_number,
+            status,
+            issued_date,
+            paid_date
+          )
+        `)
         .eq("lease_id", agreementId)
         .order("payment_date", { ascending: false });
 
@@ -65,8 +72,8 @@ export const AgreementDetailsDialog = ({
         throw error;
       }
       
-      console.log("Fetched payments:", data);
-      return data as Payment[];
+      console.log("Fetched payments:", payments);
+      return payments as Payment[];
     },
     enabled: open && !!agreementId,
   });
@@ -116,7 +123,7 @@ export const AgreementDetailsDialog = ({
                 <PaymentForm agreementId={agreementId} />
               </TabsContent>
               <TabsContent value="payment-history">
-                <PaymentHistory payments={payments} />
+                <PaymentHistory payments={payments} isLoading={isLoadingPayments} />
               </TabsContent>
               <TabsContent value="invoices">
                 <InvoiceList agreementId={agreementId} />
