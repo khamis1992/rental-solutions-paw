@@ -1,74 +1,97 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
-import { Payment } from "@/types/database/payment.types";
-import { Loader2 } from "lucide-react";
+import { useOverduePayments } from "../hooks/useOverduePayments";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 
 interface PaymentHistoryProps {
-  payments: Payment[];
-  isLoading?: boolean;
+  agreementId: string;
 }
 
-export const PaymentHistory = ({ payments, isLoading }: PaymentHistoryProps) => {
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
+  const { data: payments, isLoading: isLoadingPayments } = useQuery({
+    queryKey: ['payment-history', agreementId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_history')
+        .select('*')
+        .eq('lease_id', agreementId)
+        .order('original_due_date', { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { overduePayment, isLoading: isLoadingOverdue } = useOverduePayments(agreementId);
+
+  if (isLoadingPayments || isLoadingOverdue) {
+    return <div>Loading payment history...</div>;
   }
 
-  // Calculate total balance
-  const totalBalance = payments.reduce((sum, payment) => sum + payment.balance, 0);
-
   return (
-    <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Payment Date</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Amount Paid</TableHead>
-            <TableHead>Balance</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Payment Method</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {payments?.length ? (
-            <>
-              {payments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell>
-                    {payment.payment_date 
-                      ? format(new Date(payment.payment_date), 'dd/MM/yyyy')
-                      : format(new Date(payment.created_at), 'dd/MM/yyyy')}
-                  </TableCell>
-                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                  <TableCell>{formatCurrency(payment.amount_paid)}</TableCell>
-                  <TableCell>{formatCurrency(payment.balance)}</TableCell>
-                  <TableCell>{payment.description || '-'}</TableCell>
-                  <TableCell className="capitalize">
-                    {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {/* Summary row for total balance */}
-              <TableRow className="font-medium bg-muted/50">
-                <TableCell colSpan={3} className="text-right">Total Overdue Payments:</TableCell>
-                <TableCell>{formatCurrency(totalBalance)}</TableCell>
-                <TableCell colSpan={2}></TableCell>
-              </TableRow>
-            </>
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                No payment history found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Payment History</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {overduePayment && overduePayment.balance > 0 && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 text-red-600 mb-2">
+              <AlertTriangle className="h-5 w-5" />
+              <span className="font-semibold">Overdue Payment Alert</span>
+            </div>
+            <div className="space-y-1 text-sm">
+              <p>Days Overdue: {overduePayment.days_overdue}</p>
+              <p>Outstanding Balance: {formatCurrency(overduePayment.balance)}</p>
+              <p>Last Payment: {overduePayment.last_payment_date ? 
+                format(new Date(overduePayment.last_payment_date), 'PP') : 
+                'No payments recorded'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {payments?.map((payment) => (
+            <div
+              key={payment.id}
+              className="flex items-center justify-between p-4 border rounded-lg"
+            >
+              <div>
+                <div className="font-medium">
+                  Due: {format(new Date(payment.original_due_date), 'PP')}
+                </div>
+                {payment.actual_payment_date && (
+                  <div className="text-sm text-muted-foreground">
+                    Paid: {format(new Date(payment.actual_payment_date), 'PP')}
+                  </div>
+                )}
+              </div>
+              <div className="text-right space-y-1">
+                <div>{formatCurrency(payment.amount_due)}</div>
+                <Badge 
+                  variant="outline" 
+                  className={payment.status === 'completed' ? 
+                    'bg-green-50 text-green-600 border-green-200' : 
+                    'bg-yellow-50 text-yellow-600 border-yellow-200'
+                  }
+                >
+                  {payment.status === 'completed' ? (
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                  ) : (
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                  )}
+                  {payment.status}
+                </Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
