@@ -14,7 +14,7 @@ export interface Payment {
   updated_at: string;
   description: string | null;
   is_recurring: boolean;
-  recurring_interval: string | null;
+  recurring_interval: string | null | unknown; // Updated to handle Postgres interval type
   next_payment_date: string | null;
   type: string;
   late_fine_amount: number;
