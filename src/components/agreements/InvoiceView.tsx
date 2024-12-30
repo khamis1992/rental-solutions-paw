@@ -6,6 +6,7 @@ import { Printer } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { injectPrintStyles } from "@/lib/printStyles";
+import { format } from "date-fns";
 
 interface InvoiceViewProps {
   data: InvoiceData;
@@ -100,6 +101,38 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
         </tbody>
       </table>
 
+      {data.payments && data.payments.length > 0 && (
+        <div className="mb-8">
+          <h3 className="font-semibold mb-4">Payment History</h3>
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2">Date</th>
+                <th className="text-left py-2">Description</th>
+                <th className="text-right py-2">Amount</th>
+                <th className="text-right py-2">Method</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.payments.map((payment) => (
+                <tr key={payment.id} className="border-b">
+                  <td className="py-2">
+                    {payment.payment_date 
+                      ? format(new Date(payment.payment_date), 'dd/MM/yyyy')
+                      : format(new Date(payment.created_at), 'dd/MM/yyyy')}
+                  </td>
+                  <td className="py-2">{payment.description || '-'}</td>
+                  <td className="text-right py-2">{formatCurrency(payment.amount)}</td>
+                  <td className="text-right py-2 capitalize">
+                    {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="flex flex-col items-end space-y-2">
         <div className="flex justify-between w-48">
           <span>Subtotal:</span>
@@ -115,6 +148,12 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
           <span>Total:</span>
           <span>{formatCurrency(data.total)}</span>
         </div>
+        {data.payments && (
+          <div className="flex justify-between w-48 text-blue-600">
+            <span>Total Paid:</span>
+            <span>{formatCurrency(data.payments.reduce((sum, p) => sum + p.amount, 0))}</span>
+          </div>
+        )}
       </div>
     </Card>
   );

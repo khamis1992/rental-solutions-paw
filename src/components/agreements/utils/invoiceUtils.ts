@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { Payment } from "@/types/database/payment.types";
 
 export type InvoiceData = {
   invoiceNumber: string;
@@ -19,6 +20,7 @@ export type InvoiceData = {
   discount: number;
   total: number;
   dueDate?: string;
+  payments?: Payment[];
 };
 
 export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData | null> => {
@@ -35,6 +37,18 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
 
   if (leaseError || !lease) {
     console.error("Error fetching lease data:", leaseError);
+    return null;
+  }
+
+  // Fetch all payments for this lease
+  const { data: payments, error: paymentsError } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("lease_id", leaseId)
+    .order("payment_date", { ascending: true });
+
+  if (paymentsError) {
+    console.error("Error fetching payments:", paymentsError);
     return null;
   }
 
@@ -78,6 +92,7 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     total,
     dueDate: lease.agreement_type === "lease_to_own" 
       ? format(new Date(lease.start_date), "PP") 
-      : undefined
+      : undefined,
+    payments: payments || []
   };
 };
