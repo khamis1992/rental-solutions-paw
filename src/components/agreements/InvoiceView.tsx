@@ -42,7 +42,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     <ScrollArea className="h-[calc(100vh-200px)] w-full">
       <Card className="p-8 max-w-3xl mx-auto bg-white shadow-lg print:shadow-none print:p-4 print:max-w-none">
         <div className="print-content">
-          {/* Header Section */}
           <div className="flex justify-between items-start mb-8 print:mb-6">
             <div className="space-y-4">
               {settings?.logo_url && (
@@ -68,7 +67,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </Button>
           </div>
 
-          {/* Customer and Date Info */}
           <div className="grid grid-cols-2 gap-8 mb-8 print:mb-6">
             <div>
               <h3 className="font-semibold mb-2">Bill To:</h3>
@@ -89,7 +87,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </div>
           </div>
 
-          {/* Vehicle Details */}
           <div className="mb-8 print:mb-6">
             <h3 className="font-semibold mb-2">Vehicle Details:</h3>
             <p className="text-gray-600">{data.vehicleDetails}</p>
@@ -103,7 +100,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-2 print:py-1">Description</th>
-                <th className="text-right py-2 print:py-1">Amount</th>
+                <th className="text-right py-2 print:py-1">Contract Value</th>
               </tr>
             </thead>
             <tbody>
@@ -116,7 +113,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </tbody>
           </table>
 
-          {/* Payment History */}
           {data.payments && data.payments.length > 0 && (
             <div className="mb-8 print:mb-6">
               <h3 className="font-semibold mb-4">Payment History</h3>
@@ -149,7 +145,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </div>
           )}
 
-          {/* Totals Section */}
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
               <span>Total Amount:</span>
