@@ -1,12 +1,19 @@
-import { InvoiceData } from "./utils/invoiceUtils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { InvoiceData } from "./utils/invoiceUtils";
 
 interface InvoiceViewProps {
   data: InvoiceData;
@@ -32,12 +39,12 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     queryFn: async () => {
       const { data: remainingData, error } = await supabase
         .from("remaining_amounts")
-        .select("*")
+        .select("remaining_amount")
         .eq("lease_id", data.agreementId)
         .maybeSingle();
 
       if (error) throw error;
-      return remainingData;
+      return remainingData?.remaining_amount || 0;
     },
     enabled: !!data.agreementId,
   });
@@ -170,7 +177,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </div>
             <div className="flex justify-between w-48 print:w-40 font-bold">
               <span>Remaining Amount:</span>
-              <span>{formatCurrency(remainingAmount?.remaining_amount || 0)}</span>
+              <span>{formatCurrency(remainingAmount)}</span>
             </div>
           </div>
         </div>
