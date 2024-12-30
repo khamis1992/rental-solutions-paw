@@ -1,71 +1,76 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Loader2, TrendingUp, DollarSign, ArrowUpRight, CreditCard } from "lucide-react";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { TransactionType } from "@/components/finance/accounting/types/transaction.types";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RevenueChart } from "../charts/RevenueChart";
+import { ExpenseChart } from "../charts/ExpenseChart";
+import { Loader2 } from "lucide-react";
 
 export const RevenueDashboard = () => {
-  const { data: revenueStats, isLoading } = useQuery({
-    queryKey: ["revenue-stats"],
+  const queryClient = useQueryClient();
+
+  const { data: financialData, isLoading } = useQuery({
+    queryKey: ["financial-metrics"],
     queryFn: async () => {
-      const currentDate = new Date();
-      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      
-      // Get current month's revenue
-      const { data: currentMonthData, error: currentError } = await supabase
-        .from("accounting_transactions")
-        .select("amount")
-        .eq("type", TransactionType.INCOME)
-        .gte("transaction_date", firstDayOfMonth.toISOString())
-        .lte("transaction_date", lastDayOfMonth.toISOString());
+      const { data, error } = await supabase
+        .from("payments")
+        .select(`
+          *,
+          lease:leases (
+            agreement_type,
+            vehicle:vehicles (
+              make,
+              model
+            )
+          )
+        `)
+        .order('created_at');
 
-      if (currentError) throw currentError;
-
-      // Get last month's revenue for comparison
-      const lastMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-      const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
-      
-      const { data: lastMonthData, error: lastError } = await supabase
-        .from("accounting_transactions")
-        .select("amount")
-        .eq("type", TransactionType.INCOME)
-        .gte("transaction_date", lastMonthStart.toISOString())
-        .lte("transaction_date", lastMonthEnd.toISOString());
-
-      if (lastError) throw lastError;
-
-      // Get revenue trend data for the chart
-      const { data: trendData, error: trendError } = await supabase
-        .from("accounting_transactions")
-        .select("amount, transaction_date")
-        .eq("type", TransactionType.INCOME)
-        .order("transaction_date", { ascending: true })
-        .limit(30);
-
-      if (trendError) throw trendError;
-
-      const currentMonthRevenue = currentMonthData.reduce((sum, transaction) => sum + transaction.amount, 0);
-      const lastMonthRevenue = lastMonthData.reduce((sum, transaction) => sum + transaction.amount, 0);
-      const percentageChange = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
-
-      // Process trend data for the chart
-      const chartData = trendData.map(transaction => ({
-        date: new Date(transaction.transaction_date).toLocaleDateString(),
-        amount: transaction.amount
-      }));
-
-      return {
-        currentMonthRevenue,
-        lastMonthRevenue,
-        percentageChange,
-        chartData
-      };
-    }
+      if (error) throw error;
+      return data;
+    },
   });
+
+  useEffect(() => {
+    // Subscribe to payment changes
+    const channel = supabase
+      .channel('payment-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        async (payload) => {
+          console.log('Payment change detected:', payload);
+          
+          // Invalidate and refetch the financial metrics query
+          await queryClient.invalidateQueries({ 
+            queryKey: ['financial-metrics'] 
+          });
+          
+          const eventMessages = {
+            INSERT: 'New payment recorded',
+            UPDATE: 'Payment updated',
+            DELETE: 'Payment deleted'
+          };
+          
+          toast.info(
+            eventMessages[payload.eventType as keyof typeof eventMessages] || 'Payment record changed',
+            {
+              description: 'Financial dashboard has been updated.'
+            }
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   if (isLoading) {
     return (
@@ -75,69 +80,51 @@ export const RevenueDashboard = () => {
     );
   }
 
+  // Process data for visualizations
+  const monthlyRevenue = financialData?.reduce((acc: any, payment) => {
+    const date = new Date(payment.created_at);
+    const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    
+    if (!acc[monthYear]) {
+      acc[monthYear] = {
+        month: monthYear,
+        shortTerm: 0,
+        leaseToOwn: 0,
+        total: 0,
+      };
+    }
+
+    const amount = payment.amount_paid || 0;
+    acc[monthYear].total += amount;
+
+    if (payment.lease?.agreement_type === 'short_term') {
+      acc[monthYear].shortTerm += amount;
+    } else {
+      acc[monthYear].leaseToOwn += amount;
+    }
+
+    return acc;
+  }, {});
+
+  const revenueData = Object.values(monthlyRevenue || {});
+
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatsCard
-          title="Monthly Revenue"
-          value={formatCurrency(revenueStats?.currentMonthRevenue || 0)}
-          icon={DollarSign}
-          description={
-            <span className="flex items-center text-emerald-600">
-              <TrendingUp className="mr-1 h-4 w-4" />
-              {revenueStats?.percentageChange.toFixed(1)}% from last month
-            </span>
-          }
-        />
-        <StatsCard
-          title="Last Month Revenue"
-          value={formatCurrency(revenueStats?.lastMonthRevenue || 0)}
-          icon={CreditCard}
-          description="Previous month total"
-        />
-        <StatsCard
-          title="Average Transaction"
-          value={formatCurrency(
-            revenueStats?.chartData.reduce((sum, item) => sum + item.amount, 0) / 
-            (revenueStats?.chartData.length || 1)
-          )}
-          icon={ArrowUpRight}
-          description="30-day average"
-        />
-      </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RevenueChart data={revenueData} onExport={() => {}} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Revenue Trend</CardTitle>
+          <CardTitle>Expense Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueStats?.chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="date" 
-                  className="text-xs"
-                  tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                />
-                <YAxis
-                  className="text-xs"
-                  tickFormatter={(value) => formatCurrency(value)}
-                />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="#4ade80"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <ExpenseChart data={[]} onExport={() => {}} />
         </CardContent>
       </Card>
     </div>
