@@ -1,14 +1,13 @@
-import { FileText, AlertCircle, Loader2 } from "lucide-react";
+import { FileText, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface CustomerDocumentsProps {
   customerId: string;
 }
 
 export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
-  const { data: customer, isLoading, error } = useQuery({
+  const { data: customer, isLoading } = useQuery({
     queryKey: ['customer-documents', customerId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,11 +16,7 @@ export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
         .eq('id', customerId)
         .single();
       
-      if (error) {
-        console.error('Error fetching documents:', error);
-        toast.error('Failed to load customer documents');
-        throw error;
-      }
+      if (error) throw error;
 
       // Get public URLs for both documents if they exist
       const idDocumentUrl = data.id_document_url 
@@ -41,30 +36,7 @@ export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
     enabled: !!customerId,
   });
 
-  if (!customerId) return null;
-
-  if (isLoading) {
-    return (
-      <div className="col-span-2 space-y-4 border rounded-lg p-4 bg-muted/50">
-        <h3 className="font-medium">Customer Documents</h3>
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="col-span-2 space-y-4 border rounded-lg p-4 bg-muted/50">
-        <h3 className="font-medium">Customer Documents</h3>
-        <div className="flex items-center gap-2 text-destructive p-2 rounded-md bg-destructive/10">
-          <AlertCircle className="h-4 w-4" />
-          <span>Failed to load documents</span>
-        </div>
-      </div>
-    );
-  }
+  if (!customerId || isLoading) return null;
 
   return (
     <div className="col-span-2 space-y-4 border rounded-lg p-4 bg-muted/50">
@@ -74,7 +46,7 @@ export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
           href={customer?.id_document_url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`flex items-center gap-2 p-2 rounded-md transition-colors ${
+          className={`flex items-center gap-2 p-2 rounded-md ${
             customer?.id_document_url
               ? "text-blue-600 hover:bg-blue-50"
               : "text-gray-400 cursor-not-allowed"
@@ -90,7 +62,7 @@ export const CustomerDocuments = ({ customerId }: CustomerDocumentsProps) => {
           href={customer?.license_document_url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`flex items-center gap-2 p-2 rounded-md transition-colors ${
+          className={`flex items-center gap-2 p-2 rounded-md ${
             customer?.license_document_url
               ? "text-blue-600 hover:bg-blue-50"
               : "text-gray-400 cursor-not-allowed"

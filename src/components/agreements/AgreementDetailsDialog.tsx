@@ -56,6 +56,7 @@ export const AgreementDetailsDialog = ({
             <VehicleInfoCard 
               vehicle={agreement.vehicle}
               initialMileage={agreement.initial_mileage}
+              totalAmount={agreement.total_amount}
             />
 
             <Tabs defaultValue="payments" className="w-full">

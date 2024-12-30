@@ -1,142 +1,121 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-  data?: Record<string, any>;
-}
-
-function validateRow(row: any, headers: string[]): ValidationResult {
-  const errors: string[] = [];
-  let data: Record<string, any> = {};
-  
-  try {
-    // Basic data validation
-    if (!row.amount || isNaN(parseFloat(row.amount))) {
-      errors.push('Invalid amount format');
-    } else {
-      data.amount = parseFloat(row.amount);
-    }
-
-    if (row.payment_date) {
-      const date = new Date(row.payment_date);
-      if (isNaN(date.getTime())) {
-        errors.push('Invalid payment date format');
-      } else {
-        data.payment_date = date.toISOString();
-      }
-    }
-
-    // Copy other fields directly
-    headers.forEach(header => {
-      if (header !== 'amount' && header !== 'payment_date') {
-        data[header] = row[header] || null;
-      }
-    });
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      data: errors.length === 0 ? data : undefined
-    };
-  } catch (error) {
-    console.error('Row validation error:', error);
-    return {
-      isValid: false,
-      errors: ['Row validation failed: ' + error.message]
-    };
-  }
-}
-
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204 
+    });
   }
 
   try {
-    const { fileContent, headers, rows, importId } = await req.json();
-    console.log('Starting analysis of payment import data:', { 
-      totalRows: rows?.length,
-      headers,
-      importId 
-    });
-
-    if (!Array.isArray(rows)) {
-      throw new Error('Rows must be an array');
+    console.log('Starting payment analysis...');
+    
+    // Parse the multipart form data
+    const formData = await req.formData();
+    const file = formData.get('file');
+    
+    if (!file || !(file instanceof File)) {
+      throw new Error('No file provided or invalid file format');
     }
 
-    const validRows: any[] = [];
-    const invalidRows: { row: number; errors: string[] }[] = [];
-    let totalAmount = 0;
+    // Read the file content
+    const fileContent = await file.text();
+    const lines = fileContent.split('\n').map(line => line.trim());
+    
+    if (lines.length < 2) {
+      throw new Error('File is empty or contains only headers');
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    const requiredHeaders = ['Amount', 'Payment_Date', 'Payment_Method', 'Status', 'Lease_ID'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+    if (missingHeaders.length > 0) {
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    }
+
+    // Analyze the data
+    const analysis = {
+      totalRows: lines.length - 1,
+      validRows: 0,
+      invalidRows: 0,
+      totalAmount: 0,
+      issues: [],
+      suggestions: []
+    };
 
     // Process each row
-    rows.forEach((row, index) => {
-      const validation = validateRow(row, headers);
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
       
-      if (validation.isValid && validation.data) {
-        validRows.push(validation.data);
-        totalAmount += validation.data.amount || 0;
-      } else {
-        invalidRows.push({
-          row: index + 1,
-          errors: validation.errors
-        });
-      }
-    });
+      const values = lines[i].split(',').map(v => v.trim());
+      const rowData = headers.reduce((obj: any, header, index) => {
+        obj[header] = values[index];
+        return obj;
+      }, {});
 
-    // Generate suggestions based on common errors
-    const suggestions = [];
-    if (invalidRows.length > 0) {
-      suggestions.push("Please review and correct the errors before proceeding");
-      if (invalidRows.some(r => r.errors.includes('Invalid amount format'))) {
-        suggestions.push("Ensure all amounts are valid numbers");
+      // Validate amount
+      const amount = parseFloat(rowData.Amount);
+      if (isNaN(amount)) {
+        analysis.invalidRows++;
+        analysis.issues.push(`Row ${i}: Invalid amount format`);
+      } else {
+        analysis.totalAmount += amount;
       }
-      if (invalidRows.some(r => r.errors.includes('Invalid payment date format'))) {
-        suggestions.push("Verify date formats are correct");
+
+      // Validate date
+      const date = new Date(rowData.Payment_Date);
+      if (isNaN(date.getTime())) {
+        analysis.invalidRows++;
+        analysis.issues.push(`Row ${i}: Invalid date format`);
+      }
+
+      // Validate Lease_ID
+      if (!rowData.Lease_ID) {
+        analysis.invalidRows++;
+        analysis.issues.push(`Row ${i}: Missing Lease_ID`);
+      }
+
+      if (!analysis.issues.some(issue => issue.includes(`Row ${i}:`))) {
+        analysis.validRows++;
       }
     }
 
-    console.log('Analysis complete:', {
-      totalRows: rows.length,
-      validRowsCount: validRows.length,
-      invalidRowsCount: invalidRows.length,
-      totalAmount
-    });
+    // Add suggestions based on analysis
+    if (analysis.invalidRows > 0) {
+      analysis.suggestions.push('Please fix the invalid rows before proceeding with the import.');
+    }
+    if (analysis.totalAmount === 0) {
+      analysis.suggestions.push('Warning: Total payment amount is 0. Please verify if this is correct.');
+    }
+
+    console.log('Analysis completed:', analysis);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        totalRows: rows.length,
-        validRows,
-        invalidRows,
-        totalAmount,
-        suggestions,
-        importId,
-        errorSummary: {
-          totalErrors: invalidRows.length,
-          amountErrors: invalidRows.filter(r => r.errors.includes('Invalid amount format')).length,
-          dateErrors: invalidRows.filter(r => r.errors.includes('Invalid payment date format')).length
-        }
-      }),
-      {
+      JSON.stringify(analysis),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+        status: 200 
       }
     );
 
   } catch (error) {
-    console.error('Error analyzing payment import:', error);
+    console.error('Error processing payment analysis:', error);
+    
     return new Response(
       JSON.stringify({
-        error: error.message,
-        success: false
+        error: error.message || 'Failed to analyze payment file',
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400
       }

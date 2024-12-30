@@ -1,68 +1,181 @@
-import { useImportProcess } from "./hooks/useImportProcess";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { FileUploadSection } from "./payment-import/FileUploadSection";
 import { AIAnalysisCard } from "./payment-import/AIAnalysisCard";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { 
+  uploadImportFile, 
+  createImportLog, 
+  processImport,
+  pollImportStatus 
+} from "./services/agreementImportService";
+import { parseImportErrors } from "./utils/importUtils";
 
 export const PaymentImport = () => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
-  const {
-    isUploading,
-    isAnalyzing,
-    analysisResult,
-    startImport,
-    implementChanges
-  } = useImportProcess();
+  const queryClient = useQueryClient();
 
-  // Query to fetch imported transactions
-  const { data: importedData, refetch } = useQuery({
-    queryKey: ["imported-transactions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("remaining_amounts")
-        .select("*")
-        .order('created_at', { ascending: false })
-        .limit(50);
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-      if (error) throw error;
-      return data;
+    if (file.type !== "text/csv") {
+      toast({
+        title: "Error",
+        description: "Please upload a CSV file with the following headers: Amount, Payment_Date, Payment_Method, Status, Lease_ID",
+        variant: "destructive",
+      });
+      return;
     }
-  });
+
+    setSelectedFile(file);
+    setIsAnalyzing(true);
+    
+    try {
+      // Create FormData and append file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Call the analyze-payment-import function with proper configuration
+      const { data: aiAnalysis, error: analysisError } = await supabase.functions
+        .invoke('analyze-payment-import', {
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        });
+
+      if (analysisError) throw analysisError;
+
+      setAnalysisResult(aiAnalysis);
+      toast({
+        title: "Analysis Complete",
+        description: "AI has analyzed your file. Please review the suggestions.",
+      });
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to analyze file. Make sure the CSV includes a Lease_ID column.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleImplementChanges = async () => {
+    if (!selectedFile) return;
+    
+    setIsUploading(true);
+    try {
+      console.log('Starting file upload process...');
+      
+      const fileName = await uploadImportFile(selectedFile);
+      console.log('File uploaded successfully:', fileName);
+
+      await createImportLog(fileName);
+      console.log('Import log created');
+
+      const { data: functionResponse, error: functionError } = await processImport(fileName);
+
+      if (functionError) {
+        console.error('Edge Function error:', functionError);
+        throw functionError;
+      }
+
+      console.log('Edge Function response:', functionResponse);
+
+      const pollInterval = setInterval(async () => {
+        console.log('Checking import status...');
+        try {
+          const importLog = await pollImportStatus(fileName);
+
+          if (importLog?.status === "completed") {
+            clearInterval(pollInterval);
+            
+            const errors = importLog.errors ? parseImportErrors(importLog.errors) : null;
+            
+            const skippedCount = errors?.skipped?.length ?? 0;
+            const failedCount = errors?.failed?.length ?? 0;
+            
+            let description = `Successfully processed ${importLog.records_processed} payments.`;
+            if (skippedCount > 0) {
+              description += ` ${skippedCount} records were skipped due to missing data.`;
+            }
+            if (failedCount > 0) {
+              description += ` ${failedCount} records failed to process.`;
+            }
+
+            toast({
+              title: "Import Complete",
+              description: description,
+            });
+            
+            setSelectedFile(null);
+            setAnalysisResult(null);
+            
+            await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+            await queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
+            
+          } else if (importLog?.status === "error") {
+            clearInterval(pollInterval);
+            throw new Error("Import failed");
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+          clearInterval(pollInterval);
+          toast({
+            title: "Error",
+            description: "Failed to check import status",
+            variant: "destructive",
+          });
+        }
+      }, 2000);
+
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isUploading) {
+          setIsUploading(false);
+          toast({
+            title: "Error",
+            description: "Import timed out. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, 30000);
+
+    } catch (error: any) {
+      console.error('Import process error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process import",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const downloadTemplate = () => {
-    const csvContent = "Agreement_Number,License_Plate,Rent_Amount,Final_Price,Amount_Paid,Remaining_Amount,Agreement_Duration\n" +
-                      "AGR-001,ABC123,1000,12000,3000,9000,12";
+    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
+                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'remaining_amounts_template.csv');
+    a.setAttribute('download', 'payment_import_template.csv');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      await startImport(file);
-      refetch(); // Refresh the table data
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast({
-        title: "Error",
-        description: error.message || 'Failed to import file',
-        variant: "destructive",
-      });
-    }
   };
 
   return (
@@ -77,7 +190,7 @@ export const PaymentImport = () => {
       {analysisResult && (
         <AIAnalysisCard
           analysisResult={analysisResult}
-          onImplementChanges={implementChanges}
+          onImplementChanges={handleImplementChanges}
           isUploading={isUploading}
         />
       )}
@@ -85,49 +198,8 @@ export const PaymentImport = () => {
       {isUploading && !analysisResult && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Importing remaining amounts...
+          Importing payments...
         </div>
-      )}
-
-      {importedData && importedData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Imports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {importedData.map((item: any) => (
-                <div 
-                  key={item.id} 
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">
-                        Agreement: {item.agreement_number || 'N/A'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        License Plate: {item.license_plate || 'N/A'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">
-                        {formatCurrency(item.remaining_amount)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Total Paid: {formatCurrency(item.amount_paid)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-sm">
-                    <p>Final Price: {formatCurrency(item.final_price)}</p>
-                    <p>Rent Amount: {formatCurrency(item.rent_amount)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   );

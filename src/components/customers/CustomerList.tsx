@@ -43,7 +43,7 @@ export const CustomerList = () => {
 
   if (error) {
     return (
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleFilter={setRoleFilter}
@@ -57,12 +57,12 @@ export const CustomerList = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleFilter={setRoleFilter}
         />
-        <div className="rounded-md border bg-card">
+        <div className="rounded-md border">
           <Table>
             <CustomerTableHeader />
             <TableBody>
@@ -84,7 +84,7 @@ export const CustomerList = () => {
 
   if (!filteredCustomers?.length) {
     return (
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <div className="space-y-4">
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleFilter={setRoleFilter}
@@ -97,12 +97,12 @@ export const CustomerList = () => {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="space-y-4">
       <CustomerFilters 
         onSearchChange={setSearchQuery}
         onRoleFilter={setRoleFilter}
       />
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border">
         <Table>
           <CustomerTableHeader />
           <TableBody>

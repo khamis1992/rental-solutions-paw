@@ -4,8 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 interface DocumentUploadProps {
   agreementId: string;
@@ -71,36 +70,26 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Upload className="h-5 w-5" />
-          Upload Documents
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="document">Upload Document</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="document"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
-              {uploading && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Supported formats: PDF, JPEG, PNG (max 5MB)
-            </p>
-          </div>
+    <div className="space-y-4">
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+        <Label htmlFor="document">Upload Document</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="document"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={handleFileUpload}
+            disabled={uploading}
+            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+          />
+          {uploading && (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          )}
         </div>
-      </CardContent>
-    </Card>
+        <p className="text-sm text-muted-foreground mt-1">
+          Supported formats: PDF, JPEG, PNG (max 5MB)
+        </p>
+      </div>
+    </div>
   );
 };

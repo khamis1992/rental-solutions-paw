@@ -7,6 +7,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { StatsDisplay } from "./components/StatsDisplay";
+import { ReconcileButton } from "./components/ReconcileButton";
 
 interface TrafficFineStatsProps {
   agreementId?: string;
@@ -158,13 +159,18 @@ export function TrafficFineStats({ agreementId, paymentCount }: TrafficFineStats
   };
 
   return (
-    <StatsDisplay 
-      paymentCount={paymentCount}
-      unassignedCount={unassignedCount}
-      totalAmount={totalAmount}
-      unassignedAmount={unassignedAmount}
-      onReconcile={handleBulkAssignment}
-      isReconciling={isReconciling}
-    />
+    <div className="flex justify-between items-center">
+      <StatsDisplay 
+        paymentCount={paymentCount}
+        unassignedCount={unassignedCount}
+        totalAmount={totalAmount}
+        unassignedAmount={unassignedAmount}
+      />
+      <ReconcileButton 
+        isReconciling={isReconciling}
+        unassignedCount={unassignedCount}
+        onReconcile={handleBulkAssignment}
+      />
+    </div>
   );
 }

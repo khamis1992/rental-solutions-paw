@@ -1,158 +1,187 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+}
+
+interface PaymentRow {
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  status: string;
+  description?: string;
+  transaction_id?: string;
+  lease_id: string;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const requestData = await req.json();
-    console.log('Received request data:', requestData);
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          detectSessionInUrl: false
+        }
+      }
+    )
 
-    // Validate input structure
-    if (!requestData || typeof requestData !== 'object') {
-      throw new Error('Invalid request format');
+    // Get request body
+    const { fileName } = await req.json()
+    console.log('Processing file:', fileName)
+
+    if (!fileName) {
+      throw new Error('No file name provided')
     }
 
-    const { rows, importId, skipValidation = false } = requestData;
-    console.log('Parsed request:', { rowCount: rows?.length, importId, skipValidation });
+    // Download file from storage
+    const { data: fileData, error: downloadError } = await supabaseClient
+      .storage
+      .from('imports')
+      .download(fileName)
 
-    // Validate rows is an array
-    if (!Array.isArray(rows)) {
-      console.error('Invalid rows format:', rows);
+    if (downloadError) {
+      console.error('Download error:', downloadError)
+      throw downloadError
+    }
+
+    const text = await fileData.text()
+    const lines = text.split('\n')
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim())
+
+    // Validate required headers
+    const requiredHeaders = ['amount', 'payment_date', 'payment_method', 'status', 'lease_id']
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
+
+    if (missingHeaders.length > 0) {
       return new Response(
         JSON.stringify({
-          error: "Rows must be an array",
-          success: false
+          error: 'Missing required headers',
+          details: `Missing headers: ${missingHeaders.join(', ')}. The lease_id column is required.`
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
+          status: 400
         }
-      );
+      )
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const errors = []
+    const processedRows = []
 
-    // Process in batches of 100
-    const batchSize = 100;
-    const results = [];
-    const errors = [];
-    let processedCount = 0;
+    // Process each row
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue
 
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const batch = rows.slice(i, i + batchSize);
+      const values = lines[i].split(',').map(v => v.trim())
+      const row = headers.reduce((obj: any, header, index) => {
+        obj[header] = values[index]
+        return obj
+      }, {}) as PaymentRow
+
       try {
-        // Process each row in the batch
-        const processedBatch = batch.map(row => {
-          try {
-            if (!row || typeof row !== 'object') {
-              throw new Error('Invalid row format');
-            }
-
-            // Basic data validation and cleaning
-            const amount = parseFloat(row.amount);
-            if (isNaN(amount)) {
-              throw new Error('Invalid amount format');
-            }
-
-            return {
-              amount,
-              payment_date: row.payment_date || null,
-              payment_method: row.payment_method || 'unknown',
-              transaction_id: row.transaction_id || null,
-              status: 'pending',
-              lease_id: row.lease_id || null
-            };
-          } catch (rowError) {
-            console.error('Row processing error:', rowError, row);
-            errors.push({
-              row: i + batch.indexOf(row),
-              error: rowError.message,
-              data: row
-            });
-            return null;
-          }
-        }).filter(row => row !== null);
-
-        if (processedBatch.length > 0) {
-          const { data, error: insertError } = await supabaseClient
-            .from('payments')
-            .insert(processedBatch)
-            .select();
-
-          if (insertError) {
-            console.error('Batch insert error:', insertError);
-            errors.push({
-              batch: Math.floor(i / batchSize) + 1,
-              error: insertError.message,
-              failedRows: processedBatch.length
-            });
-          } else {
-            results.push(...(data || []));
-            processedCount += processedBatch.length;
-          }
+        // Validate lease_id
+        if (!row.lease_id) {
+          throw new Error(`Missing lease_id in row ${i}`)
         }
-      } catch (batchError) {
-        console.error('Batch processing error:', batchError);
-        errors.push({
-          batch: Math.floor(i / batchSize) + 1,
-          error: batchError.message,
-          failedRows: batch.length
-        });
-      }
-    }
 
-    // Log import results
-    if (importId) {
-      const { error: logError } = await supabaseClient
-        .from('import_logs')
-        .update({
-          status: errors.length > 0 ? 'completed_with_errors' : 'completed',
-          records_processed: processedCount,
-          errors: errors.length > 0 ? errors : null
+        // Verify lease exists
+        const { data: leaseExists, error: leaseError } = await supabaseClient
+          .from('leases')
+          .select('id')
+          .eq('id', row.lease_id)
+          .single()
+
+        if (leaseError || !leaseExists) {
+          throw new Error(`Invalid lease_id in row ${i}: ${row.lease_id}`)
+        }
+
+        // Validate and parse date
+        const paymentDate = new Date(row.payment_date)
+        if (isNaN(paymentDate.getTime())) {
+          throw new Error(`Invalid date format in row ${i}`)
+        }
+
+        // Validate amount
+        const amount = parseFloat(row.amount.toString())
+        if (isNaN(amount)) {
+          throw new Error(`Invalid amount in row ${i}`)
+        }
+
+        processedRows.push({
+          amount,
+          payment_date: paymentDate.toISOString(),
+          payment_method: row.payment_method,
+          status: row.status,
+          description: row.description || null,
+          transaction_id: row.transaction_id || null,
+          lease_id: row.lease_id
         })
-        .eq('id', importId);
-
-      if (logError) {
-        console.error('Error updating import log:', logError);
+      } catch (error) {
+        console.error(`Error processing row ${i}:`, error)
+        errors.push({
+          row: i,
+          error: error.message,
+          data: row
+        })
       }
     }
+
+    // Insert valid rows
+    if (processedRows.length > 0) {
+      const { error: insertError } = await supabaseClient
+        .from('payments')
+        .insert(processedRows)
+
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw insertError
+      }
+    }
+
+    // Update import log
+    await supabaseClient
+      .from('import_logs')
+      .update({
+        status: errors.length === 0 ? 'completed' : 'completed_with_errors',
+        records_processed: processedRows.length,
+        errors: errors.length > 0 ? errors : null
+      })
+      .eq('file_name', fileName)
 
     return new Response(
       JSON.stringify({
         success: true,
-        processed: processedCount,
-        errors: errors.length > 0 ? errors : undefined,
-        details: `Successfully processed ${processedCount} records with ${errors.length} errors`
+        processed: processedRows.length,
+        errors
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 200
       }
-    );
+    )
 
   } catch (error) {
-    console.error('Error processing payment import:', error);
+    console.error('Error processing import:', error)
     return new Response(
       JSON.stringify({
-        error: error.message || 'An error occurred during processing',
-        success: false
+        error: error.message
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 400
       }
-    );
+    )
   }
-});
+})

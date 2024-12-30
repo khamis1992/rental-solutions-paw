@@ -1,30 +1,30 @@
-import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ArrowUpDown } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { TrafficFineFilters } from "./TrafficFineFilters";
 
-interface TrafficFineListProps {
-  searchQuery: string;
-  statusFilter: string;
-  sortField: string;
-  sortDirection: "asc" | "desc";
-  onSort: (field: string) => void;
-}
+export function TrafficFinesList() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDirection, onSort }: TrafficFineListProps) {
   const { data: fines, isLoading } = useQuery({
-    queryKey: ["traffic-fines", searchQuery, statusFilter, sortField, sortDirection],
+    queryKey: ["traffic-fines"],
     queryFn: async () => {
-      let query = supabase
-        .from("traffic_fines")
+      const { data, error } = await supabase
+        .from('traffic_fines')
         .select(`
           *,
           lease:leases(
-            customer_id,
+            id,
+            customer:profiles(
+              id,
+              full_name
+            ),
             vehicle:vehicles(
               make,
               model,
@@ -32,45 +32,28 @@ export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDir
               license_plate
             )
           )
-        `);
+        `)
+        .order('violation_date', { ascending: false });
 
-      if (searchQuery) {
-        query = query.or(`license_plate.ilike.%${searchQuery}%,violation_number.ilike.%${searchQuery}%`);
-      }
-
-      if (statusFilter !== "all") {
-        query = query.eq("payment_status", statusFilter);
-      }
-
-      if (sortField) {
-        query = query.order(sortField, { ascending: sortDirection === "asc" });
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching traffic fines:", error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
   });
 
-  const getStatusBadgeStyle = (status: string) => {
-    const styles = {
-      completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-      failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-      refunded: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    };
-    return styles[status as keyof typeof styles] || styles.pending;
-  };
+  const filteredFines = fines?.filter((fine) => {
+    const matchesSearch = searchQuery.toLowerCase() === "" || 
+      fine.license_plate?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fine.violation_number?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" || fine.payment_status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (isLoading) {
     return (
-      <Card>
-        <div className="p-8 flex justify-center">
+      <Card className="p-6">
+        <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </Card>
@@ -79,53 +62,53 @@ export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDir
 
   return (
     <Card>
+      <div className="p-6">
+        <TrafficFineFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Vehicle</TableHead>
-            <TableHead>
-              <div
-                className="flex items-center cursor-pointer"
-                onClick={() => onSort("violation_date")}
-              >
-                Date
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead>Fine Type</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="w-[120px] font-semibold">License Plate</TableHead>
+            <TableHead className="w-[140px] font-semibold">Violation Number</TableHead>
+            <TableHead className="w-[120px] font-semibold">Date</TableHead>
+            <TableHead className="w-[180px] font-semibold">Fine Type</TableHead>
+            <TableHead className="w-[120px] font-semibold">Amount</TableHead>
+            <TableHead className="w-[120px] font-semibold">Status</TableHead>
+            <TableHead className="w-[180px] font-semibold">Customer</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {fines?.map((fine) => (
+          {filteredFines?.map((fine) => (
             <TableRow key={fine.id}>
-              <TableCell>
-                {fine.lease?.vehicle?.year} {fine.lease?.vehicle?.make}{" "}
-                {fine.lease?.vehicle?.model}
-                <br />
-                <span className="text-sm text-muted-foreground">
-                  {fine.lease?.vehicle?.license_plate}
-                </span>
+              <TableCell className="min-w-[120px]">
+                {fine.license_plate}
               </TableCell>
-              <TableCell>{format(new Date(fine.violation_date), "PP")}</TableCell>
-              <TableCell>{fine.fine_type}</TableCell>
-              <TableCell>{fine.fine_location}</TableCell>
-              <TableCell>{formatCurrency(fine.fine_amount || 0)}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={getStatusBadgeStyle(fine.payment_status)}
+              <TableCell className="min-w-[140px]">{fine.violation_number}</TableCell>
+              <TableCell className="min-w-[120px]">
+                {format(new Date(fine.violation_date), 'dd/MM/yyyy')}
+              </TableCell>
+              <TableCell className="min-w-[180px]">{fine.fine_type}</TableCell>
+              <TableCell className="min-w-[120px]">{formatCurrency(fine.fine_amount)}</TableCell>
+              <TableCell className="min-w-[120px]">
+                <Badge 
+                  variant={fine.payment_status === 'completed' ? 'success' : 'warning'}
                 >
                   {fine.payment_status}
                 </Badge>
               </TableCell>
+              <TableCell className="min-w-[180px]">
+                {fine.lease?.customer?.full_name || 'Unassigned'}
+              </TableCell>
             </TableRow>
           ))}
-          {(!fines || fines.length === 0) && (
+          {!filteredFines?.length && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={7} className="text-center py-4">
                 No traffic fines found
               </TableCell>
             </TableRow>
@@ -135,6 +118,3 @@ export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDir
     </Card>
   );
 }
-
-// Make sure we're exporting the component with both names for backward compatibility
-export const TrafficFineTable = TrafficFinesList;

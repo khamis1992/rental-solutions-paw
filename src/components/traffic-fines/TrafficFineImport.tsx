@@ -1,89 +1,84 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { FileUploadSection } from "./components/FileUploadSection";
-import { AIAnalysisCard } from "@/components/agreements/payment-import/AIAnalysisCard";
-import { useImportProcess } from "@/components/agreements/hooks/useImportProcess";
-import { TrafficFineFilters } from "./TrafficFineFilters";
-import { TrafficFineTable } from "./TrafficFinesList";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload } from "lucide-react";
 
 export const TrafficFineImport = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortField, setSortField] = useState<string>("violation_date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const queryClient = useQueryClient();
-  const { isUploading, isAnalyzing, analysisResult, startImport, implementChanges } = useImportProcess();
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const success = await startImport(file);
-    if (success) {
-      queryClient.invalidateQueries({ queryKey: ["traffic-fines"] });
+    if (file.type !== "text/csv") {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileName = `traffic-fines/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("imports")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: processingData, error: processingError } = await supabase.functions
+        .invoke("process-traffic-fine-import", {
+          body: { fileName }
+        });
+
+      if (processingError) throw processingError;
+
+      toast({
+        title: "Success",
+        description: "Traffic fines imported successfully",
+      });
+
+    } catch (error: any) {
+      console.error("Import error:", error);
+      toast({
+        title: "Import Failed",
+        description: error.message || "Failed to import traffic fines",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
     }
   };
 
-  const handleDownloadTemplate = () => {
-    const headers = [
-      "serial_number",
-      "violation_number",
-      "violation_date",
-      "license_plate",
-      "fine_location",
-      "violation_charge",
-      "fine_amount",
-      "violation_points"
-    ].join(",");
-    
-    const csvContent = `data:text/csv;charset=utf-8,${headers}\n`;
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "traffic_fines_import_template.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
-    <div className="space-y-4">
-      <FileUploadSection
-        onFileUpload={handleFileUpload}
-        onDownloadTemplate={handleDownloadTemplate}
-        isUploading={isUploading}
-        isAnalyzing={isAnalyzing}
-      />
-      
-      {analysisResult && (
-        <AIAnalysisCard
-          analysisResult={analysisResult}
-          onImplementChanges={implementChanges}
-          isUploading={isUploading}
-        />
-      )}
-
-      <TrafficFineFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-      />
-
-      <TrafficFineTable
-        searchQuery={searchQuery}
-        statusFilter={statusFilter}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={(field) => {
-          if (field === sortField) {
-            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-          } else {
-            setSortField(field);
-            setSortDirection("desc");
-          }
-        }}
-      />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Import Traffic Fines</CardTitle>
+        <CardDescription>
+          Upload a CSV file containing traffic fine records
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild disabled={isUploading}>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+            />
+            <Upload className="mr-2 h-4 w-4" />
+            {isUploading ? "Importing..." : "Import CSV"}
+          </label>
+        </Button>
+      </CardContent>
+    </Card>
   );
-};
+}

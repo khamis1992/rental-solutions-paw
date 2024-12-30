@@ -50,6 +50,32 @@ export const SecuritySettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Login History</CardTitle>
+          <CardDescription>
+            Review your recent login activity
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { device: "Chrome on Windows", location: "San Francisco, US", time: "2 minutes ago" },
+              { device: "Safari on iPhone", location: "San Francisco, US", time: "1 hour ago" },
+              { device: "Firefox on MacOS", location: "San Francisco, US", time: "2 days ago" },
+            ].map((session, i) => (
+              <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">{session.device}</p>
+                  <p className="text-sm text-muted-foreground">{session.location}</p>
+                </div>
+                <div className="text-sm text-muted-foreground">{session.time}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { BookOpen, Users, Car, FileText, BarChart3, Banknote, AlertTriangle } from "lucide-react";
+import { BookOpen, Users, Car, FileText, BarChart3, Banknote } from "lucide-react";
 
 export const SystemOverview = () => {
   const features = [
@@ -24,14 +24,9 @@ export const SystemOverview = () => {
       description: "Handle transactions, track expenses, and manage financial reports."
     },
     {
-      icon: AlertTriangle,
-      title: "Traffic Fines",
-      description: "Process and manage traffic fines with automatic assignment capabilities."
-    },
-    {
       icon: BarChart3,
       title: "Reports & Analytics",
-      description: "Generate comprehensive insights with advanced reporting tools."
+      description: "Generate insights with comprehensive reporting tools."
     }
   ];
 

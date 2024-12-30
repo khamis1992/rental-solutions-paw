@@ -9,9 +9,10 @@ interface VehicleInfoCardProps {
     license_plate?: string;
   };
   initialMileage: number;
+  totalAmount: number;
 }
 
-export const VehicleInfoCard = ({ vehicle, initialMileage }: VehicleInfoCardProps) => {
+export const VehicleInfoCard = ({ vehicle, initialMileage, totalAmount }: VehicleInfoCardProps) => {
   return (
     <Card>
       <CardContent className="pt-6">
@@ -28,6 +29,10 @@ export const VehicleInfoCard = ({ vehicle, initialMileage }: VehicleInfoCardProp
           <div>
             <Label>Initial Mileage</Label>
             <p>{initialMileage}</p>
+          </div>
+          <div>
+            <Label>Total Amount</Label>
+            <p>{totalAmount} QAR</p>
           </div>
         </div>
       </CardContent>

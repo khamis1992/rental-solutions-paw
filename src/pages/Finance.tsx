@@ -1,45 +1,42 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
-import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
-import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
-import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AccountingOverview } from "@/components/finance/accounting/AccountingOverview";
+import { RecentTransactions } from "@/components/finance/RecentTransactions";
+import { TaxFilingDashboard } from "@/components/finance/tax/TaxFilingDashboard";
+import { TransactionImport } from "@/components/finance/transaction-import/TransactionImport";
 
 const Finance = () => {
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
-      
-      <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="import">Import Transactions</TabsTrigger>
-          <TabsTrigger value="categorization">Categorization</TabsTrigger>
-        </TabsList>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold" tabIndex={0}>Finance</h1>
 
-        <TabsContent value="dashboard" className="space-y-6">
-          <RevenueDashboard />
-        </TabsContent>
+        <Tabs defaultValue="accounting" className="space-y-6">
+          <TabsList aria-label="Finance sections">
+            <TabsTrigger value="accounting">Accounting</TabsTrigger>
+            <TabsTrigger value="tax">Tax Management</TabsTrigger>
+            <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
+            <TabsTrigger value="import">Import Transactions</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="payments" className="space-y-6">
-          <PaymentManagement />
-        </TabsContent>
+          <TabsContent value="accounting" role="tabpanel">
+            <AccountingOverview />
+          </TabsContent>
 
-        <TabsContent value="transactions">
-          {/* Transaction management components will go here */}
-        </TabsContent>
+          <TabsContent value="tax" role="tabpanel">
+            <TaxFilingDashboard />
+          </TabsContent>
 
-        <TabsContent value="import">
-          <TransactionImportTool />
-        </TabsContent>
+          <TabsContent value="transactions" role="tabpanel">
+            <RecentTransactions />
+          </TabsContent>
 
-        <TabsContent value="categorization">
-          <TransactionCategorization />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="import" role="tabpanel">
+            <TransactionImport />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
   );
 };
 

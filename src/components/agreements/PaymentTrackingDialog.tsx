@@ -5,14 +5,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { usePaymentReconciliation } from "./hooks/usePaymentReconciliation";
-import { PaymentTrackingTabs } from "./payments/PaymentTrackingTabs";
 
 interface PaymentTrackingDialogProps {
   agreementId: string;
@@ -26,7 +34,6 @@ export function PaymentTrackingDialog({
   onOpenChange,
 }: PaymentTrackingDialogProps) {
   const queryClient = useQueryClient();
-  const { isReconciling, reconcilePayments } = usePaymentReconciliation();
 
   const { data: payments, isLoading, error } = useQuery({
     queryKey: ["payment-schedules", agreementId],
@@ -47,21 +54,6 @@ export function PaymentTrackingDialog({
     },
     enabled: open && !!agreementId,
     retry: 2,
-  });
-
-  const { data: paymentHistory } = useQuery({
-    queryKey: ["payment-history", agreementId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payment_history")
-        .select("*")
-        .eq("lease_id", agreementId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: open && !!agreementId,
   });
 
   useEffect(() => {
@@ -105,14 +97,17 @@ export function PaymentTrackingDialog({
     };
   }, [agreementId, open, queryClient]);
 
-  const handleReconcileAll = async () => {
-    try {
-      await reconcilePayments(agreementId);
-      toast.success("All payments have been reconciled");
-    } catch (error) {
-      console.error("Error reconciling payments:", error);
-      toast.error("Failed to reconcile payments");
+  const getStatusColor = (status: string, dueDate: string) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    
+    if (status === "completed") {
+      return "bg-green-500/10 text-green-500";
     }
+    
+    return now > due
+      ? "bg-red-500/10 text-red-500"
+      : "bg-yellow-500/10 text-yellow-500";
   };
 
   if (error) {
@@ -130,11 +125,11 @@ export function PaymentTrackingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Payment Management</DialogTitle>
+          <DialogTitle>Payment Schedule</DialogTitle>
           <DialogDescription>
-            Track and manage payment schedules, history, and reconciliation
+            Track payment status and reminder history
           </DialogDescription>
         </DialogHeader>
 
@@ -143,14 +138,49 @@ export function PaymentTrackingDialog({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <PaymentTrackingTabs
-            agreementId={agreementId}
-            payments={payments || []}
-            paymentHistory={paymentHistory || []}
-            isLoading={isLoading}
-            onReconcileAll={handleReconcileAll}
-            isReconciling={isReconciling}
-          />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Reminders Sent</TableHead>
+                <TableHead>Last Reminder</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payments?.map((payment) => (
+                <TableRow key={payment.id}>
+                  <TableCell>
+                    {new Date(payment.due_date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={getStatusColor(payment.status, payment.due_date)}
+                    >
+                      {payment.status.charAt(0).toUpperCase() +
+                        payment.status.slice(1)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{payment.reminder_count || 0}</TableCell>
+                  <TableCell>
+                    {payment.last_reminder_sent
+                      ? new Date(payment.last_reminder_sent).toLocaleDateString()
+                      : "No reminders sent"}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!payments?.length && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    No payment schedules found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         )}
       </DialogContent>
     </Dialog>

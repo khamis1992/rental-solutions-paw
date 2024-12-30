@@ -105,7 +105,7 @@ export const VehicleParts = ({ vehicleId }: VehiclePartsProps) => {
             />
           </div>
           <div>
-            <Label htmlFor="unit_cost">Unit Cost (QAR)</Label>
+            <Label htmlFor="unit_cost">Unit Cost</Label>
             <Input
               id="unit_cost"
               type="number"
@@ -151,7 +151,7 @@ export const VehicleParts = ({ vehicleId }: VehiclePartsProps) => {
                   <TableCell>{part.part_name}</TableCell>
                   <TableCell>{part.part_number}</TableCell>
                   <TableCell>{part.quantity}</TableCell>
-                  <TableCell>QAR {part.unit_cost.toFixed(2)}</TableCell>
+                  <TableCell>${part.unit_cost}</TableCell>
                   <TableCell>{part.supplier}</TableCell>
                   <TableCell>{part.status}</TableCell>
                 </TableRow>

@@ -13,15 +13,15 @@ export function ReconcileButton({
   onReconcile 
 }: ReconcileButtonProps) {
   return (
-    <Button
-      onClick={onReconcile}
-      disabled={isReconciling || !unassignedCount}
-      variant="default"
-      size="sm"
-      className="text-sm font-medium"
-    >
-      <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
-      Auto-Assign All
-    </Button>
+    <div className="ml-4">
+      <Button
+        onClick={onReconcile}
+        disabled={isReconciling || !unassignedCount}
+        className="whitespace-nowrap"
+      >
+        <RefreshCw className={`mr-2 h-4 w-4 ${isReconciling ? 'animate-spin' : ''}`} />
+        Auto-Assign All
+      </Button>
+    </div>
   );
 }

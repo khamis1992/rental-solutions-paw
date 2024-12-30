@@ -19,8 +19,6 @@ import { VehicleAgreementDetails } from "./form/VehicleAgreementDetails";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 
 export function CreateAgreementDialog() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -35,6 +33,7 @@ export function CreateAgreementDialog() {
     watch,
     setValue,
     errors,
+    calculateAndUpdateMonthlyPayment
   } = useAgreementForm(() => {
     setOpen(false);
     setSelectedCustomerId("");
@@ -64,95 +63,78 @@ export function CreateAgreementDialog() {
           <span className="font-medium">New Agreement</span>
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Agreement</DialogTitle>
           <DialogDescription>
             Create a new lease-to-own or short-term rental agreement.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[80vh] pr-4">
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-            <AgreementBasicInfo register={register} errors={errors} />
-            
-            <Separator className="my-6" />
-            
-            <CustomerInformation 
-              register={register} 
-              errors={errors}
-              selectedCustomerId={selectedCustomerId}
-              onCustomerSelect={setSelectedCustomerId}
-              setValue={setValue}
-            />
-            
-            <Separator className="my-6" />
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          <AgreementBasicInfo register={register} errors={errors} />
+          
+          <CustomerInformation 
+            register={register} 
+            errors={errors}
+            selectedCustomerId={selectedCustomerId}
+            onCustomerSelect={setSelectedCustomerId}
+            setValue={setValue}
+          />
 
-            <VehicleAgreementDetails 
+          <VehicleAgreementDetails 
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+          />
+
+          {agreementType === "lease_to_own" && (
+            <LeaseToOwnFields
               register={register}
-              errors={errors}
+              updateMonthlyPayment={calculateAndUpdateMonthlyPayment}
               watch={watch}
-              setValue={setValue}
             />
-            
-            <Separator className="my-6" />
+          )}
 
-            {agreementType === "lease_to_own" && (
-              <>
-                <LeaseToOwnFields
-                  register={register}
-                  watch={watch}
-                />
-                <Separator className="my-6" />
-              </>
-            )}
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Late Fees & Penalties</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <LateFeesPenaltiesFields register={register} />
-              </div>
+          <div className="col-span-2">
+            <h3 className="text-lg font-semibold mb-4">Late Fees & Penalties</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <LateFeesPenaltiesFields register={register} />
             </div>
+          </div>
 
-            <Separator className="my-6" />
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea placeholder="Additional notes..." {...register("notes")} />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea 
-                id="notes"
-                placeholder="Additional notes about the agreement..."
-                className="min-h-[100px]"
-                {...register("notes")} 
-              />
-            </div>
-
-            <DialogFooter className="sticky bottom-0 bg-background pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                disabled={isSubmitting}
-                className="relative"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="opacity-0">Create Agreement</span>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  </>
-                ) : (
-                  "Create Agreement"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </ScrollArea>
+          <DialogFooter className="sticky bottom-0 bg-background pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+              className="relative"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="opacity-0">Create Agreement</span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                </>
+              ) : (
+                "Create Agreement"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
