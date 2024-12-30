@@ -39,7 +39,6 @@ export const usePaymentForm = (agreementId: string) => {
     },
   });
 
-  // Set base amount when agreement data is loaded
   useEffect(() => {
     if (agreement?.remainingAmount?.[0]) {
       const rentAmount = agreement.remainingAmount[0].rent_amount;
@@ -116,6 +115,7 @@ export const usePaymentForm = (agreementId: string) => {
 
   const onSubmit = async (data: any) => {
     try {
+      // Calculate the balance (Total Amount to Pay - Amount Paid)
       const balance = totalAmount - data.amountPaid;
       
       const { error } = await supabase.from("payments").insert([

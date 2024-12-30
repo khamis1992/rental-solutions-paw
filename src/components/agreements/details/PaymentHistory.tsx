@@ -21,6 +21,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
         .select(`
           id,
           amount,
+          amount_paid,
+          balance,
           payment_date,
           status,
           payment_method,
@@ -84,7 +86,11 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   </div>
                 </div>
                 <div className="text-right space-y-1">
-                  <div>{formatCurrency(payment.amount)}</div>
+                  <div>Total Amount: {formatCurrency(payment.amount)}</div>
+                  <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
+                  {payment.balance > 0 && (
+                    <div className="text-red-600">Balance: {formatCurrency(payment.balance)}</div>
+                  )}
                   <Badge 
                     variant="outline" 
                     className={payment.status === 'completed' ? 
