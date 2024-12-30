@@ -34,36 +34,13 @@ export const AgreementDetailsDialog = ({
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
 
-  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
+  const { data: payments = [] } = useQuery({
     queryKey: ["agreement-payments", agreementId],
     queryFn: async () => {
       console.log("Fetching payments for agreement:", agreementId);
-      
-      const { data: payments, error } = await supabase
+      const { data, error } = await supabase
         .from("payments")
-        .select(`
-          *,
-          security_deposits (
-            amount,
-            status
-          ),
-          leases (
-            agreement_number,
-            customer_id,
-            profiles:customer_id (
-              id,
-              full_name,
-              phone_number
-            )
-          ),
-          accounting_invoices (
-            id,
-            invoice_number,
-            status,
-            issued_date,
-            paid_date
-          )
-        `)
+        .select("*")
         .eq("lease_id", agreementId)
         .order("payment_date", { ascending: false });
 
@@ -72,8 +49,8 @@ export const AgreementDetailsDialog = ({
         throw error;
       }
       
-      console.log("Fetched payments:", payments);
-      return payments as Payment[];
+      console.log("Fetched payments:", data);
+      return data as Payment[];
     },
     enabled: open && !!agreementId,
   });
@@ -123,7 +100,7 @@ export const AgreementDetailsDialog = ({
                 <PaymentForm agreementId={agreementId} />
               </TabsContent>
               <TabsContent value="payment-history">
-                <PaymentHistory payments={payments} isLoading={isLoadingPayments} />
+                <PaymentHistory payments={payments} />
               </TabsContent>
               <TabsContent value="invoices">
                 <InvoiceList agreementId={agreementId} />

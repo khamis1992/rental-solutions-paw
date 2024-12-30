@@ -2170,80 +2170,6 @@ export type Database = {
           },
         ]
       }
-      overdue_payments: {
-        Row: {
-          agreement_id: string | null
-          amount_paid: number
-          balance: number
-          created_at: string | null
-          customer_id: string | null
-          days_overdue: number | null
-          id: string
-          last_payment_date: string | null
-          notes: string | null
-          status: Database["public"]["Enums"]["overdue_payment_status"] | null
-          total_amount: number
-          updated_at: string | null
-        }
-        Insert: {
-          agreement_id?: string | null
-          amount_paid?: number
-          balance?: number
-          created_at?: string | null
-          customer_id?: string | null
-          days_overdue?: number | null
-          id?: string
-          last_payment_date?: string | null
-          notes?: string | null
-          status?: Database["public"]["Enums"]["overdue_payment_status"] | null
-          total_amount?: number
-          updated_at?: string | null
-        }
-        Update: {
-          agreement_id?: string | null
-          amount_paid?: number
-          balance?: number
-          created_at?: string | null
-          customer_id?: string | null
-          days_overdue?: number | null
-          id?: string
-          last_payment_date?: string | null
-          notes?: string | null
-          status?: Database["public"]["Enums"]["overdue_payment_status"] | null
-          total_amount?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "overdue_payments_agreement_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: false
-            referencedRelation: "agreement_overview"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_agreement_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: false
-            referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payment_history: {
         Row: {
           actual_payment_date: string | null
@@ -4014,54 +3940,6 @@ export type Database = {
         }
         Relationships: []
       }
-      overdue_payments_view: {
-        Row: {
-          agreement_id: string | null
-          agreement_number: string | null
-          amount_paid: number | null
-          balance: number | null
-          created_at: string | null
-          customer_id: string | null
-          customer_name: string | null
-          days_overdue: number | null
-          id: string | null
-          last_payment_date: string | null
-          notes: string | null
-          status: Database["public"]["Enums"]["overdue_payment_status"] | null
-          total_amount: number | null
-          updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "overdue_payments_agreement_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: false
-            referencedRelation: "agreement_overview"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_agreement_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: false
-            referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Functions: {
       calculate_credit_score: {
@@ -4194,7 +4072,6 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
-      overdue_payment_status: "pending" | "partially_paid" | "resolved"
       payment_method_type:
         | "Invoice"
         | "Cash"

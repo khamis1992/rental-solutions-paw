@@ -163,6 +163,12 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
               <span>Total:</span>
               <span>{formatCurrency(totalPaidAmount)}</span>
             </div>
+            {data.payments && (
+              <div className="flex justify-between w-48 print:w-40 text-blue-600">
+                <span>Total Paid:</span>
+                <span>{formatCurrency(totalPaidAmount)}</span>
+              </div>
+            )}
           </div>
         </div>
       </Card>
