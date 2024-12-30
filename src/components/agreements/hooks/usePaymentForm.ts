@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+interface RemainingAmount {
+  rent_amount: number;
+}
+
 export const usePaymentForm = (agreementId: string) => {
   const [isRecurring, setIsRecurring] = useState(false);
   const [baseAmount, setBaseAmount] = useState(0);
@@ -24,7 +28,7 @@ export const usePaymentForm = (agreementId: string) => {
           )
         `)
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return agreement;
@@ -50,10 +54,11 @@ export const usePaymentForm = (agreementId: string) => {
 
   // Set base amount when agreement data is loaded
   useEffect(() => {
-    if (agreement?.remainingAmount?.rent_amount) {
-      setBaseAmount(agreement.remainingAmount.rent_amount);
-      setValue("amount", agreement.remainingAmount.rent_amount);
-      setTotalAmount(agreement.remainingAmount.rent_amount);
+    if (agreement?.remainingAmount) {
+      const rentAmount = (agreement.remainingAmount as RemainingAmount).rent_amount;
+      setBaseAmount(rentAmount);
+      setValue("amount", rentAmount);
+      setTotalAmount(rentAmount);
     }
   }, [agreement, setValue]);
 
