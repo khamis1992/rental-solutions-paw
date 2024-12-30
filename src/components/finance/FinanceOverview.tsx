@@ -13,9 +13,12 @@ export const FinanceOverview = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: financialData, isLoading } = useQuery({
+  const { data: financialData, isLoading, error } = useQuery({
     queryKey: ["financial-overview"],
     queryFn: async () => {
+      console.log("Fetching financial data...");
+      
+      // Fetch expenses and completed payments in parallel
       const [expenseResult, revenueResult] = await Promise.all([
         supabase
           .from("expense_transactions")
@@ -24,11 +27,23 @@ export const FinanceOverview = () => {
         supabase
           .from("payments")
           .select("*")
+          .eq("status", "completed")
           .order("created_at", { ascending: false })
       ]);
 
-      if (expenseResult.error) throw expenseResult.error;
-      if (revenueResult.error) throw revenueResult.error;
+      if (expenseResult.error) {
+        console.error("Error fetching expenses:", expenseResult.error);
+        throw expenseResult.error;
+      }
+      if (revenueResult.error) {
+        console.error("Error fetching revenue:", revenueResult.error);
+        throw revenueResult.error;
+      }
+
+      console.log("Financial data fetched successfully:", {
+        expenses: expenseResult.data?.length || 0,
+        revenue: revenueResult.data?.length || 0
+      });
 
       return {
         expenses: expenseResult.data || [],
@@ -39,19 +54,29 @@ export const FinanceOverview = () => {
 
   const handleDeleteAllTransactions = async () => {
     try {
+      console.log("Starting delete all transactions process...");
       setIsDeleting(true);
-      const { error } = await supabase.rpc('delete_all_transactions');
       
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('delete-all-transactions');
+      
+      if (error) {
+        console.error("Error in delete-all-transactions function:", error);
+        throw error;
+      }
 
-      // Invalidate and refetch queries
-      await queryClient.invalidateQueries({ queryKey: ["financial-overview"] });
+      console.log("Delete all transactions successful:", data);
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["financial-overview"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["transaction-history"] })
+      ]);
       
-      toast.success("All transactions have been deleted successfully");
+      toast.success("Successfully deleted all transactions");
       setIsDeleteDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting transactions:', error);
-      toast.error("Failed to delete transactions. Please try again.");
+      toast.error(error.message || "Failed to delete transactions. Please try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -65,8 +90,16 @@ export const FinanceOverview = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] text-red-600">
+        Failed to load financial data. Please try again later.
+      </div>
+    );
+  }
+
   const totalRevenue = financialData?.revenue.reduce((sum, payment) => 
-    payment.status === "completed" ? sum + (payment.amount || 0) : sum, 0) || 0;
+    sum + (payment.amount || 0), 0) || 0;
 
   const totalExpenses = financialData?.expenses.reduce((sum, expense) => 
     sum + (expense.amount || 0), 0) || 0;
@@ -92,7 +125,10 @@ export const FinanceOverview = () => {
         <h2 className="text-3xl font-bold">Financial Overview</h2>
         <Button 
           variant="destructive" 
-          onClick={() => setIsDeleteDialogOpen(true)}
+          onClick={() => {
+            console.log("Delete button clicked");
+            setIsDeleteDialogOpen(true);
+          }}
           className="gap-2"
         >
           <Trash2 className="h-4 w-4" />
@@ -103,6 +139,8 @@ export const FinanceOverview = () => {
       <FinancialCards 
         totalRevenue={totalRevenue}
         totalExpenses={totalExpenses}
+        isLoading={isLoading}
+        error={error}
       />
 
       <RecentTransactionsList transactions={recentTransactions} />

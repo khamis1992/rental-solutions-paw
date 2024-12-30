@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Loader2, Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { FileUploadSection } from "./components/FileUploadSection";
 import { TransactionPreviewTable } from "./TransactionPreviewTable";
+import { Button } from "@/components/ui/button";
 import { parseCSV } from "./utils/csvUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [previewData, setPreviewData] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -26,73 +29,63 @@ export const TransactionImport = () => {
       return;
     }
 
-    setIsUploading(true);
+    setIsAnalyzing(true);
+    
     try {
       const text = await file.text();
       const parsedData = parseCSV(text);
       setPreviewData(parsedData);
+      setShowPreview(true);
+      setIsAnalyzing(false);
       
       toast({
         title: "Success",
-        description: "CSV file parsed successfully. Please review the transactions.",
+        description: `Successfully parsed ${parsedData.length} transactions.`,
       });
-    } catch (error) {
-      console.error('Error parsing CSV:', error);
+    } catch (error: any) {
+      console.error('CSV parsing error:', error);
       toast({
         title: "Error",
-        description: "Failed to parse CSV file. Please check the format.",
+        description: error.message || "Failed to parse CSV file",
         variant: "destructive",
       });
-    } finally {
-      setIsUploading(false);
+      setIsAnalyzing(false);
     }
   };
 
-  const handleImport = async () => {
-    if (previewData.length === 0) return;
+  const handleDataChange = (newData: any[]) => {
+    setPreviewData(newData);
+  };
 
+  const handleSaveTransactions = async () => {
     setIsUploading(true);
     try {
-      const { data: importLog, error: createError } = await supabase
-        .from('transaction_imports')
-        .insert([{
-          file_name: 'manual_import.csv',
-          status: 'processing'
-        }])
-        .select()
-        .single();
+      const { data, error } = await supabase
+        .from('accounting_transactions')
+        .insert(previewData.map(row => ({
+          transaction_date: row.date,
+          amount: parseFloat(row.amount),
+          description: row.description,
+          category_id: row.category_id,
+          type: parseFloat(row.amount) >= 0 ? 'income' : 'expense',
+          customer_id: row.customer_id || null
+        })));
 
-      if (createError) throw createError;
+      if (error) throw error;
 
-      const importItems = previewData.map((item, index) => ({
-        import_id: importLog.id,
-        transaction_date: item.date,
-        amount: parseFloat(item.amount),
-        description: item.description,
-        customer_id: item.customer_id,
-        category_id: item.category_id,
-        row_number: index + 1
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('transaction_import_items')
-        .insert(importItems);
-
-      if (itemsError) throw itemsError;
-
-      await queryClient.invalidateQueries({ queryKey: ['accounting-transactions'] });
-      
       toast({
         title: "Success",
-        description: `Successfully imported ${previewData.length} transactions`,
+        description: `Successfully imported ${previewData.length} transactions.`,
       });
       
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      setShowPreview(false);
       setPreviewData([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Import error:', error);
       toast({
         title: "Error",
-        description: "Failed to import transactions",
+        description: error.message || "Failed to import transactions",
         variant: "destructive",
       });
     } finally {
@@ -101,7 +94,9 @@ export const TransactionImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Date,Amount,Description,Category\n2024-03-20,1000.00,Monthly Revenue,Income";
+    const csvContent = "Date,Amount,Description,Category,Customer\n" +
+                      "2024-03-20,1000.00,Monthly Revenue,Income,Customer Name";
+    
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -115,40 +110,30 @@ export const TransactionImport = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Import Transactions</h2>
-          <p className="text-sm text-muted-foreground">
-            Upload a CSV file to import multiple transactions at once
-          </p>
+      <FileUploadSection
+        onFileUpload={handleFileUpload}
+        onDownloadTemplate={downloadTemplate}
+        isUploading={isUploading}
+        isAnalyzing={isAnalyzing}
+      />
+
+      {isAnalyzing && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Processing import...
         </div>
-        <Button onClick={downloadTemplate} variant="outline">
-          Download Template
-        </Button>
-      </div>
+      )}
 
-      <div className="grid gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            className="w-[200px]"
-            disabled={isUploading}
-          >
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <Upload className="h-4 w-4" />
-              Upload CSV
-            </label>
-          </Button>
-
-          {previewData.length > 0 && (
+      {showPreview && previewData.length > 0 && (
+        <div className="space-y-4">
+          <TransactionPreviewTable
+            data={previewData}
+            onDataChange={handleDataChange}
+          />
+          
+          <div className="flex justify-end">
             <Button 
-              onClick={handleImport}
+              onClick={handleSaveTransactions}
               disabled={isUploading}
             >
               {isUploading ? (
@@ -160,16 +145,9 @@ export const TransactionImport = () => {
                 'Import Transactions'
               )}
             </Button>
-          )}
+          </div>
         </div>
-
-        {previewData.length > 0 && (
-          <TransactionPreviewTable 
-            data={previewData} 
-            onDataChange={setPreviewData}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 };
