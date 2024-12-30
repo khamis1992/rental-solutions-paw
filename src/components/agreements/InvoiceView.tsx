@@ -95,7 +95,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </p>
           </div>
 
-          {/* Items Table */}
           <table className="w-full mb-8 print:mb-6">
             <thead>
               <tr className="border-b">
@@ -147,7 +146,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
 
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
-              <span>Total Amount:</span>
+              <span>Remaining Amount:</span>
               <span>{formatCurrency(data.amount)}</span>
             </div>
             <div className="flex justify-between w-48 print:w-40">
