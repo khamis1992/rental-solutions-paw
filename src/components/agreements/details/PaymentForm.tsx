@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,7 @@ interface PaymentFormData {
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<PaymentFormData>();
+  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<PaymentFormData>();
 
   const onSubmit = async (data: PaymentFormData) => {
     setIsSubmitting(true);
@@ -101,19 +101,26 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       
       <div>
         <Label htmlFor="paymentMethod">Payment Method</Label>
-        <Select {...register("paymentMethod", { required: "Payment method is required" })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select payment method" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Cash">Cash</SelectItem>
-            <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
-            <SelectItem value="Invoice">Invoice</SelectItem>
-            <SelectItem value="On_hold">On Hold</SelectItem>
-            <SelectItem value="Deposit">Deposit</SelectItem>
-            <SelectItem value="Cheque">Cheque</SelectItem>
-          </SelectContent>
-        </Select>
+        <Controller
+          name="paymentMethod"
+          control={control}
+          rules={{ required: "Payment method is required" }}
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cash">Cash</SelectItem>
+                <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
+                <SelectItem value="Invoice">Invoice</SelectItem>
+                <SelectItem value="On_hold">On Hold</SelectItem>
+                <SelectItem value="Deposit">Deposit</SelectItem>
+                <SelectItem value="Cheque">Cheque</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
         {errors.paymentMethod && (
           <p className="text-sm text-red-500 mt-1">{errors.paymentMethod.message}</p>
         )}
@@ -149,16 +156,23 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           </div>
           <div className="flex-1">
             <Label htmlFor="intervalUnit">Unit</Label>
-            <Select {...register("intervalUnit", { required: isRecurring })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select unit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="days">Days</SelectItem>
-                <SelectItem value="weeks">Weeks</SelectItem>
-                <SelectItem value="months">Months</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="intervalUnit"
+              control={control}
+              rules={{ required: isRecurring }}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="days">Days</SelectItem>
+                    <SelectItem value="weeks">Weeks</SelectItem>
+                    <SelectItem value="months">Months</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.intervalUnit && (
               <p className="text-sm text-red-500 mt-1">{errors.intervalUnit.message}</p>
             )}
