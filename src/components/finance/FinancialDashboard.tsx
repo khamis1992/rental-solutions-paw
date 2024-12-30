@@ -170,7 +170,10 @@ export const FinancialDashboard = () => {
       />
 
       <div className="grid gap-6 md:grid-cols-2">
-        <RevenueChart data={revenueData} />
+        <RevenueChart 
+          data={revenueData} 
+          onExport={() => {}} // Added missing onExport prop
+        />
         <ExpenseBreakdownChart data={expenseData} />
       </div>
 

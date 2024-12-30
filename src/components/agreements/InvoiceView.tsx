@@ -20,7 +20,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
       const { data, error } = await supabase
         .from("company_settings")
         .select("*")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -30,14 +30,14 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
   const { data: remainingAmount } = useQuery({
     queryKey: ["remaining-amount", data.agreementId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: remainingData, error } = await supabase
         .from("remaining_amounts")
         .select("*")
         .eq("lease_id", data.agreementId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return remainingData;
     },
     enabled: !!data.agreementId,
   });
