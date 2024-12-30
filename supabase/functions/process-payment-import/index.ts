@@ -12,19 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { analysisResult, forceImport = false } = await req.json();
+    const { rows, importId, skipValidation = false } = await req.json();
     
-    // When force import is true, we'll process all rows that have the minimum required data
-    const rowsToProcess = forceImport && analysisResult.rows ? 
-      analysisResult.rows.filter((row: any) => row.amount && row.payment_date) :
-      (analysisResult.validRows || []);
-
-    if (!Array.isArray(rowsToProcess)) {
-      console.error('Invalid rows format:', rowsToProcess);
+    if (!Array.isArray(rows)) {
       return new Response(
         JSON.stringify({ 
           error: 'Invalid data format',
-          details: 'Rows to process must be an array'
+          details: 'Rows must be an array'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -32,12 +26,6 @@ serve(async (req) => {
         }
       );
     }
-
-    console.log('Processing import with rows:', {
-      totalRows: rowsToProcess.length,
-      forceImport,
-      sampleRow: rowsToProcess[0]
-    });
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -49,17 +37,15 @@ serve(async (req) => {
     const results = [];
     const errors = [];
 
-    for (let i = 0; i < rowsToProcess.length; i += batchSize) {
-      const batch = rowsToProcess.slice(i, i + batchSize);
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
       try {
-        console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(rowsToProcess.length / batchSize)}`);
-        
-        // Prepare the batch data
+        // Prepare the batch data with minimal processing
         const processedBatch = batch.map(row => ({
           amount: parseFloat(row.amount) || 0,
-          payment_date: row.payment_date,
+          payment_date: row.payment_date || null,
           payment_method: row.payment_method || 'unknown',
-          transaction_id: row.transaction_id,
+          transaction_id: row.transaction_id || null,
           status: 'pending'
         }));
 
@@ -77,7 +63,6 @@ serve(async (req) => {
           });
         } else {
           results.push(...(data || []));
-          console.log(`Successfully processed ${data?.length || 0} rows in batch`);
         }
       } catch (batchError) {
         console.error('Batch processing error:', batchError);
@@ -89,23 +74,10 @@ serve(async (req) => {
       }
     }
 
-    // Create detailed processing report
-    const processingReport = {
-      totalProcessed: results.length,
-      successfulBatches: Math.floor(results.length / batchSize),
-      failedBatches: errors.length,
-      totalErrors: errors.reduce((sum, err) => sum + err.failedRows, 0),
-      errorDetails: errors,
-      forceImported: forceImport
-    };
-
-    console.log('Processing complete:', processingReport);
-
     return new Response(
       JSON.stringify({
         success: true,
         processed: results.length,
-        report: processingReport,
         errors: errors.length > 0 ? errors : undefined
       }),
       {
