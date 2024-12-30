@@ -1422,6 +1422,7 @@ export type Database = {
           checkout_date: string | null
           created_at: string
           customer_id: string
+          daily_late_fine: number | null
           damage_penalty_rate: number | null
           down_payment: number | null
           early_payoff_allowed: boolean | null
@@ -1433,6 +1434,7 @@ export type Database = {
           last_payment_date: string | null
           late_fee_grace_period: unknown | null
           late_fee_rate: number | null
+          late_fine_start_day: number | null
           late_return_fee: number | null
           lease_duration: unknown | null
           license_no: string | null
@@ -1462,6 +1464,7 @@ export type Database = {
           checkout_date?: string | null
           created_at?: string
           customer_id: string
+          daily_late_fine?: number | null
           damage_penalty_rate?: number | null
           down_payment?: number | null
           early_payoff_allowed?: boolean | null
@@ -1473,6 +1476,7 @@ export type Database = {
           last_payment_date?: string | null
           late_fee_grace_period?: unknown | null
           late_fee_rate?: number | null
+          late_fine_start_day?: number | null
           late_return_fee?: number | null
           lease_duration?: unknown | null
           license_no?: string | null
@@ -1502,6 +1506,7 @@ export type Database = {
           checkout_date?: string | null
           created_at?: string
           customer_id?: string
+          daily_late_fine?: number | null
           damage_penalty_rate?: number | null
           down_payment?: number | null
           early_payoff_allowed?: boolean | null
@@ -1513,6 +1518,7 @@ export type Database = {
           last_payment_date?: string | null
           late_fee_grace_period?: unknown | null
           late_fee_rate?: number | null
+          late_fine_start_day?: number | null
           late_return_fee?: number | null
           lease_duration?: unknown | null
           license_no?: string | null
@@ -2431,9 +2437,11 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          days_overdue: number | null
           description: string | null
           id: string
           is_recurring: boolean | null
+          late_fine_amount: number | null
           lease_id: string | null
           next_payment_date: string | null
           payment_date: string | null
@@ -2450,9 +2458,11 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          days_overdue?: number | null
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          late_fine_amount?: number | null
           lease_id?: string | null
           next_payment_date?: string | null
           payment_date?: string | null
@@ -2469,9 +2479,11 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          days_overdue?: number | null
           description?: string | null
           id?: string
           is_recurring?: boolean | null
+          late_fine_amount?: number | null
           lease_id?: string | null
           next_payment_date?: string | null
           payment_date?: string | null
