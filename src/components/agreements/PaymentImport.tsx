@@ -1,36 +1,18 @@
-import { useImportProcess } from "./hooks/useImportProcess";
-import { FileUploadSection } from "./payment-import/FileUploadSection";
-import { AIAnalysisCard } from "./payment-import/AIAnalysisCard";
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import Papa from 'papaparse';
 
 export const PaymentImport = () => {
-  const {
-    isUploading,
-    isAnalyzing,
-    analysisResult,
-    startImport,
-    implementChanges
-  } = useImportProcess();
-
-  // Query to fetch imported transactions
-  const { data: importedData, refetch } = useQuery({
-    queryKey: ["imported-transactions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("financial_imports")
-        .select("*")
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      return data;
-    }
-  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [importedData, setImportedData] = useState<any[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
 
   const downloadTemplate = () => {
     const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
@@ -51,76 +33,103 @@ export const PaymentImport = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setIsUploading(true);
+    
     try {
-      await startImport(file);
-      refetch(); // Refresh the table data
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target?.result as string;
+        
+        Papa.parse(text, {
+          header: true,
+          complete: async (results) => {
+            setHeaders(results.meta.fields || []);
+            setImportedData(results.data);
+
+            // Store raw data in Supabase
+            const { error } = await supabase
+              .from('raw_transaction_imports')
+              .insert({
+                raw_data: results.data,
+                is_valid: true,
+                created_at: new Date().toISOString()
+              });
+
+            if (error) {
+              console.error('Import error:', error);
+              toast.error('Failed to store imported data');
+            } else {
+              toast.success('Data imported successfully');
+            }
+          },
+          error: (error) => {
+            console.error('CSV Parse Error:', error);
+            toast.error('Failed to parse CSV file');
+          }
+        });
+      };
+      
+      reader.readAsText(file);
     } catch (error: any) {
       console.error('Import error:', error);
       toast.error(error.message || 'Failed to import file');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div className="space-y-4">
-      <FileUploadSection
-        onFileUpload={handleFileUpload}
-        onDownloadTemplate={downloadTemplate}
-        isUploading={isUploading}
-        isAnalyzing={isAnalyzing}
-      />
-      
-      {analysisResult && (
-        <AIAnalysisCard
-          analysisResult={analysisResult}
-          onImplementChanges={implementChanges}
-          isUploading={isUploading}
+      <div className="flex items-center gap-4">
+        <Input
+          type="file"
+          accept=".csv"
+          onChange={handleFileUpload}
+          disabled={isUploading}
         />
-      )}
-
-      {isUploading && !analysisResult && (
+        <Button
+          variant="outline"
+          onClick={downloadTemplate}
+          disabled={isUploading}
+        >
+          Download Template
+        </Button>
+      </div>
+      
+      {isUploading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Importing payments...
+          Importing data...
         </div>
       )}
 
-      {/* Display imported transactions */}
-      {importedData && importedData.length > 0 && (
+      {importedData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Imports</CardTitle>
+            <CardTitle>Imported Data</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {importedData.map((item: any) => (
-                <div 
-                  key={item.id} 
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">
-                        Transaction ID: {item.transaction_id || 'N/A'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Created: {new Date(item.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">
-                        {formatCurrency(item.amount)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Status: {item.status || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-sm">
-                    <p>Description: {item.description || 'N/A'}</p>
-                    <p>Payment Method: {item.payment_method || 'N/A'}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {headers.map((header) => (
+                      <TableHead key={header}>{header}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {importedData.map((row, index) => (
+                    <TableRow key={index}>
+                      {headers.map((header) => (
+                        <TableCell key={`${index}-${header}`}>
+                          {row[header]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
