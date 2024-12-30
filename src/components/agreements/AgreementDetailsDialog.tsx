@@ -15,6 +15,7 @@ import { RentManagement } from "./details/RentManagement";
 import { AgreementHeader } from "./AgreementHeader";
 import { CustomerInfoCard } from "./details/CustomerInfoCard";
 import { VehicleInfoCard } from "./details/VehicleInfoCard";
+import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 
 interface AgreementDetailsDialogProps {
@@ -61,6 +62,7 @@ export const AgreementDetailsDialog = ({
             <Tabs defaultValue="payments" className="w-full">
               <TabsList className="w-full">
                 <TabsTrigger value="payments">Payments</TabsTrigger>
+                <TabsTrigger value="payment-history">Payment History</TabsTrigger>
                 <TabsTrigger value="invoices">Invoices</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="damages">Damages</TabsTrigger>
@@ -72,6 +74,9 @@ export const AgreementDetailsDialog = ({
               
               <TabsContent value="payments">
                 <PaymentForm agreementId={agreementId} />
+              </TabsContent>
+              <TabsContent value="payment-history">
+                <PaymentHistory agreementId={agreementId} />
               </TabsContent>
               <TabsContent value="invoices">
                 <InvoiceList agreementId={agreementId} />
