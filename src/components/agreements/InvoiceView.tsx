@@ -34,6 +34,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     window.print();
   };
 
+  // Calculate total paid amount from payments
   const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
 
   return (
@@ -147,20 +148,10 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </div>
           )}
 
-          {/* Totals Section */}
+          {/* Totals Section - Only showing paid amount */}
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
-              <span>Subtotal:</span>
-              <span>{formatCurrency(data.subtotal)}</span>
-            </div>
-            {data.discount > 0 && (
-              <div className="flex justify-between w-48 print:w-40 text-green-600">
-                <span>Discount:</span>
-                <span>-{formatCurrency(data.discount)}</span>
-              </div>
-            )}
-            <div className="flex justify-between w-48 print:w-40 font-bold text-lg print:text-base">
-              <span>Total:</span>
+              <span>Total Paid:</span>
               <span>{formatCurrency(totalPaidAmount)}</span>
             </div>
           </div>
