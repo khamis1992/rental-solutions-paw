@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { InvoiceDialog } from "../InvoiceDialog";
-import { FileText, Loader2 } from "lucide-react";
+import { BatchInvoiceDialog } from "../BatchInvoiceDialog";
+import { FileText, Files, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface InvoiceListProps {
@@ -13,6 +14,7 @@ interface InvoiceListProps {
 
 export const InvoiceList = ({ agreementId }: InvoiceListProps) => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [showBatchGeneration, setShowBatchGeneration] = useState(false);
   
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["agreement-invoices", agreementId],
@@ -40,10 +42,16 @@ export const InvoiceList = ({ agreementId }: InvoiceListProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Invoices</h3>
-        <Button onClick={() => setSelectedInvoiceId(agreementId)} variant="outline">
-          <FileText className="h-4 w-4 mr-2" />
-          Generate Invoice
-        </Button>
+        <div className="space-x-2">
+          <Button onClick={() => setSelectedInvoiceId(agreementId)} variant="outline">
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Invoice
+          </Button>
+          <Button onClick={() => setShowBatchGeneration(true)}>
+            <Files className="h-4 w-4 mr-2" />
+            Batch Generate
+          </Button>
+        </div>
       </div>
 
       <Table>
@@ -91,6 +99,11 @@ export const InvoiceList = ({ agreementId }: InvoiceListProps) => {
         agreementId={selectedInvoiceId || ""}
         open={!!selectedInvoiceId}
         onOpenChange={(open) => !open && setSelectedInvoiceId(null)}
+      />
+
+      <BatchInvoiceDialog
+        open={showBatchGeneration}
+        onOpenChange={setShowBatchGeneration}
       />
     </div>
   );
