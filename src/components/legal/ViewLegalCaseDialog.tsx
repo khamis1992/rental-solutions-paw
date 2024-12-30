@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CaseWorkflowManager } from "./workflow/CaseWorkflowManager";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
+import { LegalCaseStatus } from "@/types/legal";
 
 interface ViewLegalCaseDialogProps {
   caseId: string | null;
@@ -27,7 +28,7 @@ export const ViewLegalCaseDialog = ({
         .from("legal_cases")
         .select(`
           *,
-          customer:profiles (
+          customer:profiles!customer_id (
             full_name,
             phone_number,
             email
@@ -85,7 +86,7 @@ export const ViewLegalCaseDialog = ({
 
                 <CaseWorkflowManager
                   caseId={caseDetails.id}
-                  currentStatus={caseDetails.status}
+                  currentStatus={caseDetails.status as LegalCaseStatus}
                   onStatusChange={handleStatusChange}
                 />
               </div>
