@@ -27,6 +27,21 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     },
   });
 
+  const { data: remainingAmount } = useQuery({
+    queryKey: ["remaining-amount", data.agreementId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("remaining_amounts")
+        .select("*")
+        .eq("lease_id", data.agreementId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!data.agreementId,
+  });
+
   const handlePrint = () => {
     if (onPrint) {
       onPrint();
@@ -34,9 +49,8 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     window.print();
   };
 
-  // Calculate total paid amount and remaining balance
+  // Calculate total paid amount
   const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
-  const remainingBalance = data.amount - totalPaidAmount;
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)] w-full">
@@ -146,16 +160,16 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
 
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
-              <span>Remaining Amount:</span>
-              <span>{formatCurrency(data.amount)}</span>
+              <span>Contract Value:</span>
+              <span>{formatCurrency(remainingAmount?.final_price || 0)}</span>
             </div>
             <div className="flex justify-between w-48 print:w-40">
               <span>Amount Paid:</span>
               <span>{formatCurrency(totalPaidAmount)}</span>
             </div>
             <div className="flex justify-between w-48 print:w-40 font-bold">
-              <span>Balance:</span>
-              <span>{formatCurrency(remainingBalance)}</span>
+              <span>Remaining Amount:</span>
+              <span>{formatCurrency(remainingAmount?.remaining_amount || 0)}</span>
             </div>
           </div>
         </div>
