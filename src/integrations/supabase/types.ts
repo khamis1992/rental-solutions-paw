@@ -2444,6 +2444,7 @@ export type Database = {
           security_deposit_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           transaction_id: string | null
+          type: string
           updated_at: string
         }
         Insert: {
@@ -2462,6 +2463,7 @@ export type Database = {
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
+          type?: string
           updated_at?: string
         }
         Update: {
@@ -2480,6 +2482,7 @@ export type Database = {
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           transaction_id?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: [

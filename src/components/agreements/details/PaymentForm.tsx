@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,78 +10,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
-import { PaymentMethodType } from "@/types/database/agreement.types";
-import { submitPayment } from "./services/paymentService";
-import { useQueryClient } from "@tanstack/react-query";
+import { Controller } from "react-hook-form";
+import { usePaymentForm } from "../hooks/usePaymentForm";
+import { RecurringPaymentFields } from "../payments/RecurringPaymentFields";
 
 interface PaymentFormProps {
   agreementId: string;
 }
 
-interface PaymentFormData {
-  amount: number;
-  paymentMethod: PaymentMethodType;
-  description?: string;
-  isRecurring?: boolean;
-  intervalValue?: number;
-  intervalUnit?: 'days' | 'weeks' | 'months';
-}
-
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const queryClient = useQueryClient();
-  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<PaymentFormData>();
-
-  const onSubmit = async (data: PaymentFormData) => {
-    setIsSubmitting(true);
-    try {
-      const paymentData = {
-        lease_id: agreementId,
-        amount: Number(data.amount),
-        payment_method: data.paymentMethod,
-        description: data.description,
-        payment_date: new Date().toISOString(),
-        status: 'pending' as const,
-        is_recurring: isRecurring,
-        recurring_interval: isRecurring ? 
-          `${data.intervalValue} ${data.intervalUnit}` : null,
-        next_payment_date: isRecurring ? 
-          new Date(Date.now() + getIntervalInMilliseconds(data.intervalValue!, data.intervalUnit!)).toISOString() : 
-          null
-      };
-
-      console.log('Submitting payment:', paymentData);
-      await submitPayment(paymentData);
-      
-      // Invalidate and refetch ALL relevant queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['payment-schedules', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['agreements'] })
-      ]);
-      
-      toast.success("Payment added successfully");
-      reset();
-      setIsRecurring(false);
-    } catch (error: any) {
-      console.error("Error adding payment:", error);
-      toast.error(error.message || "Failed to add payment. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getIntervalInMilliseconds = (value: number, unit: string) => {
-    const milliseconds = {
-      days: 24 * 60 * 60 * 1000,
-      weeks: 7 * 24 * 60 * 60 * 1000,
-      months: 30 * 24 * 60 * 60 * 1000
-    };
-    return value * milliseconds[unit as keyof typeof milliseconds];
-  };
+  const {
+    register,
+    control,
+    handleSubmit,
+    onSubmit,
+    isRecurring,
+    setIsRecurring,
+    errors,
+    isSubmitting
+  } = usePaymentForm(agreementId);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -151,47 +96,11 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       </div>
 
       {isRecurring && (
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <Label htmlFor="intervalValue">Repeat Every</Label>
-            <Input
-              id="intervalValue"
-              type="number"
-              min="1"
-              {...register("intervalValue", { 
-                required: isRecurring ? "Interval value is required" : false,
-                min: { value: 1, message: "Interval must be at least 1" }
-              })}
-              aria-invalid={errors.intervalValue ? "true" : "false"}
-            />
-            {errors.intervalValue && (
-              <p className="text-sm text-red-500 mt-1">{errors.intervalValue.message}</p>
-            )}
-          </div>
-          <div className="flex-1">
-            <Label htmlFor="intervalUnit">Unit</Label>
-            <Controller
-              name="intervalUnit"
-              control={control}
-              rules={{ required: isRecurring }}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select unit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="days">Days</SelectItem>
-                    <SelectItem value="weeks">Weeks</SelectItem>
-                    <SelectItem value="months">Months</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.intervalUnit && (
-              <p className="text-sm text-red-500 mt-1">{errors.intervalUnit.message}</p>
-            )}
-          </div>
-        </div>
+        <RecurringPaymentFields
+          register={register}
+          control={control}
+          errors={errors}
+        />
       )}
 
       <Button 
