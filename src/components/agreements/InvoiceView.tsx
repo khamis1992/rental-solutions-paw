@@ -49,8 +49,9 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     window.print();
   };
 
-  // Calculate total paid amount
+  // Calculate total paid amount and balance
   const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
+  const totalBalance = data.payments?.reduce((sum, payment) => sum + payment.balance, 0) || 0;
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)] w-full">
@@ -160,8 +161,8 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
 
           <div className="flex flex-col items-end space-y-2">
             <div className="flex justify-between w-48 print:w-40">
-              <span>Contract Value:</span>
-              <span>{formatCurrency(remainingAmount?.final_price || 0)}</span>
+              <span>Balance:</span>
+              <span>{formatCurrency(totalBalance)}</span>
             </div>
             <div className="flex justify-between w-48 print:w-40">
               <span>Amount Paid:</span>
