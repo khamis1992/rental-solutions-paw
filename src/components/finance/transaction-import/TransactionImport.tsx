@@ -14,20 +14,15 @@ export const TransactionImport = () => {
   const { toast } = useToast();
 
   // Query to fetch existing imported transactions
-  const { data: importedData = [], isLoading } = useQuery({
+  const { data: importedData = [], isLoading } = useQuery<ImportedTransaction[]>({
     queryKey: ['imported-transactions'],
     queryFn: async () => {
-      // Remove the problematic neq filter and fetch all records
       const { data, error } = await supabase
         .from('raw_transaction_imports')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as { data: RawTransactionImport[] | null, error: any };
 
-      if (error) {
-        console.error('Query error:', error);
-        throw error;
-      }
-      
+      if (error) throw error;
       return (data || []).map(item => item.raw_data);
     }
   });
@@ -58,17 +53,6 @@ export const TransactionImport = () => {
             };
           })
           .filter((row, index) => index > 0); // Skip header row
-
-        if (rows.length === 0) {
-          toast({
-            title: "Error",
-            description: "No valid rows found in the CSV file",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        console.log('Processed rows:', rows);
 
         // Save to Supabase
         const { error: functionError } = await supabase.functions
@@ -121,7 +105,7 @@ export const TransactionImport = () => {
       const { error } = await supabase
         .from('raw_transaction_imports')
         .delete()
-        .neq('id', '0'); // Use a valid UUID comparison
+        .neq('id', ''); // Delete all records
 
       if (error) throw error;
 
