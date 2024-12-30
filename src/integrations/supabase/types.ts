@@ -1613,6 +1613,33 @@ export type Database = {
           },
         ]
       }
+      legal_case_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          workflow_steps: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          workflow_steps?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          workflow_steps?: Json
+        }
+        Relationships: []
+      }
       legal_cases: {
         Row: {
           amount_owed: number | null
@@ -1692,6 +1719,103 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_communications: {
+        Row: {
+          case_id: string | null
+          content: string
+          created_at: string
+          delivery_status: string | null
+          id: string
+          recipient_details: Json | null
+          recipient_type: string
+          sent_date: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          content: string
+          created_at?: string
+          delivery_status?: string | null
+          id?: string
+          recipient_details?: Json | null
+          recipient_type: string
+          sent_date?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          content?: string
+          created_at?: string
+          delivery_status?: string | null
+          id?: string
+          recipient_details?: Json | null
+          recipient_type?: string
+          sent_date?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_communications_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_compliance_items: {
+        Row: {
+          case_id: string | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          priority: string | null
+          reminder_sent: boolean | null
+          status: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          priority?: string | null
+          reminder_sent?: boolean | null
+          status?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          priority?: string | null
+          reminder_sent?: boolean | null
+          status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_compliance_items_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
             referencedColumns: ["id"]
           },
         ]
@@ -1868,6 +1992,116 @@ export type Database = {
           },
           {
             foreignKeyName: "legal_notification_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_settlements: {
+        Row: {
+          case_id: string | null
+          created_at: string
+          id: string
+          paid_amount: number | null
+          payment_plan: Json | null
+          signed_by_company: boolean | null
+          signed_by_customer: boolean | null
+          signed_date: string | null
+          status: string | null
+          terms: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          created_at?: string
+          id?: string
+          paid_amount?: number | null
+          payment_plan?: Json | null
+          signed_by_company?: boolean | null
+          signed_by_customer?: boolean | null
+          signed_date?: string | null
+          status?: string | null
+          terms: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          created_at?: string
+          id?: string
+          paid_amount?: number | null
+          payment_plan?: Json | null
+          signed_by_company?: boolean | null
+          signed_by_customer?: boolean | null
+          signed_date?: string | null
+          status?: string | null
+          terms?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_settlements_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_templates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          language: string | null
+          name: string
+          updated_at: string
+          variables: Json
+          version: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          name: string
+          updated_at?: string
+          variables?: Json
+          version?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          name?: string
+          updated_at?: string
+          variables?: Json
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
