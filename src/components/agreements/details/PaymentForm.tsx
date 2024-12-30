@@ -34,12 +34,15 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     baseAmount,
     totalAmount,
     calculateLateFine,
-    setBaseAmount
+    setBaseAmount,
+    watch
   } = usePaymentForm(agreementId);
 
   useEffect(() => {
     calculateLateFine();
   }, [calculateLateFine]);
+
+  const amountPaid = watch('amountPaid') || 0;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -81,6 +84,29 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             disabled
             value={totalAmount}
           />
+        </div>
+
+        <div>
+          <Label htmlFor="amountPaid">Amount Paid (QAR)</Label>
+          <Input
+            id="amountPaid"
+            type="number"
+            step="0.01"
+            {...register("amountPaid", { 
+              required: "Amount paid is required",
+              min: {
+                value: 0,
+                message: "Amount paid must be positive"
+              },
+              max: {
+                value: totalAmount,
+                message: "Amount paid cannot exceed total amount"
+              }
+            })}
+          />
+          {errors.amountPaid && (
+            <p className="text-sm text-red-500 mt-1">{errors.amountPaid.message}</p>
+          )}
         </div>
 
         <div>

@@ -5,6 +5,8 @@ export interface Payment {
   id: string;
   lease_id: string;
   amount: number;
+  amount_paid: number;
+  balance: number;
   status: PaymentStatus | null;
   payment_date: string | null;
   transaction_id: string | null;
@@ -14,7 +16,7 @@ export interface Payment {
   updated_at: string;
   description: string | null;
   is_recurring: boolean;
-  recurring_interval: string | null | unknown; // Updated to handle Postgres interval type
+  recurring_interval: string | null | unknown;
   next_payment_date: string | null;
   type: string;
   late_fine_amount: number;

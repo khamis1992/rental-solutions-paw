@@ -69,6 +69,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           <TableRow>
             <TableHead>Payment Date</TableHead>
             <TableHead>Amount</TableHead>
+            <TableHead>Amount Paid</TableHead>
+            <TableHead>Balance</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Payment Method</TableHead>
           </TableRow>
@@ -83,6 +85,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     : format(new Date(payment.created_at), 'dd/MM/yyyy')}
                 </TableCell>
                 <TableCell>{payment.amount} QAR</TableCell>
+                <TableCell>{payment.amount_paid || 0} QAR</TableCell>
+                <TableCell>{payment.balance || 0} QAR</TableCell>
                 <TableCell>{payment.description || '-'}</TableCell>
                 <TableCell className="capitalize">
                   {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
@@ -91,7 +95,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 No payment history found
               </TableCell>
             </TableRow>

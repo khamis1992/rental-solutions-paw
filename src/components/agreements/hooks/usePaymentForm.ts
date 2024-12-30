@@ -35,23 +35,6 @@ export const usePaymentForm = (agreementId: string) => {
     },
   });
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    formState: { errors },
-    reset,
-  } = useForm({
-    defaultValues: {
-      amount: 0,
-      paymentMethod: "",
-      description: "",
-      isRecurring: false,
-      recurringInterval: "",
-    },
-  });
-
   // Set base amount when agreement data is loaded
   useEffect(() => {
     if (agreement?.remainingAmount?.[0]) {
@@ -60,7 +43,26 @@ export const usePaymentForm = (agreementId: string) => {
       setValue("amount", rentAmount);
       setTotalAmount(rentAmount);
     }
-  }, [agreement, setValue]);
+  }, [agreement]);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+    reset,
+  } = useForm({
+    defaultValues: {
+      amount: 0,
+      amountPaid: 0,
+      paymentMethod: "",
+      description: "",
+      isRecurring: false,
+      recurringInterval: "",
+    },
+  });
 
   const calculateLateFine = useCallback(async () => {
     if (!agreementId) return;
@@ -79,15 +81,12 @@ export const usePaymentForm = (agreementId: string) => {
       const currentMonth = today.getMonth();
       const currentYear = today.getFullYear();
       
-      // Create due date for current month
       const dueDate = new Date(currentYear, currentMonth, dueDay);
       
-      // If today is past the due date
       if (today > dueDate) {
         const diffTime = Math.abs(today.getTime() - dueDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        // Only start counting after late_fine_start_day
         const effectiveLateDays = Math.max(0, diffDays - (leaseData.late_fine_start_day - 1));
         
         if (effectiveLateDays > 0) {
@@ -113,10 +112,14 @@ export const usePaymentForm = (agreementId: string) => {
 
   const onSubmit = async (data: any) => {
     try {
+      const balance = totalAmount - data.amountPaid;
+      
       const { error } = await supabase.from("payments").insert([
         {
           lease_id: agreementId,
           amount: totalAmount,
+          amount_paid: data.amountPaid,
+          balance: balance,
           payment_method: data.paymentMethod,
           status: "completed",
           payment_date: new Date().toISOString(),
@@ -158,6 +161,7 @@ export const usePaymentForm = (agreementId: string) => {
     baseAmount,
     totalAmount,
     calculateLateFine,
-    setBaseAmount
+    setBaseAmount,
+    watch
   };
 };
