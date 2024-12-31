@@ -23,11 +23,7 @@ interface LegalCase {
     id: string;
     full_name: string;
   };
-  traffic_fines?: Array<{
-    id: string;
-    fine_amount: number;
-    payment_status: string;
-  }>;
+  total_fines?: number;
 }
 
 export const LegalCasesList = () => {
@@ -41,11 +37,6 @@ export const LegalCasesList = () => {
           customer:customer_id (
             id,
             full_name
-          ),
-          traffic_fines:traffic_fines!lease_id(
-            id,
-            fine_amount,
-            payment_status
           )
         `);
 
@@ -54,13 +45,24 @@ export const LegalCasesList = () => {
         throw error;
       }
 
-      // Calculate total unpaid fines for each case
-      return (legalCases || []).map(legalCase => ({
-        ...legalCase,
-        total_fines: (legalCase.traffic_fines || [])
+      // Get traffic fines for each case
+      const casesWithFines = await Promise.all((legalCases || []).map(async (legalCase) => {
+        const { data: fines } = await supabase
+          .from("traffic_fines")
+          .select("fine_amount, payment_status")
+          .eq("lease_id", legalCase.id);
+
+        const total_fines = (fines || [])
           .filter(fine => fine.payment_status !== 'completed')
-          .reduce((total, fine) => total + (fine.fine_amount || 0), 0)
+          .reduce((total, fine) => total + (fine.fine_amount || 0), 0);
+
+        return {
+          ...legalCase,
+          total_fines
+        };
       }));
+
+      return casesWithFines;
     },
   });
 
