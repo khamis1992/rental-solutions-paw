@@ -95,6 +95,10 @@ export function LegalDocumentDialog({
 
       if (fetchError) throw fetchError;
 
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user found");
+
       // Then update with the new signature
       const currentSignatures = versionData?.signatures as string[] || [];
       const newSignatures = [...currentSignatures, signature];
@@ -106,7 +110,7 @@ export function LegalDocumentDialog({
           signature_status: 'signed',
           metadata: {
             signed_at: new Date().toISOString(),
-            signed_by: auth.uid()
+            signed_by: user.id
           }
         })
         .eq("document_id", customerId)
