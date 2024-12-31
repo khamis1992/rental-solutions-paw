@@ -96,19 +96,19 @@ export const NotificationsButton = () => {
         }
 
         const formattedNotifications: Notification[] = [
-          ...(overdueVehicles?.map(vehicle => ({
+          ...(overdueVehicles?.filter(vehicle => vehicle.vehicles).map(vehicle => ({
             id: `overdue-${vehicle.id}`,
             message: `${vehicle.vehicles.year} ${vehicle.vehicles.make} ${vehicle.vehicles.model} is overdue for return`,
             created_at: vehicle.end_date,
             type: 'overdue' as const
           })) || []),
-          ...(maintenanceAlerts?.map(alert => ({
+          ...(maintenanceAlerts?.filter(alert => alert.vehicles).map(alert => ({
             id: `maintenance-${alert.id}`,
             message: `Maintenance due for ${alert.vehicles.year} ${alert.vehicles.make} ${alert.vehicles.model}: ${alert.service_type}`,
             created_at: alert.scheduled_date,
             type: 'maintenance' as const
           })) || []),
-          ...(overduePayments?.map(payment => ({
+          ...(overduePayments?.filter(payment => payment.leases?.vehicles).map(payment => ({
             id: `payment-${payment.id}`,
             message: `Payment of ${payment.amount} overdue for ${payment.leases.vehicles.year} ${payment.leases.vehicles.make} ${payment.leases.vehicles.model}`,
             created_at: payment.due_date,
