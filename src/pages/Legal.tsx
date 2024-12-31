@@ -3,6 +3,8 @@ import { NonCompliantCustomers } from "@/components/legal/NonCompliantCustomers"
 import { LegalCasesList } from "@/components/legal/LegalCasesList";
 import { LegalAnalyticsDashboard } from "@/components/legal/analytics/LegalAnalyticsDashboard";
 import { LegalReportsDashboard } from "@/components/legal/reports/LegalReportsDashboard";
+import { WorkflowBuilder } from "@/components/legal/workflow/WorkflowBuilder";
+import { AutomationSettings } from "@/components/legal/workflow/AutomationSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateLegalCaseDialog } from "@/components/legal/CreateLegalCaseDialog";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ export default function Legal() {
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="non-compliant">Non-Compliant Customers</TabsTrigger>
+            <TabsTrigger value="automation">Automation</TabsTrigger>
           </TabsList>
 
           <TabsContent value="cases">
@@ -39,6 +42,11 @@ export default function Legal() {
 
           <TabsContent value="non-compliant">
             <NonCompliantCustomers />
+          </TabsContent>
+
+          <TabsContent value="automation" className="space-y-6">
+            <WorkflowBuilder />
+            <AutomationSettings />
           </TabsContent>
         </Tabs>
       </div>

@@ -4340,6 +4340,146 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_automation_logs: {
+        Row: {
+          action_type: string
+          details: Json
+          executed_at: string | null
+          id: string
+          status: string
+          workflow_instance_id: string | null
+        }
+        Insert: {
+          action_type: string
+          details: Json
+          executed_at?: string | null
+          id?: string
+          status: string
+          workflow_instance_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          details?: Json
+          executed_at?: string | null
+          id?: string
+          status?: string
+          workflow_instance_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_automation_logs_workflow_instance_id_fkey"
+            columns: ["workflow_instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_instances: {
+        Row: {
+          case_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          current_step: number | null
+          data: Json | null
+          id: string
+          started_at: string | null
+          status: string | null
+          template_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_step?: number | null
+          data?: Json | null
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_step?: number | null
+          data?: Json | null
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_instances_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          steps: Json
+          triggers: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          steps?: Json
+          triggers?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          steps?: Json
+          triggers?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       agreement_overview: {
