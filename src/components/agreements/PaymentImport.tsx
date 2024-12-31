@@ -1,160 +1,81 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import Papa from 'papaparse';
+import { Dispatch, SetStateAction, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AIAnalysisCard } from "@/components/finance/transactions/AIAnalysisCard";
+import { FileUploadSection } from "@/components/finance/transactions/FileUploadSection";
+import { useImportProcess } from "@/components/finance/transactions/hooks/useImportProcess";
 
-export const PaymentImport = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<any[]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
+interface PaymentImportProps {
+  open: boolean;
+  onOpenChange: Dispatch<SetStateAction<boolean>>;
+}
 
-  const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'payment_import_template.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
+export const PaymentImport = ({ open, onOpenChange }: PaymentImportProps) => {
+  const {
+    isUploading,
+    isAnalyzing,
+    analysisResult,
+    startImport,
+    implementChanges
+  } = useImportProcess();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const text = e.target?.result as string;
-        
-        Papa.parse(text, {
-          header: true,
-          complete: async (results) => {
-            console.log('Parsed CSV data:', results);
-            setHeaders(results.meta.fields || []);
-            setImportedData(results.data);
-
-            // Prepare the payload for the Edge Function
-            const payload = {
-              fileName: file.name,
-              fileContent: text
-            };
-
-            console.log('Sending payload to Edge Function:', {
-              fileName: payload.fileName,
-              contentLength: payload.fileContent.length
-            });
-
-            // Call Edge Function with JSON payload
-            const { data, error } = await supabase.functions.invoke('process-payment-import', {
-              body: payload,
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            });
-
-            if (error) {
-              console.error('Edge Function error:', error);
-              throw error;
-            }
-
-            console.log('Edge Function response:', data);
-
-            if (data.success) {
-              toast.success(`Successfully processed ${data.validRows} payments`);
-              if (data.errors?.length > 0) {
-                toast.warning(`${data.errors.length} rows had errors. Check the console for details.`);
-                console.warn('Import errors:', data.errors);
-              }
-            } else {
-              throw new Error(data.error || 'Failed to process import');
-            }
-          },
-          error: (error) => {
-            console.error('CSV Parse Error:', error);
-            toast.error('Failed to parse CSV file');
-          }
-        });
-      };
-      
-      reader.readAsText(file);
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast.error(error.message || 'Failed to import file');
-    } finally {
-      setIsUploading(false);
+    const success = await startImport(file);
+    if (!success) {
+      event.target.value = '';
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          disabled={isUploading}
-        />
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
-          disabled={isUploading}
-        >
-          Download Template
-        </Button>
-      </div>
-      
-      {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Importing data...
-        </div>
-      )}
+  const downloadTemplate = () => {
+    const headers = [
+      "Lease_ID",
+      "Customer_Name",
+      "Amount",
+      "License_Plate",
+      "Vehicle",
+      "Payment_Date",
+      "Payment_Method",
+      "Transaction_ID",
+      "Description",
+      "Type",
+      "Status"
+    ].join(",");
+    
+    const csvContent = `data:text/csv;charset=utf-8,${headers}\n`;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "payment_import_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-      {importedData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Imported Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {headers.map((header) => (
-                      <TableHead key={header}>{header}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {importedData.map((row, index) => (
-                    <TableRow key={index}>
-                      {headers.map((header) => (
-                        <TableCell key={`${index}-${header}`}>
-                          {row[header]}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Import Payments</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
+          <FileUploadSection
+            onFileUpload={handleFileUpload}
+            onDownloadTemplate={downloadTemplate}
+            isUploading={isUploading}
+            isAnalyzing={isAnalyzing}
+          />
+          
+          {analysisResult && (
+            <AIAnalysisCard
+              analysisResult={analysisResult}
+              onImplementChanges={implementChanges}
+              isUploading={isUploading}
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

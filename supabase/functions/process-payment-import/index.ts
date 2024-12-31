@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,72 +13,47 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Processing payment import request');
-    
-    const { fileName, fileContent } = await req.json();
-    
-    if (!fileName || !fileContent) {
-      console.error('Missing required fields:', { fileName: !!fileName, fileContent: !!fileContent });
+    console.log('Starting payment import process');
+    const { analysisResult } = await req.json();
+
+    if (!analysisResult) {
+      console.error('Missing analysis result');
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Missing required fields' 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
+        JSON.stringify({ error: 'Missing analysis result' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    console.log('Received file:', fileName, 'Content length:', fileContent.length);
-
-    // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Store raw data in Supabase
-    const { data, error } = await supabase
-      .from('raw_transaction_imports')
+    // Store the analyzed data
+    const { error: importError } = await supabase
+      .from('raw_payment_imports')
       .insert({
-        raw_data: JSON.parse(fileContent),
+        raw_data: analysisResult,
         is_valid: true,
         created_at: new Date().toISOString()
-      })
-      .select();
+      });
 
-    if (error) {
-      console.error('Database error:', error);
-      throw error;
+    if (importError) {
+      console.error('Error storing payment import:', importError);
+      throw importError;
     }
 
-    console.log('Successfully stored import data:', data);
-
+    console.log('Payment import processed successfully');
     return new Response(
-      JSON.stringify({
-        success: true,
-        validRows: Array.isArray(data) ? data.length : 1,
-        errors: []
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      JSON.stringify({ success: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error processing payment import:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
