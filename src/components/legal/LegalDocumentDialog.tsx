@@ -81,19 +81,14 @@ export function LegalDocumentDialog({
     enabled: open && !!customerId,
   });
 
-  const handlePrint = () => {
-    injectPrintStyles();
-    window.print();
-  };
-
   const handleSignatureCapture = async (signature: string) => {
     if (!customerId) return;
 
     try {
       const { error } = await supabase
         .from("legal_document_versions")
-        .update({
-          signatures: supabase.sql`array_append(signatures, ${signature})`,
+        .update({ 
+          signatures: signatures => [...(signatures || []), signature],
           signature_status: 'signed'
         })
         .eq("document_id", customerId)
@@ -105,6 +100,11 @@ export function LegalDocumentDialog({
       console.error("Error saving signature:", error);
       toast.error(error.message || "Failed to save signature");
     }
+  };
+
+  const handlePrint = () => {
+    injectPrintStyles();
+    window.print();
   };
 
   if (!open) return null;

@@ -4,16 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ExternalLink, Loader2 } from "lucide-react";
 
+interface ResearchResult {
+  title: string;
+  url: string;
+  summary: string;
+  relevance: number;
+}
+
 interface ResearchQuery {
   id: string;
   query_text: string;
   results: {
-    results: Array<{
-      title: string;
-      url: string;
-      summary: string;
-      relevance: number;
-    }>;
+    results: ResearchResult[];
   };
   created_at: string;
 }
@@ -29,7 +31,14 @@ export const ResearchHistory = ({ caseId }: { caseId?: string }) => {
         .limit(10);
 
       if (error) throw error;
-      return data as ResearchQuery[];
+      
+      // Transform the data to match the expected type
+      return (data as any[]).map(query => ({
+        ...query,
+        results: typeof query.results === 'string' 
+          ? JSON.parse(query.results)
+          : query.results
+      })) as ResearchQuery[];
     },
   });
 

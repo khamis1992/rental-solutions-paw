@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertCircle, Clock, DollarSign } from "lucide-react";
+import { AlertCircle, Clock, DollarSign, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 
