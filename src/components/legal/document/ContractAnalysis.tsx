@@ -47,13 +47,12 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
       console.log("Fetching analysis for document:", documentId);
       
       try {
+        // Get all matching records first
         const { data, error } = await supabase
           .from("ai_document_classification")
-          .select()
+          .select("*")
           .eq("document_id", documentId)
-          .eq("classification_type", "contract_analysis")
-          .limit(1)
-          .maybeSingle();
+          .eq("classification_type", "contract_analysis");
 
         console.log("Query response:", { data, error });
 
@@ -62,18 +61,19 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           throw error;
         }
         
-        if (!data) {
+        // If no data or empty array, return null
+        if (!data || data.length === 0) {
           console.log("No analysis found for document");
           return null;
         }
         
-        // First cast to SupabaseResponse to handle the raw data
-        const rawResponse = data as SupabaseResponse;
+        // Take the first record if multiple exist
+        const record = data[0];
         
-        // Then transform the metadata to the correct type
+        // Transform the metadata to the correct type
         const transformedData: AIDocumentClassification = {
-          ...rawResponse,
-          metadata: rawResponse.metadata as ContractAnalysisMetadata
+          ...record,
+          metadata: record.metadata as ContractAnalysisMetadata
         };
 
         console.log("Transformed data:", transformedData);
@@ -84,7 +84,7 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
       }
     },
     retry: false,
-    enabled: !!documentId // Only run query if documentId exists
+    enabled: !!documentId
   });
 
   if (error) {
