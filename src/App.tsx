@@ -23,7 +23,7 @@ export default function App() {
             }
           />
 
-          {/* Protected Routes - All wrapped in DashboardLayout */}
+          {/* Protected Routes */}
           <Route
             element={
               <ProtectedRoute>
@@ -52,6 +52,7 @@ export default function App() {
             }
           />
 
+          {/* Catch all unmatched routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
