@@ -26,15 +26,6 @@ interface AIDocumentClassification {
   created_at: string;
 }
 
-interface SupabaseResponse {
-  id: string;
-  document_id: string;
-  classification_type: string;
-  confidence_score: number;
-  metadata: unknown;
-  created_at: string;
-}
-
 export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
   const { data: analysis, isLoading, error } = useQuery({
     queryKey: ["contract-analysis", documentId],
@@ -47,7 +38,6 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
       console.log("Fetching analysis for document:", documentId);
       
       try {
-        // Get all matching records first
         const { data, error } = await supabase
           .from("ai_document_classification")
           .select("*")
@@ -61,19 +51,30 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           throw error;
         }
         
-        // If no data or empty array, return null
         if (!data || data.length === 0) {
           console.log("No analysis found for document");
           return null;
         }
-        
+
         // Take the first record if multiple exist
         const record = data[0];
         
-        // Transform the metadata to the correct type
+        // Validate metadata structure
+        const metadata = record.metadata as ContractAnalysisMetadata;
+        if (!metadata || !Array.isArray(metadata.key_terms) || !Array.isArray(metadata.obligations) || 
+            !Array.isArray(metadata.risks) || !Array.isArray(metadata.recommendations) || 
+            typeof metadata.analyzed_at !== 'string') {
+          console.error("Invalid metadata structure:", metadata);
+          throw new Error("Invalid metadata structure in analysis record");
+        }
+
         const transformedData: AIDocumentClassification = {
-          ...record,
-          metadata: record.metadata as ContractAnalysisMetadata
+          id: record.id,
+          document_id: record.document_id,
+          classification_type: record.classification_type,
+          confidence_score: record.confidence_score,
+          metadata: metadata,
+          created_at: record.created_at
         };
 
         console.log("Transformed data:", transformedData);
