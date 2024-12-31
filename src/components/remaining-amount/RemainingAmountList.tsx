@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RemainingAmount {
   id: string;
@@ -32,8 +34,10 @@ export function RemainingAmountList() {
   if (isLoading) {
     return (
       <Card className="p-6">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
         </div>
       </Card>
     );
@@ -41,39 +45,49 @@ export function RemainingAmountList() {
 
   return (
     <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Agreement Number</TableHead>
-            <TableHead>License Plate</TableHead>
-            <TableHead className="text-right">Rent Amount</TableHead>
-            <TableHead className="text-right">Final Price</TableHead>
-            <TableHead className="text-right">Amount Paid</TableHead>
-            <TableHead className="text-right">Remaining Amount</TableHead>
-            <TableHead>Agreement Duration</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {remainingAmounts?.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.agreement_number}</TableCell>
-              <TableCell>{item.license_plate}</TableCell>
-              <TableCell className="text-right">{formatCurrency(item.rent_amount)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(item.final_price)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(item.amount_paid)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(item.remaining_amount)}</TableCell>
-              <TableCell>{item.agreement_duration}</TableCell>
-            </TableRow>
-          ))}
-          {!remainingAmounts?.length && (
+      <ScrollArea className="h-[600px]">
+        <Table>
+          <TableHeader className="bg-muted/50 sticky top-0">
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-4">
-                No remaining amounts found
-              </TableCell>
+              <TableHead className="font-semibold">Agreement Number</TableHead>
+              <TableHead className="font-semibold">License Plate</TableHead>
+              <TableHead className="text-right font-semibold">Rent Amount</TableHead>
+              <TableHead className="text-right font-semibold">Final Price</TableHead>
+              <TableHead className="text-right font-semibold">Amount Paid</TableHead>
+              <TableHead className="text-right font-semibold">Remaining Amount</TableHead>
+              <TableHead className="font-semibold">Agreement Duration</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {remainingAmounts?.map((item) => (
+              <TableRow key={item.id} className="hover:bg-muted/50">
+                <TableCell className="font-medium">{item.agreement_number}</TableCell>
+                <TableCell>{item.license_plate}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatCurrency(item.rent_amount)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatCurrency(item.final_price)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatCurrency(item.amount_paid)}
+                </TableCell>
+                <TableCell className="text-right font-semibold tabular-nums text-blue-600">
+                  {formatCurrency(item.remaining_amount)}
+                </TableCell>
+                <TableCell>{item.agreement_duration}</TableCell>
+              </TableRow>
+            ))}
+            {!remainingAmounts?.length && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  No remaining amounts found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </ScrollArea>
     </Card>
   );
 }

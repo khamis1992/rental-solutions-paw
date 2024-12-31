@@ -7,13 +7,15 @@ export default function RemainingAmount() {
   return (
     <DashboardLayout>
       <div className="container py-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight min-w-[250px]">Remaining Amounts</h1>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Remaining Amounts</h1>
+          <RemainingAmountImport />
         </div>
 
-        <RemainingAmountStats />
-        <RemainingAmountImport />
-        <RemainingAmountList />
+        <div className="grid gap-6">
+          <RemainingAmountStats />
+          <RemainingAmountList />
+        </div>
       </div>
     </DashboardLayout>
   );
