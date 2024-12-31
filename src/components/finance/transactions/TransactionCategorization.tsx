@@ -6,6 +6,7 @@ import { Loader2, Plus } from "lucide-react";
 import { CategoryDialog } from "../categories/CategoryDialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 interface Transaction {
   id: string;
@@ -122,7 +123,7 @@ export const TransactionCategorization = () => {
                   {new Date(transaction.transaction_date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>{transaction.description}</TableCell>
-                <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
+                <TableCell>{formatCurrency(transaction.amount)}</TableCell>
                 <TableCell>
                   {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </TableCell>
