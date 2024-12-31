@@ -1,155 +1,153 @@
+import { workflowGuides } from './workflowGuides';
+
 export const moduleGuides = {
   dashboard: [
     {
-      title: "Using the Dashboard Overview",
+      title: "Using the Dashboard",
       steps: [
-        "View real-time metrics at the top showing fleet status, revenue, and active rentals",
-        "Check recent activities in the activity feed section",
-        "Monitor vehicle status distribution in the chart",
-        "Review alerts and notifications for important updates",
+        "Navigate to the Dashboard from the main menu",
+        "View key metrics and statistics at the top",
+        "Check recent activities in the activity feed",
+        "Monitor alerts and notifications",
         "Access quick actions for common tasks"
       ]
     },
     {
-      title: "Customizing Dashboard Widgets",
+      title: "Customizing Dashboard Views",
       steps: [
-        "Click the customize button in the top-right corner",
-        "Drag and drop widgets to rearrange them",
-        "Toggle widget visibility using the checkboxes",
-        "Adjust widget settings if available",
-        "Save your customized layout"
-      ]
-    }
-  ],
-  customers: [
-    {
-      title: "Managing Customer Profiles",
-      steps: [
-        "Navigate to the Customers section",
-        "Use filters to find specific customers",
-        "View customer details including contact information and history",
-        "Update customer information as needed",
-        "Track customer status and documents"
-      ]
-    },
-    {
-      title: "Customer Document Management",
-      steps: [
-        "Select a customer profile",
-        "Go to the Documents tab",
-        "Upload required documentation (ID, license, etc.)",
-        "Set document expiration reminders",
-        "Verify document authenticity"
-      ]
-    }
-  ],
-  agreements: [
-    {
-      title: "Creating New Agreements",
-      steps: [
-        "Click 'Create Agreement' button",
-        "Select customer and vehicle",
-        "Set agreement terms and duration",
-        "Configure payment schedule",
-        "Review and finalize agreement"
-      ]
-    },
-    {
-      title: "Managing Active Agreements",
-      steps: [
-        "Monitor agreement status and payments",
-        "Process extensions or early returns",
-        "Handle damage claims",
-        "Update payment records",
-        "Generate agreement documents"
-      ]
-    }
-  ],
-  finance: [
-    {
-      title: "Financial Dashboard Overview",
-      steps: [
-        "Review monthly revenue metrics",
-        "Track payment status and history",
-        "Monitor outstanding balances",
-        "View financial trends and charts",
-        "Generate financial reports"
-      ]
-    },
-    {
-      title: "Processing Payments",
-      steps: [
-        "Select payment type (cash, card, bank transfer)",
-        "Enter payment amount and details",
-        "Assign payment to specific agreement",
-        "Generate payment receipt",
-        "Update payment records"
-      ]
-    }
-  ],
-  vehicles: [
-    {
-      title: "Vehicle Fleet Management",
-      steps: [
-        "Add new vehicles to the fleet",
-        "Update vehicle status and availability",
-        "Track maintenance schedules",
-        "Monitor vehicle documents and insurance",
-        "Generate vehicle reports"
-      ]
-    },
-    {
-      title: "Vehicle Maintenance",
-      steps: [
-        "Schedule regular maintenance",
-        "Log maintenance activities",
-        "Track maintenance costs",
-        "Update vehicle status",
-        "Monitor maintenance history"
+        "Click on the customize button in the top right",
+        "Select which widgets to display",
+        "Arrange widgets by dragging and dropping",
+        "Save your customized layout",
+        "Reset to default layout if needed"
       ]
     }
   ],
   legal: [
     {
-      title: "Managing Legal Cases",
+      title: "Using the Workflow Builder",
       steps: [
-        "Create new legal case",
-        "Assign case priority and type",
-        "Track case progress and updates",
-        "Generate legal documents",
-        "Monitor case resolution"
+        "Access the Workflow Builder from the Legal Management section",
+        "Create new workflow templates for different case types",
+        "Add and configure sequential steps",
+        "Set up automation triggers and notifications",
+        "Monitor workflow progress through the dashboard"
       ]
     },
     {
-      title: "Document Templates",
+      title: "Example: Debt Collection Workflow",
       steps: [
-        "Access template library",
-        "Select appropriate template type",
-        "Customize template content",
-        "Generate documents from templates",
-        "Manage template versions"
+        "Step 1: Initial Notice - Send formal payment request",
+        "Step 2: Payment Reminder (7 days) - Automated follow-up",
+        "Step 3: Final Warning (14 days) - Legal action notice",
+        "Step 4: Legal Proceedings (30 days) - Court filing preparation",
+        "Step 5: Case Resolution - Settlement or judgment tracking"
+      ]
+    },
+    {
+      title: "Example: Contract Review Workflow",
+      steps: [
+        "Step 1: Document Upload - Initial contract submission",
+        "Step 2: Initial Review - Basic compliance check",
+        "Step 3: Legal Analysis - Detailed terms review",
+        "Step 4: Stakeholder Review - Get necessary approvals",
+        "Step 5: Final Approval - Document completion"
+      ]
+    }
+  ],
+  workflow: workflowGuides,
+  financial: [
+    {
+      title: "Recording a Transaction",
+      steps: [
+        "Go to the Finance section",
+        "Click 'New Transaction'",
+        "Select transaction type (Income/Expense)",
+        "Choose the appropriate category",
+        "Enter amount and description",
+        "Upload any receipts or documentation",
+        "Click 'Save Transaction'"
+      ]
+    },
+    {
+      title: "Generating Financial Reports",
+      steps: [
+        "Navigate to Reports & Analytics",
+        "Select 'Financial Reports'",
+        "Choose the report type",
+        "Set the date range",
+        "Apply any filters needed",
+        "Click 'Generate Report'",
+        "Download or print the report"
+      ]
+    },
+    {
+      title: "Managing Fixed Costs",
+      steps: [
+        "Access the Finance module",
+        "Go to Fixed Costs section",
+        "Add or edit fixed cost items",
+        "Set cost amount and frequency",
+        "Save the changes"
+      ]
+    }
+  ],
+  vehicles: [
+    {
+      title: "Adding a New Vehicle",
+      steps: [
+        "Go to the Vehicles section",
+        "Click 'Add Vehicle'",
+        "Enter vehicle details (make, model, year)",
+        "Add license plate and VIN",
+        "Upload vehicle photos",
+        "Set vehicle status",
+        "Save the vehicle record"
+      ]
+    },
+    {
+      title: "Scheduling Maintenance",
+      steps: [
+        "Select a vehicle from the list",
+        "Go to Maintenance tab",
+        "Click 'Schedule Maintenance'",
+        "Select service type",
+        "Set the maintenance date",
+        "Add service details",
+        "Confirm scheduling"
+      ]
+    },
+    {
+      title: "Managing Vehicle Documents",
+      steps: [
+        "Open vehicle details",
+        "Go to Documents tab",
+        "Upload required documents",
+        "Set document expiry dates",
+        "Save document information"
       ]
     }
   ],
   reports: [
     {
-      title: "Generating Reports",
+      title: "Creating Custom Reports",
       steps: [
-        "Select report type (fleet, financial, customer)",
-        "Set date range and filters",
+        "Navigate to Reports section",
+        "Select 'Custom Report'",
         "Choose data points to include",
+        "Set filters and parameters",
         "Generate and preview report",
-        "Export report in desired format"
+        "Save report template if needed"
       ]
     },
     {
-      title: "Custom Report Creation",
+      title: "Analyzing Business Metrics",
       steps: [
-        "Access custom report builder",
-        "Select data fields to include",
-        "Configure sorting and grouping",
-        "Set up filters and parameters",
-        "Save report template"
+        "Access Analytics dashboard",
+        "Select time period",
+        "Review key performance indicators",
+        "Export data for further analysis",
+        "Save custom views"
       ]
     }
   ]
