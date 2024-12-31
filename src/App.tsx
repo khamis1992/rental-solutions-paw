@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import * as LazyComponents from "@/routes/routes";
 
 export default function App() {
@@ -22,138 +23,31 @@ export default function App() {
             }
           />
 
-          {/* Protected Routes */}
+          {/* Protected Routes - All wrapped in DashboardLayout */}
           <Route
-            path="/"
             element={
               <ProtectedRoute>
-                <LazyComponents.Dashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/vehicles"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Vehicles />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/vehicles/:id"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.VehicleDetails />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/customers"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Customers />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/customers/:id"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.CustomerProfile />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/agreements"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Agreements />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/remaining-amount"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.RemainingAmount />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Settings />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/maintenance/*"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Maintenance />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/traffic-fines"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.TrafficFines />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Reports />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/finance"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Finance />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/help"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Help />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/legal"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Legal />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/audit"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Audit />
+                <DashboardLayout>
+                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                    <Routes>
+                      <Route path="/" element={<LazyComponents.Dashboard />} />
+                      <Route path="/vehicles" element={<LazyComponents.Vehicles />} />
+                      <Route path="/vehicles/:id" element={<LazyComponents.VehicleDetails />} />
+                      <Route path="/customers" element={<LazyComponents.Customers />} />
+                      <Route path="/customers/:id" element={<LazyComponents.CustomerProfile />} />
+                      <Route path="/agreements" element={<LazyComponents.Agreements />} />
+                      <Route path="/remaining-amount" element={<LazyComponents.RemainingAmount />} />
+                      <Route path="/settings" element={<LazyComponents.Settings />} />
+                      <Route path="/maintenance/*" element={<LazyComponents.Maintenance />} />
+                      <Route path="/traffic-fines" element={<LazyComponents.TrafficFines />} />
+                      <Route path="/reports" element={<LazyComponents.Reports />} />
+                      <Route path="/finance" element={<LazyComponents.Finance />} />
+                      <Route path="/help" element={<LazyComponents.Help />} />
+                      <Route path="/legal" element={<LazyComponents.Legal />} />
+                      <Route path="/audit" element={<LazyComponents.Audit />} />
+                    </Routes>
+                  </Suspense>
+                </DashboardLayout>
               </ProtectedRoute>
             }
           />
