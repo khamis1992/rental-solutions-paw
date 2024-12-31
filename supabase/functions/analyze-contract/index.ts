@@ -98,7 +98,14 @@ async function analyzeContract(text: string) {
               - Obligations for both parties
               - Potential risks and liabilities
               - Recommendations for improvement or negotiation
-              Provide a confidence score for your analysis.`
+              Format your response as a JSON object with these fields:
+              {
+                "keyTerms": string[],
+                "obligations": string[],
+                "risks": string[],
+                "recommendations": string[],
+                "confidence": number
+              }`
           },
           { role: 'user', content: text }
         ],
@@ -116,16 +123,24 @@ async function analyzeContract(text: string) {
     const data = await response.json();
     console.log('DeepSeek API raw response:', data);
 
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from DeepSeek API');
+    }
+
     // Parse the response content as JSON
-    const analysis = JSON.parse(data.choices[0].message.content);
-    
-    return {
-      keyTerms: analysis.keyTerms || [],
-      obligations: analysis.obligations || [],
-      risks: analysis.risks || [],
-      recommendations: analysis.recommendations || [],
-      confidence: analysis.confidence || 0.8
-    };
+    try {
+      const analysis = JSON.parse(data.choices[0].message.content);
+      return {
+        keyTerms: analysis.keyTerms || [],
+        obligations: analysis.obligations || [],
+        risks: analysis.risks || [],
+        recommendations: analysis.recommendations || [],
+        confidence: analysis.confidence || 0.8
+      };
+    } catch (parseError) {
+      console.error('Error parsing DeepSeek response:', parseError);
+      throw new Error('Failed to parse contract analysis response');
+    }
   } catch (error) {
     console.error('Error in analyzeContract:', error);
     throw new Error(`Failed to analyze contract: ${error.message}`);
