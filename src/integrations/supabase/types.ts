@@ -638,6 +638,59 @@ export type Database = {
           },
         ]
       }
+      case_outcome_predictions: {
+        Row: {
+          case_id: string | null
+          confidence_score: number
+          created_at: string | null
+          id: string
+          predicted_cost: number | null
+          predicted_duration: number | null
+          predicted_outcome: string
+          prediction_date: string | null
+          risk_factors: Json | null
+          similar_cases: Json | null
+          success_probability: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          confidence_score: number
+          created_at?: string | null
+          id?: string
+          predicted_cost?: number | null
+          predicted_duration?: number | null
+          predicted_outcome: string
+          prediction_date?: string | null
+          risk_factors?: Json | null
+          similar_cases?: Json | null
+          success_probability?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          confidence_score?: number
+          created_at?: string | null
+          id?: string
+          predicted_cost?: number | null
+          predicted_duration?: number | null
+          predicted_outcome?: string
+          prediction_date?: string | null
+          risk_factors?: Json | null
+          similar_cases?: Json | null
+          success_probability?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_outcome_predictions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           address: string | null

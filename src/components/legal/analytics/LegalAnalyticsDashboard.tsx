@@ -3,6 +3,7 @@ import { CaseStatusDistribution } from "./CaseStatusDistribution";
 import { CaseTypeBreakdown } from "./CaseTypeBreakdown";
 import { SettlementMetrics } from "./SettlementMetrics";
 import { CaseTimeline } from "./CaseTimeline";
+import { CaseOutcomePredictions } from "./CaseOutcomePredictions";
 
 export const LegalAnalyticsDashboard = () => {
   return (
@@ -13,6 +14,8 @@ export const LegalAnalyticsDashboard = () => {
         <CaseStatusDistribution />
         <CaseTypeBreakdown />
       </div>
+      
+      <CaseOutcomePredictions />
       
       <div className="grid gap-6 md:grid-cols-2">
         <SettlementMetrics />
