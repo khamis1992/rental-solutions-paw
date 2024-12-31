@@ -1,15 +1,17 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
-import { useState } from "react";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
+import { PaymentImport } from "@/components/agreements/PaymentImport";
 
 const Agreements = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showPaymentImport, setShowPaymentImport] = useState(false);
 
   return (
     <div className="container mx-auto p-6">
@@ -45,6 +47,11 @@ const Agreements = () => {
       <AgreementPDFImport 
         open={showImportDialog} 
         onOpenChange={setShowImportDialog}
+      />
+
+      <PaymentImport
+        open={showPaymentImport}
+        onOpenChange={setShowPaymentImport}
       />
     </div>
   );
