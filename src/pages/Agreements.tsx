@@ -50,14 +50,18 @@ export default function Agreements() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div>
-                    <CreateAgreementDialog>
-                      <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">
-                        <Plus className="h-4 w-4" />
-                        <span>New Agreement</span>
-                      </Button>
-                    </CreateAgreementDialog>
-                  </div>
+                  <Button 
+                    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
+                    onClick={() => {
+                      const dialog = document.querySelector('[role="dialog"]');
+                      if (dialog) {
+                        (dialog as HTMLElement).click();
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>New Agreement</span>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Create a new agreement</p>
@@ -66,17 +70,19 @@ export default function Agreements() {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div>
-                    <AgreementPDFImport>
-                      <Button 
-                        variant="outline"
-                        className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 transition-colors"
-                      >
-                        <FileText className="h-4 w-4" />
-                        <span>Import PDF</span>
-                      </Button>
-                    </AgreementPDFImport>
-                  </div>
+                  <Button 
+                    variant="outline"
+                    className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 transition-colors"
+                    onClick={() => {
+                      const input = document.querySelector('input[type="file"]');
+                      if (input) {
+                        input.click();
+                      }
+                    }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Import PDF</span>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Import agreements from PDF</p>
@@ -105,6 +111,8 @@ export default function Agreements() {
 
         <AgreementStats />
         <AgreementList />
+        <CreateAgreementDialog />
+        <AgreementPDFImport />
 
         <PaymentHistoryDialog
           open={isPaymentHistoryOpen}
