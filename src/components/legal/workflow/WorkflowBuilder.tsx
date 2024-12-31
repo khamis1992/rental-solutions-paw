@@ -24,6 +24,19 @@ interface WorkflowTemplate {
   is_active: boolean;
 }
 
+// Type for database row
+interface WorkflowTemplateRow {
+  id: string;
+  name: string;
+  description: string;
+  steps: any;
+  triggers: any;
+  is_active: boolean;
+  created_at: string;
+  created_by: string | null;
+  updated_at: string;
+}
+
 export const WorkflowBuilder = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -38,29 +51,29 @@ export const WorkflowBuilder = () => {
         .select("*");
       if (error) throw error;
       
-      // Transform the JSON data to match our TypeScript interface
-      return (data as any[]).map(template => ({
-        ...template,
-        steps: Array.isArray(template.steps) ? template.steps.map((step: any) => ({
+      // Transform database rows to WorkflowTemplate type
+      return (data as WorkflowTemplateRow[]).map(row => ({
+        ...row,
+        steps: Array.isArray(row.steps) ? row.steps.map((step: any) => ({
           id: step.id || crypto.randomUUID(),
           name: step.name || '',
           type: step.type || 'task',
           config: step.config || {}
         })) : [],
-        triggers: Array.isArray(template.triggers) ? template.triggers : []
+        triggers: Array.isArray(row.triggers) ? row.triggers : []
       })) as WorkflowTemplate[];
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (template: Partial<WorkflowTemplate>) => {
+    mutationFn: async (template: Omit<WorkflowTemplate, 'id'>) => {
       const { data, error } = await supabase
         .from("workflow_templates")
         .insert([{
           name: template.name,
           description: template.description,
-          steps: template.steps,
-          triggers: template.triggers || [],
+          steps: template.steps as any,
+          triggers: template.triggers,
           is_active: true,
         }])
         .select()
