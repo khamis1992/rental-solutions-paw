@@ -60,8 +60,25 @@ export const MaintenanceStatusSelect = ({ id, status, vehicleId }: MaintenanceSt
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'scheduled':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+      case 'urgent':
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
   if (status === 'urgent') {
-    return <Badge variant="destructive">Urgent</Badge>;
+    return <Badge variant="destructive" className={getStatusColor('urgent')}>Urgent</Badge>;
   }
 
   return (
@@ -70,13 +87,25 @@ export const MaintenanceStatusSelect = ({ id, status, vehicleId }: MaintenanceSt
       onValueChange={handleStatusChange}
     >
       <SelectTrigger className="w-[130px]">
-        <SelectValue />
+        <SelectValue>
+          <Badge className={getStatusColor(status)}>
+            {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+          </Badge>
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="scheduled">Scheduled</SelectItem>
-        <SelectItem value="in_progress">In Progress</SelectItem>
-        <SelectItem value="completed">Completed</SelectItem>
-        <SelectItem value="cancelled">Cancelled</SelectItem>
+        <SelectItem value="scheduled">
+          <Badge className={getStatusColor('scheduled')}>Scheduled</Badge>
+        </SelectItem>
+        <SelectItem value="in_progress">
+          <Badge className={getStatusColor('in_progress')}>In Progress</Badge>
+        </SelectItem>
+        <SelectItem value="completed">
+          <Badge className={getStatusColor('completed')}>Completed</Badge>
+        </SelectItem>
+        <SelectItem value="cancelled">
+          <Badge className={getStatusColor('cancelled')}>Cancelled</Badge>
+        </SelectItem>
       </SelectContent>
     </Select>
   );
