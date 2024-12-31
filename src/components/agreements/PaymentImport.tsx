@@ -43,23 +43,44 @@ export const PaymentImport = () => {
         Papa.parse(text, {
           header: true,
           complete: async (results) => {
+            console.log('Parsed CSV data:', results);
             setHeaders(results.meta.fields || []);
             setImportedData(results.data);
 
-            // Store raw data in Supabase with proper typing
-            const { error } = await supabase
-              .from('raw_transaction_imports')
-              .insert({
-                raw_data: JSON.parse(JSON.stringify(results.data)), // Convert to proper JSON
-                is_valid: true,
-                created_at: new Date().toISOString()
-              });
+            // Prepare the payload for the Edge Function
+            const payload = {
+              fileName: file.name,
+              fileContent: text
+            };
+
+            console.log('Sending payload to Edge Function:', {
+              fileName: payload.fileName,
+              contentLength: payload.fileContent.length
+            });
+
+            // Call Edge Function with JSON payload
+            const { data, error } = await supabase.functions.invoke('process-payment-import', {
+              body: payload,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
 
             if (error) {
-              console.error('Import error:', error);
-              toast.error('Failed to store imported data');
+              console.error('Edge Function error:', error);
+              throw error;
+            }
+
+            console.log('Edge Function response:', data);
+
+            if (data.success) {
+              toast.success(`Successfully processed ${data.validRows} payments`);
+              if (data.errors?.length > 0) {
+                toast.warning(`${data.errors.length} rows had errors. Check the console for details.`);
+                console.warn('Import errors:', data.errors);
+              }
             } else {
-              toast.success('Data imported successfully');
+              throw new Error(data.error || 'Failed to process import');
             }
           },
           error: (error) => {
