@@ -55,8 +55,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           description: data.description || 'Payment received',
           transaction_date: new Date().toISOString(),
           reference_type: 'payment',
-          reference_id: paymentData.id,
-          payment_method: data.paymentMethod
+          reference_id: paymentData.id
         });
 
       if (transactionError) throw transactionError;
