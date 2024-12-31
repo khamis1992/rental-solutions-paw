@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserPlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CustomerFormFields } from "./CustomerFormFields";
-import { DocumentScanner } from "./DocumentScanner";
 import { EnhancedButton } from "@/components/ui/enhanced-button";
 
 interface CreateCustomerDialogProps {
@@ -42,12 +41,6 @@ export const CreateCustomerDialog = ({ children, open, onOpenChange }: CreateCus
       contract_document_url: "",
     },
   });
-
-  const handleScanComplete = (extractedData: any) => {
-    console.log("Scan complete with data:", extractedData);
-    form.setValue('full_name', extractedData.full_name);
-    form.setValue('driver_license', extractedData.id_number);
-  };
 
   const onSubmit = async (values: any) => {
     console.log("Submitting form with values:", values);
@@ -121,12 +114,6 @@ export const CreateCustomerDialog = ({ children, open, onOpenChange }: CreateCus
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {!customerId && (
-              <DocumentScanner
-                customerId={crypto.randomUUID()}
-                onScanComplete={handleScanComplete}
-              />
-            )}
             <CustomerFormFields form={form} />
             <DialogFooter>
               <EnhancedButton
