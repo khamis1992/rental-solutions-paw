@@ -54,7 +54,14 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
       try {
         const { data, error } = await supabase
           .from("ai_document_classification")
-          .select()
+          .select(`
+            id,
+            document_id,
+            classification_type,
+            confidence_score,
+            metadata,
+            created_at
+          `)
           .eq("document_id", documentId)
           .eq("classification_type", "contract_analysis")
           .maybeSingle();
