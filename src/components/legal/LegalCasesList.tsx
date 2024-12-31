@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, SortAsc, SortDesc, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 type LegalCaseWithCustomer = LegalCase & {
   customer: {
@@ -149,10 +150,7 @@ export const LegalCasesList = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{format(new Date(caseItem.created_at), 'MMM dd, yyyy')}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD'
-                  }).format(caseItem.amount_owed)}</TableCell>
+                  <TableCell>{formatCurrency(caseItem.amount_owed)}</TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
