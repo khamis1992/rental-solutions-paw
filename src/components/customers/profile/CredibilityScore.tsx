@@ -26,18 +26,26 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
 
       if (paymentError) throw paymentError;
 
-      // Get traffic fines
+      // Get traffic fines - Updated to properly filter by customer_id
       const { data: trafficFines, error: finesError } = await supabase
         .from("traffic_fines")
         .select(`
           *,
           lease:leases(
-            customer_id
+            customer_id,
+            vehicle:vehicles(
+              make,
+              model,
+              year,
+              license_plate
+            )
           )
         `)
         .eq("lease.customer_id", customerId);
 
       if (finesError) throw finesError;
+
+      console.log("Filtered traffic fines for customer:", trafficFines);
 
       // Calculate base score (starts at 100)
       let score = 100;
@@ -66,9 +74,9 @@ export const CredibilityScore = ({ customerId }: CredibilityScoreProps) => {
         });
       }
 
-      // Deduct points for traffic fines
+      // Only count fines that belong to the customer's leases
       if (trafficFines) {
-        trafficFineCount = trafficFines.length;
+        trafficFineCount = trafficFines.filter(fine => fine.lease?.customer_id === customerId).length;
         // Deduct 3 points for each traffic fine
         score -= (trafficFineCount * 3);
       }
