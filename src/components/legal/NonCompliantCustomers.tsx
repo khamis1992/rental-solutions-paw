@@ -15,7 +15,7 @@ interface NonCompliantCustomer {
   agreement_number: string;
   customer_name: string;
   overdue_payments: number;
-  unpaid_fines: number;
+  unpaid_fines_amount: number;
   damages: number;
 }
 
@@ -26,44 +26,55 @@ export const NonCompliantCustomers = () => {
   const { data: overdueCustomers, isLoading } = useQuery({
     queryKey: ["overdue-customers"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('leases')
-        .select(`
-          id,
-          customer_id,
-          agreement_number,
-          profiles:customer_id (
-            full_name
-          ),
-          payment_schedules (
+      console.log("Fetching overdue customers data");
+      
+      try {
+        const { data, error } = await supabase
+          .from('leases')
+          .select(`
             id,
-            status
-          ),
-          traffic_fines (
-            id,
-            payment_status
-          ),
-          damages (
-            id,
-            status
-          )
-        `)
-        .eq('status', 'active')
-        .order('agreement_number');
+            customer_id,
+            agreement_number,
+            profiles:customer_id (
+              id,
+              full_name
+            ),
+            payment_schedules (
+              id,
+              status
+            ),
+            traffic_fines (
+              id,
+              payment_status,
+              fine_amount
+            ),
+            damages (
+              id,
+              status
+            )
+          `)
+          .eq('status', 'active')
+          .order('agreement_number');
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const processedData = data.map(lease => ({
-        id: lease.id,
-        customer_id: lease.customer_id,
-        agreement_number: lease.agreement_number,
-        customer_name: lease.profiles?.full_name || 'Unknown',
-        overdue_payments: lease.payment_schedules?.filter(p => p.status === 'pending').length || 0,
-        unpaid_fines: lease.traffic_fines?.filter(f => f.payment_status === 'pending').length || 0,
-        damages: lease.damages?.filter(d => d.status === 'pending').length || 0
-      }));
+        const processedData = data.map(lease => ({
+          id: lease.id,
+          customer_id: lease.customer_id,
+          agreement_number: lease.agreement_number,
+          customer_name: lease.profiles?.full_name || 'Unknown',
+          overdue_payments: lease.payment_schedules?.filter(p => p.status === 'pending').length || 0,
+          unpaid_fines_amount: lease.traffic_fines?.reduce((sum, fine) => 
+            fine.payment_status === 'pending' ? sum + (fine.fine_amount || 0) : sum, 0) || 0,
+          damages: lease.damages?.filter(d => d.status === 'pending').length || 0
+        }));
 
-      return processedData as NonCompliantCustomer[];
+        console.log("Processed customer data:", processedData);
+        return processedData as NonCompliantCustomer[];
+      } catch (err) {
+        console.error("Error fetching overdue customers:", err);
+        throw err;
+      }
     }
   });
 
@@ -123,8 +134,8 @@ export const NonCompliantCustomers = () => {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
-                  <Badge variant={customer.unpaid_fines > 0 ? "destructive" : "secondary"}>
-                    {customer.unpaid_fines}
+                  <Badge variant={customer.unpaid_fines_amount > 0 ? "destructive" : "secondary"}>
+                    {formatCurrency(customer.unpaid_fines_amount)}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
