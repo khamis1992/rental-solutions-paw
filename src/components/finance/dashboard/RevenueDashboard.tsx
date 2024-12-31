@@ -57,11 +57,8 @@ export const RevenueDashboard = () => {
       }
     },
     retry: 2,
-    onError: (err) => {
-      console.error("Query error:", err);
-      toast.error("Failed to load financial data", {
-        description: "Please try again later or contact support if the problem persists."
-      });
+    meta: {
+      errorMessage: "Failed to load financial data"
     }
   });
 
@@ -109,6 +106,7 @@ export const RevenueDashboard = () => {
     };
   }, [queryClient]);
 
+  // Show error state
   if (error) {
     return (
       <Alert variant="destructive">
@@ -121,6 +119,7 @@ export const RevenueDashboard = () => {
     );
   }
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
