@@ -33,7 +33,13 @@ export const AgreementsHistory = ({ customerId }: AgreementsHistoryProps) => {
   });
 
   if (isLoading) {
-    return <div>Loading agreements...</div>;
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-center text-muted-foreground">Loading agreements...</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!agreements || agreements.length === 0) {
