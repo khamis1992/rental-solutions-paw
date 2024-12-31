@@ -85,7 +85,7 @@ export const TransactionList = () => {
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>{transaction.category?.name || "Uncategorized"}</TableCell>
-              <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
+              <TableCell>{formatCurrency(transaction.amount)}</TableCell>
               <TableCell>
                 {transaction.type === "INCOME" ? "Income" : "Expense"}
               </TableCell>
