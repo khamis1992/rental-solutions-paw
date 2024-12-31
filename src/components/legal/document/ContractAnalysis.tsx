@@ -64,6 +64,7 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           `)
           .eq("document_id", documentId)
           .eq("classification_type", "contract_analysis")
+          .limit(1)
           .maybeSingle();
 
         if (error) {
@@ -82,17 +83,7 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           throw new Error("Invalid metadata structure in analysis record");
         }
 
-        const transformedData: AIDocumentClassification = {
-          id: data.id,
-          document_id: data.document_id,
-          classification_type: data.classification_type,
-          confidence_score: data.confidence_score,
-          metadata: data.metadata,
-          created_at: data.created_at
-        };
-
-        console.log("Transformed data:", transformedData);
-        return transformedData;
+        return data as AIDocumentClassification;
       } catch (err) {
         console.error("Error in contract analysis query:", err);
         throw err;
