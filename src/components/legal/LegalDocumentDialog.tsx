@@ -7,6 +7,7 @@ import { DocumentContent } from "./document/DocumentContent";
 import { DocumentVersionControl } from "./document/DocumentVersionControl";
 import { DocumentSignature } from "./document/DocumentSignature";
 import { DocumentClassification } from "./document/DocumentClassification";
+import { ContractAnalysis } from "./document/ContractAnalysis";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -157,6 +158,9 @@ export function LegalDocumentDialog({
               onVersionChange={setCurrentVersion}
             />
             <DocumentClassification
+              documentId={customerId}
+            />
+            <ContractAnalysis
               documentId={customerId}
             />
             <DocumentSignature
