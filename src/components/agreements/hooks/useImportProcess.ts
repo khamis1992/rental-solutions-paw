@@ -46,12 +46,51 @@ const validateCSVFile = async (file: File): Promise<boolean> => {
       return false;
     }
 
-    return true;
+    // Validate data format in each row
+    const headerIndexes = requiredHeaders.reduce((acc, header) => {
+      acc[header] = headers.indexOf(header);
+      return acc;
+    }, {} as Record<string, number>);
+
+    let hasErrors = false;
+    lines.slice(1).forEach((line, index) => {
+      const values = line.split(',').map(v => v.trim());
+      
+      // Validate amount format
+      const amount = values[headerIndexes.amount];
+      if (amount && isNaN(parseFloat(amount))) {
+        toast.error(`Row ${index + 2}: Invalid amount format - ${amount}`);
+        hasErrors = true;
+      }
+
+      // Validate date format
+      const date = values[headerIndexes.payment_date];
+      if (date && !isValidDate(date)) {
+        toast.error(`Row ${index + 2}: Invalid date format - use YYYY-MM-DD`);
+        hasErrors = true;
+      }
+
+      // Validate required fields are not empty
+      requiredHeaders.forEach(header => {
+        const value = values[headerIndexes[header]];
+        if (!value || value.trim() === '') {
+          toast.error(`Row ${index + 2}: Missing required field - ${header}`);
+          hasErrors = true;
+        }
+      });
+    });
+
+    return !hasErrors;
   } catch (error) {
     console.error("CSV validation error:", error);
     toast.error("Error validating CSV file");
     return false;
   }
+};
+
+const isValidDate = (dateStr: string): boolean => {
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date.getTime());
 };
 
 export const useImportProcess = () => {
@@ -99,6 +138,11 @@ export const useImportProcess = () => {
       }
 
       console.log('Edge Function response:', data);
+      
+      if (!data || !data.totalRows || !data.validRows) {
+        throw new Error('Invalid response format from server');
+      }
+
       setAnalysisResult(data);
       return true;
     } catch (error: any) {
@@ -114,8 +158,15 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
+      if (!analysisResult) {
+        throw new Error('No analysis result available');
+      }
+
       const { error } = await supabase.functions.invoke('process-payment-import', {
-        body: { analysisResult },
+        body: { 
+          analysisResult,
+          action: 'implement'
+        },
         headers: {
           'Content-Type': 'application/json'
         }
