@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 interface RevenueChartProps {
   data: Array<{
@@ -13,17 +11,6 @@ interface RevenueChartProps {
 }
 
 export const RevenueChart = ({ data, onExport }: RevenueChartProps) => {
-  if (!data || data.length === 0) {
-    return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          No revenue data available for the selected period.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -40,10 +27,6 @@ export const RevenueChart = ({ data, onExport }: RevenueChartProps) => {
           <Tooltip
             formatter={(value: number) => formatCurrency(value)}
             labelFormatter={(label) => label}
-            contentStyle={{ 
-              backgroundColor: 'var(--background)',
-              border: '1px solid var(--border)'
-            }}
           />
           <Line
             type="monotone"
@@ -51,7 +34,6 @@ export const RevenueChart = ({ data, onExport }: RevenueChartProps) => {
             stroke="#4ade80"
             strokeWidth={2}
             dot={false}
-            name="Revenue"
           />
         </LineChart>
       </ResponsiveContainer>

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { CustomerSelect } from "./form/CustomerSelect";
-import { VehicleSelect } from "./form/VehicleSelect";
 
 interface CreateAgreementDialogProps {
   open: boolean;
@@ -18,33 +16,28 @@ interface CreateAgreementDialogProps {
 }
 
 interface FormData {
-  customerId: string;
-  agreementType: 'lease_to_own' | 'short_term';
+  customerName: string;
+  agreementType: string;
   amount: number;
   startDate: string;
   endDate: string;
-  vehicleId: string;
-  initialMileage: number;
 }
 
 export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDialogProps) => {
-  const { register, handleSubmit, formState: { isSubmitting }, reset, setValue } = useForm<FormData>();
+  const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<FormData>();
   const queryClient = useQueryClient();
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
   const onSubmit = async (data: FormData) => {
     try {
       const { error } = await supabase
-        .from('leases')
+        .from('agreements')
         .insert({
-          customer_id: data.customerId,
+          customer_name: data.customerName,
           agreement_type: data.agreementType,
-          total_amount: data.amount,
+          amount: data.amount,
           start_date: data.startDate,
           end_date: data.endDate,
-          status: 'pending_payment',
-          vehicle_id: data.vehicleId,
-          initial_mileage: data.initialMileage
+          status: 'active'
         });
 
       if (error) throw error;
@@ -59,15 +52,6 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
     }
   };
 
-  const handleCustomerSelect = (customerId: string) => {
-    setSelectedCustomerId(customerId);
-    setValue('customerId', customerId);
-  };
-
-  const handleVehicleSelect = (vehicleId: string) => {
-    setValue('vehicleId', vehicleId);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -76,49 +60,29 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <CustomerSelect 
-              register={register} 
-              onCustomerSelect={handleCustomerSelect}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <VehicleSelect 
-              register={register}
-              onVehicleSelect={handleVehicleSelect}
+            <Label htmlFor="customerName">Customer Name</Label>
+            <Input
+              id="customerName"
+              {...register('customerName', { required: true })}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="agreementType">Agreement Type</Label>
-            <Select 
-              onValueChange={(value) => {
-                register('agreementType').onChange({
-                  target: { value: value as 'lease_to_own' | 'short_term' }
-                });
-              }}
-            >
+            <Select {...register('agreementType', { required: true })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-                <SelectItem value="short_term">Short Term</SelectItem>
+                <SelectItem value="lease">Lease</SelectItem>
+                <SelectItem value="rental">Rental</SelectItem>
+                <SelectItem value="purchase">Purchase</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="initialMileage">Initial Mileage</Label>
-            <Input
-              id="initialMileage"
-              type="number"
-              {...register('initialMileage', { required: true, min: 0 })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount (QAR)</Label>
+            <Label htmlFor="amount">Amount</Label>
             <Input
               id="amount"
               type="number"

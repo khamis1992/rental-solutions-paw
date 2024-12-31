@@ -1,61 +1,53 @@
-import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RevenueChart } from "../charts/RevenueChart";
-import { FinancialMetricsCard } from "../charts/FinancialMetricsCard";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RevenueChart } from "../charts/RevenueChart";
+import { Loader2 } from "lucide-react";
 
-interface Payment {
-  amount: number;
-  created_at: string;
-  status: string;
-  type: 'Income' | 'Expense';
+interface MonthlyRevenue {
+  month: string;
+  shortTerm: number;
+  leaseToOwn: number;
+  total: number;
 }
 
-interface ChartData {
-  date: string;
-  revenue: number;
+interface Payment {
+  created_at: string;
+  amount_paid: number;
+  lease?: {
+    agreement_type: 'short_term' | 'lease_to_own';
+  };
 }
 
 export const RevenueDashboard = () => {
   const queryClient = useQueryClient();
 
-  const { data: payments, isLoading, error } = useQuery({
-    queryKey: ['financial-metrics'],
+  const { data: financialData, isLoading } = useQuery({
+    queryKey: ["financial-metrics"],
     queryFn: async () => {
-      console.log("Fetching financial metrics...");
-      try {
-        const { data, error } = await supabase
-          .from('payments')
-          .select('amount, created_at, status, type')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .order('created_at', { ascending: true });
+      const { data, error } = await supabase
+        .from("payments")
+        .select(`
+          *,
+          lease:leases (
+            agreement_type,
+            vehicle:vehicles (
+              make,
+              model
+            )
+          )
+        `)
+        .order('created_at');
 
-        if (error) {
-          console.error("Supabase query error:", error);
-          throw error;
-        }
-
-        console.log("Fetched payments:", data);
-        return data as Payment[];
-      } catch (err) {
-        console.error("Failed to fetch financial metrics:", err);
-        toast.error("Failed to load financial data", {
-          description: "Please try again later or contact support if the problem persists."
-        });
-        throw err;
-      }
-    },
-    retry: 2,
-    meta: {
-      errorMessage: "Failed to load financial data"
+      if (error) throw error;
+      return data as Payment[];
     }
   });
 
-  // Set up real-time subscription
   useEffect(() => {
+    // Subscribe to payment changes
     const channel = supabase
       .channel('payment-changes')
       .on(
@@ -65,98 +57,84 @@ export const RevenueDashboard = () => {
           schema: 'public',
           table: 'payments'
         },
-        (payload) => {
-          console.log("Real-time payment update received:", payload);
-          queryClient.invalidateQueries({ queryKey: ['financial-metrics'] });
-          toast.success("Financial data updated", {
-            description: "The dashboard has been refreshed with new data."
+        async (payload) => {
+          console.log('Payment change detected:', payload);
+          
+          // Invalidate and refetch the financial metrics query
+          await queryClient.invalidateQueries({ 
+            queryKey: ['financial-metrics'] 
           });
+          
+          const eventMessages = {
+            INSERT: 'New payment recorded',
+            UPDATE: 'Payment updated',
+            DELETE: 'Payment deleted'
+          };
+          
+          toast.info(
+            eventMessages[payload.eventType as keyof typeof eventMessages] || 'Payment record changed',
+            {
+              description: 'Financial dashboard has been updated.'
+            }
+          );
         }
       )
-      .subscribe((status) => {
-        console.log("Subscription status:", status);
-        if (status === 'SUBSCRIBED') {
-          console.log("Successfully subscribed to payment changes");
-        }
-      });
+      .subscribe();
 
     return () => {
-      console.log("Cleaning up subscription");
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
 
-  // Show error state
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>Error Loading Financial Data</AlertTitle>
-        <AlertDescription>
-          There was a problem loading the financial metrics. Please try again later or contact support if the problem persists.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  // Calculate metrics
-  const totalRevenue = payments
-    ?.filter(payment => payment.type === 'Income' && payment.status === 'completed')
-    .reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+  // Process data for visualizations
+  const monthlyRevenue = financialData?.reduce<Record<string, MonthlyRevenue>>((acc, payment) => {
+    const date = new Date(payment.created_at);
+    const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    
+    if (!acc[monthYear]) {
+      acc[monthYear] = {
+        month: monthYear,
+        shortTerm: 0,
+        leaseToOwn: 0,
+        total: 0
+      };
+    }
 
-  const totalExpenses = payments
-    ?.filter(payment => payment.type === 'Expense' && payment.status === 'completed')
-    .reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+    const amount = payment.amount_paid || 0;
+    acc[monthYear].total += amount;
 
-  const netIncome = totalRevenue - totalExpenses;
+    if (payment.lease?.agreement_type === 'short_term') {
+      acc[monthYear].shortTerm += amount;
+    } else {
+      acc[monthYear].leaseToOwn += amount;
+    }
 
-  // Process data for chart
-  const chartData: ChartData[] = payments
-    ? payments
-        .filter(payment => payment.type === 'Income' && payment.status === 'completed')
-        .reduce((acc: ChartData[], payment) => {
-          const date = new Date(payment.created_at).toLocaleDateString();
-          const existingEntry = acc.find(entry => entry.date === date);
-          
-          if (existingEntry) {
-            existingEntry.revenue += payment.amount;
-          } else {
-            acc.push({ date, revenue: payment.amount });
-          }
-          
-          return acc;
-        }, [])
-    : [];
+    return acc;
+  }, {});
+
+  const revenueData = Object.values(monthlyRevenue || {}).map(data => ({
+    date: data.month,
+    revenue: data.total
+  }));
 
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-3">
-        <FinancialMetricsCard
-          title="Total Revenue"
-          value={totalRevenue}
-        />
-        <FinancialMetricsCard
-          title="Total Expenses"
-          value={totalExpenses}
-        />
-        <FinancialMetricsCard
-          title="Net Income"
-          value={netIncome}
-        />
-      </div>
-
-      <div className="bg-card rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Revenue Overview</h3>
-        <RevenueChart data={chartData} onExport={() => {}} />
-      </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RevenueChart data={revenueData} onExport={() => {}} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
