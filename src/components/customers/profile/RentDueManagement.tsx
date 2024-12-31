@@ -25,7 +25,7 @@ export const RentDueManagement = ({ customerId }: RentDueManagementProps) => {
         `)
         .eq("customer_id", customerId)
         .eq("status", "active")
-        .single();
+        .maybeSingle();  // Changed from .single() to .maybeSingle()
 
       if (error && error.code !== "PGRST116") throw error;
       return data;
