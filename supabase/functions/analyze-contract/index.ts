@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
@@ -13,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { documentUrl, documentId } = await req.json();
+    console.log('Analyzing document:', { documentUrl, documentId });
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -27,13 +29,16 @@ serve(async (req) => {
       .download(documentUrl.split('/').pop());
 
     if (downloadError) {
+      console.error('Error downloading document:', downloadError);
       throw new Error(`Error downloading document: ${downloadError.message}`);
     }
 
     const documentText = await documentData.text();
+    console.log('Document text retrieved, length:', documentText.length);
 
     // Analyze contract using DeepSeek
     const analysis = await analyzeContract(documentText);
+    console.log('Analysis completed:', analysis);
 
     // Store analysis results
     const { error: insertError } = await supabaseClient
@@ -52,6 +57,7 @@ serve(async (req) => {
       });
 
     if (insertError) {
+      console.error('Error storing analysis:', insertError);
       throw new Error(`Error storing analysis: ${insertError.message}`);
     }
 
@@ -69,38 +75,59 @@ serve(async (req) => {
 
 async function analyzeContract(text: string) {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+  if (!deepseekApiKey) {
+    throw new Error('DeepSeek API key not configured');
+  }
   
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${deepseekApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a legal contract analysis expert. Analyze the provided contract text and extract:
-            - Key terms and conditions
-            - Obligations for both parties
-            - Potential risks and liabilities
-            - Recommendations for improvement or negotiation
-            Provide a confidence score for your analysis.`
-        },
-        { role: 'user', content: text }
-      ],
-    }),
-  });
+  console.log('Calling DeepSeek API...');
+  
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a legal contract analysis expert. Analyze the provided contract text and extract:
+              - Key terms and conditions
+              - Obligations for both parties
+              - Potential risks and liabilities
+              - Recommendations for improvement or negotiation
+              Provide a confidence score for your analysis.`
+          },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      }),
+    });
 
-  const data = await response.json();
-  const analysis = JSON.parse(data.choices[0].message.content);
-  
-  return {
-    keyTerms: analysis.keyTerms,
-    obligations: analysis.obligations,
-    risks: analysis.risks,
-    recommendations: analysis.recommendations,
-    confidence: analysis.confidence
-  };
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('DeepSeek API error response:', errorText);
+      throw new Error(`DeepSeek API error: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('DeepSeek API raw response:', data);
+
+    // Parse the response content as JSON
+    const analysis = JSON.parse(data.choices[0].message.content);
+    
+    return {
+      keyTerms: analysis.keyTerms || [],
+      obligations: analysis.obligations || [],
+      risks: analysis.risks || [],
+      recommendations: analysis.recommendations || [],
+      confidence: analysis.confidence || 0.8
+    };
+  } catch (error) {
+    console.error('Error in analyzeContract:', error);
+    throw new Error(`Failed to analyze contract: ${error.message}`);
+  }
 }
