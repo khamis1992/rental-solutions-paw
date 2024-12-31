@@ -26,20 +26,41 @@ export const DeleteMaintenanceDialog = ({ id, vehicleId, status }: DeleteMainten
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
+      console.log("Starting deletion process for maintenance record:", id);
+      
+      // First, delete any related vehicle inspections
+      const { error: inspectionError } = await supabase
+        .from('vehicle_inspections')
+        .delete()
+        .eq('maintenance_id', id);
+
+      if (inspectionError) {
+        console.error("Error deleting related inspections:", inspectionError);
+        throw inspectionError;
+      }
+
+      // Then delete the maintenance record
+      const { error: maintenanceError } = await supabase
         .from('maintenance')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (maintenanceError) {
+        console.error("Error deleting maintenance record:", maintenanceError);
+        throw maintenanceError;
+      }
 
+      // If status was scheduled or in_progress, update vehicle status
       if (status === 'scheduled' || status === 'in_progress') {
         const { error: vehicleError } = await supabase
           .from('vehicles')
           .update({ status: 'available' })
           .eq('id', vehicleId);
 
-        if (vehicleError) throw vehicleError;
+        if (vehicleError) {
+          console.error("Error updating vehicle status:", vehicleError);
+          throw vehicleError;
+        }
       }
 
       await Promise.all([
@@ -50,8 +71,8 @@ export const DeleteMaintenanceDialog = ({ id, vehicleId, status }: DeleteMainten
 
       toast.success('Maintenance record deleted successfully');
     } catch (error: any) {
-      console.error("Error deleting maintenance record:", error);
-      toast.error('Failed to delete maintenance record');
+      console.error("Error in deletion process:", error);
+      toast.error(error.message || 'Failed to delete maintenance record');
     }
   };
 
