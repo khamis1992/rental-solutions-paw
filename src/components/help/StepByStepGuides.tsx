@@ -20,6 +20,14 @@ interface Category {
   slug: string;
 }
 
+interface WorkflowGuide {
+  basics: Guide[];
+  usage: Guide[];
+  integration: Guide[];
+}
+
+type ModuleGuide = Guide[] | WorkflowGuide;
+
 export const StepByStepGuides = () => {
   const { data: categories } = useQuery({
     queryKey: ['guide-categories'],
@@ -42,6 +50,48 @@ export const StepByStepGuides = () => {
     financial,
     legal
   } = guides;
+
+  const renderGuides = (guides: ModuleGuide) => {
+    if (Array.isArray(guides)) {
+      return guides.map((guide, index) => (
+        <Card key={index} className="p-6">
+          <h3 className="text-lg font-medium mb-4">{guide.title}</h3>
+          <ol className="space-y-3">
+            {guide.steps.map((step, stepIndex) => (
+              <li key={stepIndex} className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  {stepIndex + 1}
+                </span>
+                <span className="text-sm">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      ));
+    }
+
+    // Handle workflow guides which have a nested structure
+    return Object.entries(guides).map(([section, sectionGuides]) => (
+      <div key={section} className="space-y-4">
+        <h3 className="text-lg font-semibold capitalize">{section}</h3>
+        {sectionGuides.map((guide, index) => (
+          <Card key={index} className="p-6">
+            <h4 className="text-lg font-medium mb-4">{guide.title}</h4>
+            <ol className="space-y-3">
+              {guide.steps.map((step, stepIndex) => (
+                <li key={stepIndex} className="flex gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    {stepIndex + 1}
+                  </span>
+                  <span className="text-sm">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </Card>
+        ))}
+      </div>
+    ));
+  };
 
   return (
     <div className="w-full space-y-6">
@@ -72,21 +122,7 @@ export const StepByStepGuides = () => {
             className="space-y-6 focus-visible:outline-none focus-visible:ring-0"
           >
             <div className="space-y-4">
-              {guides.map((guide, index) => (
-                <Card key={index} className="p-6">
-                  <h3 className="text-lg font-medium mb-4">{guide.title}</h3>
-                  <ol className="space-y-3">
-                    {guide.steps.map((step, stepIndex) => (
-                      <li key={stepIndex} className="flex gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
-                          {stepIndex + 1}
-                        </span>
-                        <span className="text-sm">{step}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </Card>
-              ))}
+              {renderGuides(guides)}
             </div>
           </TabsContent>
         ))}
