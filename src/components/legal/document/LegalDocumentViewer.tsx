@@ -46,6 +46,9 @@ export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
     return <div>Document not found</div>;
   }
 
+  // Default document type if not specified
+  const documentType = document.type || 'unspecified';
+
   return (
     <div className="space-y-4">
       <Card>
@@ -80,7 +83,7 @@ export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
       <DocumentClassifier
         documentId={document.id}
         documentContent={document.content}
-        documentType={document.type}
+        documentType={documentType}
       />
     </div>
   );

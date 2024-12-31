@@ -43,7 +43,7 @@ export function DocumentClassifier({
           body: {
             documentId,
             documentContent,
-            documentType
+            documentType: documentType || 'unspecified'
           }
         });
 
