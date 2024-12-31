@@ -2,14 +2,14 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
 
--- Schedule the recurring payments processing
+-- Schedule the cron job to run at midnight on the 1st of every month
 SELECT cron.schedule(
-  'process-recurring-payments-daily',
-  '0 0 * * *', -- Run at midnight every day
+  'process-monthly-rent-payments',
+  '0 0 1 * *',
   $$
   SELECT net.http_post(
-    url:='https://vqdlsidkucrownbfuouq.supabase.co/functions/v1/process-recurring-payments',
-    headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    url:='https://vqdlsidkucrownbfuouq.supabase.co/functions/v1/process-rent-payments',
+    headers:='{"Content-Type": "application/json", "Authorization": "Bearer ' || current_setting('app.settings.service_role_key') || '"}'::jsonb,
     body:='{}'::jsonb
   ) AS request_id;
   $$
