@@ -2135,6 +2135,7 @@ export type Database = {
           case_id: string | null
           content: string
           created_at: string
+          document_type: string | null
           expiry_date: string | null
           generated_by: string | null
           id: string
@@ -2147,6 +2148,7 @@ export type Database = {
           case_id?: string | null
           content: string
           created_at?: string
+          document_type?: string | null
           expiry_date?: string | null
           generated_by?: string | null
           id?: string
@@ -2159,6 +2161,7 @@ export type Database = {
           case_id?: string | null
           content?: string
           created_at?: string
+          document_type?: string | null
           expiry_date?: string | null
           generated_by?: string | null
           id?: string

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { DocumentClassifier } from "./DocumentClassifier";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ interface LegalDocument {
   status: string;
   created_at: string;
   updated_at: string;
-  document_type?: string; // Make document_type optional
+  document_type?: string;
 }
 
 export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
@@ -66,16 +66,16 @@ export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="p-4">
+        <div className="p-4">
           <div className="prose max-w-none dark:prose-invert">
             {document.content}
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {classification && (
         <Card>
-          <CardContent className="p-4 space-y-2">
+          <div className="p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-medium">Classification:</span>
               <Badge variant="outline" className="capitalize">
@@ -90,7 +90,7 @@ export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
                 {Math.round(classification.confidence_score * 100)}%
               </Badge>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
