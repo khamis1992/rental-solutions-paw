@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
@@ -127,7 +126,6 @@ async function analyzeContract(text: string) {
       throw new Error('Invalid response format from DeepSeek API');
     }
 
-    // Parse the response content as JSON
     try {
       const analysis = JSON.parse(data.choices[0].message.content);
       return {
