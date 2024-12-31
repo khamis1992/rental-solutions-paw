@@ -1,42 +1,23 @@
-import { useEffect } from "react";
-import { Outlet } from "react-router-dom";
-import { DashboardHeader } from "./DashboardHeader";
-import { DashboardSidebar } from "./DashboardSidebar";
+import { ReactNode } from 'react';
+import { DashboardHeader } from './DashboardHeader';
+import { DashboardSidebar } from './DashboardSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { supabase } from '@/integrations/supabase/client';
 
-export const DashboardLayout = () => {
-  useEffect(() => {
-    console.log("DashboardLayout mounted - Navigation structure initialized");
-    
-    // Verify Supabase connection
-    const checkConnection = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('company_settings')
-          .select('*')
-          .limit(1);
-          
-        if (error) {
-          console.error("Supabase connection error:", error);
-        } else {
-          console.log("Supabase connection verified:", !!data);
-        }
-      } catch (err) {
-        console.error("Failed to verify Supabase connection:", err);
-      }
-    };
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
 
-    checkConnection();
-  }, []);
-
+export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
-    <div className="min-h-screen">
-      <DashboardHeader />
-      <div className="flex">
+    <SidebarProvider>
+      <div className="flex h-screen overflow-hidden">
         <DashboardSidebar />
-        <main className="flex-1 p-6">
-          <Outlet />
-        </main>
+        <div className="flex-1 overflow-auto">
+          <DashboardHeader />
+          <main className="p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
