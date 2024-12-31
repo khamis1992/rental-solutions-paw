@@ -78,17 +78,13 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
         <CustomerDocuments customerId={customerId} />
       </div>
 
-      <Tabs defaultValue="agreements_history" className="space-y-4">
+      <Tabs defaultValue="payment_history" className="space-y-4">
         <TabsList className="w-full justify-start">
-          <TabsTrigger value="agreements_history">Agreements History</TabsTrigger>
           <TabsTrigger value="payment_history">Payment History</TabsTrigger>
           <TabsTrigger value="rent_due">Rent Due</TabsTrigger>
           <TabsTrigger value="traffic_fines">Traffic Fines</TabsTrigger>
+          <TabsTrigger value="agreements_history">Agreements History</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="agreements_history" className="mt-6">
-          <AgreementsHistory customerId={customerId} />
-        </TabsContent>
 
         <TabsContent value="payment_history">
           <PaymentHistoryAnalysis customerId={customerId} />
@@ -100,6 +96,10 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
 
         <TabsContent value="traffic_fines">
           <TrafficFinesSummary customerId={customerId} />
+        </TabsContent>
+
+        <TabsContent value="agreements_history">
+          <AgreementsHistory customerId={customerId} />
         </TabsContent>
       </Tabs>
     </div>
