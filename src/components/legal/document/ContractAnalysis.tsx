@@ -31,7 +31,7 @@ interface SupabaseResponse {
   document_id: string;
   classification_type: string;
   confidence_score: number;
-  metadata: ContractAnalysisMetadata;
+  metadata: unknown;
   created_at: string;
 }
 
@@ -47,7 +47,15 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
         .single();
 
       if (error) throw error;
-      return data as SupabaseResponse;
+      
+      // First cast to SupabaseResponse to handle the raw data
+      const rawResponse = data as SupabaseResponse;
+      
+      // Then transform the metadata to the correct type
+      return {
+        ...rawResponse,
+        metadata: rawResponse.metadata as ContractAnalysisMetadata
+      } as AIDocumentClassification;
     },
   });
 
