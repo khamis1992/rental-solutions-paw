@@ -37,7 +37,18 @@ export const WorkflowBuilder = () => {
         .from("workflow_templates")
         .select("*");
       if (error) throw error;
-      return data as WorkflowTemplate[];
+      
+      // Transform the JSON data to match our TypeScript interface
+      return (data as any[]).map(template => ({
+        ...template,
+        steps: Array.isArray(template.steps) ? template.steps.map((step: any) => ({
+          id: step.id || crypto.randomUUID(),
+          name: step.name || '',
+          type: step.type || 'task',
+          config: step.config || {}
+        })) : [],
+        triggers: Array.isArray(template.triggers) ? template.triggers : []
+      })) as WorkflowTemplate[];
     },
   });
 
@@ -45,7 +56,13 @@ export const WorkflowBuilder = () => {
     mutationFn: async (template: Partial<WorkflowTemplate>) => {
       const { data, error } = await supabase
         .from("workflow_templates")
-        .insert([template])
+        .insert([{
+          name: template.name,
+          description: template.description,
+          steps: template.steps,
+          triggers: template.triggers || [],
+          is_active: true,
+        }])
         .select()
         .single();
       if (error) throw error;
