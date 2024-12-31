@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, AlertTriangle, Clock, DollarSign } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { LegalDocumentDialog } from "./LegalDocumentDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface NonCompliantCustomer {
   id: string;
@@ -78,49 +79,85 @@ export const NonCompliantCustomers = () => {
 
   return (
     <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Agreement Number</TableHead>
-            <TableHead>Customer Name</TableHead>
-            <TableHead className="text-center">Overdue Payments</TableHead>
-            <TableHead className="text-center">Unpaid Fines</TableHead>
-            <TableHead className="text-center">Damages</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {overdueCustomers?.map((customer) => (
-            <TableRow key={customer.id}>
-              <TableCell>{customer.agreement_number}</TableCell>
-              <TableCell>{customer.customer_name}</TableCell>
-              <TableCell className="text-center">{customer.overdue_payments}</TableCell>
-              <TableCell className="text-center">{customer.unpaid_fines}</TableCell>
-              <TableCell className="text-center">{customer.damages}</TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCustomerId(customer.customer_id);
-                    setDocumentDialogOpen(true);
-                  }}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Generate Document
-                </Button>
-              </TableCell>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold">Non-Compliant Customers</h2>
+          <Badge variant="destructive" className="px-3 py-1">
+            {overdueCustomers?.length || 0} Issues Found
+          </Badge>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead>Agreement #</TableHead>
+              <TableHead>Customer Name</TableHead>
+              <TableHead className="text-center">
+                <div className="flex items-center gap-2 justify-center">
+                  <Clock className="h-4 w-4" />
+                  Overdue Payments
+                </div>
+              </TableHead>
+              <TableHead className="text-center">
+                <div className="flex items-center gap-2 justify-center">
+                  <DollarSign className="h-4 w-4" />
+                  Unpaid Fines
+                </div>
+              </TableHead>
+              <TableHead className="text-center">
+                <div className="flex items-center gap-2 justify-center">
+                  <AlertTriangle className="h-4 w-4" />
+                  Damages
+                </div>
+              </TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-          {!overdueCustomers?.length && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-4">
-                No overdue payments found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {overdueCustomers?.map((customer) => (
+              <TableRow key={customer.id} className="hover:bg-muted/50">
+                <TableCell className="font-medium">{customer.agreement_number}</TableCell>
+                <TableCell>{customer.customer_name}</TableCell>
+                <TableCell className="text-center">
+                  <Badge variant={customer.overdue_payments > 0 ? "destructive" : "secondary"}>
+                    {customer.overdue_payments}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant={customer.unpaid_fines > 0 ? "destructive" : "secondary"}>
+                    {customer.unpaid_fines}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant={customer.damages > 0 ? "destructive" : "secondary"}>
+                    {customer.damages}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCustomerId(customer.customer_id);
+                      setDocumentDialogOpen(true);
+                    }}
+                    className="hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Generate Document
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {!overdueCustomers?.length && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                  No non-compliant customers found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       <LegalDocumentDialog
         customerId={selectedCustomerId}
