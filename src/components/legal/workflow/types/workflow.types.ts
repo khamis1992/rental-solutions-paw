@@ -12,10 +12,9 @@ export interface WorkflowTemplate {
   steps: WorkflowStep[];
   triggers: any[];
   is_active: boolean;
-}
-
-export interface WorkflowTemplateRow extends WorkflowTemplate {
+  created_by: string;
   created_at: string;
-  created_by: string | null;
   updated_at: string;
 }
+
+export type WorkflowTemplateRow = WorkflowTemplate;

@@ -1,73 +1,35 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { Card } from "@/components/ui/card";
+import { useWorkflowTemplates } from "./hooks/useWorkflowTemplates";
 import { WorkflowForm } from "./components/WorkflowForm";
 import { ExistingWorkflows } from "./components/ExistingWorkflows";
-import { useWorkflowTemplates } from "./hooks/useWorkflowTemplates";
-import { WorkflowStep } from "./types/workflow.types";
+import { WorkflowTemplate } from "./types/workflow.types";
 
-export const WorkflowBuilder = () => {
-  const [steps, setSteps] = useState<WorkflowStep[]>([]);
-  const queryClient = useQueryClient();
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      description: "",
-    },
-  });
-
+export function WorkflowBuilder() {
+  const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplate | null>(null);
   const { data: templates, isLoading } = useWorkflowTemplates();
 
-  const createMutation = useMutation({
-    mutationFn: async (template: Omit<WorkflowTemplate, 'id'>) => {
-      const { data, error } = await supabase
-        .from("workflow_templates")
-        .insert([{
-          name: template.name,
-          description: template.description,
-          steps: template.steps as any,
-          triggers: template.triggers,
-          is_active: true,
-        }])
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workflow-templates"] });
-      toast.success("Workflow template created successfully");
-      form.reset();
-      setSteps([]);
-    },
-    onError: (error) => {
-      console.error("Error creating workflow template:", error);
-      toast.error("Failed to create workflow template");
-    },
-  });
-
-  const handleSubmit = (values: any) => {
-    createMutation.mutate({
-      name: values.name,
-      description: values.description,
-      steps,
-      triggers: [],
-      is_active: true,
-    });
+  const handleTemplateSelect = (template: WorkflowTemplate) => {
+    setSelectedTemplate(template);
   };
 
   return (
     <div className="space-y-6">
-      <WorkflowForm
-        form={form}
-        steps={steps}
-        setSteps={setSteps}
-        isSubmitting={createMutation.isPending}
-        onSubmit={handleSubmit}
-      />
-      <ExistingWorkflows templates={templates} isLoading={isLoading} />
+      <Card className="p-6">
+        <h2 className="text-2xl font-semibold mb-4">Workflow Builder</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <WorkflowForm 
+            selectedTemplate={selectedTemplate}
+            onTemplateSelect={handleTemplateSelect}
+          />
+          <ExistingWorkflows
+            templates={templates || []}
+            isLoading={isLoading}
+            onTemplateSelect={handleTemplateSelect}
+            selectedTemplateId={selectedTemplate?.id}
+          />
+        </div>
+      </Card>
     </div>
   );
-};
+}
