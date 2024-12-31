@@ -51,6 +51,26 @@ export const DocumentScanner = ({ onScanComplete, customerId }: DocumentScannerP
 
       if (analysisError) throw analysisError;
 
+      // Log analysis results
+      console.log("Document analysis results:", analysisData);
+
+      // Store analysis results in document_analysis_logs
+      const { error: logError } = await supabase
+        .from('document_analysis_logs')
+        .insert({
+          profile_id: customerId,
+          document_type: 'id_document',
+          document_url: publicUrl,
+          extracted_data: analysisData.data,
+          confidence_score: analysisData.confidence || 0.8,
+          status: 'completed'
+        });
+
+      if (logError) {
+        console.error("Error logging analysis:", logError);
+        throw logError;
+      }
+
       toast.success("Document analyzed successfully");
       onScanComplete(analysisData.data);
     } catch (error: any) {
