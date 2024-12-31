@@ -71,7 +71,13 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
 
           <div className="space-y-2">
             <Label htmlFor="agreementType">Agreement Type</Label>
-            <Select {...register('agreementType', { required: true })}>
+            <Select 
+              onValueChange={(value) => {
+                register('agreementType').onChange({
+                  target: { value: value as 'lease_to_own' | 'short_term' }
+                });
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
