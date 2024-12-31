@@ -36,7 +36,7 @@ export const LegalCasesList = () => {
         .from("legal_cases")
         .select(`
           *,
-          customer:customer_id(full_name)
+          customer:profiles!legal_cases_customer_id_fkey(full_name)
         `);
 
       if (error) throw error;
