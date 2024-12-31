@@ -54,12 +54,10 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
       try {
         const { data, error } = await supabase
           .from("ai_document_classification")
-          .select("*")
+          .select()
           .eq("document_id", documentId)
           .eq("classification_type", "contract_analysis")
-          .single();
-
-        console.log("Query response:", { data, error });
+          .maybeSingle();
 
         if (error) {
           console.error("Supabase error:", error);
