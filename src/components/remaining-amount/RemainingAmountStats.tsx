@@ -56,7 +56,7 @@ export function RemainingAmountStats() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(stats?.totalRentAmount || 0)}</div>
+          <div className="text-lg font-bold">{formatCurrency(stats?.totalRentAmount || 0)}</div>
         </CardContent>
       </Card>
 
@@ -67,7 +67,7 @@ export function RemainingAmountStats() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(stats?.totalFinalPrice || 0)}</div>
+          <div className="text-lg font-bold">{formatCurrency(stats?.totalFinalPrice || 0)}</div>
         </CardContent>
       </Card>
 
@@ -78,7 +78,7 @@ export function RemainingAmountStats() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-lg font-bold text-green-600">
             {formatCurrency(stats?.totalAmountPaid || 0)}
           </div>
         </CardContent>
@@ -91,7 +91,7 @@ export function RemainingAmountStats() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-lg font-bold text-blue-600">
             {formatCurrency(stats?.totalRemainingAmount || 0)}
           </div>
         </CardContent>
