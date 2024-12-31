@@ -26,6 +26,20 @@ interface AIDocumentClassification {
   created_at: string;
 }
 
+// Type guard to check if an object is a valid ContractAnalysisMetadata
+function isContractAnalysisMetadata(obj: unknown): obj is ContractAnalysisMetadata {
+  const metadata = obj as ContractAnalysisMetadata;
+  return (
+    metadata !== null &&
+    typeof metadata === 'object' &&
+    Array.isArray(metadata.key_terms) &&
+    Array.isArray(metadata.obligations) &&
+    Array.isArray(metadata.risks) &&
+    Array.isArray(metadata.recommendations) &&
+    typeof metadata.analyzed_at === 'string'
+  );
+}
+
 export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
   const { data: analysis, isLoading, error } = useQuery({
     queryKey: ["contract-analysis", documentId],
@@ -59,12 +73,9 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
         // Take the first record if multiple exist
         const record = data[0];
         
-        // Validate metadata structure
-        const metadata = record.metadata as ContractAnalysisMetadata;
-        if (!metadata || !Array.isArray(metadata.key_terms) || !Array.isArray(metadata.obligations) || 
-            !Array.isArray(metadata.risks) || !Array.isArray(metadata.recommendations) || 
-            typeof metadata.analyzed_at !== 'string') {
-          console.error("Invalid metadata structure:", metadata);
+        // Validate metadata using type guard
+        if (!isContractAnalysisMetadata(record.metadata)) {
+          console.error("Invalid metadata structure:", record.metadata);
           throw new Error("Invalid metadata structure in analysis record");
         }
 
@@ -73,7 +84,7 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           document_id: record.document_id,
           classification_type: record.classification_type,
           confidence_score: record.confidence_score,
-          metadata: metadata,
+          metadata: record.metadata,
           created_at: record.created_at
         };
 
