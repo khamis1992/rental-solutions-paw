@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { AlertCircle, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -41,11 +41,13 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
     queryFn: async () => {
       console.log("Fetching analysis for document:", documentId);
       
+      // First try to get the analysis with both document_id and classification_type
       const { data, error } = await supabase
         .from("ai_document_classification")
-        .select("*")
+        .select()
         .eq("document_id", documentId)
         .eq("classification_type", "contract_analysis")
+        .limit(1)
         .maybeSingle();
 
       console.log("Query response:", { data, error });
@@ -72,7 +74,8 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
       console.log("Transformed data:", transformedData);
       return transformedData;
     },
-    retry: false
+    retry: false,
+    enabled: !!documentId // Only run query if documentId exists
   });
 
   if (error) {
