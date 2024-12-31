@@ -39,40 +39,49 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
   const { data: analysis, isLoading, error } = useQuery({
     queryKey: ["contract-analysis", documentId],
     queryFn: async () => {
-      console.log("Fetching analysis for document:", documentId);
-      
-      // First try to get the analysis with both document_id and classification_type
-      const { data, error } = await supabase
-        .from("ai_document_classification")
-        .select()
-        .eq("document_id", documentId)
-        .eq("classification_type", "contract_analysis")
-        .limit(1)
-        .maybeSingle();
-
-      console.log("Query response:", { data, error });
-
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
-      
-      if (!data) {
-        console.log("No analysis found for document");
+      if (!documentId) {
+        console.log("No document ID provided");
         return null;
       }
-      
-      // First cast to SupabaseResponse to handle the raw data
-      const rawResponse = data as SupabaseResponse;
-      
-      // Then transform the metadata to the correct type
-      const transformedData: AIDocumentClassification = {
-        ...rawResponse,
-        metadata: rawResponse.metadata as ContractAnalysisMetadata
-      };
 
-      console.log("Transformed data:", transformedData);
-      return transformedData;
+      console.log("Fetching analysis for document:", documentId);
+      
+      try {
+        const { data, error } = await supabase
+          .from("ai_document_classification")
+          .select()
+          .eq("document_id", documentId)
+          .eq("classification_type", "contract_analysis")
+          .limit(1)
+          .maybeSingle();
+
+        console.log("Query response:", { data, error });
+
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
+        
+        if (!data) {
+          console.log("No analysis found for document");
+          return null;
+        }
+        
+        // First cast to SupabaseResponse to handle the raw data
+        const rawResponse = data as SupabaseResponse;
+        
+        // Then transform the metadata to the correct type
+        const transformedData: AIDocumentClassification = {
+          ...rawResponse,
+          metadata: rawResponse.metadata as ContractAnalysisMetadata
+        };
+
+        console.log("Transformed data:", transformedData);
+        return transformedData;
+      } catch (err) {
+        console.error("Error in contract analysis query:", err);
+        throw err;
+      }
     },
     retry: false,
     enabled: !!documentId // Only run query if documentId exists
@@ -100,7 +109,8 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-muted-foreground">
         <AlertCircle className="h-8 w-8 mb-2" />
-        <p>No analysis available</p>
+        <p>Analysis not available yet</p>
+        <p className="text-sm mt-2">The document is pending analysis</p>
       </div>
     );
   }
