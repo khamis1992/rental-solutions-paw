@@ -14,6 +14,11 @@ interface Payment {
   type: 'Income' | 'Expense';
 }
 
+interface ChartData {
+  date: string;
+  revenue: number;
+}
+
 export const RevenueDashboard = () => {
   const queryClient = useQueryClient();
 
@@ -113,29 +118,44 @@ export const RevenueDashboard = () => {
 
   const netIncome = totalRevenue - totalExpenses;
 
+  // Process data for chart
+  const chartData: ChartData[] = payments
+    ? payments
+        .filter(payment => payment.type === 'Income' && payment.status === 'completed')
+        .reduce((acc: ChartData[], payment) => {
+          const date = new Date(payment.created_at).toLocaleDateString();
+          const existingEntry = acc.find(entry => entry.date === date);
+          
+          if (existingEntry) {
+            existingEntry.revenue += payment.amount;
+          } else {
+            acc.push({ date, revenue: payment.amount });
+          }
+          
+          return acc;
+        }, [])
+    : [];
+
   return (
     <div className="space-y-8">
       <div className="grid gap-4 md:grid-cols-3">
         <FinancialMetricsCard
           title="Total Revenue"
-          amount={totalRevenue}
-          type="revenue"
+          value={totalRevenue}
         />
         <FinancialMetricsCard
           title="Total Expenses"
-          amount={totalExpenses}
-          type="expense"
+          value={totalExpenses}
         />
         <FinancialMetricsCard
           title="Net Income"
-          amount={netIncome}
-          type="net"
+          value={netIncome}
         />
       </div>
 
       <div className="bg-card rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4">Revenue Overview</h3>
-        <RevenueChart data={payments || []} />
+        <RevenueChart data={chartData} onExport={() => {}} />
       </div>
     </div>
   );
