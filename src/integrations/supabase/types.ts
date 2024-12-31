@@ -638,6 +638,42 @@ export type Database = {
           },
         ]
       }
+      case_duration_analytics: {
+        Row: {
+          avg_duration: number | null
+          calculated_at: string | null
+          case_type: string
+          id: string
+          max_duration: number | null
+          min_duration: number | null
+          sample_size: number | null
+          std_deviation: number | null
+          time_period: string
+        }
+        Insert: {
+          avg_duration?: number | null
+          calculated_at?: string | null
+          case_type: string
+          id?: string
+          max_duration?: number | null
+          min_duration?: number | null
+          sample_size?: number | null
+          std_deviation?: number | null
+          time_period: string
+        }
+        Update: {
+          avg_duration?: number | null
+          calculated_at?: string | null
+          case_type?: string
+          id?: string
+          max_duration?: number | null
+          min_duration?: number | null
+          sample_size?: number | null
+          std_deviation?: number | null
+          time_period?: string
+        }
+        Relationships: []
+      }
       case_outcome_predictions: {
         Row: {
           case_id: string | null
@@ -690,6 +726,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      case_status_distribution: {
+        Row: {
+          calculated_at: string | null
+          count: number | null
+          id: string
+          percentage: number | null
+          status: string
+          time_period: string
+        }
+        Insert: {
+          calculated_at?: string | null
+          count?: number | null
+          id?: string
+          percentage?: number | null
+          status: string
+          time_period: string
+        }
+        Update: {
+          calculated_at?: string | null
+          count?: number | null
+          id?: string
+          percentage?: number | null
+          status?: string
+          time_period?: string
+        }
+        Relationships: []
       }
       company_settings: {
         Row: {
@@ -4361,6 +4424,13 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_case_duration_stats: {
+        Args: {
+          p_case_type: string
+          p_time_period: string
+        }
+        Returns: undefined
+      }
       calculate_credit_score: {
         Args: {
           p_monthly_income: number
