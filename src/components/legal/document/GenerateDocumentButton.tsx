@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { useDocumentGeneration } from "./hooks/useDocumentGeneration";
+import { toast } from "sonner";
 
 interface GenerateDocumentButtonProps {
   templateId: string;
@@ -19,10 +20,12 @@ export function GenerateDocumentButton({
 
   const handleGenerate = async () => {
     try {
+      console.log('Starting document generation for template:', templateId);
+      
       // Example variables - you would typically get these from a form or context
       const variables = {
         date: new Date().toLocaleDateString(),
-        caseNumber: "CASE-" + Math.random().toString(36).substr(2, 9),
+        caseNumber: caseId ? `CASE-${caseId}` : `CASE-${Math.random().toString(36).substr(2, 9)}`,
         // Add other variables as needed
       };
 
@@ -31,6 +34,8 @@ export function GenerateDocumentButton({
         variables,
         caseId
       });
+
+      console.log('Document generation result:', result);
 
       if (result?.documentId && onGenerated) {
         onGenerated(result.documentId);

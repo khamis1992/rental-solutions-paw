@@ -14,11 +14,20 @@ export function useDocumentGeneration() {
   const generateDocument = async ({ templateId, variables, caseId }: GenerateDocumentParams) => {
     setIsGenerating(true);
     try {
+      console.log('Generating document with params:', { templateId, variables, caseId });
+      
       const { data, error } = await supabase.functions.invoke('generate-legal-document', {
         body: { templateId, variables, caseId }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('No response data received from document generation');
+      }
 
       toast.success('Document generated successfully');
       return data;
