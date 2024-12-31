@@ -6,6 +6,7 @@ import { DocumentHeader } from "./document/DocumentHeader";
 import { DocumentContent } from "./document/DocumentContent";
 import { DocumentVersionControl } from "./document/DocumentVersionControl";
 import { DocumentSignature } from "./document/DocumentSignature";
+import { DocumentClassification } from "./document/DocumentClassification";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -154,6 +155,9 @@ export function LegalDocumentDialog({
               versions={versions || []}
               currentVersion={currentVersion}
               onVersionChange={setCurrentVersion}
+            />
+            <DocumentClassification
+              documentId={customerId}
             />
             <DocumentSignature
               onSignatureCapture={handleSignatureCapture}
