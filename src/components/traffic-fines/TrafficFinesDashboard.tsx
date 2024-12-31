@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { TrafficFineStats } from "./TrafficFineStats";
 import { TrafficFineImport } from "./TrafficFineImport";
 import { TrafficFinesList } from "./TrafficFinesList";
@@ -13,7 +14,7 @@ export function TrafficFinesDashboard() {
   const [sortField, setSortField] = useState<string>("violation_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const { data: finesCount, refetch } = useQuery({
+  const { data: finesCount = 0, refetch } = useQuery({
     queryKey: ["traffic-fines-count"],
     queryFn: async () => {
       const { count, error } = await supabase
