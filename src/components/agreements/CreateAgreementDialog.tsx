@@ -17,7 +17,7 @@ interface CreateAgreementDialogProps {
 
 interface FormData {
   customerName: string;
-  agreementType: string;
+  agreementType: 'lease_to_own' | 'short_term';
   amount: number;
   startDate: string;
   endDate: string;
@@ -30,14 +30,16 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
   const onSubmit = async (data: FormData) => {
     try {
       const { error } = await supabase
-        .from('leases')  // Changed from 'agreements' to 'leases'
+        .from('leases')
         .insert({
-          customer_name: data.customerName,
+          customer_id: data.customerName, // This should be updated to use actual customer_id
           agreement_type: data.agreementType,
-          total_amount: data.amount,  // Changed to match the leases table schema
+          total_amount: data.amount,
           start_date: data.startDate,
           end_date: data.endDate,
-          status: 'pending_payment'  // Added default status
+          status: 'pending_payment',
+          vehicle_id: '00000000-0000-0000-0000-000000000000', // This should be updated to use actual vehicle_id
+          initial_mileage: 0 // Required field based on schema
         });
 
       if (error) throw error;
