@@ -16,6 +16,7 @@ export interface AgreementFormData {
   customerId: string;
   agreementDuration: number;
   rentAmount: number;
+  finalPrice: number;
   downPayment?: number;
   initialMileage: number;
   notes?: string;
@@ -57,11 +58,12 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           vehicle_id: data.vehicleId,
           agreement_type: data.agreementType,
           initial_mileage: data.initialMileage,
-          total_amount: data.rentAmount,
+          total_amount: data.finalPrice,
           rent_amount: data.rentAmount,
           status: 'pending_payment',
           down_payment: data.downPayment,
-          notes: data.notes
+          notes: data.notes,
+          lease_duration: `${data.agreementDuration} months`
         })
         .select()
         .single();
@@ -79,24 +81,6 @@ export const useAgreementForm = (onSuccess?: () => void) => {
       if (vehicleError) throw vehicleError;
 
       console.log('Retrieved vehicle:', vehicle);
-
-      const { error: remainingAmountError } = await supabase
-        .from('remaining_amounts')
-        .insert({
-          agreement_number: agreement.agreement_number,
-          license_plate: vehicle.license_plate,
-          rent_amount: data.rentAmount,
-          final_price: data.rentAmount,
-          amount_paid: 0,
-          remaining_amount: data.rentAmount,
-          agreement_duration: `${data.agreementDuration} months`,
-          lease_id: agreement.id
-        });
-
-      if (remainingAmountError) {
-        console.error('Error creating remaining amount:', remainingAmountError);
-        throw remainingAmountError;
-      }
 
       if (onSuccess) {
         onSuccess();

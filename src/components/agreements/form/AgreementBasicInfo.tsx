@@ -26,6 +26,44 @@ export const AgreementBasicInfo = ({ register, errors }: AgreementBasicInfoProps
         </div>
 
         <AgreementTypeSelect register={register} />
+
+        <div className="space-y-2">
+          <Label htmlFor="rentAmount">Rent Amount</Label>
+          <Input
+            id="rentAmount"
+            type="number"
+            step="0.01"
+            {...register("rentAmount", { required: "Rent amount is required" })}
+          />
+          {errors.rentAmount && (
+            <span className="text-sm text-red-500">{errors.rentAmount.message}</span>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="finalPrice">Final Price</Label>
+          <Input
+            id="finalPrice"
+            type="number"
+            step="0.01"
+            {...register("finalPrice", { required: "Final price is required" })}
+          />
+          {errors.finalPrice && (
+            <span className="text-sm text-red-500">{errors.finalPrice.message}</span>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="agreementDuration">Agreement Duration (months)</Label>
+          <Input
+            id="agreementDuration"
+            type="number"
+            {...register("agreementDuration", { required: "Duration is required" })}
+          />
+          {errors.agreementDuration && (
+            <span className="text-sm text-red-500">{errors.agreementDuration.message}</span>
+          )}
+        </div>
       </div>
     </div>
   );
