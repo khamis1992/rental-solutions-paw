@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,7 +14,7 @@ serve(async (req) => {
   try {
     const { documentUrl, documentId } = await req.json();
 
-    // Create Supabase client
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -33,7 +32,7 @@ serve(async (req) => {
 
     const documentText = await documentData.text();
 
-    // Analyze contract using GPT-4
+    // Analyze contract using DeepSeek
     const analysis = await analyzeContract(documentText);
 
     // Store analysis results
@@ -69,16 +68,16 @@ serve(async (req) => {
 });
 
 async function analyzeContract(text: string) {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
   
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
+      'Authorization': `Bearer ${deepseekApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'deepseek-chat',
       messages: [
         {
           role: 'system',

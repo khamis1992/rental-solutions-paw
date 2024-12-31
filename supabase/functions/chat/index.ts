@@ -17,15 +17,15 @@ serve(async (req) => {
     // Get request data
     const { messages, dbResponse } = await req.json()
 
-    // Call Perplexity API
-    const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+    // Call DeepSeek API
+    const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+        'Authorization': `Bearer ${Deno.env.get('DEEPSEEK_API_KEY')}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
@@ -38,12 +38,12 @@ serve(async (req) => {
       }),
     })
 
-    if (!perplexityResponse.ok) {
-      console.error('Perplexity API error:', await perplexityResponse.text())
+    if (!deepseekResponse.ok) {
+      console.error('DeepSeek API error:', await deepseekResponse.text())
       throw new Error('Failed to get response from AI service')
     }
 
-    const data = await perplexityResponse.json()
+    const data = await deepseekResponse.json()
     
     return new Response(
       JSON.stringify({ 

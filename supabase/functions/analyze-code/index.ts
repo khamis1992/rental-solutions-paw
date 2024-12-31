@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY')
-    if (!perplexityApiKey) {
-      throw new Error('Perplexity API key not configured')
+    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
+    if (!deepseekApiKey) {
+      throw new Error('DeepSeek API key not configured')
     }
 
     // Initialize Supabase client
@@ -24,15 +24,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Call Perplexity API for code analysis
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    // Call DeepSeek API for code analysis
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Authorization': `Bearer ${deepseekApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'system',
@@ -44,15 +44,12 @@ serve(async (req) => {
           }
         ],
         temperature: 0.2,
-        top_p: 0.9,
         max_tokens: 1000,
-        frequency_penalty: 1,
-        presence_penalty: 0
       }),
     });
 
     const aiResponse = await response.json();
-    console.log('Perplexity API Response:', aiResponse);
+    console.log('DeepSeek API Response:', aiResponse);
 
     // Process AI response and format recommendations
     const analysisResult = {
