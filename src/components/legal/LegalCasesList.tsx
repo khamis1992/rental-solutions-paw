@@ -39,7 +39,7 @@ export const LegalCasesList = () => {
         .from("legal_cases")
         .select(`
           *,
-          customer:profiles (
+          customer:customer_id (
             id,
             full_name
           ),
@@ -49,8 +49,7 @@ export const LegalCasesList = () => {
               fine_amount
             )
           )
-        `)
-        .order("created_at", { ascending: false });
+        `);
 
       if (error) {
         console.error("Error fetching legal cases:", error);
@@ -58,12 +57,12 @@ export const LegalCasesList = () => {
       }
 
       // Calculate total fines for each case
-      return legalCases.map(legalCase => ({
+      return (legalCases || []).map(legalCase => ({
         ...legalCase,
-        total_fines: legalCase.traffic_fines?.reduce((total, lease) => {
-          const leaseFines = lease.traffic_fines?.reduce((sum, fine) => sum + (fine.fine_amount || 0), 0) || 0;
+        total_fines: (legalCase.traffic_fines || []).reduce((total, lease) => {
+          const leaseFines = (lease.traffic_fines || []).reduce((sum, fine) => sum + (fine.fine_amount || 0), 0) || 0;
           return total + leaseFines;
-        }, 0) || 0
+        }, 0)
       }));
     },
   });
