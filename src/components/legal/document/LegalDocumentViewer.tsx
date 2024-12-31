@@ -9,6 +9,20 @@ interface LegalDocumentViewerProps {
   documentId: string;
 }
 
+interface LegalDocument {
+  id: string;
+  case_id: string;
+  template_id: string;
+  content: string;
+  language: "english" | "spanish" | "french" | "arabic";
+  generated_by: string;
+  expiry_date: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  document_type?: string; // Make document_type optional
+}
+
 export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
   const { data: document, isLoading } = useQuery({
     queryKey: ['legal-document', documentId],
@@ -20,7 +34,7 @@ export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as LegalDocument;
     }
   });
 
@@ -46,8 +60,8 @@ export function LegalDocumentViewer({ documentId }: LegalDocumentViewerProps) {
     return <div>Document not found</div>;
   }
 
-  // Default document type if not specified
-  const documentType = document.type || 'unspecified';
+  // Use document_type if available, otherwise 'unspecified'
+  const documentType = document.document_type || 'unspecified';
 
   return (
     <div className="space-y-4">
