@@ -4,6 +4,7 @@ import { CaseTypeBreakdown } from "./CaseTypeBreakdown";
 import { SettlementMetrics } from "./SettlementMetrics";
 import { CaseTimeline } from "./CaseTimeline";
 import { CaseOutcomePredictions } from "./CaseOutcomePredictions";
+import { TrendAnalysis } from "./TrendAnalysis";
 
 export const LegalAnalyticsDashboard = () => {
   return (
@@ -14,6 +15,8 @@ export const LegalAnalyticsDashboard = () => {
         <CaseStatusDistribution />
         <CaseTypeBreakdown />
       </div>
+      
+      <TrendAnalysis />
       
       <CaseOutcomePredictions />
       
