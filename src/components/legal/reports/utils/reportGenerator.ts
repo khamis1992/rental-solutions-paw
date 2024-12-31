@@ -1,16 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface ReportFilter {
-  field: string;
-  operator: string;
-  value: string;
-}
-
 interface ReportConfig {
   reportName: string;
   selectedFields: string[];
   filters: ReportFilter[];
   chartType: string;
+}
+
+interface ReportFilter {
+  field: string;
+  operator: string;
+  value: string;
 }
 
 export const generateReport = async (config: ReportConfig) => {
