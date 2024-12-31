@@ -2376,6 +2376,8 @@ export type Database = {
           id: string
           paid_amount: number | null
           payment_plan: Json | null
+          payments: Json | null
+          receipt_url: string | null
           signed_by_company: boolean | null
           signed_by_customer: boolean | null
           signed_date: string | null
@@ -2390,6 +2392,8 @@ export type Database = {
           id?: string
           paid_amount?: number | null
           payment_plan?: Json | null
+          payments?: Json | null
+          receipt_url?: string | null
           signed_by_company?: boolean | null
           signed_by_customer?: boolean | null
           signed_date?: string | null
@@ -2404,6 +2408,8 @@ export type Database = {
           id?: string
           paid_amount?: number | null
           payment_plan?: Json | null
+          payments?: Json | null
+          receipt_url?: string | null
           signed_by_company?: boolean | null
           signed_by_customer?: boolean | null
           signed_date?: string | null
@@ -3827,6 +3833,47 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlement_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          payment_date: string | null
+          receipt_url: string | null
+          settlement_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          settlement_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          settlement_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlement_payments_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "legal_settlements"
             referencedColumns: ["id"]
           },
         ]

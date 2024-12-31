@@ -14,24 +14,26 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { ReceiptUpload } from "@/components/finance/receipts/ReceiptUpload";
 
-interface SettlementDialogProps {
+interface SettlementPaymentDialogProps {
+  settlementId: string;
   caseId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const SettlementDialog = ({
+export const SettlementPaymentDialog = ({
+  settlementId,
   caseId,
   open,
   onOpenChange,
-}: SettlementDialogProps) => {
+}: SettlementPaymentDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    terms: "",
-    totalAmount: "",
-    paymentPlan: "",
+    amount: "",
+    notes: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +41,7 @@ export const SettlementDialog = ({
     setIsSubmitting(true);
 
     try {
-      // Get case details for audit
+      // Get case and settlement details for audit
       const { data: caseData, error: caseError } = await supabase
         .from("legal_cases")
         .select(`
@@ -53,86 +55,93 @@ export const SettlementDialog = ({
 
       if (caseError) throw caseError;
 
-      const { error } = await supabase.from("legal_settlements").insert({
-        case_id: caseId,
-        terms: formData.terms,
-        total_amount: parseFloat(formData.totalAmount),
-        payment_plan: {
-          description: formData.paymentPlan,
-        },
-        status: "pending",
-        payments: [],
-      });
+      // Insert payment record
+      const { error: paymentError } = await supabase
+        .from("settlement_payments")
+        .insert({
+          settlement_id: settlementId,
+          amount: parseFloat(formData.amount),
+          notes: formData.notes,
+        });
 
-      if (error) throw error;
+      if (paymentError) throw paymentError;
 
-      // Create audit log with enhanced description
+      // Create income transaction
+      const { error: transactionError } = await supabase
+        .from("accounting_transactions")
+        .insert({
+          type: "INCOME",
+          amount: parseFloat(formData.amount),
+          description: `Settlement payment from ${caseData.customer.full_name} - Case: ${caseData.case_type}`,
+          transaction_date: new Date().toISOString(),
+          reference_type: "settlement",
+          reference_id: settlementId,
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Create audit log
       await supabase.from("audit_logs").insert({
-        action: "create_settlement",
+        action: "settlement_payment",
         entity_type: "settlement",
-        entity_id: caseId,
+        entity_id: settlementId,
         changes: {
+          amount: formData.amount,
           customer_name: caseData.customer.full_name,
           case_type: caseData.case_type,
           case_created_at: caseData.created_at,
-          total_amount: formData.totalAmount,
         },
       });
 
-      toast.success("Settlement agreement created successfully");
+      toast.success("Payment recorded successfully");
       queryClient.invalidateQueries({ queryKey: ["legal-settlements", caseId] });
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating settlement:", error);
-      toast.error("Failed to create settlement agreement");
+      console.error("Error recording payment:", error);
+      toast.error("Failed to record payment");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleUploadComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ["legal-settlements", caseId] });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Settlement Agreement</DialogTitle>
+          <DialogTitle>Record Settlement Payment</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="terms">Settlement Terms</Label>
-            <Textarea
-              id="terms"
-              value={formData.terms}
-              onChange={(e) =>
-                setFormData({ ...formData, terms: e.target.value })
-              }
-              placeholder="Enter settlement terms..."
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="totalAmount">Total Amount</Label>
+            <Label htmlFor="amount">Payment Amount</Label>
             <Input
-              id="totalAmount"
+              id="amount"
               type="number"
-              value={formData.totalAmount}
+              value={formData.amount}
               onChange={(e) =>
-                setFormData({ ...formData, totalAmount: e.target.value })
+                setFormData({ ...formData, amount: e.target.value })
               }
-              placeholder="Enter total settlement amount"
+              placeholder="Enter payment amount"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="paymentPlan">Payment Plan</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
-              id="paymentPlan"
-              value={formData.paymentPlan}
+              id="notes"
+              value={formData.notes}
               onChange={(e) =>
-                setFormData({ ...formData, paymentPlan: e.target.value })
+                setFormData({ ...formData, notes: e.target.value })
               }
-              placeholder="Describe the payment plan..."
-              required
+              placeholder="Add any notes about this payment..."
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Upload Receipt</Label>
+            <ReceiptUpload onUploadComplete={handleUploadComplete} />
           </div>
           <DialogFooter>
             <Button
@@ -146,7 +155,7 @@ export const SettlementDialog = ({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Create Settlement
+              Record Payment
             </Button>
           </DialogFooter>
         </form>
