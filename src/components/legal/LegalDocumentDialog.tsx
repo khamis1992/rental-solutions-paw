@@ -103,7 +103,11 @@ export function LegalDocumentDialog({
         .from("legal_document_versions")
         .update({ 
           signatures: newSignatures,
-          signature_status: 'signed'
+          signature_status: 'signed',
+          metadata: {
+            signed_at: new Date().toISOString(),
+            signed_by: auth.uid()
+          }
         })
         .eq("document_id", customerId)
         .eq("version_number", currentVersion);
@@ -122,6 +126,9 @@ export function LegalDocumentDialog({
   };
 
   if (!open) return null;
+
+  const currentVersionData = versions?.find(v => v.version_number === currentVersion);
+  const canSign = currentVersionData?.signature_status !== 'signed';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,7 +153,8 @@ export function LegalDocumentDialog({
             />
             <DocumentSignature
               onSignatureCapture={handleSignatureCapture}
-              signatureStatus={versions?.[0]?.signature_status || 'pending'}
+              signatureStatus={currentVersionData?.signature_status || 'pending'}
+              disabled={!canSign}
             />
           </div>
         </div>
