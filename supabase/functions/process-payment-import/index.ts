@@ -17,16 +17,15 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting payment import processing...')
-    const formData = await req.formData()
-    const file = formData.get('file')
-    const fileName = formData.get('fileName')
+    console.log('Starting payment processing...')
+    const requestData = await req.json()
+    console.log('Request payload:', requestData)
 
-    if (!file || !fileName) {
-      throw new Error('Missing required fields')
+    // Validate required fields
+    if (!requestData.lease_id || !requestData.amount) {
+      console.error('Missing required fields in request')
+      throw new Error('Missing required fields: lease_id and amount are required')
     }
-
-    console.log('Processing file:', fileName)
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -34,97 +33,62 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Process the file content
-    const fileContent = await file.text()
-    console.log('File content received, processing...')
-
-    // Parse CSV content
-    const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-    const headers = lines[0].toLowerCase().split(',').map(h => h.trim())
-    const rows = lines.slice(1)
-
-    // Validate required fields
-    const requiredFields = ['amount', 'payment_date', 'payment_method', 'lease_id']
-    const missingFields = requiredFields.filter(field => !headers.includes(field))
-    
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(', ')}`)
-    }
-
-    // Process each row
-    let successCount = 0
-    let errorCount = 0
-    const errors = []
-    const batchSize = 50
-    const payments = []
-
-    for (let i = 0; i < rows.length; i++) {
-      try {
-        const values = rows[i].split(',').map(v => v.trim())
-        const payment = {
-          lease_id: values[headers.indexOf('lease_id')],
-          amount: parseFloat(values[headers.indexOf('amount')]),
-          payment_date: values[headers.indexOf('payment_date')],
-          payment_method: values[headers.indexOf('payment_method')],
-          status: 'completed',
-          transaction_id: values[headers.indexOf('transaction_id')] || null,
-        }
-
-        // Validate payment data
-        if (!payment.lease_id || isNaN(payment.amount) || !payment.payment_date) {
-          throw new Error('Invalid payment data')
-        }
-
-        payments.push(payment)
-
-        // Process in batches
-        if (payments.length === batchSize || i === rows.length - 1) {
-          const { error: insertError } = await supabaseClient
-            .from('payments')
-            .insert(payments)
-
-          if (insertError) {
-            errorCount += payments.length
-            errors.push({
-              rows: `${i - payments.length + 1} to ${i}`,
-              error: insertError.message
-            })
-          } else {
-            successCount += payments.length
-          }
-
-          payments.length = 0 // Clear the batch
-        }
-
-      } catch (error) {
-        errorCount++
-        errors.push({
-          row: i + 1,
-          error: error.message
-        })
-      }
-    }
-
-    // Update import log
-    await supabaseClient
-      .from('import_logs')
-      .update({
+    // Create payment record
+    const { data: paymentData, error: paymentError } = await supabaseClient
+      .from('payments')
+      .insert([{
+        lease_id: requestData.lease_id,
+        amount: requestData.amount,
+        payment_date: requestData.payment_date || new Date().toISOString(),
         status: 'completed',
-        records_processed: successCount + errorCount,
-        errors: errors.length > 0 ? errors : null
-      })
-      .eq('file_name', fileName)
+        payment_method: requestData.payment_method,
+        description: requestData.description,
+        type: 'Income',
+        amount_paid: requestData.amount,
+        balance: 0
+      }])
+      .select()
+      .single()
 
-    const result = {
-      success: true,
-      message: `Successfully processed ${successCount} payments with ${errorCount} errors`,
-      processed: successCount,
-      errors: errorCount,
-      errorDetails: errors
+    if (paymentError) {
+      console.error('Error creating payment:', paymentError)
+      throw paymentError
+    }
+
+    console.log('Payment created successfully:', paymentData)
+
+    // Create corresponding transaction record
+    const { data: transactionData, error: transactionError } = await supabaseClient
+      .from('accounting_transactions')
+      .insert([{
+        amount: requestData.amount,
+        type: 'INCOME',
+        description: requestData.description || 'Payment received',
+        transaction_date: requestData.payment_date || new Date().toISOString(),
+        reference_type: 'payment',
+        reference_id: paymentData.id,
+        meta_data: {
+          lease_id: requestData.lease_id,
+          payment_id: paymentData.id
+        }
+      }])
+      .select()
+      .single()
+
+    if (transactionError) {
+      console.error('Error creating transaction:', transactionError)
+      // Even if transaction creation fails, we don't throw since payment was successful
+      // But we log it for monitoring
+    } else {
+      console.log('Transaction created successfully:', transactionData)
     }
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({ 
+        success: true, 
+        payment: paymentData,
+        transaction: transactionData
+      }),
       {
         headers: {
           ...corsHeaders,
@@ -135,11 +99,12 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error processing payment import:', error)
+    console.error('Error in payment processing:', error)
     
     return new Response(
       JSON.stringify({
-        error: error.message || 'An error occurred during processing',
+        error: error.message || 'An error occurred during payment processing',
+        details: error.stack,
       }),
       {
         headers: {

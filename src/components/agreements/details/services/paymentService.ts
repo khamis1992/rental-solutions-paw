@@ -10,15 +10,27 @@ interface PaymentData {
   is_recurring: boolean;
   recurring_interval?: string | null;
   next_payment_date?: string | null;
+  description?: string;
 }
 
 export const submitPayment = async (paymentData: PaymentData) => {
-  const { data, error } = await supabase
-    .from("payments")
-    .insert(paymentData)
-    .select()
-    .single();
+  try {
+    console.log('Submitting payment with data:', paymentData);
+    
+    const { data, error } = await supabase.functions
+      .invoke('process-payment-import', {
+        body: paymentData
+      });
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      console.error('Payment submission error:', error);
+      throw error;
+    }
+
+    console.log('Payment submission response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in submitPayment:', error);
+    throw error;
+  }
 };
