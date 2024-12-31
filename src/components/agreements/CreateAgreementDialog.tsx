@@ -30,14 +30,14 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
   const onSubmit = async (data: FormData) => {
     try {
       const { error } = await supabase
-        .from('agreements')
+        .from('leases')  // Changed from 'agreements' to 'leases'
         .insert({
           customer_name: data.customerName,
           agreement_type: data.agreementType,
-          amount: data.amount,
+          total_amount: data.amount,  // Changed to match the leases table schema
           start_date: data.startDate,
           end_date: data.endDate,
-          status: 'active'
+          status: 'pending_payment'  // Added default status
         });
 
       if (error) throw error;
@@ -74,15 +74,14 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="lease">Lease</SelectItem>
-                <SelectItem value="rental">Rental</SelectItem>
-                <SelectItem value="purchase">Purchase</SelectItem>
+                <SelectItem value="lease_to_own">Lease to Own</SelectItem>
+                <SelectItem value="short_term">Short Term</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
+            <Label htmlFor="amount">Amount (QAR)</Label>
             <Input
               id="amount"
               type="number"

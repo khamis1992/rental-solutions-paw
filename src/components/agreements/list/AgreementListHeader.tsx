@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileUp, Trash2 } from "lucide-react";
 import { CreateAgreementDialog } from "../CreateAgreementDialog";
@@ -13,11 +14,16 @@ export const AgreementListHeader = ({
   onDeleteClick, 
   isDeleting 
 }: AgreementListHeaderProps) => {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+
   return (
     <div className="flex justify-between items-start">
       <h1 className="text-3xl font-bold">Agreements</h1>
       <div className="flex flex-col gap-2">
-        <CreateAgreementDialog />
+        <CreateAgreementDialog 
+          open={showCreateDialog} 
+          onOpenChange={setShowCreateDialog}
+        />
         <Button
           variant="outline"
           onClick={onImportClick}
