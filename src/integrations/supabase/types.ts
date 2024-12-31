@@ -2058,6 +2058,65 @@ export type Database = {
           },
         ]
       }
+      legal_email_communications: {
+        Row: {
+          case_id: string | null
+          content: string
+          created_at: string | null
+          delivered_at: string | null
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          recipient_email: string
+          sender_email: string
+          sent_at: string | null
+          status: string
+          subject: string
+          tracking_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          content: string
+          created_at?: string | null
+          delivered_at?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email: string
+          sender_email: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          tracking_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          content?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email?: string
+          sender_email?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          tracking_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_email_communications_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_notification_templates: {
         Row: {
           content: string
@@ -2109,6 +2168,61 @@ export type Database = {
           {
             foreignKeyName: "legal_notification_templates_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_research_queries: {
+        Row: {
+          case_id: string | null
+          created_at: string | null
+          id: string
+          performed_by: string | null
+          query_text: string
+          results: Json | null
+          source: string
+          updated_at: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          created_at?: string | null
+          id?: string
+          performed_by?: string | null
+          query_text: string
+          results?: Json | null
+          source?: string
+          updated_at?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          created_at?: string | null
+          id?: string
+          performed_by?: string | null
+          query_text?: string
+          results?: Json | null
+          source?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_research_queries_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_research_queries_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_research_queries_performed_by_fkey"
+            columns: ["performed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
