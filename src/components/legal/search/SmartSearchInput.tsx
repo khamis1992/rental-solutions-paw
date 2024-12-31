@@ -10,10 +10,35 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
+interface SearchResults {
+  cases: Array<{
+    id: string;
+    resultType: 'case';
+    description: string;
+    relevance: number;
+    [key: string]: any;
+  }>;
+  documents: Array<{
+    id: string;
+    resultType: 'document';
+    content: string;
+    relevance: number;
+    [key: string]: any;
+  }>;
+  communications: Array<{
+    id: string;
+    resultType: 'communication';
+    content: string;
+    relevance: number;
+    [key: string]: any;
+  }>;
+}
+
 export const SmartSearchInput = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { results, isLoading, error } = useSmartSearch(searchQuery);
+  const { data, isLoading, error } = useSmartSearch(searchQuery);
+  const results = data?.data as SearchResults;
 
   return (
     <>

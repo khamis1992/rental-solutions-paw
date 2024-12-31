@@ -9,6 +9,23 @@ interface ContractAnalysisProps {
   documentId: string;
 }
 
+interface ContractAnalysisMetadata {
+  key_terms: string[];
+  obligations: string[];
+  risks: string[];
+  recommendations: string[];
+  analyzed_at: string;
+}
+
+interface AIDocumentClassification {
+  id: string;
+  document_id: string;
+  classification_type: string;
+  confidence_score: number;
+  metadata: ContractAnalysisMetadata;
+  created_at: string;
+}
+
 export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["contract-analysis", documentId],
@@ -21,7 +38,7 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as AIDocumentClassification;
     },
   });
 
