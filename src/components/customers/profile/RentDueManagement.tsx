@@ -11,29 +11,77 @@ interface RentDueManagementProps {
 }
 
 export const RentDueManagement = ({ customerId }: RentDueManagementProps) => {
-  const { data: schedules, isLoading } = useQuery({
-    queryKey: ["customer-rent-schedules", customerId],
+  const { data: activeAgreement, isLoading } = useQuery({
+    queryKey: ["active-agreement", customerId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("payment_schedules")
+        .from("leases")
         .select(`
-          *,
-          lease:leases(
-            id,
-            customer_id
-          )
+          id,
+          rent_amount,
+          rent_due_day,
+          agreement_number,
+          status
         `)
-        .eq("lease.customer_id", customerId)
-        .eq("status", "pending")
-        .gte("due_date", new Date().toISOString())
-        .order("due_date");
+        .eq("customer_id", customerId)
+        .eq("status", "active")
+        .single();
 
-      if (error) throw error;
+      if (error && error.code !== "PGRST116") throw error;
       return data;
     },
   });
 
-  if (isLoading) return <div>Loading rent schedules...</div>;
+  const { data: schedules = [] } = useQuery({
+    queryKey: ["rent-schedules", activeAgreement?.id],
+    queryFn: async () => {
+      if (!activeAgreement?.id) return [];
+
+      const { data, error } = await supabase
+        .from("payment_schedules")
+        .select("*")
+        .eq("lease_id", activeAgreement.id)
+        .eq("status", "pending")
+        .gte("due_date", new Date().toISOString())
+        .order("due_date")
+        .limit(3);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!activeAgreement?.id,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Loading...
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (!activeAgreement) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Upcoming Rent Payments
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-muted-foreground py-4">
+            No active agreement found for this customer
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -45,7 +93,7 @@ export const RentDueManagement = ({ customerId }: RentDueManagementProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {schedules?.map((schedule) => {
+          {schedules.map((schedule) => {
             const daysUntilDue = differenceInDays(
               new Date(schedule.due_date),
               new Date()
@@ -81,7 +129,7 @@ export const RentDueManagement = ({ customerId }: RentDueManagementProps) => {
           })}
           {(!schedules || schedules.length === 0) && (
             <div className="text-center text-muted-foreground">
-              No upcoming rent payments
+              No upcoming rent payments scheduled
             </div>
           )}
         </div>
