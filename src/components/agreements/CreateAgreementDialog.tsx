@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { CustomerSelect } from "./form/CustomerSelect";
+import { VehicleSelect } from "./form/VehicleSelect";
 
 interface CreateAgreementDialogProps {
   open: boolean;
@@ -16,30 +18,33 @@ interface CreateAgreementDialogProps {
 }
 
 interface FormData {
-  customerName: string;
+  customerId: string;
   agreementType: 'lease_to_own' | 'short_term';
   amount: number;
   startDate: string;
   endDate: string;
+  vehicleId: string;
+  initialMileage: number;
 }
 
 export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDialogProps) => {
-  const { register, handleSubmit, formState: { isSubmitting }, reset } = useForm<FormData>();
+  const { register, handleSubmit, formState: { isSubmitting }, reset, setValue } = useForm<FormData>();
   const queryClient = useQueryClient();
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
 
   const onSubmit = async (data: FormData) => {
     try {
       const { error } = await supabase
         .from('leases')
         .insert({
-          customer_id: data.customerName, // This should be updated to use actual customer_id
+          customer_id: data.customerId,
           agreement_type: data.agreementType,
           total_amount: data.amount,
           start_date: data.startDate,
           end_date: data.endDate,
           status: 'pending_payment',
-          vehicle_id: '00000000-0000-0000-0000-000000000000', // This should be updated to use actual vehicle_id
-          initial_mileage: 0 // Required field based on schema
+          vehicle_id: data.vehicleId,
+          initial_mileage: data.initialMileage
         });
 
       if (error) throw error;
@@ -54,6 +59,15 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
     }
   };
 
+  const handleCustomerSelect = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    setValue('customerId', customerId);
+  };
+
+  const handleVehicleSelect = (vehicleId: string) => {
+    setValue('vehicleId', vehicleId);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -62,10 +76,16 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="customerName">Customer Name</Label>
-            <Input
-              id="customerName"
-              {...register('customerName', { required: true })}
+            <CustomerSelect 
+              register={register} 
+              onCustomerSelect={handleCustomerSelect}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <VehicleSelect 
+              register={register}
+              onVehicleSelect={handleVehicleSelect}
             />
           </div>
 
@@ -86,6 +106,15 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
                 <SelectItem value="short_term">Short Term</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="initialMileage">Initial Mileage</Label>
+            <Input
+              id="initialMileage"
+              type="number"
+              {...register('initialMileage', { required: true, min: 0 })}
+            />
           </div>
 
           <div className="space-y-2">
