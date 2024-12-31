@@ -44,9 +44,11 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
         .select("*")
         .eq("document_id", documentId)
         .eq("classification_type", "contract_analysis")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      
+      if (!data) return null;
       
       // First cast to SupabaseResponse to handle the raw data
       const rawResponse = data as SupabaseResponse;
