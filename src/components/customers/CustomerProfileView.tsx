@@ -10,6 +10,7 @@ import { CredibilityScore } from "./profile/CredibilityScore";
 import { CreditAssessment } from "./profile/CreditAssessment";
 import { CustomerNotes } from "./profile/CustomerNotes";
 import { CustomerDocuments } from "../agreements/CustomerDocuments";
+import { AgreementsHistory } from "./profile/AgreementsHistory";
 
 interface CustomerProfileViewProps {
   customerId: string;
@@ -79,11 +80,16 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
         <CustomerDocuments customerId={customerId} />
       </div>
 
-      <Tabs defaultValue="payments" className="space-y-4">
+      <Tabs defaultValue="agreements" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="agreements">Agreements History</TabsTrigger>
           <TabsTrigger value="payments">Payment History</TabsTrigger>
           <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="agreements">
+          <AgreementsHistory customerId={customerId} />
+        </TabsContent>
 
         <TabsContent value="payments">
           <PaymentHistoryAnalysis customerId={customerId} />
