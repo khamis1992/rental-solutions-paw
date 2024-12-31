@@ -336,6 +336,82 @@ export type Database = {
           },
         ]
       }
+      ai_case_analysis: {
+        Row: {
+          analysis_result: Json
+          analysis_type: string
+          case_id: string | null
+          confidence_score: number | null
+          created_at: string | null
+          id: string
+          model_version: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          analysis_result: Json
+          analysis_type: string
+          case_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          model_version?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          analysis_result?: Json
+          analysis_type?: string
+          case_id?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
+          model_version?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_case_analysis_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "legal_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_document_classification: {
+        Row: {
+          classification_type: string
+          confidence_score: number | null
+          created_at: string | null
+          document_id: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          classification_type: string
+          confidence_score?: number | null
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          classification_type?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_document_classification_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_insights: {
         Row: {
           category: string
@@ -3673,6 +3749,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      risk_patterns: {
+        Row: {
+          created_at: string | null
+          detection_rules: Json
+          id: string
+          pattern_name: string
+          pattern_type: string
+          risk_level: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          detection_rules: Json
+          id?: string
+          pattern_name: string
+          pattern_type: string
+          risk_level: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          detection_rules?: Json
+          id?: string
+          pattern_name?: string
+          pattern_type?: string
+          risk_level?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       security_deposits: {
         Row: {
