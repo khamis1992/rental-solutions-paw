@@ -18,6 +18,12 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Filter, SortAsc, SortDesc, Eye } from "lucide-react";
 import { format } from "date-fns";
 
+type LegalCaseWithCustomer = LegalCase & {
+  customer: {
+    full_name: string;
+  };
+};
+
 export const LegalCasesList = () => {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,7 +40,16 @@ export const LegalCasesList = () => {
         `);
 
       if (error) throw error;
-      return data as (LegalCase & { customer: { full_name: string } })[];
+      
+      // Type assertion after validation
+      const validatedData = data?.map(item => {
+        if (!item.customer?.full_name) {
+          throw new Error(`Missing customer data for case ${item.id}`);
+        }
+        return item as LegalCaseWithCustomer;
+      });
+
+      return validatedData || [];
     },
   });
 
