@@ -7,7 +7,6 @@ import { PaymentHistoryAnalysis } from "./profile/PaymentHistoryAnalysis";
 import { RentDueManagement } from "./profile/RentDueManagement";
 import { TrafficFinesSummary } from "./profile/TrafficFinesSummary";
 import { CredibilityScore } from "./profile/CredibilityScore";
-import { CreditAssessment } from "./profile/CreditAssessment";
 import { CustomerNotes } from "./profile/CustomerNotes";
 import { CustomerDocuments } from "../agreements/CustomerDocuments";
 import { AgreementsHistory } from "./profile/AgreementsHistory";
@@ -70,7 +69,6 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CredibilityScore customerId={customerId} />
-        <CreditAssessment customerId={customerId} />
       </div>
 
       <CustomerNotes customerId={customerId} />
