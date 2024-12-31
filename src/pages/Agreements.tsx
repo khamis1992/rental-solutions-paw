@@ -4,17 +4,15 @@ import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { Button } from "@/components/ui/button";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
-import { AgreementImport } from "@/components/agreements/AgreementImport";
 import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
 import { PaymentHistoryDialog } from "@/components/agreements/PaymentHistoryDialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { FileUp, Trash2 } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 
 export default function Agreements() {
-  const [showAgreementImport, setShowAgreementImport] = useState(false);
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,32 +44,19 @@ export default function Agreements() {
             <CreateAgreementDialog />
             <AgreementPDFImport />
             <Button
-              variant="outline"
-              onClick={() => setShowAgreementImport(true)}
-              className="flex items-center"
-            >
-              <FileUp className="h-4 w-4 mr-2" />
-              Import Agreements
-            </Button>
-            <Button
               variant="destructive"
               onClick={() => setShowDeleteDialog(true)}
               disabled={isDeleting}
-              className="flex items-center"
+              className="flex items-center gap-2 hover:bg-destructive/90 transition-colors"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete All
+              <Trash2 className="h-4 w-4" />
+              <span>Delete All</span>
             </Button>
           </div>
         </div>
 
         <AgreementStats />
         <AgreementList />
-
-        <AgreementImport
-          open={showAgreementImport}
-          onOpenChange={setShowAgreementImport}
-        />
 
         <PaymentHistoryDialog
           open={isPaymentHistoryOpen}
