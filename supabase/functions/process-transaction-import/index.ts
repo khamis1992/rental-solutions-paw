@@ -6,28 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const validateCSVHeaders = (headers: string[]) => {
-  const requiredHeaders = [
-    'Lease_ID',
-    'Customer_Name',
-    'Amount',
-    'License_Plate',
-    'Vehicle',
-    'Payment_Date',
-    'Payment_Method',
-    'Transaction_ID',
-    'Description',
-    'Type',
-    'Status'
-  ];
-
-  const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-  return {
-    isValid: missingHeaders.length === 0,
-    missingHeaders
-  };
-};
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -35,29 +13,17 @@ serve(async (req) => {
   }
 
   try {
-    const { fileName, fileContent } = await req.json();
-    console.log('Processing file:', fileName);
+    console.log('Starting transaction import process...');
     
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Parse and validate request body
+    const requestData = await req.json();
+    console.log('Request payload:', requestData);
 
-    // Parse CSV content
-    const lines = fileContent.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    
-    const headers = lines[0].split(',').map((h: string) => h.trim());
-    
-    // Validate headers
-    const headerValidation = validateCSVHeaders(headers);
-    if (!headerValidation.isValid) {
-      console.error('Missing headers:', headerValidation.missingHeaders);
+    if (!requestData.fileName || !requestData.fileContent) {
+      console.error('Missing required fields in request');
       return new Response(
-        JSON.stringify({ 
-          error: `Missing required headers: ${headerValidation.missingHeaders.join(', ')}`,
-          issues: [`The CSV file is missing the following required fields: ${headerValidation.missingHeaders.join(', ')}`]
+        JSON.stringify({
+          error: 'Missing required fields: fileName and fileContent are required'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -66,7 +32,20 @@ serve(async (req) => {
       );
     }
 
-    // Process each line (skip header)
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Parse CSV content
+    const lines = requestData.fileContent.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+    
+    const headers = lines[0].split(',').map((h: string) => h.trim());
+    
+    // Process rows (skip header)
     const transactions = [];
     const errors = [];
     let validRows = 0;
@@ -74,17 +53,10 @@ serve(async (req) => {
 
     for (let i = 1; i < lines.length; i++) {
       try {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        const values = line.split(',').map((v: string) => v.trim());
-        if (values.length !== headers.length) {
-          errors.push(`Row ${i}: Invalid number of columns`);
-          continue;
-        }
-
-        const rowData: Record<string, any> = {};
-        headers.forEach((header: string, index: number) => {
+        const values = lines[i].split(',').map(v => v.trim());
+        const rowData: Record<string, string> = {};
+        
+        headers.forEach((header, index) => {
           rowData[header] = values[index];
         });
 
@@ -97,17 +69,16 @@ serve(async (req) => {
 
         // Create transaction object
         const transaction = {
-          lease_id: rowData.Lease_ID,
-          customer_name: rowData.Customer_Name,
           amount: amount,
-          license_plate: rowData.License_Plate,
-          vehicle: rowData.Vehicle,
-          payment_date: rowData.Payment_Date,
-          payment_method: rowData.Payment_Method,
-          transaction_id: rowData.Transaction_ID,
           description: rowData.Description,
-          type: rowData.Type,
-          status: rowData.Status || 'pending'
+          transaction_date: new Date(rowData.Payment_Date).toISOString(),
+          type: rowData.Type?.toUpperCase() === 'INCOME' ? 'INCOME' : 'EXPENSE',
+          status: 'completed',
+          reference_type: 'import',
+          meta_data: {
+            import_source: 'csv',
+            original_data: rowData
+          }
         };
 
         transactions.push(transaction);
@@ -125,7 +96,7 @@ serve(async (req) => {
     const { data: importRecord, error: importError } = await supabase
       .from('transaction_imports')
       .insert({
-        file_name: fileName,
+        file_name: requestData.fileName,
         status: 'pending',
         records_processed: validRows,
         amount: totalAmount,
@@ -146,7 +117,7 @@ serve(async (req) => {
     for (let i = 0; i < transactions.length; i += batchSize) {
       const batch = transactions.slice(i, i + batchSize);
       const { error: insertError } = await supabase
-        .from('financial_imports')
+        .from('accounting_transactions')
         .insert(batch);
 
       if (insertError) {
