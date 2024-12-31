@@ -37,7 +37,7 @@ export const TransactionCategorization = () => {
         .order("transaction_date", { ascending: false });
 
       if (error) {
-        console.error("Error fetching transactions:", error);
+        console.error("Error fetching uncategorized transactions:", error);
         toast.error("Failed to load transactions");
         throw error;
       }
@@ -76,8 +76,8 @@ export const TransactionCategorization = () => {
       if (error) throw error;
       
       // Invalidate both queries to refresh the data
-      await queryClient.invalidateQuery({ queryKey: ["uncategorized-transactions"] });
-      await queryClient.invalidateQuery({ queryKey: ["transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["uncategorized-transactions"] });
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       
       toast.success("Transaction categorized successfully");
     } catch (error) {
@@ -88,7 +88,7 @@ export const TransactionCategorization = () => {
 
   if (isLoadingTransactions || isLoadingCategories) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );

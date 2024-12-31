@@ -25,7 +25,7 @@ export const TransactionList = () => {
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
-      console.log("Fetching all transactions"); // Debug log
+      console.log("Fetching all transactions");
       const { data, error } = await supabase
         .from("accounting_transactions")
         .select(`
@@ -38,12 +38,12 @@ export const TransactionList = () => {
         .order("transaction_date", { ascending: false });
 
       if (error) {
-        console.error("Error fetching transactions:", error); // Debug log
+        console.error("Error fetching transactions:", error);
         toast.error("Failed to load transactions");
         throw error;
       }
 
-      console.log("Fetched transactions:", data); // Debug log
+      console.log("Fetched transactions:", data);
       return data;
     },
   });
