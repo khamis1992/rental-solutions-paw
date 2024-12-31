@@ -81,14 +81,14 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
       </div>
 
       <Tabs defaultValue="agreements_history" className="space-y-4">
-        <TabsList>
+        <TabsList className="w-full justify-start">
           <TabsTrigger value="agreements_history">Agreements History</TabsTrigger>
           <TabsTrigger value="payment_history">Payment History</TabsTrigger>
           <TabsTrigger value="rent_due">Rent Due</TabsTrigger>
           <TabsTrigger value="traffic_fines">Traffic Fines</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="agreements_history">
+        <TabsContent value="agreements_history" className="mt-6">
           <AgreementsHistory customerId={customerId} />
         </TabsContent>
 
