@@ -42,13 +42,10 @@ export const LegalCasesList = () => {
             id,
             full_name
           ),
-          traffic_fines:leases (
+          traffic_fines:traffic_fines!lease_id(
             id,
-            traffic_fines (
-              id,
-              fine_amount,
-              payment_status
-            )
+            fine_amount,
+            payment_status
           )
         `);
 
@@ -60,12 +57,9 @@ export const LegalCasesList = () => {
       // Calculate total unpaid fines for each case
       return (legalCases || []).map(legalCase => ({
         ...legalCase,
-        total_fines: (legalCase.traffic_fines || []).reduce((total, lease) => {
-          const unpaidFines = (lease.traffic_fines || [])
-            .filter(fine => fine.payment_status !== 'completed')
-            .reduce((sum, fine) => sum + (fine.fine_amount || 0), 0);
-          return total + unpaidFines;
-        }, 0)
+        total_fines: (legalCase.traffic_fines || [])
+          .filter(fine => fine.payment_status !== 'completed')
+          .reduce((total, fine) => total + (fine.fine_amount || 0), 0)
       }));
     },
   });
