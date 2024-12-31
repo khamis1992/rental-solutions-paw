@@ -10,6 +10,8 @@ import { DocumentClassification } from "./document/DocumentClassification";
 import { ContractAnalysis } from "./document/ContractAnalysis";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
 
 interface LegalDocumentDialogProps {
   customerId: string | null;
@@ -87,7 +89,6 @@ export function LegalDocumentDialog({
     if (!customerId) return;
 
     try {
-      // First get the current version's signatures
       const { data: versionData, error: fetchError } = await supabase
         .from("legal_document_versions")
         .select("signatures")
@@ -97,11 +98,9 @@ export function LegalDocumentDialog({
 
       if (fetchError) throw fetchError;
 
-      // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user found");
 
-      // Then update with the new signature
       const currentSignatures = versionData?.signatures as string[] || [];
       const newSignatures = [...currentSignatures, signature];
 
@@ -138,36 +137,47 @@ export function LegalDocumentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-        <DocumentHeader 
-          customerName={customerData?.full_name} 
-          onPrint={handlePrint} 
-        />
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+        <div className="p-6">
+          <DocumentHeader 
+            customerName={customerData?.full_name} 
+            onPrint={handlePrint} 
+          />
+        </div>
         
-        <div className="grid grid-cols-3 gap-4 flex-1">
-          <div className="col-span-2">
-            <DocumentContent 
-              customerData={customerData} 
-              isLoading={isLoading} 
-            />
-          </div>
-          <div className="space-y-4">
-            <DocumentVersionControl
-              versions={versions || []}
-              currentVersion={currentVersion}
-              onVersionChange={setCurrentVersion}
-            />
-            <DocumentClassification
-              documentId={customerId}
-            />
-            <ContractAnalysis
-              documentId={customerId}
-            />
-            <DocumentSignature
-              onSignatureCapture={handleSignatureCapture}
-              signatureStatus={currentVersionData?.signature_status || 'pending'}
-              disabled={!canSign}
-            />
+        <Separator />
+        
+        <div className="flex-1 overflow-hidden">
+          <div className="grid grid-cols-3 gap-6 p-6 h-full">
+            <div className="col-span-2 overflow-hidden">
+              <DocumentContent 
+                customerData={customerData} 
+                isLoading={isLoading} 
+              />
+            </div>
+            <div className="space-y-6 overflow-y-auto pr-2">
+              <Card className="p-4">
+                <DocumentVersionControl
+                  versions={versions || []}
+                  currentVersion={currentVersion}
+                  onVersionChange={setCurrentVersion}
+                />
+              </Card>
+              
+              <DocumentClassification
+                documentId={customerId}
+              />
+              
+              <ContractAnalysis
+                documentId={customerId}
+              />
+              
+              <DocumentSignature
+                onSignatureCapture={handleSignatureCapture}
+                signatureStatus={currentVersionData?.signature_status || 'pending'}
+                disabled={!canSign}
+              />
+            </div>
           </div>
         </div>
       </DialogContent>

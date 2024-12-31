@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import SignaturePad from "react-signature-canvas";
-import { FileSignature } from "lucide-react";
+import { FileSignature, RefreshCw } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface DocumentSignatureProps {
   onSignatureCapture: (signature: string) => void;
@@ -34,22 +35,39 @@ export function DocumentSignature({
 
   if (signatureStatus === 'signed') {
     return (
-      <div className="space-y-4">
+      <Card className="p-4 bg-green-50 border-green-200">
         <div className="flex items-center gap-2">
           <FileSignature className="h-4 w-4 text-green-500" />
-          <h3 className="text-sm font-medium text-green-500">Document Signed</h3>
+          <h3 className="text-sm font-medium text-green-700">Document Signed</h3>
         </div>
-      </div>
+        <p className="text-sm text-green-600 mt-2">
+          This document has been successfully signed and recorded.
+        </p>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <FileSignature className="h-4 w-4" />
-        <h3 className="text-sm font-medium">Digital Signature</h3>
+    <Card className="p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileSignature className="h-4 w-4" />
+          <h3 className="text-sm font-medium">Digital Signature</h3>
+        </div>
+        <Button 
+          type="button" 
+          variant="ghost" 
+          size="sm"
+          onClick={handleClear}
+          disabled={disabled}
+          className="h-8 px-2"
+        >
+          <RefreshCw className="h-4 w-4 mr-1" />
+          Clear
+        </Button>
       </div>
-      <div className="border rounded-lg bg-white">
+      
+      <div className="border rounded-lg bg-white overflow-hidden">
         <SignaturePad
           ref={(ref) => setSignaturePad(ref)}
           canvasProps={{
@@ -58,23 +76,16 @@ export function DocumentSignature({
           disabled={disabled}
         />
       </div>
-      <div className="flex gap-2">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={handleClear}
-          disabled={disabled}
-        >
-          Clear
-        </Button>
-        <Button 
-          type="button" 
-          onClick={handleSave}
-          disabled={disabled}
-        >
-          Save Signature
-        </Button>
-      </div>
-    </div>
+      
+      <Button 
+        type="button" 
+        onClick={handleSave}
+        disabled={disabled}
+        className="w-full"
+      >
+        <FileSignature className="h-4 w-4 mr-2" />
+        Save Signature
+      </Button>
+    </Card>
   );
 }
