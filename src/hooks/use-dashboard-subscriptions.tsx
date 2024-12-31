@@ -1,73 +1,67 @@
 import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export const useDashboardSubscriptions = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Create a single channel for all subscriptions
-    const channel = supabase.channel('dashboard-changes');
+    console.log("Setting up real-time subscriptions");
 
-    // Subscribe to vehicle changes
-    channel.on(
-      'postgres_changes' as any,
-      {
-        event: '*',
-        schema: 'public',
-        table: 'vehicles'
-      },
-      () => {
-        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      }
-    );
+    // Payments subscription
+    const paymentsChannel = supabase
+      .channel('payments-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        async (payload) => {
+          console.log('Payment update received:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['payments'] });
+          toast.info('Payment data updated');
+        }
+      )
+      .subscribe((status) => {
+        console.log('Payments subscription status:', status);
+      });
 
-    // Subscribe to lease changes
-    channel.on(
-      'postgres_changes' as any,
-      {
-        event: '*',
-        schema: 'public',
-        table: 'leases'
-      },
-      () => {
-        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['agreements'] });
-      }
-    );
+    // Agreements subscription
+    const agreementsChannel = supabase
+      .channel('agreements-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leases' },
+        async (payload) => {
+          console.log('Agreement update received:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['agreements'] });
+          toast.info('Agreement data updated');
+        }
+      )
+      .subscribe((status) => {
+        console.log('Agreements subscription status:', status);
+      });
 
-    // Subscribe to payment changes
-    channel.on(
-      'postgres_changes' as any,
-      {
-        event: '*',
-        schema: 'public',
-        table: 'payments'
-      },
-      () => {
-        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['payments'] });
-      }
-    );
+    // Vehicles subscription
+    const vehiclesChannel = supabase
+      .channel('vehicles-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vehicles' },
+        async (payload) => {
+          console.log('Vehicle update received:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+          toast.info('Vehicle data updated');
+        }
+      )
+      .subscribe((status) => {
+        console.log('Vehicles subscription status:', status);
+      });
 
-    // Subscribe to the channel
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('Successfully subscribed to dashboard changes');
-      } else if (status === 'CLOSED') {
-        console.log('Subscription to dashboard changes closed');
-        toast.error('Lost connection to real-time updates');
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error('Error in dashboard subscription channel');
-        toast.error('Error in real-time updates connection');
-      }
-    });
-
-    // Cleanup subscription on unmount
     return () => {
-      channel.unsubscribe();
+      console.log("Cleaning up subscriptions");
+      supabase.removeChannel(paymentsChannel);
+      supabase.removeChannel(agreementsChannel);
+      supabase.removeChannel(vehiclesChannel);
     };
   }, [queryClient]);
 };

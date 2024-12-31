@@ -1,32 +1,42 @@
-'use client';
-
-import { ReactNode } from "react";
+import { useEffect } from "react";
+import { Outlet } from "react-router-dom";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
+export const DashboardLayout = () => {
+  useEffect(() => {
+    console.log("DashboardLayout mounted - Navigation structure initialized");
+    
+    // Verify Supabase connection
+    const checkConnection = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('company_settings')
+          .select('*')
+          .limit(1);
+          
+        if (error) {
+          console.error("Supabase connection error:", error);
+        } else {
+          console.log("Supabase connection verified:", !!data);
+        }
+      } catch (err) {
+        console.error("Failed to verify Supabase connection:", err);
+      }
+    };
 
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const isMobile = useIsMobile();
+    checkConnection();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <SidebarProvider defaultOpen={!isMobile}>
-        <DashboardHeader />
-        <div className="flex pt-[var(--header-height,56px)]">
-          <DashboardSidebar />
-          <main className="flex-1 w-full min-h-[calc(100vh-56px)] p-4 md:p-6 transition-all duration-200 ease-in-out">
-            <div className="mx-auto max-w-7xl">
-              {children}
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
+    <div className="min-h-screen">
+      <DashboardHeader />
+      <div className="flex">
+        <DashboardSidebar />
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
