@@ -46,15 +46,6 @@ const validateCSVFile = async (file: File): Promise<boolean> => {
       return false;
     }
 
-    // Validate first data row to ensure format
-    if (lines.length > 1) {
-      const firstRow = lines[1].split(',');
-      if (firstRow.length !== requiredHeaders.length) {
-        toast.error("Data row does not match header count");
-        return false;
-      }
-    }
-
     return true;
   } catch (error) {
     console.error("CSV validation error:", error);
@@ -72,7 +63,6 @@ export const useImportProcess = () => {
     setIsUploading(true);
     setIsAnalyzing(true);
     try {
-      // Validate file first
       const isValid = await validateCSVFile(file);
       if (!isValid) {
         setIsUploading(false);
@@ -81,26 +71,27 @@ export const useImportProcess = () => {
       }
 
       const fileContent = await file.text();
-      const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+      
+      console.log('Starting file upload...');
 
+      // Create the payload as JSON
       const payload = {
         fileName: file.name,
-        fileContent: fileContent,
-        headers: headers,
-        totalRows: lines.length - 1
+        fileContent: fileContent
       };
 
-      console.log('Starting file upload with payload:', {
-        ...payload,
-        fileContentLength: fileContent.length
+      console.log('Sending payload to Edge Function:', {
+        fileName: payload.fileName,
+        contentLength: payload.fileContent.length
       });
 
-      // Call Edge Function with validated data
-      const { data, error } = await supabase.functions
-        .invoke('process-transaction-import', {
-          body: payload
-        });
+      // Call Edge Function with JSON payload
+      const { data, error } = await supabase.functions.invoke('process-payment-import', {
+        body: payload,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
       if (error) {
         console.error('Edge Function error:', error);
@@ -123,10 +114,12 @@ export const useImportProcess = () => {
   const implementChanges = async () => {
     setIsUploading(true);
     try {
-      const { error } = await supabase.functions
-        .invoke("process-payment-import", {
-          body: { analysisResult }
-        });
+      const { error } = await supabase.functions.invoke('process-payment-import', {
+        body: { analysisResult },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
       if (error) throw error;
 
