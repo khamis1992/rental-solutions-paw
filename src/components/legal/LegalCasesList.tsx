@@ -34,7 +34,7 @@ export const LegalCasesList = () => {
         .from("legal_cases")
         .select(`
           *,
-          customer:customer_id (
+          customer:profiles!legal_cases_customer_id_fkey (
             id,
             full_name
           )
