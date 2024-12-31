@@ -8,20 +8,51 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { TrafficFine } from "@/types/traffic-fines";
 import { format, isValid, parseISO } from "date-fns";
 import { TrafficFineStatusBadge } from "./components/TrafficFineStatusBadge";
 import { fetchTrafficFines } from "./utils/trafficFineUtils";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface TrafficFinesProps {
   agreementId: string;
 }
 
 export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
-  const { data: fines, isLoading } = useQuery<TrafficFine[]>({
+  const queryClient = useQueryClient();
+  
+  const { data: fines, isLoading } = useQuery({
     queryKey: ["traffic-fines", agreementId],
     queryFn: () => fetchTrafficFines(agreementId),
   });
+
+  const handleStatusChange = async (fineId: string) => {
+    try {
+      const { error } = await supabase
+        .from('traffic_fines')
+        .update({ 
+          payment_status: 'completed',
+          payment_date: new Date().toISOString()
+        })
+        .eq('id', fineId);
+
+      if (error) throw error;
+
+      // Invalidate relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["traffic-fines"] }),
+        queryClient.invalidateQueries({ queryKey: ["legal-cases"] }),
+        queryClient.invalidateQueries({ queryKey: ["payment-history"] })
+      ]);
+
+      toast.success("Traffic fine marked as paid");
+    } catch (error) {
+      console.error('Error updating traffic fine:', error);
+      toast.error("Failed to update traffic fine status");
+    }
+  };
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
@@ -47,10 +78,22 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
     );
   }
 
+  const totalFines = fines?.reduce((sum, fine) => sum + (fine.fine_amount || 0), 0) || 0;
+  const unpaidFines = fines?.filter(fine => fine.payment_status !== 'completed')
+    .reduce((sum, fine) => sum + (fine.fine_amount || 0), 0) || 0;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-primary">Traffic Fines</h3>
+        <div className="space-x-4">
+          <span className="text-sm font-medium">
+            Total Fines: {formatCurrency(totalFines)}
+          </span>
+          <span className="text-sm font-medium text-red-600">
+            Unpaid: {formatCurrency(unpaidFines)}
+          </span>
+        </div>
       </div>
       
       <div className="rounded-lg border bg-card">
@@ -62,6 +105,7 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
               <TableHead className="font-semibold">Location</TableHead>
               <TableHead className="font-semibold">Amount</TableHead>
               <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -74,11 +118,22 @@ export const TrafficFines = ({ agreementId }: TrafficFinesProps) => {
                 <TableCell>
                   <TrafficFineStatusBadge status={fine.payment_status} />
                 </TableCell>
+                <TableCell>
+                  {fine.payment_status !== 'completed' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStatusChange(fine.id)}
+                    >
+                      Mark as Paid
+                    </Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
             {!fines?.length && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   No traffic fines recorded
                 </TableCell>
               </TableRow>

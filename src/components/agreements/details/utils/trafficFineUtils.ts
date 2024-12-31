@@ -8,6 +8,7 @@ export const fetchTrafficFines = async (agreementId: string): Promise<TrafficFin
       *,
       lease:leases(
         id,
+        agreement_number,
         customer_id,
         customer:profiles(
           id,
@@ -30,23 +31,4 @@ export const fetchTrafficFines = async (agreementId: string): Promise<TrafficFin
   }
 
   return data as TrafficFine[];
-};
-
-export const deleteAllTrafficFines = async () => {
-  try {
-    const { error } = await supabase
-      .from('traffic_fines')
-      .delete()
-      .neq('id', 'none'); // This ensures we delete all records
-
-    if (error) {
-      console.error('Error deleting traffic fines:', error);
-      throw new Error('Failed to delete traffic fines');
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Delete operation failed:', error);
-    throw error;
-  }
 };

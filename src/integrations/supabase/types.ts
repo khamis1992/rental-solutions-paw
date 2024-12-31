@@ -3961,6 +3961,8 @@ export type Database = {
           id: string
           lease_id: string | null
           license_plate: string | null
+          payment_date: string | null
+          payment_reference: string | null
           payment_status: string | null
           serial_number: string | null
           updated_at: string | null
@@ -3981,6 +3983,8 @@ export type Database = {
           id?: string
           lease_id?: string | null
           license_plate?: string | null
+          payment_date?: string | null
+          payment_reference?: string | null
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
@@ -4001,6 +4005,8 @@ export type Database = {
           id?: string
           lease_id?: string | null
           license_plate?: string | null
+          payment_date?: string | null
+          payment_reference?: string | null
           payment_status?: string | null
           serial_number?: string | null
           updated_at?: string | null
