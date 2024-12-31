@@ -2,10 +2,9 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CustomerList } from "@/components/customers/CustomerList";
 import { CustomerStats } from "@/components/customers/CustomerStats";
 import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialog";
-import { ImportExportCustomers } from "@/components/customers/ImportExportCustomers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, Upload, UserPlus } from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Customers = () => {
@@ -23,20 +22,7 @@ const Customers = () => {
                 Manage customer profiles, track relationships, and monitor customer activity
               </CardDescription>
             </div>
-            <div className="flex gap-4">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <ImportExportCustomers />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Import customer data from CSV</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
+            <div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
