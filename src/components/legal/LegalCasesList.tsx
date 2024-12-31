@@ -25,9 +25,8 @@ interface LegalCase {
   };
   traffic_fines?: Array<{
     id: string;
-    traffic_fines?: Array<{
-      fine_amount: number;
-    }>;
+    fine_amount: number;
+    payment_status: string;
   }>;
 }
 
@@ -46,7 +45,9 @@ export const LegalCasesList = () => {
           traffic_fines:leases (
             id,
             traffic_fines (
-              fine_amount
+              id,
+              fine_amount,
+              payment_status
             )
           )
         `);
@@ -56,12 +57,14 @@ export const LegalCasesList = () => {
         throw error;
       }
 
-      // Calculate total fines for each case
+      // Calculate total unpaid fines for each case
       return (legalCases || []).map(legalCase => ({
         ...legalCase,
         total_fines: (legalCase.traffic_fines || []).reduce((total, lease) => {
-          const leaseFines = (lease.traffic_fines || []).reduce((sum, fine) => sum + (fine.fine_amount || 0), 0) || 0;
-          return total + leaseFines;
+          const unpaidFines = (lease.traffic_fines || [])
+            .filter(fine => fine.payment_status !== 'completed')
+            .reduce((sum, fine) => sum + (fine.fine_amount || 0), 0);
+          return total + unpaidFines;
         }, 0)
       }));
     },
@@ -80,7 +83,7 @@ export const LegalCasesList = () => {
             <TableHead>Case Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Amount Owed</TableHead>
-            <TableHead>Total Fines</TableHead>
+            <TableHead>Total Unpaid Fines</TableHead>
             <TableHead>Priority</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
