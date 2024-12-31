@@ -1,14 +1,30 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface CaseBasicInfoProps {
   form: UseFormReturn<any>;
 }
 
 export const CaseBasicInfo = ({ form }: CaseBasicInfoProps) => {
+  const { data: customers, isLoading } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('role', 'customer')
+        .order('full_name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <>
       <FormField
@@ -24,8 +40,15 @@ export const CaseBasicInfo = ({ form }: CaseBasicInfoProps) => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="1">John Doe</SelectItem>
-                <SelectItem value="2">Jane Smith</SelectItem>
+                {isLoading ? (
+                  <div className="flex items-center justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : customers?.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.full_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <FormMessage />

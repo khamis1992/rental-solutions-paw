@@ -15,6 +15,7 @@ import { CaseBasicInfo } from "./case-form/CaseBasicInfo";
 import { CaseFinancialInfo } from "./case-form/CaseFinancialInfo";
 import { CasePrioritySelect } from "./case-form/CasePrioritySelect";
 import { Plus } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function CreateLegalCaseDialog() {
   const [open, setOpen] = useState(false);
@@ -63,31 +64,33 @@ export function CreateLegalCaseDialog() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Create New Legal Case</DialogTitle>
           </DialogHeader>
+          
+          <ScrollArea className="h-full max-h-[calc(90vh-8rem)] pr-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <CaseBasicInfo form={form} />
+                <CaseFinancialInfo form={form} />
+                <CasePrioritySelect form={form} />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <CaseBasicInfo form={form} />
-              <CaseFinancialInfo form={form} />
-              <CasePrioritySelect form={form} />
-
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  Create Case
-                </Button>
-              </div>
-            </form>
-          </Form>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    Create Case
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>
