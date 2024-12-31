@@ -36,7 +36,7 @@ export const LegalCasesList = () => {
         .from("legal_cases")
         .select(`
           *,
-          customer:profiles(full_name)
+          customer:customer_id(full_name)
         `);
 
       if (error) throw error;
@@ -46,7 +46,12 @@ export const LegalCasesList = () => {
         if (!item.customer?.full_name) {
           throw new Error(`Missing customer data for case ${item.id}`);
         }
-        return item as LegalCaseWithCustomer;
+        return {
+          ...item,
+          customer: {
+            full_name: item.customer.full_name
+          }
+        } as LegalCaseWithCustomer;
       });
 
       return validatedData || [];
