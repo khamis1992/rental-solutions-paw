@@ -7,9 +7,22 @@ import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
 import { CreateVehicleDialog } from "@/components/vehicles/CreateVehicleDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Car, Plus, FileQuestion } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Vehicle } from "@/types/vehicle";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Vehicles = () => {
   const [filters, setFilters] = useState({
@@ -61,7 +74,6 @@ const Vehicles = () => {
         return;
       }
 
-      // Convert vehicles data to CSV format
       const headers = ["Make", "Model", "Year", "License Plate", "VIN", "Status", "Mileage"];
       const csvContent = [
         headers.join(","),
@@ -76,7 +88,6 @@ const Vehicles = () => {
         ].join(","))
       ].join("\n");
 
-      // Create blob and download
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
@@ -100,29 +111,73 @@ const Vehicles = () => {
     }
   };
 
-  console.log("Vehicles being rendered:", vehicles);
-
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Vehicles</h1>
-        <div className="flex gap-4">
-          <Button
-            variant="default"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-6 py-2.5 rounded-lg"
-            onClick={handleExportToExcel}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export To Excel
-          </Button>
-          <CreateVehicleDialog />
-        </div>
-      </div>
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-3xl flex items-center gap-2">
+                <Car className="h-8 w-8 text-primary" />
+                Vehicle Management
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Manage your fleet, track vehicle status, and monitor maintenance schedules
+              </CardDescription>
+            </div>
+            <div className="flex gap-4">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={handleExportToExcel}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Export vehicle data to Excel</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CreateVehicleDialog>
+                      <Button className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Vehicle
+                      </Button>
+                    </CreateVehicleDialog>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add a new vehicle to the fleet</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
       <VehicleStats vehicles={vehicles} isLoading={isLoading} />
-      <div className="mt-6 space-y-4">
-        <VehicleFilters filters={filters} setFilters={setFilters} />
-        <VehicleList vehicles={vehicles} isLoading={isLoading} />
-      </div>
+      
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-xl">Vehicle List</CardTitle>
+          <CardDescription>
+            View and manage all vehicles in your fleet
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <VehicleFilters filters={filters} setFilters={setFilters} />
+          <VehicleList vehicles={vehicles} isLoading={isLoading} />
+        </CardContent>
+      </Card>
     </DashboardLayout>
   );
 };
