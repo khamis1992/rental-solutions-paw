@@ -7,6 +7,8 @@ import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
 import { PredictiveMaintenance } from "@/components/maintenance/PredictiveMaintenance";
 import { Routes, Route, useParams } from "react-router-dom";
 import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleInspectionForm";
+import { Card, CardContent } from "@/components/ui/card";
+import { Wrench } from "lucide-react";
 
 const MaintenanceInspection = () => {
   const { id } = useParams();
@@ -26,20 +28,27 @@ const Maintenance = () => {
         <Route
           path="/"
           element={
-            <>
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Maintenance</h1>
-                <CreateJobDialog />
-              </div>
+            <div className="space-y-6">
+              <Card className="border-b">
+                <CardContent className="py-6">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-6 w-6 text-primary" />
+                      <h1 className="text-3xl font-bold">Maintenance</h1>
+                    </div>
+                    <CreateJobDialog />
+                  </div>
+                </CardContent>
+              </Card>
+
               <MaintenanceStats />
-              <div className="mt-6">
+              
+              <div className="space-y-6">
                 <PredictiveMaintenance />
-              </div>
-              <div className="mt-6 space-y-4">
                 <MaintenanceFilters filters={filters} setFilters={setFilters} />
                 <MaintenanceList />
               </div>
-            </>
+            </div>
           }
         />
         <Route 

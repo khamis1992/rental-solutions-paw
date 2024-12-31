@@ -7,32 +7,11 @@ import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
+import { Card } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ITEMS_PER_PAGE = 10;
-
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  license_plate: string;
-}
-
-interface MaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  description?: string | null;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'urgent';
-  cost?: number | null;
-  scheduled_date: string;
-  completed_date?: string | null;
-  performed_by?: string | null;
-  notes?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  vehicles?: Vehicle;
-}
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
@@ -51,7 +30,6 @@ export const MaintenanceList = () => {
         async (payload) => {
           console.log('Real-time update received:', payload);
           
-          // Invalidate and refetch queries
           await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
           await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
           
@@ -72,7 +50,7 @@ export const MaintenanceList = () => {
     };
   }, [queryClient]);
 
-  const { data: records = [], isLoading } = useQuery({
+  const { data: records = [], isLoading, error } = useQuery({
     queryKey: ["maintenance-and-accidents"],
     queryFn: async () => {
       const { data: maintenanceRecords, error: maintenanceError } = await supabase
@@ -103,8 +81,7 @@ export const MaintenanceList = () => {
 
       if (vehiclesError) throw vehiclesError;
 
-      // Convert accident vehicles to maintenance record format
-      const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
+      const accidentRecords = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',
@@ -115,7 +92,6 @@ export const MaintenanceList = () => {
         vehicles: vehicle
       }));
 
-      // Combine both arrays and sort by date
       return [...maintenanceRecords, ...accidentRecords].sort((a, b) => 
         new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime()
       );
@@ -127,30 +103,49 @@ export const MaintenanceList = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentRecords = records.slice(startIndex, endIndex);
 
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load maintenance records. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="rounded-md border">
+      <Card className="rounded-md border">
         <Table>
           <MaintenanceTableHeader />
           <TableBody>
             {[...Array(5)].map((_, i) => (
-              <tr key={i}>
-                <td><Skeleton className="h-4 w-[120px]" /></td>
-                <td><Skeleton className="h-4 w-[200px]" /></td>
-                <td><Skeleton className="h-4 w-[100px]" /></td>
-                <td><Skeleton className="h-4 w-[100px]" /></td>
-                <td><Skeleton className="h-4 w-[150px]" /></td>
+              <tr key={i} className="animate-pulse">
+                <td className="p-4"><Skeleton className="h-4 w-[120px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[200px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[150px]" /></td>
               </tr>
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
+    );
+  }
+
+  if (records.length === 0) {
+    return (
+      <Card className="p-6 text-center">
+        <p className="text-muted-foreground">No maintenance records found.</p>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      <Card className="rounded-md border">
         <Table>
           <MaintenanceTableHeader />
           <TableBody>
@@ -159,7 +154,7 @@ export const MaintenanceList = () => {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
 
       <div className="flex justify-center mt-4">
         <VehicleTablePagination
