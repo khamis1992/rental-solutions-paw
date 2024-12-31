@@ -2,18 +2,18 @@ import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const AgreementTableHeader = () => {
   return (
-    <TableHeader>
+    <TableHeader className="bg-muted/50">
       <TableRow>
-        <TableHead>Agreement Number</TableHead>
-        <TableHead>License Plate</TableHead>
-        <TableHead>Vehicle</TableHead>
-        <TableHead>Customer Name</TableHead>
-        <TableHead>Start Date</TableHead>
-        <TableHead>End Date</TableHead>
-        <TableHead>Status</TableHead>
-        <TableHead>Payment Status</TableHead>
-        <TableHead>Next Payment</TableHead>
-        <TableHead className="text-right">Actions</TableHead>
+        <TableHead className="w-[150px]">Agreement Number</TableHead>
+        <TableHead className="w-[120px]">License Plate</TableHead>
+        <TableHead className="w-[200px]">Vehicle</TableHead>
+        <TableHead className="w-[200px]">Customer Name</TableHead>
+        <TableHead className="w-[120px]">Start Date</TableHead>
+        <TableHead className="w-[120px]">End Date</TableHead>
+        <TableHead className="w-[120px]">Status</TableHead>
+        <TableHead className="w-[120px]">Payment Status</TableHead>
+        <TableHead className="w-[120px]">Next Payment</TableHead>
+        <TableHead className="text-right w-[150px]">Actions</TableHead>
       </TableRow>
     </TableHeader>
   );
