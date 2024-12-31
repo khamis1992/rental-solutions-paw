@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Calendar, MapPin, Car } from "lucide-react";
 
 interface TrafficFineListProps {
   searchQuery: string;
@@ -78,30 +78,41 @@ export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDir
   }
 
   return (
-    <Card>
+    <Card className="bg-white/50 backdrop-blur-sm">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Vehicle</TableHead>
+          <TableRow className="bg-muted/50 hover:bg-muted/60">
+            <TableHead>
+              <div className="flex items-center gap-2">
+                <Car className="h-4 w-4" />
+                Vehicle
+              </div>
+            </TableHead>
             <TableHead>
               <div
-                className="flex items-center cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer"
                 onClick={() => onSort("violation_date")}
               >
+                <Calendar className="h-4 w-4" />
                 Date
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+                <ArrowUpDown className="h-4 w-4" />
               </div>
             </TableHead>
             <TableHead>Fine Type</TableHead>
-            <TableHead>Location</TableHead>
+            <TableHead>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Location
+              </div>
+            </TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {fines?.map((fine) => (
-            <TableRow key={fine.id}>
-              <TableCell>
+            <TableRow key={fine.id} className="hover:bg-muted/50 transition-colors">
+              <TableCell className="font-medium">
                 {fine.lease?.vehicle?.year} {fine.lease?.vehicle?.make}{" "}
                 {fine.lease?.vehicle?.model}
                 <br />
@@ -112,7 +123,7 @@ export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDir
               <TableCell>{format(new Date(fine.violation_date), "PP")}</TableCell>
               <TableCell>{fine.fine_type}</TableCell>
               <TableCell>{fine.fine_location}</TableCell>
-              <TableCell>{formatCurrency(fine.fine_amount || 0)}</TableCell>
+              <TableCell className="font-semibold">{formatCurrency(fine.fine_amount || 0)}</TableCell>
               <TableCell>
                 <Badge
                   variant="secondary"
@@ -125,7 +136,7 @@ export function TrafficFinesList({ searchQuery, statusFilter, sortField, sortDir
           ))}
           {(!fines || fines.length === 0) && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                 No traffic fines found
               </TableCell>
             </TableRow>

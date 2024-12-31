@@ -1,13 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { TrafficFineStats } from "./TrafficFineStats";
 import { TrafficFineImport } from "./TrafficFineImport";
 import { TrafficFinesList } from "./TrafficFinesList";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { TrafficCone } from "lucide-react";
 
 export function TrafficFinesDashboard() {
-  // Add state for the required props
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortField, setSortField] = useState<string>("violation_date");
@@ -37,25 +37,41 @@ export function TrafficFinesDashboard() {
   return (
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex flex-col space-y-6">
-        <h1 className="text-2xl font-bold">Traffic Fines Management</h1>
-        <ErrorBoundary>
-          <TrafficFineStats paymentCount={finesCount || 0} />
-        </ErrorBoundary>
+        <div className="flex items-center gap-3 border-b pb-4">
+          <TrafficCone className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Traffic Fines Management</h1>
+        </div>
+        
+        <Card className="bg-white/50 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <ErrorBoundary>
+              <TrafficFineStats paymentCount={finesCount || 0} />
+            </ErrorBoundary>
+          </CardContent>
+        </Card>
       </div>
       
-      <ErrorBoundary>
-        <TrafficFineImport />
-      </ErrorBoundary>
+      <Card className="bg-white/50 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <ErrorBoundary>
+            <TrafficFineImport />
+          </ErrorBoundary>
+        </CardContent>
+      </Card>
       
-      <ErrorBoundary>
-        <TrafficFinesList 
-          searchQuery={searchQuery}
-          statusFilter={statusFilter}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </ErrorBoundary>
+      <Card className="bg-white/50 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <ErrorBoundary>
+            <TrafficFinesList 
+              searchQuery={searchQuery}
+              statusFilter={statusFilter}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+          </ErrorBoundary>
+        </CardContent>
+      </Card>
     </div>
   );
 }

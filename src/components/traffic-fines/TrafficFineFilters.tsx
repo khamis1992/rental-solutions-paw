@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 
 interface TrafficFineFiltersProps {
   searchQuery: string;
@@ -16,28 +16,35 @@ export function TrafficFineFilters({
   onStatusFilterChange,
 }: TrafficFineFiltersProps) {
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
+    <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white/50 backdrop-blur-sm p-4 rounded-lg border">
       <div className="relative flex-1">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+          <Search className="h-4 w-4" />
+        </div>
         <Input
           placeholder="Search by license plate or violation number..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8"
+          className="pl-9 bg-white"
         />
       </div>
-      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-        <SelectTrigger className="w-full md:w-[180px]">
-          <SelectValue placeholder="Filter by status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Statuses</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
-          <SelectItem value="failed">Failed</SelectItem>
-          <SelectItem value="refunded">Refunded</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+          <SelectTrigger className="w-full md:w-[180px] bg-white">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              <SelectValue placeholder="Filter by status" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="refunded">Refunded</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }
