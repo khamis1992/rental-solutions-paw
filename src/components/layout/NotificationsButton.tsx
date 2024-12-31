@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 type Notification = {
   id: string;
@@ -21,54 +22,106 @@ export const NotificationsButton = () => {
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const now = new Date().toISOString();
-      
-      // Fetch overdue vehicles
-      const { data: overdueVehicles } = await supabase
-        .from('leases')
-        .select('id, end_date, vehicles(make, model, year)')
-        .lt('end_date', now)
-        .eq('status', 'active')
-        .limit(3);
+      try {
+        const now = new Date().toISOString();
+        
+        // Fetch overdue vehicles with error handling
+        const { data: overdueVehicles, error: overdueError } = await supabase
+          .from('leases')
+          .select(`
+            id,
+            end_date,
+            vehicles(
+              make,
+              model,
+              year
+            )
+          `)
+          .lt('end_date', now)
+          .eq('status', 'active')
+          .limit(3);
 
-      // Fetch maintenance alerts
-      const { data: maintenanceAlerts } = await supabase
-        .from('maintenance')
-        .select('id, scheduled_date, vehicles(make, model, year), service_type')
-        .eq('status', 'scheduled')
-        .lte('scheduled_date', now)
-        .limit(3);
+        if (overdueError) {
+          console.error("Error fetching overdue vehicles:", overdueError);
+          toast.error("Failed to fetch overdue vehicles");
+          return [];
+        }
 
-      // Fetch overdue payments
-      const { data: overduePayments } = await supabase
-        .from('payment_schedules')
-        .select('id, due_date, amount, leases(vehicles(make, model, year))')
-        .lt('due_date', now)
-        .eq('status', 'pending')
-        .limit(3);
+        // Fetch maintenance alerts
+        const { data: maintenanceAlerts, error: maintenanceError } = await supabase
+          .from('maintenance')
+          .select(`
+            id,
+            scheduled_date,
+            vehicles(
+              make,
+              model,
+              year
+            ),
+            service_type
+          `)
+          .eq('status', 'scheduled')
+          .lte('scheduled_date', now)
+          .limit(3);
 
-      const formattedNotifications: Notification[] = [
-        ...(overdueVehicles?.map(vehicle => ({
-          id: `overdue-${vehicle.id}`,
-          message: `${vehicle.vehicles.year} ${vehicle.vehicles.make} ${vehicle.vehicles.model} is overdue for return`,
-          created_at: vehicle.end_date,
-          type: 'overdue' as const
-        })) || []),
-        ...(maintenanceAlerts?.map(alert => ({
-          id: `maintenance-${alert.id}`,
-          message: `Maintenance due for ${alert.vehicles.year} ${alert.vehicles.make} ${alert.vehicles.model}: ${alert.service_type}`,
-          created_at: alert.scheduled_date,
-          type: 'maintenance' as const
-        })) || []),
-        ...(overduePayments?.map(payment => ({
-          id: `payment-${payment.id}`,
-          message: `Payment of ${payment.amount} overdue for ${payment.leases.vehicles.year} ${payment.leases.vehicles.make} ${payment.leases.vehicles.model}`,
-          created_at: payment.due_date,
-          type: 'payment' as const
-        })) || [])
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        if (maintenanceError) {
+          console.error("Error fetching maintenance alerts:", maintenanceError);
+          toast.error("Failed to fetch maintenance alerts");
+          return [];
+        }
 
-      return formattedNotifications;
+        // Fetch overdue payments
+        const { data: overduePayments, error: paymentsError } = await supabase
+          .from('payment_schedules')
+          .select(`
+            id,
+            due_date,
+            amount,
+            leases(
+              vehicles(
+                make,
+                model,
+                year
+              )
+            )
+          `)
+          .lt('due_date', now)
+          .eq('status', 'pending')
+          .limit(3);
+
+        if (paymentsError) {
+          console.error("Error fetching overdue payments:", paymentsError);
+          toast.error("Failed to fetch overdue payments");
+          return [];
+        }
+
+        const formattedNotifications: Notification[] = [
+          ...(overdueVehicles?.map(vehicle => ({
+            id: `overdue-${vehicle.id}`,
+            message: `${vehicle.vehicles.year} ${vehicle.vehicles.make} ${vehicle.vehicles.model} is overdue for return`,
+            created_at: vehicle.end_date,
+            type: 'overdue' as const
+          })) || []),
+          ...(maintenanceAlerts?.map(alert => ({
+            id: `maintenance-${alert.id}`,
+            message: `Maintenance due for ${alert.vehicles.year} ${alert.vehicles.make} ${alert.vehicles.model}: ${alert.service_type}`,
+            created_at: alert.scheduled_date,
+            type: 'maintenance' as const
+          })) || []),
+          ...(overduePayments?.map(payment => ({
+            id: `payment-${payment.id}`,
+            message: `Payment of ${payment.amount} overdue for ${payment.leases.vehicles.year} ${payment.leases.vehicles.make} ${payment.leases.vehicles.model}`,
+            created_at: payment.due_date,
+            type: 'payment' as const
+          })) || [])
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        return formattedNotifications;
+      } catch (err) {
+        console.error("Error in notifications query:", err);
+        toast.error("Failed to fetch notifications");
+        return [];
+      }
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });

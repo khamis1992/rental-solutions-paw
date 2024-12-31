@@ -13,18 +13,24 @@ export function DocumentClassification({ documentId }: DocumentClassificationPro
   const { data: classification, isLoading } = useQuery({
     queryKey: ['document-classification', documentId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ai_document_classification')
-        .select('*')
-        .eq('document_id', documentId)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('ai_document_classification')
+          .select('*')
+          .eq('document_id', documentId)
+          .maybeSingle();
 
-      if (error) {
-        toast.error('Failed to fetch document classification');
-        throw error;
+        if (error) {
+          console.error('Error fetching document classification:', error);
+          toast.error('Failed to fetch document classification');
+          throw error;
+        }
+
+        return data;
+      } catch (err) {
+        console.error('Error in classification query:', err);
+        return null;
       }
-
-      return data;
     }
   });
 
