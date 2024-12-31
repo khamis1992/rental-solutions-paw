@@ -86,7 +86,7 @@ export function LegalDocumentDialog({
 
     try {
       // First get the current version's signatures
-      const { data: currentVersion, error: fetchError } = await supabase
+      const { data: versionData, error: fetchError } = await supabase
         .from("legal_document_versions")
         .select("signatures")
         .eq("document_id", customerId)
@@ -96,7 +96,7 @@ export function LegalDocumentDialog({
       if (fetchError) throw fetchError;
 
       // Then update with the new signature
-      const currentSignatures = currentVersion?.signatures as string[] || [];
+      const currentSignatures = versionData?.signatures as string[] || [];
       const newSignatures = [...currentSignatures, signature];
 
       const { error } = await supabase
