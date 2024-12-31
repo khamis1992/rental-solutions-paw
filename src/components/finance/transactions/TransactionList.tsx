@@ -15,7 +15,7 @@ import { Eye, Pencil, Plus, Trash } from "lucide-react";
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog";
 import { TransactionDialog } from "./TransactionDialog";
 import { toast } from "sonner";
-import { TransactionType } from "../accounting/types/transaction.types";
+import { formatCurrency } from "@/lib/utils";
 
 export const TransactionList = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -38,6 +38,7 @@ export const TransactionList = () => {
         .order("transaction_date", { ascending: false });
 
       if (error) {
+        console.error("Error fetching transactions:", error); // Debug log
         toast.error("Failed to load transactions");
         throw error;
       }
@@ -86,7 +87,7 @@ export const TransactionList = () => {
               <TableCell>{transaction.category?.name || "Uncategorized"}</TableCell>
               <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
               <TableCell>
-                {transaction.type === TransactionType.INCOME ? "Income" : "Expense"}
+                {transaction.type === "INCOME" ? "Income" : "Expense"}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
@@ -107,6 +108,13 @@ export const TransactionList = () => {
               </TableCell>
             </TableRow>
           ))}
+          {!transactions?.length && (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
+                No transactions found
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
 
