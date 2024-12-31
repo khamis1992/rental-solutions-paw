@@ -1,27 +1,14 @@
-import { useEffect } from "react";
-import { RouteWrapper } from "@/components/layout/RouteWrapper";
-import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
-import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
-import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
-import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
+import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
+import { TransactionList } from "@/components/finance/transactions/TransactionList";
+import { TransactionImport } from "@/components/finance/transactions/TransactionImport";
+import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
+import { performanceMetrics } from "@/services/performanceMonitoring";
 import { toast } from "sonner";
-import { performanceMetrics } from "@/services/performance/metrics";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
-const Finance = () => {
-  useEffect(() => {
-    console.log("Finance page mounted");
-    const startTime = performance.now();
-    
-    // Track page load time
-    performanceMetrics.trackPageLoad('finance', startTime);
-    
-    return () => {
-      const endTime = performance.now();
-      console.log(`Finance page unmounted after ${endTime - startTime}ms`);
-    };
-  }, []);
-
+export default function Finance() {
   const handleTabChange = async (value: string) => {
     console.log(`Switched to ${value} tab`);
     try {
@@ -41,8 +28,8 @@ const Finance = () => {
   };
 
   return (
-    <RouteWrapper>
-      <div className="container mx-auto p-6">
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
         
         <Tabs defaultValue="dashboard" className="space-y-6" onValueChange={handleTabChange}>
@@ -50,24 +37,24 @@ const Finance = () => {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="import">Import Transactions</TabsTrigger>
+            <TabsTrigger value="import">Import</TabsTrigger>
             <TabsTrigger value="categorization">Categorization</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
+          <TabsContent value="dashboard">
             <RevenueDashboard />
           </TabsContent>
 
-          <TabsContent value="payments" className="space-y-6">
+          <TabsContent value="payments">
             <PaymentManagement />
           </TabsContent>
 
           <TabsContent value="transactions">
-            {/* Transaction management components will go here */}
+            <TransactionList />
           </TabsContent>
 
           <TabsContent value="import">
-            <TransactionImportTool />
+            <TransactionImport />
           </TabsContent>
 
           <TabsContent value="categorization">
@@ -75,8 +62,6 @@ const Finance = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </RouteWrapper>
+    </DashboardLayout>
   );
-};
-
-export default Finance;
+}
