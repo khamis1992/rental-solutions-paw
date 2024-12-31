@@ -26,6 +26,15 @@ interface AIDocumentClassification {
   created_at: string;
 }
 
+interface SupabaseResponse {
+  id: string;
+  document_id: string;
+  classification_type: string;
+  confidence_score: number;
+  metadata: ContractAnalysisMetadata;
+  created_at: string;
+}
+
 export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["contract-analysis", documentId],
@@ -38,7 +47,7 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
         .single();
 
       if (error) throw error;
-      return data as AIDocumentClassification;
+      return data as SupabaseResponse;
     },
   });
 
