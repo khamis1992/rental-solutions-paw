@@ -83,7 +83,15 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           throw new Error("Invalid metadata structure in analysis record");
         }
 
-        return data as AIDocumentClassification;
+        // Cast the entire response to AIDocumentClassification after validation
+        return {
+          id: data.id,
+          document_id: data.document_id,
+          classification_type: data.classification_type,
+          confidence_score: data.confidence_score,
+          metadata: data.metadata as ContractAnalysisMetadata,
+          created_at: data.created_at
+        } as AIDocumentClassification;
       } catch (err) {
         console.error("Error in contract analysis query:", err);
         throw err;
