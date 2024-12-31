@@ -26,8 +26,17 @@ const Finance = () => {
     console.log(`Switched to ${value} tab`);
     try {
       await performanceMetrics.trackCPUUtilization(performance.now());
+      
+      // Track tab navigation for analytics
+      toast.success(`Navigated to ${value} section`, {
+        description: "Loading content...",
+        duration: 2000
+      });
     } catch (error) {
       console.error('Error tracking metrics:', error);
+      toast.error("Error loading content", {
+        description: "Please try again"
+      });
     }
   };
 
@@ -37,7 +46,7 @@ const Finance = () => {
         <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
         
         <Tabs defaultValue="dashboard" className="space-y-6" onValueChange={handleTabChange}>
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
