@@ -27,19 +27,39 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("payments").insert({
-        lease_id: agreementId,
-        amount: parseFloat(data.amount),
-        payment_method: data.paymentMethod,
-        description: data.description,
-        payment_date: new Date().toISOString(),
-        status: 'completed',
-        type: 'Income',
-        amount_paid: parseFloat(data.amount),
-        balance: 0
-      });
+      // First create the payment record
+      const { data: paymentData, error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          lease_id: agreementId,
+          amount: parseFloat(data.amount),
+          payment_method: data.paymentMethod,
+          description: data.description,
+          payment_date: new Date().toISOString(),
+          status: 'completed',
+          type: 'Income',
+          amount_paid: parseFloat(data.amount),
+          balance: 0
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (paymentError) throw paymentError;
+
+      // Then create the corresponding transaction record
+      const { error: transactionError } = await supabase
+        .from("accounting_transactions")
+        .insert({
+          amount: parseFloat(data.amount),
+          type: 'INCOME',
+          description: data.description || 'Payment received',
+          transaction_date: new Date().toISOString(),
+          reference_type: 'payment',
+          reference_id: paymentData.id,
+          payment_method: data.paymentMethod
+        });
+
+      if (transactionError) throw transactionError;
 
       toast.success("Payment added successfully");
       reset();
@@ -47,6 +67,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       // Invalidate relevant queries to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       await queryClient.invalidateQueries({ queryKey: ['financial-metrics'] });
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
       
     } catch (error) {
       console.error("Error adding payment:", error);
