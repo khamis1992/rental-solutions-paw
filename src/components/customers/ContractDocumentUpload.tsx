@@ -41,14 +41,23 @@ export const ContractDocumentUpload = ({
       const fileExt = file.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      // Check if bucket exists before uploading
-      const { data: buckets } = await supabase
+      // First, check if the bucket exists and log the result
+      const { data: buckets, error: bucketsError } = await supabase
         .storage
         .listBuckets();
+
+      console.log('Available buckets:', buckets);
+      
+      if (bucketsError) {
+        console.error('Error listing buckets:', bucketsError);
+        throw new Error('Failed to check storage buckets');
+      }
 
       const customerDocumentsBucketExists = buckets?.some(
         bucket => bucket.name === 'customer_documents'
       );
+
+      console.log('customer_documents bucket exists:', customerDocumentsBucketExists);
 
       if (!customerDocumentsBucketExists) {
         console.error('Customer documents bucket not found');
