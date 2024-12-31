@@ -10,7 +10,13 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, Plus } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Agreements() {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
@@ -41,17 +47,55 @@ export default function Agreements() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Agreements</h1>
           <div className="flex items-center gap-3">
-            <CreateAgreementDialog />
-            <AgreementPDFImport />
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={isDeleting}
-              className="flex items-center gap-2 hover:bg-destructive/90 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span>Delete All</span>
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CreateAgreementDialog>
+                    <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">
+                      <Plus className="h-4 w-4" />
+                      <span>New Agreement</span>
+                    </Button>
+                  </CreateAgreementDialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Create a new agreement</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AgreementPDFImport>
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>Import PDF</span>
+                    </Button>
+                  </AgreementPDFImport>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import agreements from PDF</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 hover:bg-destructive/90 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete All</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete all agreements</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
