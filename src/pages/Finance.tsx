@@ -1,17 +1,20 @@
 import { useEffect } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
 import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
 import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
 import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { performanceMetrics } from "@/services/performance/metrics";
 
 const Finance = () => {
   useEffect(() => {
     console.log("Finance page mounted");
-    // Log performance metrics
     const startTime = performance.now();
+    
+    // Track page load time
+    performanceMetrics.trackPageLoad('finance', startTime);
     
     return () => {
       const endTime = performance.now();
@@ -19,8 +22,13 @@ const Finance = () => {
     };
   }, []);
 
-  const handleTabChange = (value: string) => {
+  const handleTabChange = async (value: string) => {
     console.log(`Switched to ${value} tab`);
+    try {
+      await performanceMetrics.trackCPUUtilization(performance.now());
+    } catch (error) {
+      console.error('Error tracking metrics:', error);
+    }
   };
 
   return (
