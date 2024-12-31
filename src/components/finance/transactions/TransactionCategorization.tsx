@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
@@ -24,17 +24,25 @@ interface Category {
 
 export const TransactionCategorization = () => {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const queryClient = useQueryClient();
   
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["uncategorized-transactions"],
     queryFn: async () => {
+      console.log("Fetching uncategorized transactions");
       const { data, error } = await supabase
         .from("accounting_transactions")
         .select("*")
         .is("category_id", null)
         .order("transaction_date", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching transactions:", error);
+        toast.error("Failed to load transactions");
+        throw error;
+      }
+      
+      console.log("Fetched uncategorized transactions:", data);
       return data as Transaction[];
     },
   });
@@ -47,19 +55,30 @@ export const TransactionCategorization = () => {
         .select("*")
         .order("name");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories");
+        throw error;
+      }
       return data as Category[];
     },
   });
 
   const handleCategoryAssignment = async (transactionId: string, categoryId: string) => {
     try {
+      console.log("Assigning category:", categoryId, "to transaction:", transactionId);
+      
       const { error } = await supabase
         .from("accounting_transactions")
         .update({ category_id: categoryId })
         .eq("id", transactionId);
 
       if (error) throw error;
+      
+      // Invalidate both queries to refresh the data
+      await queryClient.invalidateQuery({ queryKey: ["uncategorized-transactions"] });
+      await queryClient.invalidateQuery({ queryKey: ["transactions"] });
+      
       toast.success("Transaction categorized successfully");
     } catch (error) {
       console.error("Error categorizing transaction:", error);
@@ -123,6 +142,13 @@ export const TransactionCategorization = () => {
                 </TableCell>
               </TableRow>
             ))}
+            {!transactions?.length && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  No uncategorized transactions found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
