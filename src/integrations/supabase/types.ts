@@ -1990,6 +1990,70 @@ export type Database = {
           },
         ]
       }
+      legal_document_versions: {
+        Row: {
+          changes_summary: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          document_id: string | null
+          id: string
+          metadata: Json | null
+          signature_status: string | null
+          signatures: Json | null
+          status: Database["public"]["Enums"]["document_version_status"] | null
+          version_number: number
+        }
+        Insert: {
+          changes_summary?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+          signature_status?: string | null
+          signatures?: Json | null
+          status?: Database["public"]["Enums"]["document_version_status"] | null
+          version_number: number
+        }
+        Update: {
+          changes_summary?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+          signature_status?: string | null
+          signatures?: Json | null
+          status?: Database["public"]["Enums"]["document_version_status"] | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_document_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_document_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "legal_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_documents: {
         Row: {
           case_id: string | null
@@ -4796,6 +4860,7 @@ export type Database = {
       damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
       document_language: "english" | "spanish" | "french" | "arabic"
+      document_version_status: "draft" | "published" | "archived"
       import_status: "pending" | "processing" | "completed" | "failed"
       import_type: "payments" | "customers" | "agreements"
       lease_status:
