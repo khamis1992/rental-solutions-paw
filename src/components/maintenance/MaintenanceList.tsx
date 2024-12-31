@@ -13,6 +13,29 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ITEMS_PER_PAGE = 10;
 
+interface Vehicle {
+  make: string;
+  model: string;
+  year: number;
+  license_plate: string;
+}
+
+interface MaintenanceRecord {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  description?: string | null;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+  cost?: number | null;
+  scheduled_date: string;
+  completed_date?: string | null;
+  performed_by?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  vehicles?: Vehicle;
+}
+
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,7 +104,7 @@ export const MaintenanceList = () => {
 
       if (vehiclesError) throw vehiclesError;
 
-      const accidentRecords = accidentVehicles.map(vehicle => ({
+      const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',

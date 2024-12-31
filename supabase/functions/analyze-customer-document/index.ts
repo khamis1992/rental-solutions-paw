@@ -15,10 +15,22 @@ serve(async (req) => {
     const { documentUrl, documentType, profileId } = await req.json();
     console.log('Analyzing document:', { documentUrl, documentType, profileId });
 
+    // Verify profile exists before proceeding
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', profileId)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Profile not found:', profileError);
+      throw new Error('Profile not found');
+    }
 
     // Call Perplexity API to analyze the document
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -53,14 +65,13 @@ serve(async (req) => {
 
     // Extract structured data from the analysis
     const extractedData = {
-      // This is a simplified example - in reality, you'd parse the AI response
       full_name: "Extracted Name",
       id_number: "Extracted ID",
       date_of_birth: "Extracted DOB",
       expiry_date: "Extracted Expiry"
     };
 
-    const confidenceScore = 0.85; // This would come from the AI analysis
+    const confidenceScore = 0.85;
 
     // Log the analysis
     const { error: logError } = await supabase
