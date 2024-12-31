@@ -15,12 +15,18 @@ serve(async (req) => {
     const { documentUrl, documentType, profileId } = await req.json();
     console.log('Analyzing document:', { documentUrl, documentType, profileId });
 
-    // Verify profile exists before proceeding
+    if (!profileId) {
+      console.error('Profile ID is required');
+      throw new Error('Profile ID is required');
+    }
+
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // First verify the profile exists
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
@@ -29,14 +35,25 @@ serve(async (req) => {
 
     if (profileError || !profile) {
       console.error('Profile not found:', profileError);
-      throw new Error('Profile not found');
+      return new Response(
+        JSON.stringify({ error: 'Profile not found', details: profileError?.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404 
+        }
+      );
     }
 
     // Call Perplexity API to analyze the document
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    if (!perplexityApiKey) {
+      throw new Error('Perplexity API key not configured');
+    }
+
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -57,6 +74,7 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      console.error('Perplexity API error:', await response.text());
       throw new Error('Failed to analyze document');
     }
 
@@ -119,7 +137,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in analyze-customer-document:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
