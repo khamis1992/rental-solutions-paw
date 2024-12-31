@@ -56,7 +56,8 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           .from("ai_document_classification")
           .select("*")
           .eq("document_id", documentId)
-          .eq("classification_type", "contract_analysis");
+          .eq("classification_type", "contract_analysis")
+          .single();
 
         console.log("Query response:", { data, error });
 
@@ -65,27 +66,24 @@ export function ContractAnalysis({ documentId }: ContractAnalysisProps) {
           throw error;
         }
         
-        if (!data || data.length === 0) {
+        if (!data) {
           console.log("No analysis found for document");
           return null;
         }
 
-        // Take the first record if multiple exist
-        const record = data[0];
-        
         // Validate metadata using type guard
-        if (!isContractAnalysisMetadata(record.metadata)) {
-          console.error("Invalid metadata structure:", record.metadata);
+        if (!isContractAnalysisMetadata(data.metadata)) {
+          console.error("Invalid metadata structure:", data.metadata);
           throw new Error("Invalid metadata structure in analysis record");
         }
 
         const transformedData: AIDocumentClassification = {
-          id: record.id,
-          document_id: record.document_id,
-          classification_type: record.classification_type,
-          confidence_score: record.confidence_score,
-          metadata: record.metadata,
-          created_at: record.created_at
+          id: data.id,
+          document_id: data.document_id,
+          classification_type: data.classification_type,
+          confidence_score: data.confidence_score,
+          metadata: data.metadata,
+          created_at: data.created_at
         };
 
         console.log("Transformed data:", transformedData);
