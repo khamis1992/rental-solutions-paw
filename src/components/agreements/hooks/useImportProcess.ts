@@ -96,10 +96,13 @@ export const useImportProcess = () => {
         fileContentLength: fileContent.length
       });
 
-      // Call Edge Function with validated data
+      // Call analyze-payment-import Edge Function
       const { data: aiAnalysis, error: analysisError } = await supabase.functions
         .invoke('analyze-payment-import', {
-          body: payload
+          body: payload,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
 
       if (analysisError) {
@@ -114,9 +117,13 @@ export const useImportProcess = () => {
       if (aiAnalysis.success) {
         console.log('Starting payment import with analysis result:', aiAnalysis);
         
+        // Call process-payment-import Edge Function
         const { data: importResult, error: importError } = await supabase.functions
           .invoke('process-payment-import', {
-            body: { analysisResult: aiAnalysis }
+            body: { analysisResult: aiAnalysis },
+            headers: {
+              'Content-Type': 'application/json'
+            }
           });
 
         if (importError) {
@@ -150,9 +157,13 @@ export const useImportProcess = () => {
     try {
       console.log('Implementing changes with analysis result:', analysisResult);
       
+      // Call process-payment-import Edge Function for implementation
       const { error } = await supabase.functions
         .invoke('process-payment-import', {
-          body: { analysisResult }
+          body: { analysisResult },
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
 
       if (error) throw error;
