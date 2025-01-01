@@ -19,7 +19,7 @@ export const validatePaymentData = (data: any): data is PaymentData => {
   }
 
   if (!Array.isArray(data.analysisResult.rawData)) {
-    throw new Error('Invalid or missing raw data array');
+    throw new Error('Analysis result must contain rawData array');
   }
 
   return true;

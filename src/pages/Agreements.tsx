@@ -10,6 +10,9 @@ import { Plus } from "lucide-react";
 export default function Agreements() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -33,7 +36,11 @@ export default function Agreements() {
 
       <AgreementStats />
       
-      <AgreementFilters />
+      <AgreementFilters 
+        onSearchChange={setSearchQuery}
+        onStatusChange={setStatusFilter}
+        onSortChange={setSortOrder}
+      />
 
       <AgreementList />
 

@@ -2,7 +2,6 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './corsHeaders.ts';
 import { validatePaymentData } from './validators.ts';
-import { processPayments } from './paymentProcessor.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -43,32 +42,40 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { successCount, errors } = await processPayments(
-      supabaseClient, 
-      requestData.analysisResult.rawData
-    );
+    // Process each payment record
+    const rawData = requestData.analysisResult.rawData;
+    let successCount = 0;
+    const errors = [];
 
-    // Track the import in financial_imports
-    if (successCount > 0) {
+    for (const payment of rawData) {
       try {
-        const { error: trackingError } = await supabaseClient
-          .from('financial_imports')
-          .insert(requestData.analysisResult.rawData.map((p: any) => ({
-            lease_id: p.lease_id,
-            amount: p.amount,
-            payment_date: p.payment_date,
-            payment_method: p.payment_method,
-            transaction_id: p.transaction_id,
-            description: p.description,
-            type: 'payment',
-            status: 'completed'
-          })));
+        const { error: insertError } = await supabaseClient
+          .from('payments')
+          .insert({
+            lease_id: payment.lease_id,
+            amount: parseFloat(payment.amount),
+            payment_date: new Date(payment.payment_date).toISOString(),
+            payment_method: payment.payment_method.toLowerCase(),
+            status: payment.status || 'completed',
+            description: payment.description,
+            transaction_id: payment.transaction_id
+          });
 
-        if (trackingError) {
-          console.error('Error tracking imports:', trackingError);
+        if (insertError) {
+          console.error('Error inserting payment:', insertError);
+          errors.push({
+            payment,
+            error: insertError.message
+          });
+        } else {
+          successCount++;
         }
       } catch (error) {
-        console.error('Error inserting into financial_imports:', error);
+        console.error('Error processing payment:', error);
+        errors.push({
+          payment,
+          error: error.message
+        });
       }
     }
 
