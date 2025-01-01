@@ -17,27 +17,14 @@ serve(async (req) => {
     
     const { analysisResult } = await req.json();
     
-    if (!analysisResult) {
-      console.error('Missing analysis result');
-      throw new Error('Missing analysis result');
-    }
-
-    console.log('Analysis result received:', analysisResult);
-
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Validate that we have valid rows to process
-    if (!analysisResult.rawData || !Array.isArray(analysisResult.rawData)) {
-      console.error('Invalid or missing rawData in analysis result');
+    if (!analysisResult || !analysisResult.rawData || !Array.isArray(analysisResult.rawData)) {
+      console.error('Missing or invalid analysis result:', analysisResult);
       return new Response(
         JSON.stringify({
           success: false,
           message: "Invalid or missing data",
-          processed: 0
+          processed: 0,
+          error: "Analysis result must contain rawData array"
         }),
         { 
           headers: {
@@ -48,6 +35,14 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Analysis result received:', analysisResult);
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     // Filter valid rows from rawData
     const validRows = analysisResult.rawData.filter((row: any) => {
@@ -61,7 +56,8 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           message: "No valid rows found in the data",
-          processed: 0
+          processed: 0,
+          error: "No valid rows to process"
         }),
         { 
           headers: {
@@ -76,12 +72,22 @@ serve(async (req) => {
     // Process each valid row
     const payments = validRows.map((row: any) => {
       // Parse the date string (assuming format DD-MM-YYYY)
-      const [day, month, year] = row.payment_date.split('-').map(Number);
-      const paymentDate = new Date(year, month - 1, day); // month is 0-based in JS
+      let paymentDate;
+      try {
+        if (row.payment_date.includes('-')) {
+          const [day, month, year] = row.payment_date.split('-').map(Number);
+          paymentDate = new Date(year, month - 1, day);
+        } else {
+          paymentDate = new Date(row.payment_date);
+        }
 
-      // Validate the date
-      if (isNaN(paymentDate.getTime())) {
-        throw new Error(`Invalid date format for payment: ${row.payment_date}`);
+        // Validate the date
+        if (isNaN(paymentDate.getTime())) {
+          throw new Error(`Invalid date format for payment: ${row.payment_date}`);
+        }
+      } catch (error) {
+        console.error('Date parsing error:', error);
+        throw new Error(`Invalid date format: ${row.payment_date}`);
       }
 
       return {

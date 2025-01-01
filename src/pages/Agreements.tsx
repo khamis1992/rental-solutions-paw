@@ -1,74 +1,51 @@
 import { useState } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 import { AgreementList } from "@/components/agreements/AgreementList";
-import { AgreementHeader } from "@/components/agreements/AgreementHeader";
+import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { AgreementFilters } from "@/components/agreements/AgreementFilters";
-import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
-import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
-const Agreements = () => {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isPDFImportOpen, setIsPDFImportOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("newest");
-
-  // Mock agreement data for header
-  const mockAgreement = {
-    id: "",
-    agreement_number: "",
-    status: "pending_payment" as const,
-    start_date: new Date().toISOString(),
-    end_date: new Date().toISOString(),
-    rent_amount: 0,
-  };
+export default function Agreements() {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto p-6 space-y-6">
-        <AgreementHeader 
-          agreement={mockAgreement}
-          remainingAmount={null}
-        />
-        
-        <div className="flex justify-end space-x-4">
-          <Button 
-            variant="outline" 
-            onClick={() => setIsPDFImportOpen(true)}
+    <div className="flex flex-col gap-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Agreements</h1>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => setImportDialogOpen(true)}
+            variant="outline"
           >
             Import PDF
           </Button>
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
           >
-            Create Agreement
+            <Plus className="mr-2 h-4 w-4" />
+            New Agreement
           </Button>
         </div>
-
-        <AgreementStats />
-        
-        <AgreementFilters 
-          onSearchChange={setSearchQuery}
-          onStatusChange={setStatusFilter}
-          onSortChange={setSortOrder}
-        />
-        
-        <AgreementList />
-
-        <CreateAgreementDialog 
-          isOpen={isCreateDialogOpen} 
-          onClose={() => setIsCreateDialogOpen(false)}
-        />
-
-        <AgreementPDFImport 
-          isOpen={isPDFImportOpen} 
-          onClose={() => setIsPDFImportOpen(false)}
-        />
       </div>
-    </DashboardLayout>
-  );
-};
 
-export default Agreements;
+      <AgreementStats />
+      
+      <AgreementFilters />
+
+      <AgreementList />
+
+      <CreateAgreementDialog 
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
+
+      <AgreementPDFImport
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
+    </div>
+  );
+}
