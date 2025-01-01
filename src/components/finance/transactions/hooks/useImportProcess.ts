@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 export const useImportProcess = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -13,45 +13,56 @@ export const useImportProcess = () => {
     setIsUploading(true);
     setIsAnalyzing(true);
     try {
-      console.log('Starting file upload...');
-      const fileContent = await file.text();
-      const lines = fileContent.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+      console.log('Starting file analysis with AI...');
       
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-      const rawData = lines.slice(1).map(line => {
-        const values = line.split(',').map(v => v.trim());
-        const row: Record<string, any> = {};
-        headers.forEach((header, index) => {
-          row[header] = values[index];
+      // First, analyze with AI
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const { data: aiAnalysis, error: analysisError } = await supabase.functions
+        .invoke('analyze-transaction-import', {
+          body: formData,
         });
-        return row;
-      });
 
-      const { data, error } = await supabase.functions.invoke('process-transaction-import', {
-        body: {
-          fileName: file.name,
-          fileContent: fileContent,
-          rawData
-        }
-      });
-
-      if (error) {
-        console.error('Import error:', error);
-        toast.error(error.message || "Failed to import file");
+      if (analysisError) {
+        console.error('AI Analysis error:', analysisError);
+        toast.error(analysisError.message || "Failed to analyze file");
         return false;
       }
 
-      console.log('Import response:', data);
-      setAnalysisResult({
-        ...data,
-        rawData
-      });
-      return true;
+      console.log('AI Analysis complete:', aiAnalysis);
+      setAnalysisResult(aiAnalysis);
+
+      // If analysis successful, process the import
+      if (aiAnalysis.success) {
+        const { data: importResult, error: importError } = await supabase.functions
+          .invoke('process-payment-import', {
+            body: { 
+              fileName: aiAnalysis.fileName,
+              processedFileUrl: aiAnalysis.processedFileUrl
+            }
+          });
+
+        if (importError) {
+          console.error('Import error:', importError);
+          toast.error(importError.message || "Failed to import file");
+          return false;
+        }
+
+        console.log('Import successful:', importResult);
+        toast.success("Transactions imported successfully");
+        
+        // Refresh the transactions data
+        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        await queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+        
+        return true;
+      }
+
+      return false;
     } catch (error: any) {
-      console.error("Import error:", error);
-      toast.error(error.message || "Failed to import file");
+      console.error("Import process error:", error);
+      toast.error(error.message || "Failed to process import");
       return false;
     } finally {
       setIsAnalyzing(false);
@@ -60,16 +71,19 @@ export const useImportProcess = () => {
   };
 
   const implementChanges = async () => {
+    if (!analysisResult) return;
+
     setIsUploading(true);
     try {
       console.log('Implementing changes...');
-      const { error } = await supabase.functions.invoke("process-payment-import", {
-        body: { analysisResult }
-      });
+      const { error } = await supabase.functions
+        .invoke('process-payment-import', {
+          body: { analysisResult }
+        });
 
       if (error) throw error;
 
-      toast.success("Transactions imported successfully");
+      toast.success("Changes implemented successfully");
       setAnalysisResult(null);
       
       // Refresh the transactions data

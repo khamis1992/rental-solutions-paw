@@ -1,141 +1,154 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
+
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const formData = await req.formData();
-    const file = formData.get('file');
+    console.log('Starting CSV analysis with Deepseek AI...')
+    const formData = await req.formData()
+    const file = formData.get('file')
 
     if (!file || !(file instanceof File)) {
-      throw new Error('No file uploaded');
+      throw new Error('No file uploaded')
     }
 
-    const csvContent = await file.text();
-    const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
+    const csvContent = await file.text()
+    const lines = csvContent.split('\n')
+    const headers = lines[0].split(',').map(h => h.trim())
 
+    // Define expected format
     const requiredFields = [
-      'Agreement Number',
-      'Customer Name',
       'Amount',
-      'License Plate',
-      'Vehicle',
-      'Payment Date',
-      'Payment Method',
-      'Payment Number',
-      'Payment Description',
-      'Type'
-    ];
-    
-    const missingFields = requiredFields.filter(field => 
-      !headers.some(h => h.toLowerCase() === field.toLowerCase())
-    );
+      'Payment_Date',
+      'Payment_Method',
+      'Status',
+      'Description',
+      'Transaction_ID',
+      'Lease_ID'
+    ]
 
-    if (missingFields.length > 0) {
-      return new Response(
-        JSON.stringify({
-          error: `Missing required fields: ${missingFields.join(', ')}`,
-          issues: [`The CSV file is missing the following required fields: ${missingFields.join(', ')}`],
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
+    // Prepare data for AI analysis
+    const prompt = `
+    Analyze and fix this CSV data for financial transactions. Required fields are: ${requiredFields.join(', ')}.
+    The data format should be:
+    - Amount: numeric value
+    - Payment_Date: DD-MM-YYYY format
+    - Payment_Method: one of [cash, credit_card, bank_transfer, cheque]
+    - Status: one of [pending, completed, failed]
+    - Description: text
+    - Transaction_ID: alphanumeric
+    - Lease_ID: UUID format
+
+    Here's the CSV data (first few rows):
+    ${lines.slice(0, 5).join('\n')}
+
+    Please analyze and suggest fixes for any formatting issues.
+    `
+
+    // Call Deepseek API
+    const aiResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: 'You are a data validation assistant specializing in financial transaction data.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    })
+
+    if (!aiResponse.ok) {
+      throw new Error(`Deepseek API error: ${await aiResponse.text()}`)
     }
 
-    // Parse and analyze the data
-    const rows = lines.slice(1).filter(line => line.trim() !== '');
-    let validRows = 0;
-    let invalidRows = 0;
-    let totalAmount = 0;
-    const issues: string[] = [];
+    const aiResult = await aiResponse.json()
+    const analysis = aiResult.choices[0].message.content
 
-    // Get column indices
-    const agreementNumberIndex = headers.findIndex(h => h.toLowerCase() === 'agreement number');
-    const amountIndex = headers.findIndex(h => h.toLowerCase() === 'amount');
-    const paymentDateIndex = headers.findIndex(h => h.toLowerCase() === 'payment date');
-    const typeIndex = headers.findIndex(h => h.toLowerCase() === 'type');
+    // Process the data and apply AI suggestions
+    const processedLines = lines.map((line, index) => {
+      if (index === 0) return line // Keep header row unchanged
+      
+      const values = line.split(',').map(v => v.trim())
+      const rowData: Record<string, string> = {}
+      
+      headers.forEach((header, i) => {
+        rowData[header] = values[i] || ''
+      })
 
-    rows.forEach((row, index) => {
-      // Use regex to properly handle quoted values and special characters
-      const values = row.match(/(?:^|,)("(?:[^"]*(?:""[^"]*)*)"|\d+|[^,]*)/g)
-        ?.map(v => v.replace(/^,?"?|"?$/g, '').replace(/""/g, '"').trim()) || [];
-
-      if (values.length < headers.length) {
-        invalidRows++;
-        issues.push(`Row ${index + 2}: Missing values - row has ${values.length} values but needs ${headers.length}`);
-        return;
+      // Apply fixes based on AI suggestions
+      if (rowData.Payment_Date) {
+        // Ensure date format is DD-MM-YYYY
+        const dateMatch = rowData.Payment_Date.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
+        if (dateMatch) {
+          rowData.Payment_Date = `${dateMatch[1].padStart(2, '0')}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3]}`
+        }
       }
 
-      const agreementNumber = values[agreementNumberIndex];
-      const amount = parseFloat(values[amountIndex]);
-      const paymentDate = values[paymentDateIndex];
-      const type = values[typeIndex];
-
-      // Validate agreement number exists
-      if (!agreementNumber || agreementNumber.trim() === '') {
-        invalidRows++;
-        issues.push(`Row ${index + 2}: Agreement Number cannot be empty`);
-        return;
+      if (rowData.Amount) {
+        // Clean up amount format
+        rowData.Amount = rowData.Amount.replace(/[^0-9.-]/g, '')
       }
 
-      if (isNaN(amount)) {
-        invalidRows++;
-        issues.push(`Row ${index + 2}: Invalid amount format`);
-      } else {
-        validRows++;
-        totalAmount += amount;
-      }
+      return Object.values(rowData).join(',')
+    })
 
-      // Check date format
-      if (!isValidDate(paymentDate)) {
-        invalidRows++;
-        issues.push(`Row ${index + 2}: Invalid date format. Use YYYY-MM-DD`);
-      }
+    const processedContent = processedLines.join('\n')
 
-      // Validate transaction type
-      if (!type || !['INCOME', 'EXPENSE'].includes(type?.toUpperCase())) {
-        invalidRows++;
-        issues.push(`Row ${index + 2}: Invalid transaction type. Use INCOME or EXPENSE`);
-      }
-    });
+    // Store the processed file
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
+    const fileName = `processed_${Date.now()}_${file.name}`
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('imports')
+      .upload(fileName, processedContent, {
+        contentType: 'text/csv',
+        upsert: false
+      })
+
+    if (uploadError) {
+      throw uploadError
+    }
+
+    // Return analysis results and processed file info
     return new Response(
       JSON.stringify({
-        totalRows: rows.length,
-        validRows,
-        invalidRows,
-        totalAmount,
-        issues,
-        suggestions: invalidRows > 0 ? ['Please review the file for formatting issues before importing.'] : [],
+        success: true,
+        fileName,
+        analysis,
+        aiSuggestions: aiResult.choices[0].message.content,
+        processedFileUrl: uploadData.path
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
-    console.error('Error processing file:', error);
+    console.error('Error processing file:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 400
       }
-    );
+    )
   }
-});
-
-function isValidDate(dateStr: string): boolean {
-  const date = new Date(dateStr);
-  return date instanceof Date && !isNaN(date.getTime());
-}
+})
