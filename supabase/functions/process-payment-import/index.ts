@@ -31,7 +31,7 @@ serve(async (req) => {
     );
 
     // Validate that we have valid rows to process
-    if (!analysisResult.validRows || analysisResult.validRows === 0) {
+    if (!analysisResult.validRows || typeof analysisResult.validRows !== 'number' || analysisResult.validRows === 0) {
       console.log('No valid rows found in analysis result');
       return new Response(
         JSON.stringify({
@@ -49,10 +49,29 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing ${analysisResult.validRows.length} valid rows...`);
+    // Extract valid rows from the raw data
+    const validRows = analysisResult.rawData?.filter((row: any) => !row.error) || [];
+    console.log(`Processing ${validRows.length} valid rows...`);
+
+    if (validRows.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "No valid rows found in the data",
+          processed: 0
+        }),
+        { 
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          },
+          status: 400
+        }
+      );
+    }
 
     // Process each valid row
-    const payments = analysisResult.validRows.map(row => ({
+    const payments = validRows.map((row: any) => ({
       lease_id: row.lease_id,
       amount: parseFloat(row.amount),
       payment_date: new Date(row.payment_date).toISOString(),
