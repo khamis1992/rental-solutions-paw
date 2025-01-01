@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ImportErrorAnalysis } from "@/components/finance/transactions/ImportErrorAnalysis";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [importErrors, setImportErrors] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -29,6 +31,7 @@ export const PaymentImport = () => {
 
     setIsUploading(true);
     setProgress(0);
+    setImportErrors([]);
 
     try {
       const fileExt = file.name.split(".").pop();
@@ -59,7 +62,7 @@ export const PaymentImport = () => {
       console.log('Import log created, starting processing');
 
       // Process the import
-      const { error: functionError } = await supabase.functions
+      const { data, error: functionError } = await supabase.functions
         .invoke('process-payment-import', {
           body: { 
             fileName,
@@ -70,58 +73,25 @@ export const PaymentImport = () => {
 
       if (functionError) throw functionError;
 
-      // Poll for import completion
-      let timeoutCounter = 0;
-      const maxTimeout = 300; // 5 minutes maximum
+      if (data.errors?.length > 0) {
+        setImportErrors(data.errors);
+        toast({
+          title: "Import Completed with Errors",
+          description: `Imported ${data.successCount} payments with ${data.errors.length} errors`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Successfully imported ${data.successCount} payments`,
+        });
+      }
       
-      const pollInterval = setInterval(async () => {
-        timeoutCounter++;
-        
-        if (timeoutCounter >= maxTimeout) {
-          clearInterval(pollInterval);
-          throw new Error("Import timed out after 5 minutes");
-        }
-
-        const { data: importLog } = await supabase
-          .from("import_logs")
-          .select("status, records_processed, errors")
-          .eq("file_name", fileName)
-          .single();
-
-        console.log('Poll update:', importLog);
-
-        if (importLog?.status === "completed") {
-          clearInterval(pollInterval);
-          
-          // Check for any errors in the import
-          const errors = importLog.errors ? JSON.parse(JSON.stringify(importLog.errors)) : null;
-          const errorCount = errors ? (errors.failed?.length || 0) + (errors.skipped?.length || 0) : 0;
-          
-          const successMessage = errorCount > 0 
-            ? `Imported ${importLog.records_processed} payments with ${errorCount} errors`
-            : `Successfully imported ${importLog.records_processed} payments`;
-          
-          toast({
-            title: "Success",
-            description: successMessage,
-          });
-          
-          // Force refresh the queries
-          await queryClient.invalidateQueries({ queryKey: ["payments"] });
-          await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-          
-          setIsUploading(false);
-          setProgress(100);
-        } else if (importLog?.status === "error") {
-          clearInterval(pollInterval);
-          throw new Error("Import failed");
-        } else if (importLog?.records_processed) {
-          // Update progress based on processed records
-          const progressValue = Math.min((importLog.records_processed / 100) * 90, 90);
-          setProgress(progressValue);
-        }
-      }, 2000); // Poll every 2 seconds
-
+      // Force refresh the queries
+      await queryClient.invalidateQueries({ queryKey: ["payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      
+      setProgress(100);
     } catch (error: any) {
       console.error('Import process error:', error);
       toast({
@@ -129,9 +99,19 @@ export const PaymentImport = () => {
         description: error.message || "Failed to process import",
         variant: "destructive",
       });
-      setIsUploading(false);
       setProgress(0);
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    // Copy suggestion to clipboard
+    navigator.clipboard.writeText(suggestion);
+    toast({
+      title: "Suggestion Copied",
+      description: "You can now paste this in the chat to get help implementing it",
+    });
   };
 
   const downloadTemplate = () => {
@@ -166,6 +146,7 @@ export const PaymentImport = () => {
           Download Template
         </Button>
       </div>
+      
       {isUploading && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -174,6 +155,13 @@ export const PaymentImport = () => {
           </div>
           <Progress value={progress} className="h-2" />
         </div>
+      )}
+
+      {importErrors.length > 0 && (
+        <ImportErrorAnalysis 
+          errors={importErrors}
+          onSuggestionClick={handleSuggestionClick}
+        />
       )}
     </div>
   );
