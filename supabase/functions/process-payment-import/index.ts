@@ -70,7 +70,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Invalid JSON payload' 
+          error: 'Invalid JSON payload',
+          details: error.message
         }), 
         { 
           status: 400,
@@ -85,7 +86,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid analysis result structure. Required fields missing or invalid.'
+          error: 'Invalid analysis result structure. Required fields missing or invalid.',
+          expectedFields: ['success', 'totalRows', 'validRows', 'invalidRows', 'totalAmount', 'rawData']
         }),
         { 
           status: 400,
