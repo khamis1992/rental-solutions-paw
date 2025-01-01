@@ -28,7 +28,7 @@ export interface CreateAgreementDialogProps {
   children?: React.ReactNode;
 }
 
-export function CreateAgreementDialog({ open: controlledOpen, onOpenChange }: CreateAgreementDialogProps) {
+export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, children }: CreateAgreementDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -67,12 +67,14 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange }: Cr
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors w-full">
-          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500">
-            <FilePlus2 className="h-5 w-5" />
-          </div>
-          <span className="font-medium">New Agreement</span>
-        </button>
+        {children || (
+          <button className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors w-full">
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500">
+              <FilePlus2 className="h-5 w-5" />
+            </div>
+            <span className="font-medium">New Agreement</span>
+          </button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
         <DialogHeader>

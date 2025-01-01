@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     console.log('Starting payment import processing...')
     
-    // Parse the request body as JSON instead of form data
+    // Parse the request body as JSON
     const { analysisResult } = await req.json()
     
     if (!analysisResult) {
