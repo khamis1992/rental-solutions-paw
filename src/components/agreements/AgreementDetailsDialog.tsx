@@ -1,10 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaymentForm } from "./details/PaymentForm";
 import { InvoiceList } from "./details/InvoiceList";
@@ -17,6 +11,7 @@ import { CustomerInfoCard } from "./details/CustomerInfoCard";
 import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
+import { LeaseStatus } from "@/types/agreement.types";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -33,6 +28,15 @@ export const AgreementDetailsDialog = ({
 
   if (!open) return null;
 
+  const mappedAgreement = agreement ? {
+    id: agreement.id,
+    agreement_number: agreement.agreement_number || '',
+    status: agreement.status as LeaseStatus,
+    start_date: agreement.start_date || '',
+    end_date: agreement.end_date || '',
+    rent_amount: agreement.rent_amount || 0
+  } : undefined;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -48,12 +52,12 @@ export const AgreementDetailsDialog = ({
         ) : agreement ? (
           <div className="space-y-6">
             <AgreementHeader 
-              agreement={agreement} 
+              agreement={mappedAgreement}
               remainingAmount={agreement.remainingAmount}
               onCreate={() => {}}
               onImport={() => {}}
             />
-
+            
             <CustomerInfoCard customer={agreement.customer} />
             
             <VehicleInfoCard 

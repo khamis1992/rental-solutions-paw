@@ -6,8 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Import } from "lucide-react";
-
-type LeaseStatus = 'active' | 'pending' | 'completed' | 'cancelled' | 'terminated';
+import { LeaseStatus } from "@/types/agreement.types";
 
 export interface AgreementHeaderProps {
   agreement?: {

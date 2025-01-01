@@ -1,12 +1,12 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-interface AnalysisResult {
+interface PaymentAnalysis {
   success: boolean;
   totalRows: number;
   validRows: number;
@@ -18,26 +18,26 @@ interface AnalysisResult {
 }
 
 interface RequestPayload {
-  analysisResult: AnalysisResult;
+  analysisResult: PaymentAnalysis;
 }
 
-const validateAnalysisResult = (analysisResult: any): analysisResult is AnalysisResult => {
-  console.log('Validating analysis result:', JSON.stringify(analysisResult, null, 2));
+const validateAnalysisResult = (data: any): data is PaymentAnalysis => {
+  console.log('Validating analysis result:', JSON.stringify(data, null, 2));
   
-  if (!analysisResult || typeof analysisResult !== 'object') {
+  if (!data || typeof data !== 'object') {
     console.error('Analysis result is not an object');
     return false;
   }
 
   const requiredFields = ['success', 'totalRows', 'validRows', 'invalidRows', 'totalAmount', 'rawData'];
-  const missingFields = requiredFields.filter(field => !(field in analysisResult));
+  const missingFields = requiredFields.filter(field => !(field in data));
   
   if (missingFields.length > 0) {
     console.error('Missing required fields:', missingFields);
     return false;
   }
 
-  if (!Array.isArray(analysisResult.rawData)) {
+  if (!Array.isArray(data.rawData)) {
     console.error('rawData is not an array');
     return false;
   }
