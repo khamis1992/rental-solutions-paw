@@ -58,13 +58,13 @@ const Agreements = () => {
         <AgreementList />
 
         <CreateAgreementDialog 
-          open={isCreateDialogOpen} 
-          onOpenChange={setIsCreateDialogOpen}
+          isOpen={isCreateDialogOpen} 
+          onClose={() => setIsCreateDialogOpen(false)}
         />
 
         <AgreementPDFImport 
-          open={isPDFImportOpen} 
-          onOpenChange={setIsPDFImportOpen}
+          isOpen={isPDFImportOpen} 
+          onClose={() => setIsPDFImportOpen(false)}
         />
       </div>
     </DashboardLayout>

@@ -74,15 +74,26 @@ serve(async (req) => {
     }
 
     // Process each valid row
-    const payments = validRows.map((row: any) => ({
-      lease_id: row.lease_id,
-      amount: parseFloat(row.amount),
-      payment_date: new Date(row.payment_date).toISOString(),
-      payment_method: row.payment_method,
-      status: 'completed',
-      description: row.description,
-      transaction_id: row.transaction_id
-    }));
+    const payments = validRows.map((row: any) => {
+      // Parse the date string (assuming format DD-MM-YYYY)
+      const [day, month, year] = row.payment_date.split('-').map(Number);
+      const paymentDate = new Date(year, month - 1, day); // month is 0-based in JS
+
+      // Validate the date
+      if (isNaN(paymentDate.getTime())) {
+        throw new Error(`Invalid date format for payment: ${row.payment_date}`);
+      }
+
+      return {
+        lease_id: row.lease_id,
+        amount: parseFloat(row.amount),
+        payment_date: paymentDate.toISOString(),
+        payment_method: row.payment_method,
+        status: 'completed',
+        description: row.description,
+        transaction_id: row.transaction_id
+      };
+    });
 
     console.log('Prepared payments for insertion:', payments);
 
