@@ -25,12 +25,17 @@ export const TransactionImportTool = () => {
   const { data: importedTransactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["imported-transactions"],
     queryFn: async () => {
+      console.log("Fetching imported transactions");
       const { data, error } = await supabase
         .from("financial_imports")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching transactions:", error);
+        throw error;
+      }
+      console.log("Fetched transactions:", data);
       return data;
     }
   });
