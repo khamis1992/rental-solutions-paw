@@ -6,6 +6,10 @@ interface ErrorMetricsCardsProps {
 }
 
 export const ErrorMetricsCards = ({ errorLogs = [] }: ErrorMetricsCardsProps) => {
+  const getErrorDetails = (log: any) => {
+    return typeof log.errors === 'string' ? JSON.parse(log.errors) : log.errors || {};
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-4">
       <Card>
@@ -16,7 +20,7 @@ export const ErrorMetricsCards = ({ errorLogs = [] }: ErrorMetricsCardsProps) =>
           <div className="flex items-center gap-2">
             <Bug className="h-4 w-4 text-red-500" />
             <p className="text-2xl font-bold">
-              {errorLogs.filter(log => log.errors?.severity === 'high').length || 0}
+              {errorLogs.filter(log => getErrorDetails(log).severity === 'high').length || 0}
             </p>
           </div>
         </CardContent>
@@ -30,7 +34,7 @@ export const ErrorMetricsCards = ({ errorLogs = [] }: ErrorMetricsCardsProps) =>
           <div className="flex items-center gap-2">
             <Code className="h-4 w-4 text-amber-500" />
             <p className="text-2xl font-bold">
-              {errorLogs.filter(log => log.errors?.error_type === 'code_quality').length || 0}
+              {errorLogs.filter(log => getErrorDetails(log).error_type === 'code_quality').length || 0}
             </p>
           </div>
         </CardContent>
@@ -60,7 +64,7 @@ export const ErrorMetricsCards = ({ errorLogs = [] }: ErrorMetricsCardsProps) =>
           <div className="flex items-center gap-2">
             <FileSearch className="h-4 w-4 text-blue-500" />
             <p className="text-2xl font-bold">
-              {new Set(errorLogs?.map(log => log.errors?.file_name)).size || 0}
+              {new Set(errorLogs?.map(log => getErrorDetails(log).file_name)).size || 0}
             </p>
           </div>
         </CardContent>

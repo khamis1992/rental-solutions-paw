@@ -29,17 +29,18 @@ export const ErrorOverview = ({ errorLogs = [], onAnalyze }: ErrorOverviewProps)
       <CardContent>
         <div className="space-y-8">
           {errorLogs?.map((log) => {
-            const errorDetails = log.errors || {};
+            // Parse the errors JSON field
+            const errorDetails = typeof log.errors === 'string' ? JSON.parse(log.errors) : log.errors || {};
             return (
               <div key={log.id} className="flex items-start gap-4 border-b pb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium">{errorDetails.error_type || 'Unknown Error'}</h3>
+                    <h3 className="font-medium">{errorDetails.error_type || 'Import Error'}</h3>
                     <Badge variant="outline" className={getSeverityColor(errorDetails.severity)}>
-                      {errorDetails.severity || 'low'}
+                      {errorDetails.severity || 'medium'}
                     </Badge>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{errorDetails.message || 'No message available'}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{errorDetails.message || 'Error occurred during import process'}</p>
                   {errorDetails.file_name && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       File: {errorDetails.file_name} {errorDetails.line_number && `(Line: ${errorDetails.line_number})`}
