@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, TrendingUp, Copy, Check, Code, Shield, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecommendationsListProps {
   data: any[];
@@ -14,12 +15,27 @@ export const RecommendationsList = ({ data }: RecommendationsListProps) => {
   const recommendations = data?.[0]?.data_points?.recommendations || [];
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [implementedIds, setImplementedIds] = useState<string[]>([]);
 
   const handleImplement = async (recommendationId: string) => {
     try {
-      console.log('Implementing recommendation:', recommendationId);
+      // Update analytics_insights table to mark the recommendation as implemented
+      const { data, error } = await supabase
+        .from('analytics_insights')
+        .update({
+          action_taken: true,
+          status: 'implemented'
+        })
+        .eq('id', data?.[0]?.id);
+
+      if (error) throw error;
+
+      // Update local state to reflect the change
+      setImplementedIds(prev => [...prev, recommendationId]);
+      toast.success("Recommendation marked as implemented");
     } catch (error) {
       console.error('Failed to implement recommendation:', error);
+      toast.error("Failed to mark recommendation as implemented");
     }
   };
 
@@ -117,7 +133,7 @@ Please provide the necessary code changes to implement this improvement.`;
                       {getCategoryIcon(rec.category)}
                       {rec.category || "General"}
                     </Badge>
-                    {rec.implemented ? (
+                    {implementedIds.includes(rec.id) ? (
                       <Badge className="bg-green-500">
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Implemented
