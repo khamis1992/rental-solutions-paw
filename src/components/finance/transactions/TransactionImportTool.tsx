@@ -3,12 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AIAnalysisCard } from "@/components/finance/transactions/AIAnalysisCard";
-import { FileUploadSection } from "@/components/finance/transactions/FileUploadSection";
-import { useImportProcess } from "@/components/finance/transactions/hooks/useImportProcess";
+import { AIAnalysisCard } from "./AIAnalysisCard";
+import { FileUploadSection } from "./FileUploadSection";
+import { useImportProcess } from "./hooks/useImportProcess";
 import { ImportedTransactionsTable } from "./ImportedTransactionsTable";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentImportData } from "./types/payment.types";
 
 export const TransactionImportTool = () => {
   const {
@@ -42,20 +43,16 @@ export const TransactionImportTool = () => {
 
   const downloadTemplate = () => {
     const headers = [
-      "Lease_ID",
-      "Customer_Name",
-      "Amount",
-      "License_Plate",
-      "Vehicle",
-      "Payment_Date",
-      "Payment_Method",
-      "Transaction_ID",
-      "Description",
-      "Type",
-      "Status"
+      "lease_id",
+      "amount",
+      "payment_date",
+      "payment_method",
+      "status",
+      "description",
+      "transaction_id"
     ].join(",");
     
-    const sampleData = "lease-uuid,John Doe,1000.00,ABC123,Toyota Camry,2024-01-01,credit_card,TRX001,Monthly Payment,payment,completed";
+    const sampleData = "lease-uuid,1000.00,2024-03-20,WireTransfer,completed,Monthly Payment,TRX001";
     const csvContent = `${headers}\n${sampleData}`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -63,7 +60,7 @@ export const TransactionImportTool = () => {
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
     a.setAttribute('href', url);
-    a.setAttribute('download', 'transaction_import_template.csv');
+    a.setAttribute('download', 'payment_import_template.csv');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -74,34 +71,8 @@ export const TransactionImportTool = () => {
     if (!file) return;
 
     const success = await startImport(file);
-    if (!success) {
-      event.target.value = '';
-    }
-  };
-
-  const verifyImport = async (retryCount = 0): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from("financial_imports")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        if (retryCount < 3) {
-          console.log(`Retry attempt ${retryCount + 1}`);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          return verifyImport(retryCount + 1);
-        }
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Verification error:", error);
-      return false;
+    if (success) {
+      queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
     }
   };
 
@@ -112,15 +83,9 @@ export const TransactionImportTool = () => {
       // Wait for the database to update
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Verify the import
-      const isVerified = await verifyImport();
+      await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
+      toast.success("Changes implemented successfully");
       
-      if (isVerified) {
-        await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
-        toast.success("Changes implemented successfully");
-      } else {
-        toast.error("Import verification failed. Please try again.");
-      }
     } catch (error) {
       console.error("Implementation error:", error);
       toast.error("Failed to implement changes. Please try again.");
