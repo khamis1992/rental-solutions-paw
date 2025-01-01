@@ -30,7 +30,7 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
   const onSubmit = async (data: FormData) => {
     try {
       const { error } = await supabase
-        .from('agreements')
+        .from('leases')
         .insert({
           customer_name: data.customerName,
           agreement_type: data.agreementType,
@@ -43,7 +43,7 @@ export const CreateAgreementDialog = ({ open, onOpenChange }: CreateAgreementDia
       if (error) throw error;
 
       toast.success('Agreement created successfully');
-      queryClient.invalidateQueries({ queryKey: ['agreements'] });
+      queryClient.invalidateQueries({ queryKey: ['leases'] });
       reset();
       onOpenChange(false);
     } catch (error: any) {
