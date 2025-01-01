@@ -4,9 +4,11 @@ import { formatDateToDisplay } from "@/lib/dateUtils";
 import { AgreementStatus } from "@/components/agreements/details/AgreementStatus";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus, Import } from "lucide-react";
 
 export interface AgreementHeaderProps {
-  agreement: {
+  agreement?: {
     id: string;
     agreement_number: string;
     status: LeaseStatus;
@@ -24,6 +26,26 @@ export interface AgreementHeaderProps {
 }
 
 export const AgreementHeader = ({ agreement, remainingAmount, onCreate, onImport }: AgreementHeaderProps) => {
+  if (!agreement) {
+    return (
+      <Card className="bg-card">
+        <CardContent className="pt-6 flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Agreements</h2>
+          <div className="space-x-2">
+            <Button onClick={onCreate} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Agreement
+            </Button>
+            <Button onClick={onImport} variant="outline" size="sm">
+              <Import className="h-4 w-4 mr-2" />
+              Import
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-card">
       <CardContent className="pt-6">

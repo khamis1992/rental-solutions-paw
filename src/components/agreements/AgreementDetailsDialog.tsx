@@ -50,6 +50,8 @@ export const AgreementDetailsDialog = ({
             <AgreementHeader 
               agreement={agreement} 
               remainingAmount={agreement.remainingAmount}
+              onCreate={() => {}}
+              onImport={() => {}}
             />
 
             <CustomerInfoCard customer={agreement.customer} />
