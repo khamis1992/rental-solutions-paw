@@ -87,30 +87,48 @@ export const TransactionImportTool = () => {
       // First implement the changes
       await implementChanges();
       
-      // Wait a short moment for the database to update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait for the database to update (increased wait time)
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Verify the data was imported by checking the latest imports
       await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
       
-      const { data, error } = await supabase
+      const { data: verificationData, error: verificationError } = await supabase
         .from("financial_imports")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(1);
 
-      if (error) {
-        console.error("Verification error:", error);
-        toast.error("Error verifying import: " + error.message);
+      if (verificationError) {
+        console.error("Verification error:", verificationError);
+        toast.error("Error verifying import: " + verificationError.message);
         return;
       }
 
-      if (data && data.length > 0) {
-        console.log("Import verified successfully:", data[0]);
+      // Additional check to ensure we have the expected data
+      if (!verificationData || verificationData.length === 0) {
+        console.error("No imported data found during verification");
+        
+        // Retry verification after a short delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { data: retryData, error: retryError } = await supabase
+          .from("financial_imports")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(1);
+          
+        if (retryError || !retryData || retryData.length === 0) {
+          console.error("Verification retry failed:", retryError || "No data found");
+          toast.error("Import verification failed. Please try again.");
+          return;
+        }
+        
+        console.log("Import verified successfully on retry:", retryData[0]);
         toast.success("Changes implemented successfully");
       } else {
-        console.error("No imported data found during verification");
-        toast.error("Import verification failed. Please try again.");
+        console.log("Import verified successfully:", verificationData[0]);
+        toast.success("Changes implemented successfully");
       }
     } catch (error) {
       console.error("Implementation error:", error);
