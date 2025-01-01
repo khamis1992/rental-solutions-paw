@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const validateCSVFile = async (file: File): Promise<boolean> => {
   const maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -56,6 +57,7 @@ export const useImportProcess = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const startImport = async (file: File) => {
     setIsUploading(true);
@@ -119,6 +121,8 @@ export const useImportProcess = () => {
 
       toast.success("Transactions imported successfully");
       setAnalysisResult(null);
+      // Refresh the transactions list
+      queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
     } catch (error: any) {
       console.error("Implementation error:", error);
       toast.error(error.message || "Failed to implement changes");
