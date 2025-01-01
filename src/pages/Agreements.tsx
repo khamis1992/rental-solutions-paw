@@ -11,11 +11,27 @@ import { useState } from "react";
 const Agreements = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isPDFImportOpen, setIsPDFImportOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
+
+  // Mock agreement data for header
+  const mockAgreement = {
+    id: "",
+    agreement_number: "",
+    status: "pending_payment" as const,
+    start_date: new Date().toISOString(),
+    end_date: new Date().toISOString(),
+    rent_amount: 0,
+  };
 
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6 space-y-6">
-        <AgreementHeader />
+        <AgreementHeader 
+          agreement={mockAgreement}
+          remainingAmount={null}
+        />
         
         <div className="flex justify-end space-x-4">
           <Button 
@@ -33,13 +49,18 @@ const Agreements = () => {
 
         <AgreementStats />
         
-        <AgreementFilters />
+        <AgreementFilters 
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatusFilter}
+          onSortChange={setSortOrder}
+        />
         
         <AgreementList />
 
         <CreateAgreementDialog 
           open={isCreateDialogOpen} 
           onOpenChange={setIsCreateDialogOpen}
+          children={undefined}
         />
 
         <AgreementPDFImport 
