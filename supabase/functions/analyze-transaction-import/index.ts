@@ -133,7 +133,20 @@ serve(async (req) => {
         fileName,
         analysis,
         aiSuggestions: aiResult.choices[0].message.content,
-        processedFileUrl: uploadData.path
+        processedFileUrl: uploadData.path,
+        totalRows: lines.length - 1,
+        validRows: processedLines.length - 1,
+        invalidRows: lines.length - processedLines.length,
+        totalAmount: processedLines.slice(1).reduce((sum, line) => {
+          const amount = parseFloat(line.split(',')[headers.indexOf('Amount')] || '0')
+          return sum + (isNaN(amount) ? 0 : amount)
+        }, 0),
+        issues: analysis.match(/Row \d+:.+/g) || [],
+        suggestions: [
+          'Please review and correct the errors before proceeding',
+          'Ensure all amounts are valid numbers',
+          'Verify date formats are correct'
+        ]
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
