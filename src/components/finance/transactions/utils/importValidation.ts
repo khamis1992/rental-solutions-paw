@@ -53,9 +53,28 @@ export const validateFileContent = (content: string): boolean => {
     const columns = line.split(',');
     if (columns.length !== headerCount) {
       console.error(`Invalid file content: Line ${i + 1} has ${columns.length} columns, expected ${headerCount}`);
+      console.error('Line content:', line);
+      console.error('Columns found:', columns);
       return false;
     }
   }
 
   return true;
+};
+
+// Add utility function to help repair common CSV issues
+export const repairCSVLine = (line: string, expectedColumns: number): string => {
+  const columns = line.split(',');
+  
+  // If we have too few columns, pad with empty values
+  while (columns.length < expectedColumns) {
+    columns.push('');
+  }
+  
+  // If we have too many columns, truncate
+  if (columns.length > expectedColumns) {
+    columns.length = expectedColumns;
+  }
+  
+  return columns.join(',');
 };

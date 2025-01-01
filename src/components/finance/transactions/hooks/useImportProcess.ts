@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { validateFileContent } from "../utils/importValidation";
+import { validateFileContent, repairCSVLine } from "../utils/importValidation";
 
 export const useImportProcess = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -18,13 +18,14 @@ export const useImportProcess = () => {
       
       // First read the file content as text
       const fileContent = await file.text();
+      console.log('File content length:', fileContent.length);
       
       // Validate file content
       if (!validateFileContent(fileContent)) {
-        toast.error("Invalid file format. Please ensure you're uploading a valid CSV file.");
+        toast.error("Invalid file format. Please check the console for details.");
         return false;
       }
-      
+
       // Create FormData with validated content
       const formData = new FormData();
       const validatedFile = new File([fileContent], file.name, { type: 'text/csv' });
@@ -55,29 +56,27 @@ export const useImportProcess = () => {
         suggestions: aiAnalysis.suggestions || []
       };
 
-      // Parse the CSV content to get raw data
+      // Process the CSV content
       if (aiAnalysis.processedFileUrl) {
         const response = await fetch(aiAnalysis.processedFileUrl);
         const csvContent = await response.text();
-        
-        // Validate the processed content
-        if (!validateFileContent(csvContent)) {
-          toast.error("Error processing file. Please try again.");
-          return false;
-        }
+        console.log('Processed CSV content length:', csvContent.length);
         
         const lines = csvContent.split('\n');
-        const headers = lines[0].split(',');
+        const headers = lines[0].split(',').map(h => h.trim());
         const rawData = lines.slice(1)
           .filter(line => line.trim())
           .map(line => {
-            const values = line.split(',');
+            // Repair line if needed
+            const repairedLine = repairCSVLine(line, headers.length);
+            const values = repairedLine.split(',');
             return headers.reduce((obj, header, index) => {
               obj[header.trim()] = values[index]?.trim() || '';
               return obj;
             }, {} as Record<string, string>);
           });
 
+        console.log('Processed raw data count:', rawData.length);
         transformedAnalysis.rawData = rawData;
       }
       
@@ -102,6 +101,7 @@ export const useImportProcess = () => {
     setIsUploading(true);
     try {
       console.log('Implementing changes with analysis result:', analysisResult);
+      
       const { error } = await supabase.functions
         .invoke('process-payment-import', {
           body: { analysisResult }
@@ -112,17 +112,43 @@ export const useImportProcess = () => {
       // Wait for the database to update
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Verify the import
-      const { data, error: verifyError } = await supabase
-        .from("financial_imports")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1);
+      // Verify the import with retries
+      let retryCount = 0;
+      const maxRetries = 3;
+      let importVerified = false;
 
-      if (verifyError) throw verifyError;
+      while (retryCount < maxRetries && !importVerified) {
+        console.log(`Verification attempt ${retryCount + 1}`);
+        
+        const { data, error: verifyError } = await supabase
+          .from("financial_imports")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(1);
 
-      if (!data || data.length === 0) {
-        throw new Error("No imported data found during verification");
+        if (verifyError) {
+          console.error(`Verification error attempt ${retryCount + 1}:`, verifyError);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          throw verifyError;
+        }
+
+        if (data && data.length > 0) {
+          importVerified = true;
+          break;
+        }
+
+        retryCount++;
+        if (retryCount < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      if (!importVerified) {
+        throw new Error(`Verification retry failed: No data found after ${maxRetries} attempts`);
       }
 
       await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });

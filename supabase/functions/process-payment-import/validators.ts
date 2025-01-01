@@ -1,4 +1,4 @@
-import { PaymentAnalysis } from './types.ts'
+import { PaymentAnalysis } from './types'
 
 export const validateAnalysisResult = (data: any): data is PaymentAnalysis => {
   try {
@@ -32,6 +32,33 @@ export const validateAnalysisResult = (data: any): data is PaymentAnalysis => {
 
     if (!Array.isArray(data.rawData)) {
       console.error('rawData is not an array, type:', typeof data.rawData)
+      return false
+    }
+
+    // Validate each row in rawData has required fields
+    const requiredRowFields = [
+      'Lease_ID',
+      'Customer_Name',
+      'Amount',
+      'Payment_Date',
+      'Payment_Method',
+      'Transaction_ID',
+      'Description',
+      'Type',
+      'Status'
+    ]
+
+    const hasValidRows = data.rawData.every((row: any, index: number) => {
+      const missingRowFields = requiredRowFields.filter(field => !row[field])
+      if (missingRowFields.length > 0) {
+        console.error(`Row ${index} is missing required fields:`, missingRowFields)
+        return false
+      }
+      return true
+    })
+
+    if (!hasValidRows) {
+      console.error('Some rows are missing required fields')
       return false
     }
 
