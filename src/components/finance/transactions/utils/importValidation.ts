@@ -1,6 +1,13 @@
 export const validateFileContent = (content: string): boolean => {
-  // Check if content looks like HTML
-  if (content.includes('<!DOCTYPE html>') || content.includes('<html')) {
+  // Check if content is empty
+  if (!content || content.trim() === '') {
+    console.error('Invalid file content: Empty content');
+    return false;
+  }
+
+  // Check if content looks like HTML by checking for common HTML tags
+  const htmlPattern = /<[^>]*>|<!DOCTYPE|<html|<body|<script/i;
+  if (htmlPattern.test(content)) {
     console.error('Invalid file content: Contains HTML');
     return false;
   }
@@ -32,7 +39,22 @@ export const validateFileContent = (content: string): boolean => {
 
   if (!hasValidHeaders) {
     console.error('Invalid file content: Missing required headers');
+    console.error('Expected:', expectedHeaders);
+    console.error('Found:', headers);
     return false;
+  }
+
+  // Verify that all lines have the same number of columns as headers
+  const headerCount = headers.length;
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === '') continue; // Skip empty lines
+    
+    const columns = line.split(',');
+    if (columns.length !== headerCount) {
+      console.error(`Invalid file content: Line ${i + 1} has ${columns.length} columns, expected ${headerCount}`);
+      return false;
+    }
   }
 
   return true;

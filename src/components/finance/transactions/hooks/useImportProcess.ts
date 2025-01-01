@@ -16,7 +16,7 @@ export const useImportProcess = () => {
     try {
       console.log('Starting file analysis...');
       
-      // First read the file content
+      // First read the file content as text
       const fileContent = await file.text();
       
       // Validate file content
@@ -56,30 +56,32 @@ export const useImportProcess = () => {
       };
 
       // Parse the CSV content to get raw data
-      const response = await fetch(aiAnalysis.processedFileUrl);
-      const csvContent = await response.text();
-      
-      // Validate the processed content
-      if (!validateFileContent(csvContent)) {
-        toast.error("Error processing file. Please try again.");
-        return false;
+      if (aiAnalysis.processedFileUrl) {
+        const response = await fetch(aiAnalysis.processedFileUrl);
+        const csvContent = await response.text();
+        
+        // Validate the processed content
+        if (!validateFileContent(csvContent)) {
+          toast.error("Error processing file. Please try again.");
+          return false;
+        }
+        
+        const lines = csvContent.split('\n');
+        const headers = lines[0].split(',');
+        const rawData = lines.slice(1)
+          .filter(line => line.trim())
+          .map(line => {
+            const values = line.split(',');
+            return headers.reduce((obj, header, index) => {
+              obj[header.trim()] = values[index]?.trim() || '';
+              return obj;
+            }, {} as Record<string, string>);
+          });
+
+        transformedAnalysis.rawData = rawData;
       }
       
-      const lines = csvContent.split('\n');
-      const headers = lines[0].split(',');
-      const rawData = lines.slice(1)
-        .filter(line => line.trim())
-        .map(line => {
-          const values = line.split(',');
-          return headers.reduce((obj, header, index) => {
-            obj[header.trim()] = values[index]?.trim() || '';
-            return obj;
-          }, {} as Record<string, string>);
-        });
-
-      transformedAnalysis.rawData = rawData;
       setAnalysisResult(transformedAnalysis);
-      
       return true;
     } catch (error: any) {
       console.error("Import process error:", error);
@@ -106,7 +108,26 @@ export const useImportProcess = () => {
         });
 
       if (error) throw error;
+      
+      // Wait for the database to update
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify the import
+      const { data, error: verifyError } = await supabase
+        .from("financial_imports")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (verifyError) throw verifyError;
+
+      if (!data || data.length === 0) {
+        throw new Error("No imported data found during verification");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
       setAnalysisResult(null);
+      toast.success("Changes implemented successfully");
       
     } catch (error: any) {
       console.error("Implementation error:", error);
