@@ -26,7 +26,7 @@ export const RecommendationsList = ({ data }: RecommendationsListProps) => {
   const generatePrompt = (rec: any) => {
     return `Please help improve my code based on this recommendation:
 Problem: ${rec.title}
-Category: ${rec.category}
+Category: ${rec.category || 'General'}
 Description: ${rec.description}
 Priority: ${rec.priority}
 ${rec.example ? `Example of the issue:\n${rec.example}` : ''}
@@ -41,7 +41,9 @@ Please provide the necessary code changes to implement this improvement.`;
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = (category: string | undefined) => {
+    if (!category) return <Code className="h-4 w-4" />;
+    
     switch (category.toLowerCase()) {
       case 'quality':
         return <Code className="h-4 w-4" />;
