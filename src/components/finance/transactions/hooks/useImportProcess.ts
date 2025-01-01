@@ -89,7 +89,7 @@ export const useImportProcess = () => {
 
       if (error) throw error;
 
-      // Data will be refreshed by the parent component after verification
+      // Success message and data refresh will be handled by the parent component
       setAnalysisResult(null);
       
     } catch (error: any) {

@@ -82,25 +82,35 @@ export const TransactionImportTool = () => {
   };
 
   const handleImplementChanges = async () => {
-    await implementChanges();
-    // Verify data is loaded before showing success message
-    const { data, error } = await supabase
-      .from("financial_imports")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1);
+    try {
+      // First implement the changes
+      await implementChanges();
+      
+      // Then verify the data was imported by checking the latest import
+      const { data, error } = await supabase
+        .from("financial_imports")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    if (error) {
-      toast.error("Error verifying import: " + error.message);
-      return;
-    }
+      if (error) {
+        console.error("Verification error:", error);
+        toast.error("Error verifying import: " + error.message);
+        return;
+      }
 
-    if (data && data.length > 0) {
-      toast.success("Changes implemented successfully");
-      // Refresh the transactions data
-      queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
-    } else {
-      toast.error("Import verification failed. Please try again.");
+      if (data && data.length > 0) {
+        console.log("Import verified successfully:", data[0]);
+        toast.success("Changes implemented successfully");
+        // Refresh the transactions data
+        await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
+      } else {
+        console.error("No imported data found during verification");
+        toast.error("Import verification failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Implementation error:", error);
+      toast.error("Failed to implement changes. Please try again.");
     }
   };
 
