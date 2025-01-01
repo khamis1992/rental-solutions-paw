@@ -1,39 +1,38 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting payment import processing...')
+    console.log('Starting payment import processing...');
     
-    // Parse the request body as JSON
-    const { analysisResult } = await req.json()
+    const { analysisResult } = await req.json();
     
     if (!analysisResult) {
-      console.error('Missing analysis result')
-      throw new Error('Missing analysis result')
+      console.error('Missing analysis result');
+      throw new Error('Missing analysis result');
     }
 
-    console.log('Analysis result received:', analysisResult)
+    console.log('Analysis result received:', analysisResult);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
     // Validate that we have valid rows to process
-    if (!analysisResult.validRows || analysisResult.validRows.length === 0) {
-      console.log('No valid rows found in analysis result')
+    if (!analysisResult.validRows || analysisResult.validRows === 0) {
+      console.log('No valid rows found in analysis result');
       return new Response(
         JSON.stringify({
           success: false,
@@ -47,10 +46,10 @@ serve(async (req) => {
           },
           status: 400
         }
-      )
+      );
     }
 
-    console.log(`Processing ${analysisResult.validRows.length} valid rows...`)
+    console.log(`Processing ${analysisResult.validRows.length} valid rows...`);
 
     // Process each valid row
     const payments = analysisResult.validRows.map(row => ({
@@ -61,42 +60,42 @@ serve(async (req) => {
       status: 'completed',
       description: row.description,
       transaction_id: row.transaction_id
-    }))
+    }));
 
-    console.log('Prepared payments for insertion:', payments)
+    console.log('Prepared payments for insertion:', payments);
 
     // Insert payments in batches
-    const batchSize = 50
-    const errors = []
-    let successCount = 0
+    const batchSize = 50;
+    const errors = [];
+    let successCount = 0;
 
     for (let i = 0; i < payments.length; i += batchSize) {
-      const batch = payments.slice(i, Math.min(i + batchSize, payments.length))
+      const batch = payments.slice(i, Math.min(i + batchSize, payments.length));
       
       try {
-        console.log(`Processing batch ${i/batchSize + 1}:`, batch)
+        console.log(`Processing batch ${i/batchSize + 1}:`, batch);
         
         const { data, error: insertError } = await supabaseClient
           .from('payments')
           .insert(batch)
-          .select()
+          .select();
 
         if (insertError) {
-          console.error('Batch insert error:', insertError)
+          console.error('Batch insert error:', insertError);
           errors.push({
-            rows: `${i + 1} to ${i + batch.length}`,
+            batch: i/batchSize + 1,
             error: insertError.message
-          })
+          });
         } else {
-          console.log(`Successfully inserted ${data?.length} payments`)
-          successCount += data?.length || 0
+          console.log(`Successfully inserted ${data?.length} payments`);
+          successCount += data?.length || 0;
         }
       } catch (error) {
-        console.error(`Error processing batch ${i + 1}-${i + batch.length}:`, error)
+        console.error(`Error processing batch ${i + 1}-${i + batch.length}:`, error);
         errors.push({
-          rows: `${i + 1} to ${i + batch.length}`,
+          batch: i/batchSize + 1,
           error: error.message
-        })
+        });
       }
     }
 
@@ -114,13 +113,13 @@ serve(async (req) => {
             description: p.description,
             type: 'payment',
             status: 'completed'
-          })))
+          })));
 
         if (trackingError) {
-          console.error('Error tracking imports:', trackingError)
+          console.error('Error tracking imports:', trackingError);
         }
       } catch (error) {
-        console.error('Error inserting into financial_imports:', error)
+        console.error('Error inserting into financial_imports:', error);
       }
     }
 
@@ -129,35 +128,36 @@ serve(async (req) => {
       message: `Successfully processed ${successCount} payments with ${errors.length} errors`,
       processed: successCount,
       errors: errors.length > 0 ? errors : undefined
-    }
+    };
 
-    console.log('Import processing completed:', result)
+    console.log('Import processing completed:', result);
 
     return new Response(
       JSON.stringify(result),
       { 
-        headers: {
+        headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
-        }
+        } 
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error processing payment import:', error)
+    console.error('Error processing import:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'An error occurred during processing'
+        message: error.message,
+        error: error.message
       }),
-      {
-        headers: {
+      { 
+        headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
         },
         status: 400
       }
-    )
+    );
   }
-})
+});

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementHeader } from "@/components/agreements/AgreementHeader";
@@ -6,7 +7,6 @@ import { AgreementFilters } from "@/components/agreements/AgreementFilters";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
 const Agreements = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -60,7 +60,6 @@ const Agreements = () => {
         <CreateAgreementDialog 
           open={isCreateDialogOpen} 
           onOpenChange={setIsCreateDialogOpen}
-          children={undefined}
         />
 
         <AgreementPDFImport 
