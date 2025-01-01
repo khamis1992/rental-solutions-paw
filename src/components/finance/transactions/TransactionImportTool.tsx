@@ -40,45 +40,6 @@ export const TransactionImportTool = () => {
     }
   });
 
-  const downloadTemplate = () => {
-    const headers = [
-      "Lease_ID",
-      "Customer_Name",
-      "Amount",
-      "License_Plate",
-      "Vehicle",
-      "Payment_Date",
-      "Payment_Method",
-      "Transaction_ID",
-      "Description",
-      "Type",
-      "Status"
-    ].join(",");
-    
-    const sampleData = "lease-uuid,John Doe,1000.00,ABC123,Toyota Camry,2024-01-01,credit_card,TRX001,Monthly Payment,payment,completed";
-    const csvContent = `${headers}\n${sampleData}`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("hidden", "");
-    a.setAttribute("href", url);
-    a.setAttribute("download", "transaction_import_template.csv");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const success = await startImport(file);
-    if (!success) {
-      event.target.value = '';
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -86,7 +47,7 @@ export const TransactionImportTool = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <FileUploadSection
-          onFileUpload={handleFileUpload}
+          onFileUpload={startImport}
           onDownloadTemplate={downloadTemplate}
           isUploading={isUploading}
           isAnalyzing={isAnalyzing}
