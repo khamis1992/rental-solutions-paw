@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Import } from "lucide-react";
 import { LeaseStatus } from "@/types/agreement.types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface AgreementHeaderProps {
   agreement?: {
@@ -33,14 +39,42 @@ export const AgreementHeader = ({ agreement, remainingAmount, onCreate, onImport
         <CardContent className="pt-6 flex justify-between items-center">
           <h2 className="text-2xl font-bold">Agreements</h2>
           <div className="space-x-2">
-            <Button onClick={onCreate} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Agreement
-            </Button>
-            <Button onClick={onImport} variant="outline" size="sm">
-              <Import className="h-4 w-4 mr-2" />
-              Import
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={onCreate} 
+                    size="sm"
+                    className="transition-all hover:scale-105"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Agreement
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Create a new rental agreement</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={onImport} 
+                    variant="outline" 
+                    size="sm"
+                    className="transition-all hover:scale-105"
+                  >
+                    <Import className="h-4 w-4 mr-2" />
+                    Import
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Import agreements from CSV file</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardContent>
       </Card>
