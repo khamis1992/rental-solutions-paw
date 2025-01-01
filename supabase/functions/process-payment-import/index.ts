@@ -19,10 +19,11 @@ serve(async (req) => {
     const { analysisResult } = await req.json()
     
     if (!analysisResult) {
+      console.error('Missing analysis result')
       throw new Error('Missing analysis result')
     }
 
-    console.log('Processing analysis result:', analysisResult)
+    console.log('Analysis result received:', analysisResult)
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -30,35 +31,55 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Process the validated data
-    const { validRows, totalAmount } = analysisResult
-    
-    if (!validRows || validRows.length === 0) {
-      throw new Error('No valid rows to process')
+    // Validate that we have valid rows to process
+    if (!analysisResult.validRows || analysisResult.validRows.length === 0) {
+      console.log('No valid rows found in analysis result')
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "No valid rows to process",
+          processed: 0
+        }),
+        { 
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          },
+          status: 400
+        }
+      )
     }
 
-    console.log(`Processing ${validRows.length} valid payments...`)
+    console.log(`Processing ${analysisResult.validRows.length} valid rows...`)
+
+    // Process each valid row
+    const payments = analysisResult.validRows.map(row => ({
+      lease_id: row.lease_id,
+      amount: parseFloat(row.amount),
+      payment_date: new Date(row.payment_date).toISOString(),
+      payment_method: row.payment_method,
+      status: 'completed',
+      description: row.description,
+      transaction_id: row.transaction_id
+    }))
+
+    console.log('Prepared payments for insertion:', payments)
 
     // Insert payments in batches
     const batchSize = 50
     const errors = []
     let successCount = 0
 
-    for (let i = 0; i < validRows.length; i += batchSize) {
-      const batch = validRows.slice(i, Math.min(i + batchSize, validRows.length))
+    for (let i = 0; i < payments.length; i += batchSize) {
+      const batch = payments.slice(i, Math.min(i + batchSize, payments.length))
       
       try {
-        const { error: insertError } = await supabaseClient
+        console.log(`Processing batch ${i/batchSize + 1}:`, batch)
+        
+        const { data, error: insertError } = await supabaseClient
           .from('payments')
-          .insert(batch.map(row => ({
-            amount: parseFloat(row.amount),
-            payment_date: row.payment_date,
-            payment_method: row.payment_method,
-            status: 'completed',
-            description: row.description,
-            transaction_id: row.transaction_id,
-            lease_id: row.lease_id
-          })))
+          .insert(batch)
+          .select()
 
         if (insertError) {
           console.error('Batch insert error:', insertError)
@@ -67,7 +88,8 @@ serve(async (req) => {
             error: insertError.message
           })
         } else {
-          successCount += batch.length
+          console.log(`Successfully inserted ${data?.length} payments`)
+          successCount += data?.length || 0
         }
       } catch (error) {
         console.error(`Error processing batch ${i + 1}-${i + batch.length}:`, error)
@@ -78,8 +100,32 @@ serve(async (req) => {
       }
     }
 
+    // Also insert into financial_imports for tracking
+    if (successCount > 0) {
+      try {
+        const { error: trackingError } = await supabaseClient
+          .from('financial_imports')
+          .insert(payments.map(p => ({
+            lease_id: p.lease_id,
+            amount: p.amount,
+            payment_date: p.payment_date,
+            payment_method: p.payment_method,
+            transaction_id: p.transaction_id,
+            description: p.description,
+            type: 'payment',
+            status: 'completed'
+          })))
+
+        if (trackingError) {
+          console.error('Error tracking imports:', trackingError)
+        }
+      } catch (error) {
+        console.error('Error inserting into financial_imports:', error)
+      }
+    }
+
     const result = {
-      success: true,
+      success: successCount > 0,
       message: `Successfully processed ${successCount} payments with ${errors.length} errors`,
       processed: successCount,
       errors: errors.length > 0 ? errors : undefined
