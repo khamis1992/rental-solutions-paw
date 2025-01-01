@@ -1,10 +1,8 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from './corsHeaders.ts';
+import { validatePaymentData } from './validators.ts';
+import { processPayments } from './paymentProcessor.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -15,16 +13,19 @@ serve(async (req) => {
   try {
     console.log('Starting payment import processing...');
     
-    const { analysisResult } = await req.json();
-    
-    if (!analysisResult || !analysisResult.rawData || !Array.isArray(analysisResult.rawData)) {
-      console.error('Missing or invalid analysis result:', analysisResult);
+    const requestData = await req.json();
+    console.log('Received request data:', requestData);
+
+    // Validate the input data
+    try {
+      validatePaymentData(requestData);
+    } catch (error: any) {
+      console.error('Validation error:', error);
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Invalid or missing data",
-          processed: 0,
-          error: "Analysis result must contain rawData array"
+          message: error.message,
+          processed: 0
         }),
         { 
           headers: {
@@ -35,8 +36,6 @@ serve(async (req) => {
         }
       );
     }
-
-    console.log('Analysis result received:', analysisResult);
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -44,106 +43,17 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Filter valid rows from rawData
-    const validRows = analysisResult.rawData.filter((row: any) => {
-      return row.amount && row.payment_date && row.payment_method && !row.error;
-    });
+    const { successCount, errors } = await processPayments(
+      supabaseClient, 
+      requestData.analysisResult.rawData
+    );
 
-    console.log(`Found ${validRows.length} valid rows to process`);
-
-    if (validRows.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "No valid rows found in the data",
-          processed: 0,
-          error: "No valid rows to process"
-        }),
-        { 
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          },
-          status: 400
-        }
-      );
-    }
-
-    // Process each valid row
-    const payments = validRows.map((row: any) => {
-      // Parse the date string (assuming format DD-MM-YYYY)
-      let paymentDate;
-      try {
-        if (row.payment_date.includes('-')) {
-          const [day, month, year] = row.payment_date.split('-').map(Number);
-          paymentDate = new Date(year, month - 1, day);
-        } else {
-          paymentDate = new Date(row.payment_date);
-        }
-
-        // Validate the date
-        if (isNaN(paymentDate.getTime())) {
-          throw new Error(`Invalid date format for payment: ${row.payment_date}`);
-        }
-      } catch (error) {
-        console.error('Date parsing error:', error);
-        throw new Error(`Invalid date format: ${row.payment_date}`);
-      }
-
-      return {
-        lease_id: row.lease_id,
-        amount: parseFloat(row.amount),
-        payment_date: paymentDate.toISOString(),
-        payment_method: row.payment_method,
-        status: 'completed',
-        description: row.description,
-        transaction_id: row.transaction_id
-      };
-    });
-
-    console.log('Prepared payments for insertion:', payments);
-
-    // Insert payments in batches
-    const batchSize = 50;
-    const errors = [];
-    let successCount = 0;
-
-    for (let i = 0; i < payments.length; i += batchSize) {
-      const batch = payments.slice(i, Math.min(i + batchSize, payments.length));
-      
-      try {
-        console.log(`Processing batch ${i/batchSize + 1}:`, batch);
-        
-        const { data, error: insertError } = await supabaseClient
-          .from('payments')
-          .insert(batch)
-          .select();
-
-        if (insertError) {
-          console.error('Batch insert error:', insertError);
-          errors.push({
-            batch: i/batchSize + 1,
-            error: insertError.message
-          });
-        } else {
-          console.log(`Successfully inserted ${data?.length} payments`);
-          successCount += data?.length || 0;
-        }
-      } catch (error) {
-        console.error(`Error processing batch ${i + 1}-${i + batch.length}:`, error);
-        errors.push({
-          batch: i/batchSize + 1,
-          error: error.message
-        });
-      }
-    }
-
-    // Also insert into financial_imports for tracking
+    // Track the import in financial_imports
     if (successCount > 0) {
       try {
         const { error: trackingError } = await supabaseClient
           .from('financial_imports')
-          .insert(payments.map(p => ({
+          .insert(requestData.analysisResult.rawData.map((p: any) => ({
             lease_id: p.lease_id,
             amount: p.amount,
             payment_date: p.payment_date,
