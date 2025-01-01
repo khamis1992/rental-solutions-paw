@@ -31,16 +31,43 @@ export const useImportProcess = () => {
       }
 
       console.log('AI Analysis complete:', aiAnalysis);
-      setAnalysisResult(aiAnalysis);
+
+      // Transform the analysis result to match expected structure
+      const transformedAnalysis = {
+        success: aiAnalysis.success,
+        totalRows: aiAnalysis.totalRows,
+        validRows: aiAnalysis.validRows,
+        invalidRows: aiAnalysis.invalidRows,
+        totalAmount: aiAnalysis.totalAmount,
+        rawData: [], // Will be populated from the CSV
+        issues: aiAnalysis.issues || [],
+        suggestions: aiAnalysis.suggestions || []
+      };
+
+      // Parse the CSV content to get raw data
+      const response = await fetch(aiAnalysis.processedFileUrl);
+      const csvContent = await response.text();
+      const lines = csvContent.split('\n');
+      const headers = lines[0].split(',');
+      const rawData = lines.slice(1)
+        .filter(line => line.trim())
+        .map(line => {
+          const values = line.split(',');
+          return headers.reduce((obj, header, index) => {
+            obj[header.trim()] = values[index]?.trim() || '';
+            return obj;
+          }, {} as Record<string, string>);
+        });
+
+      transformedAnalysis.rawData = rawData;
+      setAnalysisResult(transformedAnalysis);
 
       // If analysis successful, process the import
-      if (aiAnalysis.success) {
+      if (transformedAnalysis.success) {
+        console.log('Processing import with transformed analysis:', transformedAnalysis);
         const { data: importResult, error: importError } = await supabase.functions
           .invoke('process-payment-import', {
-            body: { 
-              fileName: aiAnalysis.fileName,
-              processedFileUrl: aiAnalysis.processedFileUrl
-            }
+            body: { analysisResult: transformedAnalysis }
           });
 
         if (importError) {
@@ -71,11 +98,14 @@ export const useImportProcess = () => {
   };
 
   const implementChanges = async () => {
-    if (!analysisResult) return;
+    if (!analysisResult) {
+      toast.error("No analysis result available");
+      return;
+    }
 
     setIsUploading(true);
     try {
-      console.log('Implementing changes...');
+      console.log('Implementing changes with analysis result:', analysisResult);
       const { error } = await supabase.functions
         .invoke('process-payment-import', {
           body: { analysisResult }
