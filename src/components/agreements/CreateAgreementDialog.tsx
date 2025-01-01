@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 export interface CreateAgreementDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
 }
 
 export function CreateAgreementDialog({ open: controlledOpen, onOpenChange }: CreateAgreementDialogProps) {

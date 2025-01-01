@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
@@ -17,11 +16,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 export default function Agreements() {
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleDeleteAllAgreements = async () => {
@@ -51,7 +52,10 @@ export default function Agreements() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <CreateAgreementDialog>
+                    <CreateAgreementDialog
+                      open={isCreateDialogOpen}
+                      onOpenChange={setIsCreateDialogOpen}
+                    >
                       <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">
                         <Plus className="h-4 w-4" />
                         <span>New Agreement</span>
