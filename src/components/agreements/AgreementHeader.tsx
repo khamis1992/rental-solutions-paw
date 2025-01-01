@@ -5,9 +5,7 @@ import { AgreementStatus } from "@/components/agreements/details/AgreementStatus
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
-
-interface AgreementHeaderProps {
+export interface AgreementHeaderProps {
   agreement: {
     id: string;
     agreement_number: string;
@@ -21,9 +19,11 @@ interface AgreementHeaderProps {
     final_price: number;
     remaining_amount: number;
   } | null;
+  onCreate: () => void;
+  onImport: () => void;
 }
 
-export const AgreementHeader = ({ agreement, remainingAmount }: AgreementHeaderProps) => {
+export const AgreementHeader = ({ agreement, remainingAmount, onCreate, onImport }: AgreementHeaderProps) => {
   return (
     <Card className="bg-card">
       <CardContent className="pt-6">

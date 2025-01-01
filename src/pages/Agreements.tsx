@@ -10,26 +10,33 @@ import { AgreementImport } from "@/components/agreements/AgreementImport";
 const Agreements = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
         <AgreementHeader 
-          onCreateClick={() => setShowCreateDialog(true)}
-          onImportClick={() => setShowImportDialog(true)}
+          onCreate={() => setShowCreateDialog(true)}
+          onImport={() => setShowImportDialog(true)}
         />
         <AgreementStats />
-        <AgreementFilters />
+        <AgreementFilters 
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatusFilter}
+          onSortChange={setSortOrder}
+        />
         <AgreementList />
         
         <CreateAgreementDialog 
-          isOpen={showCreateDialog} 
+          open={showCreateDialog} 
           onOpenChange={setShowCreateDialog}
         />
         
         {showImportDialog && (
           <AgreementImport
-            isOpen={showImportDialog}
+            open={showImportDialog}
             onOpenChange={setShowImportDialog}
           />
         )}

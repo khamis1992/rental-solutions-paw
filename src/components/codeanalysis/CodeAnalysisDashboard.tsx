@@ -178,7 +178,7 @@ export const CodeAnalysisDashboard = () => {
         </TabsContent>
 
         <TabsContent value="recommendations">
-          <RecommendationsList data={analysisData} />
+          <RecommendationsList recommendations={analysisData?.[0]?.data_points?.recommendations || []} />
         </TabsContent>
       </Tabs>
     </div>

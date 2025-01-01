@@ -4,8 +4,15 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RecommendationsListProps {
-  recommendations: any[];
+interface Recommendation {
+  id: string;
+  category: string;
+  insight: string;
+  recommendation: string;
+}
+
+export interface RecommendationsListProps {
+  recommendations: Recommendation[];
 }
 
 export const RecommendationsList = ({ recommendations = [] }: RecommendationsListProps) => {
