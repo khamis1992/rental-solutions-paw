@@ -22,27 +22,34 @@ interface RequestPayload {
 }
 
 const validateAnalysisResult = (data: any): data is PaymentAnalysis => {
-  console.log('Validating analysis result:', JSON.stringify(data, null, 2));
-  
-  if (!data || typeof data !== 'object') {
-    console.error('Analysis result is not an object');
+  try {
+    console.log('Validating analysis result:', JSON.stringify(data, null, 2));
+    
+    if (!data || typeof data !== 'object') {
+      console.error('Analysis result is not an object');
+      return false;
+    }
+
+    const requiredFields = ['success', 'totalRows', 'validRows', 'invalidRows', 'totalAmount', 'rawData'];
+    const missingFields = requiredFields.filter(field => 
+      data[field] === undefined || data[field] === null
+    );
+    
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields);
+      return false;
+    }
+
+    if (!Array.isArray(data.rawData)) {
+      console.error('rawData is not an array');
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Validation error:', error);
     return false;
   }
-
-  const requiredFields = ['success', 'totalRows', 'validRows', 'invalidRows', 'totalAmount', 'rawData'];
-  const missingFields = requiredFields.filter(field => !(field in data));
-  
-  if (missingFields.length > 0) {
-    console.error('Missing required fields:', missingFields);
-    return false;
-  }
-
-  if (!Array.isArray(data.rawData)) {
-    console.error('rawData is not an array');
-    return false;
-  }
-
-  return true;
 };
 
 serve(async (req) => {
@@ -63,8 +70,11 @@ serve(async (req) => {
     // Parse and validate request body
     let payload: RequestPayload;
     try {
-      payload = await req.json();
-      console.log('Received payload:', JSON.stringify(payload, null, 2));
+      const text = await req.text();
+      console.log('Raw request body:', text);
+      
+      payload = JSON.parse(text);
+      console.log('Parsed payload:', JSON.stringify(payload, null, 2));
     } catch (error) {
       console.error('Error parsing request JSON:', error);
       return new Response(
