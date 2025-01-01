@@ -22,7 +22,12 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
-export function CreateAgreementDialog() {
+export interface CreateAgreementDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function CreateAgreementDialog({ open: controlledOpen, onOpenChange }: CreateAgreementDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -41,6 +46,10 @@ export function CreateAgreementDialog() {
     toast.success("Agreement created successfully");
   });
 
+  // Use controlled open state if provided
+  const isOpen = controlledOpen !== undefined ? controlledOpen : open;
+  const handleOpenChange = onOpenChange || setOpen;
+
   const handleFormSubmit = async (data: any) => {
     try {
       console.log("Form submission started with data:", data);
@@ -55,7 +64,7 @@ export function CreateAgreementDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent transition-colors w-full">
           <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500">
@@ -129,7 +138,7 @@ export function CreateAgreementDialog() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isSubmitting}
               >
                 Cancel
