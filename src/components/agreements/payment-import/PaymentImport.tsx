@@ -1,13 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
+import { FileUpload } from "./FileUpload";
+import { ImportTable } from "./ImportTable";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -110,60 +106,12 @@ export const PaymentImport = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          disabled={isUploading}
-        />
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
-          disabled={isUploading}
-        >
-          Download Template
-        </Button>
-      </div>
-      
-      {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Importing data...
-        </div>
-      )}
-
-      {importedData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Imported Raw Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {headers.map((header) => (
-                      <TableHead key={header}>{header}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {importedData.map((row, index) => (
-                    <TableRow key={index}>
-                      {headers.map((header) => (
-                        <TableCell key={`${index}-${header}`}>
-                          {row[header]}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <FileUpload
+        onFileUpload={handleFileUpload}
+        onDownloadTemplate={downloadTemplate}
+        isUploading={isUploading}
+      />
+      <ImportTable headers={headers} data={importedData} />
     </div>
   );
 };
