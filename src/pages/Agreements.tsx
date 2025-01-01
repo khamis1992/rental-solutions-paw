@@ -1,58 +1,41 @@
 import { useState } from "react";
-import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
-import { AgreementPDFImport } from "@/components/agreements/AgreementPDFImport";
+import { AgreementHeader } from "@/components/agreements/AgreementHeader";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { AgreementFilters } from "@/components/agreements/AgreementFilters";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
+import { AgreementImport } from "@/components/agreements/AgreementImport";
 
-export default function Agreements() {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("desc");
+const Agreements = () => {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Agreements</h1>
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={() => setImportDialogOpen(true)}
-            variant="outline"
-          >
-            Import PDF
-          </Button>
-          <Button
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Agreement
-          </Button>
-        </div>
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-8">
+        <AgreementHeader 
+          onCreateClick={() => setShowCreateDialog(true)}
+          onImportClick={() => setShowImportDialog(true)}
+        />
+        <AgreementStats />
+        <AgreementFilters />
+        <AgreementList />
+        
+        <CreateAgreementDialog 
+          isOpen={showCreateDialog} 
+          onOpenChange={setShowCreateDialog}
+        />
+        
+        {showImportDialog && (
+          <AgreementImport
+            isOpen={showImportDialog}
+            onOpenChange={setShowImportDialog}
+          />
+        )}
       </div>
-
-      <AgreementStats />
-      
-      <AgreementFilters 
-        onSearchChange={setSearchQuery}
-        onStatusChange={setStatusFilter}
-        onSortChange={setSortOrder}
-      />
-
-      <AgreementList />
-
-      <CreateAgreementDialog 
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
-
-      <AgreementPDFImport
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-      />
-    </div>
+    </DashboardLayout>
   );
-}
+};
+
+export default Agreements;
