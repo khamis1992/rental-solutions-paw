@@ -73,13 +73,17 @@ serve(async (req) => {
   try {
     console.log('Processing payment import request...');
     
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Initialize Supabase client with error handling
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required environment variables');
+    }
 
-    // Parse and validate request body
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+    // Parse and validate request body with detailed error handling
     let payload: RequestPayload;
     try {
       const text = await req.text();
@@ -106,7 +110,7 @@ serve(async (req) => {
       );
     }
 
-    // Validate analysis result
+    // Validate analysis result with improved error messages
     if (!payload.analysisResult || !validateAnalysisResult(payload.analysisResult)) {
       console.error('Invalid analysis result structure');
       return new Response(
@@ -125,7 +129,7 @@ serve(async (req) => {
     const { analysisResult } = payload;
     console.log('Processing', analysisResult.rawData.length, 'payment records');
 
-    // Process each payment record
+    // Process each payment record with enhanced error handling
     const results = await Promise.all(
       analysisResult.rawData.map(async (payment) => {
         try {
