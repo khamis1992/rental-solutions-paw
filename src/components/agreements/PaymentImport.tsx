@@ -9,10 +9,53 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
 
+const REQUIRED_FIELDS = [
+  'Amount',
+  'Payment_Date',
+  'Payment_Method',
+  'Status',
+  'Description',
+  'Transaction_ID',
+  'Lease_ID'
+];
+
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
+
+  const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
+    const normalizedHeaders = headers.map(h => h.trim());
+    const missingFields = REQUIRED_FIELDS.filter(
+      field => !normalizedHeaders.includes(field)
+    );
+    return {
+      isValid: missingFields.length === 0,
+      missingFields
+    };
+  };
+
+  const validateRow = (row: any, rowIndex: number): string[] => {
+    const errors: string[] = [];
+    
+    REQUIRED_FIELDS.forEach(field => {
+      if (!row[field] || row[field].trim() === '') {
+        errors.push(`Row ${rowIndex + 1}: Missing required field "${field}"`);
+      }
+    });
+
+    // Validate Amount is a number
+    if (row.Amount && isNaN(parseFloat(row.Amount))) {
+      errors.push(`Row ${rowIndex + 1}: Amount must be a valid number`);
+    }
+
+    // Validate Payment_Date format (DD-MM-YYYY)
+    if (row.Payment_Date && !/^\d{2}-\d{2}-\d{4}$/.test(row.Payment_Date)) {
+      errors.push(`Row ${rowIndex + 1}: Payment_Date must be in DD-MM-YYYY format`);
+    }
+
+    return errors;
+  };
 
   const downloadTemplate = () => {
     const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
@@ -43,20 +86,54 @@ export const PaymentImport = () => {
         Papa.parse(text, {
           header: true,
           complete: async (results) => {
-            setHeaders(results.meta.fields || []);
+            const headers = results.meta.fields || [];
+            const headerValidation = validateHeaders(headers);
+
+            if (!headerValidation.isValid) {
+              toast.error(`Missing required columns: ${headerValidation.missingFields.join(', ')}`);
+              setIsUploading(false);
+              return;
+            }
+
+            // Validate each row
+            const allErrors: string[] = [];
+            results.data.forEach((row: any, index: number) => {
+              const rowErrors = validateRow(row, index);
+              allErrors.push(...rowErrors);
+            });
+
+            if (allErrors.length > 0) {
+              toast.error(
+                <div>
+                  <p>Validation errors found:</p>
+                  <ul className="list-disc pl-4 mt-2">
+                    {allErrors.slice(0, 3).map((error, i) => (
+                      <li key={i}>{error}</li>
+                    ))}
+                    {allErrors.length > 3 && (
+                      <li>...and {allErrors.length - 3} more errors</li>
+                    )}
+                  </ul>
+                </div>
+              );
+              setIsUploading(false);
+              return;
+            }
+
+            setHeaders(headers);
             setImportedData(results.data);
 
             // Store raw data in Supabase with proper typing
-            const { error } = await supabase
+            const { error: insertError } = await supabase
               .from('raw_transaction_imports')
               .insert({
-                raw_data: JSON.parse(JSON.stringify(results.data)), // Convert to proper JSON
+                raw_data: JSON.parse(JSON.stringify(results.data)),
                 is_valid: true,
                 created_at: new Date().toISOString()
               });
 
-            if (error) {
-              console.error('Import error:', error);
+            if (insertError) {
+              console.error('Import error:', insertError);
               toast.error('Failed to store imported data');
             } else {
               toast.success('Data imported successfully');
