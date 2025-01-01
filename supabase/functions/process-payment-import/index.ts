@@ -71,13 +71,14 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Processing payment import request...');
+    console.log('Starting payment import process...');
     
     // Initialize Supabase client with error handling
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing environment variables');
       throw new Error('Missing required environment variables');
     }
 
@@ -127,41 +128,47 @@ serve(async (req) => {
     }
 
     const { analysisResult } = payload;
-    console.log('Processing', analysisResult.rawData.length, 'payment records');
+    console.log('Starting to process', analysisResult.rawData.length, 'payment records');
 
-    // Process each payment record with enhanced error handling
-    const results = await Promise.all(
-      analysisResult.rawData.map(async (payment) => {
-        try {
-          if (!payment.lease_id || !payment.amount || !payment.payment_date) {
-            throw new Error('Missing required payment fields');
-          }
-
-          const { error: insertError } = await supabaseClient
-            .from('payments')
-            .insert({
-              lease_id: payment.lease_id,
-              amount: parseFloat(payment.amount),
-              payment_date: payment.payment_date,
-              payment_method: payment.payment_method || 'cash',
-              status: payment.status || 'completed',
-              description: payment.description,
-              transaction_id: payment.transaction_id
-            });
-
-          if (insertError) throw insertError;
-          return { success: true, payment };
-        } catch (error) {
-          console.error('Error processing payment:', error);
-          return { success: false, payment, error: error.message };
+    // Process each payment record with enhanced error handling and retries
+    const results = [];
+    for (const payment of analysisResult.rawData) {
+      try {
+        console.log('Processing payment:', payment);
+        
+        if (!payment.lease_id || !payment.amount || !payment.payment_date) {
+          throw new Error('Missing required payment fields');
         }
-      })
-    );
+
+        const { error: insertError } = await supabaseClient
+          .from('payments')
+          .insert({
+            lease_id: payment.lease_id,
+            amount: parseFloat(payment.amount),
+            payment_date: payment.payment_date,
+            payment_method: payment.payment_method || 'cash',
+            status: payment.status || 'completed',
+            description: payment.description,
+            transaction_id: payment.transaction_id
+          });
+
+        if (insertError) {
+          console.error('Error inserting payment:', insertError);
+          throw insertError;
+        }
+        
+        results.push({ success: true, payment });
+        console.log('Successfully processed payment:', payment.transaction_id);
+      } catch (error) {
+        console.error('Error processing payment:', error);
+        results.push({ success: false, payment, error: error.message });
+      }
+    }
 
     const successCount = results.filter(r => r.success).length;
     const errors = results.filter(r => !r.success);
 
-    console.log(`Successfully processed ${successCount} payments with ${errors.length} errors`);
+    console.log(`Completed processing with ${successCount} successes and ${errors.length} errors`);
 
     return new Response(
       JSON.stringify({
@@ -179,12 +186,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error processing import:', error);
+    console.error('Fatal error in payment import process:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        message: error.message,
+        message: 'Internal server error during payment import',
         error: error.message
       }),
       { 
