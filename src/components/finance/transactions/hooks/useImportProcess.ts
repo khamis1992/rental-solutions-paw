@@ -61,32 +61,8 @@ export const useImportProcess = () => {
 
       transformedAnalysis.rawData = rawData;
       setAnalysisResult(transformedAnalysis);
-
-      // If analysis successful, process the import
-      if (transformedAnalysis.success) {
-        console.log('Processing import with transformed analysis:', transformedAnalysis);
-        const { data: importResult, error: importError } = await supabase.functions
-          .invoke('process-payment-import', {
-            body: { analysisResult: transformedAnalysis }
-          });
-
-        if (importError) {
-          console.error('Import error:', importError);
-          toast.error(importError.message || "Failed to import file");
-          return false;
-        }
-
-        console.log('Import successful:', importResult);
-        toast.success("Transactions imported successfully");
-        
-        // Refresh the transactions data
-        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-        await queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
-        
-        return true;
-      }
-
-      return false;
+      
+      return true;
     } catch (error: any) {
       console.error("Import process error:", error);
       toast.error(error.message || "Failed to process import");
@@ -113,12 +89,8 @@ export const useImportProcess = () => {
 
       if (error) throw error;
 
-      toast.success("Changes implemented successfully");
+      // Data will be refreshed by the parent component after verification
       setAnalysisResult(null);
-      
-      // Refresh the transactions data
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      await queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
       
     } catch (error: any) {
       console.error("Implementation error:", error);

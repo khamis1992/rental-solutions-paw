@@ -21,6 +21,8 @@ export const TransactionImportTool = () => {
     implementChanges
   } = useImportProcess();
 
+  const queryClient = useQueryClient();
+
   // Query to fetch imported transactions
   const { data: importedTransactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["imported-transactions"],
@@ -79,6 +81,29 @@ export const TransactionImportTool = () => {
     }
   };
 
+  const handleImplementChanges = async () => {
+    await implementChanges();
+    // Verify data is loaded before showing success message
+    const { data, error } = await supabase
+      .from("financial_imports")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      toast.error("Error verifying import: " + error.message);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      toast.success("Changes implemented successfully");
+      // Refresh the transactions data
+      queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
+    } else {
+      toast.error("Import verification failed. Please try again.");
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -95,7 +120,7 @@ export const TransactionImportTool = () => {
         {analysisResult && (
           <AIAnalysisCard
             analysisResult={analysisResult}
-            onImplementChanges={implementChanges}
+            onImplementChanges={handleImplementChanges}
             isUploading={isUploading}
           />
         )}
