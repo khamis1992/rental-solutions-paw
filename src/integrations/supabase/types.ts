@@ -3497,12 +3497,7 @@ export type Database = {
           id: string
           import_id: string | null
           is_valid: boolean | null
-          license_plate: string | null
-          payment_description: string | null
-          payment_method: string | null
-          payment_number: string | null
           raw_data: Json
-          vehicle_details: string | null
         }
         Insert: {
           created_at?: string | null
@@ -3510,12 +3505,7 @@ export type Database = {
           id?: string
           import_id?: string | null
           is_valid?: boolean | null
-          license_plate?: string | null
-          payment_description?: string | null
-          payment_method?: string | null
-          payment_number?: string | null
           raw_data: Json
-          vehicle_details?: string | null
         }
         Update: {
           created_at?: string | null
@@ -3523,12 +3513,7 @@ export type Database = {
           id?: string
           import_id?: string | null
           is_valid?: boolean | null
-          license_plate?: string | null
-          payment_description?: string | null
-          payment_method?: string | null
-          payment_number?: string | null
           raw_data?: Json
-          vehicle_details?: string | null
         }
         Relationships: [
           {
@@ -4048,8 +4033,10 @@ export type Database = {
           created_at: string | null
           id: string
           month_year: string | null
+          payment_method: string | null
           recorded_date: string | null
           transaction_id: string | null
+          transaction_reference: string | null
           type: Database["public"]["Enums"]["transaction_amount_type"]
           updated_at: string | null
         }
@@ -4059,8 +4046,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           month_year?: string | null
+          payment_method?: string | null
           recorded_date?: string | null
           transaction_id?: string | null
+          transaction_reference?: string | null
           type?: Database["public"]["Enums"]["transaction_amount_type"]
           updated_at?: string | null
         }
@@ -4070,8 +4059,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           month_year?: string | null
+          payment_method?: string | null
           recorded_date?: string | null
           transaction_id?: string | null
+          transaction_reference?: string | null
           type?: Database["public"]["Enums"]["transaction_amount_type"]
           updated_at?: string | null
         }
@@ -4091,39 +4082,63 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           customer_id: string | null
+          customer_name: string | null
           description: string | null
           id: string
           import_id: string | null
+          lease_id: string | null
+          license_plate: string | null
+          payment_date: string | null
+          payment_method: string | null
           row_number: number | null
           status: string | null
           transaction_date: string
+          transaction_id: string | null
+          type: string | null
           validation_errors: Json | null
+          vehicle: string | null
         }
         Insert: {
           amount: number
           category_id?: string | null
           created_at?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           description?: string | null
           id?: string
           import_id?: string | null
+          lease_id?: string | null
+          license_plate?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
           row_number?: number | null
           status?: string | null
           transaction_date: string
+          transaction_id?: string | null
+          type?: string | null
           validation_errors?: Json | null
+          vehicle?: string | null
         }
         Update: {
           amount?: number
           category_id?: string | null
           created_at?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           description?: string | null
           id?: string
           import_id?: string | null
+          lease_id?: string | null
+          license_plate?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
           row_number?: number | null
           status?: string | null
           transaction_date?: string
+          transaction_id?: string | null
+          type?: string | null
           validation_errors?: Json | null
+          vehicle?: string | null
         }
         Relationships: [
           {
@@ -4152,6 +4167,20 @@ export type Database = {
             columns: ["import_id"]
             isOneToOne: false
             referencedRelation: "transaction_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_import_items_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_import_items_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
             referencedColumns: ["id"]
           },
         ]
