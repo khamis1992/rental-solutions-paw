@@ -1,12 +1,13 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Users, FileSpreadsheet, Code } from "lucide-react";
+import { Car, Users, FileSpreadsheet, Code, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { FleetReportSection } from "@/components/reports/sections/FleetReportSection";
 import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
 import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
 import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDashboard";
+import { ErrorAnalysisSection } from "@/components/reports/sections/ErrorAnalysisSection";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState("");
@@ -44,6 +45,10 @@ const Reports = () => {
                 <Code className="h-4 w-4" />
                 Code Analysis
               </TabsTrigger>
+              <TabsTrigger value="error-analysis" className="flex items-center gap-2 text-base font-medium">
+                <AlertCircle className="h-4 w-4" />
+                Error Analysis
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -80,6 +85,10 @@ const Reports = () => {
 
             <TabsContent value="code-analysis">
               <CodeAnalysisDashboard />
+            </TabsContent>
+
+            <TabsContent value="error-analysis">
+              <ErrorAnalysisSection />
             </TabsContent>
           </div>
         </Tabs>
