@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ImportErrorAnalysis } from "@/components/finance/transactions/ImportErrorAnalysis";
+import { ImportErrorAnalysis } from "@/components/finance/import/ImportErrorAnalysis";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [importErrors, setImportErrors] = useState<any[]>([]);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,11 +20,7 @@ export const PaymentImport = () => {
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "File size must be less than 10MB",
-        variant: "destructive",
-      });
+      toast.error("File size must be less than 10MB");
       return;
     }
 
@@ -66,8 +61,8 @@ export const PaymentImport = () => {
         .invoke('process-payment-import', {
           body: { 
             fileName,
-            batchSize: 50, // Process 50 records at a time
-            maxRetries: 3  // Retry failed operations up to 3 times
+            batchSize: 50,
+            maxRetries: 3
           }
         });
 
@@ -75,16 +70,9 @@ export const PaymentImport = () => {
 
       if (data.errors?.length > 0) {
         setImportErrors(data.errors);
-        toast({
-          title: "Import Completed with Errors",
-          description: `Imported ${data.successCount} payments with ${data.errors.length} errors`,
-          variant: "destructive",
-        });
+        toast.error(`Imported ${data.successCount} payments with ${data.errors.length} errors`);
       } else {
-        toast({
-          title: "Success",
-          description: `Successfully imported ${data.successCount} payments`,
-        });
+        toast.success(`Successfully imported ${data.successCount} payments`);
       }
       
       // Force refresh the queries
@@ -94,11 +82,7 @@ export const PaymentImport = () => {
       setProgress(100);
     } catch (error: any) {
       console.error('Import process error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to process import",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to process import");
       setProgress(0);
     } finally {
       setIsUploading(false);
@@ -106,12 +90,7 @@ export const PaymentImport = () => {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    // Copy suggestion to clipboard
-    navigator.clipboard.writeText(suggestion);
-    toast({
-      title: "Suggestion Copied",
-      description: "You can now paste this in the chat to get help implementing it",
-    });
+    toast.success("Suggestion copied! Paste it in the chat to get help implementing it.");
   };
 
   const downloadTemplate = () => {

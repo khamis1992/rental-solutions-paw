@@ -1,71 +1,82 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { errors } = await req.json()
-    
-    // Prepare context for Deepseek AI
-    const prompt = `
-    Analyze these import errors and provide user-friendly suggestions for fixing them:
-    ${JSON.stringify(errors, null, 2)}
-    
-    For each error:
-    1. Explain what went wrong in simple terms
-    2. Provide step-by-step instructions to fix it
-    3. Give an example of the correct format if applicable
-    
-    Format the response as JSON with:
-    - explanation (string)
-    - steps (array of strings)
-    - example (string, optional)
-    `
+    const { errors } = await req.json();
 
-    const aiResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    if (!errors || !Array.isArray(errors)) {
+      throw new Error('Invalid input: errors must be an array');
+    }
+
+    // Format errors for analysis
+    const errorContext = errors.map((error, index) => 
+      `Error ${index + 1}: ${error.message || error.error || JSON.stringify(error)}`
+    ).join('\n');
+
+    // Call Deepseek API for analysis
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
-          { role: 'system', content: 'You are a data validation assistant specializing in CSV imports.' },
-          { role: 'user', content: prompt }
-        ]
-      })
-    })
+          {
+            role: 'system',
+            content: 'You are an AI assistant that analyzes import errors and provides user-friendly suggestions for fixing them.'
+          },
+          {
+            role: 'user',
+            content: `Please analyze these import errors and provide specific suggestions for fixing each one:\n\n${errorContext}`
+          }
+        ],
+      }),
+    });
 
-    if (!aiResponse.ok) {
-      throw new Error(`Deepseek API error: ${await aiResponse.text()}`)
+    if (!response.ok) {
+      throw new Error(`Deepseek API error: ${await response.text()}`);
     }
 
-    const analysis = await aiResponse.json()
-    
+    const aiResult = await response.json();
+    const analysis = aiResult.choices[0].message.content;
+
+    // Extract suggestions from analysis
+    const suggestions = analysis.split('\n')
+      .filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'))
+      .map(line => line.trim().replace(/^[-*]\s+/, ''));
+
     return new Response(
       JSON.stringify({
         success: true,
-        analysis: analysis.choices[0].message.content
+        analysis,
+        suggestions,
+        errorCount: errors.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    );
 
   } catch (error) {
-    console.error('Error analyzing import errors:', error)
+    console.error('Error analyzing import errors:', error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    )
+      { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
-})
+});
