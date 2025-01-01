@@ -22,7 +22,7 @@ interface RequestPayload {
 }
 
 const validateAnalysisResult = (analysisResult: any): analysisResult is AnalysisResult => {
-  console.log('Validating analysis result:', analysisResult);
+  console.log('Validating analysis result:', JSON.stringify(analysisResult, null, 2));
   
   if (!analysisResult || typeof analysisResult !== 'object') {
     console.error('Analysis result is not an object');
