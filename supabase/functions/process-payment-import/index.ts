@@ -6,16 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ImportRow {
-  amount: number;
-  payment_date: string;
-  payment_method: string;
-  status: string;
-  description: string;
-  transaction_id: string;
-  lease_id: string;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -28,6 +18,10 @@ serve(async (req) => {
     );
 
     const { fileName, fileContent, action, analysisResult } = await req.json();
+
+    // Add debug logging
+    console.log('Request payload:', { fileName, action, analysisResult });
+    console.log('File content length:', fileContent?.length || 0);
 
     // If this is an implementation request
     if (action === 'implement' && analysisResult) {
@@ -55,9 +49,17 @@ serve(async (req) => {
     // Initial analysis of the file
     console.log('Starting analysis of file:', fileName);
 
+    if (!fileContent) {
+      throw new Error('No file content provided');
+    }
+
     const lines = fileContent.split('\n')
       .map((line: string) => line.trim())
       .filter((line: string) => line.length > 0);
+
+    if (lines.length < 2) {
+      throw new Error('File is empty or contains only headers');
+    }
 
     const headers = lines[0].toLowerCase().split(',').map((h: string) => h.trim());
     const rows = lines.slice(1);
@@ -78,6 +80,15 @@ serve(async (req) => {
       transaction_id: headers.indexOf('transaction_id'),
       lease_id: headers.indexOf('lease_id')
     };
+
+    // Validate headers
+    const missingHeaders = Object.entries(headerMap)
+      .filter(([_, index]) => index === -1)
+      .map(([header]) => header);
+
+    if (missingHeaders.length > 0) {
+      throw new Error(`Missing required headers: ${missingHeaders.join(', ')}`);
+    }
 
     // Validate each row
     rows.forEach((row, index) => {
@@ -104,7 +115,7 @@ serve(async (req) => {
         // Check required fields
         const requiredFields = ['payment_method', 'status', 'description', 'transaction_id', 'lease_id'];
         for (const field of requiredFields) {
-          if (!values[headerMap[field as keyof typeof headerMap]]?.trim()) {
+          if (!values[headerMap[field]]?.trim()) {
             invalidRows++;
             issues.push(`Row ${rowNum}: Missing ${field.replace('_', ' ')}`);
             return;
@@ -151,7 +162,7 @@ serve(async (req) => {
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500 
       }
     );
   }
