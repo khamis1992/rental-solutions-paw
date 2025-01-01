@@ -45,13 +45,13 @@ export default function Agreements() {
       <AgreementList />
 
       <CreateAgreementDialog 
-        isOpen={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
       />
 
       <AgreementPDFImport
-        isOpen={importDialogOpen}
-        onClose={() => setImportDialogOpen(false)}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
       />
     </div>
   );
