@@ -50,12 +50,14 @@ export default function Agreements() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <CreateAgreementDialog>
-                    <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">
-                      <Plus className="h-4 w-4" />
-                      <span>New Agreement</span>
-                    </Button>
-                  </CreateAgreementDialog>
+                  <div>
+                    <CreateAgreementDialog>
+                      <Button className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">
+                        <Plus className="h-4 w-4" />
+                        <span>New Agreement</span>
+                      </Button>
+                    </CreateAgreementDialog>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Create a new agreement</p>
@@ -64,15 +66,17 @@ export default function Agreements() {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <AgreementPDFImport>
-                    <Button 
-                      variant="outline"
-                      className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 transition-colors"
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span>Import PDF</span>
-                    </Button>
-                  </AgreementPDFImport>
+                  <div>
+                    <AgreementPDFImport>
+                      <Button 
+                        variant="outline"
+                        className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span>Import PDF</span>
+                      </Button>
+                    </AgreementPDFImport>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Import agreements from PDF</p>
