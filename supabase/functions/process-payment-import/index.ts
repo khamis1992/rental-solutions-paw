@@ -1,6 +1,49 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from './corsHeaders.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface AnalysisResult {
+  success: boolean;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  totalAmount: number;
+  rawData: any[];
+  issues?: string[];
+  suggestions?: string[];
+}
+
+interface RequestPayload {
+  analysisResult: AnalysisResult;
+}
+
+const validateAnalysisResult = (analysisResult: any): analysisResult is AnalysisResult => {
+  console.log('Validating analysis result:', analysisResult);
+  
+  if (!analysisResult || typeof analysisResult !== 'object') {
+    console.error('Analysis result is not an object');
+    return false;
+  }
+
+  const requiredFields = ['success', 'totalRows', 'validRows', 'invalidRows', 'totalAmount', 'rawData'];
+  const missingFields = requiredFields.filter(field => !(field in analysisResult));
+  
+  if (missingFields.length > 0) {
+    console.error('Missing required fields:', missingFields);
+    return false;
+  }
+
+  if (!Array.isArray(analysisResult.rawData)) {
+    console.error('rawData is not an array');
+    return false;
+  }
+
+  return true;
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -9,33 +52,66 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Processing payment import request...');
+    
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data, error } = await req.json();
-
-    if (error) {
-      throw error;
+    // Parse and validate request body
+    let payload: RequestPayload;
+    try {
+      payload = await req.json();
+      console.log('Received payload:', JSON.stringify(payload, null, 2));
+    } catch (error) {
+      console.error('Error parsing request JSON:', error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid JSON payload' 
+        }), 
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    if (!data.analysisResult?.rawData || !Array.isArray(data.analysisResult.rawData)) {
-      throw new Error('Analysis result must contain rawData array');
+    // Validate analysis result
+    if (!payload.analysisResult || !validateAnalysisResult(payload.analysisResult)) {
+      console.error('Invalid analysis result structure');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid analysis result structure. Required fields missing or invalid.'
+        }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
+
+    const { analysisResult } = payload;
+    console.log('Processing', analysisResult.rawData.length, 'payment records');
 
     // Process each payment record
     const results = await Promise.all(
-      data.analysisResult.rawData.map(async (payment) => {
+      analysisResult.rawData.map(async (payment) => {
         try {
+          if (!payment.lease_id || !payment.amount || !payment.payment_date) {
+            throw new Error('Missing required payment fields');
+          }
+
           const { error: insertError } = await supabaseClient
             .from('payments')
             .insert({
               lease_id: payment.lease_id,
               amount: parseFloat(payment.amount),
               payment_date: payment.payment_date,
-              payment_method: payment.payment_method,
+              payment_method: payment.payment_method || 'cash',
               status: payment.status || 'completed',
               description: payment.description,
               transaction_id: payment.transaction_id
@@ -52,6 +128,8 @@ serve(async (req) => {
 
     const successCount = results.filter(r => r.success).length;
     const errors = results.filter(r => !r.success);
+
+    console.log(`Successfully processed ${successCount} payments with ${errors.length} errors`);
 
     return new Response(
       JSON.stringify({
@@ -82,7 +160,7 @@ serve(async (req) => {
           ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 400
+        status: 500
       }
     );
   }

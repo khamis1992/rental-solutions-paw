@@ -91,28 +91,48 @@ export const useImportProcess = () => {
         totalRows: lines.length - 1
       };
 
-      console.log('Starting file upload with payload:', {
+      console.log('Starting file analysis with payload:', {
         ...payload,
         fileContentLength: fileContent.length
       });
 
       // Call Edge Function with validated data
-      const { data, error } = await supabase.functions
-        .invoke('process-transaction-import', {
+      const { data: aiAnalysis, error: analysisError } = await supabase.functions
+        .invoke('analyze-payment-import', {
           body: payload
         });
 
-      if (error) {
-        console.error('Edge Function error:', error);
-        throw error;
+      if (analysisError) {
+        console.error('AI Analysis error:', analysisError);
+        throw analysisError;
       }
 
-      console.log('Edge Function response:', data);
-      setAnalysisResult(data);
-      return true;
+      console.log('AI Analysis complete:', aiAnalysis);
+      setAnalysisResult(aiAnalysis);
+
+      // Process the import if analysis was successful
+      if (aiAnalysis.success) {
+        console.log('Starting payment import with analysis result:', aiAnalysis);
+        
+        const { data: importResult, error: importError } = await supabase.functions
+          .invoke('process-payment-import', {
+            body: { analysisResult: aiAnalysis }
+          });
+
+        if (importError) {
+          console.error('Import error:', importError);
+          throw importError;
+        }
+
+        console.log('Import successful:', importResult);
+        toast.success("Payments imported successfully");
+        return true;
+      }
+
+      return false;
     } catch (error: any) {
-      console.error("Import error:", error);
-      toast.error(error.message || "Failed to import file");
+      console.error("Import process error:", error);
+      toast.error(error.message || "Failed to process import");
       return false;
     } finally {
       setIsAnalyzing(false);
@@ -121,16 +141,23 @@ export const useImportProcess = () => {
   };
 
   const implementChanges = async () => {
+    if (!analysisResult) {
+      toast.error("No analysis result available");
+      return;
+    }
+
     setIsUploading(true);
     try {
+      console.log('Implementing changes with analysis result:', analysisResult);
+      
       const { error } = await supabase.functions
-        .invoke("process-payment-import", {
+        .invoke('process-payment-import', {
           body: { analysisResult }
         });
 
       if (error) throw error;
 
-      toast.success("Payments imported successfully");
+      toast.success("Changes implemented successfully");
       setAnalysisResult(null);
     } catch (error: any) {
       console.error("Implementation error:", error);
