@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const useImportProcess = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const startImport = async (file: File) => {
     setIsUploading(true);
@@ -69,6 +71,11 @@ export const useImportProcess = () => {
 
       toast.success("Transactions imported successfully");
       setAnalysisResult(null);
+      
+      // Refresh the transactions data
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['imported-transactions'] });
+      
     } catch (error: any) {
       console.error("Implementation error:", error);
       toast.error(error.message || "Failed to implement changes");

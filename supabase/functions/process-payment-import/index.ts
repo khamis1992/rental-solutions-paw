@@ -31,12 +31,12 @@ serve(async (req) => {
     );
 
     // Validate that we have valid rows to process
-    if (!analysisResult.validRows || typeof analysisResult.validRows !== 'number' || analysisResult.validRows === 0) {
-      console.log('No valid rows found in analysis result');
+    if (!analysisResult.rawData || !Array.isArray(analysisResult.rawData)) {
+      console.error('Invalid or missing rawData in analysis result');
       return new Response(
         JSON.stringify({
           success: false,
-          message: "No valid rows to process",
+          message: "Invalid or missing data",
           processed: 0
         }),
         { 
@@ -49,9 +49,12 @@ serve(async (req) => {
       );
     }
 
-    // Extract valid rows from the raw data
-    const validRows = analysisResult.rawData?.filter((row: any) => !row.error) || [];
-    console.log(`Processing ${validRows.length} valid rows...`);
+    // Filter valid rows from rawData
+    const validRows = analysisResult.rawData.filter((row: any) => {
+      return row.amount && row.payment_date && row.payment_method && !row.error;
+    });
+
+    console.log(`Found ${validRows.length} valid rows to process`);
 
     if (validRows.length === 0) {
       return new Response(
