@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
 import { CategoryDialog } from "../categories/CategoryDialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/utils";
 
 interface Transaction {
   id: string;
@@ -25,25 +24,17 @@ interface Category {
 
 export const TransactionCategorization = () => {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
-  const queryClient = useQueryClient();
   
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["uncategorized-transactions"],
     queryFn: async () => {
-      console.log("Fetching uncategorized transactions");
       const { data, error } = await supabase
         .from("accounting_transactions")
         .select("*")
         .is("category_id", null)
         .order("transaction_date", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching uncategorized transactions:", error);
-        toast.error("Failed to load transactions");
-        throw error;
-      }
-      
-      console.log("Fetched uncategorized transactions:", data);
+      if (error) throw error;
       return data as Transaction[];
     },
   });
@@ -56,30 +47,19 @@ export const TransactionCategorization = () => {
         .select("*")
         .order("name");
 
-      if (error) {
-        console.error("Error fetching categories:", error);
-        toast.error("Failed to load categories");
-        throw error;
-      }
+      if (error) throw error;
       return data as Category[];
     },
   });
 
   const handleCategoryAssignment = async (transactionId: string, categoryId: string) => {
     try {
-      console.log("Assigning category:", categoryId, "to transaction:", transactionId);
-      
       const { error } = await supabase
         .from("accounting_transactions")
         .update({ category_id: categoryId })
         .eq("id", transactionId);
 
       if (error) throw error;
-      
-      // Invalidate both queries to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ["uncategorized-transactions"] });
-      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      
       toast.success("Transaction categorized successfully");
     } catch (error) {
       console.error("Error categorizing transaction:", error);
@@ -89,7 +69,7 @@ export const TransactionCategorization = () => {
 
   if (isLoadingTransactions || isLoadingCategories) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -123,7 +103,7 @@ export const TransactionCategorization = () => {
                   {new Date(transaction.transaction_date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>{transaction.description}</TableCell>
-                <TableCell>{formatCurrency(transaction.amount)}</TableCell>
+                <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
                 <TableCell>
                   {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </TableCell>
@@ -143,13 +123,6 @@ export const TransactionCategorization = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {!transactions?.length && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  No uncategorized transactions found
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>

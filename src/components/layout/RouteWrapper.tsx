@@ -1,9 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
+import { DashboardLayout } from "./DashboardLayout";
 
 interface RouteWrapperProps {
   children: ReactNode;
 }
 
 export const RouteWrapper = ({ children }: RouteWrapperProps) => {
-  return <div className="min-h-screen bg-background">{children}</div>;
+  return <DashboardLayout>{children}</DashboardLayout>;
 };

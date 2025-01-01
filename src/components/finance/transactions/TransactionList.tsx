@@ -15,7 +15,7 @@ import { Eye, Pencil, Plus, Trash } from "lucide-react";
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog";
 import { TransactionDialog } from "./TransactionDialog";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/utils";
+import { TransactionType } from "../accounting/types/transaction.types";
 
 export const TransactionList = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -25,7 +25,7 @@ export const TransactionList = () => {
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
-      console.log("Fetching all transactions");
+      console.log("Fetching transactions"); // Debug log
       const { data, error } = await supabase
         .from("accounting_transactions")
         .select(`
@@ -38,12 +38,11 @@ export const TransactionList = () => {
         .order("transaction_date", { ascending: false });
 
       if (error) {
-        console.error("Error fetching transactions:", error);
         toast.error("Failed to load transactions");
         throw error;
       }
 
-      console.log("Fetched transactions:", data);
+      console.log("Fetched transactions:", data); // Debug log
       return data;
     },
   });
@@ -85,9 +84,9 @@ export const TransactionList = () => {
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>{transaction.category?.name || "Uncategorized"}</TableCell>
-              <TableCell>{formatCurrency(transaction.amount)}</TableCell>
+              <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
               <TableCell>
-                {transaction.type === "INCOME" ? "Income" : "Expense"}
+                {transaction.type === TransactionType.INCOME ? "Income" : "Expense"}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
@@ -108,13 +107,6 @@ export const TransactionList = () => {
               </TableCell>
             </TableRow>
           ))}
-          {!transactions?.length && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                No transactions found
-              </TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
 

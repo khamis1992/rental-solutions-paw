@@ -1,87 +1,123 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { Loader2, Upload } from "lucide-react";
 
-interface AgreementPDFImportProps {
-  open: boolean;
-  onOpenChange: Dispatch<SetStateAction<boolean>>;
-}
-
-export const AgreementPDFImport = ({ open, onOpenChange }: AgreementPDFImportProps) => {
+export const AgreementPDFImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const queryClient = useQueryClient();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.includes('pdf')) {
-      toast.error('Please upload a PDF file');
-      return;
-    }
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     setIsUploading(true);
+    let successCount = 0;
+    let errorCount = 0;
+
     try {
-      const fileName = `${crypto.randomUUID()}.pdf`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('agreements')
-        .upload(fileName, file);
+      for (const file of files) {
+        if (file.type !== 'application/pdf') {
+          toast.error(`${file.name} is not a PDF file`);
+          errorCount++;
+          continue;
+        }
 
-      if (uploadError) throw uploadError;
+        // Extract agreement number and vehicle number from filename
+        const fileNameParts = file.name.split(' - ');
+        if (fileNameParts.length !== 2) {
+          toast.error(`Invalid file name format: ${file.name}`);
+          errorCount++;
+          continue;
+        }
 
-      const { error: processingError } = await supabase.functions
-        .invoke('process-agreement-import', {
-          body: { fileName }
-        });
+        const vehicleNumber = fileNameParts[0].trim();
+        const agreementNumber = fileNameParts[1].replace('.pdf', '').trim();
 
-      if (processingError) throw processingError;
+        // Check if agreement exists
+        const { data: agreement, error: agreementError } = await supabase
+          .from('leases')
+          .select('id')
+          .eq('agreement_number', agreementNumber)
+          .single();
 
-      toast.success('Agreement imported successfully');
-      queryClient.invalidateQueries({ queryKey: ['agreements'] });
-      onOpenChange(false);
-    } catch (error: any) {
+        if (agreementError || !agreement) {
+          toast.error(`No matching agreement found for: ${agreementNumber}`);
+          errorCount++;
+          continue;
+        }
+
+        // Upload file to storage
+        const fileExt = 'pdf';
+        const filePath = `${agreement.id}/${crypto.randomUUID()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('agreement_documents')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Failed to upload: ${file.name}`);
+          errorCount++;
+          continue;
+        }
+
+        // Add document record
+        const { error: docError } = await supabase
+          .from('agreement_documents')
+          .insert({
+            lease_id: agreement.id,
+            document_type: 'contract',
+            document_url: filePath
+          });
+
+        if (docError) {
+          console.error('Document record error:', docError);
+          toast.error(`Failed to save document record for: ${file.name}`);
+          errorCount++;
+          continue;
+        }
+
+        successCount++;
+      }
+
+      toast.success(`Successfully processed ${successCount} files with ${errorCount} errors`);
+    } catch (error) {
       console.error('Import error:', error);
-      toast.error(error.message || 'Failed to import agreement');
+      toast.error('Failed to process files');
     } finally {
       setIsUploading(false);
+      event.target.value = '';
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Import Agreement PDF</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Input
-            type="file"
-            accept=".pdf"
-            onChange={handleFileUpload}
-            disabled={isUploading}
-          />
-          <Button
-            variant="outline"
-            disabled={isUploading}
-          >
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        className="relative"
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Uploading...
+          </>
+        ) : (
+          <>
             <Upload className="h-4 w-4 mr-2" />
-            Upload PDF
-          </Button>
-        </div>
-        
-        {isUploading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Importing agreement...
-          </div>
+            Import Agreement PDFs
+          </>
         )}
-      </CardContent>
-    </Card>
+        <input
+          type="file"
+          multiple
+          accept=".pdf"
+          onChange={handleFileUpload}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          disabled={isUploading}
+        />
+      </Button>
+    </div>
   );
 };
