@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders } from './corsHeaders.ts';
-import { validatePaymentData } from './validators.ts';
+import { createClient } from '@supabase/supabase-js';
+import { corsHeaders } from './corsHeaders';
+import { validatePaymentData, validatePaymentRow } from './validators';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -12,6 +12,12 @@ serve(async (req) => {
   try {
     console.log('Starting payment import processing...');
     
+    // Validate content type
+    const contentType = req.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      throw new Error('Content-Type must be application/json');
+    }
+
     const requestData = await req.json();
     console.log('Received request data:', requestData);
 
@@ -47,8 +53,12 @@ serve(async (req) => {
     let successCount = 0;
     const errors = [];
 
+    console.log(`Processing ${rawData.length} payment records...`);
+
     for (const payment of rawData) {
       try {
+        validatePaymentRow(payment);
+
         const { error: insertError } = await supabaseClient
           .from('payments')
           .insert({
@@ -70,7 +80,7 @@ serve(async (req) => {
         } else {
           successCount++;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error processing payment:', error);
         errors.push({
           payment,

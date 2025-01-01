@@ -1,104 +1,65 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, MessageSquare } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface ImportErrorAnalysisProps {
   errors: any[];
-  onSuggestionClick: (suggestion: string) => void;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 export const ImportErrorAnalysis = ({ errors, onSuggestionClick }: ImportErrorAnalysisProps) => {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
-
-  const analyzeErrors = async () => {
-    setIsAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-import-errors', {
-        body: { errors }
-      });
-
-      if (error) throw error;
-      
-      const parsedAnalysis = JSON.parse(data.analysis);
-      setAnalysis(parsedAnalysis);
-    } catch (error) {
-      console.error('Error analyzing errors:', error);
-      toast.error('Failed to analyze errors');
-    } finally {
-      setIsAnalyzing(false);
+  const handleSuggestionClick = (suggestion: string) => {
+    // Copy suggestion to clipboard
+    navigator.clipboard.writeText(suggestion);
+    toast.success("Suggestion copied to clipboard");
+    
+    if (onSuggestionClick) {
+      onSuggestionClick(suggestion);
     }
   };
 
-  if (!errors.length) return null;
+  if (!errors || errors.length === 0) return null;
 
   return (
-    <Card className="mt-4">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          AI Error Analysis
-        </CardTitle>
+        <CardTitle>Import Analysis</CardTitle>
       </CardHeader>
-      <CardContent>
-        {!analysis ? (
-          <Button
-            onClick={analyzeErrors}
-            disabled={isAnalyzing}
-            variant="outline"
-            className="w-full"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing Errors...
-              </>
-            ) : (
-              'Analyze Errors with AI'
-            )}
-          </Button>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {analysis.explanation}
-            </p>
-            
-            <div className="space-y-2">
-              <h4 className="font-semibold">Steps to Fix:</h4>
-              <ul className="list-disc pl-5 space-y-1">
-                {analysis.steps.map((step: string, index: number) => (
-                  <li 
-                    key={index}
-                    className="text-sm text-muted-foreground cursor-pointer hover:text-primary"
-                    onClick={() => onSuggestionClick(step)}
-                  >
-                    {step}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <CardContent className="space-y-4">
+        <div>
+          <h4 className="font-semibold mb-2">Errors Found:</h4>
+          <ul className="list-disc pl-5 space-y-1">
+            {errors.map((error, index) => (
+              <li key={index} className="text-sm text-muted-foreground">
+                {error.error || error.message}
+                {error.payment && (
+                  <span className="block text-xs mt-1">
+                    Row data: {JSON.stringify(error.payment)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-            {analysis.example && (
-              <div className="space-y-2">
-                <h4 className="font-semibold">Example:</h4>
-                <pre className="text-sm bg-muted p-2 rounded-md overflow-x-auto">
-                  {analysis.example}
-                </pre>
-              </div>
-            )}
-
-            <Button
-              onClick={analyzeErrors}
-              variant="outline"
-              size="sm"
-              className="w-full mt-4"
-            >
-              Analyze Again
-            </Button>
+        <div>
+          <h4 className="font-semibold mb-2">AI Suggestions:</h4>
+          <div className="space-y-2">
+            {errors.map((error, index) => {
+              const suggestion = `Fix payment import error: ${error.error || error.message}`;
+              return (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="w-full text-left justify-start"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              );
+            })}
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
