@@ -30,6 +30,7 @@ interface AnalyticsDataPoints {
     title: string;
     priority: string;
     description: string;
+    category: string;
     example?: string;
   }>;
 }
@@ -95,6 +96,12 @@ export const CodeAnalysisDashboard = () => {
     return <div>Loading analysis data...</div>;
   }
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -115,7 +122,7 @@ export const CodeAnalysisDashboard = () => {
             <CardTitle className="text-sm font-medium">Code Quality Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`text-2xl font-bold ${getScoreColor(analysisData?.[0]?.data_points?.quality_score || 0)}`}>
               {analysisData?.[0]?.data_points?.quality_score || "N/A"}
             </div>
           </CardContent>
@@ -126,7 +133,7 @@ export const CodeAnalysisDashboard = () => {
             <CardTitle className="text-sm font-medium">Security Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`text-2xl font-bold ${getScoreColor(analysisData?.[0]?.data_points?.security_score || 0)}`}>
               {analysisData?.[0]?.data_points?.security_score || "N/A"}
             </div>
           </CardContent>
@@ -137,7 +144,7 @@ export const CodeAnalysisDashboard = () => {
             <CardTitle className="text-sm font-medium">Performance Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`text-2xl font-bold ${getScoreColor(analysisData?.[0]?.data_points?.performance_score || 0)}`}>
               {analysisData?.[0]?.data_points?.performance_score || "N/A"}
             </div>
           </CardContent>
