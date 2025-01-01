@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { validateFileContent } from "../utils/importValidation";
 
 export const useImportProcess = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -13,11 +14,21 @@ export const useImportProcess = () => {
     setIsUploading(true);
     setIsAnalyzing(true);
     try {
-      console.log('Starting file analysis with AI...');
+      console.log('Starting file analysis...');
       
-      // First, analyze with AI
+      // First read the file content
+      const fileContent = await file.text();
+      
+      // Validate file content
+      if (!validateFileContent(fileContent)) {
+        toast.error("Invalid file format. Please ensure you're uploading a valid CSV file.");
+        return false;
+      }
+      
+      // Create FormData with validated content
       const formData = new FormData();
-      formData.append('file', file);
+      const validatedFile = new File([fileContent], file.name, { type: 'text/csv' });
+      formData.append('file', validatedFile);
       
       const { data: aiAnalysis, error: analysisError } = await supabase.functions
         .invoke('analyze-transaction-import', {
@@ -32,14 +43,14 @@ export const useImportProcess = () => {
 
       console.log('AI Analysis complete:', aiAnalysis);
 
-      // Transform the analysis result to match expected structure
+      // Transform the analysis result
       const transformedAnalysis = {
         success: aiAnalysis.success,
         totalRows: aiAnalysis.totalRows,
         validRows: aiAnalysis.validRows,
         invalidRows: aiAnalysis.invalidRows,
         totalAmount: aiAnalysis.totalAmount,
-        rawData: [], // Will be populated from the CSV
+        rawData: [], 
         issues: aiAnalysis.issues || [],
         suggestions: aiAnalysis.suggestions || []
       };
@@ -47,6 +58,13 @@ export const useImportProcess = () => {
       // Parse the CSV content to get raw data
       const response = await fetch(aiAnalysis.processedFileUrl);
       const csvContent = await response.text();
+      
+      // Validate the processed content
+      if (!validateFileContent(csvContent)) {
+        toast.error("Error processing file. Please try again.");
+        return false;
+      }
+      
       const lines = csvContent.split('\n');
       const headers = lines[0].split(',');
       const rawData = lines.slice(1)
@@ -88,8 +106,6 @@ export const useImportProcess = () => {
         });
 
       if (error) throw error;
-
-      // Success message and data refresh will be handled by the parent component
       setAnalysisResult(null);
       
     } catch (error: any) {

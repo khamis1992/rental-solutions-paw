@@ -6,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAnalysisCard } from "@/components/finance/transactions/AIAnalysisCard";
 import { FileUploadSection } from "@/components/finance/transactions/FileUploadSection";
 import { useImportProcess } from "@/components/finance/transactions/hooks/useImportProcess";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ImportedTransactionsTable } from "./ImportedTransactionsTable";
 import { useQuery } from "@tanstack/react-query";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 export const TransactionImportTool = () => {
@@ -23,7 +21,6 @@ export const TransactionImportTool = () => {
 
   const queryClient = useQueryClient();
 
-  // Query to fetch imported transactions
   const { data: importedTransactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["imported-transactions"],
     queryFn: async () => {
@@ -82,53 +79,47 @@ export const TransactionImportTool = () => {
     }
   };
 
-  const handleImplementChanges = async () => {
+  const verifyImport = async (retryCount = 0): Promise<boolean> => {
     try {
-      // First implement the changes
-      await implementChanges();
-      
-      // Wait for the database to update (increased wait time)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Verify the data was imported by checking the latest imports
-      await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
-      
-      const { data: verificationData, error: verificationError } = await supabase
+      const { data, error } = await supabase
         .from("financial_imports")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(1);
 
-      if (verificationError) {
-        console.error("Verification error:", verificationError);
-        toast.error("Error verifying import: " + verificationError.message);
-        return;
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        if (retryCount < 3) {
+          console.log(`Retry attempt ${retryCount + 1}`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return verifyImport(retryCount + 1);
+        }
+        return false;
       }
 
-      // Additional check to ensure we have the expected data
-      if (!verificationData || verificationData.length === 0) {
-        console.error("No imported data found during verification");
-        
-        // Retry verification after a short delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const { data: retryData, error: retryError } = await supabase
-          .from("financial_imports")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(1);
-          
-        if (retryError || !retryData || retryData.length === 0) {
-          console.error("Verification retry failed:", retryError || "No data found");
-          toast.error("Import verification failed. Please try again.");
-          return;
-        }
-        
-        console.log("Import verified successfully on retry:", retryData[0]);
+      return true;
+    } catch (error) {
+      console.error("Verification error:", error);
+      return false;
+    }
+  };
+
+  const handleImplementChanges = async () => {
+    try {
+      await implementChanges();
+      
+      // Wait for the database to update
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify the import
+      const isVerified = await verifyImport();
+      
+      if (isVerified) {
+        await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
         toast.success("Changes implemented successfully");
       } else {
-        console.log("Import verified successfully:", verificationData[0]);
-        toast.success("Changes implemented successfully");
+        toast.error("Import verification failed. Please try again.");
       }
     } catch (error) {
       console.error("Implementation error:", error);
@@ -157,49 +148,8 @@ export const TransactionImportTool = () => {
           />
         )}
 
-        {/* Display imported transactions */}
         {importedTransactions && importedTransactions.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-4">Imported Transactions</h3>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Payment Method</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {importedTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        {format(new Date(transaction.payment_date), "PP")}
-                      </TableCell>
-                      <TableCell>{transaction.customer_name}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell>{transaction.payment_method}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(transaction.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.status === 'completed' 
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {transaction.status}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <ImportedTransactionsTable transactions={importedTransactions} />
         )}
       </CardContent>
     </Card>
