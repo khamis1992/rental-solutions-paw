@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAnalysisCard } from "@/components/finance/transactions/AIAnalysisCard";
@@ -11,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TransactionImportTool = () => {
   const {
@@ -31,7 +31,8 @@ export const TransactionImportTool = () => {
       const { data, error } = await supabase
         .from("financial_imports")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (error) {
         console.error("Error fetching transactions:", error);
@@ -86,7 +87,12 @@ export const TransactionImportTool = () => {
       // First implement the changes
       await implementChanges();
       
-      // Then verify the data was imported by checking the latest import
+      // Wait a short moment for the database to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verify the data was imported by checking the latest imports
+      await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
+      
       const { data, error } = await supabase
         .from("financial_imports")
         .select("*")
@@ -102,8 +108,6 @@ export const TransactionImportTool = () => {
       if (data && data.length > 0) {
         console.log("Import verified successfully:", data[0]);
         toast.success("Changes implemented successfully");
-        // Refresh the transactions data
-        await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
       } else {
         console.error("No imported data found during verification");
         toast.error("Import verification failed. Please try again.");
