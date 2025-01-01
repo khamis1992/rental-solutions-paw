@@ -1,11 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { validateAndRepairRow } from './validator.ts';
-import { AnalysisResult } from './types.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+interface AnalysisResult {
+  success: boolean;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  totalAmount: number;
+  issues: string[];
+  suggestions: string[];
+  rawData: any[];
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -104,7 +110,7 @@ serve(async (req) => {
       totalAmount,
       issues,
       suggestions,
-      repairedData
+      rawData: repairedData
     };
 
     console.log('Analysis completed successfully:', result);
