@@ -1,8 +1,10 @@
+import { Json } from "@/integrations/supabase/types";
+
 export interface Transaction {
   id: string;
   agreement_number: string;
   amount: number;
-  category_id: string;
+  category_id: string | null;
   created_at: string;
   customer_name: string;
   description: string;
@@ -24,8 +26,8 @@ export interface Transaction {
 
 export interface RawPaymentImport {
   id: string;
-  Transaction_ID: string;
   Agreement_Number: string;
+  Transaction_ID: string;
   Customer_Name: string;
   License_Plate: string;
   Amount: number;
@@ -39,14 +41,9 @@ export interface RawPaymentImport {
   created_at: string;
 }
 
-export type TransactionType = 'INCOME' | 'EXPENSE';
-
-export type Category = {
-  id: string;
-  name: string;
-  type: string;
-  budget_limit: number;
-  budget_period: string;
+export enum TransactionType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE'
 }
 
 export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
