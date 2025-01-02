@@ -74,13 +74,15 @@ export const PaymentImport = () => {
             setImportedData(results.data);
 
             // Store raw data in Supabase with proper typing
+            const rawData = {
+              raw_data: results.data as Record<string, unknown>[],
+              is_valid: true,
+              created_at: new Date().toISOString()
+            };
+
             const { error: insertError } = await supabase
               .from('raw_payment_imports')
-              .insert({
-                raw_data: results.data as Json,
-                is_valid: true,
-                created_at: new Date().toISOString()
-              });
+              .insert(rawData);
 
             if (insertError) {
               console.error('Raw data import error:', insertError);
