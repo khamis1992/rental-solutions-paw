@@ -14,6 +14,7 @@ interface AnalysisResult {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -25,10 +26,13 @@ serve(async (req) => {
     const file = formData.get('file');
 
     if (!file || !(file instanceof File)) {
+      console.error('No file uploaded or invalid file');
       throw new Error('No file uploaded');
     }
 
     const csvContent = await file.text();
+    console.log('File content length:', csvContent.length);
+    
     const lines = csvContent.split('\n').filter(line => line.trim());
     const headers = lines[0].split(',').map(h => h.trim());
 
@@ -42,11 +46,13 @@ serve(async (req) => {
       'Lease_ID'
     ];
     
+    // Check for missing required fields
     const missingFields = requiredFields.filter(field => 
       !headers.some(h => h === field)
     );
 
     if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields);
       return new Response(
         JSON.stringify({
           success: false,
