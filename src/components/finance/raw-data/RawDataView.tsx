@@ -5,6 +5,7 @@ import { Loader2, Brain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RawPaymentImport } from "../types/transaction.types";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
@@ -80,12 +81,12 @@ export const RawDataView = () => {
             {rawTransactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>{transaction.Transaction_ID}</TableCell>
-                <TableCell>{transaction.Agreemgent_Number}</TableCell>
+                <TableCell>{transaction.Agreement_Number}</TableCell>
                 <TableCell>{transaction.Customer_Name}</TableCell>
                 <TableCell>{transaction.Amount}</TableCell>
                 <TableCell>{transaction.Payment_Method}</TableCell>
                 <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
-                <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
+                <TableCell>{transaction.Payment_Date ? formatDate(new Date(transaction.Payment_Date)) : ''}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     transaction.Type === 'INCOME' 
