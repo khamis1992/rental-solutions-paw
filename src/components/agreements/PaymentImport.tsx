@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
 import { Json } from "@/integrations/supabase/types";
+import { format, parse } from "date-fns";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -38,9 +39,21 @@ export const PaymentImport = () => {
     };
   };
 
+  const formatDate = (dateStr: string): string => {
+    try {
+      // Parse the date assuming DD/MM/YYYY format
+      const parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date());
+      // Format it to ISO string
+      return format(parsedDate, 'yyyy-MM-dd');
+    } catch (error) {
+      console.error('Date parsing error:', error);
+      throw new Error(`Invalid date format: ${dateStr}. Expected format: DD/MM/YYYY`);
+    }
+  };
+
   const downloadTemplate = () => {
     const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+                      "1000,14/12/2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -80,25 +93,20 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Generate a UUID for each row and prepare the data
-            const dataWithIds = parsedData.map(row => ({
-              id: crypto.randomUUID(),
-              transaction_id: row.Transaction_ID,
-              agreement_number: row.Lease_ID,
-              amount: row.Amount,
-              payment_method: row.Payment_Method,
-              description: row.Description,
-              transaction_date: row.Payment_Date,
-              status: row.Status,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }));
+            // Process the data and format dates
+            const processedData = parsedData.map(row => {
+              const formattedRow = { ...row };
+              if (typeof row.Payment_Date === 'string') {
+                formattedRow.Payment_Date = formatDate(row.Payment_Date as string);
+              }
+              return formattedRow;
+            });
 
             // Store raw data in Supabase
             const { error: insertError } = await supabase
               .from('raw_payment_imports')
               .insert({
-                raw_data: dataWithIds as Json,
+                raw_data: processedData as Json,
                 is_valid: true,
                 created_at: new Date().toISOString()
               });
