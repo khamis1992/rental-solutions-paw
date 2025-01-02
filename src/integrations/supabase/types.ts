@@ -9,51 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      accounting_audit_trail: {
-        Row: {
-          action: string
-          changes: Json
-          entity_id: string
-          entity_type: string
-          id: string
-          performed_at: string
-          performed_by: string | null
-        }
-        Insert: {
-          action: string
-          changes: Json
-          entity_id: string
-          entity_type: string
-          id?: string
-          performed_at?: string
-          performed_by?: string | null
-        }
-        Update: {
-          action?: string
-          changes?: Json
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          performed_at?: string
-          performed_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_audit_trail_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_audit_trail_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       accounting_categories: {
         Row: {
           budget_limit: number | null
@@ -163,61 +118,55 @@ export type Database = {
       }
       accounting_transactions: {
         Row: {
-          amount: number
+          agreement_number: string | null
+          amount: string | null
           category_id: string | null
-          cost_type: string | null
-          created_at: string
+          created_at: string | null
+          customer_name: string | null
           description: string | null
-          id: string
-          is_recurring: boolean | null
-          meta_data: Json | null
+          id: string | null
+          license_plate: string | null
+          payment_method: string | null
           receipt_url: string | null
-          recurrence_interval: unknown | null
-          recurring_schedule: Json | null
-          reference_id: string | null
-          reference_type: string | null
           status: string | null
-          transaction_date: string
-          type: Database["public"]["Enums"]["transaction_type"]
-          updated_at: string
+          transaction_date: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
         }
         Insert: {
-          amount: number
+          agreement_number?: string | null
+          amount?: string | null
           category_id?: string | null
-          cost_type?: string | null
-          created_at?: string
+          created_at?: string | null
+          customer_name?: string | null
           description?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          meta_data?: Json | null
+          id?: string | null
+          license_plate?: string | null
+          payment_method?: string | null
           receipt_url?: string | null
-          recurrence_interval?: unknown | null
-          recurring_schedule?: Json | null
-          reference_id?: string | null
-          reference_type?: string | null
           status?: string | null
-          transaction_date: string
-          type: Database["public"]["Enums"]["transaction_type"]
-          updated_at?: string
+          transaction_date?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
         }
         Update: {
-          amount?: number
+          agreement_number?: string | null
+          amount?: string | null
           category_id?: string | null
-          cost_type?: string | null
-          created_at?: string
+          created_at?: string | null
+          customer_name?: string | null
           description?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          meta_data?: Json | null
+          id?: string | null
+          license_plate?: string | null
+          payment_method?: string | null
           receipt_url?: string | null
-          recurrence_interval?: unknown | null
-          recurring_schedule?: Json | null
-          reference_id?: string | null
-          reference_type?: string | null
           status?: string | null
-          transaction_date?: string
-          type?: Database["public"]["Enums"]["transaction_type"]
-          updated_at?: string
+          transaction_date?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -593,123 +542,6 @@ export type Database = {
             columns: ["promo_code_id"]
             isOneToOne: false
             referencedRelation: "promotional_codes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      audit_logs: {
-        Row: {
-          action: string
-          browser_info: Json | null
-          changes: Json | null
-          created_at: string
-          entity_id: string | null
-          entity_type: string
-          id: string
-          ip_address: string | null
-          metadata: Json | null
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          browser_info?: Json | null
-          changes?: Json | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type: string
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          browser_info?: Json | null
-          changes?: Json | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "audit_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      audit_records: {
-        Row: {
-          ai_analysis_results: Json | null
-          audit_year: number
-          auditor_license_number: string | null
-          auditor_name: string | null
-          company_id: string | null
-          created_at: string | null
-          findings: Json | null
-          id: string
-          status: string
-          submission_deadline: string
-          submitted_date: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          ai_analysis_results?: Json | null
-          audit_year: number
-          auditor_license_number?: string | null
-          auditor_name?: string | null
-          company_id?: string | null
-          created_at?: string | null
-          findings?: Json | null
-          id?: string
-          status: string
-          submission_deadline: string
-          submitted_date?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          ai_analysis_results?: Json | null
-          audit_year?: number
-          auditor_license_number?: string | null
-          auditor_name?: string | null
-          company_id?: string | null
-          created_at?: string | null
-          findings?: Json | null
-          id?: string
-          status?: string
-          submission_deadline?: string
-          submitted_date?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audit_records_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "audit_records_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3455,41 +3287,6 @@ export type Database = {
         }
         Relationships: []
       }
-      raw_payment_imports: {
-        Row: {
-          created_at: string | null
-          error_description: string | null
-          id: string
-          import_id: string | null
-          is_valid: boolean | null
-          raw_data: Json
-        }
-        Insert: {
-          created_at?: string | null
-          error_description?: string | null
-          id?: string
-          import_id?: string | null
-          is_valid?: boolean | null
-          raw_data: Json
-        }
-        Update: {
-          created_at?: string | null
-          error_description?: string | null
-          id?: string
-          import_id?: string | null
-          is_valid?: boolean | null
-          raw_data?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "raw_payment_imports_import_id_fkey"
-            columns: ["import_id"]
-            isOneToOne: false
-            referencedRelation: "import_logs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       raw_transaction_imports: {
         Row: {
           created_at: string | null
@@ -4990,17 +4787,6 @@ export type Database = {
           customer_id: string
         }
         Returns: boolean
-      }
-      log_audit_event: {
-        Args: {
-          p_user_id: string
-          p_action: string
-          p_entity_type: string
-          p_entity_id: string
-          p_changes: Json
-          p_ip_address: string
-        }
-        Returns: undefined
       }
       process_recurring_payments: {
         Args: Record<PropertyKey, never>

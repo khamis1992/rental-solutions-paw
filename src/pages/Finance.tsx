@@ -3,6 +3,7 @@ import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboar
 import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
 import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
 import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
+import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Finance = () => {
@@ -17,6 +18,7 @@ const Finance = () => {
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="import">Import Transactions</TabsTrigger>
           <TabsTrigger value="categorization">Categorization</TabsTrigger>
+          <TabsTrigger value="raw-data">Raw Data</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -37,6 +39,10 @@ const Finance = () => {
 
         <TabsContent value="categorization">
           <TransactionCategorization />
+        </TabsContent>
+
+        <TabsContent value="raw-data">
+          <RawDataView />
         </TabsContent>
       </Tabs>
     </div>
