@@ -17,7 +17,7 @@ const REQUIRED_FIELDS = [
   'Status',
   'Description',
   'Transaction_ID',
-  'Agreement_Number'
+  'Lease_ID'
 ] as const;
 
 type ImportedData = Record<string, unknown>;
@@ -39,19 +39,15 @@ export const PaymentImport = () => {
   };
 
   const formatDateForDB = (dateStr: string): string => {
-    // Check if date is in DD/MM/YYYY format
-    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    if (dateRegex.test(dateStr)) {
-      const [day, month, year] = dateStr.split('/');
-      return `${year}-${month}-${day}`;
-    }
-    // If not in DD/MM/YYYY format, return as is (assuming it's already in YYYY-MM-DD)
-    return dateStr;
+    // Split the date string by '/'
+    const [day, month, year] = dateStr.split('/');
+    // Return in YYYY-MM-DD format
+    return `${year}-${month}-${day}`;
   };
 
   const downloadTemplate = () => {
-    const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
-                      '1000,14/12/2024,credit_card,completed,Monthly payment for March,INV001,AGR-001';
+    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
+                      "1000,14/12/2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -91,18 +87,28 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            for (const row of parsedData) {
+            // Process each row and format the date
+            const processedData = parsedData.map(row => {
+              const formattedRow = { ...row };
+              if (typeof row.Payment_Date === 'string') {
+                formattedRow.Payment_Date = formatDateForDB(row.Payment_Date as string);
+              }
+              return formattedRow;
+            });
+
+            // Insert each row individually to avoid batch insert issues
+            for (const row of processedData) {
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
                 .insert({
-                  Agreement_Number: row.Agreement_Number,
+                  Agreemgent_Number: row.Lease_ID,
                   Transaction_ID: row.Transaction_ID,
                   Customer_Name: row.Customer_Name,
                   License_Plate: row.License_Plate,
-                  Amount: parseFloat(row.Amount as string),
+                  Amount: row.Amount,
                   Payment_Method: row.Payment_Method,
                   Description: row.Description,
-                  Payment_Date: formatDateForDB(row.Payment_Date as string),
+                  Payment_Date: row.Payment_Date,
                   Type: row.Type,
                   Status: row.Status,
                   is_valid: true

@@ -1,8 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { RawPaymentImport } from "../types/transaction.types";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
+
+interface RawPaymentImport {
+  id: string;
+  Transaction_ID: string;
+  Agreemgent_Number: string;
+  Customer_Name: string;
+  License_Plate: string;
+  Amount: number;
+  Payment_Method: string;
+  Description: string;
+  Payment_Date: string;
+  Type: string;
+  Status: string;
+  is_valid: boolean;
+  error_description?: string;
+  created_at: string;
+}
 
 export const RawDataView = () => {
   const { data: rawTransactions, isLoading } = useQuery({
@@ -48,7 +64,7 @@ export const RawDataView = () => {
             {rawTransactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>{transaction.Transaction_ID}</TableCell>
-                <TableCell>{transaction.Agreement_Number}</TableCell>
+                <TableCell>{transaction.Agreemgent_Number}</TableCell>
                 <TableCell>{transaction.Customer_Name}</TableCell>
                 <TableCell>{transaction.Amount}</TableCell>
                 <TableCell>{transaction.Payment_Method}</TableCell>
