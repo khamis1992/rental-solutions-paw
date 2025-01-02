@@ -10,9 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
 import { supabase } from "@/integrations/supabase/client";
 
-const CSV_TEMPLATE_CONTENT = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                           "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
-
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
@@ -27,7 +24,10 @@ export const TransactionImport = () => {
   }
 
   const downloadTemplate = () => {
-    const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
+    const headers = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
+                   "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+    
+    const blob = new Blob([headers], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
@@ -49,6 +49,7 @@ export const TransactionImport = () => {
       Papa.parse(file, {
         header: true,
         complete: async (results) => {
+          console.log("Parsed data:", results.data); // Debug log
           const headers = results.meta.fields || [];
           setHeaders(headers);
           setImportedData(results.data);
