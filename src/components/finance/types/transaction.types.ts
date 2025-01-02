@@ -26,7 +26,7 @@ export interface Transaction {
 
 export interface RawPaymentImport {
   id: string;
-  Agreemgent_Number: string;
+  Agreement_Number: string;
   Transaction_ID: string;
   Customer_Name: string;
   License_Plate: string;
