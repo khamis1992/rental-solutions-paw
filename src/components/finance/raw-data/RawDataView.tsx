@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 interface RawPaymentImport {
   id: string;
   Transaction_ID: string;
-  Agreemgent_Number: string;
+  Agreement_Number: string;
   Customer_Name: string;
   License_Plate: string;
   Amount: number;
@@ -64,7 +64,7 @@ export const RawDataView = () => {
             {rawTransactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>{transaction.Transaction_ID}</TableCell>
-                <TableCell>{transaction.Agreemgent_Number}</TableCell>
+                <TableCell>{transaction.Agreement_Number}</TableCell>
                 <TableCell>{transaction.Customer_Name}</TableCell>
                 <TableCell>{transaction.Amount}</TableCell>
                 <TableCell>{transaction.Payment_Method}</TableCell>
