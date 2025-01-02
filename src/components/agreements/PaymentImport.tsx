@@ -80,22 +80,28 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Generate a UUID for each row
+            // Generate a UUID for each row and prepare the data
             const dataWithIds = parsedData.map(row => ({
               id: crypto.randomUUID(),
-              ...row
+              transaction_id: row.Transaction_ID,
+              agreement_number: row.Lease_ID,
+              amount: row.Amount,
+              payment_method: row.Payment_Method,
+              description: row.Description,
+              transaction_date: row.Payment_Date,
+              status: row.Status,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             }));
 
-            // Store raw data in Supabase with proper typing
-            const rawData = {
-              raw_data: JSON.stringify(dataWithIds) as Json,
-              is_valid: true,
-              created_at: new Date().toISOString()
-            };
-
+            // Store raw data in Supabase
             const { error: insertError } = await supabase
               .from('raw_payment_imports')
-              .insert(rawData);
+              .insert({
+                raw_data: dataWithIds as Json,
+                is_valid: true,
+                created_at: new Date().toISOString()
+              });
 
             if (insertError) {
               console.error('Raw data import error:', insertError);
