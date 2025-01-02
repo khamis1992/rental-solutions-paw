@@ -22,8 +22,6 @@ export interface Transaction {
   };
 }
 
-export type TransactionType = 'INCOME' | 'EXPENSE';
-
 export interface RawPaymentImport {
   id: string;
   Transaction_ID: string;
@@ -40,6 +38,8 @@ export interface RawPaymentImport {
   error_description?: string;
   created_at: string;
 }
+
+export type TransactionType = 'INCOME' | 'EXPENSE';
 
 export type Category = {
   id: string;

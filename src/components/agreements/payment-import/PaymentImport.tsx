@@ -1,41 +1,29 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 import Papa from 'papaparse';
-import { Json } from "@/integrations/supabase/types";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 
 const REQUIRED_FIELDS = [
-  'Amount',
-  'Payment_Date',
-  'Payment_Method',
-  'Status',
-  'Description',
   'Transaction_ID',
-  'Lease_ID'
+  'Agreement_Number',
+  'Customer_Name',
+  'License_Plate',
+  'Amount',
+  'Payment_Method',
+  'Description',
+  'Payment_Date',
+  'Type',
+  'Status'
 ] as const;
 
 type ImportedData = Record<string, unknown>;
-
-const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
-  const normalizedHeaders = headers.map(h => h.trim());
-  const missingFields = REQUIRED_FIELDS.filter(
-    field => !normalizedHeaders.includes(field)
-  );
-  return {
-    isValid: missingFields.length === 0,
-    missingFields
-  };
-};
-
-const CSV_TEMPLATE_CONTENT = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                           "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -43,8 +31,22 @@ export const PaymentImport = () => {
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  const downloadTemplate = useCallback(() => {
-    const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
+  const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
+    const normalizedHeaders = headers.map(h => h.trim());
+    const missingFields = REQUIRED_FIELDS.filter(
+      field => !normalizedHeaders.includes(field)
+    );
+    return {
+      isValid: missingFields.length === 0,
+      missingFields
+    };
+  };
+
+  const downloadTemplate = () => {
+    const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
+                      '1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here';
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
@@ -53,9 +55,9 @@ export const PaymentImport = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, []);
+  };
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -82,9 +84,18 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            const rawImport: Omit<RawPaymentImport, 'id' | 'created_at'> = {
-              raw_data: parsedData as Json,
-              is_valid: true,
+            const rawImport: Partial<RawPaymentImport> = {
+              Transaction_ID: '',
+              Agreement_Number: '',
+              Customer_Name: '',
+              License_Plate: '',
+              Amount: 0,
+              Payment_Method: '',
+              Description: '',
+              Payment_Date: new Date().toISOString(),
+              Type: '',
+              Status: '',
+              is_valid: true
             };
 
             const { error: insertError } = await supabase
@@ -115,7 +126,7 @@ export const PaymentImport = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [queryClient]);
+  };
 
   return (
     <div className="space-y-4">
