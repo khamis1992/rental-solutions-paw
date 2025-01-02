@@ -3289,7 +3289,7 @@ export type Database = {
       }
       raw_payment_imports: {
         Row: {
-          Agreemgent_Number: string | null
+          Agreement_Number: string | null
           Amount: number | null
           created_at: string | null
           Customer_Name: string | null
@@ -3305,7 +3305,7 @@ export type Database = {
           Type: string | null
         }
         Insert: {
-          Agreemgent_Number?: string | null
+          Agreement_Number?: string | null
           Amount?: number | null
           created_at?: string | null
           Customer_Name?: string | null
@@ -3321,7 +3321,7 @@ export type Database = {
           Type?: string | null
         }
         Update: {
-          Agreemgent_Number?: string | null
+          Agreement_Number?: string | null
           Amount?: number | null
           created_at?: string | null
           Customer_Name?: string | null
