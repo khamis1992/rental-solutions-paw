@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { AccountingTransaction } from "../types/transaction.types";
 import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -10,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
-import { AccountingTransaction } from "../types/transaction.types";
 
 export const TransactionList = () => {
   const { data: transactions, isLoading } = useQuery({
@@ -19,7 +20,7 @@ export const TransactionList = () => {
       const { data, error } = await supabase
         .from("accounting_transactions")
         .select("*")
-        .order("Payment_Date", { ascending: false });
+        .order("transaction_date", { ascending: false });
 
       if (error) throw error;
       return data as AccountingTransaction[];
@@ -56,18 +57,18 @@ export const TransactionList = () => {
             {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
-                  {transaction.Payment_Date ? new Date(transaction.Payment_Date).toLocaleDateString() : "N/A"}
+                  {transaction.transaction_date ? format(new Date(transaction.transaction_date), "PP") : "N/A"}
                 </TableCell>
-                <TableCell>{transaction.Transaction_ID}</TableCell>
-                <TableCell>{transaction.Agreemgent_Number}</TableCell>
-                <TableCell>{transaction.Customer_Name}</TableCell>
-                <TableCell>{transaction.License_Plate}</TableCell>
-                <TableCell>{transaction.Type}</TableCell>
-                <TableCell>{transaction.Payment_Method}</TableCell>
-                <TableCell>{transaction.Description}</TableCell>
-                <TableCell>{transaction.Status}</TableCell>
+                <TableCell>{transaction.transaction_id}</TableCell>
+                <TableCell>{transaction.agreement_number}</TableCell>
+                <TableCell>{transaction.customer_name}</TableCell>
+                <TableCell>{transaction.license_plate}</TableCell>
+                <TableCell>{transaction.type}</TableCell>
+                <TableCell>{transaction.payment_method}</TableCell>
+                <TableCell>{transaction.description}</TableCell>
+                <TableCell>{transaction.status}</TableCell>
                 <TableCell className="text-right">
-                  {formatCurrency(parseFloat(transaction.Amount) || 0)}
+                  {transaction.amount ? formatCurrency(parseFloat(transaction.amount)) : "N/A"}
                 </TableCell>
               </TableRow>
             ))}

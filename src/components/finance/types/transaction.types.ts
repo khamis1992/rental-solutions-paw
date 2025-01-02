@@ -1,52 +1,32 @@
 export enum TransactionType {
-  LATE_PAYMENT_FEE = 'LATE_PAYMENT_FEE',
-  ADMINISTRATIVE_FEES = 'ADMINISTRATIVE_FEES',
-  VEHICLE_DAMAGE_CHARGE = 'VEHICLE_DAMAGE_CHARGE',
-  TRAFFIC_FINE = 'TRAFFIC_FINE',
-  RENTAL_FEE = 'RENTAL_FEE',
-  ADVANCE_PAYMENT = 'ADVANCE_PAYMENT',
-  OTHER = 'OTHER',
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE'
 }
 
-export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
-
-export type PaymentCategoryType = 
-  | 'LATE PAYMENT FEE'
-  | 'Administrative Fees'
-  | 'Vehicle Damage Charge'
-  | 'Traffic Fine'
-  | 'RENTAL FEE'
-  | 'Advance Payment'
-  | 'other';
-
 export interface AccountingTransaction {
   id: string;
-  Transaction_ID: string;
-  Agreemgent_Number: string;
-  Customer_Name: string;
-  License_Plate: string;
-  Amount: string;
-  Payment_Method: string;
-  Description: string;
-  Payment_Date: string;
-  Type: string;
-  Status: string;
-  receipt_url?: string;
-  category_id?: string;
+  transaction_id: string | null;
+  agreement_number: string | null;
+  customer_name: string | null;
+  license_plate: string | null;
+  amount: string | null;
+  payment_method: string | null;
+  description: string | null;
+  transaction_date: string | null;
+  type: string | null;
+  status: string | null;
+  category_id: string | null;
+  receipt_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface TransactionFormData {
-  Type: string;
-  Amount: string;
+  type: string;
+  amount: string;
   category_id?: string;
-  Description: string;
-  Payment_Date: string;
+  description: string;
+  transaction_date: string;
   receipt?: FileList;
-  cost_type?: 'fixed' | 'variable';
-  is_recurring?: boolean;
-  Payment_Method?: PaymentMethodType;
-  intervalValue?: number;
-  intervalUnit?: 'days' | 'weeks' | 'months';
+  payment_method?: string;
 }
