@@ -1,9 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface PaymentAnalysis {
+  agreement_id: string;
+  amount: number;
+  payment_date: string;
+  late_fine: number;
+  description: string;
 }
 
 serve(async (req) => {
@@ -14,103 +18,103 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     
-    if (!supabaseUrl || !supabaseKey || !deepseekApiKey) {
+    if (!supabaseUrl || !supabaseKey || !openaiApiKey) {
       throw new Error('Missing environment variables')
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
-    
+
     // Get raw payment data
     const { data: rawPayments, error: fetchError } = await supabase
       .from('raw_payment_imports')
       .select('*')
       .eq('is_valid', true)
-      .order('created_at', { ascending: false })
+      .is('error_description', null)
 
     if (fetchError) throw fetchError
 
-    console.log('Processing raw payments:', rawPayments)
+    // Prepare data for ChatGPT analysis
+    const paymentsData = rawPayments.map(p => ({
+      agreement_number: p.Agreemgent_Number,
+      amount: p.Amount,
+      payment_date: p.Payment_Date,
+      description: p.Description
+    }))
 
-    for (const payment of rawPayments) {
-      try {
-        // Find matching agreement
-        const { data: agreement } = await supabase
-          .from('leases')
-          .select('*')
-          .eq('agreement_number', payment.Agreemgent_Number)
-          .single()
+    // Call ChatGPT API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [{
+          role: "system",
+          content: `You are a payment processing assistant. Analyze payment data and return a JSON array of payment objects. 
+          For each payment:
+          1. Verify the payment details
+          2. Calculate late fees (120 QAR per day) for payments after the 1st of the month
+          3. Format the response as an array of objects with: agreement_id, amount, payment_date, late_fine, description`
+        }, {
+          role: "user",
+          content: `Analyze these payments: ${JSON.stringify(paymentsData)}`
+        }]
+      })
+    })
 
-        if (!agreement) {
-          console.warn(`No agreement found for number: ${payment.Agreemgent_Number}`)
-          continue
-        }
+    const aiResponse = await response.json()
+    const analysis = JSON.parse(aiResponse.choices[0].message.content) as PaymentAnalysis[]
 
-        // Calculate late fine if payment is after 1st of the month
-        const paymentDate = new Date(payment.Payment_Date)
-        const lateFine = paymentDate.getDate() > 1 ? 
-          (paymentDate.getDate() - 1) * 120 : 0 // 120 QAR per day late
+    // Process each analyzed payment
+    for (const payment of analysis) {
+      // Insert into payments table
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          lease_id: payment.agreement_id,
+          amount: payment.amount,
+          payment_date: payment.payment_date,
+          description: payment.description,
+          type: 'INCOME',
+          status: 'completed',
+          late_fine_amount: payment.late_fine
+        })
 
-        // Insert payment record
-        const { error: paymentError } = await supabase
-          .from('payments')
-          .insert({
-            lease_id: agreement.id,
-            amount: payment.Amount,
-            payment_date: payment.Payment_Date,
-            payment_method: payment.Payment_Method,
-            status: 'completed',
-            description: payment.Description,
-            transaction_id: payment.Transaction_ID,
-            type: 'INCOME',
-            late_fine_amount: lateFine,
-            days_overdue: paymentDate.getDate() - 1
-          })
+      if (paymentError) throw paymentError
 
-        if (paymentError) throw paymentError
+      // Insert into accounting_transactions
+      const { error: transactionError } = await supabase
+        .from('accounting_transactions')
+        .insert({
+          type: 'INCOME',
+          amount: payment.amount,
+          description: payment.description,
+          transaction_date: payment.payment_date
+        })
 
-        // Insert accounting transaction
-        const { error: transactionError } = await supabase
-          .from('accounting_transactions')
-          .insert({
-            transaction_id: payment.Transaction_ID,
-            agreement_number: payment.Agreemgent_Number,
-            customer_name: payment.Customer_Name,
-            license_plate: payment.License_Plate,
-            amount: payment.Amount,
-            payment_method: payment.Payment_Method,
-            description: payment.Description,
-            transaction_date: payment.Payment_Date,
-            type: 'INCOME',
-            status: 'completed'
-          })
-
-        if (transactionError) throw transactionError
-
-        // Mark raw payment as processed
-        await supabase
-          .from('raw_payment_imports')
-          .update({ is_valid: false })
-          .eq('id', payment.id)
-
-      } catch (error) {
-        console.error('Error processing payment:', error)
-      }
+      if (transactionError) throw transactionError
     }
 
     return new Response(
-      JSON.stringify({ success: true, processed: rawPayments.length }),
+      JSON.stringify({ 
+        success: true, 
+        processed: analysis.length,
+        details: analysis
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error processing payments:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 500
       }
     )
   }
