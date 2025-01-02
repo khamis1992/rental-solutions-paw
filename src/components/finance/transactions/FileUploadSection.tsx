@@ -20,7 +20,7 @@ export const FileUploadSection = ({
       <div className="flex items-center gap-4">
         <Input
           type="file"
-          accept=".csv"
+          accept=".xlsx,.xls"
           onChange={onFileUpload}
           disabled={isUploading || isAnalyzing}
         />

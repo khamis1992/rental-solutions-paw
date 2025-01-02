@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from '@supabase/auth-helpers-react';
 import { useNavigate } from 'react-router-dom';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { ImportedPaymentData, ValidationResult, RawPaymentImport } from "../types/payment.types";
 
 const REQUIRED_FIELDS = [
@@ -34,8 +34,10 @@ const validateHeaders = (headers: string[]): ValidationResult => {
 };
 
 // Template content moved outside to prevent recreation
-const CSV_TEMPLATE_CONTENT = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                           "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+const EXCEL_TEMPLATE_DATA = [
+  ['Amount', 'Payment_Date', 'Payment_Method', 'Status', 'Description', 'Transaction_ID', 'Lease_ID'],
+  [1000, '20-03-2024', 'credit_card', 'completed', 'Monthly payment for March', 'INV001', 'lease-uuid-here']
+];
 
 export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -46,22 +48,17 @@ export const TransactionImport = () => {
   const navigate = useNavigate();
 
   // Redirect to auth if not authenticated
-  React.useEffect(() => {
+  useState(() => {
     if (!session) {
       navigate('/auth');
     }
   }, [session, navigate]);
 
   const downloadTemplate = () => {
-    const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'payment_import_template.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(EXCEL_TEMPLATE_DATA);
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, 'payment_import_template.xlsx');
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,53 +75,50 @@ export const TransactionImport = () => {
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const text = e.target?.result;
-        if (typeof text !== 'string') {
+        const data = e.target?.result;
+        if (!data) {
           throw new Error('Invalid file content');
         }
         
-        Papa.parse(text, {
-          header: true,
-          complete: async (results) => {
-            const headers = results.meta.fields || [];
-            const headerValidation = validateHeaders(headers);
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        // Get headers from the first row
+        const headers = Object.keys(jsonData[0] || {});
+        const headerValidation = validateHeaders(headers);
 
-            if (!headerValidation.isValid) {
-              toast.error(`Missing required columns: ${headerValidation.missingFields.join(', ')}`);
-              setIsUploading(false);
-              return;
-            }
+        if (!headerValidation.isValid) {
+          toast.error(`Missing required columns: ${headerValidation.missingFields.join(', ')}`);
+          setIsUploading(false);
+          return;
+        }
 
-            setHeaders(headers);
-            const parsedData = results.data as ImportedPaymentData[];
-            setImportedData(parsedData);
+        setHeaders(headers);
+        const parsedData = jsonData as ImportedPaymentData[];
+        setImportedData(parsedData);
 
-            const rawImport: RawPaymentImport = {
-              raw_data: JSON.stringify(parsedData),
-              is_valid: true,
-              created_at: new Date().toISOString()
-            };
+        const rawImport: RawPaymentImport = {
+          raw_data: JSON.stringify(parsedData),
+          is_valid: true,
+          created_at: new Date().toISOString()
+        };
 
-            const { error: insertError } = await supabase
-              .from('raw_payment_imports')
-              .insert(rawImport);
+        const { error: insertError } = await supabase
+          .from('raw_payment_imports')
+          .insert(rawImport);
 
-            if (insertError) {
-              console.error('Raw data import error:', insertError);
-              toast.error('Failed to store raw data');
-            } else {
-              toast.success('Raw data imported successfully');
-              await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-            }
-          },
-          error: (error: Error) => {
-            console.error('CSV Parse Error:', error);
-            toast.error('Failed to parse CSV file');
-          }
-        });
+        if (insertError) {
+          console.error('Raw data import error:', insertError);
+          toast.error('Failed to store raw data');
+        } else {
+          toast.success('Raw data imported successfully');
+          await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+        }
       };
       
-      reader.readAsText(file);
+      reader.readAsBinaryString(file);
     } catch (error) {
       if (error instanceof Error) {
         console.error('Import error:', error);
@@ -148,7 +142,7 @@ export const TransactionImport = () => {
         <div className="flex items-center gap-4">
           <Input
             type="file"
-            accept=".csv"
+            accept=".xlsx,.xls"
             onChange={handleFileUpload}
             disabled={isUploading}
           />
