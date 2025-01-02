@@ -1,12 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { ImportedPaymentData, ValidationResult, RawPaymentImport } from "../types/payment.types";
+import { supabase } from "@/integrations/supabase/client";
 import Papa from 'papaparse';
+import { ImportedPaymentData, ValidationResult, RawPaymentImport } from "../types/payment.types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -40,7 +41,7 @@ export const TransactionImport = () => {
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  const downloadTemplate = useCallback(() => {
+  const downloadTemplate = () => {
     const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -50,9 +51,9 @@ export const TransactionImport = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, []); // Empty dependencies as it doesn't rely on any state/props
+  };
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -116,7 +117,7 @@ export const TransactionImport = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [queryClient]);
+  };
 
   return (
     <Card>
