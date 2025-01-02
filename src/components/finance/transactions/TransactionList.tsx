@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -57,7 +56,7 @@ export const TransactionList = () => {
             {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
-                  {transaction.Payment_Date ? format(new Date(transaction.Payment_Date), "PP") : "N/A"}
+                  {transaction.Payment_Date ? new Date(transaction.Payment_Date).toLocaleDateString() : "N/A"}
                 </TableCell>
                 <TableCell>{transaction.Transaction_ID}</TableCell>
                 <TableCell>{transaction.Agreemgent_Number}</TableCell>

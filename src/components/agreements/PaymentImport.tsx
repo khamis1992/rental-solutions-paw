@@ -20,7 +20,7 @@ const REQUIRED_FIELDS = [
   'Lease_ID'
 ] as const;
 
-type ImportedData = Record<string, unknown>;
+type ImportedData = Record<string, string>;
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -80,7 +80,7 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            const transformedData = parsedData.map(row => ({
+            const transformedData: Partial<AccountingTransaction>[] = parsedData.map(row => ({
               Amount: row.Amount,
               Payment_Date: row.Payment_Date,
               Payment_Method: row.Payment_Method,
