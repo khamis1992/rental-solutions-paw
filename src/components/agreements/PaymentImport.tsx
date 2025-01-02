@@ -85,15 +85,7 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            const processedData = parsedData.map(row => {
-              const formattedRow = { ...row };
-              if (typeof row.Payment_Date === 'string') {
-                formattedRow.Payment_Date = formatDateForDB(row.Payment_Date as string);
-              }
-              return formattedRow;
-            });
-
-            for (const row of processedData) {
+            for (const row of parsedData) {
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
                 .insert({
@@ -104,7 +96,7 @@ export const PaymentImport = () => {
                   Amount: parseFloat(row.Amount as string),
                   Payment_Method: row.Payment_Method,
                   Description: row.Description,
-                  Payment_Date: row.Payment_Date,
+                  Payment_Date: typeof row.Payment_Date === 'string' ? formatDateForDB(row.Payment_Date) : row.Payment_Date,
                   Type: row.Type,
                   Status: row.Status,
                   is_valid: true
