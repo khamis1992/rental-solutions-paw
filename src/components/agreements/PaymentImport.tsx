@@ -80,22 +80,24 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Store raw data in Supabase with proper typing
-            const rawData = {
-              raw_data: JSON.stringify(parsedData) as Json,
-              is_valid: true,
-              created_at: new Date().toISOString()
-            };
-
+            // Store raw data in accounting_transactions
             const { error: insertError } = await supabase
-              .from('raw_payment_imports')
-              .insert(rawData);
+              .from('accounting_transactions')
+              .insert(parsedData.map(row => ({
+                Amount: row.Amount,
+                Payment_Date: row.Payment_Date,
+                Payment_Method: row.Payment_Method,
+                Status: row.Status,
+                Description: row.Description,
+                Transaction_ID: row.Transaction_ID,
+                Agreemgent_Number: row.Lease_ID
+              })));
 
             if (insertError) {
-              console.error('Raw data import error:', insertError);
-              toast.error('Failed to store raw data');
+              console.error('Data import error:', insertError);
+              toast.error('Failed to store data');
             } else {
-              toast.success('Raw data imported successfully');
+              toast.success('Data imported successfully');
             }
           },
           error: (error) => {
@@ -142,7 +144,7 @@ export const PaymentImport = () => {
       {importedData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Imported Raw Data</CardTitle>
+            <CardTitle>Imported Data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
