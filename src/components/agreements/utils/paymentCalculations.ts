@@ -1,8 +1,8 @@
 export const calculateMonthlyPayment = (
   totalAmount: number,
-  downPayment: number = 0,
-  interestRate: number = 0,
-  leaseDuration: number = 12
+  downPayment = 0,
+  interestRate = 0,
+  leaseDuration = 12
 ): number => {
   const loanAmount = totalAmount - downPayment;
   const monthlyInterestRate = (interestRate / 100) / 12;
