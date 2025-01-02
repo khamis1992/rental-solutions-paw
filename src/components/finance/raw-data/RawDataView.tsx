@@ -1,22 +1,45 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Brain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { RawPaymentImport } from "../types/transaction.types";
+import { toast } from "sonner";
 
 export const RawDataView = () => {
+  const queryClient = useQueryClient();
   const { data: rawTransactions, isLoading } = useQuery({
     queryKey: ["raw-payment-imports"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("raw_payment_imports")
         .select("*")
+        .eq('is_valid', true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as RawPaymentImport[];
     },
   });
+
+  const processPayments = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-raw-payments', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
+      await queryClient.invalidateQueries({ queryKey: ["payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["accounting-transactions"] });
+
+      toast.success(`Successfully processed ${data.processed} payments`);
+    } catch (error) {
+      console.error('Error processing payments:', error);
+      toast.error('Failed to process payments');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -28,7 +51,16 @@ export const RawDataView = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
+        <Button 
+          onClick={processPayments}
+          className="flex items-center gap-2"
+        >
+          <Brain className="h-4 w-4" />
+          Process Payments
+        </Button>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
