@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
+import { Json } from "@/integrations/supabase/types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -17,11 +18,13 @@ const REQUIRED_FIELDS = [
   'Description',
   'Transaction_ID',
   'Lease_ID'
-];
+] as const;
+
+type ImportedData = Record<string, unknown>;
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<any[]>([]);
+  const [importedData, setImportedData] = useState<ImportedData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
 
   const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
@@ -74,16 +77,19 @@ export const PaymentImport = () => {
             }
 
             setHeaders(headers);
-            setImportedData(results.data);
+            const parsedData = results.data as ImportedData[];
+            setImportedData(parsedData);
 
-            // Store raw data in Supabase
+            // Store raw data in Supabase with proper typing
+            const rawData = {
+              raw_data: JSON.stringify(parsedData) as Json,
+              is_valid: true,
+              created_at: new Date().toISOString()
+            };
+
             const { error: insertError } = await supabase
               .from('raw_payment_imports')
-              .insert({
-                raw_data: results.data,
-                is_valid: true,
-                created_at: new Date().toISOString()
-              });
+              .insert(rawData);
 
             if (insertError) {
               console.error('Raw data import error:', insertError);
@@ -153,7 +159,7 @@ export const PaymentImport = () => {
                     <TableRow key={index}>
                       {headers.map((header) => (
                         <TableCell key={`${index}-${header}`}>
-                          {row[header]}
+                          {String(row[header])}
                         </TableCell>
                       ))}
                     </TableRow>
