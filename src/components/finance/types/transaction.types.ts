@@ -33,18 +33,20 @@ export interface AccountingTransaction {
   Payment_Date: string;
   Type: string;
   Status: string;
+  receipt_url?: string;
+  category_id?: string;
 }
 
 export interface TransactionFormData {
-  type: TransactionType;
-  amount: number;
+  Type: string;
+  Amount: string;
   category_id?: string;
-  description: string;
-  transaction_date: string;
+  Description: string;
+  Payment_Date: string;
   receipt?: FileList;
   cost_type?: 'fixed' | 'variable';
   is_recurring?: boolean;
-  paymentMethod?: PaymentMethodType;
+  Payment_Method?: PaymentMethodType;
   intervalValue?: number;
   intervalUnit?: 'days' | 'weeks' | 'months';
 }

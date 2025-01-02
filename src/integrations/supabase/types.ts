@@ -118,45 +118,65 @@ export type Database = {
       }
       accounting_transactions: {
         Row: {
-          Agreemgent_Number: string | null
-          Amount: string | null
-          Customer_Name: string | null
-          Description: string | null
+          agreement_number: string | null
+          amount: string | null
+          category_id: string | null
+          created_at: string | null
+          customer_name: string | null
+          description: string | null
           id: string | null
-          License_Plate: string | null
-          Payment_Date: string | null
-          Payment_Method: string | null
-          Status: string | null
-          Transaction_ID: string | null
-          Type: string | null
+          license_plate: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          status: string | null
+          transaction_date: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
         }
         Insert: {
-          Agreemgent_Number?: string | null
-          Amount?: string | null
-          Customer_Name?: string | null
-          Description?: string | null
+          agreement_number?: string | null
+          amount?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          description?: string | null
           id?: string | null
-          License_Plate?: string | null
-          Payment_Date?: string | null
-          Payment_Method?: string | null
-          Status?: string | null
-          Transaction_ID?: string | null
-          Type?: string | null
+          license_plate?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
         }
         Update: {
-          Agreemgent_Number?: string | null
-          Amount?: string | null
-          Customer_Name?: string | null
-          Description?: string | null
+          agreement_number?: string | null
+          amount?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          description?: string | null
           id?: string | null
-          License_Plate?: string | null
-          Payment_Date?: string | null
-          Payment_Method?: string | null
-          Status?: string | null
-          Transaction_ID?: string | null
-          Type?: string | null
+          license_plate?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          transaction_date?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounting_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agreement_documents: {
         Row: {

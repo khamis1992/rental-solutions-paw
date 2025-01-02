@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { TransactionType } from "@/components/finance/accounting/types/transaction.types";
+import { TransactionType } from "@/components/finance/types/transaction.types";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -35,12 +35,11 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      console.log("Submitting transaction with data:", data); // Debug log
       const { error } = await supabase.from("accounting_transactions").insert({
-        amount: parseFloat(data.amount),
-        type: data.type as TransactionType,
-        description: data.description,
-        transaction_date: new Date().toISOString(),
+        Amount: data.Amount,
+        Type: data.Type,
+        Description: data.Description,
+        Payment_Date: new Date().toISOString(),
         category_id: data.category_id,
       });
 
@@ -68,7 +67,7 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <Label htmlFor="type">Type</Label>
-            <Select onValueChange={(value) => setValue("type", value)}>
+            <Select onValueChange={(value) => setValue("Type", value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select transaction type" />
               </SelectTrigger>
@@ -85,7 +84,7 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
               id="amount"
               type="number"
               step="0.01"
-              {...register("amount", { required: true })}
+              {...register("Amount", { required: true })}
             />
           </div>
 
@@ -93,7 +92,7 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              {...register("description")}
+              {...register("Description")}
               placeholder="Enter transaction description..."
             />
           </div>
