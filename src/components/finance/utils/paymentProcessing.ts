@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PaymentMethodType, PaymentStatus } from "../types/payment.types";
+import { PaymentMethodType, PaymentStatus } from "@/types/database/payment.types";
 
 interface PaymentDetails {
   amount: number;

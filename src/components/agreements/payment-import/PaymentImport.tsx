@@ -44,7 +44,6 @@ export const PaymentImport = () => {
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  // Memoized download template handler
   const downloadTemplate = useCallback(() => {
     const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -55,9 +54,8 @@ export const PaymentImport = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, []); // Empty dependencies as it doesn't rely on any state/props
+  }, []);
 
-  // Memoized file upload handler
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -112,13 +110,15 @@ export const PaymentImport = () => {
       };
       
       reader.readAsText(file);
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast.error(error.message || 'Failed to import file');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Import error:', error);
+        toast.error(error.message || 'Failed to import file');
+      }
     } finally {
       setIsUploading(false);
     }
-  }, [queryClient]); // Only depends on queryClient
+  }, [queryClient]);
 
   return (
     <div className="space-y-4">
