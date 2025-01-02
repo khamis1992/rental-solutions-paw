@@ -14,8 +14,9 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseKey || !deepseekApiKey) {
       throw new Error('Missing environment variables')
     }
 
