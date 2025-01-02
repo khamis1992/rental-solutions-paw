@@ -3,13 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AIAnalysisCard } from "./AIAnalysisCard";
 import { FileUploadSection } from "./FileUploadSection";
-import { useImportProcess } from "./hooks/useImportProcess";
 import { ImportedTransactionsTable } from "./ImportedTransactionsTable";
+import { useImportProcess } from "./hooks/useImportProcess";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TransactionType } from "../accounting/types/transaction.types";
+import { AccountingTransaction } from "../types/transaction.types";
+import Papa from 'papaparse';
 
 export const TransactionImportTool = () => {
   const {
@@ -25,7 +25,6 @@ export const TransactionImportTool = () => {
   const { data: importedTransactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ["imported-transactions"],
     queryFn: async () => {
-      console.log("Fetching imported transactions");
       const { data: transactions, error } = await supabase
         .from("accounting_transactions")
         .select("*")
@@ -37,8 +36,7 @@ export const TransactionImportTool = () => {
         throw error;
       }
 
-      console.log("Fetched transactions:", transactions);
-      return transactions;
+      return transactions as AccountingTransaction[];
     }
   });
 
@@ -48,11 +46,11 @@ export const TransactionImportTool = () => {
       "amount",
       "transaction_date",
       "description",
-      "cost_type",
-      "is_recurring"
+      "payment_method",
+      "status"
     ].join(",");
     
-    const sampleData = `${TransactionType.INCOME},1000.00,2024-03-20,Monthly Payment,fixed,false`;
+    const sampleData = `INCOME,1000.00,2024-03-20,Monthly Payment,credit_card,completed`;
     const csvContent = `${headers}\n${sampleData}`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -71,69 +69,38 @@ export const TransactionImportTool = () => {
     if (!file) return;
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // First store the file in Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('imports')
-        .upload(`transactions/${file.name}`, file);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        toast.error('Failed to upload file');
-        return;
-      }
-
-      // Parse CSV and insert into accounting_transactions
       Papa.parse(file, {
         header: true,
         complete: async (results) => {
-          console.log("Parsed data:", results.data);
-          
-          // Insert each row into accounting_transactions
-          for (const row of results.data) {
-            const { data, error } = await supabase
-              .from('accounting_transactions')
-              .insert({
-                type: row.type || TransactionType.INCOME,
-                amount: parseFloat(row.amount) || 0,
-                description: row.description,
-                transaction_date: row.transaction_date || new Date().toISOString(),
-                cost_type: row.cost_type,
-                is_recurring: row.is_recurring === 'true'
-              });
+          const transformedData = results.data.map((row: any) => ({
+            type: row.type || 'INCOME',
+            amount: String(row.amount || '0'),
+            description: row.description,
+            transaction_date: row.transaction_date,
+            payment_method: row.payment_method,
+            status: row.status || 'pending'
+          }));
 
-            if (error) {
-              console.error('Insert error:', error);
-              toast.error(`Failed to insert row: ${error.message}`);
-            }
+          const { error } = await supabase
+            .from('accounting_transactions')
+            .insert(transformedData);
+
+          if (error) {
+            console.error('Insert error:', error);
+            toast.error(`Failed to insert data: ${error.message}`);
+          } else {
+            toast.success('Transactions imported successfully');
+            queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
           }
-
-          toast.success('Transactions imported successfully');
-          queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
         },
         error: (error) => {
           console.error('CSV Parse Error:', error);
           toast.error('Failed to parse CSV file');
         }
       });
-
     } catch (error: any) {
       console.error('Import error:', error);
       toast.error(error.message || 'Failed to import file');
-    }
-  };
-
-  const handleImplementChanges = async () => {
-    try {
-      await implementChanges();
-      await queryClient.invalidateQueries({ queryKey: ["imported-transactions"] });
-      toast.success("Changes implemented successfully");
-    } catch (error) {
-      console.error("Implementation error:", error);
-      toast.error("Failed to implement changes. Please try again.");
     }
   };
 
@@ -150,14 +117,6 @@ export const TransactionImportTool = () => {
           isAnalyzing={isAnalyzing}
         />
         
-        {analysisResult && (
-          <AIAnalysisCard
-            analysisResult={analysisResult}
-            onImplementChanges={handleImplementChanges}
-            isUploading={isUploading}
-          />
-        )}
-
         {importedTransactions && importedTransactions.length > 0 && (
           <ImportedTransactionsTable transactions={importedTransactions} />
         )}

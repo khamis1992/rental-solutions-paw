@@ -81,13 +81,13 @@ export const PaymentImport = () => {
             setImportedData(parsedData);
 
             const transformedData: Partial<AccountingTransaction>[] = parsedData.map(row => ({
-              Amount: row.Amount,
-              Payment_Date: row.Payment_Date,
-              Payment_Method: row.Payment_Method,
-              Status: row.Status,
-              Description: row.Description,
-              Transaction_ID: row.Transaction_ID,
-              Agreemgent_Number: row.Lease_ID
+              amount: row.Amount,
+              transaction_date: row.Payment_Date,
+              payment_method: row.Payment_Method,
+              status: row.Status,
+              description: row.Description,
+              transaction_id: row.Transaction_ID,
+              agreement_number: row.Lease_ID
             }));
 
             const { error: insertError } = await supabase
