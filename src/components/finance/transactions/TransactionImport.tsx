@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -47,8 +47,8 @@ export const TransactionImport = () => {
   const session = useSession();
   const navigate = useNavigate();
 
-  // Redirect to auth if not authenticated
-  useState(() => {
+  // Use useEffect for authentication check
+  useEffect(() => {
     if (!session) {
       navigate('/auth');
     }
