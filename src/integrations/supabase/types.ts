@@ -9,51 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      accounting_audit_trail: {
-        Row: {
-          action: string
-          changes: Json
-          entity_id: string
-          entity_type: string
-          id: string
-          performed_at: string
-          performed_by: string | null
-        }
-        Insert: {
-          action: string
-          changes: Json
-          entity_id: string
-          entity_type: string
-          id?: string
-          performed_at?: string
-          performed_by?: string | null
-        }
-        Update: {
-          action?: string
-          changes?: Json
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          performed_at?: string
-          performed_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_audit_trail_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_audit_trail_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       accounting_categories: {
         Row: {
           budget_limit: number | null
@@ -163,71 +118,45 @@ export type Database = {
       }
       accounting_transactions: {
         Row: {
-          amount: number
-          category_id: string | null
-          cost_type: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_recurring: boolean | null
-          meta_data: Json | null
-          receipt_url: string | null
-          recurrence_interval: unknown | null
-          recurring_schedule: Json | null
-          reference_id: string | null
-          reference_type: string | null
-          status: string | null
-          transaction_date: string
-          type: Database["public"]["Enums"]["transaction_type"]
-          updated_at: string
+          Agreemgent_Number: string | null
+          Amount: string | null
+          Customer_Name: string | null
+          Description: string | null
+          id: string | null
+          License_Plate: string | null
+          Payment_Date: string | null
+          Payment_Method: string | null
+          Status: string | null
+          Transaction_ID: string | null
+          Type: string | null
         }
         Insert: {
-          amount: number
-          category_id?: string | null
-          cost_type?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          meta_data?: Json | null
-          receipt_url?: string | null
-          recurrence_interval?: unknown | null
-          recurring_schedule?: Json | null
-          reference_id?: string | null
-          reference_type?: string | null
-          status?: string | null
-          transaction_date: string
-          type: Database["public"]["Enums"]["transaction_type"]
-          updated_at?: string
+          Agreemgent_Number?: string | null
+          Amount?: string | null
+          Customer_Name?: string | null
+          Description?: string | null
+          id?: string | null
+          License_Plate?: string | null
+          Payment_Date?: string | null
+          Payment_Method?: string | null
+          Status?: string | null
+          Transaction_ID?: string | null
+          Type?: string | null
         }
         Update: {
-          amount?: number
-          category_id?: string | null
-          cost_type?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          meta_data?: Json | null
-          receipt_url?: string | null
-          recurrence_interval?: unknown | null
-          recurring_schedule?: Json | null
-          reference_id?: string | null
-          reference_type?: string | null
-          status?: string | null
-          transaction_date?: string
-          type?: Database["public"]["Enums"]["transaction_type"]
-          updated_at?: string
+          Agreemgent_Number?: string | null
+          Amount?: string | null
+          Customer_Name?: string | null
+          Description?: string | null
+          id?: string | null
+          License_Plate?: string | null
+          Payment_Date?: string | null
+          Payment_Method?: string | null
+          Status?: string | null
+          Transaction_ID?: string | null
+          Type?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_transactions_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       agreement_documents: {
         Row: {
@@ -3454,41 +3383,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      raw_payment_imports: {
-        Row: {
-          created_at: string | null
-          error_description: string | null
-          id: string
-          import_id: string | null
-          is_valid: boolean | null
-          raw_data: Json
-        }
-        Insert: {
-          created_at?: string | null
-          error_description?: string | null
-          id?: string
-          import_id?: string | null
-          is_valid?: boolean | null
-          raw_data: Json
-        }
-        Update: {
-          created_at?: string | null
-          error_description?: string | null
-          id?: string
-          import_id?: string | null
-          is_valid?: boolean | null
-          raw_data?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "raw_payment_imports_import_id_fkey"
-            columns: ["import_id"]
-            isOneToOne: false
-            referencedRelation: "import_logs"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       raw_transaction_imports: {
         Row: {
