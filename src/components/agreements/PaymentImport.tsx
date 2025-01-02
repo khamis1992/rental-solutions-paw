@@ -39,8 +39,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+    const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
+                      '1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -66,6 +66,10 @@ export const PaymentImport = () => {
         
         Papa.parse(text, {
           header: true,
+          transformHeader: (header) => {
+            // Normalize headers to match required format
+            return header.trim().replace(/\s+/g, '_');
+          },
           complete: async (results) => {
             const headers = results.meta.fields || [];
             const headerValidation = validateHeaders(headers);
@@ -76,13 +80,21 @@ export const PaymentImport = () => {
               return;
             }
 
-            setHeaders(headers);
-            const parsedData = results.data as ImportedData[];
-            setImportedData(parsedData);
+            // Transform data to ensure correct field names
+            const transformedData = results.data.map((row: any) => {
+              const transformedRow: Record<string, any> = {};
+              REQUIRED_FIELDS.forEach(field => {
+                transformedRow[field] = row[field];
+              });
+              return transformedRow;
+            });
 
-            // Store raw data in Supabase with proper typing
+            setHeaders(headers);
+            setImportedData(transformedData);
+
+            // Store raw data in Supabase
             const rawData = {
-              raw_data: JSON.stringify(parsedData) as Json,
+              raw_data: JSON.stringify(transformedData) as Json,
               is_valid: true,
               created_at: new Date().toISOString()
             };
