@@ -1,3 +1,8 @@
+export enum TransactionType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE'
+}
+
 export interface Transaction {
   id: string;
   agreement_number: string;
@@ -11,9 +16,9 @@ export interface Transaction {
   receipt_url: string;
   status: string;
   transaction_date: string;
-  type: string;
+  type: TransactionType;
   updated_at: string;
-  category?: {
+  category: {
     id: string;
     name: string;
     type: string;
@@ -21,41 +26,3 @@ export interface Transaction {
     budget_period: string;
   };
 }
-
-export interface RawPaymentImport {
-  id: string;
-  Transaction_ID: string;
-  Agreement_Number: string;
-  Customer_Name: string;
-  License_Plate: string;
-  Amount: number;
-  Payment_Method: string;
-  Description: string;
-  Payment_Date: string;
-  Type: string;
-  Status: string;
-  is_valid: boolean;
-  error_description?: string;
-  created_at: string;
-}
-
-export type TransactionType = 'INCOME' | 'EXPENSE';
-
-export type Category = {
-  id: string;
-  name: string;
-  type: string;
-  budget_limit: number;
-  budget_period: string;
-}
-
-export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
-
-export type PaymentCategoryType = 
-  | 'LATE PAYMENT FEE'
-  | 'Administrative Fees'
-  | 'Vehicle Damage Charge'
-  | 'Traffic Fine'
-  | 'RENTAL FEE'
-  | 'Advance Payment'
-  | 'other';

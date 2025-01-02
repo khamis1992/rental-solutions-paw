@@ -1,23 +1,26 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import Papa from 'papaparse';
-import { Json } from "@/integrations/supabase/types";
+import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 
 const REQUIRED_FIELDS = [
-  'Amount',
-  'Payment_Date',
-  'Payment_Method',
-  'Status',
-  'Description',
   'Transaction_ID',
-  'Lease_ID'
+  'Agreement_Number',
+  'Customer_Name',
+  'License_Plate',
+  'Amount',
+  'Payment_Method',
+  'Description',
+  'Payment_Date',
+  'Type',
+  'Status'
 ] as const;
 
 type ImportedData = Record<string, unknown>;
@@ -26,6 +29,7 @@ export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [importedData, setImportedData] = useState<ImportedData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
   const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
     const normalizedHeaders = headers.map(h => h.trim());
@@ -38,16 +42,9 @@ export const PaymentImport = () => {
     };
   };
 
-  const formatDateForDB = (dateStr: string): string => {
-    // Split the date string by '/'
-    const [day, month, year] = dateStr.split('/');
-    // Return in YYYY-MM-DD format
-    return `${year}-${month}-${day}`;
-  };
-
   const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,14/12/2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+    const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
+                      '1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -87,25 +84,15 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Process each row and format the date
-            const processedData = parsedData.map(row => {
-              const formattedRow = { ...row };
-              if (typeof row.Payment_Date === 'string') {
-                formattedRow.Payment_Date = formatDateForDB(row.Payment_Date as string);
-              }
-              return formattedRow;
-            });
-
-            // Insert each row individually to avoid batch insert issues
-            for (const row of processedData) {
+            for (const row of parsedData) {
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
                 .insert({
-                  Agreemgent_Number: row.Lease_ID,
                   Transaction_ID: row.Transaction_ID,
+                  Agreement_Number: row.Agreement_Number,
                   Customer_Name: row.Customer_Name,
                   License_Plate: row.License_Plate,
-                  Amount: row.Amount,
+                  Amount: Number(row.Amount),
                   Payment_Method: row.Payment_Method,
                   Description: row.Description,
                   Payment_Date: row.Payment_Date,
@@ -115,12 +102,13 @@ export const PaymentImport = () => {
                 });
 
               if (insertError) {
-                console.error('Row insert error:', insertError);
-                toast.error(`Failed to insert row: ${insertError.message}`);
+                console.error('Raw data import error:', insertError);
+                toast.error('Failed to store raw data');
+              } else {
+                toast.success('Raw data imported successfully');
+                await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
               }
             }
-
-            toast.success('Data imported successfully');
           },
           error: (error) => {
             console.error('CSV Parse Error:', error);
@@ -130,9 +118,11 @@ export const PaymentImport = () => {
       };
       
       reader.readAsText(file);
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast.error(error.message || 'Failed to import file');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Import error:', error);
+        toast.error(error.message || 'Failed to import file');
+      }
     } finally {
       setIsUploading(false);
     }
