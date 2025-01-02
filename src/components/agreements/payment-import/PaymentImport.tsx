@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 import Papa from 'papaparse';
 import { Json } from "@/integrations/supabase/types";
+import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -22,7 +23,6 @@ const REQUIRED_FIELDS = [
 
 type ImportedData = Record<string, unknown>;
 
-// Moved outside component to prevent recreation
 const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
   const normalizedHeaders = headers.map(h => h.trim());
   const missingFields = REQUIRED_FIELDS.filter(
@@ -34,7 +34,6 @@ const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: 
   };
 };
 
-// Template content moved outside to prevent recreation
 const CSV_TEMPLATE_CONTENT = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
                            "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
 
@@ -83,16 +82,14 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Store raw data in Supabase with proper typing
-            const rawData = {
-              raw_data: JSON.stringify(parsedData) as Json,
+            const rawImport: Omit<RawPaymentImport, 'id' | 'created_at'> = {
+              raw_data: parsedData as Json,
               is_valid: true,
-              created_at: new Date().toISOString()
             };
 
             const { error: insertError } = await supabase
               .from('raw_payment_imports')
-              .insert(rawData);
+              .insert(rawImport);
 
             if (insertError) {
               console.error('Raw data import error:', insertError);
