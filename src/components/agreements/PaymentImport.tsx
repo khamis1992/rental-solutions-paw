@@ -17,7 +17,7 @@ const REQUIRED_FIELDS = [
   'Status',
   'Description',
   'Transaction_ID',
-  'Lease_ID'
+  'Agreemgent_Number'
 ] as const;
 
 type ImportedData = Record<string, unknown>;
@@ -44,8 +44,8 @@ export const PaymentImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,14/12/2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
+    const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
+                      '1000,14/12/2024,credit_card,completed,Monthly payment for March,INV001,AGR-001';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -89,7 +89,7 @@ export const PaymentImport = () => {
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
                 .insert({
-                  Agreement_Number: row.Lease_ID,
+                  Agreemgent_Number: row.Agreemgent_Number,
                   Transaction_ID: row.Transaction_ID,
                   Customer_Name: row.Customer_Name,
                   License_Plate: row.License_Plate,
