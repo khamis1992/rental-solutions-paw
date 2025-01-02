@@ -26,18 +26,33 @@ export const TransactionImportTool = () => {
     queryKey: ["imported-transactions"],
     queryFn: async () => {
       console.log("Fetching imported transactions");
-      const { data, error } = await supabase
-        .from("financial_imports")
+      const { data: rawImports, error: rawImportsError } = await supabase
+        .from("raw_transaction_imports")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error("Error fetching transactions:", error);
-        throw error;
+      if (rawImportsError) {
+        console.error("Error fetching raw imports:", rawImportsError);
+        throw rawImportsError;
       }
-      console.log("Fetched transactions:", data);
-      return data;
+
+      // Transform the raw data into the format expected by the table
+      const transformedData = rawImports.map(record => {
+        const parsedData = JSON.parse(record.raw_data)[0]; // Get first record from the array
+        return {
+          id: record.id,
+          payment_date: parsedData.Payment_Date || parsedData.payment_date,
+          customer_name: parsedData.Customer_Name || parsedData.customer_name || "N/A",
+          description: parsedData.Description || parsedData.description || "N/A",
+          payment_method: parsedData.Payment_Method || parsedData.payment_method || "N/A",
+          amount: parsedData.Amount || parsedData.amount || 0,
+          status: parsedData.Status || parsedData.status || "pending"
+        };
+      });
+
+      console.log("Transformed transactions:", transformedData);
+      return transformedData;
     }
   });
 

@@ -18,7 +18,7 @@ export const ImportedTransactionsTable = ({ transactions }: ImportedTransactions
               <TableHead>Customer</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Payment Method</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Amount (QAR)</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
