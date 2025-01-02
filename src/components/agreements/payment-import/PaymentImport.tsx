@@ -16,9 +16,11 @@ const REQUIRED_FIELDS = [
   'Lease_ID'
 ];
 
+type ImportedData = Record<string, unknown>;
+
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<any[]>([]);
+  const [importedData, setImportedData] = useState<ImportedData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
 
   const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
@@ -71,11 +73,12 @@ export const PaymentImport = () => {
             }
 
             setHeaders(headers);
-            setImportedData(results.data);
+            const parsedData = results.data as ImportedData[];
+            setImportedData(parsedData);
 
             // Store raw data in Supabase with proper typing
             const rawData = {
-              raw_data: results.data as Record<string, unknown>[],
+              raw_data: JSON.stringify(parsedData) as Json,
               is_valid: true,
               created_at: new Date().toISOString()
             };
