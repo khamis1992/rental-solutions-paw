@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from '@supabase/auth-helpers-react';
+import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
 import { ImportedPaymentData, ValidationResult, RawPaymentImport } from "../types/payment.types";
 
@@ -40,6 +42,15 @@ export const TransactionImport = () => {
   const [importedData, setImportedData] = useState<ImportedPaymentData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
+  const session = useSession();
+  const navigate = useNavigate();
+
+  // Redirect to auth if not authenticated
+  React.useEffect(() => {
+    if (!session) {
+      navigate('/auth');
+    }
+  }, [session, navigate]);
 
   const downloadTemplate = () => {
     const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
@@ -54,6 +65,11 @@ export const TransactionImport = () => {
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!session) {
+      toast.error('Please sign in to upload files');
+      return;
+    }
+
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -118,6 +134,10 @@ export const TransactionImport = () => {
       setIsUploading(false);
     }
   };
+
+  if (!session) {
+    return null; // Or a loading state
+  }
 
   return (
     <Card>
