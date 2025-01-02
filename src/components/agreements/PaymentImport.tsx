@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
-import { Json } from "@/integrations/supabase/types";
+import { AccountingTransaction } from "../finance/types/transaction.types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -80,18 +80,19 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Store raw data in accounting_transactions
+            const transformedData = parsedData.map(row => ({
+              Amount: row.Amount,
+              Payment_Date: row.Payment_Date,
+              Payment_Method: row.Payment_Method,
+              Status: row.Status,
+              Description: row.Description,
+              Transaction_ID: row.Transaction_ID,
+              Agreemgent_Number: row.Lease_ID
+            }));
+
             const { error: insertError } = await supabase
               .from('accounting_transactions')
-              .insert(parsedData.map(row => ({
-                Amount: row.Amount,
-                Payment_Date: row.Payment_Date,
-                Payment_Method: row.Payment_Method,
-                Status: row.Status,
-                Description: row.Description,
-                Transaction_ID: row.Transaction_ID,
-                Agreemgent_Number: row.Lease_ID
-              })));
+              .insert(transformedData);
 
             if (insertError) {
               console.error('Data import error:', insertError);
@@ -161,7 +162,7 @@ export const PaymentImport = () => {
                     <TableRow key={index}>
                       {headers.map((header) => (
                         <TableCell key={`${index}-${header}`}>
-                          {String(row[header])}
+                          {String(row[header] || '')}
                         </TableCell>
                       ))}
                     </TableRow>

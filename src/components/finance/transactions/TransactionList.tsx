@@ -11,20 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
-
-interface Transaction {
-  id: string;
-  Transaction_ID: string;
-  Agreemgent_Number: string;
-  Customer_Name: string;
-  License_Plate: string;
-  Amount: string;
-  Payment_Method: string;
-  Description: string;
-  Payment_Date: string;
-  Type: string;
-  Status: string;
-}
+import { AccountingTransaction } from "../types/transaction.types";
 
 export const TransactionList = () => {
   const { data: transactions, isLoading } = useQuery({
@@ -35,12 +22,8 @@ export const TransactionList = () => {
         .select("*")
         .order("Payment_Date", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching transactions:", error);
-        throw error;
-      }
-
-      return data as Transaction[];
+      if (error) throw error;
+      return data as AccountingTransaction[];
     },
   });
 
@@ -67,7 +50,7 @@ export const TransactionList = () => {
               <TableHead>Payment Method</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Amount (QAR)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
