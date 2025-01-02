@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import Papa from 'papaparse';
 import { FileUpload } from "./FileUpload";
 import { ImportTable } from "./ImportTable";
+import { Json } from "@/integrations/supabase/types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -72,11 +73,11 @@ export const PaymentImport = () => {
             setHeaders(headers);
             setImportedData(results.data);
 
-            // Store raw data in Supabase
+            // Store raw data in Supabase with proper typing
             const { error: insertError } = await supabase
               .from('raw_payment_imports')
               .insert({
-                raw_data: results.data,
+                raw_data: results.data as Json,
                 is_valid: true,
                 created_at: new Date().toISOString()
               });
