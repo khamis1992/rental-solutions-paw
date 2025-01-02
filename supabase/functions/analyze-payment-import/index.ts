@@ -14,9 +14,22 @@ serve(async (req) => {
   try {
     console.log('Starting payment import analysis...');
 
+    // Validate request content type
+    const contentType = req.headers.get('content-type');
+    if (!contentType || !contentType.includes('multipart/form-data')) {
+      console.error('Invalid content type:', contentType);
+      throw new Error('Invalid content type. Expected multipart/form-data');
+    }
+
     // Get the form data from the request
-    const formData = await req.formData();
-    console.log('Form data received');
+    let formData;
+    try {
+      formData = await req.formData();
+      console.log('Form data received');
+    } catch (error) {
+      console.error('Error parsing form data:', error);
+      throw new Error('Failed to parse form data');
+    }
 
     // Get the file from form data
     const file = formData.get('file');
@@ -28,13 +41,18 @@ serve(async (req) => {
     console.log('File received:', file.name, 'Size:', file.size);
 
     // Read file content
-    const fileContent = await file.text();
-    if (!fileContent || fileContent.trim() === '') {
-      console.error('Empty file content');
-      throw new Error('File is empty');
+    let fileContent;
+    try {
+      fileContent = await file.text();
+      if (!fileContent || fileContent.trim() === '') {
+        console.error('Empty file content');
+        throw new Error('File is empty');
+      }
+      console.log('File content length:', fileContent.length);
+    } catch (error) {
+      console.error('Error reading file content:', error);
+      throw new Error('Failed to read file content');
     }
-
-    console.log('File content length:', fileContent.length);
 
     // Parse CSV content
     const lines = fileContent.split('\n').filter(line => line.trim());
@@ -77,15 +95,20 @@ serve(async (req) => {
       );
     }
 
-    // Parse data rows
-    const data = lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
-      const row = {};
-      headers.forEach((header, index) => {
-        row[header] = values[index] || '';
-      });
-      return row;
-    });
+    // Parse data rows with validation
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length === headers.length) {
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        data.push(row);
+      } else {
+        console.warn(`Skipping invalid row ${i + 1}: incorrect number of columns`);
+      }
+    }
 
     console.log('Successfully parsed', data.length, 'rows');
 
