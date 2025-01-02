@@ -47,7 +47,6 @@ export const TransactionImport = () => {
   const session = useSession();
   const navigate = useNavigate();
 
-  // Use useEffect for authentication check
   useEffect(() => {
     if (!session) {
       navigate('/auth');
@@ -130,7 +129,7 @@ export const TransactionImport = () => {
   };
 
   if (!session) {
-    return null; // Or a loading state
+    return null;
   }
 
   return (
