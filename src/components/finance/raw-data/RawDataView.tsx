@@ -4,23 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2, Brain } from "lucide-react";
 import { toast } from "sonner";
-
-interface RawPaymentImport {
-  id: string;
-  Transaction_ID: string;
-  Agreement_Number: string;
-  Customer_Name: string;
-  License_Plate: string;
-  Amount: number;
-  Payment_Method: string;
-  Description: string;
-  Payment_Date: string;
-  Type: string;
-  Status: string;
-  is_valid: boolean;
-  error_description?: string;
-  created_at: string;
-}
+import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
