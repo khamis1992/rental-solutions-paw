@@ -46,11 +46,10 @@ export const TransactionImport = () => {
   const navigate = useNavigate();
 
   // Redirect to auth if not authenticated
-  React.useEffect(() => {
-    if (!session) {
-      navigate('/auth');
-    }
-  }, [session, navigate]);
+  if (!session) {
+    navigate('/auth');
+    return null;
+  }
 
   const downloadTemplate = () => {
     const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
@@ -134,10 +133,6 @@ export const TransactionImport = () => {
       setIsUploading(false);
     }
   };
-
-  if (!session) {
-    return null; // Or a loading state
-  }
 
   return (
     <Card>
