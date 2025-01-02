@@ -1,14 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import Papa from 'papaparse';
-import { AccountingTransaction } from "../finance/types/transaction.types";
+import { AccountingTransaction } from "../../finance/types/transaction.types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -39,7 +39,7 @@ export const PaymentImport = () => {
     };
   };
 
-  const downloadTemplate = useCallback(() => {
+  const downloadTemplate = () => {
     const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
                       "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
     
@@ -52,7 +52,7 @@ export const PaymentImport = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, []);
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
