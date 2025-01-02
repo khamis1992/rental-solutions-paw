@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PaymentMethodType, PaymentStatus } from "@/types/database/payment.types";
+import { PaymentMethodType, PaymentStatus } from "../types/payment.types";
 
 interface PaymentDetails {
   amount: number;
@@ -32,14 +32,21 @@ export async function processPayment(details: PaymentDetails): Promise<Processed
 
     if (error) throw error;
 
+    if (!data) {
+      throw new Error('No data returned from insert operation');
+    }
+
     return {
       id: data.id,
       status: data.status,
       timestamp: data.payment_date,
     };
   } catch (error) {
-    console.error('Payment processing error:', error);
-    throw new Error('Failed to process payment');
+    if (error instanceof Error) {
+      console.error('Payment processing error:', error);
+      throw new Error('Failed to process payment');
+    }
+    throw error;
   }
 }
 
