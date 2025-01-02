@@ -14,7 +14,10 @@ export const TransactionList = () => {
           *,
           category:category_id (
             id,
-            name
+            name,
+            type,
+            budget_limit,
+            budget_period
           )
         `)
         .order("created_at", { ascending: false });

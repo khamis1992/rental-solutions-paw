@@ -39,9 +39,7 @@ export const PaymentImport = () => {
   };
 
   const formatDateForDB = (dateStr: string): string => {
-    // Split the date string by '/'
     const [day, month, year] = dateStr.split('/');
-    // Return in YYYY-MM-DD format
     return `${year}-${month}-${day}`;
   };
 
@@ -87,7 +85,6 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Process each row and format the date
             const processedData = parsedData.map(row => {
               const formattedRow = { ...row };
               if (typeof row.Payment_Date === 'string') {
@@ -96,16 +93,15 @@ export const PaymentImport = () => {
               return formattedRow;
             });
 
-            // Insert each row individually to avoid batch insert issues
             for (const row of processedData) {
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
                 .insert({
-                  Agreemgent_Number: row.Lease_ID,
+                  Agreement_Number: row.Lease_ID,
                   Transaction_ID: row.Transaction_ID,
                   Customer_Name: row.Customer_Name,
                   License_Plate: row.License_Plate,
-                  Amount: row.Amount,
+                  Amount: parseFloat(row.Amount as string),
                   Payment_Method: row.Payment_Method,
                   Description: row.Description,
                   Payment_Date: row.Payment_Date,
