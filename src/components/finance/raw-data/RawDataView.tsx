@@ -3,32 +3,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 
-interface RawTransaction {
+interface RawPaymentImport {
   id: string;
-  transaction_id: string;
-  agreement_number: string;
-  customer_name: string;
-  license_plate: string;
-  amount: string;
-  payment_method: string;
-  description: string;
-  transaction_date: string;
-  type: string;
-  status: string;
+  Transaction_ID: string;
+  Agreemgent_Number: string;
+  Customer_Name: string;
+  License_Plate: string;
+  Amount: number;
+  Payment_Method: string;
+  Description: string;
+  Payment_Date: string;
+  Type: string;
+  Status: string;
+  is_valid: boolean;
+  error_description?: string;
   created_at: string;
 }
 
 export const RawDataView = () => {
   const { data: rawTransactions, isLoading } = useQuery({
-    queryKey: ["raw-transactions"],
+    queryKey: ["raw-payment-imports"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("accounting_transactions")
+        .from("raw_payment_imports")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as RawTransaction[];
+      return data as RawPaymentImport[];
     },
   });
 
@@ -42,7 +44,7 @@ export const RawDataView = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Raw Transaction Data</h2>
+      <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -51,39 +53,41 @@ export const RawDataView = () => {
               <TableHead>Agreement Number</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Amount (QAR)</TableHead>
+              <TableHead>Payment Method</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Payment Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rawTransactions?.map((transaction) => (
               <TableRow key={transaction.id}>
-                <TableCell>{transaction.transaction_id}</TableCell>
-                <TableCell>{transaction.agreement_number}</TableCell>
-                <TableCell>{transaction.customer_name}</TableCell>
-                <TableCell>{transaction.amount}</TableCell>
+                <TableCell>{transaction.Transaction_ID}</TableCell>
+                <TableCell>{transaction.Agreemgent_Number}</TableCell>
+                <TableCell>{transaction.Customer_Name}</TableCell>
+                <TableCell>{transaction.Amount}</TableCell>
+                <TableCell>{transaction.Payment_Method}</TableCell>
+                <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
+                <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.type === 'INCOME' 
+                    transaction.Type === 'INCOME' 
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {transaction.type}
+                    {transaction.Type}
                   </span>
                 </TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.status === 'completed' 
+                    transaction.Status === 'completed' 
                       ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {transaction.status}
+                    {transaction.Status}
                   </span>
                 </TableCell>
-                <TableCell>{new Date(transaction.transaction_date).toLocaleDateString()}</TableCell>
-                <TableCell className="max-w-md truncate">{transaction.description}</TableCell>
               </TableRow>
             ))}
           </TableBody>
