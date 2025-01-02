@@ -18,7 +18,7 @@ export function calculatePayment(
   rate: number, // Annual interest rate as percentage (e.g., 5 for 5%)
   frequency: PaymentFrequency,
   startDate: Date = new Date(),
-  durationMonths: number = 12
+  durationMonths = 12
 ): PaymentCalculation {
   // Convert annual rate to decimal and period rate
   const annualRate = rate / 100;

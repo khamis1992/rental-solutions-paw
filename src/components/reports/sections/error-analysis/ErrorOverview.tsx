@@ -15,7 +15,7 @@ export const ErrorOverview = ({ errorLogs = [], onAnalyze }: ErrorOverviewProps)
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [implementedIds, setImplementedIds] = useState<string[]>([]);
 
-  const getSeverityColor = (severity: string = 'low') => {
+  const getSeverityColor = (severity = 'low') => {
     switch (severity.toLowerCase()) {
       case 'high':
         return 'bg-red-100 text-red-800';
