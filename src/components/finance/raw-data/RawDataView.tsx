@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Brain } from "lucide-react";
+import { toast } from "sonner";
 
 interface RawPaymentImport {
   id: string;
@@ -21,6 +23,8 @@ interface RawPaymentImport {
 }
 
 export const RawDataView = () => {
+  const queryClient = useQueryClient();
+
   const { data: rawTransactions, isLoading } = useQuery({
     queryKey: ["raw-payment-imports"],
     queryFn: async () => {
@@ -32,6 +36,26 @@ export const RawDataView = () => {
       if (error) throw error;
       return data as RawPaymentImport[];
     },
+  });
+
+  const analyzePaymentMutation = useMutation({
+    mutationFn: async (paymentId: string) => {
+      const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
+        body: { rawPaymentId: paymentId }
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
+      queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      toast.success("Payment analyzed and processed successfully");
+    },
+    onError: (error) => {
+      console.error('Payment analysis error:', error);
+      toast.error("Failed to analyze payment");
+    }
   });
 
   if (isLoading) {
@@ -58,6 +82,7 @@ export const RawDataView = () => {
               <TableHead>Payment Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,6 +112,22 @@ export const RawDataView = () => {
                   }`}>
                     {transaction.Status}
                   </span>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => analyzePaymentMutation.mutate(transaction.id)}
+                    disabled={transaction.is_valid || analyzePaymentMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    {analyzePaymentMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Brain className="h-4 w-4" />
+                    )}
+                    Analyze
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

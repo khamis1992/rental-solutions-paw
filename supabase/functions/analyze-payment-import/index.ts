@@ -1,17 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { validateAndRepairRow } from './validator.ts';
-import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
-interface AnalysisResult {
-  success: boolean;
-  totalRows: number;
-  validRows: number;
-  invalidRows: number;
-  totalAmount: number;
-  issues: string[];
-  suggestions: string[];
-  rawData: any[];
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,119 +16,95 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting payment import analysis...');
-    
-    const formData = await req.formData();
-    const file = formData.get('file');
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+    const { rawPaymentId } = await req.json();
 
-    if (!file || !(file instanceof File)) {
-      throw new Error('No file uploaded');
-    }
+    // Fetch raw payment data
+    const { data: rawPayment, error: fetchError } = await supabase
+      .from('raw_payment_imports')
+      .select('*')
+      .eq('id', rawPaymentId)
+      .single();
 
-    const csvContent = await file.text();
-    const lines = csvContent.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',').map(h => h.trim());
+    if (fetchError) throw fetchError;
 
-    const requiredFields = [
-      'Amount',
-      'Payment_Date',
-      'Payment_Method',
-      'Status',
-      'Description',
-      'Transaction_ID',
-      'Lease_ID'
-    ];
-    
-    const missingFields = requiredFields.filter(field => 
-      !headers.some(h => h === field)
-    );
+    // Prepare data for AI analysis
+    const prompt = `Analyze this payment data and provide a structured response:
+    Agreement Number: ${rawPayment.Agreement_Number}
+    Amount: ${rawPayment.Amount}
+    Payment Date: ${rawPayment.Payment_Date}
+    Description: ${rawPayment.Description}
 
-    if (missingFields.length > 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Missing required fields: ${missingFields.join(', ')}`,
-          issues: [`The CSV file is missing the following required fields: ${missingFields.join(', ')}`],
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
-    }
+    Calculate if there are any late fees (120 QAR per day after the 1st of the month).
+    Provide the following in your response:
+    1. Validated agreement number
+    2. Payment amount
+    3. Late fee calculation (if applicable)
+    4. Total amount including late fees
+    5. Payment description
+    Format as JSON.`;
 
-    // Process and repair each row
-    const rows = lines.slice(1);
-    let validRows = 0;
-    let invalidRows = 0;
-    let totalAmount = 0;
-    const issues: string[] = [];
-    const suggestions: string[] = [];
-    const repairedData: any[] = [];
-    const allRepairs: string[] = [];
-
-    rows.forEach((row, index) => {
-      const values = row.split(',').map(v => v.trim());
-      const rowData = headers.reduce((obj, header, i) => {
-        obj[header] = values[i] || '';
-        return obj;
-      }, {} as Record<string, string>);
-
-      const { isValid, repairs, errors, repairedData: repairedRow } = validateAndRepairRow(rowData, index);
-
-      if (isValid) {
-        validRows++;
-        repairedData.push(repairedRow);
-        totalAmount += parseFloat(repairedRow.Amount);
-        if (repairs.length > 0) {
-          allRepairs.push(...repairs);
-        }
-      } else {
-        invalidRows++;
-        issues.push(...errors);
-      }
+    // Get AI analysis
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a payment processing assistant that analyzes payment data and calculates late fees.' },
+          { role: 'user', content: prompt }
+        ],
+      }),
     });
 
-    // Generate suggestions based on repairs and issues
-    if (allRepairs.length > 0) {
-      suggestions.push('The following automatic repairs were made:');
-      suggestions.push(...allRepairs);
-    }
+    const aiData = await aiResponse.json();
+    const analysis = JSON.parse(aiData.choices[0].message.content);
 
-    if (invalidRows > 0) {
-      suggestions.push('Please review and correct the invalid entries before importing');
-    }
+    // Process payment with AI insights
+    const { error: insertError } = await supabase
+      .from('payments')
+      .insert({
+        lease_id: rawPayment.Agreement_Number,
+        amount: analysis.paymentAmount,
+        amount_paid: analysis.paymentAmount,
+        payment_method: rawPayment.Payment_Method,
+        payment_date: rawPayment.Payment_Date,
+        description: analysis.description,
+        status: 'completed',
+        type: 'Income',
+        late_fine_amount: analysis.lateFeeAmount || 0,
+        days_overdue: analysis.daysOverdue || 0
+      });
 
-    const result: AnalysisResult = {
-      success: invalidRows === 0,
-      totalRows: rows.length,
-      validRows,
-      invalidRows,
-      totalAmount,
-      issues,
-      suggestions,
-      rawData: repairedData
-    };
+    if (insertError) throw insertError;
 
-    console.log('Analysis completed successfully:', result);
+    // Update raw payment status
+    const { error: updateError } = await supabase
+      .from('raw_payment_imports')
+      .update({ is_valid: true })
+      .eq('id', rawPaymentId);
+
+    if (updateError) throw updateError;
 
     return new Response(
-      JSON.stringify(result),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ 
+        success: true, 
+        analysis,
+        message: 'Payment processed successfully' 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error processing file:', error);
+    console.error('Error processing payment:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      JSON.stringify({ success: false, error: error.message }),
+      { 
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }
