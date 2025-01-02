@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
-import { Json } from "@/integrations/supabase/types";
+import { formatDate } from "@/lib/dateUtils";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -17,7 +17,7 @@ const REQUIRED_FIELDS = [
   'Status',
   'Description',
   'Transaction_ID',
-  'Agreemgent_Number'
+  'Agreement_Number'
 ] as const;
 
 type ImportedData = Record<string, unknown>;
@@ -89,14 +89,14 @@ export const PaymentImport = () => {
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
                 .insert({
-                  Agreemgent_Number: row.Agreemgent_Number,
+                  Agreement_Number: row.Agreement_Number,
                   Transaction_ID: row.Transaction_ID,
                   Customer_Name: row.Customer_Name,
                   License_Plate: row.License_Plate,
                   Amount: parseFloat(row.Amount as string),
                   Payment_Method: row.Payment_Method,
                   Description: row.Description,
-                  Payment_Date: typeof row.Payment_Date === 'string' ? formatDateForDB(row.Payment_Date) : row.Payment_Date,
+                  Payment_Date: typeof row.Payment_Date === 'string' ? formatDateForDB(row.Payment_Date as string) : row.Payment_Date,
                   Type: row.Type,
                   Status: row.Status,
                   is_valid: true
@@ -171,7 +171,9 @@ export const PaymentImport = () => {
                     <TableRow key={index}>
                       {headers.map((header) => (
                         <TableCell key={`${index}-${header}`}>
-                          {String(row[header])}
+                          {header === 'Payment_Date' && row[header] 
+                            ? formatDate(new Date(row[header] as string))
+                            : String(row[header])}
                         </TableCell>
                       ))}
                     </TableRow>
