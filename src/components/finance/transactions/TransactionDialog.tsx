@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { TransactionType } from "@/components/finance/accounting/types/transaction.types";
+import { TransactionType } from "../types/transaction.types";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -35,14 +35,15 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      console.log("Submitting transaction with data:", data); // Debug log
-      const { error } = await supabase.from("accounting_transactions").insert({
-        amount: parseFloat(data.amount),
-        type: data.type as TransactionType,
-        description: data.description,
-        transaction_date: new Date().toISOString(),
-        category_id: data.category_id,
-      });
+      const { error } = await supabase
+        .from("accounting_transactions")
+        .insert({
+          amount: data.amount.toString(), // Convert to string for storage
+          type: data.type as TransactionType,
+          description: data.description,
+          transaction_date: new Date().toISOString(),
+          category_id: data.category_id,
+        });
 
       if (error) throw error;
 

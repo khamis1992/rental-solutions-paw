@@ -6,22 +6,7 @@ import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { Loader2 } from "lucide-react";
-
-interface Category {
-  id: string;
-  name: string;
-  type: string;
-  budget_limit: number | null;
-  budget_period: string | null;
-}
-
-interface Transaction {
-  id: string;
-  amount: number;
-  type: 'INCOME' | 'EXPENSE';
-  category: Category;
-  transaction_date: string;
-}
+import { Transaction } from "./types/transaction.types";
 
 export const FinancialDashboard = () => {
   const { data: financialData, isLoading } = useQuery({
@@ -36,7 +21,12 @@ export const FinancialDashboard = () => {
         .order("transaction_date", { ascending: true });
 
       if (error) throw error;
-      return data as Transaction[];
+      
+      // Convert string amounts to numbers
+      return (data as any[]).map(transaction => ({
+        ...transaction,
+        amount: parseFloat(transaction.amount) || 0
+      })) as Transaction[];
     },
   });
 
@@ -166,13 +156,13 @@ export const FinancialDashboard = () => {
       <BudgetTrackingSection 
         transactions={financialData || []}
         categories={Array.from(new Set(financialData?.map(t => t.category)
-          .filter(Boolean))) as Category[]}
+          .filter(Boolean))) as Transaction['category'][]}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
         <RevenueChart 
           data={revenueData} 
-          onExport={() => {}} // Added missing onExport prop
+          onExport={() => {}} 
         />
         <ExpenseBreakdownChart data={expenseData} />
       </div>

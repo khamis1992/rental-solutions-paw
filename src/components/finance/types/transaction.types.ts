@@ -19,12 +19,4 @@ export interface Transaction {
   };
 }
 
-export interface RawPaymentImport {
-  id: string;
-  raw_data: any;
-  is_valid: boolean;
-  created_at: string;
-  error_description?: string;
-}
-
 export type TransactionType = 'INCOME' | 'EXPENSE';
