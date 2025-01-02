@@ -1,53 +1,53 @@
-import { format } from "date-fns";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  description: string;
+  transaction_date: string;
+  cost_type?: string;
+  is_recurring?: boolean;
+}
 
 interface ImportedTransactionsTableProps {
-  transactions: any[];
+  transactions: Transaction[];
 }
 
 export const ImportedTransactionsTable = ({ transactions }: ImportedTransactionsTableProps) => {
   return (
-    <div className="mt-8">
-      <h3 className="text-lg font-semibold mb-4">Imported Transactions</h3>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead className="text-right">Amount (QAR)</TableHead>
-              <TableHead>Status</TableHead>
+    <div className="rounded-md border mt-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Cost Type</TableHead>
+            <TableHead className="text-right">Amount (QAR)</TableHead>
+            <TableHead>Recurring</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.map((transaction) => (
+            <TableRow key={transaction.id}>
+              <TableCell>
+                {new Date(transaction.transaction_date).toLocaleDateString()}
+              </TableCell>
+              <TableCell>{transaction.type}</TableCell>
+              <TableCell>{transaction.description}</TableCell>
+              <TableCell>{transaction.cost_type || 'N/A'}</TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(transaction.amount)}
+              </TableCell>
+              <TableCell>
+                {transaction.is_recurring ? 'Yes' : 'No'}
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell>
-                  {format(new Date(transaction.payment_date), "PP")}
-                </TableCell>
-                <TableCell>{transaction.customer_name}</TableCell>
-                <TableCell>{transaction.description}</TableCell>
-                <TableCell>{transaction.payment_method}</TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(transaction.amount)}
-                </TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.status === 'completed' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {transaction.status}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
