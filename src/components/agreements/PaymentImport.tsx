@@ -9,7 +9,6 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
 import { Json } from "@/integrations/supabase/types";
-import { format, parse } from "date-fns";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -39,16 +38,11 @@ export const PaymentImport = () => {
     };
   };
 
-  const formatDate = (dateStr: string): string => {
-    try {
-      // Parse the date assuming DD/MM/YYYY format
-      const parsedDate = parse(dateStr, 'dd/MM/yyyy', new Date());
-      // Format it to ISO string
-      return format(parsedDate, 'yyyy-MM-dd');
-    } catch (error) {
-      console.error('Date parsing error:', error);
-      throw new Error(`Invalid date format: ${dateStr}. Expected format: DD/MM/YYYY`);
-    }
+  const formatDateForDB = (dateStr: string): string => {
+    // Split the date string by '/'
+    const [day, month, year] = dateStr.split('/');
+    // Return in YYYY-MM-DD format
+    return `${year}-${month}-${day}`;
   };
 
   const downloadTemplate = () => {
@@ -93,30 +87,40 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            // Process the data and format dates
+            // Process each row and format the date
             const processedData = parsedData.map(row => {
               const formattedRow = { ...row };
               if (typeof row.Payment_Date === 'string') {
-                formattedRow.Payment_Date = formatDate(row.Payment_Date as string);
+                formattedRow.Payment_Date = formatDateForDB(row.Payment_Date as string);
               }
               return formattedRow;
             });
 
-            // Store raw data in Supabase
-            const { error: insertError } = await supabase
-              .from('raw_payment_imports')
-              .insert({
-                raw_data: processedData as Json,
-                is_valid: true,
-                created_at: new Date().toISOString()
-              });
+            // Insert each row individually to avoid batch insert issues
+            for (const row of processedData) {
+              const { error: insertError } = await supabase
+                .from('raw_payment_imports')
+                .insert({
+                  Agreemgent_Number: row.Lease_ID,
+                  Transaction_ID: row.Transaction_ID,
+                  Customer_Name: row.Customer_Name,
+                  License_Plate: row.License_Plate,
+                  Amount: row.Amount,
+                  Payment_Method: row.Payment_Method,
+                  Description: row.Description,
+                  Payment_Date: row.Payment_Date,
+                  Type: row.Type,
+                  Status: row.Status,
+                  is_valid: true
+                });
 
-            if (insertError) {
-              console.error('Raw data import error:', insertError);
-              toast.error('Failed to store raw data');
-            } else {
-              toast.success('Raw data imported successfully');
+              if (insertError) {
+                console.error('Row insert error:', insertError);
+                toast.error(`Failed to insert row: ${insertError.message}`);
+              }
             }
+
+            toast.success('Data imported successfully');
           },
           error: (error) => {
             console.error('CSV Parse Error:', error);
