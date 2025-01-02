@@ -3289,52 +3289,52 @@ export type Database = {
       }
       raw_payment_imports: {
         Row: {
-          agreement_number: string | null
-          amount: number | null
+          Agreement_Number: string | null
+          Amount: number | null
           created_at: string | null
-          customer_name: string | null
-          description: string | null
+          Customer_Name: string | null
+          Description: string | null
           error_description: string | null
           id: string
           is_valid: boolean | null
-          license_plate: string | null
-          payment_date: string | null
-          payment_method: string | null
-          status: string | null
-          transaction_id: string | null
-          type: string | null
+          License_Plate: string | null
+          Payment_Date: string | null
+          Payment_Method: string | null
+          Status: string | null
+          Transaction_ID: string | null
+          Type: string | null
         }
         Insert: {
-          agreement_number?: string | null
-          amount?: number | null
+          Agreement_Number?: string | null
+          Amount?: number | null
           created_at?: string | null
-          customer_name?: string | null
-          description?: string | null
+          Customer_Name?: string | null
+          Description?: string | null
           error_description?: string | null
           id?: string
           is_valid?: boolean | null
-          license_plate?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          transaction_id?: string | null
-          type?: string | null
+          License_Plate?: string | null
+          Payment_Date?: string | null
+          Payment_Method?: string | null
+          Status?: string | null
+          Transaction_ID?: string | null
+          Type?: string | null
         }
         Update: {
-          agreement_number?: string | null
-          amount?: number | null
+          Agreement_Number?: string | null
+          Amount?: number | null
           created_at?: string | null
-          customer_name?: string | null
-          description?: string | null
+          Customer_Name?: string | null
+          Description?: string | null
           error_description?: string | null
           id?: string
           is_valid?: boolean | null
-          license_plate?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          transaction_id?: string | null
-          type?: string | null
+          License_Plate?: string | null
+          Payment_Date?: string | null
+          Payment_Method?: string | null
+          Status?: string | null
+          Transaction_ID?: string | null
+          Type?: string | null
         }
         Relationships: []
       }
