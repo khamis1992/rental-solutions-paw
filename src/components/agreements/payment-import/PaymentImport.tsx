@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import Papa from 'papaparse';
-import { AccountingTransaction } from "../../finance/types/transaction.types";
+import { Json } from "@/integrations/supabase/types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -20,7 +20,23 @@ const REQUIRED_FIELDS = [
   'Lease_ID'
 ] as const;
 
-type ImportedData = Record<string, string>;
+type ImportedData = Record<string, unknown>;
+
+// Moved outside component to prevent recreation
+const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
+  const normalizedHeaders = headers.map(h => h.trim());
+  const missingFields = REQUIRED_FIELDS.filter(
+    field => !normalizedHeaders.includes(field)
+  );
+  return {
+    isValid: missingFields.length === 0,
+    missingFields
+  };
+};
+
+// Template content moved outside to prevent recreation
+const CSV_TEMPLATE_CONTENT = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
+                           "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -28,22 +44,8 @@ export const PaymentImport = () => {
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
-  const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
-    const normalizedHeaders = headers.map(h => h.trim());
-    const missingFields = REQUIRED_FIELDS.filter(
-      field => !normalizedHeaders.includes(field)
-    );
-    return {
-      isValid: missingFields.length === 0,
-      missingFields
-    };
-  };
-
-  const downloadTemplate = () => {
-    const csvContent = "Amount,Payment_Date,Payment_Method,Status,Description,Transaction_ID,Lease_ID\n" +
-                      "1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here";
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+  const downloadTemplate = useCallback(() => {
+    const blob = new Blob([CSV_TEMPLATE_CONTENT], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.setAttribute('hidden', '');
@@ -52,9 +54,9 @@ export const PaymentImport = () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  };
+  }, []);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -81,26 +83,23 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            const transformedData: Partial<AccountingTransaction>[] = parsedData.map(row => ({
-              amount: row.Amount,
-              transaction_date: row.Payment_Date,
-              payment_method: row.Payment_Method,
-              status: row.Status,
-              description: row.Description,
-              transaction_id: row.Transaction_ID,
-              agreement_number: row.Lease_ID
-            }));
+            // Store raw data in Supabase with proper typing
+            const rawData = {
+              raw_data: JSON.stringify(parsedData) as Json,
+              is_valid: true,
+              created_at: new Date().toISOString()
+            };
 
             const { error: insertError } = await supabase
-              .from('accounting_transactions')
-              .insert(transformedData);
+              .from('raw_payment_imports')
+              .insert(rawData);
 
             if (insertError) {
-              console.error('Data import error:', insertError);
-              toast.error('Failed to store data');
+              console.error('Raw data import error:', insertError);
+              toast.error('Failed to store raw data');
             } else {
-              toast.success('Data imported successfully');
-              await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+              toast.success('Raw data imported successfully');
+              await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
             }
           },
           error: (error) => {
@@ -119,7 +118,7 @@ export const PaymentImport = () => {
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [queryClient]);
 
   return (
     <div className="space-y-4">
@@ -149,7 +148,7 @@ export const PaymentImport = () => {
       {importedData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Imported Data</CardTitle>
+            <CardTitle>Imported Raw Data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
@@ -166,7 +165,7 @@ export const PaymentImport = () => {
                     <TableRow key={index}>
                       {headers.map((header) => (
                         <TableCell key={`${index}-${header}`}>
-                          {String(row[header] || '')}
+                          {String(row[header])}
                         </TableCell>
                       ))}
                     </TableRow>

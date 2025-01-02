@@ -3,7 +3,6 @@ import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboar
 import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
 import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
 import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
-import { TransactionList } from "@/components/finance/transactions/TransactionList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Finance = () => {
@@ -29,7 +28,7 @@ const Finance = () => {
         </TabsContent>
 
         <TabsContent value="transactions">
-          <TransactionList />
+          {/* Transaction management components will go here */}
         </TabsContent>
 
         <TabsContent value="import">

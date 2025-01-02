@@ -1,8 +1,6 @@
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AccountingTransaction } from "../types/transaction.types";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -11,77 +9,117 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { Eye, Pencil, Plus, Trash } from "lucide-react";
+import { TransactionDetailsDialog } from "./TransactionDetailsDialog";
+import { TransactionDialog } from "./TransactionDialog";
+import { toast } from "sonner";
+import { TransactionType } from "../accounting/types/transaction.types";
 
 export const TransactionList = () => {
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
+      console.log("Fetching transactions"); // Debug log
       const { data, error } = await supabase
         .from("accounting_transactions")
-        .select("*")
+        .select(`
+          *,
+          category:category_id (
+            name,
+            type
+          )
+        `)
         .order("transaction_date", { ascending: false });
 
-      if (error) throw error;
-      return data as AccountingTransaction[];
+      if (error) {
+        toast.error("Failed to load transactions");
+        throw error;
+      }
+
+      console.log("Fetched transactions:", data); // Debug log
+      return data;
     },
   });
 
+  const handleViewDetails = (transaction) => {
+    setSelectedTransaction(transaction);
+    setIsDetailsOpen(true);
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <div>Loading transactions...</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Transaction ID</TableHead>
-              <TableHead>Agreement Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>License Plate</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Amount (QAR)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions?.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell>
-                  {transaction.transaction_date ? format(new Date(transaction.transaction_date), "PP") : "N/A"}
-                </TableCell>
-                <TableCell>{transaction.transaction_id}</TableCell>
-                <TableCell>{transaction.agreement_number}</TableCell>
-                <TableCell>{transaction.customer_name}</TableCell>
-                <TableCell>{transaction.license_plate}</TableCell>
-                <TableCell>{transaction.type}</TableCell>
-                <TableCell>{transaction.payment_method}</TableCell>
-                <TableCell>{transaction.description}</TableCell>
-                <TableCell>{transaction.status}</TableCell>
-                <TableCell className="text-right">
-                  {transaction.amount ? formatCurrency(parseFloat(transaction.amount)) : "N/A"}
-                </TableCell>
-              </TableRow>
-            ))}
-            {!transactions?.length && (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center text-muted-foreground">
-                  No transactions found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+    <div>
+      <div className="mb-4">
+        <Button onClick={() => setIsAddOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Transaction
+        </Button>
       </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions?.map((transaction) => (
+            <TableRow key={transaction.id}>
+              <TableCell>
+                {format(new Date(transaction.transaction_date), "PP")}
+              </TableCell>
+              <TableCell>{transaction.description}</TableCell>
+              <TableCell>{transaction.category?.name || "Uncategorized"}</TableCell>
+              <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
+              <TableCell>
+                {transaction.type === TransactionType.INCOME ? "Income" : "Expense"}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleViewDetails(transaction)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon">
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <TransactionDialog
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+      />
+
+      <TransactionDetailsDialog
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 };

@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from 'papaparse';
-import { AccountingTransaction } from "../finance/types/transaction.types";
+import { Json } from "@/integrations/supabase/types";
 
 const REQUIRED_FIELDS = [
   'Amount',
@@ -20,7 +20,7 @@ const REQUIRED_FIELDS = [
   'Lease_ID'
 ] as const;
 
-type ImportedData = Record<string, string>;
+type ImportedData = Record<string, unknown>;
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -80,25 +80,22 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            const transformedData: Partial<AccountingTransaction>[] = parsedData.map(row => ({
-              amount: row.Amount,
-              transaction_date: row.Payment_Date,
-              payment_method: row.Payment_Method,
-              status: row.Status,
-              description: row.Description,
-              transaction_id: row.Transaction_ID,
-              agreement_number: row.Lease_ID
-            }));
+            // Store raw data in Supabase with proper typing
+            const rawData = {
+              raw_data: JSON.stringify(parsedData) as Json,
+              is_valid: true,
+              created_at: new Date().toISOString()
+            };
 
             const { error: insertError } = await supabase
-              .from('accounting_transactions')
-              .insert(transformedData);
+              .from('raw_payment_imports')
+              .insert(rawData);
 
             if (insertError) {
-              console.error('Data import error:', insertError);
-              toast.error('Failed to store data');
+              console.error('Raw data import error:', insertError);
+              toast.error('Failed to store raw data');
             } else {
-              toast.success('Data imported successfully');
+              toast.success('Raw data imported successfully');
             }
           },
           error: (error) => {
@@ -145,7 +142,7 @@ export const PaymentImport = () => {
       {importedData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Imported Data</CardTitle>
+            <CardTitle>Imported Raw Data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
@@ -162,7 +159,7 @@ export const PaymentImport = () => {
                     <TableRow key={index}>
                       {headers.map((header) => (
                         <TableCell key={`${index}-${header}`}>
-                          {String(row[header] || '')}
+                          {String(row[header])}
                         </TableCell>
                       ))}
                     </TableRow>

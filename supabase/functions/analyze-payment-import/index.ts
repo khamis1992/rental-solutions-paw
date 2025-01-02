@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { validateAndRepairRow } from './validator.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../_shared/cors.ts';
 
 interface AnalysisResult {
   success: boolean;
@@ -18,7 +14,6 @@ interface AnalysisResult {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,45 +21,16 @@ serve(async (req) => {
   try {
     console.log('Starting payment import analysis...');
     
-    // Validate content type
-    const contentType = req.headers.get('content-type');
-    if (!contentType || !contentType.includes('multipart/form-data')) {
-      console.error('Invalid content type:', contentType);
-      throw new Error('Invalid content type. Expected multipart/form-data');
-    }
-
-    let formData;
-    try {
-      formData = await req.formData();
-    } catch (error) {
-      console.error('Error parsing form data:', error);
-      throw new Error('Failed to parse form data');
-    }
-
+    const formData = await req.formData();
     const file = formData.get('file');
+
     if (!file || !(file instanceof File)) {
-      console.error('No file uploaded or invalid file');
-      throw new Error('No file uploaded or invalid file');
+      throw new Error('No file uploaded');
     }
 
-    console.log('File received:', file.name, 'Size:', file.size);
-
-    let csvContent;
-    try {
-      csvContent = await file.text();
-      console.log('CSV content length:', csvContent.length);
-    } catch (error) {
-      console.error('Error reading file content:', error);
-      throw new Error('Failed to read file content');
-    }
-
+    const csvContent = await file.text();
     const lines = csvContent.split('\n').filter(line => line.trim());
-    if (lines.length < 2) {
-      throw new Error('File is empty or contains only headers');
-    }
-
     const headers = lines[0].split(',').map(h => h.trim());
-    console.log('Headers found:', headers);
 
     const requiredFields = [
       'Amount',
@@ -81,7 +47,6 @@ serve(async (req) => {
     );
 
     if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields);
       return new Response(
         JSON.stringify({
           success: false,
@@ -104,8 +69,6 @@ serve(async (req) => {
     const suggestions: string[] = [];
     const repairedData: any[] = [];
     const allRepairs: string[] = [];
-
-    console.log('Processing', rows.length, 'rows');
 
     rows.forEach((row, index) => {
       const values = row.split(',').map(v => v.trim());
