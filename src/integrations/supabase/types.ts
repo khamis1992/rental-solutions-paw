@@ -3289,25 +3289,52 @@ export type Database = {
       }
       raw_payment_imports: {
         Row: {
+          agreement_number: string | null
+          amount: number | null
           created_at: string | null
+          customer_name: string | null
+          description: string | null
           error_description: string | null
           id: string
           is_valid: boolean | null
-          raw_data: Json
+          license_plate: string | null
+          payment_date: string | null
+          payment_method: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
         }
         Insert: {
+          agreement_number?: string | null
+          amount?: number | null
           created_at?: string | null
+          customer_name?: string | null
+          description?: string | null
           error_description?: string | null
           id?: string
           is_valid?: boolean | null
-          raw_data: Json
+          license_plate?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
         }
         Update: {
+          agreement_number?: string | null
+          amount?: number | null
           created_at?: string | null
+          customer_name?: string | null
+          description?: string | null
           error_description?: string | null
           id?: string
           is_valid?: boolean | null
-          raw_data?: Json
+          license_plate?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
         }
         Relationships: []
       }
