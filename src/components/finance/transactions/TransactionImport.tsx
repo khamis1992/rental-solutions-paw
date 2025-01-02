@@ -58,7 +58,7 @@ export const TransactionImport = () => {
             const { error: insertError } = await supabase
               .from('raw_transaction_imports')
               .insert({
-                raw_data: results.data,
+                raw_data: JSON.stringify(results.data),
                 is_valid: true
               });
 
@@ -110,7 +110,7 @@ export const TransactionImport = () => {
         </div>
 
         {importedData.length > 0 && (
-          <div className="rounded-md border">
+          <div className="rounded-md border mt-4">
             <Table>
               <TableHeader>
                 <TableRow>
