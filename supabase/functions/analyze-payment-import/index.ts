@@ -16,9 +16,20 @@ serve(async (req) => {
 
     // Validate request content type
     const contentType = req.headers.get('content-type');
+    console.log('Content-Type:', contentType);
+    
     if (!contentType || !contentType.includes('multipart/form-data')) {
       console.error('Invalid content type:', contentType);
-      throw new Error('Invalid content type. Expected multipart/form-data');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid content type. Expected multipart/form-data'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     // Get the form data from the request
@@ -27,15 +38,33 @@ serve(async (req) => {
       formData = await req.formData();
       console.log('Form data received');
     } catch (error) {
-      console.error('Error parsing form data:', error);
-      throw new Error('Failed to parse form data');
+      console.error('Form data parsing error:', error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to parse form data'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     // Get the file from form data
     const file = formData.get('file');
     if (!file || !(file instanceof File)) {
       console.error('No file uploaded or invalid file');
-      throw new Error('No file uploaded or invalid file format');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'No file uploaded or invalid file format'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     console.log('File received:', file.name, 'Size:', file.size);
@@ -44,21 +73,50 @@ serve(async (req) => {
     let fileContent;
     try {
       fileContent = await file.text();
+      console.log('File content read successfully');
+      
       if (!fileContent || fileContent.trim() === '') {
         console.error('Empty file content');
-        throw new Error('File is empty');
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'File is empty'
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        );
       }
       console.log('File content length:', fileContent.length);
     } catch (error) {
-      console.error('Error reading file content:', error);
-      throw new Error('Failed to read file content');
+      console.error('Error reading file:', error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to read file content'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     // Parse CSV content
     const lines = fileContent.split('\n').filter(line => line.trim());
     if (lines.length < 2) {
       console.error('File has no data rows');
-      throw new Error('File must contain headers and at least one data row');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'File must contain headers and at least one data row'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     const headers = lines[0].split(',').map(h => h.trim());
@@ -97,31 +155,46 @@ serve(async (req) => {
 
     // Parse data rows with validation
     const data = [];
+    const errors = [];
+    
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      if (values.length === headers.length) {
-        const row = {};
-        headers.forEach((header, index) => {
-          row[header] = values[index] || '';
-        });
-        data.push(row);
-      } else {
-        console.warn(`Skipping invalid row ${i + 1}: incorrect number of columns`);
+      try {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length === headers.length) {
+          const row = {};
+          headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+          });
+          data.push(row);
+        } else {
+          console.warn(`Invalid row ${i + 1}: incorrect number of columns`);
+          errors.push(`Row ${i + 1} has incorrect number of columns`);
+        }
+      } catch (error) {
+        console.error(`Error processing row ${i + 1}:`, error);
+        errors.push(`Error in row ${i + 1}: ${error.message}`);
       }
     }
 
     console.log('Successfully parsed', data.length, 'rows');
+    if (errors.length > 0) {
+      console.log('Found', errors.length, 'errors during parsing');
+    }
 
-    // Analyze the data
+    // Prepare analysis result
     const analysis = {
       success: true,
       totalRows: data.length,
       validRows: data.length,
-      invalidRows: 0,
+      invalidRows: errors.length,
       totalAmount: data.reduce((sum, row) => sum + (parseFloat(row['Amount']) || 0), 0),
       rawData: data,
-      issues: [],
-      suggestions: []
+      issues: errors.length > 0 ? errors : [],
+      suggestions: errors.length > 0 ? [
+        'Ensure all rows have the correct number of columns',
+        'Check for any special characters that might affect CSV parsing',
+        'Verify that all required fields have valid values'
+      ] : []
     };
 
     console.log('Analysis completed:', analysis);
