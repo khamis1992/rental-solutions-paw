@@ -80,9 +80,15 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
+            // Generate a UUID for each row
+            const dataWithIds = parsedData.map(row => ({
+              id: crypto.randomUUID(),
+              ...row
+            }));
+
             // Store raw data in Supabase with proper typing
             const rawData = {
-              raw_data: JSON.stringify(parsedData) as Json,
+              raw_data: JSON.stringify(dataWithIds) as Json,
               is_valid: true,
               created_at: new Date().toISOString()
             };
