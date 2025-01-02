@@ -1,18 +1,9 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-
-interface Transaction {
-  id: string;
-  type: string;
-  amount: number;
-  description: string;
-  transaction_date: string;
-  cost_type?: string;
-  is_recurring?: boolean;
-}
+import { AccountingTransaction } from "../types/transaction.types";
 
 interface ImportedTransactionsTableProps {
-  transactions: Transaction[];
+  transactions: AccountingTransaction[];
 }
 
 export const ImportedTransactionsTable = ({ transactions }: ImportedTransactionsTableProps) => {
@@ -22,30 +13,39 @@ export const ImportedTransactionsTable = ({ transactions }: ImportedTransactions
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead>Transaction ID</TableHead>
+            <TableHead>Agreement Number</TableHead>
+            <TableHead>Customer</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>Cost Type</TableHead>
+            <TableHead>Payment Method</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Amount (QAR)</TableHead>
-            <TableHead>Recurring</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell>
-                {new Date(transaction.transaction_date).toLocaleDateString()}
+                {transaction.transaction_date ? new Date(transaction.transaction_date).toLocaleDateString() : 'N/A'}
               </TableCell>
-              <TableCell>{transaction.type}</TableCell>
-              <TableCell>{transaction.description}</TableCell>
-              <TableCell>{transaction.cost_type || 'N/A'}</TableCell>
+              <TableCell>{transaction.transaction_id || 'N/A'}</TableCell>
+              <TableCell>{transaction.agreement_number || 'N/A'}</TableCell>
+              <TableCell>{transaction.customer_name || 'N/A'}</TableCell>
+              <TableCell>{transaction.description || 'N/A'}</TableCell>
+              <TableCell>{transaction.payment_method || 'N/A'}</TableCell>
+              <TableCell>{transaction.status || 'N/A'}</TableCell>
               <TableCell className="text-right">
-                {formatCurrency(transaction.amount)}
-              </TableCell>
-              <TableCell>
-                {transaction.is_recurring ? 'Yes' : 'No'}
+                {transaction.amount ? formatCurrency(parseFloat(transaction.amount)) : 'N/A'}
               </TableCell>
             </TableRow>
           ))}
+          {!transactions.length && (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
+                No transactions found
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

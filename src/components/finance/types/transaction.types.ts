@@ -1,8 +1,3 @@
-export enum TransactionType {
-  INCOME = 'INCOME',
-  EXPENSE = 'EXPENSE'
-}
-
 export interface AccountingTransaction {
   id: string;
   transaction_id: string | null;
@@ -19,14 +14,4 @@ export interface AccountingTransaction {
   receipt_url: string | null;
   created_at: string | null;
   updated_at: string | null;
-}
-
-export interface TransactionFormData {
-  type: string;
-  amount: string;
-  category_id?: string;
-  description: string;
-  transaction_date: string;
-  receipt?: FileList;
-  payment_method?: string;
 }
