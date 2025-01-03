@@ -97,10 +97,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
               min: {
                 value: 0,
                 message: "Amount paid must be positive"
-              },
-              max: {
-                value: totalAmount,
-                message: "Amount paid cannot exceed total amount"
               }
             })}
           />

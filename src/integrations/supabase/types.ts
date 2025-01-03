@@ -1469,6 +1469,7 @@ export type Database = {
       }
       leases: {
         Row: {
+          agreement_duration: unknown
           agreement_number: string | null
           agreement_sequence: number
           agreement_type: Database["public"]["Enums"]["agreement_type"]
@@ -1511,6 +1512,7 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          agreement_duration: unknown
           agreement_number?: string | null
           agreement_sequence?: number
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
@@ -1553,6 +1555,7 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          agreement_duration?: unknown
           agreement_number?: string | null
           agreement_sequence?: number
           agreement_type?: Database["public"]["Enums"]["agreement_type"]
