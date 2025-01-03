@@ -63,7 +63,7 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           status: 'pending_payment',
           down_payment: data.downPayment,
           notes: data.notes,
-          agreement_duration: `${data.agreementDuration} months`::interval
+          agreement_duration: data.agreementDuration
         })
         .select()
         .single();
