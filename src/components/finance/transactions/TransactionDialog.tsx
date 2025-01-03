@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TransactionType, TransactionFormData } from "../types/transaction.types";
+import { TransactionFormData, PaymentMethodType } from "../types/transaction.types";
 import { Loader2 } from "lucide-react";
 
 interface TransactionDialogProps {
@@ -17,11 +17,12 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<TransactionFormData>({
-    type: TransactionType.INCOME,
+    type: "INCOME",
     amount: 0,
     description: "",
     transaction_date: new Date().toISOString().split('T')[0],
-    paymentMethod: "cash"
+    payment_method: "Cash",
+    category_id: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,10 +34,11 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
         .from('accounting_transactions')
         .insert({
           type: formData.type,
-          amount: formData.amount,
+          amount: formData.amount.toString(),
           description: formData.description,
           transaction_date: formData.transaction_date,
-          payment_method: formData.paymentMethod
+          payment_method: formData.payment_method,
+          category_id: formData.category_id
         });
 
       if (error) throw error;
@@ -88,8 +90,8 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
           <div>
             <label className="text-sm font-medium">Payment Method</label>
             <Input
-              value={formData.paymentMethod}
-              onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+              value={formData.payment_method}
+              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value as PaymentMethodType })}
               required
             />
           </div>

@@ -21,7 +21,7 @@ export interface Category {
 
 export interface Transaction {
   id: string;
-  type: TransactionType;
+  type: "INCOME" | "EXPENSE";
   amount: number;
   description: string;
   transaction_date: string;
@@ -32,6 +32,15 @@ export interface Transaction {
   updated_at: string;
   payment_method: PaymentMethodType;
   status: string;
+}
+
+export interface TransactionFormData {
+  amount: number;
+  description: string;
+  category_id: string;
+  payment_method: PaymentMethodType;
+  transaction_date: string;
+  type: "INCOME" | "EXPENSE";
 }
 
 export interface RawPaymentImport {
@@ -56,44 +65,4 @@ export interface PaymentAssignmentResult {
   agreementNumber: string;
   amountAssigned: number;
   timestamp: string;
-}
-
-export interface TransactionFormData {
-  amount: number;
-  description: string;
-  category_id: string;
-  payment_method: PaymentMethodType;
-  transaction_date: string;
-  type: TransactionType;
-}
-
-export enum TransactionType {
-  LATE_PAYMENT_FEE = 'LATE_PAYMENT_FEE',
-  ADMINISTRATIVE_FEES = 'ADMINISTRATIVE_FEES',
-  VEHICLE_DAMAGE_CHARGE = 'VEHICLE_DAMAGE_CHARGE',
-  TRAFFIC_FINE = 'TRAFFIC_FINE',
-  RENTAL_FEE = 'RENTAL_FEE',
-  ADVANCE_PAYMENT = 'ADVANCE_PAYMENT',
-  OTHER = 'OTHER',
-  INCOME = 'INCOME',
-  EXPENSE = 'EXPENSE'
-}
-
-export interface ImportErrors {
-  skipped: Array<{
-    row: number;
-    data: Record<string, any>;
-    reason: string;
-  }>;
-  failed: Array<{
-    row: number;
-    data?: Record<string, any>;
-    error: string;
-  }>;
-}
-
-export interface ImportLog {
-  status: string;
-  records_processed: number;
-  errors: Json;
 }

@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
-import Papa from 'papaparse';
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { supabase } from "@/integrations/supabase/client";
+import { ImportErrorAnalysis } from "@/components/finance/import/ImportErrorAnalysis";
+import { PaymentMethodType } from "@/components/finance/types/transaction.types";
 
 const REQUIRED_FIELDS = [
   'Transaction_ID',
@@ -27,8 +26,8 @@ type ImportedData = Record<string, unknown>;
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [importedData, setImportedData] = useState<ImportedData[]>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [importErrors, setImportErrors] = useState<any[]>([]);
   const queryClient = useQueryClient();
 
   const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
@@ -84,30 +83,32 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            const rawImport: Partial<RawPaymentImport> = {
-              Transaction_ID: '',
-              Agreement_Number: '',
-              Customer_Name: '',
-              License_Plate: '',
-              Amount: 0,
-              Payment_Method: '',
-              Description: '',
-              Payment_Date: new Date().toISOString(),
-              Type: '',
-              Status: '',
-              is_valid: true
-            };
+            for (const row of parsedData) {
+              const rawImport: Partial<RawPaymentImport> = {
+                Transaction_ID: row.Transaction_ID as string,
+                Agreement_Number: row.Agreement_Number as string,
+                Customer_Name: row.Customer_Name as string,
+                License_Plate: row.License_Plate as string,
+                Amount: Number(row.Amount),
+                Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
+                Description: row.Description as string,
+                Payment_Date: row.Payment_Date as string,
+                Type: row.Type as string,
+                Status: row.Status as string,
+                is_valid: true
+              };
 
-            const { error: insertError } = await supabase
-              .from('raw_payment_imports')
-              .insert(rawImport);
+              const { error: insertError } = await supabase
+                .from('raw_payment_imports')
+                .insert(rawImport);
 
-            if (insertError) {
-              console.error('Raw data import error:', insertError);
-              toast.error('Failed to store raw data');
-            } else {
-              toast.success('Raw data imported successfully');
-              await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+              if (insertError) {
+                console.error('Raw data import error:', insertError);
+                toast.error('Failed to store raw data');
+              } else {
+                toast.success('Raw data imported successfully');
+                await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+              }
             }
           },
           error: (error) => {
@@ -126,6 +127,24 @@ export const PaymentImport = () => {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const normalizePaymentMethod = (method: string): PaymentMethodType => {
+    const methodMap: Record<string, PaymentMethodType> = {
+      'cash': 'Cash',
+      'invoice': 'Invoice',
+      'wire': 'WireTransfer',
+      'wiretransfer': 'WireTransfer',
+      'cheque': 'Cheque',
+      'check': 'Cheque',
+      'deposit': 'Deposit',
+      'onhold': 'On_hold',
+      'on_hold': 'On_hold',
+      'on-hold': 'On_hold'
+    };
+
+    const normalized = method.toLowerCase().replace(/[^a-z]/g, '');
+    return methodMap[normalized] || 'Cash';
   };
 
   return (
@@ -147,42 +166,20 @@ export const PaymentImport = () => {
       </div>
       
       {isUploading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Importing data...
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Importing payments...
+          </div>
+          <Progress value={progress} className="h-2" />
         </div>
       )}
 
-      {importedData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Imported Raw Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {headers.map((header) => (
-                      <TableHead key={header}>{header}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {importedData.map((row, index) => (
-                    <TableRow key={index}>
-                      {headers.map((header) => (
-                        <TableCell key={`${index}-${header}`}>
-                          {String(row[header])}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+      {importErrors.length > 0 && (
+        <ImportErrorAnalysis 
+          errors={importErrors}
+          onSuggestionClick={handleSuggestionClick}
+        />
       )}
     </div>
   );
