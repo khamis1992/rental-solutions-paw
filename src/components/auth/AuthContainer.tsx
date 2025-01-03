@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
+import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,7 +43,7 @@ export const AuthContainer = () => {
             <p className="text-gray-600">Please sign in to continue</p>
           </div>
           
-          <SupabaseAuth
+          <Auth
             supabaseClient={supabase}
             appearance={{
               theme: ThemeSupa,

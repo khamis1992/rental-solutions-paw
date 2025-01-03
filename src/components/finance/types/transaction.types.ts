@@ -11,7 +11,6 @@ export enum TransactionType {
 }
 
 export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Transaction {
   id: string;
@@ -24,7 +23,7 @@ export interface Transaction {
   license_plate: string;
   payment_method: PaymentMethodType;
   receipt_url: string;
-  status: PaymentStatus;
+  status: string;
   transaction_date: string;
   type: TransactionType;
   updated_at: string;
@@ -35,6 +34,20 @@ export interface Transaction {
     budget_limit: number;
     budget_period: string;
   };
+}
+
+export interface TransactionFormData {
+  type: TransactionType;
+  amount: number;
+  category_id?: string;
+  description: string;
+  transaction_date: string;
+  receipt?: FileList;
+  cost_type?: 'fixed' | 'variable';
+  is_recurring?: boolean;
+  paymentMethod?: PaymentMethodType;
+  intervalValue?: number;
+  intervalUnit?: 'days' | 'weeks' | 'months';
 }
 
 export interface RawPaymentImport {
@@ -52,18 +65,4 @@ export interface RawPaymentImport {
   is_valid?: boolean;
   error_description?: string;
   created_at?: string;
-}
-
-export interface TransactionFormData {
-  type: TransactionType;
-  amount: number;
-  category_id?: string;
-  description: string;
-  transaction_date: string;
-  receipt?: FileList;
-  cost_type?: 'fixed' | 'variable';
-  is_recurring?: boolean;
-  paymentMethod?: PaymentMethodType;
-  intervalValue?: number;
-  intervalUnit?: 'days' | 'weeks' | 'months';
 }
