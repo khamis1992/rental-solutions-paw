@@ -27,7 +27,7 @@ export interface Transaction {
   transaction_date: string;
   type: TransactionType;
   updated_at: string;
-  category: {
+  category?: {
     id: string;
     name: string;
     type: string;
