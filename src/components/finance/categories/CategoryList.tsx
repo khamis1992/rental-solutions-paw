@@ -1,27 +1,22 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { CategoryDialog } from "./CategoryDialog";
-import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 
 export const CategoryList = () => {
   const [showDialog, setShowDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounting_categories")
-        .select(`
-          *,
-          transactions:accounting_transactions(
-            amount
-          )
-        `)
+        .select("*")
         .order("name");
 
       if (error) throw error;
@@ -29,65 +24,82 @@ export const CategoryList = () => {
     },
   });
 
+  const handleEdit = (category: any) => {
+    setSelectedCategory(category);
+    setShowDialog(true);
+  };
+
   if (isLoading) {
     return <div>Loading categories...</div>;
   }
+
+  const calculateTotalBudget = () => {
+    if (!categories) return 0;
+    return categories.reduce((total, category) => {
+      const budget = Number(category.budget_limit) || 0;
+      return total + budget;
+    }, 0);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Categories</h2>
-        <Button onClick={() => setShowDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Category
-        </Button>
+        <Button onClick={() => setShowDialog(true)}>Add Category</Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Transaction Categories</CardTitle>
+          <CardTitle>Categories Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Budget Limit</TableHead>
-                <TableHead>Budget Period</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories?.map((category) => {
-                const totalAmount = category.transactions?.reduce(
-                  (sum: number, transaction: { amount: string | number }) => 
-                    sum + Number(transaction.amount), 
-                  0
-                ) || 0;
-
-                return (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Budget Limit</TableHead>
+                  <TableHead>Budget Period</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categories?.map((category) => (
                   <TableRow key={category.id}>
                     <TableCell>{category.name}</TableCell>
                     <TableCell>{category.type}</TableCell>
-                    <TableCell>{formatCurrency(totalAmount)}</TableCell>
                     <TableCell>
-                      {category.budget_limit
-                        ? formatCurrency(category.budget_limit)
-                        : "N/A"}
+                      {category.budget_limit ? formatCurrency(Number(category.budget_limit)) : '-'}
                     </TableCell>
-                    <TableCell>{category.budget_period || "N/A"}</TableCell>
+                    <TableCell>{category.budget_period || '-'}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(category)}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="mt-4 text-right">
+            <p className="text-sm text-muted-foreground">
+              Total Budget: {formatCurrency(calculateTotalBudget())}
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       <CategoryDialog
         open={showDialog}
         onOpenChange={setShowDialog}
+        category={selectedCategory}
       />
     </div>
   );

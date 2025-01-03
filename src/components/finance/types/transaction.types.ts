@@ -19,7 +19,7 @@ export interface Transaction {
   transaction_date: string | null;
   type: TransactionType;
   updated_at: string | null;
-  category: {
+  category?: {
     id: string;
     name: string;
     type: string;
@@ -64,4 +64,18 @@ export interface PaymentAnalysisResult {
   rawData: PaymentImportData[];
   issues?: string[];
   suggestions?: string[];
+}
+
+export interface TransactionFormData {
+  type: TransactionType;
+  amount: number;
+  category_id?: string;
+  description: string;
+  transaction_date: string;
+  receipt?: FileList;
+  cost_type?: 'fixed' | 'variable';
+  is_recurring?: boolean;
+  paymentMethod?: PaymentMethodType;
+  intervalValue?: number;
+  intervalUnit?: 'days' | 'weeks' | 'months';
 }

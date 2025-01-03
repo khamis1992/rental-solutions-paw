@@ -24,7 +24,7 @@ export const TransactionImport = () => {
           const columns = row.split(',');
           const transactionData = {
             agreement_number: columns[0],
-            amount: parseFloat(columns[1]),
+            amount: columns[1], // Keep as string for database insert
             transaction_date: columns[2],
             payment_method: columns[3],
             status: columns[4],
