@@ -14,6 +14,8 @@ import { usePaymentForm } from "../hooks/usePaymentForm";
 import { RecurringPaymentFields } from "../payments/RecurringPaymentFields";
 import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
+import { paymentService } from "@/services/payment/paymentService";
+import { toast } from "sonner";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -24,9 +26,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     register,
     control,
     handleSubmit,
-    onSubmit,
-    isRecurring,
-    setIsRecurring,
     errors,
     isSubmitting,
     lateFineAmount,
@@ -34,7 +33,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     baseAmount,
     totalAmount,
     calculateLateFine,
-    setBaseAmount,
     watch
   } = usePaymentForm(agreementId);
 
@@ -42,7 +40,21 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     calculateLateFine();
   }, [calculateLateFine]);
 
-  const amountPaid = watch('amountPaid') || 0;
+  const onSubmit = async (data: any) => {
+    try {
+      await paymentService.processPayment({
+        leaseId: agreementId,
+        amount: data.amountPaid,
+        paymentMethod: data.paymentMethod,
+        description: data.description
+      });
+      
+      toast.success("Payment processed successfully");
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      toast.error("Failed to process payment");
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -142,20 +154,12 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         </div>
       </div>
 
-      {isRecurring && (
-        <RecurringPaymentFields
-          register={register}
-          control={control}
-          errors={errors}
-        />
-      )}
-
       <Button 
         type="submit" 
         disabled={isSubmitting}
         className="w-full"
       >
-        {isSubmitting ? "Adding Payment..." : "Add Payment"}
+        {isSubmitting ? "Processing Payment..." : "Add Payment"}
       </Button>
     </form>
   );

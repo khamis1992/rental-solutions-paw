@@ -3706,6 +3706,72 @@ export type Database = {
           },
         ]
       }
+      service_communication_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          request_type: string
+          response_time: number | null
+          source_service: string
+          status_code: number | null
+          target_service: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          request_type: string
+          response_time?: number | null
+          source_service: string
+          status_code?: number | null
+          target_service: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          request_type?: string
+          response_time?: number | null
+          source_service?: string
+          status_code?: number | null
+          target_service?: string
+        }
+        Relationships: []
+      }
+      service_registry: {
+        Row: {
+          api_version: string
+          created_at: string | null
+          endpoint_url: string
+          health_status: string | null
+          id: string
+          last_health_check: string | null
+          service_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_version: string
+          created_at?: string | null
+          endpoint_url: string
+          health_status?: string | null
+          id?: string
+          last_health_check?: string | null
+          service_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_version?: string
+          created_at?: string | null
+          endpoint_url?: string
+          health_status?: string | null
+          id?: string
+          last_health_check?: string | null
+          service_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       settlement_payments: {
         Row: {
           amount: number
