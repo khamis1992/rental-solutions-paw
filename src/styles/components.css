@@ -29,18 +29,14 @@
   .dialog-content {
     @apply max-w-[min(calc(100vw-2rem),500px)] mx-auto;
   }
-}
 
-/* Accessibility Enhancements */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
-}
-
-.focus-visible {
-  @apply outline-none ring-2 ring-offset-2 ring-primary;
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }
