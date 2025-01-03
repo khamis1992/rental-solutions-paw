@@ -1,190 +1,155 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Brain, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
-import { RawPaymentImport } from "../types/transaction.types";
+import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { Loader2 } from "lucide-react";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
 
-  const { data: rawTransactions, isLoading } = useQuery({
-    queryKey: ["raw-payment-imports"],
+  const { data: rawPayments, isLoading } = useQuery({
+    queryKey: ['raw-payment-imports'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("raw_payment_imports")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from('raw_payment_imports')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching raw payments:', error);
+        toast.error('Failed to fetch raw payments');
+        throw error;
+      }
+
       return data as RawPaymentImport[];
-    },
-  });
-
-  const analyzePaymentMutation = useMutation({
-    mutationFn: async (paymentId: string) => {
-      const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
-        body: { rawPaymentId: paymentId }
-      });
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
-      queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      toast.success("Payment analyzed and processed successfully");
-    },
-    onError: (error) => {
-      console.error('Payment analysis error:', error);
-      toast.error("Failed to analyze payment");
     }
   });
 
-  const analyzeAllPaymentsMutation = useMutation({
-    mutationFn: async () => {
-      if (!rawTransactions) return;
-      
-      const unprocessedPayments = rawTransactions.filter(payment => !payment.is_valid);
-      const results = [];
+  const analyzeMutation = useMutation({
+    mutationFn: async (rawPaymentId: string) => {
+      console.log('Analyzing payment:', rawPaymentId);
+      const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
+        body: { rawPaymentId }
+      });
 
-      for (const payment of unprocessedPayments) {
-        if (!payment.id) continue;
-        
-        try {
-          const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
-            body: { rawPaymentId: payment.id }
-          });
-          
-          if (error) {
-            console.error('Error processing payment:', payment.id, error);
-            results.push({ id: payment.id, success: false, error });
-          } else {
-            results.push({ id: payment.id, success: true, data });
-          }
-        } catch (error) {
-          console.error('Error processing payment:', payment.id, error);
-          results.push({ id: payment.id, success: false, error });
-        }
+      if (error) {
+        console.error('Analysis error:', error);
+        throw error;
       }
 
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+      toast.success('Payment analyzed successfully');
+    },
+    onError: (error: Error) => {
+      console.error('Analysis error:', error);
+      toast.error(error.message || 'Failed to analyze payment');
+    }
+  });
+
+  const analyzeAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!rawPayments) return;
+      
+      const results = [];
+      for (const payment of rawPayments) {
+        if (!payment.is_valid && payment.id) {
+          try {
+            const result = await analyzeMutation.mutateAsync(payment.id);
+            results.push(result);
+          } catch (error) {
+            console.error(`Failed to analyze payment ${payment.id}:`, error);
+            results.push({ error });
+          }
+        }
+      }
       return results;
     },
     onSuccess: (results) => {
-      queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
-      queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      const successCount = results?.filter(r => !r.error).length || 0;
+      const errorCount = results?.filter(r => r.error).length || 0;
       
-      const successCount = results?.filter(r => r.success).length || 0;
-      const failureCount = results?.filter(r => !r.success).length || 0;
-      
-      if (failureCount === 0) {
-        toast.success(`Successfully analyzed all ${successCount} payments`);
-      } else {
-        toast.warning(`Processed ${successCount} payments, ${failureCount} failed. Check console for details.`);
+      if (errorCount > 0) {
+        toast.error(`Failed to analyze ${errorCount} payments`);
       }
+      if (successCount > 0) {
+        toast.success(`Successfully analyzed ${successCount} payments`);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
     },
-    onError: (error) => {
-      console.error('Bulk payment analysis error:', error);
-      toast.error("Failed to analyze payments");
+    onError: (error: Error) => {
+      console.error('Batch analysis error:', error);
+      toast.error('Failed to analyze all payments');
     }
   });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  const hasUnprocessedPayments = rawTransactions?.some(payment => !payment.is_valid);
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
-        {hasUnprocessedPayments && (
-          <Button
-            variant="default"
-            onClick={() => analyzeAllPaymentsMutation.mutate()}
-            disabled={analyzeAllPaymentsMutation.isPending}
-            className="flex items-center gap-2"
-          >
-            {analyzeAllPaymentsMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <PlayCircle className="h-4 w-4" />
-            )}
-            Analyze All
-          </Button>
-        )}
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Transaction ID</TableHead>
-              <TableHead>Agreement Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Amount (QAR)</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Payment Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rawTransactions?.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell>{transaction.Transaction_ID}</TableCell>
-                <TableCell>{transaction.Agreement_Number}</TableCell>
-                <TableCell>{transaction.Customer_Name}</TableCell>
-                <TableCell>{transaction.Amount}</TableCell>
-                <TableCell>{transaction.Payment_Method}</TableCell>
-                <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
-                <TableCell>{transaction.Payment_Date && new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.Type === 'INCOME' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {transaction.Type}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.Status === 'completed' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {transaction.Status}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => transaction.id && analyzePaymentMutation.mutate(transaction.id)}
-                    disabled={transaction.is_valid || analyzePaymentMutation.isPending}
-                    className="flex items-center gap-2"
-                  >
-                    {analyzePaymentMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Brain className="h-4 w-4" />
-                    )}
-                    Analyze
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Raw Payment Import Data</CardTitle>
+        <Button 
+          onClick={() => analyzeAllMutation.mutate()}
+          disabled={analyzeAllMutation.isPending}
+        >
+          {analyzeAllMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            'Analyze All'
+          )}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {rawPayments?.map((payment) => (
+            <Card key={payment.Transaction_ID}>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>Agreement Number:</strong> {payment.Agreement_Number}</p>
+                    <p><strong>Customer Name:</strong> {payment.Customer_Name}</p>
+                    <p><strong>Amount:</strong> {payment.Amount}</p>
+                    <p><strong>Payment Method:</strong> {payment.Payment_Method}</p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant={payment.is_valid ? "outline" : "default"}
+                      onClick={() => payment.id && analyzeMutation.mutate(payment.id)}
+                      disabled={payment.is_valid || analyzeMutation.isPending}
+                    >
+                      {analyzeMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : payment.is_valid ? (
+                        'Validated'
+                      ) : (
+                        'Analyze'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

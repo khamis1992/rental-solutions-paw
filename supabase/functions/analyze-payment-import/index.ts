@@ -1,45 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { corsHeaders } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Valid payment method types from the enum
 const VALID_PAYMENT_METHODS = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'] as const;
 type PaymentMethodType = typeof VALID_PAYMENT_METHODS[number];
 
 function normalizePaymentMethod(method: string): PaymentMethodType {
-  // Convert to title case first
-  const titleCase = method.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  const normalizedMethod = method.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   
-  // Handle special cases
-  switch (titleCase) {
-    case 'Cash':
-      return 'Cash';
+  switch (normalizedMethod) {
+    case 'Cash': return 'Cash';
     case 'Wire':
     case 'Wiretransfer':
-    case 'Wire Transfer':
-      return 'WireTransfer';
+    case 'Wire Transfer': return 'WireTransfer';
     case 'Check':
-    case 'Cheque':
-      return 'Cheque';
-    case 'Invoice':
-      return 'Invoice';
-    case 'Deposit':
-      return 'Deposit';
+    case 'Cheque': return 'Cheque';
+    case 'Invoice': return 'Invoice';
+    case 'Deposit': return 'Deposit';
     case 'Hold':
     case 'On Hold':
-    case 'Onhold':
-      return 'On_hold';
+    case 'Onhold': return 'On_hold';
     default:
+      console.error(`Invalid payment method: ${method}`);
       throw new Error(`Invalid payment method: ${method}`);
   }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -52,7 +39,10 @@ serve(async (req) => {
     const { rawPaymentId } = await req.json();
     console.log('Processing raw payment:', rawPaymentId);
 
-    // Fetch raw payment data
+    if (!rawPaymentId) {
+      throw new Error('Missing rawPaymentId');
+    }
+
     const { data: rawPayment, error: fetchError } = await supabase
       .from('raw_payment_imports')
       .select('*')
@@ -64,19 +54,31 @@ serve(async (req) => {
       throw fetchError;
     }
 
+    if (!rawPayment) {
+      throw new Error(`No payment found with ID: ${rawPaymentId}`);
+    }
+
+    console.log('Raw payment data:', rawPayment);
+
+    // Validate required fields
+    if (!rawPayment.Agreement_Number) {
+      throw new Error('Agreement number is required');
+    }
+
+    if (!rawPayment.Amount || isNaN(Number(rawPayment.Amount))) {
+      throw new Error('Valid amount is required');
+    }
+
     // Normalize payment method
     let normalizedPaymentMethod: PaymentMethodType;
     try {
-      normalizedPaymentMethod = normalizePaymentMethod(rawPayment.Payment_Method);
-      if (!VALID_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
-        throw new Error(`Payment method ${normalizedPaymentMethod} is not valid`);
-      }
+      normalizedPaymentMethod = normalizePaymentMethod(rawPayment.Payment_Method || 'Cash');
     } catch (error) {
       console.error('Payment method normalization error:', error);
       throw error;
     }
 
-    // Find the lease by agreement number
+    // Find the lease
     const { data: lease, error: leaseError } = await supabase
       .from('leases')
       .select('*')
@@ -100,14 +102,16 @@ serve(async (req) => {
     // Process payment
     const paymentData = {
       lease_id: lease.id,
-      amount: parseFloat(rawPayment.Amount),
-      payment_date: rawPayment.Payment_Date,
+      amount: Number(rawPayment.Amount),
+      payment_date: rawPayment.Payment_Date || new Date().toISOString(),
       payment_method: normalizedPaymentMethod,
-      description: rawPayment.Description,
+      description: rawPayment.Description || '',
       status: 'completed',
       type: 'Income',
       transaction_id: rawPayment.Transaction_ID
     };
+
+    console.log('Inserting payment data:', paymentData);
 
     const { error: insertError } = await supabase
       .from('payments')
@@ -146,11 +150,12 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message || 'An unexpected error occurred',
+        details: error
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: error.status || 500
       }
     );
   }

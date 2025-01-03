@@ -65,11 +65,3 @@ export interface PaymentAnalysisResult {
   issues?: string[];
   suggestions?: string[];
 }
-
-export interface TransactionFormData {
-  amount: number;
-  category_id: string;
-  description: string;
-  payment_method: string;
-  type: TransactionType;
-}
