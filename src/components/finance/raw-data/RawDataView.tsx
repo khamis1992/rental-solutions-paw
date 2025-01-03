@@ -1,15 +1,16 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Brain, PlayCircle, Trash2 } from "lucide-react";
+import { Loader2, PlayCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { RawPaymentImport, PaymentAssignmentResult } from "@/components/finance/types/transaction.types";
+import { PaymentAssignmentCard } from "./components/PaymentAssignmentCard";
+import { PaymentTable } from "./components/PaymentTable";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
+  const [assignmentResults, setAssignmentResults] = useState<PaymentAssignmentResult[]>([]);
 
   const { data: rawTransactions, isLoading } = useQuery({
     queryKey: ["raw-payment-imports"],
@@ -18,34 +19,62 @@ export const RawDataView = () => {
         .from("raw_payment_imports")
         .select("*")
         .order("created_at", { ascending: false })
-        .filter('is_valid', 'eq', false); // Only fetch unprocessed payments
+        .filter('is_valid', 'eq', false);
 
       if (error) throw error;
       return data as RawPaymentImport[];
     },
   });
 
-  // Calculate total and unassigned amounts
   const totalAmount = rawTransactions?.reduce((sum, transaction) => 
     sum + (Number(transaction.Amount) || 0), 0) || 0;
 
   const analyzePaymentMutation = useMutation({
     mutationFn: async (paymentId: string) => {
-      const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
-        body: { rawPaymentId: paymentId }
-      });
-      
-      if (error) throw error;
-      return data;
+      const payment = rawTransactions?.find(t => t.id === paymentId);
+      if (!payment) throw new Error("Payment not found");
+
+      // Direct assignment without validation
+      const { error: insertError } = await supabase
+        .from('payments')
+        .insert({
+          lease_id: payment.Agreement_Number, // Direct assignment using Agreement Number
+          amount: payment.Amount,
+          payment_method: payment.Payment_Method,
+          status: 'completed',
+          payment_date: payment.Payment_Date,
+          description: payment.Description,
+          type: payment.Type
+        });
+
+      if (insertError) throw insertError;
+
+      // Update raw payment import status
+      const { error: updateError } = await supabase
+        .from('raw_payment_imports')
+        .update({ is_valid: true })
+        .eq('id', paymentId);
+
+      if (updateError) throw updateError;
+
+      // Log the assignment
+      setAssignmentResults(prev => [...prev, {
+        success: true,
+        agreementNumber: payment.Agreement_Number,
+        amountAssigned: payment.Amount,
+        timestamp: new Date().toISOString()
+      }]);
+
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      toast.success("Payment analyzed and processed successfully");
+      toast.success("Payment assigned successfully");
     },
     onError: (error) => {
-      console.error('Payment analysis error:', error);
-      toast.error("Failed to analyze payment");
+      console.error('Payment assignment error:', error);
+      toast.error("Failed to assign payment");
     }
   });
 
@@ -54,21 +83,17 @@ export const RawDataView = () => {
       const unprocessedPayments = rawTransactions?.filter(payment => !payment.is_valid) || [];
       
       for (const payment of unprocessedPayments) {
-        const { error } = await supabase.functions.invoke('analyze-payment-import', {
-          body: { rawPaymentId: payment.id }
-        });
-        
-        if (error) throw error;
+        await analyzePaymentMutation.mutateAsync(payment.id);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      toast.success("All payments analyzed and processed successfully");
+      toast.success("All payments assigned successfully");
     },
     onError: (error) => {
-      console.error('Bulk payment analysis error:', error);
-      toast.error("Failed to analyze all payments");
+      console.error('Bulk payment assignment error:', error);
+      toast.error("Failed to assign all payments");
     }
   });
 
@@ -84,6 +109,7 @@ export const RawDataView = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
       toast.success("Table cleaned successfully - removed all processed payments");
+      setAssignmentResults([]); // Clear assignment results
     },
     onError: (error) => {
       console.error('Clean table error:', error);
@@ -137,83 +163,16 @@ export const RawDataView = () => {
         </div>
       </div>
 
-      <Card className="bg-muted/50">
-        <CardHeader>
-          <CardTitle className="text-lg">Remaining Unassigned Amount</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{formatCurrency(totalAmount)}</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Total amount from unprocessed payments
-          </p>
-        </CardContent>
-      </Card>
+      <PaymentAssignmentCard 
+        totalAmount={totalAmount}
+        assignmentResults={assignmentResults}
+      />
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Transaction ID</TableHead>
-              <TableHead>Agreement Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Amount (QAR)</TableHead>
-              <TableHead>Payment Method</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Payment Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rawTransactions?.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell>{transaction.Transaction_ID}</TableCell>
-                <TableCell>{transaction.Agreement_Number}</TableCell>
-                <TableCell>{transaction.Customer_Name}</TableCell>
-                <TableCell>{formatCurrency(Number(transaction.Amount))}</TableCell>
-                <TableCell>{transaction.Payment_Method}</TableCell>
-                <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
-                <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.Type === 'INCOME' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {transaction.Type}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    transaction.Status === 'completed' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {transaction.Status}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => analyzePaymentMutation.mutate(transaction.id)}
-                    disabled={transaction.is_valid || analyzePaymentMutation.isPending}
-                    className="flex items-center gap-2"
-                  >
-                    {analyzePaymentMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Brain className="h-4 w-4" />
-                    )}
-                    Analyze
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <PaymentTable 
+        rawTransactions={rawTransactions || []}
+        onAnalyzePayment={(id) => analyzePaymentMutation.mutate(id)}
+        isAnalyzing={analyzePaymentMutation.isPending}
+      />
     </div>
   );
 };
