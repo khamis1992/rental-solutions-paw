@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
@@ -23,7 +23,8 @@ export const RawDataView = () => {
         throw error;
       }
 
-      return data as RawPaymentImport[];
+      // Filter out payments that are already assigned
+      return (data as RawPaymentImport[]).filter(payment => !payment.is_valid);
     }
   });
 
@@ -88,6 +89,27 @@ export const RawDataView = () => {
     }
   });
 
+  const cleanTableMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('raw_payment_imports')
+        .delete()
+        .eq('is_valid', true);
+
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+      toast.success('Successfully cleaned assigned payments from the table');
+    },
+    onError: (error: Error) => {
+      console.error('Clean table error:', error);
+      toast.error('Failed to clean the table');
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -100,19 +122,38 @@ export const RawDataView = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Raw Payment Import Data</CardTitle>
-        <Button 
-          onClick={() => analyzeAllMutation.mutate()}
-          disabled={analyzeAllMutation.isPending}
-        >
-          {analyzeAllMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            'Analyze All'
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => cleanTableMutation.mutate()}
+            disabled={cleanTableMutation.isPending}
+          >
+            {cleanTableMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Cleaning...
+              </>
+            ) : (
+              <>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clean Table
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={() => analyzeAllMutation.mutate()}
+            disabled={analyzeAllMutation.isPending}
+          >
+            {analyzeAllMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              'Analyze All'
+            )}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
