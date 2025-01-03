@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Brain, PlayCircle } from "lucide-react";
+import { Loader2, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 
@@ -42,29 +42,6 @@ export const RawDataView = () => {
     }
   });
 
-  const analyzeAllPaymentsMutation = useMutation({
-    mutationFn: async () => {
-      const unprocessedPayments = rawTransactions?.filter(payment => !payment.is_valid) || [];
-      
-      for (const payment of unprocessedPayments) {
-        const { error } = await supabase.functions.invoke('analyze-payment-import', {
-          body: { rawPaymentId: payment.id }
-        });
-        
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
-      queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      toast.success("All payments analyzed and processed successfully");
-    },
-    onError: (error) => {
-      console.error('Bulk payment analysis error:', error);
-      toast.error("Failed to analyze all payments");
-    }
-  });
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -73,28 +50,9 @@ export const RawDataView = () => {
     );
   }
 
-  const hasUnprocessedPayments = rawTransactions?.some(payment => !payment.is_valid);
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
-        {hasUnprocessedPayments && (
-          <Button
-            variant="default"
-            onClick={() => analyzeAllPaymentsMutation.mutate()}
-            disabled={analyzeAllPaymentsMutation.isPending}
-            className="flex items-center gap-2"
-          >
-            {analyzeAllPaymentsMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <PlayCircle className="h-4 w-4" />
-            )}
-            Analyze All
-          </Button>
-        )}
-      </div>
+      <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
