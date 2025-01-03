@@ -8,14 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { getDatabaseResponse } from "@/utils/chatDatabaseQueries";
+import { sendPostMessage, addPostMessageListener, TRUSTED_ORIGIN } from "@/utils/postMessageUtils";
 
 interface Message {
   role: "assistant" | "user";
   content: string;
 }
-
-// Get the current origin for postMessage security
-const TRUSTED_ORIGIN = window.location.origin;
 
 export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -30,7 +28,6 @@ export const SystemChatbot = () => {
     queryKey: ["perplexity-api-key"],
     queryFn: async () => {
       try {
-        // Add origin to request headers
         const { data, error } = await supabase.functions.invoke("check-perplexity-key", {
           headers: {
             'Origin': TRUSTED_ORIGIN
@@ -61,10 +58,8 @@ export const SystemChatbot = () => {
         }
       } catch (error) {
         console.error('Database query error:', error);
-        // Continue to AI if database query fails
       }
 
-      // Process messages to ensure alternation
       const processedMessages = messages.reduce((acc: Message[], curr, index) => {
         if (index === 0 || curr.role !== acc[acc.length - 1].role) {
           acc.push(curr);
@@ -79,11 +74,10 @@ export const SystemChatbot = () => {
 
       console.log('Sending messages to AI:', apiMessages);
       
-      // Add origin to request headers
       const { data, error } = await supabase.functions.invoke("chat", {
         body: { 
           messages: apiMessages,
-          dbResponse: null // No database response, use AI
+          dbResponse: null
         },
         headers: {
           'Origin': TRUSTED_ORIGIN
@@ -99,17 +93,38 @@ export const SystemChatbot = () => {
       return data.message;
     },
     onSuccess: (response, variables) => {
-      setMessages((prev) => [
-        ...prev,
+      const newMessages = [
+        ...messages,
         { role: "user", content: variables },
         { role: "assistant", content: response },
-      ]);
+      ];
+      setMessages(newMessages);
+      
+      // Send message to parent window
+      sendPostMessage({
+        type: 'CHAT_UPDATED',
+        payload: { messages: newMessages }
+      });
     },
     onError: (error: Error) => {
       console.error("Chat error:", error);
       toast.error(error.message || "Failed to get response. Please try again.");
     },
   });
+
+  // Set up message listener
+  React.useEffect(() => {
+    const cleanup = addPostMessageListener((event) => {
+      if (event.data.type === 'RESET_CHAT') {
+        setMessages([{
+          role: "assistant",
+          content: "Hello! I'm your Rental Solutions assistant. How can I help you today?",
+        }]);
+      }
+    });
+
+    return cleanup;
+  }, []);
 
   const handleSendMessage = (message: string) => {
     if (isKeyError) {
