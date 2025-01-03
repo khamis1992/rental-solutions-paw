@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2, Brain, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { RawPaymentImport } from "../types/transaction.types";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
@@ -143,7 +143,7 @@ export const RawDataView = () => {
                 <TableCell>{transaction.Amount}</TableCell>
                 <TableCell>{transaction.Payment_Method}</TableCell>
                 <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
-                <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
+                <TableCell>{transaction.Payment_Date && new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     transaction.Type === 'INCOME' 

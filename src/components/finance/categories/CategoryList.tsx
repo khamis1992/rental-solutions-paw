@@ -61,7 +61,7 @@ export const CategoryList = () => {
             <TableBody>
               {categories?.map((category) => {
                 const totalAmount = category.transactions?.reduce(
-                  (sum: number, transaction: { amount: number }) => 
+                  (sum: number, transaction: { amount: string | number }) => 
                     sum + Number(transaction.amount), 
                   0
                 ) || 0;
