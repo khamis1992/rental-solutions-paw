@@ -7,9 +7,10 @@ const corsHeaders = {
 };
 
 // Valid payment method types from the enum
-const VALID_PAYMENT_METHODS = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'];
+const VALID_PAYMENT_METHODS = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'] as const;
+type PaymentMethodType = typeof VALID_PAYMENT_METHODS[number];
 
-function normalizePaymentMethod(method: string): string {
+function normalizePaymentMethod(method: string): PaymentMethodType {
   // Convert to title case first
   const titleCase = method.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   
@@ -64,7 +65,7 @@ serve(async (req) => {
     }
 
     // Normalize payment method
-    let normalizedPaymentMethod;
+    let normalizedPaymentMethod: PaymentMethodType;
     try {
       normalizedPaymentMethod = normalizePaymentMethod(rawPayment.Payment_Method);
       if (!VALID_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
