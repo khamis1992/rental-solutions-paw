@@ -27,14 +27,13 @@ export const SettlementPaymentDialog = ({ open, onClose, settlementId }: Settlem
 
     try {
       const { error: paymentError } = await supabase
-        .from("payments")
+        .from("settlement_payments")
         .insert({
-          amount: String(amount), // Convert to string for the database
+          settlement_id: settlementId,
+          amount: Number(amount),
           payment_method: paymentMethod,
           description: description,
-          payment_date: new Date().toISOString(),
-          type: 'INCOME',
-          status: 'completed'
+          payment_date: new Date().toISOString()
         });
 
       if (paymentError) throw paymentError;

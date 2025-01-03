@@ -80,12 +80,13 @@ export const SettlementsList = ({ caseId }: SettlementsListProps) => {
         />
       ))}
       {selectedSettlement && (
-        <SettlementPaymentDialog
-          settlementId={selectedSettlement}
-          caseId={caseId}
-          open={showPaymentDialog}
-          onOpenChange={setShowPaymentDialog}
-        />
+
+<SettlementPaymentDialog
+  open={showPaymentDialog}
+  onClose={() => setShowPaymentDialog(false)}
+  settlementId={selectedSettlement}
+/>
+
       )}
     </div>
   );

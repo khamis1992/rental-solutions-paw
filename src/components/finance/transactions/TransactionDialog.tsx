@@ -31,7 +31,7 @@ export const TransactionDialog = ({ open, onClose }: TransactionDialogProps) => 
       const { error } = await supabase
         .from("accounting_transactions")
         .insert({
-          amount: formData.amount,
+          amount: formData.amount.toString(), // Convert to string for the database
           description: formData.description,
           category_id: formData.category_id,
           payment_method: formData.payment_method,
