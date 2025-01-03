@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
 import { Transaction } from "../types/transaction.types";
 
 export const TransactionList = () => {
@@ -12,24 +13,23 @@ export const TransactionList = () => {
         .from("accounting_transactions")
         .select(`
           *,
-          category:category_id (
+          category:accounting_categories (
             id,
-            name
+            name,
+            type,
+            budget_limit,
+            budget_period
           )
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      return data.map(transaction => ({
-        ...transaction,
-        amount: parseFloat(transaction.amount)
-      })) as Transaction[];
-    }
+      return data as Transaction[];
+    },
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading transactions...</div>;
   }
 
   return (
@@ -40,7 +40,7 @@ export const TransactionList = () => {
             <TableHead>Date</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead className="text-right">Amount (QAR)</TableHead>
+            <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -48,22 +48,12 @@ export const TransactionList = () => {
           {transactions?.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell>
-                {new Date(transaction.created_at).toLocaleDateString()}
+                {transaction.created_at && format(new Date(transaction.created_at), "PP")}
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell>{transaction.category?.name}</TableCell>
-              <TableCell className="text-right">
-                {formatCurrency(transaction.amount)}
-              </TableCell>
-              <TableCell>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  transaction.status === 'completed' 
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {transaction.status}
-                </span>
-              </TableCell>
+              <TableCell>{formatCurrency(transaction.amount)}</TableCell>
+              <TableCell>{transaction.status}</TableCell>
             </TableRow>
           ))}
         </TableBody>
