@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { PaymentAssignmentResult } from "@/components/finance/types/transaction.types";
 
 interface PaymentAssignmentCardProps {
   totalAmount: number;

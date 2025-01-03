@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
-import { PaymentAssignmentCard } from "./components/PaymentAssignmentCard";
-import { PaymentTable } from "./components/PaymentTable";
-import { PaymentActions } from "./components/PaymentActions";
-import { usePaymentAssignment } from "./hooks/usePaymentAssignment";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AIAnalysisCard } from "./components/AIAnalysisCard";
+import { FileUploadSection } from "./components/FileUploadSection";
+import { useImportProcess } from "./hooks/useImportProcess";
+import { ImportedTransactionsTable } from "./ImportedTransactionsTable";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { PaymentImportData } from "./types/payment.types";
+import { Loader2 } from "lucide-react";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
-  const { isSubmitting, assignmentResults, assignPayment, assignAllPayments } = usePaymentAssignment();
+  const { isUploading, isAnalyzing, analysisResult, startImport, implementChanges } = useImportProcess();
 
   const { data: rawTransactions, isLoading } = useQuery({
     queryKey: ["raw-payment-imports"],

@@ -27,7 +27,7 @@ export const usePaymentAssignment = () => {
         .insert({
           lease_id: agreementData,
           amount: payment.Amount,
-          payment_method: payment.Payment_Method,
+          payment_method: payment.Payment_Method as any,
           status: 'completed',
           payment_date: payment.Payment_Date,
           description: payment.Description,

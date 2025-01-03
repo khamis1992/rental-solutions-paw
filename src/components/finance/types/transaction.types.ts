@@ -1,3 +1,24 @@
+import { Json } from '@/integrations/supabase/types';
+
+export interface ImportErrors {
+  skipped: Array<{
+    row: number;
+    data: Record<string, any>;
+    reason: string;
+  }>;
+  failed: Array<{
+    row: number;
+    data?: Record<string, any>;
+    error: string;
+  }>;
+}
+
+export interface ImportLog {
+  status: string;
+  records_processed: number;
+  errors: Json;
+}
+
 export interface RawPaymentImport {
   id: string;
   Agreement_Number: string;
@@ -66,7 +87,13 @@ export interface Transaction {
   description: string;
   transaction_date: string;
   category_id?: string;
+  category?: {
+    id: string;
+    name: string;
+  };
   receipt_url?: string;
   created_at: string;
   updated_at: string;
+  payment_method?: PaymentMethodType;
+  status?: string;
 }
