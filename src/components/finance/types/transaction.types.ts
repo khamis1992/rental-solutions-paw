@@ -1,7 +1,18 @@
 export enum TransactionType {
+  LATE_PAYMENT_FEE = 'LATE_PAYMENT_FEE',
+  ADMINISTRATIVE_FEES = 'ADMINISTRATIVE_FEES',
+  VEHICLE_DAMAGE_CHARGE = 'VEHICLE_DAMAGE_CHARGE',
+  TRAFFIC_FINE = 'TRAFFIC_FINE',
+  RENTAL_FEE = 'RENTAL_FEE',
+  ADVANCE_PAYMENT = 'ADVANCE_PAYMENT',
+  OTHER = 'OTHER',
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE'
 }
+
+export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
+
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Transaction {
   id: string;
@@ -12,9 +23,9 @@ export interface Transaction {
   customer_name: string;
   description: string;
   license_plate: string;
-  payment_method: string;
+  payment_method: PaymentMethodType;
   receipt_url: string;
-  status: string;
+  status: PaymentStatus;
   transaction_date: string;
   type: TransactionType;
   updated_at: string;
