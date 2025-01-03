@@ -1,4 +1,4 @@
-import { Json } from '@/integrations/supabase/types';
+import { Json } from "@/integrations/supabase/types";
 
 export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 
@@ -16,7 +16,7 @@ export interface Category {
   name: string;
   type: string;
   budget_limit: number;
-  budget_period?: string;
+  budget_period: string;
 }
 
 export interface Transaction {
