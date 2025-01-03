@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2, Brain, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { RawPaymentImport } from "../types/transaction.types";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
@@ -44,24 +44,49 @@ export const RawDataView = () => {
 
   const analyzeAllPaymentsMutation = useMutation({
     mutationFn: async () => {
-      const unprocessedPayments = rawTransactions?.filter(payment => !payment.is_valid) || [];
+      if (!rawTransactions) return;
       
+      const unprocessedPayments = rawTransactions.filter(payment => !payment.is_valid);
+      const results = [];
+
       for (const payment of unprocessedPayments) {
-        const { error } = await supabase.functions.invoke('analyze-payment-import', {
-          body: { rawPaymentId: payment.id }
-        });
+        if (!payment.id) continue;
         
-        if (error) throw error;
+        try {
+          const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
+            body: { rawPaymentId: payment.id }
+          });
+          
+          if (error) {
+            console.error('Error processing payment:', payment.id, error);
+            results.push({ id: payment.id, success: false, error });
+          } else {
+            results.push({ id: payment.id, success: true, data });
+          }
+        } catch (error) {
+          console.error('Error processing payment:', payment.id, error);
+          results.push({ id: payment.id, success: false, error });
+        }
       }
+
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      toast.success("All payments analyzed and processed successfully");
+      
+      const successCount = results?.filter(r => r.success).length || 0;
+      const failureCount = results?.filter(r => !r.success).length || 0;
+      
+      if (failureCount === 0) {
+        toast.success(`Successfully analyzed all ${successCount} payments`);
+      } else {
+        toast.warning(`Processed ${successCount} payments, ${failureCount} failed. Check console for details.`);
+      }
     },
     onError: (error) => {
       console.error('Bulk payment analysis error:', error);
-      toast.error("Failed to analyze all payments");
+      toast.error("Failed to analyze payments");
     }
   });
 
@@ -120,7 +145,7 @@ export const RawDataView = () => {
                 <TableCell>{transaction.Amount}</TableCell>
                 <TableCell>{transaction.Payment_Method}</TableCell>
                 <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
-                <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
+                <TableCell>{transaction.Payment_Date && new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     transaction.Type === 'INCOME' 
@@ -143,7 +168,7 @@ export const RawDataView = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => analyzePaymentMutation.mutate(transaction.id)}
+                    onClick={() => transaction.id && analyzePaymentMutation.mutate(transaction.id)}
                     disabled={transaction.is_valid || analyzePaymentMutation.isPending}
                     className="flex items-center gap-2"
                   >
