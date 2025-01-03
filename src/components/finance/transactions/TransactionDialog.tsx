@@ -1,19 +1,18 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { TransactionType } from "../types/transaction.types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TransactionType } from "../types/transaction.types";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 export const TransactionDialog = () => {
   const [open, setOpen] = useState(false);
   const { register, handleSubmit } = useForm();
 
   const onSubmit = async (data: any) => {
+    // Handle the submission of the transaction data
     try {
       const { error } = await supabase
         .from('accounting_transactions')
