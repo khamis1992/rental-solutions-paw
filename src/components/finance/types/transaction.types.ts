@@ -25,7 +25,7 @@ export interface Transaction {
   description: string;
   transaction_date: string;
   category_id?: string;
-  category?: Category;
+  category: Category;
   receipt_url?: string;
   created_at: string;
   updated_at: string;
