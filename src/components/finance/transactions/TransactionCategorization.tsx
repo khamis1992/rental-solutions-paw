@@ -6,7 +6,21 @@ import { Loader2, Plus } from "lucide-react";
 import { CategoryDialog } from "../categories/CategoryDialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Transaction } from "../types/transaction.types";
+
+interface Transaction {
+  id: string;
+  amount: number;
+  description: string;
+  transaction_date: string;
+  category_id: string | null;
+  type: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  type: string;
+}
 
 export const TransactionCategorization = () => {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
@@ -21,10 +35,7 @@ export const TransactionCategorization = () => {
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
-      return data.map(transaction => ({
-        ...transaction,
-        amount: Number(transaction.amount)
-      })) as Transaction[];
+      return data as Transaction[];
     },
   });
 
@@ -37,7 +48,7 @@ export const TransactionCategorization = () => {
         .order("name");
 
       if (error) throw error;
-      return data;
+      return data as Category[];
     },
   });
 
@@ -89,7 +100,7 @@ export const TransactionCategorization = () => {
             {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
-                  {transaction.transaction_date && new Date(transaction.transaction_date).toLocaleDateString()}
+                  {new Date(transaction.transaction_date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>{transaction.description}</TableCell>
                 <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
