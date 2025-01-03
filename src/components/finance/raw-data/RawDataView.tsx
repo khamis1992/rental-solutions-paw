@@ -11,6 +11,7 @@ import { PaymentTable } from "./components/PaymentTable";
 export const RawDataView = () => {
   const queryClient = useQueryClient();
   const [assignmentResults, setAssignmentResults] = useState<PaymentAssignmentResult[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: rawTransactions, isLoading } = useQuery({
     queryKey: ["raw-payment-imports"],
@@ -31,41 +32,59 @@ export const RawDataView = () => {
 
   const analyzePaymentMutation = useMutation({
     mutationFn: async (paymentId: string) => {
-      const payment = rawTransactions?.find(t => t.id === paymentId);
-      if (!payment) throw new Error("Payment not found");
+      setIsSubmitting(true);
+      try {
+        const payment = rawTransactions?.find(t => t.id === paymentId);
+        if (!payment) throw new Error("Payment not found");
 
-      // Direct assignment without validation
-      const { error: insertError } = await supabase
-        .from('payments')
-        .insert({
-          lease_id: payment.Agreement_Number, // Direct assignment using Agreement Number
-          amount: payment.Amount,
-          payment_method: payment.Payment_Method,
-          status: 'completed',
-          payment_date: payment.Payment_Date,
-          description: payment.Description,
-          type: payment.Type
-        });
+        // Create or get agreement
+        const { data: agreementData, error: agreementError } = await supabase
+          .rpc('create_default_agreement_if_not_exists', {
+            p_agreement_number: payment.Agreement_Number,
+            p_customer_name: payment.Customer_Name,
+            p_amount: payment.Amount
+          });
 
-      if (insertError) throw insertError;
+        if (agreementError) throw agreementError;
 
-      // Update raw payment import status
-      const { error: updateError } = await supabase
-        .from('raw_payment_imports')
-        .update({ is_valid: true })
-        .eq('id', paymentId);
+        // Insert payment
+        const { error: insertError } = await supabase
+          .from('payments')
+          .insert({
+            lease_id: agreementData,
+            amount: payment.Amount,
+            payment_method: payment.Payment_Method,
+            status: 'completed',
+            payment_date: payment.Payment_Date,
+            description: payment.Description,
+            type: payment.Type
+          });
 
-      if (updateError) throw updateError;
+        if (insertError) throw insertError;
 
-      // Log the assignment
-      setAssignmentResults(prev => [...prev, {
-        success: true,
-        agreementNumber: payment.Agreement_Number,
-        amountAssigned: payment.Amount,
-        timestamp: new Date().toISOString()
-      }]);
+        // Update raw payment import status
+        const { error: updateError } = await supabase
+          .from('raw_payment_imports')
+          .update({ is_valid: true })
+          .eq('id', paymentId);
 
-      return { success: true };
+        if (updateError) throw updateError;
+
+        // Log the assignment
+        setAssignmentResults(prev => [...prev, {
+          success: true,
+          agreementNumber: payment.Agreement_Number,
+          amountAssigned: payment.Amount,
+          timestamp: new Date().toISOString()
+        }]);
+
+        return { success: true };
+      } catch (error) {
+        console.error('Payment processing error:', error);
+        throw error;
+      } finally {
+        setIsSubmitting(false);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
@@ -80,10 +99,15 @@ export const RawDataView = () => {
 
   const analyzeAllPaymentsMutation = useMutation({
     mutationFn: async () => {
-      const unprocessedPayments = rawTransactions?.filter(payment => !payment.is_valid) || [];
-      
-      for (const payment of unprocessedPayments) {
-        await analyzePaymentMutation.mutateAsync(payment.id);
+      setIsSubmitting(true);
+      try {
+        const unprocessedPayments = rawTransactions?.filter(payment => !payment.is_valid) || [];
+        
+        for (const payment of unprocessedPayments) {
+          await analyzePaymentMutation.mutateAsync(payment.id);
+        }
+      } finally {
+        setIsSubmitting(false);
       }
     },
     onSuccess: () => {
@@ -136,10 +160,10 @@ export const RawDataView = () => {
             <Button
               variant="default"
               onClick={() => analyzeAllPaymentsMutation.mutate()}
-              disabled={analyzeAllPaymentsMutation.isPending}
+              disabled={isSubmitting}
               className="flex items-center gap-2"
             >
-              {analyzeAllPaymentsMutation.isPending ? (
+              {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <PlayCircle className="h-4 w-4" />
@@ -171,7 +195,7 @@ export const RawDataView = () => {
       <PaymentTable 
         rawTransactions={rawTransactions || []}
         onAnalyzePayment={(id) => analyzePaymentMutation.mutate(id)}
-        isAnalyzing={analyzePaymentMutation.isPending}
+        isAnalyzing={isSubmitting}
       />
     </div>
   );

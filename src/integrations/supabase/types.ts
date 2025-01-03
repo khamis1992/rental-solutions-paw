@@ -4849,6 +4849,14 @@ export type Database = {
         }
         Returns: number
       }
+      create_default_agreement_if_not_exists: {
+        Args: {
+          p_agreement_number: string
+          p_customer_name: string
+          p_amount: number
+        }
+        Returns: string
+      }
       create_transaction_import: {
         Args: {
           p_file_name: string
