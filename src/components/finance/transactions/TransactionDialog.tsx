@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TransactionFormData } from "../types/transaction.types";
+import { TransactionFormData, TransactionType } from "../types/transaction.types";
 
 interface TransactionDialogProps {
   isOpen: boolean;
@@ -18,8 +18,9 @@ export const TransactionDialog = ({ isOpen, onClose, onSuccess }: TransactionDia
     amount: 0,
     category_id: "",
     description: "",
-    payment_method: "",
-    type: "INCOME"
+    type: TransactionType.INCOME,
+    transaction_date: new Date().toISOString(),
+    payment_method: "Invoice"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +85,7 @@ export const TransactionDialog = ({ isOpen, onClose, onSuccess }: TransactionDia
             <Input
               id="payment_method"
               value={formData.payment_method}
-              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value as any })}
               required
             />
           </div>

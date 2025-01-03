@@ -24,7 +24,10 @@ export const TransactionList = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Transaction[];
+      return data.map(transaction => ({
+        ...transaction,
+        amount: parseFloat(transaction.amount) || 0
+      })) as Transaction[];
     },
   });
 
@@ -53,7 +56,7 @@ export const TransactionList = () => {
               <TableCell>{transaction.description}</TableCell>
               <TableCell>{transaction.category?.name}</TableCell>
               <TableCell>{formatCurrency(transaction.amount)}</TableCell>
-              <TableCell>{transaction.status}</TableCell>
+              <TableCell>{transaction.status || 'N/A'}</TableCell>
             </TableRow>
           ))}
         </TableBody>

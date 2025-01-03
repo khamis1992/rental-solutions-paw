@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { ReceiptUpload } from "@/components/finance/receipts/ReceiptUpload";
+import { TransactionType } from "@/components/finance/types/transaction.types";
 
 interface SettlementPaymentDialogProps {
   settlementId: string;
@@ -70,12 +71,12 @@ export const SettlementPaymentDialog = ({
       const { error: transactionError } = await supabase
         .from("accounting_transactions")
         .insert({
-          type: "INCOME",
           amount: parseFloat(formData.amount),
           description: `Settlement payment from ${caseData.customer.full_name} - Case: ${caseData.case_type}`,
           transaction_date: new Date().toISOString(),
           reference_type: "settlement",
           reference_id: settlementId,
+          type: TransactionType.INCOME
         });
 
       if (transactionError) throw transactionError;

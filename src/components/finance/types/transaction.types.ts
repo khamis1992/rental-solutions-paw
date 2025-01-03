@@ -25,7 +25,7 @@ export interface Transaction {
   id: string;
   type: TransactionType;
   amount: number;
-  category: {
+  category?: {
     id: string;
     name: string;
     type: string;
@@ -42,6 +42,7 @@ export interface Transaction {
   receipt_url?: string;
   created_at?: string;
   updated_at?: string;
+  status?: string;
 }
 
 export interface TransactionFormData {
@@ -53,7 +54,7 @@ export interface TransactionFormData {
   receipt?: FileList;
   cost_type?: 'fixed' | 'variable';
   is_recurring?: boolean;
-  paymentMethod?: PaymentMethodType;
+  payment_method?: PaymentMethodType;
   intervalValue?: number;
   intervalUnit?: 'days' | 'weeks' | 'months';
 }
@@ -73,4 +74,10 @@ export interface RawPaymentImport {
   is_valid: boolean;
   error_description?: string | null;
   created_at?: string | null;
+}
+
+export interface CategoryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  category?: any;
 }
