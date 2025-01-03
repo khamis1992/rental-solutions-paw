@@ -15,6 +15,7 @@ export interface Category {
   type: string;
   budget_limit: number;
   budget_period: string;
+  description?: string;
 }
 
 export interface Transaction {
@@ -30,6 +31,15 @@ export interface Transaction {
   updated_at: string;
   payment_method: PaymentMethodType;
   status: string;
+}
+
+export interface TransactionFormData {
+  amount: number;
+  description: string;
+  category_id: string;
+  payment_method: PaymentMethodType;
+  transaction_date: string;
+  type: "INCOME" | "EXPENSE";
 }
 
 export interface RawPaymentImport {
@@ -54,13 +64,4 @@ export interface PaymentAssignmentResult {
   agreementNumber: string;
   amountAssigned: number;
   timestamp: string;
-}
-
-export interface TransactionFormData {
-  amount: number;
-  description: string;
-  category_id: string;
-  payment_method: PaymentMethodType;
-  transaction_date: string;
-  type: "INCOME" | "EXPENSE";
 }

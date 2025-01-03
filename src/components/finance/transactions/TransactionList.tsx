@@ -14,7 +14,10 @@ export const TransactionList = () => {
           *,
           category:category_id (
             id,
-            name
+            name,
+            type,
+            budget_limit,
+            budget_period
           )
         `)
         .order("created_at", { ascending: false });
@@ -23,7 +26,7 @@ export const TransactionList = () => {
 
       return data.map(transaction => ({
         ...transaction,
-        amount: parseFloat(transaction.amount)
+        amount: Number(transaction.amount)
       })) as Transaction[];
     }
   });

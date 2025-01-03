@@ -1,163 +1,103 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { ReceiptUpload } from "@/components/finance/receipts/ReceiptUpload";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SettlementPaymentDialogProps {
-  settlementId: string;
-  caseId: string;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
+  settlementId: string;
 }
 
-export const SettlementPaymentDialog = ({
-  settlementId,
-  caseId,
-  open,
-  onOpenChange,
-}: SettlementPaymentDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const SettlementPaymentDialog = ({ open, onClose, settlementId }: SettlementPaymentDialogProps) => {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState({
-    amount: "",
-    notes: "",
-  });
+  const [amount, setAmount] = useState<number | string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const [description, setDescription] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Get case and settlement details for audit
-      const { data: caseData, error: caseError } = await supabase
-        .from("legal_cases")
-        .select(`
-          *,
-          customer:profiles!legal_cases_customer_id_fkey (
-            full_name
-          )
-        `)
-        .eq("id", caseId)
-        .single();
-
-      if (caseError) throw caseError;
-
-      // Insert payment record
       const { error: paymentError } = await supabase
-        .from("settlement_payments")
+        .from("payments")
         .insert({
-          settlement_id: settlementId,
-          amount: parseFloat(formData.amount),
-          notes: formData.notes,
+          amount: String(amount), // Convert to string for the database
+          payment_method: paymentMethod,
+          description: description,
+          payment_date: new Date().toISOString(),
+          type: 'INCOME',
+          status: 'completed'
         });
 
       if (paymentError) throw paymentError;
 
-      // Create income transaction
-      const { error: transactionError } = await supabase
-        .from("accounting_transactions")
-        .insert({
-          type: "INCOME",
-          amount: parseFloat(formData.amount),
-          description: `Settlement payment from ${caseData.customer.full_name} - Case: ${caseData.case_type}`,
-          transaction_date: new Date().toISOString(),
-          reference_type: "settlement",
-          reference_id: settlementId,
-        });
-
-      if (transactionError) throw transactionError;
-
-      // Create audit log
-      await supabase.from("audit_logs").insert({
-        action: "settlement_payment",
-        entity_type: "settlement",
-        entity_id: settlementId,
-        changes: {
-          amount: formData.amount,
-          customer_name: caseData.customer.full_name,
-          case_type: caseData.case_type,
-          case_created_at: caseData.created_at,
-        },
-      });
-
-      toast.success("Payment recorded successfully");
-      queryClient.invalidateQueries({ queryKey: ["legal-settlements", caseId] });
-      onOpenChange(false);
+      toast.success("Payment added successfully");
+      onClose();
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
     } catch (error) {
-      console.error("Error recording payment:", error);
-      toast.error("Failed to record payment");
+      console.error('Error adding payment:', error);
+      toast.error('Failed to add payment');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleUploadComplete = () => {
-    queryClient.invalidateQueries({ queryKey: ["legal-settlements", caseId] });
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Settlement Payment</DialogTitle>
+          <DialogTitle>Add Settlement Payment</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="amount">Payment Amount</Label>
+          <div>
+            <Label htmlFor="amount">Amount</Label>
             <Input
               id="amount"
               type="number"
-              value={formData.amount}
-              onChange={(e) =>
-                setFormData({ ...formData, amount: e.target.value })
-              }
-              placeholder="Enter payment amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              placeholder="Add any notes about this payment..."
+          <div>
+            <Label htmlFor="payment_method">Payment Method</Label>
+            <Select
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cash">Cash</SelectItem>
+                <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
+                <SelectItem value="Invoice">Invoice</SelectItem>
+                <SelectItem value="Cheque">Cheque</SelectItem>
+                <SelectItem value="Deposit">Deposit</SelectItem>
+                <SelectItem value="On_hold">On Hold</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Upload Receipt</Label>
-            <ReceiptUpload onUploadComplete={handleUploadComplete} />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Record Payment
-            </Button>
-          </DialogFooter>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Adding Payment..." : "Add Payment"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
