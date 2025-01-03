@@ -1,106 +1,108 @@
-import { TransactionType } from "../types/transaction.types";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { TransactionType, TransactionFormData } from "../types/transaction.types";
+import { Loader2 } from "lucide-react";
 
-export const TransactionDialog = () => {
-  const [open, setOpen] = useState(false);
-  const { register, handleSubmit } = useForm();
+interface TransactionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-  const onSubmit = async (data: any) => {
-    // Handle the submission of the transaction data
+export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps) => {
+  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<TransactionFormData>({
+    type: TransactionType.INCOME,
+    amount: 0,
+    description: "",
+    transaction_date: new Date().toISOString().split('T')[0],
+    paymentMethod: "cash"
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
     try {
       const { error } = await supabase
         .from('accounting_transactions')
         .insert({
-          agreement_number: data.agreement_number,
-          amount: Number(data.amount),
-          category_id: data.category_id,
-          created_at: new Date().toISOString(),
-          customer_name: data.customer_name,
-          description: data.description,
-          license_plate: data.license_plate,
-          payment_method: data.payment_method,
-          receipt_url: data.receipt_url,
-          status: data.status,
-          transaction_date: data.transaction_date,
-          type: data.type,
+          type: formData.type,
+          amount: formData.amount,
+          description: formData.description,
+          transaction_date: formData.transaction_date,
+          payment_method: formData.paymentMethod
         });
 
       if (error) throw error;
 
-      toast.success("Transaction added successfully");
-      setOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Transaction created successfully');
+      onOpenChange(false);
     } catch (error) {
-      console.error('Error adding transaction:', error);
-      toast.error("Failed to add transaction");
+      console.error('Transaction creation error:', error);
+      toast.error('Failed to create transaction');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Transaction</DialogTitle>
+          <DialogTitle>Create Transaction</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Type</Label>
-            <Select {...register("type")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TransactionType.INCOME}>Income</SelectItem>
-                <SelectItem value={TransactionType.EXPENSE}>Expense</SelectItem>
-              </SelectContent>
-            </Select>
+            <label className="text-sm font-medium">Amount</label>
+            <Input
+              type="number"
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+              required
+            />
           </div>
           <div>
-            <Label>Agreement Number</Label>
-            <Input {...register("agreement_number")} />
+            <label className="text-sm font-medium">Description</label>
+            <Input
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              required
+            />
           </div>
           <div>
-            <Label>Amount</Label>
-            <Input type="number" {...register("amount")} />
+            <label className="text-sm font-medium">Date</label>
+            <Input
+              type="date"
+              value={formData.transaction_date}
+              onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
+              required
+            />
           </div>
           <div>
-            <Label>Category</Label>
-            <Input {...register("category_id")} />
+            <label className="text-sm font-medium">Payment Method</label>
+            <Input
+              value={formData.paymentMethod}
+              onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+              required
+            />
           </div>
-          <div>
-            <Label>Customer Name</Label>
-            <Input {...register("customer_name")} />
-          </div>
-          <div>
-            <Label>Description</Label>
-            <Input {...register("description")} />
-          </div>
-          <div>
-            <Label>License Plate</Label>
-            <Input {...register("license_plate")} />
-          </div>
-          <div>
-            <Label>Payment Method</Label>
-            <Input {...register("payment_method")} />
-          </div>
-          <div>
-            <Label>Receipt URL</Label>
-            <Input {...register("receipt_url")} />
-          </div>
-          <div>
-            <Label>Status</Label>
-            <Input {...register("status")} />
-          </div>
-          <div>
-            <Label>Transaction Date</Label>
-            <Input type="date" {...register("transaction_date")} />
-          </div>
-          <Button type="submit">Save Transaction</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              'Create Transaction'
+            )}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

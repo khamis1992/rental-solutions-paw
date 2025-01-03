@@ -28,55 +28,18 @@ serve(async (req) => {
 
     if (fetchError) throw fetchError;
 
-    // Prepare data for AI analysis
-    const prompt = `Analyze this payment data and provide a structured response:
-    Agreement Number: ${rawPayment.Agreement_Number}
-    Amount: ${rawPayment.Amount}
-    Payment Date: ${rawPayment.Payment_Date}
-    Description: ${rawPayment.Description}
-
-    Calculate if there are any late fees (120 QAR per day after the 1st of the month).
-    Provide the following in your response:
-    1. Validated agreement number
-    2. Payment amount
-    3. Late fee calculation (if applicable)
-    4. Total amount including late fees
-    5. Payment description
-    Format as JSON.`;
-
-    // Get AI analysis
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a payment processing assistant that analyzes payment data and calculates late fees.' },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    });
-
-    const aiData = await aiResponse.json();
-    const analysis = JSON.parse(aiData.choices[0].message.content);
-
     // Process payment with AI insights
     const { error: insertError } = await supabase
       .from('payments')
       .insert({
         lease_id: rawPayment.Agreement_Number,
-        amount: analysis.paymentAmount,
-        amount_paid: analysis.paymentAmount,
+        amount: Number(rawPayment.Amount),
         payment_method: rawPayment.Payment_Method,
         payment_date: rawPayment.Payment_Date,
-        description: analysis.description,
+        description: rawPayment.Description,
         status: 'completed',
         type: 'Income',
-        late_fine_amount: analysis.lateFeeAmount || 0,
-        days_overdue: analysis.daysOverdue || 0
+        transaction_id: rawPayment.Transaction_ID
       });
 
     if (insertError) throw insertError;
@@ -91,8 +54,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        analysis,
+        success: true,
         message: 'Payment processed successfully' 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

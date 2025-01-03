@@ -29,8 +29,8 @@ export interface Transaction {
 
 export interface RawPaymentImport {
   id: string;
-  Transaction_ID: string;
   Agreement_Number: string;
+  Transaction_ID: string;
   Customer_Name: string;
   License_Plate: string;
   Amount: number;
@@ -42,4 +42,14 @@ export interface RawPaymentImport {
   is_valid: boolean;
   error_description?: string;
   created_at: string;
+}
+
+export interface TransactionFormData {
+  type: TransactionType;
+  amount: number;
+  category_id?: string;
+  description: string;
+  transaction_date: string;
+  receipt?: FileList;
+  paymentMethod?: string;
 }
