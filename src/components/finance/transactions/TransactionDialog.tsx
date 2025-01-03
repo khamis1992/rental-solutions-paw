@@ -5,65 +5,62 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TransactionFormData, PaymentMethodType } from "../types/transaction.types";
-import { Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TransactionFormData } from "../types/transaction.types";
 
 interface TransactionDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
 }
 
-export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps) => {
+export const TransactionDialog = ({ open, onClose }: TransactionDialogProps) => {
   const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<TransactionFormData>({
-    type: "INCOME",
     amount: 0,
     description: "",
-    transaction_date: new Date().toISOString().split('T')[0],
+    category_id: "",
     payment_method: "Cash",
-    category_id: ""
+    transaction_date: new Date().toISOString(),
+    type: "INCOME"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
     try {
       const { error } = await supabase
-        .from('accounting_transactions')
+        .from("accounting_transactions")
         .insert({
-          type: formData.type,
-          amount: formData.amount.toString(),
+          amount: formData.amount,
           description: formData.description,
-          transaction_date: formData.transaction_date,
+          category_id: formData.category_id,
           payment_method: formData.payment_method,
-          category_id: formData.category_id
+          transaction_date: formData.transaction_date,
+          type: formData.type
         });
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      toast.success('Transaction created successfully');
-      onOpenChange(false);
+      toast.success("Transaction added successfully");
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      onClose();
     } catch (error) {
-      console.error('Transaction creation error:', error);
-      toast.error('Failed to create transaction');
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error adding transaction:", error);
+      toast.error("Failed to add transaction");
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Transaction</DialogTitle>
+          <DialogTitle>Add Transaction</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Amount</label>
+            <Label htmlFor="amount">Amount</Label>
             <Input
+              id="amount"
               type="number"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
@@ -71,40 +68,25 @@ export const TransactionDialog = ({ open, onOpenChange }: TransactionDialogProps
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Description</label>
-            <Input
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Date</label>
-            <Input
-              type="date"
-              value={formData.transaction_date}
-              onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Payment Method</label>
-            <Input
+            <Label htmlFor="payment_method">Payment Method</Label>
+            <Select
               value={formData.payment_method}
-              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value as PaymentMethodType })}
-              required
-            />
+              onValueChange={(value) => setFormData({ ...formData, payment_method: value as TransactionFormData["payment_method"] })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cash">Cash</SelectItem>
+                <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
+                <SelectItem value="Invoice">Invoice</SelectItem>
+                <SelectItem value="Cheque">Cheque</SelectItem>
+                <SelectItem value="Deposit">Deposit</SelectItem>
+                <SelectItem value="On_hold">On Hold</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              'Create Transaction'
-            )}
-          </Button>
+          <Button type="submit">Add Transaction</Button>
         </form>
       </DialogContent>
     </Dialog>

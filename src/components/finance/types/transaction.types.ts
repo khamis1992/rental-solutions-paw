@@ -1,6 +1,4 @@
-import { Json } from "@/integrations/supabase/types";
-
-export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
+export type PaymentMethodType = 'Cash' | 'Invoice' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 
 export type PaymentCategoryType = 
   | 'LATE PAYMENT FEE'
@@ -34,15 +32,6 @@ export interface Transaction {
   status: string;
 }
 
-export interface TransactionFormData {
-  amount: number;
-  description: string;
-  category_id: string;
-  payment_method: PaymentMethodType;
-  transaction_date: string;
-  type: "INCOME" | "EXPENSE";
-}
-
 export interface RawPaymentImport {
   id: string;
   Agreement_Number: string;
@@ -65,4 +54,13 @@ export interface PaymentAssignmentResult {
   agreementNumber: string;
   amountAssigned: number;
   timestamp: string;
+}
+
+export interface TransactionFormData {
+  amount: number;
+  description: string;
+  category_id: string;
+  payment_method: PaymentMethodType;
+  transaction_date: string;
+  type: "INCOME" | "EXPENSE";
 }

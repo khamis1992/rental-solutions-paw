@@ -1,45 +1,19 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ImportErrorAnalysis } from "@/components/finance/import/ImportErrorAnalysis";
-import { PaymentMethodType } from "@/components/finance/types/transaction.types";
-
-const REQUIRED_FIELDS = [
-  'Transaction_ID',
-  'Agreement_Number',
-  'Customer_Name',
-  'License_Plate',
-  'Amount',
-  'Payment_Method',
-  'Description',
-  'Payment_Date',
-  'Type',
-  'Status'
-] as const;
-
-type ImportedData = Record<string, unknown>;
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import Papa from 'papaparse';
+import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { FileUploadSection } from "./components/FileUploadSection";
+import { REQUIRED_FIELDS, validateHeaders, normalizePaymentMethod } from "./utils/paymentUtils";
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [importErrors, setImportErrors] = useState<any[]>([]);
+  const [importedData, setImportedData] = useState<Record<string, unknown>[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
-
-  const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
-    const normalizedHeaders = headers.map(h => h.trim());
-    const missingFields = REQUIRED_FIELDS.filter(
-      field => !normalizedHeaders.includes(field)
-    );
-    return {
-      isValid: missingFields.length === 0,
-      missingFields
-    };
-  };
 
   const downloadTemplate = () => {
     const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
@@ -80,7 +54,7 @@ export const PaymentImport = () => {
             }
 
             setHeaders(headers);
-            const parsedData = results.data as ImportedData[];
+            const parsedData = results.data as Record<string, unknown>[];
             setImportedData(parsedData);
 
             for (const row of parsedData) {
@@ -129,57 +103,44 @@ export const PaymentImport = () => {
     }
   };
 
-  const normalizePaymentMethod = (method: string): PaymentMethodType => {
-    const methodMap: Record<string, PaymentMethodType> = {
-      'cash': 'Cash',
-      'invoice': 'Invoice',
-      'wire': 'WireTransfer',
-      'wiretransfer': 'WireTransfer',
-      'cheque': 'Cheque',
-      'check': 'Cheque',
-      'deposit': 'Deposit',
-      'onhold': 'On_hold',
-      'on_hold': 'On_hold',
-      'on-hold': 'On_hold'
-    };
-
-    const normalized = method.toLowerCase().replace(/[^a-z]/g, '');
-    return methodMap[normalized] || 'Cash';
-  };
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          disabled={isUploading}
-        />
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
-          disabled={isUploading}
-        >
-          Download Template
-        </Button>
-      </div>
+      <FileUploadSection
+        onFileUpload={handleFileUpload}
+        onDownloadTemplate={downloadTemplate}
+        isUploading={isUploading}
+      />
       
-      {isUploading && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Importing payments...
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
-      )}
-
-      {importErrors.length > 0 && (
-        <ImportErrorAnalysis 
-          errors={importErrors}
-          onSuggestionClick={handleSuggestionClick}
-        />
+      {importedData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Imported Raw Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {headers.map((header) => (
+                      <TableHead key={header}>{header}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {importedData.map((row, index) => (
+                    <TableRow key={index}>
+                      {headers.map((header) => (
+                        <TableCell key={`${index}-${header}`}>
+                          {String(row[header])}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
