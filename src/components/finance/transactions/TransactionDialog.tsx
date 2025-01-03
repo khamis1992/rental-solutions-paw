@@ -1,94 +1,106 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TransactionType } from "../types/transaction.types";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { TransactionFormData } from "../types/transaction.types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
-interface TransactionDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}
+export const TransactionDialog = () => {
+  const [open, setOpen] = useState(false);
+  const { register, handleSubmit } = useForm();
 
-export const TransactionDialog = ({ isOpen, onClose, onSuccess }: TransactionDialogProps) => {
-  const [formData, setFormData] = useState<TransactionFormData>({
-    amount: 0,
-    category_id: "",
-    description: "",
-    payment_method: "",
-    type: "INCOME"
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: any) => {
+    // Handle the submission of the transaction data
     try {
       const { error } = await supabase
-        .from("accounting_transactions")
+        .from('accounting_transactions')
         .insert({
-          ...formData,
-          amount: formData.amount.toString(),
-          transaction_date: new Date().toISOString()
+          agreement_number: data.agreement_number,
+          amount: Number(data.amount),
+          category_id: data.category_id,
+          created_at: new Date().toISOString(),
+          customer_name: data.customer_name,
+          description: data.description,
+          license_plate: data.license_plate,
+          payment_method: data.payment_method,
+          receipt_url: data.receipt_url,
+          status: data.status,
+          transaction_date: data.transaction_date,
+          type: data.type,
         });
 
       if (error) throw error;
 
       toast.success("Transaction added successfully");
-      onSuccess();
-      onClose();
+      setOpen(false);
     } catch (error) {
-      console.error("Error adding transaction:", error);
+      console.error('Error adding transaction:', error);
       toast.error("Failed to add transaction");
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Transaction</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="amount">Amount (QAR)</Label>
-            <Input
-              id="amount"
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
-              required
-            />
+            <Label>Type</Label>
+            <Select {...register("type")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TransactionType.INCOME}>Income</SelectItem>
+                <SelectItem value={TransactionType.EXPENSE}>Expense</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <Label htmlFor="category">Category</Label>
-            <Input
-              id="category"
-              value={formData.category_id}
-              onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-              required
-            />
+            <Label>Agreement Number</Label>
+            <Input {...register("agreement_number")} />
           </div>
           <div>
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-            />
+            <Label>Amount</Label>
+            <Input type="number" {...register("amount")} />
           </div>
           <div>
-            <Label htmlFor="payment_method">Payment Method</Label>
-            <Input
-              id="payment_method"
-              value={formData.payment_method}
-              onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-              required
-            />
+            <Label>Category</Label>
+            <Input {...register("category_id")} />
           </div>
-          <Button type="submit" className="w-full">Add Transaction</Button>
+          <div>
+            <Label>Customer Name</Label>
+            <Input {...register("customer_name")} />
+          </div>
+          <div>
+            <Label>Description</Label>
+            <Input {...register("description")} />
+          </div>
+          <div>
+            <Label>License Plate</Label>
+            <Input {...register("license_plate")} />
+          </div>
+          <div>
+            <Label>Payment Method</Label>
+            <Input {...register("payment_method")} />
+          </div>
+          <div>
+            <Label>Receipt URL</Label>
+            <Input {...register("receipt_url")} />
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Input {...register("status")} />
+          </div>
+          <div>
+            <Label>Transaction Date</Label>
+            <Input type="date" {...register("transaction_date")} />
+          </div>
+          <Button type="submit">Save Transaction</Button>
         </form>
       </DialogContent>
     </Dialog>

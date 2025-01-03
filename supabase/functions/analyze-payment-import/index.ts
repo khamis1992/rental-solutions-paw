@@ -6,51 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Valid payment method types from the enum
-const VALID_PAYMENT_METHODS = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'] as const;
-type PaymentMethodType = typeof VALID_PAYMENT_METHODS[number];
-
-function normalizePaymentMethod(method: string): PaymentMethodType {
-  // Convert to title case first
-  const titleCase = method.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  
-  // Handle special cases
-  switch (titleCase) {
-    case 'Cash':
-      return 'Cash';
-    case 'Wire':
-    case 'Wiretransfer':
-    case 'Wire Transfer':
-      return 'WireTransfer';
-    case 'Check':
-    case 'Cheque':
-      return 'Cheque';
-    case 'Invoice':
-      return 'Invoice';
-    case 'Deposit':
-      return 'Deposit';
-    case 'Hold':
-    case 'On Hold':
-    case 'Onhold':
-      return 'On_hold';
-    default:
-      throw new Error(`Invalid payment method: ${method}`);
-  }
-}
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     const { rawPaymentId } = await req.json();
-    console.log('Processing raw payment:', rawPaymentId);
 
     // Fetch raw payment data
     const { data: rawPayment, error: fetchError } = await supabase
@@ -59,64 +26,60 @@ serve(async (req) => {
       .eq('id', rawPaymentId)
       .single();
 
-    if (fetchError) {
-      console.error('Error fetching raw payment:', fetchError);
-      throw fetchError;
-    }
+    if (fetchError) throw fetchError;
 
-    // Normalize payment method
-    let normalizedPaymentMethod: PaymentMethodType;
-    try {
-      normalizedPaymentMethod = normalizePaymentMethod(rawPayment.Payment_Method);
-      if (!VALID_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
-        throw new Error(`Payment method ${normalizedPaymentMethod} is not valid`);
-      }
-    } catch (error) {
-      console.error('Payment method normalization error:', error);
-      throw error;
-    }
+    // Prepare data for AI analysis
+    const prompt = `Analyze this payment data and provide a structured response:
+    Agreement Number: ${rawPayment.Agreement_Number}
+    Amount: ${rawPayment.Amount}
+    Payment Date: ${rawPayment.Payment_Date}
+    Description: ${rawPayment.Description}
 
-    // Find the lease by agreement number
-    const { data: lease, error: leaseError } = await supabase
-      .from('leases')
-      .select('*')
-      .eq('agreement_number', rawPayment.Agreement_Number)
-      .single();
+    Calculate if there are any late fees (120 QAR per day after the 1st of the month).
+    Provide the following in your response:
+    1. Validated agreement number
+    2. Payment amount
+    3. Late fee calculation (if applicable)
+    4. Total amount including late fees
+    5. Payment description
+    Format as JSON.`;
 
-    if (leaseError) {
-      console.error('Error finding lease:', leaseError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `No lease found for agreement number: ${rawPayment.Agreement_Number}`
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 404
-        }
-      );
-    }
+    // Get AI analysis
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a payment processing assistant that analyzes payment data and calculates late fees.' },
+          { role: 'user', content: prompt }
+        ],
+      }),
+    });
 
-    // Process payment
-    const paymentData = {
-      lease_id: lease.id,
-      amount: parseFloat(rawPayment.Amount),
-      payment_date: rawPayment.Payment_Date,
-      payment_method: normalizedPaymentMethod,
-      description: rawPayment.Description,
-      status: 'completed',
-      type: 'Income',
-      transaction_id: rawPayment.Transaction_ID
-    };
+    const aiData = await aiResponse.json();
+    const analysis = JSON.parse(aiData.choices[0].message.content);
 
+    // Process payment with AI insights
     const { error: insertError } = await supabase
       .from('payments')
-      .insert(paymentData);
+      .insert({
+        lease_id: rawPayment.Agreement_Number,
+        amount: analysis.paymentAmount,
+        amount_paid: analysis.paymentAmount,
+        payment_method: rawPayment.Payment_Method,
+        payment_date: rawPayment.Payment_Date,
+        description: analysis.description,
+        status: 'completed',
+        type: 'Income',
+        late_fine_amount: analysis.lateFeeAmount || 0,
+        days_overdue: analysis.daysOverdue || 0
+      });
 
-    if (insertError) {
-      console.error('Error inserting payment:', insertError);
-      throw insertError;
-    }
+    if (insertError) throw insertError;
 
     // Update raw payment status
     const { error: updateError } = await supabase
@@ -124,33 +87,24 @@ serve(async (req) => {
       .update({ is_valid: true })
       .eq('id', rawPaymentId);
 
-    if (updateError) {
-      console.error('Error updating raw payment:', updateError);
-      throw updateError;
-    }
+    if (updateError) throw updateError;
 
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: 'Payment processed successfully',
-        payment: paymentData
+        success: true, 
+        analysis,
+        message: 'Payment processed successfully' 
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Error processing payment:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
-      }),
+      JSON.stringify({ success: false, error: error.message }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
   }
