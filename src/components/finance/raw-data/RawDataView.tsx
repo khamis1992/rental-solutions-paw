@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Brain, PlayCircle } from "lucide-react";
+import { Loader2, Brain, PlayCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 
@@ -15,7 +15,8 @@ export const RawDataView = () => {
       const { data, error } = await supabase
         .from("raw_payment_imports")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .filter('is_valid', 'eq', false); // Only fetch unprocessed payments
 
       if (error) throw error;
       return data as RawPaymentImport[];
@@ -65,6 +66,25 @@ export const RawDataView = () => {
     }
   });
 
+  const cleanTableMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('raw_payment_imports')
+        .delete()
+        .filter('is_valid', 'eq', true);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
+      toast.success("Table cleaned successfully - removed all processed payments");
+    },
+    onError: (error) => {
+      console.error('Clean table error:', error);
+      toast.error("Failed to clean table");
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -79,21 +99,36 @@ export const RawDataView = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
-        {hasUnprocessedPayments && (
+        <div className="flex gap-2">
+          {hasUnprocessedPayments && (
+            <Button
+              variant="default"
+              onClick={() => analyzeAllPaymentsMutation.mutate()}
+              disabled={analyzeAllPaymentsMutation.isPending}
+              className="flex items-center gap-2"
+            >
+              {analyzeAllPaymentsMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PlayCircle className="h-4 w-4" />
+              )}
+              Analyze All
+            </Button>
+          )}
           <Button
-            variant="default"
-            onClick={() => analyzeAllPaymentsMutation.mutate()}
-            disabled={analyzeAllPaymentsMutation.isPending}
+            variant="outline"
+            onClick={() => cleanTableMutation.mutate()}
+            disabled={cleanTableMutation.isPending}
             className="flex items-center gap-2"
           >
-            {analyzeAllPaymentsMutation.isPending ? (
+            {cleanTableMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <PlayCircle className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
             )}
-            Analyze All
+            Clean Table
           </Button>
-        )}
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
