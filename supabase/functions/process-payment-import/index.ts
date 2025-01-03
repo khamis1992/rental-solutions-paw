@@ -1,146 +1,125 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-interface PaymentData {
-  lease_id: string;
-  amount: number;
-  payment_date: string;
-  payment_method?: string;
-  status?: string;
-  description?: string;
-  transaction_id?: string;
-}
-
-interface PaymentAnalysis {
-  success: boolean;
-  totalRows: number;
-  validRows: number;
-  invalidRows: number;
-  totalAmount: number;
-  rawData: PaymentData[];
-  issues?: string[];
-  suggestions?: string[];
-}
-
-const validateAnalysisResult = (result: any): result is PaymentAnalysis => {
-  console.log('Validating analysis result:', result);
-  
-  if (!result || typeof result !== 'object') {
-    console.error('Analysis result is not an object');
-    return false;
-  }
-
-  const requiredFields = [
-    'success',
-    'totalRows',
-    'validRows',
-    'invalidRows',
-    'totalAmount',
-    'rawData'
-  ];
-
-  const missingFields = requiredFields.filter(field => !(field in result));
-  if (missingFields.length > 0) {
-    console.error('Missing required fields:', missingFields);
-    return false;
-  }
-
-  if (!Array.isArray(result.rawData)) {
-    console.error('rawData is not an array');
-    return false;
-  }
-
-  return true;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing environment variables')
+      throw new Error('Missing environment variables');
     }
 
-    const supabaseClient = createClient(supabaseUrl, supabaseKey)
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const payload = await req.json()
-    console.log('Received payload:', payload)
+    // Get unprocessed payments
+    const { data: unprocessedPayments, error: fetchError } = await supabase
+      .from('raw_payment_imports')
+      .select('*')
+      .eq('is_valid', false);
 
-    if (!payload.analysisResult) {
-      console.error('Missing analysisResult in payload');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing analysis result'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      )
-    }
+    if (fetchError) throw fetchError;
 
-    if (!validateAnalysisResult(payload.analysisResult)) {
-      console.error('Invalid analysis result structure:', payload.analysisResult);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid analysis result structure'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      )
-    }
-
-    const { rawData } = payload.analysisResult;
-    console.log('Processing payments:', rawData);
-
-    // Process payments in batches
-    const batchSize = 50;
     const results = [];
-    let successCount = 0;
     const errors = [];
 
-    for (let i = 0; i < rawData.length; i += batchSize) {
-      const batch = rawData.slice(i, Math.min(i + batchSize, rawData.length));
-      
+    for (const payment of unprocessedPayments || []) {
       try {
-        const { data, error } = await supabaseClient
-          .from('payments')
-          .insert(batch.map(payment => ({
-            lease_id: payment.lease_id,
-            amount: payment.amount,
-            payment_date: payment.payment_date,
-            payment_method: payment.payment_method || 'cash',
-            status: payment.status || 'completed',
-            description: payment.description,
-            transaction_id: payment.transaction_id
-          })))
-          .select();
+        // Check if agreement exists
+        const { data: agreement } = await supabase
+          .from('leases')
+          .select('id')
+          .eq('agreement_number', payment.Agreement_Number)
+          .single();
 
-        if (error) {
-          console.error('Batch insert error:', error);
-          errors.push({
-            batch: Math.floor(i / batchSize) + 1,
-            error: error.message
-          });
-        } else {
-          console.log(`Successfully inserted ${data.length} payments`);
-          successCount += data.length;
-          results.push(...data);
+        if (!agreement) {
+          // Create agreement if it doesn't exist
+          const { data: customer } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('full_name', payment.Customer_Name)
+            .single();
+
+          if (!customer) {
+            // Create customer if they don't exist
+            const { data: newCustomer, error: customerError } = await supabase
+              .from('profiles')
+              .insert({
+                full_name: payment.Customer_Name,
+                role: 'customer'
+              })
+              .select()
+              .single();
+
+            if (customerError) throw customerError;
+            
+            // Get first available vehicle
+            const { data: vehicle } = await supabase
+              .from('vehicles')
+              .select('id')
+              .eq('status', 'available')
+              .limit(1)
+              .single();
+
+            if (!vehicle) throw new Error('No available vehicles');
+
+            // Create new agreement
+            const { data: newAgreement, error: agreementError } = await supabase
+              .from('leases')
+              .insert({
+                agreement_number: payment.Agreement_Number,
+                customer_id: newCustomer.id,
+                vehicle_id: vehicle.id,
+                total_amount: payment.Amount,
+                status: 'active',
+                agreement_type: 'short_term'
+              })
+              .select()
+              .single();
+
+            if (agreementError) throw agreementError;
+          }
         }
+
+        // Create payment
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            lease_id: agreement?.id,
+            amount: payment.Amount,
+            payment_method: payment.Payment_Method,
+            payment_date: payment.Payment_Date,
+            status: payment.Status,
+            description: payment.Description
+          });
+
+        if (paymentError) throw paymentError;
+
+        // Mark as processed
+        const { error: updateError } = await supabase
+          .from('raw_payment_imports')
+          .update({ is_valid: true })
+          .eq('id', payment.id);
+
+        if (updateError) throw updateError;
+
+        results.push({
+          success: true,
+          payment: payment.Transaction_ID
+        });
       } catch (error) {
-        console.error(`Error processing batch ${i + 1}-${i + batch.length}:`, error);
+        console.error(`Error processing payment ${payment.Transaction_ID}:`, error);
         errors.push({
-          batch: Math.floor(i / batchSize) + 1,
+          payment: payment.Transaction_ID,
           error: error.message
         });
       }
@@ -148,21 +127,26 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        processed: successCount,
+        success: true,
+        processed: results.length,
         errors: errors.length > 0 ? errors : undefined,
         results 
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
   } catch (error) {
-    console.error('Error processing payment import:', error)
+    console.error('Error processing payment import:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
-    )
+    );
   }
-})
+});

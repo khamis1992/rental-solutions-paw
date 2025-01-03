@@ -1,5 +1,18 @@
 import { PaymentMethodType } from "@/components/finance/types/transaction.types";
 
+export const REQUIRED_FIELDS = [
+  'Transaction_ID',
+  'Agreement_Number',
+  'Customer_Name',
+  'License_Plate',
+  'Amount',
+  'Payment_Method',
+  'Description',
+  'Payment_Date',
+  'Type',
+  'Status'
+] as const;
+
 export const normalizePaymentMethod = (method: string): PaymentMethodType => {
   const methodMap: Record<string, PaymentMethodType> = {
     'cash': 'Cash',
@@ -17,19 +30,6 @@ export const normalizePaymentMethod = (method: string): PaymentMethodType => {
   const normalized = method.toLowerCase().replace(/[^a-z]/g, '');
   return methodMap[normalized] || 'Cash';
 };
-
-export const REQUIRED_FIELDS = [
-  'Transaction_ID',
-  'Agreement_Number',
-  'Customer_Name',
-  'License_Plate',
-  'Amount',
-  'Payment_Method',
-  'Description',
-  'Payment_Date',
-  'Type',
-  'Status'
-] as const;
 
 export const validateHeaders = (headers: string[]): { isValid: boolean; missingFields: string[] } => {
   const normalizedHeaders = headers.map(h => h.trim());
