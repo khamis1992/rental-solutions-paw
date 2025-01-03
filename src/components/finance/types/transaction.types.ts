@@ -1,4 +1,8 @@
+import { Json } from "@/integrations/supabase/types";
+
 export type TransactionType = 'INCOME' | 'EXPENSE';
+export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Transaction {
   id: string;
@@ -25,7 +29,7 @@ export interface Transaction {
 }
 
 export interface RawPaymentImport {
-  id: string;
+  id?: string;
   Agreement_Number: string | null;
   Transaction_ID: string | null;
   Customer_Name: string | null;
@@ -37,8 +41,29 @@ export interface RawPaymentImport {
   Type: string | null;
   Status: string | null;
   is_valid: boolean;
-  error_description: string | null;
-  created_at: string | null;
+  error_description?: string | null;
+  created_at?: string | null;
+}
+
+export interface PaymentImportData {
+  lease_id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: PaymentMethodType;
+  status: PaymentStatus;
+  description?: string;
+  transaction_id?: string;
+}
+
+export interface PaymentAnalysisResult {
+  success: boolean;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  totalAmount: number;
+  rawData: PaymentImportData[];
+  issues?: string[];
+  suggestions?: string[];
 }
 
 export interface TransactionFormData {

@@ -50,6 +50,8 @@ export const RawDataView = () => {
       const results = [];
 
       for (const payment of unprocessedPayments) {
+        if (!payment.id) continue;
+        
         try {
           const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
             body: { rawPaymentId: payment.id }
@@ -166,7 +168,7 @@ export const RawDataView = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => analyzePaymentMutation.mutate(transaction.id)}
+                    onClick={() => transaction.id && analyzePaymentMutation.mutate(transaction.id)}
                     disabled={transaction.is_valid || analyzePaymentMutation.isPending}
                     className="flex items-center gap-2"
                   >
