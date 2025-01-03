@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Brain, PlayCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
@@ -22,6 +24,10 @@ export const RawDataView = () => {
       return data as RawPaymentImport[];
     },
   });
+
+  // Calculate total and unassigned amounts
+  const totalAmount = rawTransactions?.reduce((sum, transaction) => 
+    sum + (Number(transaction.Amount) || 0), 0) || 0;
 
   const analyzePaymentMutation = useMutation({
     mutationFn: async (paymentId: string) => {
@@ -130,6 +136,19 @@ export const RawDataView = () => {
           </Button>
         </div>
       </div>
+
+      <Card className="bg-muted/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Remaining Unassigned Amount</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold">{formatCurrency(totalAmount)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Total amount from unprocessed payments
+          </p>
+        </CardContent>
+      </Card>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -152,7 +171,7 @@ export const RawDataView = () => {
                 <TableCell>{transaction.Transaction_ID}</TableCell>
                 <TableCell>{transaction.Agreement_Number}</TableCell>
                 <TableCell>{transaction.Customer_Name}</TableCell>
-                <TableCell>{transaction.Amount}</TableCell>
+                <TableCell>{formatCurrency(Number(transaction.Amount))}</TableCell>
                 <TableCell>{transaction.Payment_Method}</TableCell>
                 <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
                 <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
