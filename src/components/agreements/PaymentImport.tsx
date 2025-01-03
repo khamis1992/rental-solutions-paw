@@ -85,21 +85,23 @@ export const PaymentImport = () => {
             setImportedData(parsedData);
 
             for (const row of parsedData) {
+              const rawImport: Partial<RawPaymentImport> = {
+                Transaction_ID: row.Transaction_ID as string,
+                Agreement_Number: row.Agreement_Number as string,
+                Customer_Name: row.Customer_Name as string,
+                License_Plate: row.License_Plate as string,
+                Amount: Number(row.Amount),
+                Payment_Method: row.Payment_Method as PaymentMethodType,
+                Description: row.Description as string,
+                Payment_Date: row.Payment_Date as string,
+                Type: row.Type as string,
+                Status: row.Status as string,
+                is_valid: true
+              };
+
               const { error: insertError } = await supabase
                 .from('raw_payment_imports')
-                .insert({
-                  Transaction_ID: row.Transaction_ID,
-                  Agreement_Number: row.Agreement_Number,
-                  Customer_Name: row.Customer_Name,
-                  License_Plate: row.License_Plate,
-                  Amount: Number(row.Amount),
-                  Payment_Method: row.Payment_Method,
-                  Description: row.Description,
-                  Payment_Date: row.Payment_Date,
-                  Type: row.Type,
-                  Status: row.Status,
-                  is_valid: true
-                });
+                .insert(rawImport);
 
               if (insertError) {
                 console.error('Raw data import error:', insertError);
