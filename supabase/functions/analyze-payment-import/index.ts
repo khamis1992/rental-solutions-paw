@@ -6,7 +6,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Valid payment method types from the enum
+const VALID_PAYMENT_METHODS = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'];
+
+function normalizePaymentMethod(method: string): string {
+  // Convert to title case first
+  const titleCase = method.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  
+  // Handle special cases
+  switch (titleCase) {
+    case 'Cash':
+      return 'Cash';
+    case 'Wire':
+    case 'Wiretransfer':
+    case 'Wire Transfer':
+      return 'WireTransfer';
+    case 'Check':
+    case 'Cheque':
+      return 'Cheque';
+    case 'Invoice':
+      return 'Invoice';
+    case 'Deposit':
+      return 'Deposit';
+    case 'Hold':
+    case 'On Hold':
+    case 'Onhold':
+      return 'On_hold';
+    default:
+      throw new Error(`Invalid payment method: ${method}`);
+  }
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -31,6 +63,18 @@ serve(async (req) => {
       throw fetchError;
     }
 
+    // Normalize payment method
+    let normalizedPaymentMethod;
+    try {
+      normalizedPaymentMethod = normalizePaymentMethod(rawPayment.Payment_Method);
+      if (!VALID_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
+        throw new Error(`Payment method ${normalizedPaymentMethod} is not valid`);
+      }
+    } catch (error) {
+      console.error('Payment method normalization error:', error);
+      throw error;
+    }
+
     // Find the lease by agreement number
     const { data: lease, error: leaseError } = await supabase
       .from('leases')
@@ -52,32 +96,15 @@ serve(async (req) => {
       );
     }
 
-    // Calculate late fees if applicable
-    const paymentDate = new Date(rawPayment.Payment_Date);
-    const dueDay = lease.rent_due_day || 1;
-    const paymentMonth = paymentDate.getMonth();
-    const paymentYear = paymentDate.getFullYear();
-    const dueDate = new Date(paymentYear, paymentMonth, dueDay);
-    
-    let lateFee = 0;
-    let daysOverdue = 0;
-    
-    if (paymentDate > dueDate) {
-      daysOverdue = Math.floor((paymentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-      lateFee = daysOverdue * (lease.daily_late_fine || 120); // Default to 120 QAR if not set
-    }
-
     // Process payment
     const paymentData = {
       lease_id: lease.id,
       amount: parseFloat(rawPayment.Amount),
       payment_date: rawPayment.Payment_Date,
-      payment_method: rawPayment.Payment_Method,
+      payment_method: normalizedPaymentMethod,
       description: rawPayment.Description,
       status: 'completed',
       type: 'Income',
-      late_fine_amount: lateFee,
-      days_overdue: daysOverdue,
       transaction_id: rawPayment.Transaction_ID
     };
 
