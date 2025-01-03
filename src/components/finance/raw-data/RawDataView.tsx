@@ -44,24 +44,47 @@ export const RawDataView = () => {
 
   const analyzeAllPaymentsMutation = useMutation({
     mutationFn: async () => {
-      const unprocessedPayments = rawTransactions?.filter(payment => !payment.is_valid) || [];
+      if (!rawTransactions) return;
       
+      const unprocessedPayments = rawTransactions.filter(payment => !payment.is_valid);
+      const results = [];
+
       for (const payment of unprocessedPayments) {
-        const { error } = await supabase.functions.invoke('analyze-payment-import', {
-          body: { rawPaymentId: payment.id }
-        });
-        
-        if (error) throw error;
+        try {
+          const { data, error } = await supabase.functions.invoke('analyze-payment-import', {
+            body: { rawPaymentId: payment.id }
+          });
+          
+          if (error) {
+            console.error('Error processing payment:', payment.id, error);
+            results.push({ id: payment.id, success: false, error });
+          } else {
+            results.push({ id: payment.id, success: true, data });
+          }
+        } catch (error) {
+          console.error('Error processing payment:', payment.id, error);
+          results.push({ id: payment.id, success: false, error });
+        }
       }
+
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
       queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      toast.success("All payments analyzed and processed successfully");
+      
+      const successCount = results?.filter(r => r.success).length || 0;
+      const failureCount = results?.filter(r => !r.success).length || 0;
+      
+      if (failureCount === 0) {
+        toast.success(`Successfully analyzed all ${successCount} payments`);
+      } else {
+        toast.warning(`Processed ${successCount} payments, ${failureCount} failed. Check console for details.`);
+      }
     },
     onError: (error) => {
       console.error('Bulk payment analysis error:', error);
-      toast.error("Failed to analyze all payments");
+      toast.error("Failed to analyze payments");
     }
   });
 

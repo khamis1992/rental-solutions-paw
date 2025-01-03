@@ -1,23 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const REQUIRED_FIELDS = [
-  'Transaction_ID',
-  'Agreement_Number',
-  'Customer_Name',
-  'License_Plate',
-  'Amount',
-  'Payment_Method',
-  'Description',
-  'Payment_Date',
-  'Type',
-  'Status'
-] as const;
-
-export const PaymentImport = () => {
+export const TransactionImport = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,36 +22,33 @@ export const PaymentImport = () => {
 
         for (const row of rows) {
           const columns = row.split(',');
-          const paymentData = {
-            Transaction_ID: columns[0],
-            Agreement_Number: columns[1],
-            Customer_Name: columns[2],
-            License_Plate: columns[3],
-            Amount: parseFloat(columns[4]),
-            Payment_Method: columns[5],
-            Description: columns[6],
-            Payment_Date: columns[7],
-            Type: columns[8],
-            Status: columns[9],
+          const transactionData = {
+            agreement_number: columns[0],
+            amount: parseFloat(columns[1]),
+            transaction_date: columns[2],
+            payment_method: columns[3],
+            status: columns[4],
+            description: columns[5],
+            transaction_id: columns[6],
           };
 
           const { error } = await supabase
-            .from("raw_payment_imports")
-            .insert(paymentData);
+            .from("accounting_transactions")
+            .insert(transactionData);
 
           if (error) {
-            console.error('Raw data import error:', error);
-            toast.error('Failed to store raw data');
+            console.error('Transaction import error:', error);
+            toast.error('Failed to import transaction');
           }
         }
 
-        toast.success('Raw data imported successfully');
+        toast.success('Transactions imported successfully');
       };
       
       reader.readAsText(file);
     } catch (error) {
       console.error('Import error:', error);
-      toast.error("Failed to import payment data");
+      toast.error("Failed to import transactions");
     } finally {
       setIsUploading(false);
     }
@@ -90,7 +75,7 @@ export const PaymentImport = () => {
       {isUploading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Importing payments...
+          Importing transactions...
         </div>
       )}
     </div>
