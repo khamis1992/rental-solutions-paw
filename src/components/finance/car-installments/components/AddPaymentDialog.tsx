@@ -70,11 +70,17 @@ export const AddPaymentDialog = ({
       for (const cheque of chequeSequence) {
         try {
           // First check if cheque number exists
-          const { data: existingCheque } = await supabase
+          const { data: existingCheque, error: checkError } = await supabase
             .from("car_installment_payments")
             .select("id")
             .eq("cheque_number", cheque.cheque_number)
             .single();
+
+          if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+            console.error("Error checking cheque:", checkError);
+            errorCount++;
+            continue;
+          }
 
           if (existingCheque) {
             console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
