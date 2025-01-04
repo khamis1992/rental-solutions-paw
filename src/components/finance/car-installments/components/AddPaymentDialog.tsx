@@ -8,21 +8,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { addMonths, format } from "date-fns";
-
-interface ContractFormData {
-  contract_name: string;
-  total_installments: number;
-  paid_installments: number;
-  monthly_installment: number;
-  price_per_car: number;
-  total_contract_value: number;
-  number_of_cars: number;
-}
+import { getAIPaymentSuggestions } from "../utils/paymentAI";
+import { PaymentAIRecommendations } from "./PaymentAIRecommendations";
+import { Loader2 } from "lucide-react";
 
 interface AddPaymentDialogProps {
   open: boolean;
@@ -42,6 +33,9 @@ export function AddPaymentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
+  const [amount, setAmount] = useState<string>("");
+  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const generateChequeSequence = (baseNumber: string, startDate: string, amount: number) => {
     const sequence = [];
@@ -60,33 +54,50 @@ export function AddPaymentDialog({
     return sequence;
   };
 
+  const analyzePayment = async () => {
+    if (!firstChequeNumber || !firstPaymentDate || !amount) {
+      toast.error("Please fill in all fields first");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const suggestions = await getAIPaymentSuggestions(
+        firstChequeNumber,
+        Number(amount),
+        firstPaymentDate,
+        totalInstallments
+      );
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      console.error('Error analyzing payment:', error);
+      toast.error("Failed to analyze payment details");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData(e.currentTarget);
-      const amount = Number(formData.get("amount"));
-      const draweeBankName = String(formData.get("draweeBankName"));
-
-      if (!firstChequeNumber || !firstPaymentDate) {
+      if (!firstChequeNumber || !firstPaymentDate || !amount) {
         throw new Error("Please enter both cheque number and payment date");
       }
 
       const chequeSequence = generateChequeSequence(
         firstChequeNumber,
         firstPaymentDate,
-        amount
+        Number(amount)
       );
 
       let successCount = 0;
       let errorCount = 0;
 
-      // Process payments one by one
       for (const cheque of chequeSequence) {
         try {
-          // Check if cheque number exists using maybeSingle()
           const { data: existingCheque, error: checkError } = await supabase
             .from("car_installment_payments")
             .select("id")
@@ -105,17 +116,16 @@ export function AddPaymentDialog({
             continue;
           }
 
-          // Insert new payment if cheque doesn't exist
           const { error: insertError } = await supabase
             .from("car_installment_payments")
             .insert({
               contract_id: contractId,
               cheque_number: cheque.cheque_number,
-              amount: amount,
+              amount: Number(amount),
               payment_date: cheque.payment_date,
-              drawee_bank: draweeBankName,
+              drawee_bank: e.currentTarget.draweeBankName.value,
               paid_amount: 0,
-              remaining_amount: amount,
+              remaining_amount: Number(amount),
               status: "pending"
             });
 
@@ -173,7 +183,9 @@ export function AddPaymentDialog({
               id="amount" 
               name="amount" 
               type="number" 
-              step="0.01" 
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               required 
             />
           </div>
@@ -195,8 +207,42 @@ export function AddPaymentDialog({
             <Input id="draweeBankName" name="draweeBankName" required />
           </div>
 
+          {!aiSuggestions && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full"
+              onClick={analyzePayment}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                'Analyze Payment Details'
+              )}
+            </Button>
+          )}
+
+          {aiSuggestions && (
+            <PaymentAIRecommendations
+              riskLevel={aiSuggestions.riskAssessment.riskLevel}
+              factors={aiSuggestions.riskAssessment.factors}
+              recommendations={aiSuggestions.recommendations}
+            />
+          )}
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Adding Payments..." : "Add Payment Sequence"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Adding Payments...
+              </>
+            ) : (
+              'Add Payment Sequence'
+            )}
           </Button>
         </form>
       </DialogContent>
