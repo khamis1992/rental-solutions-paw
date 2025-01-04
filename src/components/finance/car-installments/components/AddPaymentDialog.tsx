@@ -50,6 +50,7 @@ export const AddPaymentDialog = ({
     try {
       const formData = new FormData(e.currentTarget);
       const amount = Number(formData.get("amount"));
+      const draweeBankName = String(formData.get("draweeBankName"));
 
       if (!firstChequeNumber || !firstPaymentDate) {
         throw new Error("Please enter both cheque number and payment date");
@@ -61,21 +62,30 @@ export const AddPaymentDialog = ({
         amount
       );
 
-      // Create all installments
-      const { error } = await supabase
-        .from("car_installment_payments")
-        .insert(chequeSequence.map(cheque => ({
-          contract_id: contractId,
-          cheque_number: cheque.cheque_number,
-          amount: amount,
-          payment_date: cheque.payment_date,
-          drawee_bank: String(formData.get("draweeBankName")),
-          paid_amount: 0,
-          remaining_amount: amount,
-          status: "pending"
-        })));
+      // Insert payments one by one to better handle errors
+      for (const cheque of chequeSequence) {
+        const { error } = await supabase
+          .from("car_installment_payments")
+          .insert({
+            contract_id: contractId,
+            cheque_number: cheque.cheque_number,
+            amount: amount,
+            payment_date: cheque.payment_date,
+            drawee_bank: draweeBankName,
+            paid_amount: 0,
+            remaining_amount: amount,
+            status: "pending"
+          });
 
-      if (error) throw error;
+        if (error) {
+          // If it's a unique constraint violation, skip this cheque
+          if (error.code === '23505') {
+            console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
+            continue;
+          }
+          throw error;
+        }
+      }
 
       toast.success("Payment installments added successfully");
       onSuccess?.();
