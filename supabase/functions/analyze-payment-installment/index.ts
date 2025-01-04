@@ -1,13 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     const { firstChequeNumber, amount, firstPaymentDate, totalInstallments } = await req.json();
+    console.log('Analyzing payment details:', { firstChequeNumber, amount, firstPaymentDate, totalInstallments });
 
     // Analyze cheque number pattern
     const hasValidFormat = /^[A-Za-z]*\d+$/.test(firstChequeNumber);
@@ -62,6 +68,8 @@ serve(async (req) => {
       recommendations: recommendations,
       suggestedDates: [firstPaymentDate], // Could be expanded to suggest alternative dates
     };
+
+    console.log('Analysis response:', response);
 
     return new Response(
       JSON.stringify(response),
