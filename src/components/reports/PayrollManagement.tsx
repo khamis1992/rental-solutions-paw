@@ -8,7 +8,10 @@ export const PayrollManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounting_transactions")
-        .select("*")
+        .select(`
+          *,
+          category:accounting_categories(*)
+        `)
         .eq("type", "EXPENSE")
         .order("created_at", { ascending: false });
 
@@ -16,7 +19,8 @@ export const PayrollManagement = () => {
 
       return data.map(transaction => ({
         ...transaction,
-        amount: Number(transaction.amount)
+        amount: Number(transaction.amount),
+        category: transaction.category || null
       })) as Transaction[];
     }
   });

@@ -16,14 +16,18 @@ export const TransactionCategorization = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("accounting_transactions")
-        .select("*")
+        .select(`
+          *,
+          category:accounting_categories(*)
+        `)
         .is("category_id", null)
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
       return data.map(transaction => ({
         ...transaction,
-        amount: Number(transaction.amount)
+        amount: Number(transaction.amount),
+        category: transaction.category || null
       })) as Transaction[];
     },
   });
