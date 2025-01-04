@@ -58,6 +58,85 @@ export const PaymentImport = () => {
     document.body.removeChild(a);
   };
 
+  const forceAssignPayment = async (payment: RawPaymentImport) => {
+    try {
+      // Get lease ID by agreement number
+      const { data: lease } = await supabase
+        .from('leases')
+        .select('id')
+        .eq('agreement_number', payment.Agreement_Number)
+        .single();
+
+      if (!lease) {
+        toast.error(`No agreement found with number ${payment.Agreement_Number}`);
+        return false;
+      }
+
+      // Insert payment directly
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          lease_id: lease.id,
+          amount: payment.Amount,
+          payment_method: payment.Payment_Method,
+          payment_date: payment.Payment_Date,
+          status: payment.Status,
+          description: payment.Description,
+          type: payment.Type
+        });
+
+      if (paymentError) {
+        console.error('Payment insert error:', paymentError);
+        toast.error(`Failed to create payment for agreement ${payment.Agreement_Number}`);
+        return false;
+      }
+
+      // Mark raw payment as valid
+      const { error: updateError } = await supabase
+        .from('raw_payment_imports')
+        .update({ is_valid: true })
+        .eq('id', payment.id);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        return false;
+      }
+
+      toast.success(`Payment assigned to agreement ${payment.Agreement_Number}`);
+      return true;
+    } catch (error) {
+      console.error('Force assign error:', error);
+      toast.error('Failed to assign payment');
+      return false;
+    }
+  };
+
+  const forceAssignAllPayments = async () => {
+    setIsUploading(true);
+    try {
+      const { data: unprocessedPayments, error: fetchError } = await supabase
+        .from('raw_payment_imports')
+        .select('*')
+        .eq('is_valid', false);
+
+      if (fetchError) throw fetchError;
+
+      let successCount = 0;
+      for (const payment of (unprocessedPayments || [])) {
+        const success = await forceAssignPayment(payment);
+        if (success) successCount++;
+      }
+
+      toast.success(`Successfully assigned ${successCount} payments`);
+      await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+    } catch (error) {
+      console.error('Bulk assign error:', error);
+      toast.error('Failed to assign payments');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -97,7 +176,7 @@ export const PaymentImport = () => {
                 Payment_Date: row.Payment_Date as string,
                 Type: row.Type as string,
                 Status: row.Status as string,
-                is_valid: true
+                is_valid: false
               };
 
               const { error: insertError } = await supabase
@@ -107,11 +186,11 @@ export const PaymentImport = () => {
               if (insertError) {
                 console.error('Raw data import error:', insertError);
                 toast.error('Failed to store raw data');
-              } else {
-                toast.success('Raw data imported successfully');
-                await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
               }
             }
+
+            await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
+            toast.success('Raw data imported successfully');
           },
           error: (error) => {
             console.error('CSV Parse Error:', error);
@@ -147,12 +226,19 @@ export const PaymentImport = () => {
         >
           Download Template
         </Button>
+        <Button
+          variant="default"
+          onClick={forceAssignAllPayments}
+          disabled={isUploading}
+        >
+          Force Assign All
+        </Button>
       </div>
       
       {isUploading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Importing data...
+          Processing payments...
         </div>
       )}
 
