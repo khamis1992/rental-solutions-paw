@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,7 +39,7 @@ export function CreateContractDialog() {
   };
 
   // Watch for changes in both fields and update total value
-  React.useEffect(() => {
+  useEffect(() => {
     calculateTotalValue();
   }, [watchTotalInstallments, watchMonthlyInstallment]);
 
