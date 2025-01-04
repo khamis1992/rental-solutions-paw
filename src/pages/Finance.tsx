@@ -6,7 +6,7 @@ import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
 import { CarInstallmentDetails } from "@/components/finance/car-installments/CarInstallmentDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useParams } from "react-router-dom";
+import { useParams, Routes, Route } from "react-router-dom";
 import { 
   BarChart3, 
   CreditCard, 
@@ -97,7 +97,10 @@ const Finance = () => {
         </TabsContent>
 
         <TabsContent value="car-installments">
-          {id ? <CarInstallmentDetails /> : <CarInstallmentContracts />}
+          <Routes>
+            <Route index element={<CarInstallmentContracts />} />
+            <Route path=":id/*" element={<CarInstallmentDetails />} />
+          </Routes>
         </TabsContent>
       </Tabs>
     </div>

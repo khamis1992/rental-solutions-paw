@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Routes, Route, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Loader2, Calendar, DollarSign, Car, Tag } from "lucide-react";
 import { CarInstallmentAnalytics } from "./CarInstallmentAnalytics";
 import { PaymentMonitoring } from "./PaymentMonitoring";
 import { CarInstallmentPayments } from "./CarInstallmentPayments";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const CarInstallmentDetails = () => {
   const { id } = useParams();
@@ -121,11 +122,25 @@ export const CarInstallmentDetails = () => {
         </CardContent>
       </Card>
 
-      <CarInstallmentAnalytics contractId={id!} />
-      
-      <CarInstallmentPayments contractId={id!} />
-      
-      <PaymentMonitoring contractId={id!} />
+      <Tabs defaultValue="analytics" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="analytics">
+          <CarInstallmentAnalytics contractId={id!} />
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <CarInstallmentPayments contractId={id!} />
+        </TabsContent>
+
+        <TabsContent value="monitoring">
+          <PaymentMonitoring contractId={id!} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
