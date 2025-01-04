@@ -1,43 +1,38 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { paymentService } from '@/services/payment/paymentService';
+import { toast } from 'sonner';
 
 export const usePaymentReconciliation = () => {
   const [isReconciling, setIsReconciling] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const reconcilePayments = async (paymentId: string) => {
+  const reconcilePayments = async (agreementId: string) => {
     setIsReconciling(true);
     try {
-      const { data, error } = await supabase.functions.invoke('process-payment-reconciliation', {
-        body: { paymentId }
-      });
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('lease_id', agreementId)
+        .eq('status', 'pending');
 
-      if (error) throw error;
+      if (!payments?.length) {
+        toast.info('No pending payments to reconcile');
+        return;
+      }
 
-      // Invalidate all related queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["payment-history"] }),
-        queryClient.invalidateQueries({ queryKey: ["payment-reconciliation"] }),
-        queryClient.invalidateQueries({ queryKey: ["agreements"] }),
-        queryClient.invalidateQueries({ queryKey: ["financial-reports"] })
-      ]);
+      for (const payment of payments) {
+        await paymentService.reconcilePayment(payment.id);
+      }
 
-      toast({
-        title: "Success",
-        description: "Payment reconciliation completed successfully",
-      });
-
-      return data;
-    } catch (error: any) {
+      // Invalidate relevant queries
+      await queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+      
+      toast.success('Payments reconciled successfully');
+    } catch (error) {
       console.error('Reconciliation error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to reconcile payment",
-        variant: "destructive",
-      });
+      toast.error('Failed to reconcile payments');
       throw error;
     } finally {
       setIsReconciling(false);
