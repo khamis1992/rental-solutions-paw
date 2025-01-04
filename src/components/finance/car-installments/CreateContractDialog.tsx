@@ -29,15 +29,19 @@ export function CreateContractDialog() {
   const queryClient = useQueryClient();
   const { register, handleSubmit, watch, setValue } = useForm<ContractFormData>();
 
-  const watchPricePerCar = watch("price_per_car", 0);
   const watchTotalInstallments = watch("total_installments", 0);
-  const watchPaidInstallments = watch("paid_installments", 0);
   const watchMonthlyInstallment = watch("monthly_installment", 0);
 
-  // Calculate total contract value when price per car changes
-  const calculateTotalValue = (pricePerCar: number) => {
-    setValue("total_contract_value", pricePerCar);
+  // Calculate total contract value when either total installments or monthly installment changes
+  const calculateTotalValue = () => {
+    const totalValue = watchTotalInstallments * watchMonthlyInstallment;
+    setValue("total_contract_value", totalValue);
   };
+
+  // Watch for changes in both fields and update total value
+  React.useEffect(() => {
+    calculateTotalValue();
+  }, [watchTotalInstallments, watchMonthlyInstallment]);
 
   const onSubmit = async (data: ContractFormData) => {
     try {
@@ -136,8 +140,7 @@ export function CreateContractDialog() {
               type="number" 
               {...register("price_per_car", {
                 required: true,
-                valueAsNumber: true,
-                onChange: (e) => calculateTotalValue(Number(e.target.value))
+                valueAsNumber: true
               })} 
             />
           </div>
