@@ -5,7 +5,9 @@ import { PaymentManagement } from "@/components/finance/payments/PaymentManageme
 import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
 import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
+import { CarInstallmentDetails } from "@/components/finance/car-installments/CarInstallmentDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useParams } from "react-router-dom";
 import { 
   BarChart3, 
   CreditCard, 
@@ -17,6 +19,8 @@ import {
 } from "lucide-react";
 
 const Finance = () => {
+  const { id } = useParams();
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
@@ -107,7 +111,7 @@ const Finance = () => {
         </TabsContent>
 
         <TabsContent value="car-installments">
-          <CarInstallmentContracts />
+          {id ? <CarInstallmentDetails /> : <CarInstallmentContracts />}
         </TabsContent>
       </Tabs>
     </div>
