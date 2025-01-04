@@ -586,6 +586,7 @@ export type Database = {
           id: string
           installment_value: number
           model_year: number
+          number_of_cars: number
           price_per_car: number
           remaining_installments: number
           total_contract_value: number
@@ -601,6 +602,7 @@ export type Database = {
           id?: string
           installment_value: number
           model_year: number
+          number_of_cars?: number
           price_per_car: number
           remaining_installments: number
           total_contract_value: number
@@ -616,6 +618,7 @@ export type Database = {
           id?: string
           installment_value?: number
           model_year?: number
+          number_of_cars?: number
           price_per_car?: number
           remaining_installments?: number
           total_contract_value?: number
