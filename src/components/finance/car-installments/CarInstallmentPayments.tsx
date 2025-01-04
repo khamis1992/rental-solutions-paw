@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CarInstallmentPayment {
   id: string;
@@ -67,9 +68,10 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
                   <TableCell>{payment.drawee_bank}</TableCell>
                   <TableCell className="text-right">{formatCurrency(payment.amount)}</TableCell>
                   <TableCell 
-                    className={`text-right font-medium ${
-                      payment.paid_amount >= payment.amount ? 'text-green-600' : 'text-red-600'
-                    }`}
+                    className={cn(
+                      "text-right font-medium",
+                      payment.paid_amount >= payment.amount ? "text-green-600" : "text-red-600"
+                    )}
                   >
                     {formatCurrency(payment.paid_amount)}
                   </TableCell>
@@ -78,11 +80,12 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
                   </TableCell>
                   <TableCell className="text-center">
                     <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                        ${payment.status === 'completed' 
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        payment.status === 'completed' 
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
-                        }`}
+                      )}
                     >
                       {payment.status}
                     </span>
