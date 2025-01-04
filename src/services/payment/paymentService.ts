@@ -1,9 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentMethodType } from "@/types/database/payment.types";
 
 export interface PaymentRequest {
   leaseId: string;
   amount: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethodType;
   description?: string;
 }
 

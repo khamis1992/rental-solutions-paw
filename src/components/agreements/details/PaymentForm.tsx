@@ -16,13 +16,11 @@ import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
 import { paymentService } from "@/services/payment/paymentService";
 import { toast } from "sonner";
+import { PaymentMethodType } from "@/types/database/payment.types";
 
 interface PaymentFormProps {
   agreementId: string;
 }
-
-// Define payment method type to match the database enum exactly
-type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const {
