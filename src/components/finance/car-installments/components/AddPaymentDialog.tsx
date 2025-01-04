@@ -45,6 +45,7 @@ export const AddPaymentDialog = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
@@ -68,26 +69,7 @@ export const AddPaymentDialog = ({
       // Process payments one by one
       for (const cheque of chequeSequence) {
         try {
-          // Check for existing cheque number
-          const { data: existingCheques, error: checkError } = await supabase
-            .from("car_installment_payments")
-            .select("cheque_number")
-            .eq("cheque_number", cheque.cheque_number);
-
-          if (checkError) {
-            console.error("Error checking cheque number:", checkError);
-            errorCount++;
-            continue;
-          }
-
-          // Skip if cheque number already exists
-          if (existingCheques && existingCheques.length > 0) {
-            console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
-            errorCount++;
-            continue;
-          }
-
-          // Insert new payment
+          // Insert new payment without checking for duplicates first
           const { error: insertError } = await supabase
             .from("car_installment_payments")
             .insert({
@@ -103,7 +85,13 @@ export const AddPaymentDialog = ({
 
           if (insertError) {
             console.error("Error inserting payment:", insertError);
-            errorCount++;
+            // If error is due to duplicate cheque number
+            if (insertError.code === '23505') {
+              console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
+              errorCount++;
+            } else {
+              throw insertError;
+            }
           } else {
             successCount++;
           }
@@ -123,9 +111,9 @@ export const AddPaymentDialog = ({
       } else {
         toast.error("Failed to add any payment installments");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding payments:", error);
-      toast.error("Failed to add payment installments");
+      toast.error(error.message || "Failed to add payment installments");
     } finally {
       setIsSubmitting(false);
     }
