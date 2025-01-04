@@ -1,16 +1,36 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
+import { Brain, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentTableProps {
   rawTransactions: RawPaymentImport[];
   onAnalyzePayment: (id: string) => void;
   isAnalyzing: boolean;
+  onRefresh?: () => void;
 }
 
-export const PaymentTable = ({ rawTransactions, onAnalyzePayment, isAnalyzing }: PaymentTableProps) => {
+export const PaymentTable = ({ rawTransactions, onAnalyzePayment, isAnalyzing, onRefresh }: PaymentTableProps) => {
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('raw_payment_imports')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Transaction deleted successfully');
+      onRefresh?.();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete transaction');
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -57,16 +77,28 @@ export const PaymentTable = ({ rawTransactions, onAnalyzePayment, isAnalyzing }:
                 </span>
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAnalyzePayment(transaction.id)}
-                  disabled={transaction.is_valid || isAnalyzing}
-                  className="flex items-center gap-2"
-                >
-                  <Brain className="h-4 w-4" />
-                  Analyze
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onAnalyzePayment(transaction.id)}
+                    disabled={transaction.is_valid || isAnalyzing}
+                    className="flex items-center gap-2"
+                  >
+                    <Brain className="h-4 w-4" />
+                    Analyze
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(transaction.id)}
+                    disabled={isAnalyzing}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

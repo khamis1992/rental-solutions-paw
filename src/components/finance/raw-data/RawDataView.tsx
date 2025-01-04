@@ -22,7 +22,7 @@ export const RawDataView = () => {
     cleanupStuckPayments 
   } = usePaymentAssignment();
 
-  const { data: rawTransactions, isLoading } = useQuery({
+  const { data: rawTransactions, isLoading, refetch } = useQuery({
     queryKey: ["raw-payment-imports"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -93,6 +93,7 @@ export const RawDataView = () => {
           }
         }}
         isAnalyzing={isAssigning}
+        onRefresh={refetch}
       />
     </div>
   );
