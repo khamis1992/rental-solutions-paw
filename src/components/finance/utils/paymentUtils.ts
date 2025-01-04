@@ -15,6 +15,6 @@ export const normalizePaymentMethod = (method: string): PaymentMethodType => {
     'on-hold': 'On_hold'
   };
 
-  const normalized = method.toLowerCase().replace(/[^a-z]/g, '');
+  const normalized = method.toLowerCase().replace(/[^a-z_]/g, '');
   return methodMap[normalized] || 'Cash'; // Default to Cash if no match found
 };
