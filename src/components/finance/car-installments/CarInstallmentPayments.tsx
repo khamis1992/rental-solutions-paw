@@ -26,7 +26,7 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
         .from("car_installment_payments")
         .select("*")
         .eq("contract_id", contractId)
-        .order("payment_date", { ascending: false });
+        .order("payment_date", { ascending: true });
 
       if (error) throw error;
       return data as CarInstallmentPayment[];

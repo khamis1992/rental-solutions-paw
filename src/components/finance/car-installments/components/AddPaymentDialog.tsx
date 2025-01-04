@@ -5,21 +5,43 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { addMonths, format } from "date-fns";
 
 interface AddPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contractId: string;
   onSuccess?: () => void;
+  totalInstallments: number;
 }
 
 export const AddPaymentDialog = ({ 
   open, 
   onOpenChange, 
   contractId,
-  onSuccess 
+  onSuccess,
+  totalInstallments
 }: AddPaymentDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [firstChequeNumber, setFirstChequeNumber] = useState("");
+  const [firstPaymentDate, setFirstPaymentDate] = useState("");
+
+  const generateChequeSequence = (baseNumber: string, startDate: string, amount: number) => {
+    const sequence = [];
+    const baseDigits = baseNumber.replace(/\D/g, '');
+    const basePrefix = baseNumber.replace(/\d/g, '');
+    
+    for (let i = 0; i < totalInstallments; i++) {
+      const nextNumber = String(Number(baseDigits) + i).padStart(baseDigits.length, '0');
+      const paymentDate = addMonths(new Date(startDate), i);
+      
+      sequence.push({
+        cheque_number: `${basePrefix}${nextNumber}`,
+        payment_date: format(paymentDate, 'yyyy-MM-dd'),
+      });
+    }
+    return sequence;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,31 +50,39 @@ export const AddPaymentDialog = ({
     try {
       const formData = new FormData(e.currentTarget);
       const amount = Number(formData.get("amount"));
-      const paidAmount = Number(formData.get("paidAmount"));
 
-      const paymentData = {
-        contract_id: contractId,
-        cheque_number: String(formData.get("chequeNumber")),
-        amount: amount,
-        payment_date: String(formData.get("paymentDate")),
-        drawee_bank: String(formData.get("draweeBankName")),
-        paid_amount: paidAmount,
-        remaining_amount: amount - paidAmount,
-        status: "pending"
-      };
+      if (!firstChequeNumber || !firstPaymentDate) {
+        throw new Error("Please enter both cheque number and payment date");
+      }
 
+      const chequeSequence = generateChequeSequence(
+        firstChequeNumber,
+        firstPaymentDate,
+        amount
+      );
+
+      // Create all installments
       const { error } = await supabase
         .from("car_installment_payments")
-        .insert(paymentData);
+        .insert(chequeSequence.map(cheque => ({
+          contract_id: contractId,
+          cheque_number: cheque.cheque_number,
+          amount: amount,
+          payment_date: cheque.payment_date,
+          drawee_bank: String(formData.get("draweeBankName")),
+          paid_amount: 0,
+          remaining_amount: amount,
+          status: "pending"
+        })));
 
       if (error) throw error;
 
-      toast.success("Payment installment added successfully");
+      toast.success("Payment installments added successfully");
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error adding payment:", error);
-      toast.error("Failed to add payment installment");
+      console.error("Error adding payments:", error);
+      toast.error("Failed to add payment installments");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,12 +96,18 @@ export const AddPaymentDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="chequeNumber">Cheque Number</Label>
-            <Input id="chequeNumber" name="chequeNumber" required />
+            <Label htmlFor="chequeNumber">First Cheque Number</Label>
+            <Input 
+              id="chequeNumber" 
+              name="chequeNumber" 
+              value={firstChequeNumber}
+              onChange={(e) => setFirstChequeNumber(e.target.value)}
+              required 
+            />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (QAR)</Label>
+            <Label htmlFor="amount">Amount per Installment (QAR)</Label>
             <Input 
               id="amount" 
               name="amount" 
@@ -82,22 +118,13 @@ export const AddPaymentDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="paidAmount">Paid Amount (QAR)</Label>
-            <Input 
-              id="paidAmount" 
-              name="paidAmount" 
-              type="number" 
-              step="0.01" 
-              required 
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="paymentDate">Payment Date</Label>
+            <Label htmlFor="paymentDate">First Payment Date</Label>
             <Input 
               id="paymentDate" 
               name="paymentDate" 
-              type="date" 
+              type="date"
+              value={firstPaymentDate}
+              onChange={(e) => setFirstPaymentDate(e.target.value)}
               required 
             />
           </div>
@@ -108,7 +135,7 @@ export const AddPaymentDialog = ({
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Adding Payment..." : "Add Payment"}
+            {isSubmitting ? "Adding Payments..." : "Add Payment Sequence"}
           </Button>
         </form>
       </DialogContent>

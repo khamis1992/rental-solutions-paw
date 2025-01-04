@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CarInstallmentAnalytics } from "./CarInstallmentAnalytics";
 import { CarInstallmentPayments } from "./CarInstallmentPayments";
 import { PaymentMonitoring } from "./PaymentMonitoring";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
 export const CarInstallmentDetails = () => {
@@ -52,6 +54,7 @@ export const CarInstallmentDetails = () => {
         onOpenChange={setShowPaymentDialog}
         contractId={id!}
         onSuccess={refetch}
+        totalInstallments={contract.total_installments}
       />
 
       <Tabs defaultValue="analytics" className="space-y-6">
@@ -65,7 +68,13 @@ export const CarInstallmentDetails = () => {
           <CarInstallmentAnalytics contractId={id!} />
         </TabsContent>
 
-        <TabsContent value="payments">
+        <TabsContent value="payments" className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setShowPaymentDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Payment Installment
+            </Button>
+          </div>
           <CarInstallmentPayments contractId={id!} />
         </TabsContent>
 
