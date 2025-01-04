@@ -2,7 +2,6 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
 import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
 import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
-import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
 import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
 import { CarInstallmentDetails } from "@/components/finance/car-installments/CarInstallmentDetails";
@@ -12,7 +11,6 @@ import {
   BarChart3, 
   CreditCard, 
   FileText, 
-  Upload, 
   Tags, 
   Database,
   Car
@@ -53,14 +51,6 @@ const Finance = () => {
             </TabsTrigger>
 
             <TabsTrigger 
-              value="import" 
-              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              <Upload className="h-4 w-4" />
-              <span>Import</span>
-            </TabsTrigger>
-
-            <TabsTrigger 
               value="categorization" 
               className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
             >
@@ -96,10 +86,6 @@ const Finance = () => {
 
         <TabsContent value="transactions">
           {/* Transaction management components will go here */}
-        </TabsContent>
-
-        <TabsContent value="import">
-          <TransactionImportTool />
         </TabsContent>
 
         <TabsContent value="categorization">
