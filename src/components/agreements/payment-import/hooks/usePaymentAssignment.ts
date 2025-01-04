@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RawPaymentImport, PaymentMethodType } from "@/components/finance/types/transaction.types";
+import { normalizePaymentMethod } from "../utils/paymentUtils";
 
 export const usePaymentAssignment = () => {
   const [isAssigning, setIsAssigning] = useState(false);
@@ -26,7 +27,7 @@ export const usePaymentAssignment = () => {
         .insert({
           lease_id: lease.id,
           amount: payment.Amount,
-          payment_method: payment.Payment_Method as PaymentMethodType,
+          payment_method: normalizePaymentMethod(payment.Payment_Method),
           payment_date: payment.Payment_Date,
           status: "completed",
           description: payment.Description,
@@ -70,7 +71,7 @@ export const usePaymentAssignment = () => {
 
       let successCount = 0;
       for (const payment of (unprocessedPayments || [])) {
-        const success = await forceAssignPayment(payment);
+        const success = await forceAssignPayment(payment as RawPaymentImport);
         if (success) successCount++;
       }
 

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 import Papa from 'papaparse';
-import { validateHeaders, normalizePaymentMethod } from "../utils/paymentUtils";
+import { validateHeaders, normalizePaymentMethod, REQUIRED_FIELDS } from "../utils/paymentUtils";
 
 export const usePaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
