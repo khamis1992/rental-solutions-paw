@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Loader2, Calendar, DollarSign, Car, Tag } from "lucide-react";
 import { CarInstallmentAnalytics } from "./CarInstallmentAnalytics";
 import { PaymentMonitoring } from "./PaymentMonitoring";
+import { CarInstallmentPayments } from "./CarInstallmentPayments";
 
 export const CarInstallmentDetails = () => {
   const { id } = useParams();
@@ -121,6 +122,8 @@ export const CarInstallmentDetails = () => {
       </Card>
 
       <CarInstallmentAnalytics contractId={id!} />
+      
+      <CarInstallmentPayments contractId={id!} />
       
       <PaymentMonitoring contractId={id!} />
     </div>
