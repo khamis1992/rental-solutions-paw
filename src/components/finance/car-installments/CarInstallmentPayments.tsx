@@ -28,7 +28,10 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
         .eq("contract_id", contractId)
         .order("payment_date", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching payments:", error);
+        throw error;
+      }
       return data as CarInstallmentPayment[];
     },
   });
