@@ -69,7 +69,20 @@ export const AddPaymentDialog = ({
       // Process payments one by one
       for (const cheque of chequeSequence) {
         try {
-          // Insert new payment without checking for duplicates first
+          // First check if cheque number exists
+          const { data: existingCheque } = await supabase
+            .from("car_installment_payments")
+            .select("id")
+            .eq("cheque_number", cheque.cheque_number)
+            .single();
+
+          if (existingCheque) {
+            console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
+            errorCount++;
+            continue;
+          }
+
+          // Insert new payment
           const { error: insertError } = await supabase
             .from("car_installment_payments")
             .insert({
@@ -85,13 +98,7 @@ export const AddPaymentDialog = ({
 
           if (insertError) {
             console.error("Error inserting payment:", insertError);
-            // If error is due to duplicate cheque number
-            if (insertError.code === '23505') {
-              console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
-              errorCount++;
-            } else {
-              throw insertError;
-            }
+            errorCount++;
           } else {
             successCount++;
           }
