@@ -132,12 +132,12 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Invoice">Invoice</SelectItem>
                   <SelectItem value="Cash">Cash</SelectItem>
                   <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
-                  <SelectItem value="Invoice">Invoice</SelectItem>
-                  <SelectItem value="On_hold">On Hold</SelectItem>
-                  <SelectItem value="Deposit">Deposit</SelectItem>
                   <SelectItem value="Cheque">Cheque</SelectItem>
+                  <SelectItem value="Deposit">Deposit</SelectItem>
+                  <SelectItem value="On_hold">On Hold</SelectItem>
                 </SelectContent>
               </Select>
             )}

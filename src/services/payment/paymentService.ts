@@ -11,7 +11,6 @@ export const paymentService = {
   async processPayment(paymentData: PaymentRequest) {
     console.log('Calling payment service to process payment:', paymentData)
     
-    // Payment method is already in correct case from the form
     const { data, error } = await supabase.functions.invoke('payment-service', {
       body: {
         operation: 'process_payment',
