@@ -29,16 +29,14 @@ export function CreateContractDialog() {
   const queryClient = useQueryClient();
   const { register, handleSubmit, watch, setValue } = useForm<ContractFormData>();
 
-  const watchMonthlyInstallment = watch("monthly_installment", 0);
+  const watchPricePerCar = watch("price_per_car", 0);
   const watchTotalInstallments = watch("total_installments", 0);
   const watchPaidInstallments = watch("paid_installments", 0);
+  const watchMonthlyInstallment = watch("monthly_installment", 0);
 
-  const calculateValues = (monthlyInstallment: number, totalInstallments: number) => {
-    const pricePerCar = monthlyInstallment * totalInstallments;
-    const totalContractValue = pricePerCar; // In this case they're the same
-    
-    setValue("price_per_car", pricePerCar);
-    setValue("total_contract_value", totalContractValue);
+  // Calculate total contract value when price per car changes
+  const calculateTotalValue = (pricePerCar: number) => {
+    setValue("total_contract_value", pricePerCar);
   };
 
   const onSubmit = async (data: ContractFormData) => {
@@ -102,8 +100,7 @@ export function CreateContractDialog() {
               type="number" 
               {...register("total_installments", { 
                 required: true,
-                valueAsNumber: true,
-                onChange: (e) => calculateValues(watchMonthlyInstallment, Number(e.target.value))
+                valueAsNumber: true
               })} 
             />
           </div>
@@ -128,8 +125,7 @@ export function CreateContractDialog() {
               type="number" 
               {...register("monthly_installment", { 
                 required: true,
-                valueAsNumber: true,
-                onChange: (e) => calculateValues(Number(e.target.value), watchTotalInstallments)
+                valueAsNumber: true
               })} 
             />
           </div>
@@ -138,9 +134,11 @@ export function CreateContractDialog() {
             <Label>Price per Car (QAR)</Label>
             <Input 
               type="number" 
-              {...register("price_per_car")} 
-              readOnly 
-              className="bg-muted"
+              {...register("price_per_car", {
+                required: true,
+                valueAsNumber: true,
+                onChange: (e) => calculateTotalValue(Number(e.target.value))
+              })} 
             />
           </div>
           
