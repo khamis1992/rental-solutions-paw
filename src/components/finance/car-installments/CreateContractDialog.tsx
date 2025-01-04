@@ -14,15 +14,14 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatCurrency } from "@/lib/utils";
 
 interface ContractFormData {
-  car_type: string;
-  category: string;
-  model_year: number;
-  price_per_car: number;
-  total_contract_value: number;
+  contract_name: string;
   total_installments: number;
-  installment_value: number;
+  monthly_installment: number;
+  total_car_value: number;
+  total_contract_value: number;
 }
 
 export function CreateContractDialog() {
@@ -30,14 +29,15 @@ export function CreateContractDialog() {
   const queryClient = useQueryClient();
   const { register, handleSubmit, watch, setValue } = useForm<ContractFormData>();
 
-  const watchPricePerCar = watch("price_per_car", 0);
+  const watchMonthlyInstallment = watch("monthly_installment", 0);
   const watchTotalInstallments = watch("total_installments", 0);
 
-  const calculateValues = (pricePerCar: number, totalInstallments: number) => {
-    const totalValue = pricePerCar;
-    const installmentValue = totalInstallments > 0 ? totalValue / totalInstallments : 0;
-    setValue("total_contract_value", totalValue);
-    setValue("installment_value", installmentValue);
+  const calculateValues = (monthlyInstallment: number, totalInstallments: number) => {
+    const totalCarValue = monthlyInstallment * totalInstallments;
+    const totalContractValue = totalCarValue; // In this case they're the same
+    
+    setValue("total_car_value", totalCarValue);
+    setValue("total_contract_value", totalContractValue);
   };
 
   const onSubmit = async (data: ContractFormData) => {
@@ -45,15 +45,15 @@ export function CreateContractDialog() {
       const { error } = await supabase
         .from("car_installment_contracts")
         .insert({
-          car_type: data.car_type,
-          category: data.category,
-          model_year: data.model_year,
-          price_per_car: data.price_per_car,
-          total_contract_value: data.total_contract_value,
+          car_type: data.contract_name, // Using car_type field for contract name
           total_installments: data.total_installments,
+          price_per_car: data.total_car_value,
+          total_contract_value: data.total_contract_value,
           remaining_installments: data.total_installments,
-          installment_value: data.installment_value,
+          installment_value: data.monthly_installment,
           amount_pending: data.total_contract_value,
+          category: 'standard', // Default category
+          model_year: new Date().getFullYear(), // Current year as default
         });
 
       if (error) throw error;
@@ -81,37 +81,10 @@ export function CreateContractDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="car_type">Car Type</Label>
-            <Input id="car_type" {...register("car_type", { required: true })} />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Input id="category" {...register("category", { required: true })} />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="model_year">Model Year</Label>
+            <Label htmlFor="contract_name">Contract Name</Label>
             <Input 
-              id="model_year" 
-              type="number" 
-              {...register("model_year", { 
-                required: true,
-                valueAsNumber: true 
-              })} 
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="price_per_car">Price per Car (QAR)</Label>
-            <Input 
-              id="price_per_car" 
-              type="number" 
-              {...register("price_per_car", { 
-                required: true,
-                valueAsNumber: true,
-                onChange: (e) => calculateValues(Number(e.target.value), watchTotalInstallments)
-              })} 
+              id="contract_name" 
+              {...register("contract_name", { required: true })} 
             />
           </div>
           
@@ -123,8 +96,31 @@ export function CreateContractDialog() {
               {...register("total_installments", { 
                 required: true,
                 valueAsNumber: true,
-                onChange: (e) => calculateValues(watchPricePerCar, Number(e.target.value))
+                onChange: (e) => calculateValues(watchMonthlyInstallment, Number(e.target.value))
               })} 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="monthly_installment">Monthly Installment (QAR)</Label>
+            <Input 
+              id="monthly_installment" 
+              type="number" 
+              {...register("monthly_installment", { 
+                required: true,
+                valueAsNumber: true,
+                onChange: (e) => calculateValues(Number(e.target.value), watchTotalInstallments)
+              })} 
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Total Car Value (QAR)</Label>
+            <Input 
+              type="number" 
+              {...register("total_car_value")} 
+              readOnly 
+              className="bg-muted"
             />
           </div>
           
@@ -133,16 +129,6 @@ export function CreateContractDialog() {
             <Input 
               type="number" 
               {...register("total_contract_value")} 
-              readOnly 
-              className="bg-muted"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Installment Value (QAR)</Label>
-            <Input 
-              type="number" 
-              {...register("installment_value")} 
               readOnly 
               className="bg-muted"
             />
