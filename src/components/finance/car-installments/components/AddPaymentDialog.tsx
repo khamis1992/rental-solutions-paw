@@ -14,6 +14,7 @@ import { addMonths, format } from "date-fns";
 import { getAIPaymentSuggestions } from "../utils/paymentAI";
 import { PaymentAIRecommendations } from "./PaymentAIRecommendations";
 import { Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AddPaymentDialogProps {
   open: boolean;
@@ -161,90 +162,92 @@ export function AddPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>Add Payment Installment</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="chequeNumber">First Cheque Number</Label>
-            <Input 
-              id="chequeNumber" 
-              name="chequeNumber" 
-              value={firstChequeNumber}
-              onChange={(e) => setFirstChequeNumber(e.target.value)}
-              required 
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount per Installment (QAR)</Label>
-            <Input 
-              id="amount" 
-              name="amount" 
-              type="number" 
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required 
-            />
-          </div>
+        <ScrollArea className="max-h-[calc(90vh-120px)] px-6 pb-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="chequeNumber">First Cheque Number</Label>
+              <Input 
+                id="chequeNumber" 
+                name="chequeNumber" 
+                value={firstChequeNumber}
+                onChange={(e) => setFirstChequeNumber(e.target.value)}
+                required 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount per Installment (QAR)</Label>
+              <Input 
+                id="amount" 
+                name="amount" 
+                type="number" 
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required 
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="paymentDate">First Payment Date</Label>
-            <Input 
-              id="paymentDate" 
-              name="paymentDate" 
-              type="date"
-              value={firstPaymentDate}
-              onChange={(e) => setFirstPaymentDate(e.target.value)}
-              required 
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="paymentDate">First Payment Date</Label>
+              <Input 
+                id="paymentDate" 
+                name="paymentDate" 
+                type="date"
+                value={firstPaymentDate}
+                onChange={(e) => setFirstPaymentDate(e.target.value)}
+                required 
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="draweeBankName">Drawee Bank Name</Label>
-            <Input id="draweeBankName" name="draweeBankName" required />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="draweeBankName">Drawee Bank Name</Label>
+              <Input id="draweeBankName" name="draweeBankName" required />
+            </div>
 
-          {!aiSuggestions && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full"
-              onClick={analyzePayment}
-              disabled={isAnalyzing}
-            >
-              {isAnalyzing ? (
+            {!aiSuggestions && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={analyzePayment}
+                disabled={isAnalyzing}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  'Analyze Payment Details'
+                )}
+              </Button>
+            )}
+
+            {aiSuggestions && (
+              <PaymentAIRecommendations
+                riskLevel={aiSuggestions.riskAssessment.riskLevel}
+                factors={aiSuggestions.riskAssessment.factors}
+                recommendations={aiSuggestions.recommendations}
+              />
+            )}
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
+                  Adding Payments...
                 </>
               ) : (
-                'Analyze Payment Details'
+                'Add Payment Sequence'
               )}
             </Button>
-          )}
-
-          {aiSuggestions && (
-            <PaymentAIRecommendations
-              riskLevel={aiSuggestions.riskAssessment.riskLevel}
-              factors={aiSuggestions.riskAssessment.factors}
-              recommendations={aiSuggestions.recommendations}
-            />
-          )}
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding Payments...
-              </>
-            ) : (
-              'Add Payment Sequence'
-            )}
-          </Button>
-        </form>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
