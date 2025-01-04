@@ -38,15 +38,16 @@ const normalizePaymentMethod = (method: string): string => {
   return methodMap[normalized] || 'Cash';
 };
 
-serve(async (req) => {
-  console.log('Starting payment analysis...');
-  
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+serve(async (req: Request) => {
   try {
+    console.log('Starting payment analysis...');
+
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Validate environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -55,10 +56,18 @@ serve(async (req) => {
       throw new Error('Missing Supabase environment variables');
     }
 
+    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Parse request body
-    const requestData = await req.json();
+
+    // Parse and validate request body
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (error) {
+      console.error('Failed to parse request body:', error);
+      throw new Error('Invalid request body format');
+    }
+
     const { payment } = requestData;
 
     if (!payment) {
@@ -68,10 +77,15 @@ serve(async (req) => {
 
     console.log('Analyzing payment:', payment);
 
+    // Validate required payment fields
+    if (!payment.Agreement_Number || !payment.Amount || !payment.Payment_Method) {
+      throw new Error('Missing required payment fields');
+    }
+
     // Normalize payment method
     const normalizedPaymentMethod = normalizePaymentMethod(payment.Payment_Method);
     console.log('Normalized payment method:', normalizedPaymentMethod);
-    
+
     // Validate agreement exists
     const { data: agreement, error: agreementError } = await supabase
       .from('leases')
