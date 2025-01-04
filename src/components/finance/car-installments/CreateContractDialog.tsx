@@ -14,13 +14,13 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatCurrency } from "@/lib/utils";
 
 interface ContractFormData {
   contract_name: string;
   total_installments: number;
+  paid_installments: number;
   monthly_installment: number;
-  total_car_value: number;
+  price_per_car: number;
   total_contract_value: number;
 }
 
@@ -31,28 +31,34 @@ export function CreateContractDialog() {
 
   const watchMonthlyInstallment = watch("monthly_installment", 0);
   const watchTotalInstallments = watch("total_installments", 0);
+  const watchPaidInstallments = watch("paid_installments", 0);
 
   const calculateValues = (monthlyInstallment: number, totalInstallments: number) => {
-    const totalCarValue = monthlyInstallment * totalInstallments;
-    const totalContractValue = totalCarValue; // In this case they're the same
+    const pricePerCar = monthlyInstallment * totalInstallments;
+    const totalContractValue = pricePerCar; // In this case they're the same
     
-    setValue("total_car_value", totalCarValue);
+    setValue("price_per_car", pricePerCar);
     setValue("total_contract_value", totalContractValue);
   };
 
   const onSubmit = async (data: ContractFormData) => {
     try {
+      if (data.paid_installments > data.total_installments) {
+        toast.error("Paid installments cannot exceed total installments");
+        return;
+      }
+
       const { error } = await supabase
         .from("car_installment_contracts")
         .insert({
-          car_type: data.contract_name, // Using car_type field for contract name
+          car_type: data.contract_name,
           total_installments: data.total_installments,
-          price_per_car: data.total_car_value,
+          price_per_car: data.price_per_car,
           total_contract_value: data.total_contract_value,
-          remaining_installments: data.total_installments,
+          remaining_installments: data.total_installments - data.paid_installments,
           installment_value: data.monthly_installment,
-          amount_pending: data.total_contract_value,
-          category: 'standard', // Default category
+          amount_paid: data.paid_installments * data.monthly_installment,
+          amount_pending: data.total_contract_value - (data.paid_installments * data.monthly_installment),
           model_year: new Date().getFullYear(), // Current year as default
         });
 
@@ -100,6 +106,19 @@ export function CreateContractDialog() {
               })} 
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="paid_installments">Paid Installments</Label>
+            <Input 
+              id="paid_installments" 
+              type="number" 
+              {...register("paid_installments", { 
+                required: true,
+                valueAsNumber: true,
+                min: 0
+              })} 
+            />
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="monthly_installment">Monthly Installment (QAR)</Label>
@@ -115,10 +134,10 @@ export function CreateContractDialog() {
           </div>
           
           <div className="space-y-2">
-            <Label>Total Car Value (QAR)</Label>
+            <Label>Price per Car (QAR)</Label>
             <Input 
               type="number" 
-              {...register("total_car_value")} 
+              {...register("price_per_car")} 
               readOnly 
               className="bg-muted"
             />
