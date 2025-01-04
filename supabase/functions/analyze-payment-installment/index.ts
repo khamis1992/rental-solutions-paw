@@ -12,11 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate request method
-    if (req.method !== 'POST') {
-      throw new Error(`Method ${req.method} not allowed`);
-    }
-
     // Parse and validate request body
     const body = await req.json().catch(() => null);
     if (!body) {
@@ -95,7 +90,7 @@ serve(async (req) => {
           ...corsHeaders, 
           'Content-Type': 'application/json' 
         } 
-      },
+      }
     );
   } catch (error) {
     console.error('Error in analyze-payment-installment:', error);
