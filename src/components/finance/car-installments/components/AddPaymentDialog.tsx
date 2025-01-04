@@ -62,43 +62,67 @@ export const AddPaymentDialog = ({
         amount
       );
 
+      let successCount = 0;
+      let errorCount = 0;
+
       // Process payments one by one
       for (const cheque of chequeSequence) {
-        // Check for existing cheque number
-        const { data: existingCheques } = await supabase
-          .from("car_installment_payments")
-          .select("cheque_number")
-          .eq("cheque_number", cheque.cheque_number);
+        try {
+          // Check for existing cheque number
+          const { data: existingCheques, error: checkError } = await supabase
+            .from("car_installment_payments")
+            .select("cheque_number")
+            .eq("cheque_number", cheque.cheque_number);
 
-        // Skip if cheque number already exists
-        if (existingCheques && existingCheques.length > 0) {
-          console.warn(`Skipping existing cheque number: ${cheque.cheque_number}`);
-          continue;
-        }
+          if (checkError) {
+            console.error("Error checking cheque number:", checkError);
+            errorCount++;
+            continue;
+          }
 
-        // Insert new payment
-        const { error: insertError } = await supabase
-          .from("car_installment_payments")
-          .insert({
-            contract_id: contractId,
-            cheque_number: cheque.cheque_number,
-            amount: amount,
-            payment_date: cheque.payment_date,
-            drawee_bank: draweeBankName,
-            paid_amount: 0,
-            remaining_amount: amount,
-            status: "pending"
-          });
+          // Skip if cheque number already exists
+          if (existingCheques && existingCheques.length > 0) {
+            console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
+            errorCount++;
+            continue;
+          }
 
-        if (insertError) {
-          console.error("Error inserting payment:", insertError);
-          throw insertError;
+          // Insert new payment
+          const { error: insertError } = await supabase
+            .from("car_installment_payments")
+            .insert({
+              contract_id: contractId,
+              cheque_number: cheque.cheque_number,
+              amount: amount,
+              payment_date: cheque.payment_date,
+              drawee_bank: draweeBankName,
+              paid_amount: 0,
+              remaining_amount: amount,
+              status: "pending"
+            });
+
+          if (insertError) {
+            console.error("Error inserting payment:", insertError);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          console.error("Error processing cheque:", error);
+          errorCount++;
         }
       }
 
-      toast.success("Payment installments added successfully");
-      onSuccess?.();
-      onOpenChange(false);
+      if (successCount > 0) {
+        toast.success(`Successfully added ${successCount} payment installments`);
+        if (errorCount > 0) {
+          toast.warning(`${errorCount} installments could not be added (duplicate cheque numbers)`);
+        }
+        onSuccess?.();
+        onOpenChange(false);
+      } else {
+        toast.error("Failed to add any payment installments");
+      }
     } catch (error) {
       console.error("Error adding payments:", error);
       toast.error("Failed to add payment installments");
