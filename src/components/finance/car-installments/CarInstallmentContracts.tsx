@@ -5,11 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatCurrency } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { CreateContractDialog } from "./CreateContractDialog";
+import { useNavigate } from "react-router-dom";
 
 interface CarInstallmentContract {
   id: string;
   car_type: string;
-  category: string;
   model_year: number;
   price_per_car: number;
   total_contract_value: number;
@@ -21,6 +21,8 @@ interface CarInstallmentContract {
 }
 
 export const CarInstallmentContracts = () => {
+  const navigate = useNavigate();
+  
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["car-installment-contracts"],
     queryFn: async () => {
@@ -53,8 +55,7 @@ export const CarInstallmentContracts = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Car Type</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>Contract Name</TableHead>
                 <TableHead>Model Year</TableHead>
                 <TableHead className="text-right">Price per Car</TableHead>
                 <TableHead className="text-right">Total Value</TableHead>
@@ -69,10 +70,9 @@ export const CarInstallmentContracts = () => {
                 <TableRow 
                   key={contract.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => window.location.href = `/finance/car-installments/${contract.id}`}
+                  onClick={() => navigate(`/finance/car-installments/${contract.id}`)}
                 >
                   <TableCell>{contract.car_type}</TableCell>
-                  <TableCell>{contract.category}</TableCell>
                   <TableCell>{contract.model_year}</TableCell>
                   <TableCell className="text-right">{formatCurrency(contract.price_per_car)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(contract.total_contract_value)}</TableCell>
@@ -92,7 +92,7 @@ export const CarInstallmentContracts = () => {
               ))}
               {!contracts?.length && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     No contracts found
                   </TableCell>
                 </TableRow>
