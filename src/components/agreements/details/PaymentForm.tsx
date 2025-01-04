@@ -22,7 +22,7 @@ interface PaymentFormProps {
 }
 
 // Define payment method type to match the database enum exactly
-type PaymentMethodType = 'Cash' | 'WireTransfer' | 'Invoice' | 'On_hold' | 'Deposit' | 'Cheque';
+type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const {

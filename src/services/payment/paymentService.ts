@@ -11,17 +11,11 @@ export const paymentService = {
   async processPayment(paymentData: PaymentRequest) {
     console.log('Calling payment service to process payment:', paymentData)
     
-    // Ensure payment method has correct casing
-    const normalizedPaymentMethod = paymentData.paymentMethod.charAt(0).toUpperCase() + 
-                                  paymentData.paymentMethod.slice(1);
-    
+    // Payment method is already in correct case from the form
     const { data, error } = await supabase.functions.invoke('payment-service', {
       body: {
         operation: 'process_payment',
-        data: {
-          ...paymentData,
-          paymentMethod: normalizedPaymentMethod
-        }
+        data: paymentData
       }
     })
 
