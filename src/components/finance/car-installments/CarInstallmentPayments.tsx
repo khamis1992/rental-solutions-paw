@@ -22,6 +22,7 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
   const { data: payments, isLoading } = useQuery({
     queryKey: ["car-installment-payments", contractId],
     queryFn: async () => {
+      console.log("Fetching payments for contract:", contractId);
       const { data, error } = await supabase
         .from("car_installment_payments")
         .select("*")
@@ -32,8 +33,11 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
         console.error("Error fetching payments:", error);
         throw error;
       }
+      console.log("Fetched payments:", data);
       return data as CarInstallmentPayment[];
     },
+    // Add refetch interval to periodically check for new payments
+    refetchInterval: 5000,
   });
 
   if (isLoading) {
