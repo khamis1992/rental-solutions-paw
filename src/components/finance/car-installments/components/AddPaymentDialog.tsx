@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,19 +24,21 @@ interface ContractFormData {
   number_of_cars: number;
 }
 
+interface AddPaymentDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  contractId: string;
+  onSuccess?: () => void;
+  totalInstallments: number;
+}
+
 export function AddPaymentDialog({ 
   open, 
   onOpenChange, 
   contractId,
   onSuccess,
   totalInstallments
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  contractId: string;
-  onSuccess?: () => void;
-  totalInstallments: number;
-}) {
+}: AddPaymentDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
@@ -86,7 +86,7 @@ export function AddPaymentDialog({
       // Process payments one by one
       for (const cheque of chequeSequence) {
         try {
-          // Check if cheque number exists
+          // Check if cheque number exists using maybeSingle()
           const { data: existingCheque, error: checkError } = await supabase
             .from("car_installment_payments")
             .select("id")
