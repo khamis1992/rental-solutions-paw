@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RawPaymentImport, PaymentAssignmentResult } from "../../types/transaction.types";
+import { RawPaymentImport } from "../../types/transaction.types";
 import { retryOperation } from "../utils/retryUtils";
 import { createDefaultAgreement, insertPayment, updatePaymentStatus } from "../utils/paymentUtils";
-import { normalizePaymentMethod } from "../../utils/paymentUtils";
 
 export const usePaymentAssignment = () => {
   const [isAssigning, setIsAssigning] = useState(false);
-  const [assignmentResults, setAssignmentResults] = useState<PaymentAssignmentResult[]>([]);
+  const [assignmentResults, setAssignmentResults] = useState<any[]>([]);
   const queryClient = useQueryClient();
 
   const forceAssignPayment = async (payment: RawPaymentImport) => {
@@ -37,13 +35,7 @@ export const usePaymentAssignment = () => {
           }
         }
 
-        // Normalize the payment method before insertion
-        const normalizedPayment = {
-          ...payment,
-          Payment_Method: normalizePaymentMethod(payment.Payment_Method)
-        };
-
-        await insertPayment(analysisResult.normalizedPayment.lease_id, normalizedPayment);
+        await insertPayment(analysisResult.normalizedPayment.lease_id, payment);
         await updatePaymentStatus(payment.id, true);
 
         return true;
@@ -64,7 +56,11 @@ export const usePaymentAssignment = () => {
       return success;
     } catch (error) {
       console.error('Force assign error:', error);
-      await updatePaymentStatus(payment.id, false, error instanceof Error ? error.message : 'Unknown error');
+      await updatePaymentStatus(
+        payment.id, 
+        false, 
+        error instanceof Error ? error.message : 'Unknown error'
+      );
       toast.error('Failed to assign payment');
       return false;
     }
