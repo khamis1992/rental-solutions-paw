@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { RawPaymentImport } from "../../types/transaction.types";
 import { retryOperation } from "../utils/retryUtils";
 import { createDefaultAgreement, insertPayment, updatePaymentStatus } from "../utils/paymentUtils";
+import { analyzePayment, findStuckPayments, findUnprocessedPayments } from "../utils/paymentAnalysis";
 
 export const usePaymentAssignment = () => {
   const [isAssigning, setIsAssigning] = useState(false);
@@ -15,15 +16,7 @@ export const usePaymentAssignment = () => {
       console.log('Starting payment assignment for:', payment);
 
       const assignPaymentWithRetry = async () => {
-        const { data: analysisResult, error: analysisError } = await supabase.functions
-          .invoke('analyze-payment-import', {
-            body: { payment }
-          });
-
-        if (analysisError) {
-          console.error('Analysis error:', analysisError);
-          throw new Error(`Failed to analyze payment: ${analysisError.message}`);
-        }
+        const analysisResult = await analyzePayment(payment);
 
         if (!analysisResult.success) {
           if (analysisResult.shouldCreateAgreement) {
@@ -71,30 +64,12 @@ export const usePaymentAssignment = () => {
       setIsAssigning(true);
       console.log('Starting cleanup of stuck payments...');
 
-      const { data: stuckPayments, error: fetchError } = await supabase
-        .from('raw_payment_imports')
-        .select('*')
-        .eq('is_valid', false);
-
-      if (fetchError) throw fetchError;
-
+      const stuckPayments = await findStuckPayments();
       let cleanedCount = 0;
-      for (const payment of (stuckPayments || [])) {
-        const { data: existingPayment, error: checkError } = await supabase
-          .from('payments')
-          .select('id')
-          .eq('transaction_id', payment.Transaction_ID)
-          .maybeSingle();
 
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking existing payment:', checkError);
-          continue;
-        }
-
-        if (existingPayment) {
-          await updatePaymentStatus(payment.id, true, 'Payment already exists in system');
-          cleanedCount++;
-        }
+      for (const payment of stuckPayments) {
+        const success = await forceAssignPayment(payment as RawPaymentImport);
+        if (success) cleanedCount++;
       }
 
       if (cleanedCount > 0) {
@@ -112,18 +87,12 @@ export const usePaymentAssignment = () => {
   const forceAssignAllPayments = async () => {
     setIsAssigning(true);
     try {
-      const { data: unprocessedPayments, error: fetchError } = await supabase
-        .from('raw_payment_imports')
-        .select('*')
-        .eq('is_valid', false);
-
-      if (fetchError) throw fetchError;
-
+      const unprocessedPayments = await findUnprocessedPayments();
       let successCount = 0;
       const batchSize = 5;
       const batches = [];
       
-      for (let i = 0; i < (unprocessedPayments || []).length; i += batchSize) {
+      for (let i = 0; i < unprocessedPayments.length; i += batchSize) {
         batches.push(unprocessedPayments.slice(i, i + batchSize));
       }
 
