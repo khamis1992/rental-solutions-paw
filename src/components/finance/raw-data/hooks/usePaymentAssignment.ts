@@ -17,7 +17,6 @@ export const usePaymentAssignment = () => {
       console.log('Starting payment assignment for:', payment);
 
       const assignPaymentWithRetry = async () => {
-        // First analyze the payment data
         const { data: analysisResult, error: analysisError } = await supabase.functions
           .invoke('analyze-payment-import', {
             body: { payment }
