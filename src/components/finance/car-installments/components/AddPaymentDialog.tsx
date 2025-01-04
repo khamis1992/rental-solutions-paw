@@ -62,20 +62,21 @@ export const AddPaymentDialog = ({
         amount
       );
 
-      // Insert payments one by one
+      // Process payments one by one
       for (const cheque of chequeSequence) {
-        const { data, error } = await supabase
+        // Check for existing cheque number
+        const { data: existingCheques } = await supabase
           .from("car_installment_payments")
           .select("cheque_number")
-          .eq("cheque_number", cheque.cheque_number)
-          .single();
+          .eq("cheque_number", cheque.cheque_number);
 
-        // If cheque number already exists, skip it
-        if (data) {
+        // Skip if cheque number already exists
+        if (existingCheques && existingCheques.length > 0) {
           console.warn(`Skipping existing cheque number: ${cheque.cheque_number}`);
           continue;
         }
 
+        // Insert new payment
         const { error: insertError } = await supabase
           .from("car_installment_payments")
           .insert({
