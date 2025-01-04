@@ -12,7 +12,24 @@ serve(async (req) => {
   }
 
   try {
-    const { firstChequeNumber, amount, firstPaymentDate, totalInstallments } = await req.json();
+    // Validate request method
+    if (req.method !== 'POST') {
+      throw new Error(`Method ${req.method} not allowed`);
+    }
+
+    // Parse and validate request body
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      throw new Error('Missing request body');
+    }
+
+    const { firstChequeNumber, amount, firstPaymentDate, totalInstallments } = body;
+
+    // Validate required fields
+    if (!firstChequeNumber || !amount || !firstPaymentDate || !totalInstallments) {
+      throw new Error('Missing required fields');
+    }
+
     console.log('Analyzing payment details:', { firstChequeNumber, amount, firstPaymentDate, totalInstallments });
 
     // Analyze cheque number pattern
@@ -66,20 +83,35 @@ serve(async (req) => {
         factors: riskFactors.length > 0 ? riskFactors : ["No significant risk factors identified"],
       },
       recommendations: recommendations,
-      suggestedDates: [firstPaymentDate], // Could be expanded to suggest alternative dates
+      suggestedDates: [firstPaymentDate],
     };
 
     console.log('Analysis response:', response);
 
     return new Response(
       JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      },
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in analyze-payment-installment:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
+      JSON.stringify({ 
+        error: error.message || 'Internal server error',
+        details: error.toString()
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
+        status: 400
+      }
     );
   }
 });
