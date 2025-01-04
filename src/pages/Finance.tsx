@@ -6,7 +6,7 @@ import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
 import { CarInstallmentDetails } from "@/components/finance/car-installments/CarInstallmentDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useParams, Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { 
   BarChart3, 
   CreditCard, 
@@ -17,7 +17,19 @@ import {
 } from "lucide-react";
 
 const Finance = () => {
-  const { id } = useParams();
+  const location = useLocation();
+  const isCarInstallmentDetails = location.pathname.includes('/car-installments/');
+
+  // Don't show tabs if we're on the details page
+  if (isCarInstallmentDetails) {
+    return (
+      <div className="container mx-auto p-6">
+        <Routes>
+          <Route path="/car-installments/:id" element={<CarInstallmentDetails />} />
+        </Routes>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -99,7 +111,7 @@ const Finance = () => {
         <TabsContent value="car-installments">
           <Routes>
             <Route index element={<CarInstallmentContracts />} />
-            <Route path=":id/*" element={<CarInstallmentDetails />} />
+            <Route path=":id" element={<CarInstallmentDetails />} />
           </Routes>
         </TabsContent>
       </Tabs>

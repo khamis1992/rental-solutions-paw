@@ -123,7 +123,7 @@ export default function App() {
           />
 
           <Route
-            path="/finance"
+            path="/finance/*"
             element={
               <ProtectedRoute>
                 <LazyComponents.Finance />
