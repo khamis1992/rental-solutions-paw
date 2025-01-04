@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -14,7 +14,13 @@ import { usePaymentAssignment } from "./hooks/usePaymentAssignment";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
-  const { isSubmitting, assignmentResults, assignPayment, assignAllPayments } = usePaymentAssignment();
+  const { 
+    isAssigning, 
+    assignmentResults, 
+    forceAssignPayment, 
+    forceAssignAllPayments,
+    cleanupStuckPayments 
+  } = usePaymentAssignment();
 
   const { data: rawTransactions, isLoading } = useQuery({
     queryKey: ["raw-payment-imports"],
@@ -65,9 +71,10 @@ export const RawDataView = () => {
         <h2 className="text-xl font-semibold">Raw Payment Import Data</h2>
         <PaymentActions
           hasUnprocessedPayments={hasUnprocessedPayments}
-          onAnalyzeAll={() => assignAllPayments(rawTransactions || [])}
+          onAnalyzeAll={forceAssignAllPayments}
           onCleanTable={() => cleanTableMutation.refetch()}
-          isSubmitting={isSubmitting}
+          onCleanupStuck={cleanupStuckPayments}
+          isSubmitting={isAssigning}
           cleanTableMutationIsPending={cleanTableMutation.isFetching}
         />
       </div>
@@ -82,10 +89,10 @@ export const RawDataView = () => {
         onAnalyzePayment={(id) => {
           const payment = rawTransactions?.find(t => t.id === id);
           if (payment) {
-            assignPayment(payment);
+            forceAssignPayment(payment);
           }
         }}
-        isAnalyzing={isSubmitting}
+        isAnalyzing={isAssigning}
       />
     </div>
   );
