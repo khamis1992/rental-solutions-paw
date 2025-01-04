@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { CreateContractDialog } from "./CreateContractDialog";
 
 interface CarInstallmentContract {
   id: string;
@@ -43,8 +44,9 @@ export const CarInstallmentContracts = () => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Car Installment Contracts</CardTitle>
+        <CreateContractDialog />
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
