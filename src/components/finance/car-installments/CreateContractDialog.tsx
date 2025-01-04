@@ -22,12 +22,17 @@ interface ContractFormData {
   monthly_installment: number;
   price_per_car: number;
   total_contract_value: number;
+  number_of_cars: number;
 }
 
 export function CreateContractDialog() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, watch, setValue } = useForm<ContractFormData>();
+  const { register, handleSubmit, watch, setValue } = useForm<ContractFormData>({
+    defaultValues: {
+      number_of_cars: 1 // Set default value to 1
+    }
+  });
 
   const watchTotalInstallments = watch("total_installments", 0);
   const watchMonthlyInstallment = watch("monthly_installment", 0);
@@ -62,7 +67,8 @@ export function CreateContractDialog() {
           amount_paid: data.paid_installments * data.monthly_installment,
           amount_pending: data.total_contract_value - (data.paid_installments * data.monthly_installment),
           model_year: new Date().getFullYear(), // Current year as default
-          category: 'standard' // Adding the required category field
+          category: 'standard', // Adding the required category field
+          number_of_cars: data.number_of_cars // Add number of cars to the insert
         });
 
       if (error) throw error;
@@ -130,6 +136,19 @@ export function CreateContractDialog() {
               {...register("monthly_installment", { 
                 required: true,
                 valueAsNumber: true
+              })} 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="number_of_cars">Number of Cars</Label>
+            <Input 
+              id="number_of_cars" 
+              type="number" 
+              {...register("number_of_cars", { 
+                required: true,
+                valueAsNumber: true,
+                min: 1
               })} 
             />
           </div>
