@@ -60,6 +60,7 @@ export function CreateContractDialog() {
           amount_paid: data.paid_installments * data.monthly_installment,
           amount_pending: data.total_contract_value - (data.paid_installments * data.monthly_installment),
           model_year: new Date().getFullYear(), // Current year as default
+          category: 'standard' // Adding the required category field
         });
 
       if (error) throw error;
