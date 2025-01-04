@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { RawPaymentImport, PaymentAssignmentResult } from "../../types/transaction.types";
 import { retryOperation } from "../utils/retryUtils";
 import { createDefaultAgreement, insertPayment, updatePaymentStatus } from "../utils/paymentUtils";
+import { normalizePaymentMethod } from "../../utils/paymentUtils";
 
 export const usePaymentAssignment = () => {
   const [isAssigning, setIsAssigning] = useState(false);
@@ -37,7 +38,13 @@ export const usePaymentAssignment = () => {
           }
         }
 
-        await insertPayment(analysisResult.normalizedPayment.lease_id, payment);
+        // Normalize the payment method before insertion
+        const normalizedPayment = {
+          ...payment,
+          Payment_Method: normalizePaymentMethod(payment.Payment_Method)
+        };
+
+        await insertPayment(analysisResult.normalizedPayment.lease_id, normalizedPayment);
         await updatePaymentStatus(payment.id, true);
 
         return true;

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { RawPaymentImport } from "../../types/transaction.types";
+import { normalizePaymentMethod } from "../../utils/paymentUtils";
 
 export const createDefaultAgreement = async (payment: RawPaymentImport) => {
   const { data: agreementData, error: agreementError } = await supabase
@@ -17,16 +18,19 @@ export const insertPayment = async (
   leaseId: string, 
   payment: RawPaymentImport
 ) => {
+  const normalizedMethod = normalizePaymentMethod(payment.Payment_Method);
+  
   const { error: paymentError } = await supabase
     .from('payments')
     .insert({
       lease_id: leaseId,
       amount: payment.Amount,
-      payment_method: payment.Payment_Method,
+      payment_method: normalizedMethod,
       payment_date: payment.Payment_Date,
       status: 'completed',
       description: payment.Description,
-      type: payment.Type
+      type: payment.Type,
+      transaction_id: payment.Transaction_ID
     });
 
   if (paymentError) throw paymentError;
