@@ -19,6 +19,25 @@ interface PaymentData {
   Status: string;
 }
 
+const normalizePaymentMethod = (method: string): string => {
+  const methodMap: Record<string, string> = {
+    'cash': 'Cash',
+    'invoice': 'Invoice',
+    'wire': 'WireTransfer',
+    'wiretransfer': 'WireTransfer',
+    'wire_transfer': 'WireTransfer',
+    'cheque': 'Cheque',
+    'check': 'Cheque',
+    'deposit': 'Deposit',
+    'onhold': 'On_hold',
+    'on_hold': 'On_hold',
+    'on-hold': 'On_hold'
+  };
+
+  const normalized = method.toLowerCase().replace(/[^a-z_]/g, '');
+  return methodMap[normalized] || 'Cash';
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -39,30 +58,8 @@ serve(async (req) => {
     console.log('Analyzing payment:', payment);
 
     // Normalize payment method
-    const validPaymentMethods = ['Invoice', 'Cash', 'WireTransfer', 'Cheque', 'Deposit', 'On_hold'];
-    let normalizedPaymentMethod = payment.Payment_Method;
+    const normalizedPaymentMethod = normalizePaymentMethod(payment.Payment_Method);
     
-    // Convert to proper case and format
-    normalizedPaymentMethod = normalizedPaymentMethod
-      .toLowerCase()
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
-
-    // Map common variations
-    const paymentMethodMap: Record<string, string> = {
-      'Cash': 'Cash',
-      'Check': 'Cheque',
-      'Wire': 'WireTransfer',
-      'WireTransfer': 'WireTransfer',
-      'Wire_Transfer': 'WireTransfer',
-      'Deposit': 'Deposit',
-      'OnHold': 'On_hold',
-      'Invoice': 'Invoice'
-    };
-
-    normalizedPaymentMethod = paymentMethodMap[normalizedPaymentMethod] || 'Cash';
-
     // Validate agreement exists
     const { data: agreement, error: agreementError } = await supabase
       .from('leases')
