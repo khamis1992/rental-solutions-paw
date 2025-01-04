@@ -82,7 +82,7 @@ export const usePaymentAssignment = () => {
           .from('payments')
           .select('id')
           .eq('transaction_id', payment.Transaction_ID)
-          .single();
+          .maybeSingle();
 
         if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking existing payment:', checkError);
