@@ -1,27 +1,43 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { addMonths, format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
-interface AddPaymentDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  contractId: string;
-  onSuccess?: () => void;
-  totalInstallments: number;
+interface ContractFormData {
+  contract_name: string;
+  total_installments: number;
+  paid_installments: number;
+  monthly_installment: number;
+  price_per_car: number;
+  total_contract_value: number;
+  number_of_cars: number;
 }
 
-export const AddPaymentDialog = ({ 
+export function AddPaymentDialog({ 
   open, 
   onOpenChange, 
   contractId,
   onSuccess,
   totalInstallments
-}: AddPaymentDialogProps) => {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  contractId: string;
+  onSuccess?: () => void;
+  totalInstallments: number;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
@@ -69,12 +85,18 @@ export const AddPaymentDialog = ({
       // Process payments one by one
       for (const cheque of chequeSequence) {
         try {
-          // First check if cheque number exists using maybeSingle()
-          const { data: existingCheque } = await supabase
+          // Check if cheque number exists
+          const { data: existingCheque, error: checkError } = await supabase
             .from("car_installment_payments")
             .select("id")
             .eq("cheque_number", cheque.cheque_number)
             .maybeSingle();
+
+          if (checkError) {
+            console.error("Error checking cheque:", checkError);
+            errorCount++;
+            continue;
+          }
 
           if (existingCheque) {
             console.warn(`Skipping duplicate cheque number: ${cheque.cheque_number}`);
@@ -82,7 +104,7 @@ export const AddPaymentDialog = ({
             continue;
           }
 
-          // Insert new payment
+          // Insert new payment if cheque doesn't exist
           const { error: insertError } = await supabase
             .from("car_installment_payments")
             .insert({
@@ -179,4 +201,4 @@ export const AddPaymentDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
