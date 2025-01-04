@@ -1,4 +1,3 @@
-import { useParams, Routes, Route, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +7,18 @@ import { CarInstallmentAnalytics } from "./CarInstallmentAnalytics";
 import { PaymentMonitoring } from "./PaymentMonitoring";
 import { CarInstallmentPayments } from "./CarInstallmentPayments";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const CarInstallmentDetails = () => {
   const { id } = useParams();
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: contract, isLoading } = useQuery({
     queryKey: ["car-installment-contract", id],
@@ -25,6 +33,39 @@ export const CarInstallmentDetails = () => {
       return data;
     },
   });
+
+  const handlePaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const paymentData = {
+      contract_id: id,
+      cheque_number: formData.get("chequeNumber"),
+      amount: Number(formData.get("amount")),
+      payment_date: formData.get("paymentDate"),
+      drawee_bank: formData.get("draweeBankName"),
+      paid_amount: Number(formData.get("paidAmount")),
+      remaining_amount: Number(formData.get("amount")) - Number(formData.get("paidAmount")),
+      status: "pending"
+    };
+
+    try {
+      const { error } = await supabase
+        .from("car_installment_payments")
+        .insert(paymentData);
+
+      if (error) throw error;
+
+      toast.success("Payment installment added successfully");
+      setIsPaymentDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding payment:", error);
+      toast.error("Failed to add payment installment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -96,7 +137,66 @@ export const CarInstallmentDetails = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Contract Summary</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Contract Summary</CardTitle>
+            <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>Add Payment Installment</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Payment Installment</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chequeNumber">Cheque Number</Label>
+                    <Input id="chequeNumber" name="chequeNumber" required />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Amount (QAR)</Label>
+                    <Input 
+                      id="amount" 
+                      name="amount" 
+                      type="number" 
+                      step="0.01" 
+                      required 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="paidAmount">Paid Amount (QAR)</Label>
+                    <Input 
+                      id="paidAmount" 
+                      name="paidAmount" 
+                      type="number" 
+                      step="0.01" 
+                      required 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentDate">Payment Date</Label>
+                    <Input 
+                      id="paymentDate" 
+                      name="paymentDate" 
+                      type="date" 
+                      required 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="draweeBankName">Drawee Bank Name</Label>
+                    <Input id="draweeBankName" name="draweeBankName" required />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Adding Payment..." : "Add Payment"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
