@@ -11,7 +11,7 @@ import Papa from 'papaparse';
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
 import { usePaymentAssignment } from "./payment-import/hooks/usePaymentAssignment";
-import { REQUIRED_FIELDS } from "./payment-import/utils/paymentUtils";
+import { REQUIRED_FIELDS, validateHeaders } from "./payment-import/utils/paymentUtils";
 
 type ImportedData = Record<string, unknown>;
 
