@@ -21,6 +21,9 @@ interface PaymentFormProps {
   agreementId: string;
 }
 
+// Define payment method type to match the database enum
+type PaymentMethodType = 'Cash' | 'WireTransfer' | 'Invoice' | 'On_hold' | 'Deposit' | 'Cheque';
+
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const {
     register,
@@ -45,7 +48,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       await paymentService.processPayment({
         leaseId: agreementId,
         amount: data.amountPaid,
-        paymentMethod: data.paymentMethod,
+        paymentMethod: data.paymentMethod as PaymentMethodType,
         description: data.description
       });
       
