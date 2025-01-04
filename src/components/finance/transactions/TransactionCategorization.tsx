@@ -96,7 +96,7 @@ export const TransactionCategorization = () => {
                   {new Date(transaction.transaction_date).toLocaleDateString()}
                 </TableCell>
                 <TableCell>{transaction.description}</TableCell>
-                <TableCell>${Math.abs(transaction.amount).toFixed(2)}</TableCell>
+                <TableCell>QAR {Math.abs(transaction.amount).toFixed(2)}</TableCell>
                 <TableCell>
                   {transaction.type?.charAt(0).toUpperCase() + transaction.type?.slice(1).toLowerCase()}
                 </TableCell>

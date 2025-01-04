@@ -3459,7 +3459,7 @@ export type Database = {
       }
       remaining_amounts: {
         Row: {
-          agreement_duration: unknown
+          agreement_duration: unknown | null
           agreement_number: string
           amount_paid: number
           created_at: string
@@ -3473,7 +3473,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agreement_duration: unknown
+          agreement_duration?: unknown | null
           agreement_number: string
           amount_paid: number
           created_at?: string
@@ -3487,7 +3487,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agreement_duration?: unknown
+          agreement_duration?: unknown | null
           agreement_number?: string
           amount_paid?: number
           created_at?: string
