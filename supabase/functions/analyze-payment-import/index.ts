@@ -39,6 +39,8 @@ const normalizePaymentMethod = (method: string): string => {
 };
 
 serve(async (req) => {
+  console.log('Starting payment analysis...');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -49,16 +51,26 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing environment variables');
       throw new Error('Missing Supabase environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { payment } = await req.json();
+    
+    // Parse request body
+    const requestData = await req.json();
+    const { payment } = requestData;
+
+    if (!payment) {
+      console.error('No payment data provided');
+      throw new Error('Payment data is required');
+    }
 
     console.log('Analyzing payment:', payment);
 
     // Normalize payment method
     const normalizedPaymentMethod = normalizePaymentMethod(payment.Payment_Method);
+    console.log('Normalized payment method:', normalizedPaymentMethod);
     
     // Validate agreement exists
     const { data: agreement, error: agreementError } = await supabase
@@ -68,6 +80,7 @@ serve(async (req) => {
       .single();
 
     if (agreementError) {
+      console.log('Agreement not found:', payment.Agreement_Number);
       return new Response(
         JSON.stringify({
           success: false,
@@ -89,6 +102,8 @@ serve(async (req) => {
       is_valid: true
     };
 
+    console.log('Analysis completed successfully:', normalizedPayment);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -106,7 +121,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message || 'An unexpected error occurred'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
