@@ -18,6 +18,7 @@ interface CarInstallmentContract {
   total_installments: number;
   remaining_installments: number;
   installment_value: number;
+  number_of_cars: number;
 }
 
 export const CarInstallmentContracts = () => {
@@ -57,6 +58,7 @@ export const CarInstallmentContracts = () => {
               <TableRow>
                 <TableHead>Contract Name</TableHead>
                 <TableHead>Model Year</TableHead>
+                <TableHead className="text-center">Number of Cars</TableHead>
                 <TableHead className="text-right">Price per Car</TableHead>
                 <TableHead className="text-right">Total Value</TableHead>
                 <TableHead className="text-right">Amount Paid</TableHead>
@@ -74,6 +76,7 @@ export const CarInstallmentContracts = () => {
                 >
                   <TableCell>{contract.car_type}</TableCell>
                   <TableCell>{contract.model_year}</TableCell>
+                  <TableCell className="text-center">{contract.number_of_cars || 1}</TableCell>
                   <TableCell className="text-right">{formatCurrency(contract.price_per_car)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(contract.total_contract_value)}</TableCell>
                   <TableCell className="text-right font-medium text-green-600">
@@ -92,7 +95,7 @@ export const CarInstallmentContracts = () => {
               ))}
               {!contracts?.length && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground">
                     No contracts found
                   </TableCell>
                 </TableRow>
