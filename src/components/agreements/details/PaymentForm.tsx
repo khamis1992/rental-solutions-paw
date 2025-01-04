@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { paymentService } from "@/services/payment/paymentService";
 import { toast } from "sonner";
 import { PaymentMethodType } from "@/types/database/payment.types";
+import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -46,7 +47,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       await paymentService.processPayment({
         leaseId: agreementId,
         amount: data.amountPaid,
-        paymentMethod: data.paymentMethod as PaymentMethodType,
+        paymentMethod: normalizePaymentMethod(data.paymentMethod),
         description: data.description
       });
       

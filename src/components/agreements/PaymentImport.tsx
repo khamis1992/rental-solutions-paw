@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from "lucide-react";
 import Papa from 'papaparse';
 import { RawPaymentImport, PaymentMethodType } from "@/components/finance/types/transaction.types";
+import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
 
 const REQUIRED_FIELDS = [
   'Transaction_ID',
@@ -24,24 +25,6 @@ const REQUIRED_FIELDS = [
 ] as const;
 
 type ImportedData = Record<string, unknown>;
-
-const normalizePaymentMethod = (method: string): PaymentMethodType => {
-  const methodMap: Record<string, PaymentMethodType> = {
-    'cash': 'Cash',
-    'invoice': 'Invoice',
-    'wire': 'WireTransfer',
-    'wiretransfer': 'WireTransfer',
-    'cheque': 'Cheque',
-    'check': 'Cheque',
-    'deposit': 'Deposit',
-    'onhold': 'On_hold',
-    'on_hold': 'On_hold',
-    'on-hold': 'On_hold'
-  };
-
-  const normalized = method.toLowerCase().replace(/[^a-z]/g, '');
-  return methodMap[normalized] || 'Cash';
-};
 
 export const PaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
