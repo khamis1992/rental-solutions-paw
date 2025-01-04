@@ -2,9 +2,10 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PaymentHistoryTable } from "@/components/agreements/payments/PaymentHistoryTable";
 import { formatCurrency } from "@/lib/utils";
 import { Loader2, Calendar, DollarSign, Car, Tag } from "lucide-react";
+import { CarInstallmentAnalytics } from "./CarInstallmentAnalytics";
+import { PaymentMonitoring } from "./PaymentMonitoring";
 
 export const CarInstallmentDetails = () => {
   const { id } = useParams();
@@ -17,20 +18,6 @@ export const CarInstallmentDetails = () => {
         .select("*")
         .eq("id", id)
         .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: payments, isLoading: isLoadingPayments } = useQuery({
-    queryKey: ["car-installment-payments", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("car_installment_payments")
-        .select("*")
-        .eq("contract_id", id)
-        .order("payment_date", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -133,27 +120,9 @@ export const CarInstallmentDetails = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PaymentHistoryTable
-            paymentHistory={payments?.map(payment => ({
-              id: payment.id,
-              payment_date: payment.payment_date,
-              amount: payment.amount,
-              payment_method: "Cheque",
-              status: payment.status,
-              invoice: {
-                id: payment.id,
-                invoice_number: payment.cheque_number
-              }
-            })) || []}
-            isLoading={isLoadingPayments}
-          />
-        </CardContent>
-      </Card>
+      <CarInstallmentAnalytics contractId={id!} />
+      
+      <PaymentMonitoring contractId={id!} />
     </div>
   );
 };
