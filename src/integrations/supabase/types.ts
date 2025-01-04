@@ -576,6 +576,104 @@ export type Database = {
         }
         Relationships: []
       }
+      car_installment_contracts: {
+        Row: {
+          amount_paid: number | null
+          amount_pending: number
+          car_type: string
+          category: string
+          created_at: string
+          id: string
+          installment_value: number
+          model_year: number
+          price_per_car: number
+          remaining_installments: number
+          total_contract_value: number
+          total_installments: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          amount_pending: number
+          car_type: string
+          category: string
+          created_at?: string
+          id?: string
+          installment_value: number
+          model_year: number
+          price_per_car: number
+          remaining_installments: number
+          total_contract_value: number
+          total_installments: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number | null
+          amount_pending?: number
+          car_type?: string
+          category?: string
+          created_at?: string
+          id?: string
+          installment_value?: number
+          model_year?: number
+          price_per_car?: number
+          remaining_installments?: number
+          total_contract_value?: number
+          total_installments?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      car_installment_payments: {
+        Row: {
+          amount: number
+          cheque_number: string
+          contract_id: string | null
+          created_at: string
+          drawee_bank: string
+          id: string
+          paid_amount: number | null
+          payment_date: string
+          remaining_amount: number
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cheque_number: string
+          contract_id?: string | null
+          created_at?: string
+          drawee_bank: string
+          id?: string
+          paid_amount?: number | null
+          payment_date: string
+          remaining_amount: number
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cheque_number?: string
+          contract_id?: string | null
+          created_at?: string
+          drawee_bank?: string
+          id?: string
+          paid_amount?: number | null
+          payment_date?: string
+          remaining_amount?: number
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_installment_payments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "car_installment_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       case_duration_analytics: {
         Row: {
           avg_duration: number | null

@@ -4,6 +4,7 @@ import { TransactionCategorization } from "@/components/finance/transactions/Tra
 import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
 import { TransactionImportTool } from "@/components/finance/transactions/TransactionImportTool";
 import { RawDataView } from "@/components/finance/raw-data/RawDataView";
+import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart3, 
@@ -11,7 +12,8 @@ import {
   FileText, 
   Upload, 
   Tags, 
-  Database 
+  Database,
+  Car
 } from "lucide-react";
 
 const Finance = () => {
@@ -69,6 +71,14 @@ const Finance = () => {
               <Database className="h-4 w-4" />
               <span>Raw Data</span>
             </TabsTrigger>
+
+            <TabsTrigger 
+              value="car-installments" 
+              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
+              <Car className="h-4 w-4" />
+              <span>Car Installments</span>
+            </TabsTrigger>
           </div>
         </TabsList>
 
@@ -94,6 +104,10 @@ const Finance = () => {
 
         <TabsContent value="raw-data">
           <RawDataView />
+        </TabsContent>
+
+        <TabsContent value="car-installments">
+          <CarInstallmentContracts />
         </TabsContent>
       </Tabs>
     </div>
