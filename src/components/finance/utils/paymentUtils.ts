@@ -6,6 +6,7 @@ export const normalizePaymentMethod = (method: string): PaymentMethodType => {
     'invoice': 'Invoice',
     'wire': 'WireTransfer',
     'wiretransfer': 'WireTransfer',
+    'wire_transfer': 'WireTransfer',
     'cheque': 'Cheque',
     'check': 'Cheque',
     'deposit': 'Deposit',
@@ -15,5 +16,5 @@ export const normalizePaymentMethod = (method: string): PaymentMethodType => {
   };
 
   const normalized = method.toLowerCase().replace(/[^a-z]/g, '');
-  return methodMap[normalized] || 'Cash';
+  return methodMap[normalized] || 'Cash'; // Default to Cash if no match found
 };
