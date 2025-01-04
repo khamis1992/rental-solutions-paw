@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 interface ContractSummaryProps {
   contract: {
     car_type: string;
-    number_of_cars: number; // Added this field
+    number_of_cars: number;
     model_year: number;
     price_per_car: number;
     total_contract_value: number;
@@ -29,7 +29,7 @@ export const ContractSummary = ({ contract, onAddPayment }: ContractSummaryProps
           </div>
           <div>
             <p className="text-sm font-medium">Number of Cars</p>
-            <p className="text-2xl font-bold">{contract.number_of_cars}</p>
+            <p className="text-2xl font-bold">{contract.number_of_cars || 1}</p>
           </div>
           <div>
             <p className="text-sm font-medium">Model Year</p>
