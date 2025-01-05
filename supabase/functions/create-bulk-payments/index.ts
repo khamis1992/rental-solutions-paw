@@ -57,19 +57,25 @@ serve(async (req) => {
       .select('cheque_number')
       .in('cheque_number', payments.map(p => p.cheque_number))
 
-    if (checkError) throw checkError
+    if (checkError) {
+      console.error('Error checking existing cheques:', checkError)
+      throw new Error('Failed to check for existing cheque numbers')
+    }
 
     if (existingCheques && existingCheques.length > 0) {
       const duplicates = existingCheques.map(c => c.cheque_number).join(', ')
       throw new Error(`Duplicate cheque numbers found: ${duplicates}`)
     }
 
-    // Insert payments in bulk
+    // Insert payments without ON CONFLICT clause
     const { error: insertError } = await supabase
       .from('car_installment_payments')
       .insert(payments)
 
-    if (insertError) throw insertError
+    if (insertError) {
+      console.error('Error inserting payments:', insertError)
+      throw insertError
+    }
 
     return new Response(
       JSON.stringify({ success: true, count: payments.length }),
