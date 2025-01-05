@@ -82,9 +82,11 @@ serve(async (req) => {
     const results = [];
     for (const payment of payments) {
       try {
+        // Check if cheque number already exists for this contract
         const { data: existingCheque } = await supabase
           .from('car_installment_payments')
           .select('cheque_number')
+          .eq('contract_id', payment.contract_id)
           .eq('cheque_number', payment.cheque_number)
           .single();
 
