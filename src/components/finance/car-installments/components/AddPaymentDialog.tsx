@@ -35,6 +35,7 @@ export function AddPaymentDialog({
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
   const [amount, setAmount] = useState<string>("");
+  const [draweeBankName, setDraweeBankName] = useState("");
   const [aiSuggestions, setAiSuggestions] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -84,8 +85,8 @@ export function AddPaymentDialog({
     setIsSubmitting(true);
 
     try {
-      if (!firstChequeNumber || !firstPaymentDate || !amount) {
-        throw new Error("Please enter both cheque number and payment date");
+      if (!firstChequeNumber || !firstPaymentDate || !amount || !draweeBankName) {
+        throw new Error("Please fill in all required fields");
       }
 
       const chequeSequence = generateChequeSequence(
@@ -124,7 +125,7 @@ export function AddPaymentDialog({
               cheque_number: cheque.cheque_number,
               amount: Number(amount),
               payment_date: cheque.payment_date,
-              drawee_bank: e.currentTarget.draweeBankName.value,
+              drawee_bank: draweeBankName,
               paid_amount: 0,
               remaining_amount: Number(amount),
               status: "pending"
@@ -172,7 +173,6 @@ export function AddPaymentDialog({
               <Label htmlFor="chequeNumber">First Cheque Number</Label>
               <Input 
                 id="chequeNumber" 
-                name="chequeNumber" 
                 value={firstChequeNumber}
                 onChange={(e) => setFirstChequeNumber(e.target.value)}
                 required 
@@ -183,7 +183,6 @@ export function AddPaymentDialog({
               <Label htmlFor="amount">Amount per Installment (QAR)</Label>
               <Input 
                 id="amount" 
-                name="amount" 
                 type="number" 
                 step="0.01"
                 value={amount}
@@ -196,7 +195,6 @@ export function AddPaymentDialog({
               <Label htmlFor="paymentDate">First Payment Date</Label>
               <Input 
                 id="paymentDate" 
-                name="paymentDate" 
                 type="date"
                 value={firstPaymentDate}
                 onChange={(e) => setFirstPaymentDate(e.target.value)}
@@ -206,7 +204,12 @@ export function AddPaymentDialog({
 
             <div className="space-y-2">
               <Label htmlFor="draweeBankName">Drawee Bank Name</Label>
-              <Input id="draweeBankName" name="draweeBankName" required />
+              <Input 
+                id="draweeBankName" 
+                value={draweeBankName}
+                onChange={(e) => setDraweeBankName(e.target.value)}
+                required 
+              />
             </div>
 
             {!aiSuggestions && (
