@@ -83,12 +83,22 @@ serve(async (req) => {
     for (const payment of payments) {
       try {
         // Check if cheque number already exists for this contract
-        const { data: existingCheque } = await supabase
+        const { data: existingCheque, error: checkError } = await supabase
           .from('car_installment_payments')
           .select('cheque_number')
           .eq('contract_id', payment.contract_id)
           .eq('cheque_number', payment.cheque_number)
-          .single();
+          .maybeSingle();
+
+        if (checkError) {
+          console.error('Error checking existing cheque:', checkError);
+          results.push({ 
+            success: false, 
+            chequeNumber: payment.cheque_number, 
+            error: 'Error checking for duplicate cheque' 
+          });
+          continue;
+        }
 
         if (existingCheque) {
           results.push({ 
@@ -103,7 +113,15 @@ serve(async (req) => {
           .from('car_installment_payments')
           .insert([payment]);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting payment:', insertError);
+          results.push({ 
+            success: false, 
+            chequeNumber: payment.cheque_number, 
+            error: insertError.message 
+          });
+          continue;
+        }
         
         results.push({ 
           success: true, 
