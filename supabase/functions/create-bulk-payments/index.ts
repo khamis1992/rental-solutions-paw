@@ -16,6 +16,7 @@ interface BulkPaymentDetails {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -26,9 +27,21 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log('Processing bulk payment request...')
-    const details: BulkPaymentDetails = await req.json()
-    console.log('Request details:', details)
+    console.log('Starting bulk payment processing...')
+    
+    // Parse request body
+    const requestBody = await req.text()
+    console.log('Raw request body:', requestBody)
+    
+    let details: BulkPaymentDetails
+    try {
+      details = JSON.parse(requestBody)
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError)
+      throw new Error('Invalid JSON in request body')
+    }
+    
+    console.log('Parsed request details:', details)
 
     // Input validation
     if (!details.firstChequeNumber || !details.totalCheques || !details.amount || 
@@ -44,6 +57,8 @@ serve(async (req) => {
       throw new Error('Invalid cheque number format')
     }
 
+    console.log('Generating payment records...')
+    
     // Generate payment records
     const payments = Array.from({ length: details.totalCheques }, (_, index) => {
       const chequeNumber = `${prefix}${String(Number(baseNumber) + index).padStart(baseNumber.length, '0')}`
@@ -73,7 +88,7 @@ serve(async (req) => {
 
       if (checkError) {
         console.error('Error checking existing cheques:', checkError)
-        throw new Error('Failed to check for existing cheque numbers')
+        throw new Error(`Failed to check for existing cheque numbers: ${checkError.message}`)
       }
 
       if (existingCheques && existingCheques.length > 0) {
@@ -81,8 +96,11 @@ serve(async (req) => {
         throw new Error(`Duplicate cheque numbers found: ${duplicates}`)
       }
 
-      // Insert payments one by one to better handle errors
+      console.log('Starting individual payment insertions...')
+      
+      // Insert payments one by one
       for (const payment of payments) {
+        console.log('Inserting payment:', payment)
         const { error: insertError } = await supabase
           .from('car_installment_payments')
           .insert([payment])
@@ -93,22 +111,29 @@ serve(async (req) => {
         }
       }
 
-      console.log('Successfully created bulk payments')
+      console.log('Successfully created all bulk payments')
       return new Response(
-        JSON.stringify({ success: true, count: payments.length }),
+        JSON.stringify({ 
+          success: true, 
+          count: payments.length,
+          message: 'Bulk payments created successfully'
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200 
         }
       )
     } catch (error) {
-      console.error('Error in database operations:', error)
+      console.error('Database operation error:', error)
       throw error
     }
   } catch (error) {
-    console.error('Error processing request:', error)
+    console.error('Request processing error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 
