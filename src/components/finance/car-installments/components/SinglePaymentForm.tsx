@@ -10,9 +10,10 @@ import { Loader2 } from "lucide-react";
 interface SinglePaymentFormProps {
   contractId: string;
   onSuccess: () => void;
+  totalInstallments?: number;
 }
 
-export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormProps) {
+export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: SinglePaymentFormProps) {
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [firstPaymentDate, setFirstPaymentDate] = useState("");
   const [amount, setAmount] = useState<string>("");
@@ -36,7 +37,7 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
             firstChequeNumber,
             amount: Number(amount),
             firstPaymentDate,
-            totalInstallments: 1
+            totalInstallments: totalInstallments || 1
           }
         }
       );

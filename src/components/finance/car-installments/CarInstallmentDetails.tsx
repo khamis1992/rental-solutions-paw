@@ -84,4 +84,4 @@ export const CarInstallmentDetails = () => {
       </Tabs>
     </div>
   );
-};
+}

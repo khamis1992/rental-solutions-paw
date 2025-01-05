@@ -10,18 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SinglePaymentForm } from "./SinglePaymentForm";
 import { BulkPaymentForm } from "./BulkPaymentForm";
 
-interface AddPaymentDialogProps {
+export interface AddPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contractId: string;
   onSuccess?: () => void;
+  totalInstallments?: number;
 }
 
 export function AddPaymentDialog({ 
   open, 
   onOpenChange, 
   contractId,
-  onSuccess 
+  onSuccess,
+  totalInstallments 
 }: AddPaymentDialogProps) {
   const handleSuccess = () => {
     onSuccess?.();
@@ -44,6 +46,7 @@ export function AddPaymentDialog({
               <SinglePaymentForm 
                 contractId={contractId} 
                 onSuccess={handleSuccess}
+                totalInstallments={totalInstallments}
               />
             </TabsContent>
             <TabsContent value="bulk">
