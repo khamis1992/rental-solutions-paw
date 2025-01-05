@@ -22,15 +22,15 @@ serve(async (req) => {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // Log request details for debugging
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
     // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    // Log request method and headers for debugging
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
 
     // Get and log raw request body
     const rawBody = await req.text();
@@ -103,68 +103,51 @@ serve(async (req) => {
       };
     });
 
-    // Check for duplicate cheque numbers
-    const { data: existingCheques, error: checkError } = await supabase
-      .from('car_installment_payments')
-      .select('cheque_number')
-      .in('cheque_number', payments.map(p => p.cheque_number));
+    console.log('Generated payments:', payments);
 
-    if (checkError) {
-      console.error('Error checking duplicates:', checkError);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to check for duplicate cheque numbers',
-          details: checkError.message 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
-        }
-      );
-    }
-
-    if (existingCheques && existingCheques.length > 0) {
-      const duplicates = existingCheques.map(c => c.cheque_number).join(', ');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Duplicate cheque numbers found',
-          duplicates 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      );
-    }
-
-    // Insert payments one by one
+    // Insert payments one by one for better error handling
+    const results = [];
     for (const payment of payments) {
-      const { error: insertError } = await supabase
-        .from('car_installment_payments')
-        .insert([payment]);
+      try {
+        // Check for duplicate cheque numbers first
+        const { data: existingCheque, error: checkError } = await supabase
+          .from('car_installment_payments')
+          .select('cheque_number')
+          .eq('cheque_number', payment.cheque_number)
+          .single();
 
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Failed to insert payment',
-            details: insertError.message,
-            payment 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500 
-          }
-        );
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+          console.error('Error checking duplicate cheque:', checkError);
+          throw checkError;
+        }
+
+        if (existingCheque) {
+          throw new Error(`Duplicate cheque number: ${payment.cheque_number}`);
+        }
+
+        // Insert the payment
+        const { data, error: insertError } = await supabase
+          .from('car_installment_payments')
+          .insert([payment]);
+
+        if (insertError) throw insertError;
+        results.push({ success: true, chequeNumber: payment.cheque_number });
+      } catch (error) {
+        console.error('Error processing payment:', error);
+        results.push({ 
+          success: false, 
+          chequeNumber: payment.cheque_number, 
+          error: error.message 
+        });
       }
     }
 
-    // Return success response
+    // Return success response with results
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Bulk payments created successfully',
-        count: payments.length
+        message: 'Bulk payments processed',
+        results
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
