@@ -66,7 +66,7 @@ export const CarInstallmentDetails = () => {
               </DialogHeader>
               <SinglePaymentForm 
                 contractId={id!} 
-                onClose={() => setIsDialogOpen(false)}
+                onSuccess={() => setIsDialogOpen(false)}
               />
             </DialogContent>
           </Dialog>

@@ -9,10 +9,11 @@ import { Loader2 } from "lucide-react";
 
 interface BulkPaymentFormProps {
   contractId: string;
+  onSuccess?: () => void;
   onClose?: () => void;
 }
 
-export const BulkPaymentForm = ({ contractId, onClose }: BulkPaymentFormProps) => {
+export const BulkPaymentForm = ({ contractId, onSuccess, onClose }: BulkPaymentFormProps) => {
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [totalCheques, setTotalCheques] = useState("");
   const [amount, setAmount] = useState("");
@@ -54,6 +55,7 @@ export const BulkPaymentForm = ({ contractId, onClose }: BulkPaymentFormProps) =
       await queryClient.invalidateQueries({ queryKey: ['car-installment-payments', contractId] });
       
       toast.success("Bulk payments created successfully");
+      onSuccess?.();
       onClose?.();
     } catch (error) {
       console.error("Error creating bulk payments:", error);
