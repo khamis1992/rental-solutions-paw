@@ -16,54 +16,80 @@ interface BulkPaymentDetails {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
-  }
-
   try {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    console.log('Starting bulk payment processing...')
-    
+    // Log request method and headers for debugging
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
+    // Get and log raw request body
+    const rawBody = await req.text();
+    console.log('Raw request body:', rawBody);
+
     // Parse request body
-    const requestBody = await req.text()
-    console.log('Raw request body:', requestBody)
-    
-    let details: BulkPaymentDetails
+    let details: BulkPaymentDetails;
     try {
-      details = JSON.parse(requestBody)
-    } catch (parseError) {
-      console.error('Error parsing request body:', parseError)
-      throw new Error('Invalid JSON in request body')
+      details = JSON.parse(rawBody);
+    } catch (error) {
+      console.error('JSON parsing error:', error);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid JSON format',
+          details: error.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
+
+    // Validate required fields
+    const requiredFields = ['firstChequeNumber', 'totalCheques', 'amount', 'startDate', 'draweeBankName', 'contractId'];
+    const missingFields = requiredFields.filter(field => !details[field as keyof BulkPaymentDetails]);
     
-    console.log('Parsed request details:', details)
-
-    // Input validation
-    if (!details.firstChequeNumber || !details.totalCheques || !details.amount || 
-        !details.startDate || !details.draweeBankName || !details.contractId) {
-      throw new Error('Missing required fields')
+    if (missingFields.length > 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Missing required fields',
+          missingFields 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
-    // Extract base number and prefix from cheque number
-    const baseNumber = details.firstChequeNumber.replace(/\D/g, '')
-    const prefix = details.firstChequeNumber.replace(/\d/g, '')
+    // Extract and validate cheque number format
+    const baseNumber = details.firstChequeNumber.replace(/\D/g, '');
+    const prefix = details.firstChequeNumber.replace(/\d/g, '');
 
     if (!baseNumber) {
-      throw new Error('Invalid cheque number format')
+      return new Response(
+        JSON.stringify({ error: 'Invalid cheque number format' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
-    console.log('Generating payment records...')
-    
     // Generate payment records
     const payments = Array.from({ length: details.totalCheques }, (_, index) => {
-      const chequeNumber = `${prefix}${String(Number(baseNumber) + index).padStart(baseNumber.length, '0')}`
-      const paymentDate = new Date(details.startDate)
-      paymentDate.setMonth(paymentDate.getMonth() + index)
+      const chequeNumber = `${prefix}${String(Number(baseNumber) + index).padStart(baseNumber.length, '0')}`;
+      const paymentDate = new Date(details.startDate);
+      paymentDate.setMonth(paymentDate.getMonth() + index);
 
       return {
         contract_id: details.contractId,
@@ -74,70 +100,90 @@ serve(async (req) => {
         paid_amount: 0,
         remaining_amount: Number(details.amount),
         status: 'pending'
-      }
-    })
+      };
+    });
 
-    console.log('Generated payments:', payments)
+    // Check for duplicate cheque numbers
+    const { data: existingCheques, error: checkError } = await supabase
+      .from('car_installment_payments')
+      .select('cheque_number')
+      .in('cheque_number', payments.map(p => p.cheque_number));
 
-    try {
-      // Check for duplicate cheque numbers
-      const { data: existingCheques, error: checkError } = await supabase
-        .from('car_installment_payments')
-        .select('cheque_number')
-        .in('cheque_number', payments.map(p => p.cheque_number))
-
-      if (checkError) {
-        console.error('Error checking existing cheques:', checkError)
-        throw new Error(`Failed to check for existing cheque numbers: ${checkError.message}`)
-      }
-
-      if (existingCheques && existingCheques.length > 0) {
-        const duplicates = existingCheques.map(c => c.cheque_number).join(', ')
-        throw new Error(`Duplicate cheque numbers found: ${duplicates}`)
-      }
-
-      console.log('Starting individual payment insertions...')
-      
-      // Insert payments one by one
-      for (const payment of payments) {
-        console.log('Inserting payment:', payment)
-        const { error: insertError } = await supabase
-          .from('car_installment_payments')
-          .insert([payment])
-
-        if (insertError) {
-          console.error('Error inserting payment:', payment, insertError)
-          throw new Error(`Failed to insert payment with cheque number ${payment.cheque_number}: ${insertError.message}`)
-        }
-      }
-
-      console.log('Successfully created all bulk payments')
+    if (checkError) {
+      console.error('Error checking duplicates:', checkError);
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          count: payments.length,
-          message: 'Bulk payments created successfully'
+          error: 'Failed to check for duplicate cheque numbers',
+          details: checkError.message 
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+          status: 500 
         }
-      )
-    } catch (error) {
-      console.error('Database operation error:', error)
-      throw error
+      );
     }
-  } catch (error) {
-    console.error('Request processing error:', error)
+
+    if (existingCheques && existingCheques.length > 0) {
+      const duplicates = existingCheques.map(c => c.cheque_number).join(', ');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Duplicate cheque numbers found',
+          duplicates 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
+    }
+
+    // Insert payments one by one
+    for (const payment of payments) {
+      const { error: insertError } = await supabase
+        .from('car_installment_payments')
+        .insert([payment]);
+
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to insert payment',
+            details: insertError.message,
+            payment 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        );
+      }
+    }
+
+    // Return success response
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
+      JSON.stringify({
+        success: true,
+        message: 'Bulk payments created successfully',
+        count: payments.length
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 200 
       }
-    )
+    );
+
+  } catch (error) {
+    console.error('Unhandled error:', error);
+    return new Response(
+      JSON.stringify({
+        error: 'Internal server error',
+        message: error.message,
+        stack: error.stack
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
+    );
   }
 })
