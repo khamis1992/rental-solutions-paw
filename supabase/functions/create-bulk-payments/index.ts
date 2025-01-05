@@ -26,12 +26,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    console.log('Processing bulk payment request...')
     const details: BulkPaymentDetails = await req.json()
-    console.log('Processing bulk payment request:', details)
+    console.log('Request details:', details)
+
+    // Input validation
+    if (!details.firstChequeNumber || !details.totalCheques || !details.amount || 
+        !details.startDate || !details.draweeBankName || !details.contractId) {
+      throw new Error('Missing required fields')
+    }
 
     // Extract base number and prefix from cheque number
     const baseNumber = details.firstChequeNumber.replace(/\D/g, '')
     const prefix = details.firstChequeNumber.replace(/\d/g, '')
+
+    if (!baseNumber) {
+      throw new Error('Invalid cheque number format')
+    }
 
     // Generate payment records
     const payments = Array.from({ length: details.totalCheques }, (_, index) => {
@@ -51,46 +62,56 @@ serve(async (req) => {
       }
     })
 
-    // Check for duplicate cheque numbers
-    const { data: existingCheques, error: checkError } = await supabase
-      .from('car_installment_payments')
-      .select('cheque_number')
-      .in('cheque_number', payments.map(p => p.cheque_number))
+    console.log('Generated payments:', payments)
 
-    if (checkError) {
-      console.error('Error checking existing cheques:', checkError)
-      throw new Error('Failed to check for existing cheque numbers')
-    }
+    try {
+      // Check for duplicate cheque numbers
+      const { data: existingCheques, error: checkError } = await supabase
+        .from('car_installment_payments')
+        .select('cheque_number')
+        .in('cheque_number', payments.map(p => p.cheque_number))
 
-    if (existingCheques && existingCheques.length > 0) {
-      const duplicates = existingCheques.map(c => c.cheque_number).join(', ')
-      throw new Error(`Duplicate cheque numbers found: ${duplicates}`)
-    }
-
-    // Insert payments without ON CONFLICT clause
-    const { error: insertError } = await supabase
-      .from('car_installment_payments')
-      .insert(payments)
-
-    if (insertError) {
-      console.error('Error inserting payments:', insertError)
-      throw insertError
-    }
-
-    return new Response(
-      JSON.stringify({ success: true, count: payments.length }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+      if (checkError) {
+        console.error('Error checking existing cheques:', checkError)
+        throw new Error('Failed to check for existing cheque numbers')
       }
-    )
+
+      if (existingCheques && existingCheques.length > 0) {
+        const duplicates = existingCheques.map(c => c.cheque_number).join(', ')
+        throw new Error(`Duplicate cheque numbers found: ${duplicates}`)
+      }
+
+      // Insert payments one by one to better handle errors
+      for (const payment of payments) {
+        const { error: insertError } = await supabase
+          .from('car_installment_payments')
+          .insert([payment])
+
+        if (insertError) {
+          console.error('Error inserting payment:', payment, insertError)
+          throw new Error(`Failed to insert payment with cheque number ${payment.cheque_number}: ${insertError.message}`)
+        }
+      }
+
+      console.log('Successfully created bulk payments')
+      return new Response(
+        JSON.stringify({ success: true, count: payments.length }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
+    } catch (error) {
+      console.error('Error in database operations:', error)
+      throw error
+    }
   } catch (error) {
-    console.error('Error processing bulk payments:', error)
+    console.error('Error processing request:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
+        status: 400 
       }
     )
   }
