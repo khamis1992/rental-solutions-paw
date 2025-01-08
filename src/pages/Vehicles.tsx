@@ -179,7 +179,7 @@ const Vehicles = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <VehicleFilters filters={filters} setFilters={setFilters} />
+          <VehicleFilters filters={filters} setFilters={setFilters as (filters: Filters) => void} />
           <VehicleList vehicles={vehicles} isLoading={isLoading} />
         </CardContent>
       </Card>
