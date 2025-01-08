@@ -1,5 +1,3 @@
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,14 +21,6 @@ export const AgreementFilters = ({
   return (
     <Card className="p-4 mb-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search agreements by number, customer, or license plate..."
-            className="pl-8 w-full md:max-w-md"
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Select defaultValue="all" onValueChange={onStatusChange}>
             <SelectTrigger className="w-[180px]">
