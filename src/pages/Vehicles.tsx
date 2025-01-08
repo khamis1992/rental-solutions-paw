@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Download, Car, Plus, FileQuestion } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Vehicle } from "@/types/vehicle";
+import { Vehicle, VehicleStatus } from "@/types/vehicle";
 import {
   Card,
   CardContent,
@@ -24,8 +24,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+interface Filters {
+  status: VehicleStatus | "all";
+  searchQuery: string;
+}
+
 const Vehicles = () => {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     status: "all",
     searchQuery: "",
   });
