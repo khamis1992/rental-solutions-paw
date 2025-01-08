@@ -5,7 +5,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
 
 interface AgreementFiltersProps {
   onSearchChange: (value: string) => void;
@@ -19,34 +18,32 @@ export const AgreementFilters = ({
   onSortChange,
 }: AgreementFiltersProps) => {
   return (
-    <Card className="p-4 mb-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Select defaultValue="all" onValueChange={onStatusChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="newest" onValueChange={onSortChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="amount-high">Amount (High-Low)</SelectItem>
-              <SelectItem value="amount-low">Amount (Low-High)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="flex flex-col gap-4 md:flex-row md:items-center mb-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Select defaultValue="all" onValueChange={onStatusChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="expired">Expired</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select defaultValue="newest" onValueChange={onSortChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="amount-high">Amount (High-Low)</SelectItem>
+            <SelectItem value="amount-low">Amount (Low-High)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-    </Card>
+    </div>
   );
 };
