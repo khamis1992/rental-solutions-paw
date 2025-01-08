@@ -20,18 +20,6 @@ export const AgreementFilters = ({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center mb-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Select defaultValue="all" onValueChange={onStatusChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="expired">Expired</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
         <Select defaultValue="newest" onValueChange={onSortChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by" />
