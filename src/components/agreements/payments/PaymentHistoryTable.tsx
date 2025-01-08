@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryTableProps {
   paymentHistory: any[];
@@ -26,6 +27,7 @@ interface PaymentHistoryTableProps {
 export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistoryTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   if (isLoading) {
     return (
@@ -55,6 +57,7 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
 
       toast.success("Payment deleted successfully");
       // The payment list will be automatically updated through real-time subscription
+      await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Failed to delete payment");
