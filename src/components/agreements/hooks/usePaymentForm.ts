@@ -39,15 +39,6 @@ export const usePaymentForm = (agreementId: string) => {
     },
   });
 
-  useEffect(() => {
-    if (agreement?.remainingAmount?.[0]) {
-      const rentAmount = agreement.remainingAmount[0].rent_amount;
-      setBaseAmount(rentAmount);
-      setValue("amount", rentAmount);
-      setTotalAmount(rentAmount);
-    }
-  }, [agreement]);
-
   const {
     register,
     handleSubmit,
@@ -66,6 +57,15 @@ export const usePaymentForm = (agreementId: string) => {
       recurringInterval: "",
     },
   });
+
+  useEffect(() => {
+    if (agreement?.remainingAmount?.[0]) {
+      const rentAmount = agreement.remainingAmount[0].rent_amount;
+      setBaseAmount(rentAmount);
+      setValue("amount", rentAmount);
+      setTotalAmount(rentAmount);
+    }
+  }, [agreement, setValue]);
 
   const calculateLateFine = useCallback(async () => {
     if (!agreementId) return;
@@ -113,51 +113,10 @@ export const usePaymentForm = (agreementId: string) => {
     }
   }, [agreementId, baseAmount]);
 
-  const onSubmit = async (data: any) => {
-    try {
-      // Calculate the balance (Total Amount to Pay - Amount Paid)
-      const balance = totalAmount - data.amountPaid;
-      
-      const { error } = await supabase.from("payments").insert([
-        {
-          lease_id: agreementId,
-          amount: totalAmount,
-          amount_paid: data.amountPaid,
-          balance: balance,
-          payment_method: data.paymentMethod,
-          status: "completed",
-          payment_date: new Date().toISOString(),
-          description: data.description,
-          is_recurring: isRecurring,
-          recurring_interval: isRecurring ? data.recurringInterval : null,
-          type: "Income",
-          late_fine_amount: lateFineAmount,
-          days_overdue: daysOverdue,
-        },
-      ]);
-
-      if (error) throw error;
-
-      toast.success("Payment added successfully");
-      reset();
-      
-      // Invalidate relevant queries
-      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
-      await queryClient.invalidateQueries({ queryKey: ['agreement-details'] });
-      
-    } catch (error: any) {
-      console.error("Error adding payment:", error);
-      toast.error("Failed to add payment");
-    }
-  };
-
   return {
     register,
     control,
     handleSubmit,
-    onSubmit,
-    isRecurring,
-    setIsRecurring,
     errors,
     isSubmitting: false,
     lateFineAmount,
@@ -166,6 +125,7 @@ export const usePaymentForm = (agreementId: string) => {
     totalAmount,
     calculateLateFine,
     setBaseAmount,
-    watch
+    watch,
+    setValue // Added setValue to the return object
   };
 };
