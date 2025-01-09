@@ -13,10 +13,7 @@ const Agreements = () => {
   return (
     <DashboardLayout>
       <div className="container mx-auto space-y-6 px-4 py-8">
-        <AgreementHeader 
-          onCreate={() => setShowCreateDialog(true)}
-          onImport={() => setShowImportDialog(true)}
-        />
+        <AgreementHeader />
         <AgreementStats />
         <AgreementList />
         

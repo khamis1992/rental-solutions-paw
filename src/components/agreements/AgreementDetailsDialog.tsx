@@ -174,8 +174,6 @@ export const AgreementDetailsDialog = ({
               <AgreementHeader 
                 agreement={mappedAgreement}
                 remainingAmount={agreement.remainingAmount}
-                onCreate={() => {}}
-                onImport={() => {}}
               />
               <AgreementStatusSelect
                 agreementId={agreement.id}
