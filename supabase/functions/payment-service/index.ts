@@ -22,20 +22,34 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Parse request body
+    // Parse and validate request data
     const requestData = await req.json();
     console.log('Received payment request:', requestData);
 
-    // Validate required fields
-    const { leaseId, amount, paymentMethod, description } = requestData;
-    
-    if (!leaseId || amount === undefined || amount === null) {
-      console.error('Missing required fields:', { leaseId, amount });
+    const { leaseId, amount, paymentMethod = 'Cash', description = '' } = requestData;
+
+    // Validate required fields with type checking
+    if (!leaseId || typeof leaseId !== 'string') {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Missing required fields',
-          details: { leaseId, amount }
+          error: 'Missing or invalid leaseId',
+          details: { leaseId }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid amount',
+          details: { amount }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -71,13 +85,14 @@ serve(async (req) => {
       .from('payments')
       .insert({
         lease_id: leaseId,
-        amount: amount,
-        payment_method: paymentMethod || 'Cash',
+        amount: numericAmount,
+        payment_method: paymentMethod,
         description: description,
         status: 'completed',
         payment_date: new Date().toISOString(),
-        amount_paid: amount,
-        balance: 0
+        amount_paid: numericAmount,
+        balance: 0,
+        type: 'Income'
       })
       .select(`
         id,
