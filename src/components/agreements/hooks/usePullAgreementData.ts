@@ -60,6 +60,16 @@ export const usePullAgreementData = (refetch: () => void) => {
           }
 
           if (leaseId) {
+            // Log the data being updated for verification
+            if (amount.agreement_number === 'LTO2024324') {
+              console.log('Updating agreement LTO2024324:', {
+                agreement_duration: amount.agreement_duration,
+                total_amount: amount.final_price,
+                rent_amount: amount.rent_amount,
+                remaining_amount: amount.remaining_amount
+              });
+            }
+
             // Update the lease with the pulled data
             const updateResult = await supabase
               .from('leases')
