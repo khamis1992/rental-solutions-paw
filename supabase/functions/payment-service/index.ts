@@ -1,104 +1,108 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface PaymentRequest {
-  leaseId: string;
-  amount: number;
-  paymentMethod: string;
-  description?: string;
-}
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    // Log service request
-    await supabase.from('service_communication_logs').insert({
-      source_service: 'client',
-      target_service: 'payment_service',
-      request_type: req.method,
-    })
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing environment variables');
+    }
 
-    const { operation, data } = await req.json()
-    let result
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    switch (operation) {
-      case 'process_payment':
-        result = await processPayment(supabase, data as PaymentRequest)
-        break
-      default:
-        throw new Error('Invalid operation')
+    // Parse request body
+    const { leaseId, amount, paymentMethod, description } = await req.json();
+    console.log('Processing payment:', { leaseId, amount, paymentMethod, description });
+
+    if (!leaseId || !amount) {
+      throw new Error('Missing required fields');
+    }
+
+    // Validate lease exists
+    const { data: lease, error: leaseError } = await supabase
+      .from('leases')
+      .select('id')
+      .eq('id', leaseId)
+      .single();
+
+    if (leaseError) {
+      console.error('Lease validation error:', leaseError);
+      throw new Error('Invalid lease ID');
+    }
+
+    // Create payment
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        lease_id: leaseId,
+        amount: amount,
+        payment_method: paymentMethod,
+        description: description,
+        status: 'completed',
+        payment_date: new Date().toISOString(),
+      })
+      .select(`
+        id,
+        amount,
+        payment_method,
+        description,
+        status,
+        payment_date,
+        leases!inner (
+          id,
+          agreement_number,
+          customer_id,
+          profiles!inner (
+            full_name
+          )
+        )
+      `)
+      .single();
+
+    if (paymentError) {
+      console.error('Payment creation error:', paymentError);
+      throw new Error('Failed to create payment');
     }
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        success: true,
+        data: payment
+      }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
-    )
+    );
+
   } catch (error) {
-    console.error('Payment service error:', error)
+    console.error('Payment service error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
         status: 400
       }
-    )
+    );
   }
-})
-
-async function processPayment(supabase: any, paymentData: PaymentRequest) {
-  console.log('Processing payment:', paymentData)
-
-  const { data: payment, error: paymentError } = await supabase
-    .from('payments')
-    .insert({
-      lease_id: paymentData.leaseId,
-      amount: paymentData.amount,
-      payment_method: paymentData.paymentMethod,
-      description: paymentData.description,
-      status: 'completed',
-      payment_date: new Date().toISOString(),
-    })
-    .select(`
-      payments.id,
-      payments.amount,
-      payments.payment_method,
-      payments.description,
-      payments.status,
-      payments.payment_date,
-      leases!inner (
-        id,
-        agreement_number,
-        customer_id,
-        profiles!inner (
-          id,
-          full_name,
-          phone_number
-        )
-      )
-    `)
-    .single()
-
-  if (paymentError) {
-    console.error('Payment error:', paymentError)
-    throw paymentError
-  }
-
-  return { success: true, payment }
-}
+});
