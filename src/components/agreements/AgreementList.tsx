@@ -9,6 +9,10 @@ import { AgreementFilters } from "./AgreementFilters";
 import { AgreementListHeader } from "./list/AgreementListHeader";
 import { AgreementListContent } from "./list/AgreementListContent";
 import { useAgreementList } from "./list/useAgreementList";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -19,6 +23,7 @@ export const AgreementList = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPullingData, setIsPullingData] = useState(false);
 
   const {
     currentPage,
@@ -45,6 +50,46 @@ export const AgreementList = () => {
     }
   };
 
+  const handlePullData = async () => {
+    try {
+      setIsPullingData(true);
+      
+      // Fetch remaining amounts data
+      const { data: remainingAmounts, error: remainingError } = await supabase
+        .from('remaining_amounts')
+        .select('*');
+
+      if (remainingError) throw remainingError;
+
+      // Update each agreement with the corresponding remaining amount data
+      for (const amount of remainingAmounts || []) {
+        if (amount.lease_id) {
+          const { error: updateError } = await supabase
+            .from('leases')
+            .update({
+              agreement_duration: amount.agreement_duration,
+              total_amount: amount.final_price,
+              rent_amount: amount.rent_amount
+            })
+            .eq('id', amount.lease_id);
+
+          if (updateError) {
+            console.error('Error updating agreement:', updateError);
+            continue;
+          }
+        }
+      }
+
+      await refetch();
+      toast.success('Data pulled successfully');
+    } catch (error) {
+      console.error('Error pulling data:', error);
+      toast.error('Failed to pull data');
+    } finally {
+      setIsPullingData(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-center py-4">Loading agreements...</div>;
   }
@@ -59,11 +104,23 @@ export const AgreementList = () => {
 
   return (
     <div className="space-y-6">
-      <AgreementFilters
-        onSearchChange={setSearchQuery}
-        onStatusChange={setStatusFilter}
-        onSortChange={setSortOrder}
-      />
+      <div className="flex justify-between items-center">
+        <AgreementFilters
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatusFilter}
+          onSortChange={setSortOrder}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePullData}
+          disabled={isPullingData}
+          className="ml-4"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Pull Data
+        </Button>
+      </div>
       
       <AgreementListContent
         agreements={agreements}
