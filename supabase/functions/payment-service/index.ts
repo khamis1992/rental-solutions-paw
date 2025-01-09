@@ -23,35 +23,61 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Parse request body
-    const { leaseId, amount, paymentMethod, description } = await req.json();
-    console.log('Processing payment:', { leaseId, amount, paymentMethod, description });
+    const requestData = await req.json();
+    console.log('Received payment request:', requestData);
 
-    if (!leaseId || !amount) {
-      throw new Error('Missing required fields');
+    // Validate required fields
+    const { leaseId, amount, paymentMethod, description } = requestData;
+    
+    if (!leaseId || amount === undefined || amount === null) {
+      console.error('Missing required fields:', { leaseId, amount });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required fields',
+          details: { leaseId, amount }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     // Validate lease exists
     const { data: lease, error: leaseError } = await supabase
       .from('leases')
-      .select('id')
+      .select('id, agreement_number')
       .eq('id', leaseId)
       .single();
 
     if (leaseError) {
       console.error('Lease validation error:', leaseError);
-      throw new Error('Invalid lease ID');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid lease ID',
+          details: leaseError
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
-    // Create payment
+    // Create payment with explicit field selection
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
         lease_id: leaseId,
         amount: amount,
-        payment_method: paymentMethod,
+        payment_method: paymentMethod || 'Cash',
         description: description,
         status: 'completed',
         payment_date: new Date().toISOString(),
+        amount_paid: amount,
+        balance: 0
       })
       .select(`
         id,
@@ -60,11 +86,11 @@ serve(async (req) => {
         description,
         status,
         payment_date,
-        leases!inner (
+        leases:lease_id (
           id,
           agreement_number,
           customer_id,
-          profiles!inner (
+          profiles:customer_id (
             full_name
           )
         )
@@ -73,8 +99,20 @@ serve(async (req) => {
 
     if (paymentError) {
       console.error('Payment creation error:', paymentError);
-      throw new Error('Failed to create payment');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to create payment',
+          details: paymentError
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
+
+    console.log('Payment created successfully:', payment);
 
     return new Response(
       JSON.stringify({
@@ -82,10 +120,7 @@ serve(async (req) => {
         data: payment
       }),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
@@ -94,14 +129,11 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message || 'Internal server error'
       }),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
-        status: 400
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     );
   }
