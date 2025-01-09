@@ -22,7 +22,6 @@ export interface AgreementHeaderProps {
 export const AgreementHeader = ({
   agreement,
   remainingAmount = 0,
-  onCreate,
   onImport,
 }: AgreementHeaderProps) => {
   return (
@@ -43,7 +42,6 @@ export const AgreementHeader = ({
             )}
           </div>
           <div className="flex gap-2">
-            <Button onClick={onCreate}>Create Invoice</Button>
             <Button variant="outline" onClick={onImport}>
               Import Invoice
             </Button>
