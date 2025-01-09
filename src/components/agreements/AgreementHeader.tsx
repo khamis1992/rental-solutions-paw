@@ -15,14 +15,11 @@ export interface AgreementHeaderProps {
     contractValue?: number;
   };
   remainingAmount?: number;
-  onCreate: () => void;
-  onImport: () => void;
 }
 
 export const AgreementHeader = ({
   agreement,
   remainingAmount = 0,
-  onImport,
 }: AgreementHeaderProps) => {
   return (
     <Card>
@@ -40,11 +37,6 @@ export const AgreementHeader = ({
                 {agreement.status}
               </Badge>
             )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onImport}>
-              Import Invoice
-            </Button>
           </div>
         </div>
 
