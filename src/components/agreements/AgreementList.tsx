@@ -124,7 +124,8 @@ export const AgreementList = () => {
               console.log(`Successfully updated agreement ${amount.agreement_number}:`, {
                 agreement_duration: amount.agreement_duration,
                 total_amount: amount.final_price,
-                rent_amount: amount.rent_amount
+                rent_amount: amount.rent_amount,
+                remaining_amount: amount.remaining_amount
               });
             }
           } else {
