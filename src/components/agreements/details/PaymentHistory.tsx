@@ -1,17 +1,34 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { useOverduePayments } from "../hooks/useOverduePayments";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface PaymentHistoryProps {
   agreementId: string;
 }
 
 export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
   const { data: payments, isLoading: isLoadingPayments } = useQuery({
     queryKey: ['payment-history', agreementId],
     queryFn: async () => {
@@ -42,6 +59,33 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   });
 
   const { overduePayment, isLoading: isLoadingOverdue } = useOverduePayments(agreementId);
+
+  const handleDeleteClick = (paymentId: string) => {
+    setSelectedPaymentId(paymentId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedPaymentId) return;
+
+    try {
+      const { error } = await supabase
+        .from("payments")
+        .delete()
+        .eq("id", selectedPaymentId);
+
+      if (error) throw error;
+
+      toast.success("Payment deleted successfully");
+      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Failed to delete payment");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedPaymentId(null);
+    }
+  };
 
   // Calculate total balance from all payments
   const totalBalance = payments?.reduce((sum, payment) => sum + (payment.balance || 0), 0) || 0;
@@ -94,20 +138,30 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   {payment.balance > 0 && (
                     <div className="text-red-600">Balance: {formatCurrency(payment.balance)}</div>
                   )}
-                  <Badge 
-                    variant="outline" 
-                    className={payment.status === 'completed' ? 
-                      'bg-green-50 text-green-600 border-green-200' : 
-                      'bg-yellow-50 text-yellow-600 border-yellow-200'
-                    }
-                  >
-                    {payment.status === 'completed' ? (
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                    ) : (
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                    )}
-                    {payment.status}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="outline" 
+                      className={payment.status === 'completed' ? 
+                        'bg-green-50 text-green-600 border-green-200' : 
+                        'bg-yellow-50 text-yellow-600 border-yellow-200'
+                      }
+                    >
+                      {payment.status === 'completed' ? (
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                      ) : (
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                      )}
+                      {payment.status}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(payment.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))
@@ -118,6 +172,26 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           )}
         </div>
       </CardContent>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
