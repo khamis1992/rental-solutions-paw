@@ -52,13 +52,13 @@ export const AgreementDetailsDialog = ({
         setDuration(calculatedDuration);
         
         if (agreement.rent_amount) {
-          console.log('Calculating contract value with:', {
-            rentAmount: agreement.rent_amount,
-            duration: calculatedDuration
-          });
-          const calculatedValue = calculateContractValue(agreement.rent_amount, calculatedDuration);
-          console.log('Setting contract value to:', calculatedValue);
+          const calculatedValue = calculateContractValue(Number(agreement.rent_amount), calculatedDuration);
           setContractValue(calculatedValue);
+          console.log('Initial calculation:', {
+            rentAmount: Number(agreement.rent_amount),
+            duration: calculatedDuration,
+            contractValue: calculatedValue
+          });
         }
       }
     }
@@ -92,13 +92,14 @@ export const AgreementDetailsDialog = ({
     setDuration(newDuration);
     
     if (agreement?.rent_amount) {
-      console.log('Updating contract value with:', {
-        rentAmount: agreement.rent_amount,
-        duration: newDuration
-      });
-      const newContractValue = calculateContractValue(agreement.rent_amount, newDuration);
-      console.log('New contract value:', newContractValue);
+      const rentAmount = Number(agreement.rent_amount);
+      const newContractValue = calculateContractValue(rentAmount, newDuration);
       setContractValue(newContractValue);
+      console.log('Updated values:', {
+        rentAmount,
+        duration: newDuration,
+        contractValue: newContractValue
+      });
     }
 
     try {
@@ -129,12 +130,6 @@ export const AgreementDetailsDialog = ({
     end_date: agreement.end_date || '',
     rent_amount: agreement.rent_amount || 0
   } : undefined;
-
-  console.log('Current values:', {
-    rentAmount: agreement?.rent_amount,
-    duration,
-    contractValue
-  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
