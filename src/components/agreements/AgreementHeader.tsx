@@ -4,8 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LeaseStatus } from "@/types/agreement.types";
 import { formatCurrency } from "@/lib/utils";
 
-interface AgreementHeaderProps {
-  agreement: {
+export interface AgreementHeaderProps {
+  agreement?: {
     id: string;
     agreement_number: string;
     status: LeaseStatus;
@@ -13,14 +13,15 @@ interface AgreementHeaderProps {
     end_date: string;
     rent_amount: number;
     contractValue?: number;
-    remainingAmount?: number;
   };
+  remainingAmount?: number;
   onCreate: () => void;
   onImport: () => void;
 }
 
 export const AgreementHeader = ({
   agreement,
+  remainingAmount = 0,
   onCreate,
   onImport,
 }: AgreementHeaderProps) => {
@@ -30,14 +31,16 @@ export const AgreementHeader = ({
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="text-2xl font-bold mb-2">
-              Agreement #{agreement.agreement_number}
+              {agreement ? `Agreement #${agreement.agreement_number}` : 'Agreements'}
             </h2>
-            <Badge
-              variant={agreement.status === "active" ? "success" : "secondary"}
-              className="mb-4"
-            >
-              {agreement.status}
-            </Badge>
+            {agreement && (
+              <Badge
+                variant={agreement.status === "active" ? "success" : "secondary"}
+                className="mb-4"
+              >
+                {agreement.status}
+              </Badge>
+            )}
           </div>
           <div className="flex gap-2">
             <Button onClick={onCreate}>Create Invoice</Button>
@@ -47,36 +50,38 @@ export const AgreementHeader = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Start Date</p>
-            <p className="font-medium">
-              {agreement.start_date
-                ? new Date(agreement.start_date).toLocaleDateString()
-                : "Not set"}
-            </p>
+        {agreement && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Start Date</p>
+              <p className="font-medium">
+                {agreement.start_date
+                  ? new Date(agreement.start_date).toLocaleDateString()
+                  : "Not set"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">End Date</p>
+              <p className="font-medium">
+                {agreement.end_date
+                  ? new Date(agreement.end_date).toLocaleDateString()
+                  : "Not set"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Rent Amount</p>
+              <p className="font-medium">{formatCurrency(agreement.rent_amount)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Contract Value</p>
+              <p className="font-medium">{formatCurrency(agreement.contractValue || 0)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Remaining Amount</p>
+              <p className="font-medium text-red-600">{formatCurrency(remainingAmount)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">End Date</p>
-            <p className="font-medium">
-              {agreement.end_date
-                ? new Date(agreement.end_date).toLocaleDateString()
-                : "Not set"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Rent Amount</p>
-            <p className="font-medium">{formatCurrency(agreement.rent_amount)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Contract Value</p>
-            <p className="font-medium">{formatCurrency(agreement.contractValue || 0)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Remaining Amount</p>
-            <p className="font-medium text-red-600">{formatCurrency(agreement.remainingAmount || 0)}</p>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
