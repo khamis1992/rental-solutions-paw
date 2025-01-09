@@ -26,7 +26,7 @@ serve(async (req) => {
     const requestData = await req.json();
     console.log('Received payment request:', requestData);
 
-    const { leaseId, amount, paymentMethod = 'Cash', description = '' } = requestData;
+    const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = requestData;
 
     // Validate required fields with type checking
     if (!leaseId || typeof leaseId !== 'string') {
@@ -50,6 +50,20 @@ serve(async (req) => {
           success: false,
           error: 'Invalid amount',
           details: { amount }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    if (!type || !['Income', 'Expense'].includes(type)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid payment type',
+          details: { type }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -92,7 +106,7 @@ serve(async (req) => {
         payment_date: new Date().toISOString(),
         amount_paid: numericAmount,
         balance: 0,
-        type: 'Income'
+        type: type
       })
       .select(`
         id,
