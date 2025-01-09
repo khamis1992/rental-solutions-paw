@@ -1,126 +1,147 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CustomerInfoCard } from "./details/CustomerInfoCard";
+import { VehicleInfoCard } from "./details/VehicleInfoCard";
+import { RentManagement } from "./details/RentManagement";
+import { DocumentUpload } from "./details/DocumentUpload";
+import { DamageAssessment } from "./details/DamageAssessment";
+import { TrafficFines } from "./details/TrafficFines";
+import { PaymentHistory } from "./details/PaymentHistory";
+import { useAgreementDetails } from "./hooks/useAgreementDetails";
+import type { LeaseStatus } from "@/types/database/agreement.types";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AgreementDetailsTab } from "./details/AgreementDetailsTab";
-import { AgreementPaymentsTab } from "./details/AgreementPaymentsTab";
-import { AgreementDocumentsTab } from "./details/AgreementDocumentsTab";
-import { AgreementHistoryTab } from "./details/AgreementHistoryTab";
+import { useQueryClient } from "@tanstack/react-query";
+import { Download } from "lucide-react";
+
+interface AgreementDetailsDialogProps {
+  agreementId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
 export const AgreementDetailsDialog = ({
   agreementId,
   open,
   onOpenChange,
-}: {
-  agreementId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) => {
-  const [agreement, setAgreement] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [activeTab, setActiveTab] = useState("details");
+}: AgreementDetailsDialogProps) => {
+  const { agreement, isLoading } = useAgreementDetails(agreementId, open);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchAgreement = async () => {
-      if (!agreementId) return;
-
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const { data, error: fetchError } = await supabase
-          .from("leases")
-          .select(`
-            *,
-            customer:profiles (
-              id,
-              full_name,
-              email,
-              phone_number
-            ),
-            vehicle:vehicles (
-              id,
-              make,
-              model,
-              year,
-              license_plate,
-              vin
-            )
-          `)
-          .eq("id", agreementId)
-          .maybeSingle();
-
-        if (fetchError) {
-          console.error("Error fetching agreement:", fetchError);
-          throw fetchError;
-        }
-
-        if (!data) {
-          console.log("No agreement found with ID:", agreementId);
-          toast.error("Agreement not found");
-          return;
-        }
-
-        console.log("Fetched agreement:", data);
-        setAgreement(data);
-      } catch (err) {
-        console.error("Error in fetchAgreement:", err);
-        setError(err as Error);
-        toast.error("Failed to load agreement details");
-      } finally {
-        setIsLoading(false);
+  const pullRemainingAmountData = async () => {
+    try {
+      if (!agreement?.agreement_number) {
+        toast.error("Agreement number is required to pull data");
+        return;
       }
-    };
 
-    if (open) {
-      fetchAgreement();
+      const { data: remainingAmount, error } = await supabase
+        .from('remaining_amounts')
+        .select('*')
+        .eq('agreement_number', agreement.agreement_number)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!remainingAmount) {
+        toast.error("No remaining amount data found for this agreement");
+        return;
+      }
+
+      // Ensure agreement_duration is properly handled
+      const agreement_duration = remainingAmount.agreement_duration || '12 months';
+
+      // Update the agreement with the pulled data
+      const { error: updateError } = await supabase
+        .from('leases')
+        .update({
+          agreement_duration,
+          total_amount: remainingAmount.final_price,
+          rent_amount: remainingAmount.rent_amount
+        })
+        .eq('id', agreementId);
+
+      if (updateError) throw updateError;
+
+      // Invalidate the agreement query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
+
+      toast.success("Data successfully pulled and updated");
+    } catch (error) {
+      console.error('Error pulling data:', error);
+      toast.error("Failed to pull data. Please try again.");
     }
-  }, [agreementId, open]);
+  };
+
+  if (!open) return null;
+
+  const canEditAgreement = agreement?.status !== 'closed' && 
+                          agreement?.status !== 'cancelled';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Agreement Details</DialogTitle>
+          <div className="flex justify-between items-center">
+            <div>
+              <DialogTitle>Agreement Details</DialogTitle>
+              <DialogDescription>
+                View and manage agreement details, payments, and related information.
+              </DialogDescription>
+            </div>
+            <Button 
+              onClick={pullRemainingAmountData}
+              variant="secondary"
+              size="sm"
+              className="transition-all hover:scale-105"
+              disabled={isLoading}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Pull Data
+            </Button>
+          </div>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center p-4">
-            <span>Loading agreement details...</span>
+          <div className="space-y-4">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
           </div>
-        ) : error ? (
-          <div className="text-red-500 p-4">
-            Error loading agreement details: {error.message}
-          </div>
-        ) : !agreement ? (
-          <div className="text-gray-500 p-4">No agreement found</div>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            <CustomerInfoCard customer={agreement?.customer} />
 
-            <TabsContent value="details">
-              <AgreementDetailsTab agreement={agreement} />
-            </TabsContent>
+            <VehicleInfoCard 
+              vehicle={agreement?.vehicle} 
+              initialMileage={agreement?.initial_mileage || 0}
+            />
 
-            <TabsContent value="payments">
-              <AgreementPaymentsTab agreementId={agreement.id} />
-            </TabsContent>
+            {canEditAgreement && (
+              <RentManagement 
+                agreementId={agreementId}
+                initialRentAmount={agreement?.rent_amount}
+                initialRentDueDay={agreement?.rent_due_day}
+              />
+            )}
 
-            <TabsContent value="documents">
-              <AgreementDocumentsTab agreementId={agreement.id} />
-            </TabsContent>
+            <PaymentHistory 
+              agreementId={agreementId}
+            />
 
-            <TabsContent value="history">
-              <AgreementHistoryTab agreementId={agreement.id} />
-            </TabsContent>
-          </Tabs>
+            <DocumentUpload 
+              agreementId={agreementId}
+            />
+
+            <DamageAssessment 
+              agreementId={agreementId}
+            />
+
+            <TrafficFines 
+              agreementId={agreementId}
+            />
+          </div>
         )}
       </DialogContent>
     </Dialog>
