@@ -12,10 +12,6 @@ import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 import { LeaseStatus } from "@/types/agreement.types";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -29,43 +25,6 @@ export const AgreementDetailsDialog = ({
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
-
-  const handlePullData = async () => {
-    try {
-      toast.info("Fetching remaining amounts data...");
-      
-      // Fetch data from remaining_amounts table
-      const { data: remainingData, error: remainingError } = await supabase
-        .from('remaining_amounts')
-        .select('*')
-        .eq('lease_id', agreementId)
-        .maybeSingle();
-
-      if (remainingError) throw remainingError;
-
-      if (!remainingData) {
-        toast.warning("No remaining amounts data found for this agreement");
-        return;
-      }
-
-      // Update the lease with the fetched data
-      const { error: updateError } = await supabase
-        .from('leases')
-        .update({
-          agreement_duration: remainingData.agreement_duration,
-          total_amount: remainingData.final_price,
-          rent_amount: remainingData.rent_amount
-        })
-        .eq('id', agreementId);
-
-      if (updateError) throw updateError;
-
-      toast.success("Agreement data updated successfully");
-    } catch (error) {
-      console.error('Error pulling data:', error);
-      toast.error("Failed to update agreement data");
-    }
-  };
 
   if (!open) return null;
 
@@ -82,18 +41,7 @@ export const AgreementDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex justify-between items-center">
-            <DialogTitle>Agreement Details</DialogTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePullData}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Pull Data
-            </Button>
-          </div>
+          <DialogTitle>Agreement Details</DialogTitle>
           <DialogDescription>
             View and manage agreement details, payments, and related information.
           </DialogDescription>
