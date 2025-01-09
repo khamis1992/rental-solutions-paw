@@ -3,16 +3,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementHeader } from "@/components/agreements/AgreementHeader";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
-import { AgreementFilters } from "@/components/agreements/AgreementFilters";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
 import { AgreementImport } from "@/components/agreements/AgreementImport";
 
 const Agreements = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("newest");
 
   return (
     <DashboardLayout>
@@ -22,11 +18,6 @@ const Agreements = () => {
           onImport={() => setShowImportDialog(true)}
         />
         <AgreementStats />
-        <AgreementFilters 
-          onSearchChange={setSearchQuery}
-          onStatusChange={setStatusFilter}
-          onSortChange={setSortOrder}
-        />
         <AgreementList />
         
         <CreateAgreementDialog 
