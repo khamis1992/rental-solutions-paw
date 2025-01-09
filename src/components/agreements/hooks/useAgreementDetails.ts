@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { calculateContractValue, calculateRemainingAmount } from "../utils/agreementCalculations";
 
 export const useAgreementDetails = (agreementId: string, open: boolean) => {
   const queryClient = useQueryClient();
@@ -12,6 +12,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
     queryFn: async () => {
       console.log('Fetching agreement details for:', agreementId);
       
+      // Fetch agreement details
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .select(`
@@ -43,36 +44,45 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
         return null;
       }
 
-      // Fetch remaining amounts using agreement_number
-      const { data: remainingAmount, error: remainingError } = await supabase
-        .from('remaining_amounts')
-        .select('*')
-        .eq('agreement_number', agreement.agreement_number)
-        .maybeSingle();
+      // Fetch payment history to calculate total payments
+      const { data: payments, error: paymentsError } = await supabase
+        .from('payments')
+        .select('amount, status')
+        .eq('lease_id', agreementId)
+        .eq('status', 'completed');
 
-      if (remainingError) {
-        console.error('Error fetching remaining amount:', remainingError);
+      if (paymentsError) {
+        console.error('Error fetching payments:', paymentsError);
+        throw paymentsError;
       }
 
-      console.log('Fetched agreement:', agreement);
-      console.log('Fetched remaining amount:', remainingAmount);
-      
-      // Handle the case where remainingAmount is null or undefined
-      const defaultRemainingAmount = {
-        rent_amount: 0,
-        final_price: 0,
-        remaining_amount: 0
-      };
+      // Calculate total payments
+      const totalPayments = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
 
+      // Calculate contract value and remaining amount
+      const contractValue = calculateContractValue(
+        agreement.rent_amount || 0,
+        agreement.agreement_duration || '3 years'
+      );
+
+      const remainingAmount = calculateRemainingAmount(contractValue, totalPayments);
+
+      console.log('Fetched agreement:', agreement);
+      console.log('Contract Value:', contractValue);
+      console.log('Total Payments:', totalPayments);
+      console.log('Remaining Amount:', remainingAmount);
+      
       return {
         ...agreement,
-        remainingAmount: remainingAmount || defaultRemainingAmount
+        contractValue,
+        totalPayments,
+        remainingAmount
       };
     },
     enabled: !!agreementId && open,
   });
 
-  // Set up real-time subscription for both leases and remaining_amounts tables
+  // Set up real-time subscription for agreement changes
   useEffect(() => {
     if (!agreementId || !open) return;
 
@@ -99,13 +109,13 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
         {
           event: '*',
           schema: 'public',
-          table: 'remaining_amounts',
+          table: 'payments',
           filter: `lease_id=eq.${agreementId}`
         },
         async (payload) => {
-          console.log('Real-time update received for remaining amounts:', payload);
+          console.log('Real-time update received for payments:', payload);
           await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
-          toast.info('Remaining amounts updated');
+          toast.info('Payment information updated');
         }
       )
       .subscribe();
