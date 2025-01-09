@@ -59,31 +59,74 @@ export const AgreementList = () => {
         .from('remaining_amounts')
         .select('*');
 
-      if (remainingAmountsResult.error) throw remainingAmountsResult.error;
+      if (remainingAmountsResult.error) {
+        console.error('Error fetching remaining amounts:', remainingAmountsResult.error);
+        toast.error('Failed to fetch remaining amounts data');
+        return;
+      }
+
       const remainingAmounts = remainingAmountsResult.data;
+      let successCount = 0;
+      let errorCount = 0;
 
       // Process each remaining amount sequentially
       for (const amount of remainingAmounts) {
-        if (amount.lease_id) {
-          const updateResult = await supabase
+        if (!amount.lease_id && amount.agreement_number) {
+          // Try to find the lease by agreement number
+          const { data: leaseData, error: leaseError } = await supabase
             .from('leases')
-            .update({
-              agreement_duration: amount.agreement_duration,
-              total_amount: amount.final_price,
-              rent_amount: amount.rent_amount
-            })
-            .eq('id', amount.lease_id)
-            .select();
+            .select('id')
+            .eq('agreement_number', amount.agreement_number)
+            .single();
 
-          if (updateResult.error) {
-            console.error('Error updating agreement:', updateResult.error);
+          if (leaseError) {
+            console.error('Error finding lease:', leaseError);
+            errorCount++;
             continue;
+          }
+
+          if (leaseData) {
+            amount.lease_id = leaseData.id;
+          }
+        }
+
+        if (amount.lease_id) {
+          try {
+            const updateResult = await supabase
+              .from('leases')
+              .update({
+                agreement_duration: amount.agreement_duration,
+                total_amount: amount.final_price,
+                rent_amount: amount.rent_amount
+              })
+              .eq('id', amount.lease_id)
+              .select();
+
+            if (updateResult.error) {
+              console.error('Error updating agreement:', updateResult.error);
+              errorCount++;
+            } else {
+              successCount++;
+            }
+          } catch (error) {
+            console.error('Error in update operation:', error);
+            errorCount++;
           }
         }
       }
 
       await refetch();
-      toast.success('Data pulled successfully');
+      
+      if (successCount > 0) {
+        toast.success(`Successfully updated ${successCount} agreements`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to update ${errorCount} agreements`);
+      }
+      if (successCount === 0 && errorCount === 0) {
+        toast.info('No agreements to update');
+      }
+
     } catch (error) {
       console.error('Error pulling data:', error);
       toast.error('Failed to pull data');
