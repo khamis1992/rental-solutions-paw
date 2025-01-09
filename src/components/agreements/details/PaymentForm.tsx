@@ -60,7 +60,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         leaseId: agreementId,
         amount: data.amountPaid,
         paymentMethod: normalizePaymentMethod(data.paymentMethod),
-        description: data.description
+        description: data.description,
+        type: 'Income' // Add the required type field
       });
       
       toast.success("Payment processed successfully");
