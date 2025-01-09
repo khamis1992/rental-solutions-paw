@@ -12,6 +12,7 @@ import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
