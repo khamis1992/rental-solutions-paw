@@ -7,6 +7,8 @@ export const usePullAgreementData = (refetch: () => void) => {
 
   const validateDataMapping = async (remainingAmount: any, agreement: any) => {
     try {
+      console.log('Validating data mapping:', { remainingAmount, agreement });
+      
       const { data: aiValidation, error } = await supabase.functions.invoke('validate-agreement-mapping', {
         body: {
           remainingAmount,
@@ -22,8 +24,11 @@ export const usePullAgreementData = (refetch: () => void) => {
 
       if (error) {
         console.error('AI validation error:', error);
-        return true; // Proceed with default mapping if AI fails
+        toast.error(`Validation error: ${error.message}`);
+        return false;
       }
+
+      console.log('AI validation response:', aiValidation);
 
       if (!aiValidation.isValid) {
         toast.error(`AI detected mapping issue: ${aiValidation.message}`);
@@ -33,7 +38,8 @@ export const usePullAgreementData = (refetch: () => void) => {
       return true;
     } catch (err) {
       console.error('Error in AI validation:', err);
-      return true; // Proceed with default mapping if AI fails
+      toast.error('Failed to validate data mapping');
+      return false;
     }
   };
 

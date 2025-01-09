@@ -1,25 +1,25 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.2.1'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { remainingAmount, agreement, mapping } = await req.json()
+    const { remainingAmount, agreement, mapping } = await req.json();
 
     // Initialize OpenAI
     const configuration = new Configuration({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
-    })
-    const openai = new OpenAIApi(configuration)
+    });
+    const openai = new OpenAIApi(configuration);
 
     // Prepare the prompt for OpenAI
     const prompt = `
@@ -46,17 +46,32 @@ serve(async (req) => {
         "message": "explanation if invalid",
         "correctedValues": {mapped values if corrections needed}
       }
-    `
+    `;
+
+    console.log('Sending prompt to OpenAI:', prompt);
 
     const completion = await openai.createCompletion({
-      model: 'text-davinci-003',
+      model: 'gpt-4o-mini',
       prompt,
       max_tokens: 500,
       temperature: 0.1,
-    })
+    });
 
-    const aiResponse = completion.data.choices[0].text?.trim()
-    const result = JSON.parse(aiResponse || '{"isValid": true}')
+    console.log('OpenAI response:', completion.data);
+
+    const aiResponse = completion.data.choices[0].text?.trim();
+    let result;
+    
+    try {
+      result = JSON.parse(aiResponse || '{"isValid": true}');
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      result = {
+        isValid: false,
+        message: "Error parsing AI response",
+        correctedValues: null
+      };
+    }
 
     return new Response(
       JSON.stringify(result),
@@ -64,15 +79,20 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       },
-    )
+    );
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in validate-agreement-mapping:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        isValid: false,
+        message: "Error processing validation request",
+        correctedValues: null
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       },
-    )
+    );
   }
-})
+});
