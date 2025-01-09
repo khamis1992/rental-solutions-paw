@@ -15,3 +15,8 @@ export const calculateDuration = (startDate: string, endDate: string): number =>
 export const calculateContractValue = (rentAmount: number, duration: number): number => {
   return rentAmount * duration;
 };
+
+// Add the missing function
+export const calculateRemainingAmount = (totalAmount: number, paidAmount: number): number => {
+  return Math.max(0, totalAmount - paidAmount);
+};

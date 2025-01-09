@@ -61,8 +61,8 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
 
       // Calculate contract value and remaining amount
       const contractValue = calculateContractValue(
-        agreement.rent_amount || 0,
-        agreement.agreement_duration?.toString() || '3 years'
+        Number(agreement.rent_amount) || 0,
+        Number(agreement.agreement_duration?.toString() || '3') || 0
       );
 
       const remainingAmount = calculateRemainingAmount(contractValue, totalPayments);
