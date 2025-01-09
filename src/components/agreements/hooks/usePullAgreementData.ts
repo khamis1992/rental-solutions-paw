@@ -60,6 +60,7 @@ export const usePullAgreementData = (refetch: () => void) => {
           }
 
           if (leaseId) {
+            // Update the lease with the pulled data
             const updateResult = await supabase
               .from('leases')
               .update({
