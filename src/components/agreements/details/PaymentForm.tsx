@@ -35,12 +35,23 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     baseAmount,
     totalAmount,
     calculateLateFine,
-    watch
+    watch,
+    setValue
   } = usePaymentForm(agreementId);
+
+  // Watch for changes in rent amount to sync with base amount
+  const rentAmount = watch("amount");
 
   useEffect(() => {
     calculateLateFine();
   }, [calculateLateFine]);
+
+  // Ensure base amount always matches rent amount
+  useEffect(() => {
+    if (rentAmount !== baseAmount) {
+      setValue("amount", baseAmount);
+    }
+  }, [baseAmount, rentAmount, setValue]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -77,6 +88,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             {...register("amount")}
             disabled
             value={baseAmount}
+            className="bg-gray-100"
           />
         </div>
 
@@ -87,6 +99,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
               type="number"
               disabled
               value={lateFineAmount}
+              className="bg-gray-100"
             />
           </div>
         )}
@@ -97,6 +110,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             type="number"
             disabled
             value={totalAmount}
+            className="bg-gray-100"
           />
         </div>
 
