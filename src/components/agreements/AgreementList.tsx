@@ -55,26 +55,28 @@ export const AgreementList = () => {
       setIsPullingData(true);
       
       // Fetch remaining amounts data
-      const { data: remainingAmounts, error: remainingError } = await supabase
+      const remainingAmountsResult = await supabase
         .from('remaining_amounts')
         .select('*');
 
-      if (remainingError) throw remainingError;
+      if (remainingAmountsResult.error) throw remainingAmountsResult.error;
+      const remainingAmounts = remainingAmountsResult.data;
 
-      // Update each agreement with the corresponding remaining amount data
-      for (const amount of remainingAmounts || []) {
+      // Process each remaining amount sequentially
+      for (const amount of remainingAmounts) {
         if (amount.lease_id) {
-          const { error: updateError } = await supabase
+          const updateResult = await supabase
             .from('leases')
             .update({
               agreement_duration: amount.agreement_duration,
               total_amount: amount.final_price,
               rent_amount: amount.rent_amount
             })
-            .eq('id', amount.lease_id);
+            .eq('id', amount.lease_id)
+            .select();
 
-          if (updateError) {
-            console.error('Error updating agreement:', updateError);
+          if (updateResult.error) {
+            console.error('Error updating agreement:', updateResult.error);
             continue;
           }
         }
