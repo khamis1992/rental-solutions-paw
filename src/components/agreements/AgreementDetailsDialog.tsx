@@ -38,8 +38,9 @@ export const AgreementDetailsDialog = ({
   const [dateError, setDateError] = useState("");
   const [duration, setDuration] = useState(0);
   const [contractValue, setContractValue] = useState(0);
+  const [rentAmount, setRentAmount] = useState<number>(0);
 
-  // Initialize dates and calculate initial values when agreement loads
+  // Initialize dates, rent amount and calculate initial values when agreement loads
   useEffect(() => {
     if (agreement) {
       const start = agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "";
@@ -47,20 +48,16 @@ export const AgreementDetailsDialog = ({
       
       setStartDate(start);
       setEndDate(end);
+      setRentAmount(Number(agreement.rent_amount) || 0);
       
       if (start && end) {
         const calculatedDuration = calculateDuration(start, end);
         setDuration(calculatedDuration);
         
         if (agreement.rent_amount) {
-          const rentAmount = Number(agreement.rent_amount);
-          const calculatedValue = calculateContractValue(rentAmount, calculatedDuration);
+          const rentAmountValue = Number(agreement.rent_amount);
+          const calculatedValue = calculateContractValue(rentAmountValue, calculatedDuration);
           setContractValue(calculatedValue);
-          console.log('Initial values set:', {
-            rentAmount,
-            duration: calculatedDuration,
-            contractValue: calculatedValue
-          });
         }
       }
     }
@@ -93,16 +90,8 @@ export const AgreementDetailsDialog = ({
     const newDuration = calculateDuration(start, end);
     setDuration(newDuration);
     
-    if (agreement?.rent_amount) {
-      const rentAmount = Number(agreement.rent_amount);
-      const newContractValue = calculateContractValue(rentAmount, newDuration);
-      setContractValue(newContractValue);
-      console.log('Updated values:', {
-        rentAmount,
-        duration: newDuration,
-        contractValue: newContractValue
-      });
-    }
+    const newContractValue = calculateContractValue(rentAmount, newDuration);
+    setContractValue(newContractValue);
 
     try {
       const { error } = await supabase
@@ -122,6 +111,35 @@ export const AgreementDetailsDialog = ({
     }
   };
 
+  const handleRentAmountChange = async (value: string) => {
+    const newRentAmount = Number(value);
+    
+    if (isNaN(newRentAmount) || newRentAmount < 0) {
+      toast.error("Please enter a valid rent amount");
+      return;
+    }
+
+    setRentAmount(newRentAmount);
+    const newContractValue = calculateContractValue(newRentAmount, duration);
+    setContractValue(newContractValue);
+
+    try {
+      const { error } = await supabase
+        .from('leases')
+        .update({
+          rent_amount: newRentAmount
+        })
+        .eq('id', agreementId);
+
+      if (error) throw error;
+      toast.success("Rent amount updated successfully");
+      refetch();
+    } catch (error) {
+      console.error('Error updating rent amount:', error);
+      toast.error('Failed to update rent amount');
+    }
+  };
+
   const handleStatusChange = (newStatus: LeaseStatus) => {
     refetch();
   };
@@ -134,7 +152,7 @@ export const AgreementDetailsDialog = ({
     status: agreement.status as LeaseStatus,
     start_date: agreement.start_date || '',
     end_date: agreement.end_date || '',
-    rent_amount: agreement.rent_amount || 0,
+    rent_amount: rentAmount,
     contractValue: contractValue
   } : undefined;
 
@@ -198,6 +216,18 @@ export const AgreementDetailsDialog = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="rent_amount">Rent Amount (QAR)</Label>
+                <Input
+                  id="rent_amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={rentAmount}
+                  onChange={(e) => handleRentAmountChange(e.target.value)}
+                  className="bg-white"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Duration (Months)</Label>
                 <Input
                   type="number"
@@ -259,7 +289,7 @@ export const AgreementDetailsDialog = ({
                 <TabsContent value="rent">
                   <RentManagement 
                     agreementId={agreementId}
-                    initialRentAmount={agreement.rent_amount}
+                    initialRentAmount={rentAmount}
                     initialRentDueDay={agreement.rent_due_day}
                   />
                 </TabsContent>
