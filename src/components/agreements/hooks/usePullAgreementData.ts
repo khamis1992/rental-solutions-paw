@@ -74,7 +74,7 @@ export const usePullAgreementData = (refetch: () => void) => {
             const updateResult = await supabase
               .from('leases')
               .update({
-                agreement_duration: amount.agreement_duration,
+                agreement_duration: amount.agreement_duration || '3 years',
                 total_amount: amount.final_price,
                 rent_amount: amount.rent_amount
               })
