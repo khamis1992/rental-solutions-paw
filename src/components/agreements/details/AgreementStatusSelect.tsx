@@ -21,17 +21,18 @@ export const AgreementStatusSelect = ({
 
   useEffect(() => {
     const fetchStatuses = async () => {
+      // Get all statuses from the leases table
       const { data, error } = await supabase
         .from('leases')
-        .select('status')
-        .distinct();
+        .select('status');
 
       if (error) {
         console.error('Error fetching statuses:', error);
         return;
       }
 
-      const uniqueStatuses = [...new Set(data.map(item => item.status))].filter(Boolean) as LeaseStatus[];
+      // Filter out null values and create a unique array of statuses
+      const uniqueStatuses = Array.from(new Set(data.map(item => item.status).filter(Boolean))) as LeaseStatus[];
       setStatuses(uniqueStatuses);
     };
 
