@@ -7,7 +7,7 @@ import { calculateContractValue } from "../utils/agreementCalculations";
 export const useAgreementDetails = (agreementId: string, open: boolean) => {
   const queryClient = useQueryClient();
 
-  const { data: agreement, isLoading } = useQuery({
+  const { data: agreement, isLoading, refetch } = useQuery({
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
       console.log('Fetching agreement details for:', agreementId);
@@ -126,5 +126,5 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
     };
   }, [agreementId, open, queryClient]);
 
-  return { agreement, isLoading };
+  return { agreement, isLoading, refetch };
 };

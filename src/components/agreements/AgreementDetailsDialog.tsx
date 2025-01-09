@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format, isValid, parse } from "date-fns";
 import { calculateDuration, calculateContractValue } from "./utils/agreementCalculations";
+import { AgreementStatusSelect } from "./details/AgreementStatusSelect";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -31,7 +32,7 @@ export const AgreementDetailsDialog = ({
   open,
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
-  const { agreement, isLoading } = useAgreementDetails(agreementId, open);
+  const { agreement, isLoading, refetch } = useAgreementDetails(agreementId, open);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [dateError, setDateError] = useState("");
@@ -121,6 +122,10 @@ export const AgreementDetailsDialog = ({
     }
   };
 
+  const handleStatusChange = (newStatus: LeaseStatus) => {
+    refetch();
+  };
+
   if (!open) return null;
 
   const mappedAgreement = agreement ? {
@@ -130,7 +135,7 @@ export const AgreementDetailsDialog = ({
     start_date: agreement.start_date || '',
     end_date: agreement.end_date || '',
     rent_amount: agreement.rent_amount || 0,
-    contractValue: contractValue // Add contractValue here
+    contractValue: contractValue
   } : undefined;
 
   return (
@@ -147,12 +152,19 @@ export const AgreementDetailsDialog = ({
           <div>Loading agreement details...</div>
         ) : agreement ? (
           <div className="space-y-6">
-            <AgreementHeader 
-              agreement={mappedAgreement}
-              remainingAmount={agreement.remainingAmount}
-              onCreate={() => {}}
-              onImport={() => {}}
-            />
+            <div className="flex justify-between items-start">
+              <AgreementHeader 
+                agreement={mappedAgreement}
+                remainingAmount={agreement.remainingAmount}
+                onCreate={() => {}}
+                onImport={() => {}}
+              />
+              <AgreementStatusSelect
+                agreementId={agreement.id}
+                currentStatus={agreement.status as LeaseStatus}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
