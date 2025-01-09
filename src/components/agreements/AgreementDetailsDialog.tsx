@@ -12,9 +12,12 @@ import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 import { LeaseStatus } from "@/types/agreement.types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { format, isValid, parse } from "date-fns";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -28,6 +31,17 @@ export const AgreementDetailsDialog = ({
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [dateError, setDateError] = useState("");
+
+  // Initialize dates when agreement loads
+  useEffect(() => {
+    if (agreement) {
+      setStartDate(agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "");
+      setEndDate(agreement.end_date ? format(new Date(agreement.end_date), "yyyy-MM-dd") : "");
+    }
+  }, [agreement]);
 
   // Update rent amount in the database when it changes
   useEffect(() => {
@@ -49,6 +63,44 @@ export const AgreementDetailsDialog = ({
       updateRentAmount();
     }
   }, [agreement?.rent_amount, agreementId]);
+
+  const validateAndUpdateDates = async (start: string, end: string) => {
+    const startDateObj = parse(start, "yyyy-MM-dd", new Date());
+    const endDateObj = parse(end, "yyyy-MM-dd", new Date());
+
+    if (!isValid(startDateObj)) {
+      setDateError("Invalid start date");
+      return;
+    }
+
+    if (!isValid(endDateObj)) {
+      setDateError("Invalid end date");
+      return;
+    }
+
+    if (startDateObj > endDateObj) {
+      setDateError("Start date cannot be after end date");
+      return;
+    }
+
+    setDateError("");
+
+    try {
+      const { error } = await supabase
+        .from('leases')
+        .update({
+          start_date: start,
+          end_date: end
+        })
+        .eq('id', agreementId);
+
+      if (error) throw error;
+      toast.success("Dates updated successfully");
+    } catch (error) {
+      console.error('Error updating dates:', error);
+      toast.error('Failed to update dates');
+    }
+  };
 
   if (!open) return null;
 
@@ -81,6 +133,36 @@ export const AgreementDetailsDialog = ({
               onCreate={() => {}}
               onImport={() => {}}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    validateAndUpdateDates(e.target.value, endDate);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    validateAndUpdateDates(startDate, e.target.value);
+                  }}
+                />
+              </div>
+            </div>
+            {dateError && (
+              <div className="text-sm text-red-500">{dateError}</div>
+            )}
             
             <CustomerInfoCard customer={agreement.customer} />
             
