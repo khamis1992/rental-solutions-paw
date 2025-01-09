@@ -1,20 +1,17 @@
-/**
- * Calculates the contract value based on rent amount and duration
- */
-export const calculateContractValue = (rentAmount: number, duration: string): number => {
-  // Extract the number and unit from duration string (e.g., "3 years" -> 3)
-  const durationMatch = duration.match(/(\d+)/);
-  const durationNumber = durationMatch ? parseInt(durationMatch[1]) : 3; // Default to 3 if not found
+import { differenceInMonths, isValid, parse } from "date-fns";
+
+export const calculateDuration = (startDate: string, endDate: string): number => {
+  const start = parse(startDate, "yyyy-MM-dd", new Date());
+  const end = parse(endDate, "yyyy-MM-dd", new Date());
   
-  // Calculate monthly payments for the entire duration
-  const monthlyPayments = rentAmount * (durationNumber * 12);
+  if (!isValid(start) || !isValid(end)) {
+    return 0;
+  }
   
-  return monthlyPayments;
+  // Add 1 to include both start and end months
+  return Math.max(0, differenceInMonths(end, start) + 1);
 };
 
-/**
- * Calculates the remaining amount based on contract value and total payments
- */
-export const calculateRemainingAmount = (contractValue: number, totalPayments: number): number => {
-  return Math.max(0, contractValue - totalPayments);
+export const calculateContractValue = (rentAmount: number, duration: number): number => {
+  return rentAmount * duration;
 };

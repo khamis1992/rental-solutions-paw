@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format, isValid, parse } from "date-fns";
+import { calculateDuration, calculateContractValue } from "./utils/agreementCalculations";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -34,35 +35,25 @@ export const AgreementDetailsDialog = ({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [dateError, setDateError] = useState("");
+  const [duration, setDuration] = useState(0);
+  const [contractValue, setContractValue] = useState(0);
 
-  // Initialize dates when agreement loads
+  // Initialize dates and calculate initial values when agreement loads
   useEffect(() => {
     if (agreement) {
-      setStartDate(agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "");
-      setEndDate(agreement.end_date ? format(new Date(agreement.end_date), "yyyy-MM-dd") : "");
+      const start = agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "";
+      const end = agreement.end_date ? format(new Date(agreement.end_date), "yyyy-MM-dd") : "";
+      
+      setStartDate(start);
+      setEndDate(end);
+      
+      if (start && end) {
+        const calculatedDuration = calculateDuration(start, end);
+        setDuration(calculatedDuration);
+        setContractValue(calculateContractValue(agreement.rent_amount || 0, calculatedDuration));
+      }
     }
   }, [agreement]);
-
-  // Update rent amount in the database when it changes
-  useEffect(() => {
-    if (agreement?.rent_amount) {
-      const updateRentAmount = async () => {
-        try {
-          const { error } = await supabase
-            .from('leases')
-            .update({ rent_amount: agreement.rent_amount })
-            .eq('id', agreementId);
-
-          if (error) throw error;
-        } catch (error) {
-          console.error('Error updating rent amount:', error);
-          toast.error('Failed to update rent amount');
-        }
-      };
-
-      updateRentAmount();
-    }
-  }, [agreement?.rent_amount, agreementId]);
 
   const validateAndUpdateDates = async (start: string, end: string) => {
     const startDateObj = parse(start, "yyyy-MM-dd", new Date());
@@ -85,12 +76,18 @@ export const AgreementDetailsDialog = ({
 
     setDateError("");
 
+    // Calculate new duration and contract value
+    const newDuration = calculateDuration(start, end);
+    setDuration(newDuration);
+    setContractValue(calculateContractValue(agreement?.rent_amount || 0, newDuration));
+
     try {
       const { error } = await supabase
         .from('leases')
         .update({
           start_date: start,
-          end_date: end
+          end_date: end,
+          agreement_duration: `${newDuration} months`
         })
         .eq('id', agreementId);
 
@@ -163,6 +160,27 @@ export const AgreementDetailsDialog = ({
             {dateError && (
               <div className="text-sm text-red-500">{dateError}</div>
             )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Duration (Months)</Label>
+                <Input
+                  type="number"
+                  value={duration}
+                  disabled
+                  className="bg-gray-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contract Value (QAR)</Label>
+                <Input
+                  type="number"
+                  value={contractValue}
+                  disabled
+                  className="bg-gray-100"
+                />
+              </div>
+            </div>
             
             <CustomerInfoCard customer={agreement.customer} />
             
