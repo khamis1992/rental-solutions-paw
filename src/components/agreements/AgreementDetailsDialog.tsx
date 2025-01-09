@@ -49,11 +49,14 @@ export const AgreementDetailsDialog = ({
         return;
       }
 
+      // Ensure agreement_duration is properly handled
+      const agreement_duration = remainingAmount.agreement_duration || '12 months';
+
       // Update the agreement with the pulled data
       const { error: updateError } = await supabase
         .from('leases')
         .update({
-          agreement_duration: remainingAmount.agreement_duration,
+          agreement_duration,
           total_amount: remainingAmount.final_price,
           rent_amount: remainingAmount.rent_amount
         })
