@@ -31,7 +31,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
             license_plate
           )
         `)
-        .eq('id', agreementId as string)
+        .eq('id', agreementId)
         .maybeSingle();
 
       if (agreementError) {
