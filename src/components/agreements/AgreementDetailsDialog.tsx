@@ -12,6 +12,9 @@ import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 import { LeaseStatus } from "@/types/agreement.types";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -25,6 +28,27 @@ export const AgreementDetailsDialog = ({
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
+
+  // Update base amount when rent amount changes
+  useEffect(() => {
+    if (agreement?.rent_amount) {
+      const updateBaseAmount = async () => {
+        try {
+          const { error } = await supabase
+            .from('leases')
+            .update({ base_amount: agreement.rent_amount })
+            .eq('id', agreementId);
+
+          if (error) throw error;
+        } catch (error) {
+          console.error('Error updating base amount:', error);
+          toast.error('Failed to update base amount');
+        }
+      };
+
+      updateBaseAmount();
+    }
+  }, [agreement?.rent_amount, agreementId]);
 
   if (!open) return null;
 
