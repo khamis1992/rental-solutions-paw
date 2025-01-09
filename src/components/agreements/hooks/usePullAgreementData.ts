@@ -5,6 +5,38 @@ import { supabase } from "@/integrations/supabase/client";
 export const usePullAgreementData = (refetch: () => void) => {
   const [isPullingData, setIsPullingData] = useState(false);
 
+  const validateDataMapping = async (remainingAmount: any, agreement: any) => {
+    try {
+      const { data: aiValidation, error } = await supabase.functions.invoke('validate-agreement-mapping', {
+        body: {
+          remainingAmount,
+          agreement,
+          mapping: {
+            agreement_duration: "Agreement Duration",
+            final_price: "Contract Value/Total Amount",
+            rent_amount: "Monthly Rent Amount",
+            remaining_amount: "Remaining Balance"
+          }
+        }
+      });
+
+      if (error) {
+        console.error('AI validation error:', error);
+        return true; // Proceed with default mapping if AI fails
+      }
+
+      if (!aiValidation.isValid) {
+        toast.error(`AI detected mapping issue: ${aiValidation.message}`);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Error in AI validation:', err);
+      return true; // Proceed with default mapping if AI fails
+    }
+  };
+
   const handlePullData = async () => {
     try {
       setIsPullingData(true);
@@ -44,7 +76,7 @@ export const usePullAgreementData = (refetch: () => void) => {
             // Try to find the lease by agreement number
             const { data: leaseData, error: leaseError } = await supabase
               .from('leases')
-              .select('id')
+              .select('*')
               .eq('agreement_number', amount.agreement_number)
               .maybeSingle();
 
@@ -55,38 +87,39 @@ export const usePullAgreementData = (refetch: () => void) => {
             }
 
             if (leaseData) {
-              leaseId = leaseData.id;
-            }
-          }
+              // Validate data mapping with AI before updating
+              const isValidMapping = await validateDataMapping(amount, leaseData);
+              
+              if (!isValidMapping) {
+                errorCount++;
+                continue;
+              }
 
-          if (leaseId) {
-            // Update the lease with the values from remaining_amounts
-            const updateResult = await supabase
-              .from('leases')
-              .update({
-                agreement_duration: amount.agreement_duration,
-                total_amount: amount.final_price,
-                rent_amount: amount.rent_amount
-              })
-              .eq('id', leaseId)
-              .select();
+              // Update the lease with the values from remaining_amounts
+              const updateResult = await supabase
+                .from('leases')
+                .update({
+                  agreement_duration: amount.agreement_duration,
+                  total_amount: amount.final_price,
+                  rent_amount: amount.rent_amount
+                })
+                .eq('id', leaseData.id)
+                .select();
 
-            if (updateResult.error) {
-              console.error('Error updating agreement:', updateResult.error);
-              errorCount++;
-            } else {
-              successCount++;
-              processedAgreements.add(amount.agreement_number);
-              console.log(`Successfully updated agreement ${amount.agreement_number}:`, {
-                agreement_duration: amount.agreement_duration,
-                total_amount: amount.final_price,
-                rent_amount: amount.rent_amount,
-                remaining_amount: amount.remaining_amount
-              });
+              if (updateResult.error) {
+                console.error('Error updating agreement:', updateResult.error);
+                errorCount++;
+              } else {
+                successCount++;
+                processedAgreements.add(amount.agreement_number);
+                console.log(`Successfully updated agreement ${amount.agreement_number}:`, {
+                  agreement_duration: amount.agreement_duration,
+                  total_amount: amount.final_price,
+                  rent_amount: amount.rent_amount,
+                  remaining_amount: amount.remaining_amount
+                });
+              }
             }
-          } else {
-            console.error('No lease ID found for agreement:', amount.agreement_number);
-            errorCount++;
           }
         } catch (error) {
           console.error('Error processing agreement:', amount.agreement_number, error);
