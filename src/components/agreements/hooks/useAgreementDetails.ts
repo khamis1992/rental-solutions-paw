@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { calculateContractValue, calculateRemainingAmount } from "../utils/agreementCalculations";
+import { calculateContractValue } from "../utils/agreementCalculations";
 
 export const useAgreementDetails = (agreementId: string, open: boolean) => {
   const queryClient = useQueryClient();
@@ -59,15 +59,15 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
       // Calculate total payments
       const totalPayments = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
 
-      // Calculate contract value and remaining amount
+      // Calculate contract value
       const contractValue = calculateContractValue(
         Number(agreement.rent_amount) || 0,
         Number(agreement.agreement_duration?.toString() || '3') || 0
       );
 
-      const remainingAmount = calculateRemainingAmount(contractValue, totalPayments);
+      // Calculate remaining amount
+      const remainingAmount = Math.max(0, contractValue - totalPayments);
 
-      console.log('Fetched agreement:', agreement);
       console.log('Contract Value:', contractValue);
       console.log('Total Payments:', totalPayments);
       console.log('Remaining Amount:', remainingAmount);
