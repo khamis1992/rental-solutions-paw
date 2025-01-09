@@ -8,7 +8,7 @@ import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
-import { LeaseStatus } from "@/types/agreement.types";
+import { LeaseStatus } from "@/types/database/agreement.types";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -108,42 +108,35 @@ export const AgreementDetailsDialog = ({
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Customer Information */}
             <CustomerInfoCard customer={agreement?.customer} />
 
-            {/* Vehicle Information */}
-            <VehicleInfoCard vehicle={agreement?.vehicle} />
+            <VehicleInfoCard 
+              vehicle={agreement?.vehicle} 
+              initialMileage={agreement?.initial_mileage || 0}
+            />
 
-            {/* Rent Management */}
             {canEditAgreement && (
               <RentManagement 
-                agreement={agreement} 
-                remainingAmount={agreement?.remainingAmount}
+                agreementId={agreementId}
+                initialRentAmount={agreement?.rent_amount}
+                initialRentDueDay={agreement?.rent_due_day}
               />
             )}
 
-            {/* Payment History */}
             <PaymentHistory 
-              agreementId={agreementId} 
-              canEdit={canEditAgreement}
+              agreementId={agreementId}
             />
 
-            {/* Document Upload */}
             <DocumentUpload 
               agreementId={agreementId}
-              vehicleId={agreement?.vehicle_id}
             />
 
-            {/* Damage Assessment */}
             <DamageAssessment 
               agreementId={agreementId}
-              vehicleId={agreement?.vehicle_id}
             />
 
-            {/* Traffic Fines */}
             <TrafficFines 
               agreementId={agreementId}
-              vehicleId={agreement?.vehicle_id}
             />
           </div>
         )}
