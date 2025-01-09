@@ -48,7 +48,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   // Ensure base amount always matches rent amount
   useEffect(() => {
-    if (rentAmount !== baseAmount) {
+    if (rentAmount !== baseAmount && baseAmount > 0) {
       console.log('Syncing base amount with rent amount:', rentAmount, baseAmount);
       setValue("amount", baseAmount);
     }

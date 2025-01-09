@@ -2,13 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface RemainingAmount {
-  rent_amount: number;
-  final_price: number;
-  remaining_amount: number;
-}
+import { useQuery } from "@tanstack/react-query";
 
 export const usePaymentForm = (agreementId: string) => {
   const [isRecurring, setIsRecurring] = useState(false);
@@ -16,7 +10,6 @@ export const usePaymentForm = (agreementId: string) => {
   const [lateFineAmount, setLateFineAmount] = useState(0);
   const [daysOverdue, setDaysOverdue] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
-  const queryClient = useQueryClient();
 
   const { data: agreement } = useQuery({
     queryKey: ['agreement-details', agreementId],
@@ -58,12 +51,13 @@ export const usePaymentForm = (agreementId: string) => {
     },
   });
 
+  // Initialize base amount when agreement data is loaded
   useEffect(() => {
-    if (agreement?.remainingAmount?.[0]) {
-      const rentAmount = agreement.remainingAmount[0].rent_amount;
-      setBaseAmount(rentAmount);
-      setValue("amount", rentAmount);
-      setTotalAmount(rentAmount);
+    if (agreement?.rent_amount) {
+      console.log('Setting base amount from agreement:', agreement.rent_amount);
+      setBaseAmount(agreement.rent_amount);
+      setValue("amount", agreement.rent_amount);
+      setTotalAmount(agreement.rent_amount);
     }
   }, [agreement, setValue]);
 
@@ -126,6 +120,6 @@ export const usePaymentForm = (agreementId: string) => {
     calculateLateFine,
     setBaseAmount,
     watch,
-    setValue // Added setValue to the return object
+    setValue
   };
 };
