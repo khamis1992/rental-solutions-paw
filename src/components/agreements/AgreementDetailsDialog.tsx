@@ -12,6 +12,10 @@ import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 import { LeaseStatus } from "@/types/agreement.types";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -25,6 +29,49 @@ export const AgreementDetailsDialog = ({
   onOpenChange,
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
+  const queryClient = useQueryClient();
+
+  const pullRemainingAmountData = async () => {
+    try {
+      if (!agreement?.agreement_number) {
+        toast.error("Agreement number is required to pull data");
+        return;
+      }
+
+      const { data: remainingAmount, error } = await supabase
+        .from('remaining_amounts')
+        .select('*')
+        .eq('agreement_number', agreement.agreement_number)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!remainingAmount) {
+        toast.error("No remaining amount data found for this agreement");
+        return;
+      }
+
+      // Update the agreement with the pulled data
+      const { error: updateError } = await supabase
+        .from('leases')
+        .update({
+          agreement_duration: remainingAmount.agreement_duration,
+          total_amount: remainingAmount.final_price,
+          rent_amount: remainingAmount.rent_amount
+        })
+        .eq('id', agreementId);
+
+      if (updateError) throw updateError;
+
+      // Invalidate the agreement query to refresh the data
+      await queryClient.invalidateQueries({ queryKey: ['agreement-details', agreementId] });
+
+      toast.success("Data successfully pulled and updated");
+    } catch (error) {
+      console.error('Error pulling data:', error);
+      toast.error("Failed to pull data. Please try again.");
+    }
+  };
 
   if (!open) return null;
 
@@ -41,10 +88,21 @@ export const AgreementDetailsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Agreement Details</DialogTitle>
-          <DialogDescription>
-            View and manage agreement details, payments, and related information.
-          </DialogDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <DialogTitle>Agreement Details</DialogTitle>
+              <DialogDescription>
+                View and manage agreement details, payments, and related information.
+              </DialogDescription>
+            </div>
+            <Button 
+              onClick={pullRemainingAmountData}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              Pull Data
+            </Button>
+          </div>
         </DialogHeader>
 
         {isLoading ? (
