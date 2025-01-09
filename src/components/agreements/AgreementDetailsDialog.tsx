@@ -29,24 +29,24 @@ export const AgreementDetailsDialog = ({
 }: AgreementDetailsDialogProps) => {
   const { agreement, isLoading } = useAgreementDetails(agreementId, open);
 
-  // Update base amount when rent amount changes
+  // Update rent amount in the database when it changes
   useEffect(() => {
     if (agreement?.rent_amount) {
-      const updateBaseAmount = async () => {
+      const updateRentAmount = async () => {
         try {
           const { error } = await supabase
             .from('leases')
-            .update({ base_amount: agreement.rent_amount })
+            .update({ rent_amount: agreement.rent_amount })
             .eq('id', agreementId);
 
           if (error) throw error;
         } catch (error) {
-          console.error('Error updating base amount:', error);
-          toast.error('Failed to update base amount');
+          console.error('Error updating rent amount:', error);
+          toast.error('Failed to update rent amount');
         }
       };
 
-      updateBaseAmount();
+      updateRentAmount();
     }
   }, [agreement?.rent_amount, agreementId]);
 
