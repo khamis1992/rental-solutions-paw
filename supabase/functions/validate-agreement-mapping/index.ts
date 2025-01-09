@@ -15,38 +15,47 @@ serve(async (req) => {
   try {
     const { remainingAmount, agreement, mapping } = await req.json();
 
-    // Initialize OpenAI
+    if (!remainingAmount || !agreement) {
+      throw new Error('Missing required data');
+    }
+
+    // Initialize OpenAI with error handling
     const configuration = new Configuration({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     });
+
+    if (!configuration.apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
     const openai = new OpenAIApi(configuration);
 
-    // Prepare the prompt for OpenAI with specific mapping instructions
+    // Prepare the prompt with specific mapping instructions
     const prompt = `
-      Analyze and validate the mapping between remaining amounts data and agreement details.
-      
+      You are a data mapping validator. Analyze the following data and ensure correct field mapping:
+
       Remaining Amounts Data:
       ${JSON.stringify(remainingAmount, null, 2)}
       
       Agreement Data:
       ${JSON.stringify(agreement, null, 2)}
       
-      Required Mappings:
-      1. "Agreement Duration" from Remaining Amounts -> "Duration" in Agreement Details
-      2. "Final Price" from Remaining Amounts -> "Contract Value" in Agreement Details
-      3. "Rent Amount" from Remaining Amounts -> "Rent Amount" in Agreement Details
-      4. "Remaining Amount" from Remaining Amounts -> "Remaining Amount" in Agreement Details
+      Required Field Mappings:
+      1. Map "Agreement Duration" from remaining_amounts.agreement_duration to agreement.duration
+      2. Map "Final Price" from remaining_amounts.final_price to agreement.total_amount
+      3. Map "Rent Amount" from remaining_amounts.rent_amount to agreement.rent_amount
+      4. Map "Remaining Amount" from remaining_amounts.remaining_amount to agreement.remaining_amount
 
       Validation Rules:
       1. Agreement Duration must be a valid interval (e.g., "12 months", "24 months")
-      2. Final Price and Rent Amount must be positive numbers
-      3. Remaining Amount must be a number less than or equal to Final Price
-      4. All required fields must be present and have valid values
+      2. All amounts must be positive numbers
+      3. Remaining Amount must not exceed Final Price
+      4. All fields must be present and valid
 
       Return a JSON object with:
       {
         "isValid": boolean,
-        "message": "detailed explanation of any issues",
+        "message": "detailed explanation",
         "correctedValues": {
           "agreement_duration": "mapped duration value",
           "total_amount": "mapped final price value",
@@ -56,10 +65,9 @@ serve(async (req) => {
       }
     `;
 
-    console.log('Validating mapping with data:', {
+    console.log('Starting validation with data:', {
       remainingAmount,
-      agreement,
-      mapping
+      agreement
     });
 
     const completion = await openai.createCompletion({
@@ -69,7 +77,9 @@ serve(async (req) => {
       temperature: 0.1,
     });
 
-    console.log('OpenAI response:', completion.data);
+    if (!completion.data || !completion.data.choices || !completion.data.choices[0]) {
+      throw new Error('Invalid response from OpenAI');
+    }
 
     const aiResponse = completion.data.choices[0].text?.trim();
     let result;
