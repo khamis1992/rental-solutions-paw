@@ -8,7 +8,7 @@ import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
-import { LeaseStatus } from "@/types/database/agreement.types";
+import type { LeaseStatus } from "@/types/database/agreement.types";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -73,8 +73,8 @@ export const AgreementDetailsDialog = ({
 
   if (!open) return null;
 
-  const canEditAgreement = agreement?.status !== LeaseStatus.CLOSED && 
-                          agreement?.status !== LeaseStatus.CANCELLED;
+  const canEditAgreement = agreement?.status !== 'closed' && 
+                          agreement?.status !== 'cancelled';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
