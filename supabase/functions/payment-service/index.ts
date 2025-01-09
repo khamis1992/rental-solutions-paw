@@ -75,7 +75,19 @@ async function processPayment(supabase: any, paymentData: PaymentRequest) {
       status: 'completed',
       payment_date: new Date().toISOString(),
     })
-    .select()
+    .select(`
+      *,
+      leases!inner (
+        id,
+        agreement_number,
+        customer_id,
+        profiles!inner (
+          id,
+          full_name,
+          phone_number
+        )
+      )
+    `)
     .single()
 
   if (paymentError) {
