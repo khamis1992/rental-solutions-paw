@@ -60,7 +60,7 @@ serve(async (req) => {
         }
       }`;
 
-    console.log('Sending prompt to OpenAI');
+    console.log('Sending prompt to OpenAI:', prompt);
     
     const completion = await openai.createCompletion({
       model: "gpt-4o-mini",
