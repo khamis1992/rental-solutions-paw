@@ -1,14 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PaymentForm } from "./details/PaymentForm";
-import { InvoiceList } from "./details/InvoiceList";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CustomerInfoCard } from "./details/CustomerInfoCard";
+import { VehicleInfoCard } from "./details/VehicleInfoCard";
+import { RentManagement } from "./details/RentManagement";
 import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
-import { RentManagement } from "./details/RentManagement";
-import { AgreementHeader } from "./AgreementHeader";
-import { CustomerInfoCard } from "./details/CustomerInfoCard";
-import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 import { LeaseStatus } from "@/types/agreement.types";
@@ -16,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -75,14 +73,8 @@ export const AgreementDetailsDialog = ({
 
   if (!open) return null;
 
-  const mappedAgreement = agreement ? {
-    id: agreement.id,
-    agreement_number: agreement.agreement_number || '',
-    status: agreement.status as LeaseStatus,
-    start_date: agreement.start_date || '',
-    end_date: agreement.end_date || '',
-    rent_amount: agreement.rent_amount || 0
-  } : undefined;
+  const canEditAgreement = agreement?.status !== LeaseStatus.CLOSED && 
+                          agreement?.status !== LeaseStatus.CANCELLED;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,76 +89,63 @@ export const AgreementDetailsDialog = ({
             </div>
             <Button 
               onClick={pullRemainingAmountData}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="secondary"
+              size="sm"
+              className="transition-all hover:scale-105"
               disabled={isLoading}
             >
+              <Download className="h-4 w-4 mr-2" />
               Pull Data
             </Button>
           </div>
         </DialogHeader>
 
         {isLoading ? (
-          <div>Loading agreement details...</div>
-        ) : agreement ? (
-          <div className="space-y-6">
-            <AgreementHeader 
-              agreement={mappedAgreement}
-              remainingAmount={agreement.remainingAmount}
-              onCreate={() => {}}
-              onImport={() => {}}
-            />
-            
-            <CustomerInfoCard customer={agreement.customer} />
-            
-            <VehicleInfoCard 
-              vehicle={agreement.vehicle}
-              initialMileage={agreement.initial_mileage}
-            />
-
-            <Tabs defaultValue="payments" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="payments">Payments</TabsTrigger>
-                <TabsTrigger value="payment-history">Payment History</TabsTrigger>
-                <TabsTrigger value="invoices">Invoices</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="damages">Damages</TabsTrigger>
-                <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
-                {agreement.status === 'active' && (
-                  <TabsTrigger value="rent">Rent Management</TabsTrigger>
-                )}
-              </TabsList>
-              
-              <TabsContent value="payments">
-                <PaymentForm agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="payment-history">
-                <PaymentHistory agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="invoices">
-                <InvoiceList agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="documents">
-                <DocumentUpload agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="damages">
-                <DamageAssessment agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="fines">
-                <TrafficFines agreementId={agreementId} />
-              </TabsContent>
-              {agreement.status === 'active' && (
-                <TabsContent value="rent">
-                  <RentManagement 
-                    agreementId={agreementId}
-                    initialRentAmount={agreement.rent_amount}
-                    initialRentDueDay={agreement.rent_due_day}
-                  />
-                </TabsContent>
-              )}
-            </Tabs>
+          <div className="space-y-4">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
           </div>
         ) : (
-          <div>Agreement not found</div>
+          <div className="space-y-6">
+            {/* Customer Information */}
+            <CustomerInfoCard customer={agreement?.customer} />
+
+            {/* Vehicle Information */}
+            <VehicleInfoCard vehicle={agreement?.vehicle} />
+
+            {/* Rent Management */}
+            {canEditAgreement && (
+              <RentManagement 
+                agreement={agreement} 
+                remainingAmount={agreement?.remainingAmount}
+              />
+            )}
+
+            {/* Payment History */}
+            <PaymentHistory 
+              agreementId={agreementId} 
+              canEdit={canEditAgreement}
+            />
+
+            {/* Document Upload */}
+            <DocumentUpload 
+              agreementId={agreementId}
+              vehicleId={agreement?.vehicle_id}
+            />
+
+            {/* Damage Assessment */}
+            <DamageAssessment 
+              agreementId={agreementId}
+              vehicleId={agreement?.vehicle_id}
+            />
+
+            {/* Traffic Fines */}
+            <TrafficFines 
+              agreementId={agreementId}
+              vehicleId={agreement?.vehicle_id}
+            />
+          </div>
         )}
       </DialogContent>
     </Dialog>
