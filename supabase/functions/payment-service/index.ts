@@ -76,7 +76,12 @@ async function processPayment(supabase: any, paymentData: PaymentRequest) {
       payment_date: new Date().toISOString(),
     })
     .select(`
-      *,
+      payments.id,
+      payments.amount,
+      payments.payment_method,
+      payments.description,
+      payments.status,
+      payments.payment_date,
       leases!inner (
         id,
         agreement_number,
