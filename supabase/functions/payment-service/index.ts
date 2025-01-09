@@ -30,6 +30,7 @@ serve(async (req) => {
 
     // Validate required fields with type checking
     if (!leaseId || typeof leaseId !== 'string') {
+      console.error('Invalid leaseId:', leaseId);
       return new Response(
         JSON.stringify({
           success: false,
@@ -43,8 +44,31 @@ serve(async (req) => {
       );
     }
 
+    // Verify lease exists before proceeding
+    const { data: lease, error: leaseError } = await supabase
+      .from('leases')
+      .select('id, agreement_number')
+      .eq('id', leaseId)
+      .single();
+
+    if (leaseError || !lease) {
+      console.error('Lease verification error:', leaseError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid lease ID or lease not found',
+          details: leaseError
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
     const numericAmount = Number(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
+      console.error('Invalid amount:', amount);
       return new Response(
         JSON.stringify({
           success: false,
@@ -59,33 +83,12 @@ serve(async (req) => {
     }
 
     if (!type || !['Income', 'Expense'].includes(type)) {
+      console.error('Invalid payment type:', type);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Invalid payment type',
           details: { type }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
-    // Validate lease exists
-    const { data: lease, error: leaseError } = await supabase
-      .from('leases')
-      .select('id, agreement_number')
-      .eq('id', leaseId)
-      .single();
-
-    if (leaseError) {
-      console.error('Lease validation error:', leaseError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid lease ID',
-          details: leaseError
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
