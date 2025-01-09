@@ -41,21 +41,27 @@ export const AgreementDetailsDialog = ({
   // Initialize dates and calculate initial values when agreement loads
   useEffect(() => {
     if (agreement) {
+      console.log('Setting base amount from agreement:', agreement.rent_amount);
+      
       const start = agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "";
       const end = agreement.end_date ? format(new Date(agreement.end_date), "yyyy-MM-dd") : "";
       
       setStartDate(start);
       setEndDate(end);
       
-      if (start && end) {
+      if (start && end && agreement.rent_amount) {
         const calculatedDuration = calculateDuration(start, end);
         setDuration(calculatedDuration);
-        setContractValue(calculateContractValue(agreement.rent_amount || 0, calculatedDuration));
+        const calculatedValue = calculateContractValue(agreement.rent_amount, calculatedDuration);
+        console.log('Calculated contract value:', calculatedValue);
+        setContractValue(calculatedValue);
       }
     }
   }, [agreement]);
 
   const validateAndUpdateDates = async (start: string, end: string) => {
+    if (!start || !end) return;
+
     const startDateObj = parse(start, "yyyy-MM-dd", new Date());
     const endDateObj = parse(end, "yyyy-MM-dd", new Date());
 
@@ -79,7 +85,10 @@ export const AgreementDetailsDialog = ({
     // Calculate new duration and contract value
     const newDuration = calculateDuration(start, end);
     setDuration(newDuration);
-    setContractValue(calculateContractValue(agreement?.rent_amount || 0, newDuration));
+    
+    const newContractValue = calculateContractValue(agreement?.rent_amount || 0, newDuration);
+    setContractValue(newContractValue);
+    console.log('New contract value calculated:', newContractValue);
 
     try {
       const { error } = await supabase
@@ -181,7 +190,7 @@ export const AgreementDetailsDialog = ({
                 />
               </div>
             </div>
-            
+
             <CustomerInfoCard customer={agreement.customer} />
             
             <VehicleInfoCard 
