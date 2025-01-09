@@ -31,7 +31,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
             license_plate
           )
         `)
-        .eq('id', agreementId)
+        .eq('id', agreementId as string)
         .maybeSingle();
 
       if (agreementError) {
@@ -48,7 +48,7 @@ export const useAgreementDetails = (agreementId: string, open: boolean) => {
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('amount, status')
-        .eq('lease_id', agreementId as string) // Type assertion here
+        .eq('lease_id', agreementId)
         .eq('status', 'completed');
 
       if (paymentsError) {
