@@ -34,13 +34,13 @@ export const AgreementDetailsDialog = ({
           .from("leases")
           .select(`
             *,
-            customer:customer_id (
+            customer:profiles (
               id,
               full_name,
               email,
-              phone
+              phone_number
             ),
-            vehicle:vehicle_id (
+            vehicle:vehicles (
               id,
               make,
               model,
@@ -50,12 +50,23 @@ export const AgreementDetailsDialog = ({
             )
           `)
           .eq("id", agreementId)
-          .single();
+          .maybeSingle();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error("Error fetching agreement:", fetchError);
+          throw fetchError;
+        }
+
+        if (!data) {
+          console.log("No agreement found with ID:", agreementId);
+          toast.error("Agreement not found");
+          return;
+        }
+
+        console.log("Fetched agreement:", data);
         setAgreement(data);
       } catch (err) {
-        console.error("Error fetching agreement:", err);
+        console.error("Error in fetchAgreement:", err);
         setError(err as Error);
         toast.error("Failed to load agreement details");
       } finally {
