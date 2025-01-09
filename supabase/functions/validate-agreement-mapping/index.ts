@@ -62,18 +62,20 @@ serve(async (req) => {
 
     console.log('Sending prompt to OpenAI:', prompt);
     
-    const completion = await openai.createCompletion({
+    const completion = await openai.createChatCompletion({
       model: "gpt-4o-mini",
-      prompt,
-      max_tokens: 500,
+      messages: [
+        { role: "system", content: "You are a data validation assistant that checks and validates agreement mappings." },
+        { role: "user", content: prompt }
+      ],
       temperature: 0.1,
     });
 
-    if (!completion.data?.choices?.[0]?.text) {
+    if (!completion.data?.choices?.[0]?.message?.content) {
       throw new Error('Invalid response from OpenAI');
     }
 
-    const aiResponse = completion.data.choices[0].text.trim();
+    const aiResponse = completion.data.choices[0].message.content.trim();
     console.log('Received AI response:', aiResponse);
 
     let result;
