@@ -52,10 +52,11 @@ export const AgreementDetailsDialog = ({
         setDuration(calculatedDuration);
         
         if (agreement.rent_amount) {
-          const calculatedValue = calculateContractValue(Number(agreement.rent_amount), calculatedDuration);
+          const rentAmount = Number(agreement.rent_amount);
+          const calculatedValue = calculateContractValue(rentAmount, calculatedDuration);
           setContractValue(calculatedValue);
-          console.log('Initial calculation:', {
-            rentAmount: Number(agreement.rent_amount),
+          console.log('Initial values set:', {
+            rentAmount,
             duration: calculatedDuration,
             contractValue: calculatedValue
           });
@@ -128,7 +129,8 @@ export const AgreementDetailsDialog = ({
     status: agreement.status as LeaseStatus,
     start_date: agreement.start_date || '',
     end_date: agreement.end_date || '',
-    rent_amount: agreement.rent_amount || 0
+    rent_amount: agreement.rent_amount || 0,
+    contractValue: contractValue // Add contractValue here
   } : undefined;
 
   return (
