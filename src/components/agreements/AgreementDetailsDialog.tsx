@@ -41,20 +41,25 @@ export const AgreementDetailsDialog = ({
   // Initialize dates and calculate initial values when agreement loads
   useEffect(() => {
     if (agreement) {
-      console.log('Setting base amount from agreement:', agreement.rent_amount);
-      
       const start = agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "";
       const end = agreement.end_date ? format(new Date(agreement.end_date), "yyyy-MM-dd") : "";
       
       setStartDate(start);
       setEndDate(end);
       
-      if (start && end && agreement.rent_amount) {
+      if (start && end) {
         const calculatedDuration = calculateDuration(start, end);
         setDuration(calculatedDuration);
-        const calculatedValue = calculateContractValue(agreement.rent_amount, calculatedDuration);
-        console.log('Calculated contract value:', calculatedValue);
-        setContractValue(calculatedValue);
+        
+        if (agreement.rent_amount) {
+          console.log('Calculating contract value with:', {
+            rentAmount: agreement.rent_amount,
+            duration: calculatedDuration
+          });
+          const calculatedValue = calculateContractValue(agreement.rent_amount, calculatedDuration);
+          console.log('Setting contract value to:', calculatedValue);
+          setContractValue(calculatedValue);
+        }
       }
     }
   }, [agreement]);
@@ -86,9 +91,15 @@ export const AgreementDetailsDialog = ({
     const newDuration = calculateDuration(start, end);
     setDuration(newDuration);
     
-    const newContractValue = calculateContractValue(agreement?.rent_amount || 0, newDuration);
-    setContractValue(newContractValue);
-    console.log('New contract value calculated:', newContractValue);
+    if (agreement?.rent_amount) {
+      console.log('Updating contract value with:', {
+        rentAmount: agreement.rent_amount,
+        duration: newDuration
+      });
+      const newContractValue = calculateContractValue(agreement.rent_amount, newDuration);
+      console.log('New contract value:', newContractValue);
+      setContractValue(newContractValue);
+    }
 
     try {
       const { error } = await supabase
@@ -118,6 +129,12 @@ export const AgreementDetailsDialog = ({
     end_date: agreement.end_date || '',
     rent_amount: agreement.rent_amount || 0
   } : undefined;
+
+  console.log('Current values:', {
+    rentAmount: agreement?.rent_amount,
+    duration,
+    contractValue
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
