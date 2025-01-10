@@ -138,14 +138,17 @@ serve(async (req) => {
     // Verify lease exists with proper table aliasing
     console.log('Verifying lease:', leaseId);
     const { data: lease, error: leaseError } = await supabase
-      .from('leases AS l')
+      .from('leases')
       .select(`
-        l.id,
-        l.agreement_number,
-        p.id AS customer_id,
-        p.full_name AS customer_name
+        id,
+        agreement_number,
+        customer_id,
+        profiles!leases_customer_id_fkey (
+          id,
+          full_name
+        )
       `)
-      .eq('l.id', leaseId)
+      .eq('id', leaseId)
       .single();
 
     if (leaseError) {
@@ -237,10 +240,10 @@ serve(async (req) => {
         payment_method,
         status,
         payment_date,
-        l:leases!payments_lease_id_fkey (
+        leases!payments_lease_id_fkey (
           id,
           agreement_number,
-          p:profiles!leases_customer_id_fkey (
+          profiles!leases_customer_id_fkey (
             id,
             full_name
           )
