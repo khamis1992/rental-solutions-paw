@@ -5083,6 +5083,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      swap_day_month: {
+        Args: {
+          input_date: string
+        }
+        Returns: string
+      }
       update_payment_schedule: {
         Args: {
           p_lease_id: string
