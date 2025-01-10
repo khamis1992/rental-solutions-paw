@@ -15,36 +15,6 @@ interface PaymentDetails {
 }
 
 /**
- * Processes a payment without unnecessary async/await.
- * Returns a Promise directly when no await is needed.
- */
-export function processSimplePayment(amount: number): Promise<PaymentResult> {
-  if (amount <= 0) {
-    return Promise.resolve({
-      success: false,
-      error: "Invalid amount"
-    });
-  }
-
-  return Promise.resolve({
-    success: true,
-    transactionId: crypto.randomUUID()
-  });
-}
-
-/**
- * Validates payment details synchronously.
- * No async needed as it's a pure validation function.
- */
-export function validatePaymentDetails(details: PaymentDetails): boolean {
-  return (
-    details.amount > 0 &&
-    typeof details.leaseId === "string" &&
-    details.leaseId.length > 0
-  );
-}
-
-/**
  * Processes a payment with database interaction.
  * async keyword is required here due to await usage with Supabase.
  */
@@ -67,7 +37,8 @@ export async function processPaymentWithDb(
         payment_method: details.paymentMethod,
         description: details.description,
         status: "completed" as PaymentStatus,
-        payment_date: new Date().toISOString()
+        payment_date: new Date().toISOString(),
+        type: 'Income'
       })
       .select()
       .single();
@@ -85,6 +56,36 @@ export async function processPaymentWithDb(
       error: error instanceof Error ? error.message : "Unknown error occurred"
     };
   }
+}
+
+/**
+ * Validates payment details synchronously.
+ * No async needed as it's a pure validation function.
+ */
+export function validatePaymentDetails(details: PaymentDetails): boolean {
+  return (
+    details.amount > 0 &&
+    typeof details.leaseId === "string" &&
+    details.leaseId.length > 0
+  );
+}
+
+/**
+ * Processes a payment without unnecessary async/await.
+ * Returns a Promise directly when no await is needed.
+ */
+export function processSimplePayment(amount: number): Promise<PaymentResult> {
+  if (amount <= 0) {
+    return Promise.resolve({
+      success: false,
+      error: "Invalid amount"
+    });
+  }
+
+  return Promise.resolve({
+    success: true,
+    transactionId: crypto.randomUUID()
+  });
 }
 
 /**

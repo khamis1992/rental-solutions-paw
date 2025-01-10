@@ -1,17 +1,20 @@
+import { RawPaymentImport } from "@/types/database/payment.types";
 import { supabase } from "@/integrations/supabase/client";
-import { RawPaymentImport } from "../../types/transaction.types";
-import { normalizePaymentMethod } from "../../utils/paymentUtils";
 
-export const createDefaultAgreement = async (payment: RawPaymentImport) => {
-  const { data: agreementData, error: agreementError } = await supabase
-    .rpc('create_default_agreement_if_not_exists', {
-      p_agreement_number: payment.Agreement_Number,
-      p_customer_name: payment.Customer_Name,
-      p_amount: payment.Amount
-    });
+export const updatePaymentStatus = async (
+  paymentId: string, 
+  isValid: boolean, 
+  errorDescription?: string
+) => {
+  const { error: updateError } = await supabase
+    .from('raw_payment_imports')
+    .update({ 
+      is_valid: isValid,
+      error_description: errorDescription || null
+    })
+    .eq('id', paymentId);
 
-  if (agreementError) throw agreementError;
-  return agreementData;
+  if (updateError) throw updateError;
 };
 
 export const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
@@ -53,20 +56,4 @@ export const insertPayment = async (leaseId: string, payment: RawPaymentImport) 
 
   if (paymentError) throw paymentError;
   return paymentData;
-};
-
-export const updatePaymentStatus = async (
-  paymentId: string, 
-  isValid: boolean, 
-  errorDescription?: string
-) => {
-  const { error: updateError } = await supabase
-    .from('raw_payment_imports')
-    .update({ 
-      is_valid: isValid,
-      error_description: errorDescription || null
-    })
-    .eq('id', paymentId);
-
-  if (updateError) throw updateError;
 };
