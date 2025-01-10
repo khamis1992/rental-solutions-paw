@@ -10,9 +10,7 @@ serve(async (req) => {
   try {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-      return new Response(null, { 
-        headers: corsHeaders 
-      });
+      return new Response(null, { headers: corsHeaders });
     }
 
     // Log request details
@@ -137,12 +135,17 @@ serve(async (req) => {
       );
     }
 
-    // Verify lease exists
+    // Verify lease exists with proper table aliasing
     console.log('Verifying lease:', leaseId);
     const { data: lease, error: leaseError } = await supabase
-      .from('leases')
-      .select('id, agreement_number')
-      .eq('id', leaseId)
+      .from('leases AS l')
+      .select(`
+        l.id,
+        l.agreement_number,
+        p.id AS customer_id,
+        p.full_name AS customer_name
+      `)
+      .eq('l.id', leaseId)
       .single();
 
     if (leaseError) {
@@ -214,7 +217,7 @@ serve(async (req) => {
       type
     });
 
-    // Create payment
+    // Create payment with explicit table references
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
@@ -228,7 +231,21 @@ serve(async (req) => {
         balance: 0,
         type: type
       })
-      .select()
+      .select(`
+        id,
+        amount,
+        payment_method,
+        status,
+        payment_date,
+        l:leases!payments_lease_id_fkey (
+          id,
+          agreement_number,
+          p:profiles!leases_customer_id_fkey (
+            id,
+            full_name
+          )
+        )
+      `)
       .single();
 
     if (paymentError) {
