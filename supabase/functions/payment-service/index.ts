@@ -13,24 +13,49 @@ serve(async (req) => {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Validate environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing environment variables:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey });
-      throw new Error('Missing environment variables');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Log request details for debugging
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    // Parse and validate request data
-    const requestData = await req.json();
-    console.log('Received payment request:', requestData);
+    // Validate environment variables with detailed logging
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseKey) {
+      const error = 'Missing environment variables';
+      console.error(error, {
+        supabaseUrl: !!supabaseUrl,
+        supabaseKey: !!supabaseKey
+      });
+      return new Response(
+        JSON.stringify({ success: false, error }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Parse request body with error handling
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log('Received request data:', JSON.stringify(requestData, null, 2));
+    } catch (error) {
+      console.error('Failed to parse request body:', error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid JSON in request body'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
 
     const { operation, data } = requestData;
     
@@ -49,9 +74,24 @@ serve(async (req) => {
       );
     }
 
+    // Validate payment data
+    if (!data) {
+      console.error('Missing payment data');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing payment data'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
     const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
 
-    // Validate required fields with type checking
+    // Validate required fields with detailed logging
     if (!leaseId || typeof leaseId !== 'string') {
       console.error('Invalid leaseId:', leaseId);
       return new Response(
@@ -74,7 +114,7 @@ serve(async (req) => {
       .eq('id', leaseId)
       .single();
 
-    if (leaseError || !lease) {
+    if (leaseError) {
       console.error('Lease verification error:', leaseError);
       return new Response(
         JSON.stringify({
