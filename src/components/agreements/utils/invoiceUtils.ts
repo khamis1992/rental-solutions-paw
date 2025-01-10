@@ -1,87 +1,109 @@
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
 import { Payment } from "@/types/database/payment.types";
 
-export interface InvoiceData {
+export type InvoiceData = {
   invoiceNumber: string;
   customerName: string;
   customerAddress: string;
-  startDate: string;
-  endDate: string;
-  dueDate?: string;
   vehicleDetails: string;
   agreementType: string;
-  items: Array<{
+  startDate: string;
+  endDate: string;
+  amount: number;
+  items: {
     description: string;
     amount: number;
-  }>;
+  }[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  dueDate?: string;
   payments?: Payment[];
-}
-
-export const transformPayments = (dbPayments: any[]): Payment[] => {
-  return dbPayments.map(payment => ({
-    id: payment.id,
-    lease_id: payment.lease_id,
-    amount: payment.amount,
-    amount_paid: payment.amount_paid,
-    balance: payment.balance,
-    payment_date: payment.payment_date,
-    due_date: payment.due_date,
-    transaction_id: payment.transaction_id,
-    payment_method: payment.payment_method,
-    status: payment.status,
-    description: payment.description,
-    type: payment.type || 'Income',
-    is_recurring: payment.is_recurring || false,
-    recurring_interval: payment.recurring_interval || '',
-    next_payment_date: payment.next_payment_date,
-    late_fine_amount: payment.late_fine_amount || 0,
-    days_overdue: payment.days_overdue || 0,
-    include_in_calculation: payment.include_in_calculation ?? true,
-    invoice_id: payment.invoice_id,
-    security_deposit_id: payment.security_deposit_id,
-    created_at: payment.created_at,
-    updated_at: payment.updated_at
-  }));
+  agreementId: string; // Added this field
 };
 
-export const generateInvoiceData = async (agreementId: string): Promise<InvoiceData | null> => {
-  try {
-    const { data: agreement, error: agreementError } = await supabase
-      .from('leases')
-      .select(`
-        *,
-        customer:profiles(full_name, address),
-        vehicle:vehicles(make, model, year)
-      `)
-      .eq('id', agreementId)
-      .single();
+export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData | null> => {
+  const { data: lease, error: leaseError } = await supabase
+    .from("leases")
+    .select(`
+      *,
+      customer:profiles(*),
+      vehicle:vehicles(*)
+    `)
+    .eq("id", leaseId)
+    .single();
 
-    if (agreementError) throw agreementError;
-
-    const { data: payments, error: paymentsError } = await supabase
-      .from('new_unified_payments')
-      .select('*')
-      .eq('lease_id', agreementId)
-      .order('payment_date', { ascending: true });
-
-    if (paymentsError) throw paymentsError;
-
-    return {
-      invoiceNumber: agreement.agreement_number || `INV-${Date.now()}`,
-      customerName: agreement.customer?.full_name || 'Unknown Customer',
-      customerAddress: agreement.customer?.address || 'No address provided',
-      startDate: new Date(agreement.start_date).toLocaleDateString(),
-      endDate: new Date(agreement.end_date).toLocaleDateString(),
-      vehicleDetails: `${agreement.vehicle?.year} ${agreement.vehicle?.make} ${agreement.vehicle?.model}`,
-      agreementType: agreement.agreement_type,
-      items: [{
-        description: 'Rental Fee',
-        amount: agreement.total_amount
-      }],
-      payments: transformPayments(payments || [])
-    };
-  } catch (error) {
-    console.error('Error generating invoice data:', error);
+  if (leaseError || !lease) {
+    console.error("Error fetching lease data:", leaseError);
     return null;
   }
+
+  // Fetch remaining amount data for the agreement
+  const { data: remainingAmount, error: remainingError } = await supabase
+    .from("remaining_amounts")
+    .select("*")
+    .eq("agreement_number", lease.agreement_number)
+    .maybeSingle();
+
+  if (remainingError) {
+    console.error("Error fetching remaining amount:", remainingError);
+    return null;
+  }
+
+  // Fetch all payments for this lease
+  const { data: payments, error: paymentsError } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("lease_id", leaseId)
+    .order("payment_date", { ascending: true });
+
+  if (paymentsError) {
+    console.error("Error fetching payments:", paymentsError);
+    return null;
+  }
+
+  const items = [];
+  if (lease.agreement_type === "short_term") {
+    items.push({
+      description: `Short-term rental (${format(new Date(lease.start_date), "PP")} - ${format(new Date(lease.end_date), "PP")})`,
+      amount: remainingAmount?.final_price || lease.total_amount || 0
+    });
+  } else {
+    items.push({
+      description: "Down payment",
+      amount: lease.down_payment || 0
+    });
+    if (lease.monthly_payment) {
+      items.push({
+        description: `Monthly payment (${format(new Date(lease.start_date), "MMMM yyyy")})`,
+        amount: lease.monthly_payment
+      });
+    }
+  }
+
+  const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+  const totalDiscount = 0; // Add discount logic if needed
+  const total = subtotal - totalDiscount;
+
+  return {
+    invoiceNumber: `INV-${lease.id.slice(0, 8)}`,
+    customerName: lease.customer?.full_name || "Unknown Customer",
+    customerAddress: lease.customer?.address || "No address provided",
+    vehicleDetails: `${lease.vehicle?.year} ${lease.vehicle?.make} ${lease.vehicle?.model}`,
+    agreementType: lease.agreement_type === "short_term" ? "Short-term Rental" : "Lease-to-Own",
+    startDate: format(new Date(lease.start_date), "PP"),
+    endDate: format(new Date(lease.end_date), "PP"),
+    amount: remainingAmount?.final_price || lease.total_amount || 0,
+    items,
+    subtotal,
+    discount: totalDiscount,
+    total,
+    dueDate: lease.agreement_type === "lease_to_own" 
+      ? format(new Date(lease.start_date), "PP") 
+      : undefined,
+    payments: payments || [],
+    agreementId: lease.id // Added this field
+  };
 };

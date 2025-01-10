@@ -1,9 +1,4 @@
-import { format, parse, isValid } from "date-fns";
-
-/**
- * Standard date format used across the application
- */
-export const DATE_FORMAT = "dd/MM/yyyy";
+import { format, isValid } from "date-fns";
 
 /**
  * Formats a date into DD/MM/YYYY format
@@ -21,47 +16,10 @@ export const formatDate = (date: Date | string | null): string => {
       return '';
     }
     
-    return format(dateObj, DATE_FORMAT);
+    return format(dateObj, 'dd/MM/yyyy');
   } catch (error) {
     console.error('Error formatting date:', date, error);
     return '';
-  }
-};
-
-/**
- * Validates if a string matches DD/MM/YYYY format
- * @param dateStr - Date string to validate
- * @returns True if valid, false otherwise
- */
-export const isValidDateFormat = (dateStr: string): boolean => {
-  if (!dateStr) return false;
-
-  // Check basic format using regex
-  const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-  if (!regex.test(dateStr)) return false;
-
-  // Parse and validate the date
-  try {
-    const parsedDate = parse(dateStr, DATE_FORMAT, new Date());
-    return isValid(parsedDate);
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Parses a date string in DD/MM/YYYY format to a Date object
- * @param dateStr - Date string to parse
- * @returns Date object or null if invalid
- */
-export const parseDateString = (dateStr: string): Date | null => {
-  if (!isValidDateFormat(dateStr)) return null;
-  
-  try {
-    const parsedDate = parse(dateStr, DATE_FORMAT, new Date());
-    return isValid(parsedDate) ? parsedDate : null;
-  } catch {
-    return null;
   }
 };
 
@@ -81,26 +39,9 @@ export const formatDateToDisplay = (date: Date | string | null): string => {
       return '';
     }
     
-    return format(dateObj, `${DATE_FORMAT} HH:mm`);
+    return format(dateObj, 'dd/MM/yyyy HH:mm');
   } catch (error) {
     console.error('Error formatting date:', date, error);
-    return '';
-  }
-};
-
-/**
- * Converts a date string from any format to DD/MM/YYYY
- * @param dateStr - Date string to convert
- * @returns Formatted date string or empty string if invalid
- */
-export const convertToStandardFormat = (dateStr: string): string => {
-  if (!dateStr) return '';
-  
-  try {
-    const date = new Date(dateStr);
-    if (!isValid(date)) return '';
-    return formatDate(date);
-  } catch {
     return '';
   }
 };
