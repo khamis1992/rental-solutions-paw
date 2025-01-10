@@ -24,6 +24,41 @@ export type InvoiceData = {
   agreementId: string; // Added this field
 };
 
+export const getPaymentHistory = async (agreementId: string): Promise<Payment[]> => {
+  const { data, error } = await supabase
+    .from('new_unified_payments')
+    .select('*')
+    .eq('lease_id', agreementId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  // Transform the data to match the Payment interface
+  return data.map(payment => ({
+    ...payment,
+    lease_id: payment.lease_id,
+    id: payment.id,
+    amount: payment.amount,
+    amount_paid: payment.amount_paid,
+    balance: payment.balance,
+    status: payment.status,
+    payment_date: payment.payment_date,
+    payment_method: payment.payment_method,
+    description: payment.description,
+    type: payment.type,
+    created_at: payment.created_at,
+    updated_at: payment.updated_at,
+    transaction_id: payment.transaction_id,
+    is_recurring: payment.is_recurring,
+    recurring_interval: payment.recurring_interval,
+    next_payment_date: payment.next_payment_date,
+    late_fine_amount: payment.late_fine_amount,
+    days_overdue: payment.days_overdue,
+    include_in_calculation: payment.include_in_calculation,
+    invoice_id: payment.invoice_id
+  }));
+};
+
 export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData | null> => {
   const { data: lease, error: leaseError } = await supabase
     .from("leases")

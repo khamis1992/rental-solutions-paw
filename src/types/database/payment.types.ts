@@ -2,6 +2,16 @@ export type PaymentMethodType = 'Cash' | 'Invoice' | 'WireTransfer' | 'Cheque' |
 
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
 
+export interface PaymentFormData {
+  amount: number;
+  amountPaid: number;
+  paymentMethod: PaymentMethodType;
+  description: string;
+  isRecurring: boolean;
+  recurringInterval: string;
+  paymentDate?: string;
+}
+
 export interface PaymentRequest {
   leaseId: string;
   amount: number;
@@ -13,7 +23,7 @@ export interface PaymentRequest {
 
 export interface Payment {
   id: string;
-  leaseId: string;
+  lease_id: string;
   amount: number;
   amount_paid: number;
   balance: number;
