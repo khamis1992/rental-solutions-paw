@@ -15,12 +15,31 @@ export const createDefaultAgreement = async (payment: RawPaymentImport) => {
 };
 
 export const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
+  // First check if payment already exists
+  const { data: existingPayment, error: checkError } = await supabase
+    .from('payments')
+    .select('id')
+    .eq('lease_id', leaseId)
+    .eq('payment_date', payment.Payment_Date)
+    .eq('amount', payment.Amount)
+    .maybeSingle();
+
+  if (checkError) throw checkError;
+
+  // If payment already exists, return early
+  if (existingPayment) {
+    console.log('Payment already exists:', existingPayment);
+    return existingPayment;
+  }
+
+  const normalizedMethod = normalizePaymentMethod(payment.Payment_Method);
+  
   const { data: paymentData, error: paymentError } = await supabase
     .from('payments')
     .insert({
       lease_id: leaseId,
       amount: payment.Amount,
-      payment_method: normalizePaymentMethod(payment.Payment_Method || ''),
+      payment_method: normalizedMethod,
       payment_date: payment.Payment_Date,
       status: 'completed',
       description: payment.Description,
