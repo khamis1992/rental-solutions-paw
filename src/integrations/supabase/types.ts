@@ -2823,6 +2823,33 @@ export type Database = {
           },
         ]
       }
+      payment_date_migration_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          original_date: string | null
+          payment_id: string | null
+          reason: string | null
+          table_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          original_date?: string | null
+          payment_id?: string | null
+          reason?: string | null
+          table_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          original_date?: string | null
+          payment_id?: string | null
+          reason?: string | null
+          table_name?: string | null
+        }
+        Relationships: []
+      }
       payment_history: {
         Row: {
           actual_payment_date: string | null
@@ -3425,12 +3452,9 @@ export type Database = {
         Row: {
           Agreement_Number: string | null
           Amount: number | null
-          created_at: string | null
           Customer_Name: string | null
           Description: string | null
-          error_description: string | null
           id: string
-          is_valid: boolean | null
           License_Plate: string | null
           Payment_Date: string | null
           Payment_Method: string | null
@@ -3441,12 +3465,9 @@ export type Database = {
         Insert: {
           Agreement_Number?: string | null
           Amount?: number | null
-          created_at?: string | null
           Customer_Name?: string | null
           Description?: string | null
-          error_description?: string | null
           id?: string
-          is_valid?: boolean | null
           License_Plate?: string | null
           Payment_Date?: string | null
           Payment_Method?: string | null
@@ -3457,12 +3478,9 @@ export type Database = {
         Update: {
           Agreement_Number?: string | null
           Amount?: number | null
-          created_at?: string | null
           Customer_Name?: string | null
           Description?: string | null
-          error_description?: string | null
           id?: string
-          is_valid?: boolean | null
           License_Plate?: string | null
           Payment_Date?: string | null
           Payment_Method?: string | null
@@ -5047,6 +5065,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_valid_date: {
+        Args: {
+          date_str: string
+        }
+        Returns: boolean
+      }
       process_recurring_payments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -5058,6 +5082,12 @@ export type Database = {
       send_payment_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      swap_day_month: {
+        Args: {
+          input_date: string
+        }
+        Returns: string
       }
       update_payment_schedule: {
         Args: {
