@@ -10,7 +10,12 @@ serve(async (req) => {
   try {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
     }
 
     // Log request details for debugging
@@ -36,13 +41,32 @@ serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Create Supabase client with error handling
+    let supabase;
+    try {
+      supabase = createClient(supabaseUrl, supabaseKey);
+      console.log('Supabase client created successfully');
+    } catch (error) {
+      console.error('Failed to create Supabase client:', error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to initialize database connection'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
+    }
 
     // Parse request body with error handling
     let requestData;
     try {
-      requestData = await req.json();
-      console.log('Received request data:', JSON.stringify(requestData, null, 2));
+      const text = await req.text();
+      console.log('Raw request body:', text);
+      requestData = JSON.parse(text);
+      console.log('Parsed request data:', requestData);
     } catch (error) {
       console.error('Failed to parse request body:', error);
       return new Response(
@@ -108,6 +132,7 @@ serve(async (req) => {
     }
 
     // Verify lease exists before proceeding
+    console.log('Verifying lease:', leaseId);
     const { data: lease, error: leaseError } = await supabase
       .from('leases')
       .select('id, agreement_number')
@@ -125,6 +150,21 @@ serve(async (req) => {
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400
+        }
+      );
+    }
+
+    if (!lease) {
+      console.error('Lease not found:', leaseId);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Lease not found',
+          details: { leaseId }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404
         }
       );
     }
