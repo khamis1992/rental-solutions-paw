@@ -22,4 +22,6 @@ export interface Payment {
   type: string;
   late_fine_amount: number;
   days_overdue: number;
+  include_in_calculation: boolean;
+  invoice_id: string | null;
 }

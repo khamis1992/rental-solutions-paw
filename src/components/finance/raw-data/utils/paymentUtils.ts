@@ -17,7 +17,7 @@ export const createDefaultAgreement = async (payment: RawPaymentImport) => {
 export const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
   // First check if payment already exists
   const { data: existingPayment, error: checkError } = await supabase
-    .from('payments')
+    .from('new_unified_payments')
     .select('id')
     .eq('lease_id', leaseId)
     .eq('payment_date', payment.Payment_Date)
@@ -32,18 +32,20 @@ export const insertPayment = async (leaseId: string, payment: RawPaymentImport) 
     return existingPayment;
   }
 
-  const normalizedMethod = normalizePaymentMethod(payment.Payment_Method);
+  const normalizedMethod = normalizePaymentMethod(payment.Payment_Method || '');
   
   const { data: paymentData, error: paymentError } = await supabase
-    .from('payments')
+    .from('new_unified_payments')
     .insert({
       lease_id: leaseId,
       amount: payment.Amount,
+      amount_paid: payment.Amount,
+      balance: 0,
       payment_method: normalizedMethod,
       payment_date: payment.Payment_Date,
       status: 'completed',
       description: payment.Description,
-      type: payment.Type,
+      type: payment.Type || 'Income',
       transaction_id: payment.Transaction_ID
     })
     .select()

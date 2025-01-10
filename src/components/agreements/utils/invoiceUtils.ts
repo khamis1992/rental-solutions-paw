@@ -52,9 +52,9 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     return null;
   }
 
-  // Fetch all payments for this lease
+  // Fetch all payments for this lease from the new unified payments table
   const { data: payments, error: paymentsError } = await supabase
-    .from("payments")
+    .from("new_unified_payments")
     .select("*")
     .eq("lease_id", leaseId)
     .order("payment_date", { ascending: true });
@@ -103,7 +103,7 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     dueDate: lease.agreement_type === "lease_to_own" 
       ? format(new Date(lease.start_date), "PP") 
       : undefined,
-    payments: payments || [],
-    agreementId: lease.id // Added this field
+    payments: payments as Payment[],
+    agreementId: lease.id
   };
 };
