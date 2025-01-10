@@ -1,127 +1,99 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "./corsHeaders.ts";
-import { DatabaseOperations } from "./dbOperations.ts";
-import { PaymentRequest } from "./types.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface PaymentRequest {
+  leaseId: string;
+  amount: number;
+  paymentMethod: string;
+  description?: string;
+}
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
   try {
-    // Handle CORS preflight requests
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Log service request
+    await supabase.from('service_communication_logs').insert({
+      source_service: 'client',
+      target_service: 'payment_service',
+      request_type: req.method,
+    })
+
+    const { operation, data } = await req.json()
+    let result
+
+    switch (operation) {
+      case 'process_payment':
+        result = await processPayment(supabase, data as PaymentRequest)
+        break
+      default:
+        throw new Error('Invalid operation')
     }
-
-    // Validate environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing environment variables');
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Server configuration error',
-          details: 'Missing required environment variables'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
-        }
-      );
-    }
-
-    // Parse request body
-    let requestData: PaymentRequest;
-    try {
-      const text = await req.text();
-      console.log('Raw request body:', text);
-      requestData = JSON.parse(text);
-      console.log('Parsed request data:', requestData);
-    } catch (error) {
-      console.error('Request parsing error:', error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid request format',
-          details: error instanceof Error ? error.message : 'Failed to parse request body'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
-    const { operation, data } = requestData;
-    
-    if (operation !== 'process_payment') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid operation',
-          details: { operation, supported: ['process_payment'] }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
-    // Initialize database operations
-    const db = new DatabaseOperations(supabaseUrl, supabaseKey);
-
-    // Process payment
-    const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
-
-    // Verify required fields
-    if (!leaseId || typeof leaseId !== 'string') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid lease ID format',
-          details: { leaseId, expectedType: 'string' }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
-    // Verify lease exists
-    await db.verifyLease(leaseId);
-
-    // Create payment
-    const payment = await db.createPayment({
-      leaseId,
-      amount: Number(amount),
-      paymentMethod,
-      description,
-      type
-    });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        data: payment
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-
-  } catch (error) {
-    console.error('Payment service error:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error occurred'
-      }),
+      JSON.stringify(result),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 200 
       }
-    );
+    )
+  } catch (error) {
+    console.error('Payment service error:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
+      }
+    )
   }
-});
+})
+
+async function processPayment(supabase: any, paymentData: PaymentRequest) {
+  console.log('Processing payment:', paymentData)
+
+  const { data: payment, error: paymentError } = await supabase
+    .from('payments')
+    .insert({
+      lease_id: paymentData.leaseId,
+      amount: paymentData.amount,
+      payment_method: paymentData.paymentMethod,
+      description: paymentData.description,
+      status: 'completed',
+      payment_date: new Date().toISOString(),
+    })
+    .select(`
+      *,
+      leases!inner (
+        id,
+        agreement_number,
+        customer_id,
+        profiles!inner (
+          id,
+          full_name,
+          phone_number
+        )
+      )
+    `)
+    .single()
+
+  if (paymentError) {
+    console.error('Payment error:', paymentError)
+    throw paymentError
+  }
+
+  return { success: true, payment }
+}

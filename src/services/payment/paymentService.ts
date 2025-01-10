@@ -6,7 +6,6 @@ export interface PaymentRequest {
   amount: number;
   paymentMethod: PaymentMethodType;
   description?: string;
-  type: 'Income' | 'Expense';  // Make type required
 }
 
 export const paymentService = {
