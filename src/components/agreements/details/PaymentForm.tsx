@@ -18,10 +18,20 @@ import { paymentService } from "@/services/payment/paymentService";
 import { toast } from "sonner";
 import { PaymentMethodType } from "@/types/database/payment.types";
 import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
-import { isValidDateFormat, formatDate } from "@/lib/dateUtils";
+import { isValidDateFormat } from "@/lib/dateUtils";
 
 interface PaymentFormProps {
   agreementId: string;
+}
+
+interface PaymentFormData {
+  amount: number;
+  amountPaid: number;
+  paymentMethod: string;
+  description: string;
+  isRecurring: boolean;
+  recurringInterval: string;
+  paymentDate?: string;
 }
 
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
@@ -55,7 +65,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     }
   }, [baseAmount, rentAmount, setValue]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PaymentFormData) => {
     try {
       // Validate payment date format if provided
       if (data.paymentDate && !isValidDateFormat(data.paymentDate)) {
