@@ -58,10 +58,9 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     try {
       await paymentService.processPayment({
         leaseId: agreementId,
-        amount: Number(data.amountPaid), // Convert to number
+        amount: data.amountPaid,
         paymentMethod: normalizePaymentMethod(data.paymentMethod),
-        description: data.description,
-        type: 'Income'
+        description: data.description
       });
       
       toast.success("Payment processed successfully");
