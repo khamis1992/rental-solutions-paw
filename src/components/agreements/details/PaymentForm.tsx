@@ -56,18 +56,27 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
-      await paymentService.processPayment({
+      console.log('Processing payment with data:', {
         leaseId: agreementId,
-        amount: Number(data.amountPaid), // Convert to number
+        amount: Number(data.amountPaid),
+        paymentMethod: data.paymentMethod,
+        description: data.description
+      });
+
+      const response = await paymentService.processPayment({
+        leaseId: agreementId,
+        amount: Number(data.amountPaid),
         paymentMethod: normalizePaymentMethod(data.paymentMethod),
         description: data.description,
         type: 'Income'
       });
-      
+
+      console.log('Payment service response:', response);
       toast.success("Payment processed successfully");
     } catch (error) {
       console.error("Error processing payment:", error);
-      toast.error("Failed to process payment");
+      const errorMessage = error instanceof Error ? error.message : "Failed to process payment";
+      toast.error(`Payment processing failed: ${errorMessage}`);
     }
   };
 
