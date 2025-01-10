@@ -2823,6 +2823,33 @@ export type Database = {
           },
         ]
       }
+      payment_date_migration_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          original_date: string | null
+          payment_id: string | null
+          reason: string | null
+          table_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          original_date?: string | null
+          payment_id?: string | null
+          reason?: string | null
+          table_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          original_date?: string | null
+          payment_id?: string | null
+          reason?: string | null
+          table_name?: string | null
+        }
+        Relationships: []
+      }
       payment_history: {
         Row: {
           actual_payment_date: string | null
@@ -5035,6 +5062,12 @@ export type Database = {
       has_active_agreements: {
         Args: {
           customer_id: string
+        }
+        Returns: boolean
+      }
+      is_valid_date: {
+        Args: {
+          date_str: string
         }
         Returns: boolean
       }
