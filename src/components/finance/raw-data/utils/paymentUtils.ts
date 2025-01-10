@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentMethodType } from "@/types/database/payment.types";
+import { PaymentMethodType } from "../../types/transaction.types";
 import { RawPaymentImport } from "../../types/transaction.types";
 
 export const normalizePaymentMethod = (method: string): PaymentMethodType => {
