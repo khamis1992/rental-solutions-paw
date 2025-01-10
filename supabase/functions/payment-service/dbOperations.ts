@@ -1,50 +1,51 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { LeaseVerificationResult } from './types.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { LeaseVerificationResult } from './types.ts';
 
 export class DatabaseOperations {
-  private supabase
+  private supabase;
 
   constructor(supabaseUrl: string, supabaseKey: string) {
     this.supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false }
-    })
+    });
   }
 
   async verifyLease(leaseId: string): Promise<LeaseVerificationResult> {
-    console.log('Verifying lease:', leaseId)
+    console.log('Verifying lease:', leaseId);
     
     const { data, error } = await this.supabase
       .from('leases')
       .select(`
         id,
         agreement_number,
+        customer_id,
         profiles!leases_customer_id_fkey (
           id,
           full_name
         )
       `)
       .eq('id', leaseId)
-      .single()
+      .single();
 
     if (error) {
-      console.error('Lease verification error:', error)
-      throw new Error('Failed to verify lease')
+      console.error('Lease verification error:', error);
+      throw new Error('Failed to verify lease');
     }
 
     if (!data) {
-      console.error('Lease not found:', leaseId)
-      throw new Error('Lease not found')
+      console.error('Lease not found:', leaseId);
+      throw new Error('Lease not found');
     }
 
-    return data
+    return data;
   }
 
   async createPayment(params: {
-    leaseId: string
-    amount: number
-    paymentMethod: string
-    description: string
-    type: string
+    leaseId: string;
+    amount: number;
+    paymentMethod: string;
+    description: string;
+    type: string;
   }) {
     const { data, error } = await this.supabase
       .from('payments')
@@ -74,13 +75,13 @@ export class DatabaseOperations {
           )
         )
       `)
-      .single()
+      .single();
 
     if (error) {
-      console.error('Payment creation error:', error)
-      throw new Error('Failed to create payment')
+      console.error('Payment creation error:', error);
+      throw new Error('Failed to create payment');
     }
 
-    return data
+    return data;
   }
 }
