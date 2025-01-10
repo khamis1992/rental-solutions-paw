@@ -13,21 +13,43 @@ serve(async (req) => {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // Validate environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing environment variables');
+      console.error('Missing environment variables:', { supabaseUrl: !!supabaseUrl, supabaseKey: !!supabaseKey });
       throw new Error('Missing environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Log request details for debugging
+    console.log('Request method:', req.method);
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
     // Parse and validate request data
     const requestData = await req.json();
     console.log('Received payment request:', requestData);
 
-    const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = requestData;
+    const { operation, data } = requestData;
+    
+    if (operation !== 'process_payment') {
+      console.error('Invalid operation:', operation);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid operation',
+          details: { operation }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
 
     // Validate required fields with type checking
     if (!leaseId || typeof leaseId !== 'string') {
@@ -97,6 +119,14 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Creating payment with data:', {
+      lease_id: leaseId,
+      amount: numericAmount,
+      payment_method: paymentMethod,
+      description,
+      type
+    });
 
     // Create payment with explicit field selection
     const { data: payment, error: paymentError } = await supabase
