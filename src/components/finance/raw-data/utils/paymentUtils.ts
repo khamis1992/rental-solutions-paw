@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { RawPaymentImport } from "../../types/transaction.types";
+import { RawPaymentImport } from "@/types/database/payment.types";
 import { normalizePaymentMethod } from "../../utils/paymentUtils";
 
 export const createDefaultAgreement = async (payment: RawPaymentImport) => {
