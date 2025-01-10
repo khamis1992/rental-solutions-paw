@@ -27,13 +27,16 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      const error = 'Missing environment variables';
-      console.error(error, {
-        supabaseUrl: !!supabaseUrl,
-        supabaseKey: !!supabaseKey
+      console.error('Missing environment variables:', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseKey
       });
       return new Response(
-        JSON.stringify({ success: false, error }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Server configuration error',
+          details: 'Missing required environment variables'
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500 
@@ -44,14 +47,19 @@ serve(async (req) => {
     // Create Supabase client with error handling
     let supabase;
     try {
-      supabase = createClient(supabaseUrl, supabaseKey);
+      supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          persistSession: false
+        }
+      });
       console.log('Supabase client created successfully');
     } catch (error) {
       console.error('Failed to create Supabase client:', error);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Failed to initialize database connection'
+          error: 'Database connection error',
+          details: error instanceof Error ? error.message : 'Unknown error'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -68,11 +76,12 @@ serve(async (req) => {
       requestData = JSON.parse(text);
       console.log('Parsed request data:', requestData);
     } catch (error) {
-      console.error('Failed to parse request body:', error);
+      console.error('Request parsing error:', error);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid JSON in request body'
+          error: 'Invalid request format',
+          details: error instanceof Error ? error.message : 'Failed to parse request body'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,12 +93,12 @@ serve(async (req) => {
     const { operation, data } = requestData;
     
     if (operation !== 'process_payment') {
-      console.error('Invalid operation:', operation);
+      console.error('Invalid operation requested:', operation);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Invalid operation',
-          details: { operation }
+          details: { operation, supported: ['process_payment'] }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -100,7 +109,7 @@ serve(async (req) => {
 
     // Validate payment data
     if (!data) {
-      console.error('Missing payment data');
+      console.error('Missing payment data in request');
       return new Response(
         JSON.stringify({
           success: false,
@@ -117,12 +126,12 @@ serve(async (req) => {
 
     // Validate required fields with detailed logging
     if (!leaseId || typeof leaseId !== 'string') {
-      console.error('Invalid leaseId:', leaseId);
+      console.error('Invalid leaseId provided:', { leaseId, type: typeof leaseId });
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Missing or invalid leaseId',
-          details: { leaseId }
+          error: 'Invalid lease ID format',
+          details: { leaseId, expectedType: 'string' }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,7 +153,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid lease ID or lease not found',
+          error: 'Failed to verify lease',
           details: leaseError
         }),
         { 
@@ -171,12 +180,12 @@ serve(async (req) => {
 
     const numericAmount = Number(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      console.error('Invalid amount:', amount);
+      console.error('Invalid amount:', { amount, parsed: numericAmount });
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Invalid amount',
-          details: { amount }
+          details: { amount, reason: 'Must be a positive number' }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -191,7 +200,7 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           error: 'Invalid payment type',
-          details: { type }
+          details: { type, allowed: ['Income', 'Expense'] }
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -257,8 +266,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Internal server error',
-        details: error
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error occurred'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
