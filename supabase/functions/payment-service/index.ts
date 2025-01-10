@@ -11,18 +11,15 @@ serve(async (req) => {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
       return new Response(null, { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: corsHeaders 
       });
     }
 
-    // Log request details for debugging
+    // Log request details
     console.log('Request method:', req.method);
     console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     
-    // Validate environment variables with detailed logging
+    // Validate environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -124,7 +121,7 @@ serve(async (req) => {
 
     const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
 
-    // Validate required fields with detailed logging
+    // Validate required fields
     if (!leaseId || typeof leaseId !== 'string') {
       console.error('Invalid leaseId provided:', { leaseId, type: typeof leaseId });
       return new Response(
@@ -140,7 +137,7 @@ serve(async (req) => {
       );
     }
 
-    // Verify lease exists before proceeding
+    // Verify lease exists
     console.log('Verifying lease:', leaseId);
     const { data: lease, error: leaseError } = await supabase
       .from('leases')
@@ -217,7 +214,7 @@ serve(async (req) => {
       type
     });
 
-    // Create payment with explicit field selection
+    // Create payment
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
