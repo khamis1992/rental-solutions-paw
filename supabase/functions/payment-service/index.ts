@@ -17,6 +17,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing environment variables');
       throw new Error('Missing environment variables');
     }
 
