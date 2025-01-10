@@ -18,6 +18,7 @@ import { paymentService } from "@/services/payment/paymentService";
 import { toast } from "sonner";
 import { PaymentMethodType } from "@/types/database/payment.types";
 import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
+import { isValidDateFormat, formatDate } from "@/lib/dateUtils";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -56,12 +57,19 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
+      // Validate payment date format if provided
+      if (data.paymentDate && !isValidDateFormat(data.paymentDate)) {
+        toast.error("Invalid date format. Please use DD/MM/YYYY");
+        return;
+      }
+
       await paymentService.processPayment({
         leaseId: agreementId,
-        amount: Number(data.amountPaid), // Convert to number
+        amount: Number(data.amountPaid),
         paymentMethod: normalizePaymentMethod(data.paymentMethod),
         description: data.description,
-        type: 'Income'
+        type: 'Income',
+        paymentDate: data.paymentDate
       });
       
       toast.success("Payment processed successfully");
@@ -132,6 +140,22 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           />
           {errors.amountPaid && (
             <p className="text-sm text-red-500 mt-1">{errors.amountPaid.message}</p>
+          )}
+        </div>
+
+        <div>
+          <Label htmlFor="paymentDate">Payment Date (DD/MM/YYYY)</Label>
+          <Input
+            id="paymentDate"
+            type="text"
+            placeholder="DD/MM/YYYY"
+            {...register("paymentDate", {
+              validate: (value) => 
+                !value || isValidDateFormat(value) || "Please use DD/MM/YYYY format"
+            })}
+          />
+          {errors.paymentDate && (
+            <p className="text-sm text-red-500 mt-1">{errors.paymentDate.message}</p>
           )}
         </div>
 
