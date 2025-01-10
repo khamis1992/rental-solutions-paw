@@ -5,7 +5,6 @@ import { InvoiceList } from "./details/InvoiceList";
 import { DocumentUpload } from "./details/DocumentUpload";
 import { DamageAssessment } from "./details/DamageAssessment";
 import { TrafficFines } from "./details/TrafficFines";
-import { RentManagement } from "./details/RentManagement";
 import { AgreementHeader } from "./AgreementHeader";
 import { CustomerInfoCard } from "./details/CustomerInfoCard";
 import { VehicleInfoCard } from "./details/VehicleInfoCard";
@@ -260,9 +259,6 @@ export const AgreementDetailsDialog = ({
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="damages">Damages</TabsTrigger>
                 <TabsTrigger value="fines">Traffic Fines</TabsTrigger>
-                {agreement.status === 'active' && (
-                  <TabsTrigger value="rent">Rent Management</TabsTrigger>
-                )}
               </TabsList>
               
               <TabsContent value="payments">
@@ -283,15 +279,6 @@ export const AgreementDetailsDialog = ({
               <TabsContent value="fines">
                 <TrafficFines agreementId={agreementId} />
               </TabsContent>
-              {agreement.status === 'active' && (
-                <TabsContent value="rent">
-                  <RentManagement 
-                    agreementId={agreementId}
-                    initialRentAmount={rentAmount}
-                    initialRentDueDay={agreement.rent_due_day}
-                  />
-                </TabsContent>
-              )}
             </Tabs>
           </div>
         ) : (
