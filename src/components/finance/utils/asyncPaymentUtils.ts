@@ -14,10 +14,6 @@ interface PaymentDetails {
   description?: string;
 }
 
-/**
- * Processes a payment with database interaction.
- * async keyword is required here due to await usage with Supabase.
- */
 export async function processPaymentWithDb(
   details: PaymentDetails
 ): Promise<PaymentResult> {
@@ -36,7 +32,7 @@ export async function processPaymentWithDb(
         lease_id: details.leaseId,
         payment_method: details.paymentMethod,
         description: details.description,
-        status: "completed" as PaymentStatus,
+        status: 'completed' as PaymentStatus,
         payment_date: new Date().toISOString(),
         type: 'Income'
       })
@@ -58,10 +54,6 @@ export async function processPaymentWithDb(
   }
 }
 
-/**
- * Validates payment details synchronously.
- * No async needed as it's a pure validation function.
- */
 export function validatePaymentDetails(details: PaymentDetails): boolean {
   return (
     details.amount > 0 &&

@@ -24,7 +24,7 @@ export async function processPayment(details: PaymentDetails): Promise<Processed
         lease_id: details.leaseId,
         payment_method: details.paymentMethod || 'Cash',
         description: details.description,
-        status: 'completed' as PaymentStatus,
+        status: 'completed',
         payment_date: new Date().toISOString(),
       })
       .select()

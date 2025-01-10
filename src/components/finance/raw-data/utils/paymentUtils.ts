@@ -1,5 +1,6 @@
-import { PaymentMethodType } from "@/types/database/payment.types";
 import { supabase } from "@/integrations/supabase/client";
+import { PaymentMethodType } from "@/types/database/payment.types";
+import { RawPaymentImport } from "../../types/transaction.types";
 
 export const normalizePaymentMethod = (method: string): PaymentMethodType => {
   const methodMap: Record<string, PaymentMethodType> = {
@@ -41,7 +42,27 @@ export const createDefaultAgreement = async (
   }
 };
 
-export const updatePaymentStatus = async (id: string, isValid: boolean, errorDescription?: string) => {
+export const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
+  const { error } = await supabase
+    .from('payments')
+    .insert({
+      lease_id: leaseId,
+      amount: payment.Amount,
+      payment_method: normalizePaymentMethod(payment.Payment_Method || ''),
+      payment_date: payment.Payment_Date,
+      status: 'completed',
+      description: payment.Description,
+      type: payment.Type || 'Income'
+    });
+
+  if (error) throw error;
+};
+
+export const updatePaymentStatus = async (
+  id: string, 
+  isValid: boolean, 
+  errorDescription?: string
+) => {
   const { error } = await supabase
     .from('raw_payment_imports')
     .update({
@@ -50,8 +71,5 @@ export const updatePaymentStatus = async (id: string, isValid: boolean, errorDes
     })
     .eq('id', id);
 
-  if (error) {
-    console.error('Error updating payment status:', error);
-    throw error;
-  }
+  if (error) throw error;
 };
