@@ -1,6 +1,5 @@
-export type PaymentMethodType = 'Cash' | 'Invoice' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
-
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+export type PaymentMethodType = 'Cash' | 'WireTransfer' | 'Invoice' | 'On_hold' | 'Deposit' | 'Cheque';
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded' | 'cancelled';
 
 export interface RawPaymentImport {
   id?: string;
@@ -16,7 +15,6 @@ export interface RawPaymentImport {
   Status?: string;
   is_valid?: boolean;
   error_description?: string;
-  created_at?: string;
 }
 
 export interface Payment {
@@ -44,21 +42,12 @@ export interface Payment {
   updated_at: string;
 }
 
-export interface PaymentRequest {
-  leaseId: string;
-  amount: number;
-  paymentMethod: PaymentMethodType;
-  description?: string;
-  type: string;
-  paymentDate?: string;
-}
-
 export interface PaymentFormData {
   amount: number;
   amountPaid: number;
   paymentMethod: PaymentMethodType;
-  description: string;
-  isRecurring: boolean;
-  recurringInterval: string;
+  description?: string;
   paymentDate?: string;
+  isRecurring: boolean;
+  recurringInterval?: string;
 }

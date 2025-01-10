@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { Payment } from "@/types/database/payment.types";
 
 export interface InvoiceData {
@@ -41,4 +42,46 @@ export const transformPayments = (dbPayments: any[]): Payment[] => {
     created_at: payment.created_at,
     updated_at: payment.updated_at
   }));
-}
+};
+
+export const generateInvoiceData = async (agreementId: string): Promise<InvoiceData | null> => {
+  try {
+    const { data: agreement, error: agreementError } = await supabase
+      .from('leases')
+      .select(`
+        *,
+        customer:profiles(full_name, address),
+        vehicle:vehicles(make, model, year)
+      `)
+      .eq('id', agreementId)
+      .single();
+
+    if (agreementError) throw agreementError;
+
+    const { data: payments, error: paymentsError } = await supabase
+      .from('new_unified_payments')
+      .select('*')
+      .eq('lease_id', agreementId)
+      .order('payment_date', { ascending: true });
+
+    if (paymentsError) throw paymentsError;
+
+    return {
+      invoiceNumber: agreement.agreement_number || `INV-${Date.now()}`,
+      customerName: agreement.customer?.full_name || 'Unknown Customer',
+      customerAddress: agreement.customer?.address || 'No address provided',
+      startDate: new Date(agreement.start_date).toLocaleDateString(),
+      endDate: new Date(agreement.end_date).toLocaleDateString(),
+      vehicleDetails: `${agreement.vehicle?.year} ${agreement.vehicle?.make} ${agreement.vehicle?.model}`,
+      agreementType: agreement.agreement_type,
+      items: [{
+        description: 'Rental Fee',
+        amount: agreement.total_amount
+      }],
+      payments: transformPayments(payments || [])
+    };
+  } catch (error) {
+    console.error('Error generating invoice data:', error);
+    return null;
+  }
+};

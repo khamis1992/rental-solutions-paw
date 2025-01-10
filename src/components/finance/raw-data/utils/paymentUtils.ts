@@ -1,59 +1,57 @@
-import { RawPaymentImport } from "@/types/database/payment.types";
+import { PaymentMethodType } from "@/types/database/payment.types";
 import { supabase } from "@/integrations/supabase/client";
 
-export const updatePaymentStatus = async (
-  paymentId: string, 
-  isValid: boolean, 
-  errorDescription?: string
-) => {
-  const { error: updateError } = await supabase
-    .from('raw_payment_imports')
-    .update({ 
-      is_valid: isValid,
-      error_description: errorDescription || null
-    })
-    .eq('id', paymentId);
+export const normalizePaymentMethod = (method: string): PaymentMethodType => {
+  const methodMap: Record<string, PaymentMethodType> = {
+    'cash': 'Cash',
+    'invoice': 'Invoice',
+    'wire': 'WireTransfer',
+    'wiretransfer': 'WireTransfer',
+    'wire_transfer': 'WireTransfer',
+    'cheque': 'Cheque',
+    'check': 'Cheque',
+    'deposit': 'Deposit',
+    'onhold': 'On_hold',
+    'on_hold': 'On_hold',
+    'on-hold': 'On_hold'
+  };
 
-  if (updateError) throw updateError;
+  const normalized = method.toLowerCase().replace(/[^a-z_]/g, '');
+  return methodMap[normalized] || 'Cash';
 };
 
-export const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
-  // First check if payment already exists
-  const { data: existingPayment, error: checkError } = await supabase
-    .from('new_unified_payments')
-    .select('id')
-    .eq('lease_id', leaseId)
-    .eq('payment_date', payment.Payment_Date)
-    .eq('amount', payment.Amount)
-    .maybeSingle();
+export const createDefaultAgreement = async (
+  agreementNumber: string,
+  customerName: string,
+  amount: number
+): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase
+      .rpc('create_default_agreement_if_not_exists', {
+        p_agreement_number: agreementNumber,
+        p_customer_name: customerName,
+        p_amount: amount
+      });
 
-  if (checkError) throw checkError;
-
-  // If payment already exists, return early
-  if (existingPayment) {
-    console.log('Payment already exists:', existingPayment);
-    return existingPayment;
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating default agreement:', error);
+    return null;
   }
+};
 
-  const normalizedMethod = normalizePaymentMethod(payment.Payment_Method || '');
-  
-  const { data: paymentData, error: paymentError } = await supabase
-    .from('new_unified_payments')
-    .insert({
-      lease_id: leaseId,
-      amount: payment.Amount,
-      amount_paid: payment.Amount,
-      balance: 0,
-      payment_method: normalizedMethod,
-      payment_date: payment.Payment_Date,
-      status: 'completed',
-      description: payment.Description,
-      type: payment.Type || 'Income',
-      transaction_id: payment.Transaction_ID
+export const updatePaymentStatus = async (id: string, isValid: boolean, errorDescription?: string) => {
+  const { error } = await supabase
+    .from('raw_payment_imports')
+    .update({
+      is_valid: isValid,
+      error_description: errorDescription
     })
-    .select()
-    .single();
+    .eq('id', id);
 
-  if (paymentError) throw paymentError;
-  return paymentData;
+  if (error) {
+    console.error('Error updating payment status:', error);
+    throw error;
+  }
 };
