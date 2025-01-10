@@ -7,12 +7,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
   try {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -111,22 +111,7 @@ serve(async (req) => {
         balance: 0,
         type: type
       })
-      .select(`
-        id,
-        amount,
-        payment_method,
-        description,
-        status,
-        payment_date,
-        leases:lease_id (
-          id,
-          agreement_number,
-          customer_id,
-          profiles:customer_id (
-            full_name
-          )
-        )
-      `)
+      .select()
       .single();
 
     if (paymentError) {
@@ -161,7 +146,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Internal server error'
+        error: error.message || 'Internal server error',
+        details: error
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
