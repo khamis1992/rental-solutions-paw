@@ -18,7 +18,6 @@ export class DatabaseOperations {
       .select(`
         id,
         agreement_number,
-        customer_id,
         profiles!leases_customer_id_fkey (
           id,
           full_name
