@@ -9,6 +9,7 @@ export interface Payment {
   balance: number;
   status: PaymentStatus | null;
   payment_date: string | null;
+  due_date: string | null;
   transaction_id: string | null;
   payment_method: PaymentMethodType | null;
   security_deposit_id: string | null;

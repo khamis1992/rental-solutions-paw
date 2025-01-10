@@ -27,16 +27,16 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("payments").insert({
+      const { error } = await supabase.from("new_unified_payments").insert({
         lease_id: agreementId,
         amount: parseFloat(data.amount),
+        amount_paid: parseFloat(data.amount),
+        balance: 0,
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
         status: 'completed',
-        type: 'Income',
-        amount_paid: parseFloat(data.amount),
-        balance: 0
+        type: 'Income'
       });
 
       if (error) throw error;

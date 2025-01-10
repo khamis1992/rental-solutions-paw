@@ -2666,6 +2666,116 @@ export type Database = {
           },
         ]
       }
+      new_unified_payments: {
+        Row: {
+          amount: number
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string
+          include_in_calculation: boolean | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          next_payment_date: string | null
+          payment_date: string | null
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          include_in_calculation?: boolean | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          next_payment_date?: string | null
+          payment_date?: string | null
+          payment_method?:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          include_in_calculation?: boolean | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          next_payment_date?: string | null
+          payment_date?: string | null
+          payment_method?:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_unified_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "new_unified_payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "new_unified_payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "new_unified_payments_security_deposit_id_fkey"
+            columns: ["security_deposit_id"]
+            isOneToOne: false
+            referencedRelation: "security_deposits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operational_anomalies: {
         Row: {
           affected_records: Json | null
