@@ -10,9 +10,21 @@ import { AgreementListHeader } from "./list/AgreementListHeader";
 import { AgreementListContent } from "./list/AgreementListContent";
 import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, History } from "lucide-react";
 import { usePullAgreementData } from "./hooks/usePullAgreementData";
 import { AgreementPDFImport } from "./AgreementPDFImport";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -22,6 +34,7 @@ export const AgreementList = () => {
   const [selectedDetailsId, setSelectedDetailsId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
+  const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
 
   const {
     currentPage,
@@ -47,6 +60,22 @@ export const AgreementList = () => {
     const agreement = await handleViewContract(agreementId);
     if (agreement) {
       navigate(`/agreements/${agreementId}/view`);
+    }
+  };
+
+  const handleDeleteHistoricalPayments = async () => {
+    try {
+      const { error } = await supabase.rpc('delete_all_historical_payments');
+
+      if (error) throw error;
+
+      toast.success("All historical payments deleted successfully");
+      await refetch();
+    } catch (error) {
+      console.error("Error deleting historical payments:", error);
+      toast.error("Failed to delete historical payments");
+    } finally {
+      setIsHistoricalDeleteDialogOpen(false);
     }
   };
 
@@ -80,6 +109,15 @@ export const AgreementList = () => {
           >
             <Download className="h-4 w-4 mr-2" />
             Pull Data
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsHistoricalDeleteDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <History className="h-4 w-4" />
+            Delete Pre-2025 Payments
           </Button>
         </div>
       </div>
@@ -127,6 +165,26 @@ export const AgreementList = () => {
         onOpenChange={setShowDeleteDialog}
         onDeleted={refetch}
       />
+
+      <AlertDialog open={isHistoricalDeleteDialogOpen} onOpenChange={setIsHistoricalDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Historical Payments</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete all payments made before 2025 across all agreements. This action cannot be undone. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteHistoricalPayments}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete All Historical Payments
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
