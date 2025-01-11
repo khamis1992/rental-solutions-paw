@@ -67,42 +67,41 @@ serve(async (req) => {
       );
     }
 
-    console.log('Calling process_payment with parameters:', {
-      input_lease_id: leaseId,
-      input_amount: amount,
-      input_payment_method: paymentMethod,
-      input_description: description,
-      input_type: type
-    });
+    // Direct insert into payments table instead of using the function
+    const { data: payment, error: insertError } = await supabase
+      .from('payments')
+      .insert({
+        lease_id: leaseId,
+        amount: amount,
+        payment_method: paymentMethod,
+        description: description,
+        type: type,
+        status: 'completed',
+        payment_date: new Date().toISOString(),
+        amount_paid: amount,
+        balance: 0
+      })
+      .select()
+      .single();
 
-    // Call the process_payment function with renamed parameters
-    const { data: result, error: functionError } = await supabase
-      .rpc('process_payment', {
-        input_lease_id: leaseId,
-        input_amount: amount,
-        input_payment_method: paymentMethod,
-        input_description: description,
-        input_type: type
-      });
-
-    if (functionError) {
-      console.error('Payment processing error:', functionError);
+    if (insertError) {
+      console.error('Payment insert error:', insertError);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Failed to process payment',
-          details: functionError
+          details: insertError
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    console.log('Payment processed successfully:', result);
+    console.log('Payment processed successfully:', payment);
 
     return new Response(
       JSON.stringify({
         success: true,
-        data: result
+        data: payment
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
