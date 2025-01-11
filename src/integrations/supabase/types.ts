@@ -5227,6 +5227,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      set_datestyle: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       swap_day_month: {
         Args: {
           input_date: string

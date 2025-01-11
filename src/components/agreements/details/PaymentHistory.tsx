@@ -2,9 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
-import { useOverduePayments } from "../hooks/useOverduePayments";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import { AlertTriangle, CheckCircle, Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -138,7 +137,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               <p>Days Overdue: {overduePayment.days_overdue}</p>
               <p>Outstanding Balance: {formatCurrency(totalBalance)}</p>
               <p>Last Payment: {overduePayment.last_payment_date ? 
-                format(new Date(overduePayment.last_payment_date), 'PP') : 
+                formatDateToDisplay(new Date(overduePayment.last_payment_date)) : 
                 'No payments recorded'}
               </p>
             </div>
@@ -154,7 +153,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               >
                 <div>
                   <div className="font-medium">
-                    {payment.payment_date}
+                    {payment.payment_date ? formatDateToDisplay(new Date(payment.payment_date)) : 'No date'}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {payment.payment_method} - {payment.description || 'Payment'}
