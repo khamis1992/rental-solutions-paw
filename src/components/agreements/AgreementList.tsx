@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { InvoiceDialog } from "./InvoiceDialog";
 import { PaymentTrackingDialog } from "./PaymentTrackingDialog";
 import { PaymentHistoryDialog } from "./PaymentHistoryDialog";
@@ -28,6 +29,7 @@ import {
 
 export const AgreementList = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const [selectedPaymentTrackingId, setSelectedPaymentTrackingId] = useState<string | null>(null);
   const [selectedPaymentHistoryId, setSelectedPaymentHistoryId] = useState<string | null>(null);
