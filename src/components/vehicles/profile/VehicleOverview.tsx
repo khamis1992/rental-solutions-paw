@@ -22,7 +22,7 @@ interface VehicleOverviewProps {
 }
 
 export const VehicleOverview = ({ vehicle }: VehicleOverviewProps) => {
-  // Fetch insurance information
+  // Fetch insurance information using maybeSingle() instead of single()
   const { data: insurance } = useQuery({
     queryKey: ["vehicle-insurance", vehicle.id],
     queryFn: async () => {
@@ -30,7 +30,7 @@ export const VehicleOverview = ({ vehicle }: VehicleOverviewProps) => {
         .from("vehicle_insurance")
         .select("*")
         .eq("vehicle_id", vehicle.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

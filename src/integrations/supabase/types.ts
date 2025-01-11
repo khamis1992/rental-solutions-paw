@@ -3564,7 +3564,9 @@ export type Database = {
           Amount: number | null
           Customer_Name: string | null
           Description: string | null
+          error_description: string | null
           id: string
+          is_valid: boolean | null
           License_Plate: string | null
           Payment_Date: string | null
           Payment_Method: string | null
@@ -3577,7 +3579,9 @@ export type Database = {
           Amount?: number | null
           Customer_Name?: string | null
           Description?: string | null
+          error_description?: string | null
           id?: string
+          is_valid?: boolean | null
           License_Plate?: string | null
           Payment_Date?: string | null
           Payment_Method?: string | null
@@ -3590,7 +3594,9 @@ export type Database = {
           Amount?: number | null
           Customer_Name?: string | null
           Description?: string | null
+          error_description?: string | null
           id?: string
+          is_valid?: boolean | null
           License_Plate?: string | null
           Payment_Date?: string | null
           Payment_Method?: string | null
@@ -5302,7 +5308,24 @@ export type Database = {
         | "stolen"
     }
     CompositeTypes: {
-      [_ in never]: never
+      payment_assignment_result: {
+        success: boolean | null
+        agreement_number: string | null
+        amount_assigned: number | null
+        timestamp: string | null
+      }
+      transaction_form_data: {
+        type: string | null
+        amount: number | null
+        category_id: string | null
+        description: string | null
+        transaction_date: string | null
+        cost_type: string | null
+        is_recurring: boolean | null
+        payment_method: string | null
+        interval_value: number | null
+        interval_unit: string | null
+      }
     }
   }
 }
