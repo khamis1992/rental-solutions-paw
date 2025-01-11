@@ -1,5 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
-
 export interface VehicleFilters {
   search: string;
   status: string;
@@ -16,10 +14,5 @@ interface AdvancedVehicleFiltersProps {
 }
 
 export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFiltersProps) => {
-  return (
-    <Card className="mb-6">
-      <CardContent>
-      </CardContent>
-    </Card>
-  );
+  return null;
 };
