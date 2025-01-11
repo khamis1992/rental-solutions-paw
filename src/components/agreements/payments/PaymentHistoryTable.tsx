@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -18,6 +18,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatCurrency } from "@/lib/utils";
 
 interface PaymentHistoryTableProps {
   paymentHistory: any[];
@@ -56,7 +57,6 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
       if (error) throw error;
 
       toast.success("Payment deleted successfully");
-      // The payment list will be automatically updated through real-time subscription
       await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
     } catch (error) {
       console.error("Error deleting payment:", error);
@@ -81,6 +81,7 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
             <TableHead>Customer</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Amount</TableHead>
+            <TableHead>Late Fine</TableHead>
             <TableHead>Method</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Invoice</TableHead>
@@ -92,13 +93,23 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
             <TableRow key={payment.id}>
               <TableCell>
                 {payment.payment_date
-                  ? format(new Date(payment.payment_date), "MMM d, yyyy")
-                  : format(new Date(payment.created_at), "MMM d, yyyy")}
+                  ? format(new Date(payment.payment_date), "dd/MM/yyyy")
+                  : format(new Date(payment.created_at), "dd/MM/yyyy")}
               </TableCell>
               <TableCell>{payment.agreement_number || "N/A"}</TableCell>
               <TableCell>{payment.customer?.full_name || "Unknown"}</TableCell>
               <TableCell>{payment.customer?.phone_number || "N/A"}</TableCell>
-              <TableCell>QAR {payment.amount.toFixed(2)}</TableCell>
+              <TableCell>{formatCurrency(payment.amount)}</TableCell>
+              <TableCell>
+                {payment.late_fine_amount > 0 ? (
+                  <div className="flex items-center gap-1 text-red-600">
+                    <AlertTriangle className="h-4 w-4" />
+                    {formatCurrency(payment.late_fine_amount)}
+                  </div>
+                ) : (
+                  "-"
+                )}
+              </TableCell>
               <TableCell>
                 <Badge variant="outline">
                   {payment.payment_method || "Not specified"}

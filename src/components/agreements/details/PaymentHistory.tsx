@@ -44,7 +44,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           payment_date,
           status,
           payment_method,
-          description
+          description,
+          late_fine_amount,
+          days_overdue
         `)
         .eq('lease_id', agreementId)
         .order('payment_date', { ascending: false });
@@ -90,8 +92,10 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   const handleDeleteHistoricalPayments = async () => {
     try {
-      const { error } = await supabase
-        .rpc('delete_historical_payments', { agreement_id: agreementId });
+      const { error } = await supabase.functions.invoke('delete-historical-payments', {
+        method: 'POST',
+        body: { agreementId }
+      });
 
       if (error) throw error;
 
@@ -105,12 +109,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     }
   };
 
-  // Calculate total balance from all payments
-  const totalBalance = payments?.reduce((sum, payment) => sum + (payment.balance || 0), 0) || 0;
-
   if (isLoadingPayments || isLoadingOverdue) {
     return <div>Loading payment history...</div>;
   }
+
+  // Calculate total balance from all payments
+  const totalBalance = payments?.reduce((sum, payment) => sum + (payment.balance || 0), 0) || 0;
 
   return (
     <Card>
@@ -163,6 +167,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                 <div className="text-right space-y-1">
                   <div>Total Amount: {formatCurrency(payment.amount)}</div>
                   <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
+                  {payment.late_fine_amount > 0 && (
+                    <div className="text-red-600 flex items-center justify-end gap-1">
+                      <AlertTriangle className="h-4 w-4" />
+                      Late Fine: {formatCurrency(payment.late_fine_amount)}
+                    </div>
+                  )}
                   {payment.balance > 0 && (
                     <div className="text-red-600">Balance: {formatCurrency(payment.balance)}</div>
                   )}
