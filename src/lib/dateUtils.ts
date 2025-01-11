@@ -80,3 +80,16 @@ export const formatApiDateToDisplay = (isoDate: string | null): string => {
     return '';
   }
 };
+
+export const swap_day_month = (date: Date): Date => {
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-11
+  const day = date.getDate();
+  
+  // Only swap if day is a valid month number (1-12)
+  if (day <= 12) {
+    return new Date(year, day - 1, month + 1);
+  }
+  
+  return date;
+};

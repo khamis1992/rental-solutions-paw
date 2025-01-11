@@ -3577,6 +3577,7 @@ export type Database = {
         Row: {
           Agreement_Number: string | null
           Amount: number | null
+          created_at: string | null
           Customer_Name: string | null
           Description: string | null
           error_description: string | null
@@ -3592,6 +3593,7 @@ export type Database = {
         Insert: {
           Agreement_Number?: string | null
           Amount?: number | null
+          created_at?: string | null
           Customer_Name?: string | null
           Description?: string | null
           error_description?: string | null
@@ -3607,6 +3609,7 @@ export type Database = {
         Update: {
           Agreement_Number?: string | null
           Amount?: number | null
+          created_at?: string | null
           Customer_Name?: string | null
           Description?: string | null
           error_description?: string | null
