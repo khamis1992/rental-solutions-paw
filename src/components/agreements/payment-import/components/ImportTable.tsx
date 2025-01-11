@@ -50,8 +50,14 @@ export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
         return dateStr;
       }
 
+      // Always swap day and month for consistent DD/MM/YYYY display
+      const day = parsedDate.getDate();
+      const month = parsedDate.getMonth();
+      const year = parsedDate.getFullYear();
+      const swappedDate = new Date(year, day - 1, month + 1);
+      
       // Format in DD/MM/YYYY
-      return format(parsedDate, 'dd/MM/yyyy');
+      return isValid(swappedDate) ? format(swappedDate, 'dd/MM/yyyy') : format(parsedDate, 'dd/MM/yyyy');
     } catch (error) {
       console.error('Error formatting date:', error);
       return String(value);
