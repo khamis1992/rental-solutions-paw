@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface VehicleFilters {
@@ -17,23 +16,6 @@ interface AdvancedVehicleFiltersProps {
 }
 
 export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFiltersProps) => {
-  const [filters, setFilters] = useState<VehicleFilters>({
-    search: "",
-    status: "all",
-    location: "",
-    makeModel: "",
-    yearRange: {
-      from: null,
-      to: null,
-    },
-  });
-
-  const handleFilterChange = (key: keyof VehicleFilters, value: any) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
   return (
     <Card className="mb-6">
       <CardContent>
