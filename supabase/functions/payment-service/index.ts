@@ -19,13 +19,15 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseKey) {
       console.error('Missing environment variables');
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing environment variables' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Server configuration error' 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
     const requestData = await req.json();
     const { operation, data } = requestData;
     
@@ -35,18 +37,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid operation',
-          details: { operation }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    if (!data) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing payment data'
+          error: 'Invalid operation'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
@@ -60,26 +51,26 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Missing required parameters',
-          details: { leaseId, amount, type }
+          error: 'Missing required parameters'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Direct insert into payments table instead of using the function
+    // Direct insert into payments table
     const { data: payment, error: insertError } = await supabase
       .from('payments')
       .insert({
         lease_id: leaseId,
         amount: amount,
+        amount_paid: amount,
+        balance: 0,
         payment_method: paymentMethod,
         description: description,
         type: type,
         status: 'completed',
         payment_date: new Date().toISOString(),
-        amount_paid: amount,
-        balance: 0
+        include_in_calculation: true
       })
       .select()
       .single();
@@ -111,8 +102,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Internal server error',
-        details: error
+        error: error.message || 'Internal server error'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
