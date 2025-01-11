@@ -28,12 +28,7 @@ export const formatDateToDisplay = (date: Date | string | null): string => {
 export const parseDateFromDisplay = (dateStr: string): Date | null => {
   try {
     const parsedDate = parse(dateStr, DATE_FORMAT, new Date());
-    if (!isValid(parsedDate)) {
-      // Try alternative format YYYY-MM-DD
-      const isoDate = parse(dateStr, ISO_FORMAT, new Date());
-      return isValid(isoDate) ? isoDate : null;
-    }
-    return parsedDate;
+    return isValid(parsedDate) ? parsedDate : null;
   } catch (error) {
     console.error('Error parsing date:', dateStr, error);
     return null;
@@ -41,14 +36,8 @@ export const parseDateFromDisplay = (dateStr: string): Date | null => {
 };
 
 /**
- * Formats a date for database storage (YYYY-MM-DD)
+ * Validates if a string matches DD/MM/YYYY format
  */
-export const formatDateForDB = (dateStr: string): string | null => {
-  const date = parseDateFromDisplay(dateStr);
-  if (!date) return null;
-  return format(date, ISO_FORMAT);
-};
-
 export const isValidDateFormat = (dateStr: string): boolean => {
   if (!dateStr) return false;
   

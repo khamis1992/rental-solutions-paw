@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Transaction, Category, TransactionType } from "../types/transaction.types";
+import { Transaction } from "../types/transaction.types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDateToDisplay, parseDateFromDisplay } from "@/lib/dateUtils";
@@ -32,7 +32,7 @@ export const TransactionDialog = ({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState<string>("");
+  const [category, setCategory] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [status, setStatus] = useState<"pending" | "completed" | "failed">("completed");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -44,8 +44,8 @@ export const TransactionDialog = ({
       setAmount(transaction.amount.toString());
       setDescription(transaction.description);
       setDate(formatDateToDisplay(new Date(transaction.transaction_date)));
-      setCategory(transaction.category.id);
-      setType(transaction.type === 'INCOME' ? 'income' : 'expense');
+      setCategory(transaction.category);
+      setType(transaction.type);
       setStatus(transaction.status);
       setPaymentMethod(transaction.payment_method || "");
       setReference(transaction.reference || "");
@@ -79,8 +79,8 @@ export const TransactionDialog = ({
         amount: Number(amount),
         description,
         transaction_date: parsedDate.toISOString(),
-        category_id: category,
-        type: type === 'income' ? 'INCOME' as TransactionType : 'EXPENSE' as TransactionType,
+        category,
+        type,
         status,
         payment_method: paymentMethod,
         reference,
@@ -88,7 +88,7 @@ export const TransactionDialog = ({
 
       if (transaction) {
         const { error } = await supabase
-          .from("accounting_transactions")
+          .from("transactions")
           .update(transactionData)
           .eq("id", transaction.id);
 
@@ -96,7 +96,7 @@ export const TransactionDialog = ({
         toast.success("Transaction updated successfully");
       } else {
         const { error } = await supabase
-          .from("accounting_transactions")
+          .from("transactions")
           .insert([transactionData]);
 
         if (error) throw error;
@@ -114,6 +114,10 @@ export const TransactionDialog = ({
     }
   };
 
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -125,7 +129,7 @@ export const TransactionDialog = ({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (QAR)</Label>
+              <Label htmlFor="amount">Amount</Label>
               <Input
                 id="amount"
                 type="number"
@@ -135,7 +139,7 @@ export const TransactionDialog = ({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date (DD/MM/YYYY)</Label>
+              <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
                 type="text"
@@ -150,7 +154,7 @@ export const TransactionDialog = ({
             <Label htmlFor="description">Description</Label>
             <Textarea 
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={handleDescriptionChange}
               placeholder="Enter transaction description"
             />
           </div>
