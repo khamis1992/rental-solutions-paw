@@ -5215,6 +5215,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_payment: {
+        Args: {
+          input_lease_id: string
+          input_amount: number
+          input_payment_method?: Database["public"]["Enums"]["payment_method_type"]
+          input_description?: string
+          input_type?: string
+        }
+        Returns: Json
+      }
       process_recurring_payments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
