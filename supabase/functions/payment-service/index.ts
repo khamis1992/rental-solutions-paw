@@ -57,7 +57,7 @@ serve(async (req) => {
       );
     }
 
-    // Insert payment with basic select
+    // Insert payment with explicit table reference in the select
     const { data: payment, error: insertError } = await supabase
       .from('payments')
       .insert({
@@ -72,7 +72,7 @@ serve(async (req) => {
         payment_date: new Date().toISOString(),
         include_in_calculation: true
       })
-      .select()
+      .select('payments.id, payments.amount, payments.payment_date, payments.status')
       .single();
 
     if (insertError) {
