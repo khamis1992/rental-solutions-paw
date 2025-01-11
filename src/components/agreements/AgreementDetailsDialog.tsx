@@ -14,11 +14,12 @@ import { LeaseStatus } from "@/types/agreement.types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { format, isValid, parse } from "date-fns";
+import { DateInput } from "@/components/ui/date-input";
+import { Input } from "@/components/ui/input";
 import { calculateDuration, calculateContractValue } from "./utils/agreementCalculations";
 import { AgreementStatusSelect } from "./details/AgreementStatusSelect";
+import { formatDateToDisplay, parseDateFromDisplay, formatDateForApi } from "@/lib/dateUtils";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -34,7 +35,6 @@ export const AgreementDetailsDialog = ({
   const { agreement, isLoading, refetch } = useAgreementDetails(agreementId, open);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [dateError, setDateError] = useState("");
   const [duration, setDuration] = useState(0);
   const [contractValue, setContractValue] = useState(0);
   const [rentAmount, setRentAmount] = useState<number>(0);
@@ -42,8 +42,8 @@ export const AgreementDetailsDialog = ({
   // Initialize dates, rent amount and calculate initial values when agreement loads
   useEffect(() => {
     if (agreement) {
-      const start = agreement.start_date ? format(new Date(agreement.start_date), "yyyy-MM-dd") : "";
-      const end = agreement.end_date ? format(new Date(agreement.end_date), "yyyy-MM-dd") : "";
+      const start = agreement.start_date ? formatDateToDisplay(new Date(agreement.start_date)) : "";
+      const end = agreement.end_date ? formatDateToDisplay(new Date(agreement.end_date)) : "";
       
       setStartDate(start);
       setEndDate(end);
@@ -62,28 +62,21 @@ export const AgreementDetailsDialog = ({
     }
   }, [agreement]);
 
-  const validateAndUpdateDates = async (start: string, end: string) => {
+  const handleDateChange = async (start: string, end: string) => {
     if (!start || !end) return;
 
-    const startDateObj = parse(start, "yyyy-MM-dd", new Date());
-    const endDateObj = parse(end, "yyyy-MM-dd", new Date());
+    const startDateObj = parseDateFromDisplay(start);
+    const endDateObj = parseDateFromDisplay(end);
 
-    if (!isValid(startDateObj)) {
-      setDateError("Invalid start date");
-      return;
-    }
-
-    if (!isValid(endDateObj)) {
-      setDateError("Invalid end date");
+    if (!startDateObj || !endDateObj) {
+      toast.error("Invalid date format. Please use DD/MM/YYYY");
       return;
     }
 
     if (startDateObj > endDateObj) {
-      setDateError("Start date cannot be after end date");
+      toast.error("Start date cannot be after end date");
       return;
     }
-
-    setDateError("");
 
     // Calculate new duration and contract value
     const newDuration = calculateDuration(start, end);
@@ -96,8 +89,8 @@ export const AgreementDetailsDialog = ({
       const { error } = await supabase
         .from('leases')
         .update({
-          start_date: start,
-          end_date: end,
+          start_date: formatDateForApi(startDateObj),
+          end_date: formatDateForApi(endDateObj),
           agreement_duration: `${newDuration} months`
         })
         .eq('id', agreementId);
@@ -182,34 +175,23 @@ export const AgreementDetailsDialog = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">Start Date</Label>
-                <Input
-                  id="start_date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    validateAndUpdateDates(e.target.value, endDate);
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end_date">End Date</Label>
-                <Input
-                  id="end_date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    validateAndUpdateDates(startDate, e.target.value);
-                  }}
-                />
-              </div>
+              <DateInput
+                label="Start Date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  handleDateChange(e.target.value, endDate);
+                }}
+              />
+              <DateInput
+                label="End Date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  handleDateChange(startDate, e.target.value);
+                }}
+              />
             </div>
-            {dateError && (
-              <div className="text-sm text-red-500">{dateError}</div>
-            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
