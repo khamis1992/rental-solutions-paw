@@ -76,6 +76,7 @@ export const AgreementList = () => {
         .select(`
           id,
           agreement_number,
+          rent_due_day,
           payments (
             id,
             payment_date,
@@ -94,6 +95,7 @@ export const AgreementList = () => {
       for (const agreement of agreementsWithPayments || []) {
         console.log(`Processing agreement ${agreement.agreement_number}`);
         const payments = agreement.payments || [];
+        const dueDay = agreement.rent_due_day || 1;
         
         for (const payment of payments) {
           // Only process completed payments
@@ -103,15 +105,15 @@ export const AgreementList = () => {
           }
 
           const paymentDate = new Date(payment.payment_date);
-          const paymentMonth = paymentDate.getMonth();
-          const paymentYear = paymentDate.getFullYear();
-          const firstOfMonth = new Date(paymentYear, paymentMonth, 1);
+          const paymentDay = paymentDate.getDate();
           
-          // Calculate days late (if payment was made after the 1st)
-          const daysLate = Math.max(0, Math.floor((paymentDate.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24)));
+          // Calculate days late (if payment was made after the due day)
+          const daysLate = Math.max(0, paymentDay - dueDay);
           
           console.log(`Payment ${payment.id} for agreement ${agreement.agreement_number}:`);
           console.log(`- Payment date: ${paymentDate.toISOString()}`);
+          console.log(`- Due day: ${dueDay}`);
+          console.log(`- Payment day: ${paymentDay}`);
           console.log(`- Days late: ${daysLate}`);
           console.log(`- Existing fine: ${payment.late_fine_amount}`);
 
@@ -143,13 +145,16 @@ export const AgreementList = () => {
         }
       }
 
+      // Invalidate all payment-related queries to refresh the UI
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await refetch();
+
       if (finesAdded > 0) {
         toast.success(`Added late fines to ${finesAdded} payment(s)`);
       } else {
         toast.info('No new late fines to add');
       }
-      
-      await refetch();
     } catch (error) {
       console.error('Error calculating late fines:', error);
       toast.error('Failed to calculate late fines');
