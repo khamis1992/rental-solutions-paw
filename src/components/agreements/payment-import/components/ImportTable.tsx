@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { format, parse, isValid } from "date-fns";
 
 interface ImportTableProps {
   headers: string[];
@@ -13,56 +12,6 @@ interface ImportTableProps {
 
 export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
   if (data.length === 0) return null;
-
-  const formatDateValue = (value: unknown, header: string): string => {
-    // Only process Payment_Date field
-    if (header !== 'Payment_Date') return String(value);
-
-    try {
-      const dateStr = String(value);
-      
-      // Try parsing with different formats
-      const formats = ['MM/dd/yyyy', 'yyyy-MM-dd', 'dd/MM/yyyy'];
-      let parsedDate: Date | null = null;
-      
-      for (const dateFormat of formats) {
-        try {
-          const attemptedDate = parse(dateStr, dateFormat, new Date());
-          if (isValid(attemptedDate)) {
-            parsedDate = attemptedDate;
-            break;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      // If no format worked, try direct Date constructor
-      if (!parsedDate) {
-        const directDate = new Date(dateStr);
-        if (isValid(directDate)) {
-          parsedDate = directDate;
-        }
-      }
-
-      if (!parsedDate) {
-        console.error('Invalid date:', dateStr);
-        return dateStr;
-      }
-
-      // Always swap day and month for consistent DD/MM/YYYY display
-      const day = parsedDate.getDate();
-      const month = parsedDate.getMonth();
-      const year = parsedDate.getFullYear();
-      const swappedDate = new Date(year, day - 1, month + 1);
-      
-      // Format in DD/MM/YYYY
-      return isValid(swappedDate) ? format(swappedDate, 'dd/MM/yyyy') : format(parsedDate, 'dd/MM/yyyy');
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return String(value);
-    }
-  };
 
   return (
     <Card>
@@ -85,7 +34,7 @@ export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
                 <TableRow key={index}>
                   {headers.map((header) => (
                     <TableCell key={`${index}-${header}`}>
-                      {formatDateValue(row[header], header)}
+                      {String(row[header])}
                     </TableCell>
                   ))}
                   <TableCell>
@@ -93,7 +42,6 @@ export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
                       variant="destructive"
                       size="sm"
                       onClick={() => {
-                        // Delete functionality will be handled here
                         toast.error('Delete functionality coming soon');
                       }}
                       className="h-8"
