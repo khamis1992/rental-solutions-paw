@@ -52,86 +52,32 @@ serve(async (req) => {
 
     const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
 
-    // Verify lease exists before proceeding
-    console.log('Verifying lease:', leaseId);
-    const { data: lease, error: leaseError } = await supabase
-      .from('leases')
-      .select('id, agreement_number')
-      .eq('id', leaseId)
-      .single();
+    // Call the updated process_payment function with new parameter names
+    const { data: result, error: functionError } = await supabase
+      .rpc('process_payment', {
+        input_lease_id: leaseId,
+        input_amount: amount,
+        input_payment_method: paymentMethod,
+        input_description: description,
+        input_type: type
+      });
 
-    if (leaseError) {
-      console.error('Lease verification error:', leaseError);
+    if (functionError) {
+      console.error('Payment processing error:', functionError);
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Invalid lease ID or lease not found',
-          details: leaseError
+          error: 'Failed to process payment',
+          details: functionError
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    const numericAmount = Number(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid amount',
-          details: { amount }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // Create payment with explicit table alias
-    const { data: payment, error: paymentError } = await supabase
-      .from('payments')
-      .insert({
-        lease_id: leaseId,
-        amount: numericAmount,
-        payment_method: paymentMethod,
-        description: description,
-        status: 'completed',
-        payment_date: new Date().toISOString(),
-        amount_paid: numericAmount,
-        balance: 0,
-        type: type
-      })
-      .select(`
-        id,
-        lease_id,
-        amount,
-        payment_method,
-        status,
-        payment_date,
-        description,
-        type,
-        leases!payments_lease_id_fkey (
-          agreement_number
-        )
-      `)
-      .single();
-
-    if (paymentError) {
-      console.error('Payment creation error:', paymentError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Failed to create payment',
-          details: paymentError
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    console.log('Payment created successfully:', payment);
+    console.log('Payment processed successfully:', result);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        data: payment
-      }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
