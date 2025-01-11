@@ -22,7 +22,7 @@ export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
       const dateStr = String(value);
       
       // Try parsing with different formats
-      const formats = ['yyyy-MM-dd', 'MM/dd/yyyy', 'dd/MM/yyyy'];
+      const formats = ['MM/dd/yyyy', 'yyyy-MM-dd', 'dd/MM/yyyy'];
       let parsedDate: Date | null = null;
       
       for (const dateFormat of formats) {
