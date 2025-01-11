@@ -9,9 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Upload, FileDown, PlayCircle, Trash2 } from "lucide-react";
 import Papa from 'papaparse';
 import { RawPaymentImport } from "@/components/finance/types/transaction.types";
-import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
+import { normalizePaymentMethod, validateHeaders, formatDateForDB, REQUIRED_FIELDS } from "./payment-import/utils/paymentUtils";
 import { usePaymentAssignment } from "./payment-import/hooks/usePaymentAssignment";
-import { REQUIRED_FIELDS, validateHeaders } from "./payment-import/utils/paymentUtils";
 
 type ImportedData = Record<string, unknown>;
 
@@ -65,27 +64,38 @@ export const PaymentImport = () => {
             setImportedData(parsedData);
 
             for (const row of parsedData) {
-              const rawImport: Partial<RawPaymentImport> = {
-                Transaction_ID: row.Transaction_ID as string,
-                Agreement_Number: row.Agreement_Number as string,
-                Customer_Name: row.Customer_Name as string,
-                License_Plate: row.License_Plate as string,
-                Amount: Number(row.Amount),
-                Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
-                Description: row.Description as string,
-                Payment_Date: row.Payment_Date as string,
-                Type: row.Type as string,
-                Status: row.Status as string,
-                is_valid: false
-              };
+              try {
+                const formattedDate = formatDateForDB(row.Payment_Date as string);
+                if (!formattedDate) {
+                  toast.error(`Invalid date format for transaction ${row.Transaction_ID}: ${row.Payment_Date}`);
+                  continue;
+                }
 
-              const { error: insertError } = await supabase
-                .from('raw_payment_imports')
-                .insert(rawImport);
+                const rawImport: Partial<RawPaymentImport> = {
+                  Transaction_ID: row.Transaction_ID as string,
+                  Agreement_Number: row.Agreement_Number as string,
+                  Customer_Name: row.Customer_Name as string,
+                  License_Plate: row.License_Plate as string,
+                  Amount: Number(row.Amount),
+                  Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
+                  Description: row.Description as string,
+                  Payment_Date: formattedDate,
+                  Type: row.Type as string,
+                  Status: row.Status as string,
+                  is_valid: false
+                };
 
-              if (insertError) {
-                console.error('Raw data import error:', insertError);
-                toast.error('Failed to store raw data');
+                const { error: insertError } = await supabase
+                  .from('raw_payment_imports')
+                  .insert(rawImport);
+
+                if (insertError) {
+                  console.error('Raw data import error:', insertError);
+                  toast.error(`Failed to store raw data for transaction ${rawImport.Transaction_ID}`);
+                }
+              } catch (error) {
+                console.error('Error processing row:', row, error);
+                toast.error(`Failed to process transaction ${row.Transaction_ID}`);
               }
             }
 

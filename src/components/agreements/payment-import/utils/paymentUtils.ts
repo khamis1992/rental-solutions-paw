@@ -1,8 +1,9 @@
-import { PaymentMethodType } from "@/components/finance/types/transaction.types";
+import { PaymentMethodType } from "@/types/database/payment.types";
+import { format, parse, isValid } from "date-fns";
 
 export const REQUIRED_FIELDS = [
   'Transaction_ID',
-  'Agreement_Number',
+  'Agreement_Number', 
   'Customer_Name',
   'License_Plate',
   'Amount',
@@ -41,4 +42,33 @@ export const normalizePaymentMethod = (method: string): PaymentMethodType => {
 
   const normalized = method.toLowerCase().replace(/[^a-z_]/g, '');
   return methodMap[normalized] || 'Cash';
+};
+
+export const formatDateForDB = (dateStr: string): string | null => {
+  try {
+    // Try parsing DD-MM-YYYY format
+    const parsedDate = parse(dateStr.replace(/\//g, '-'), 'dd-MM-yyyy', new Date());
+    
+    if (isValid(parsedDate)) {
+      return format(parsedDate, 'yyyy-MM-dd');
+    }
+
+    // Try parsing DD/MM/YYYY format
+    const parsedDateSlash = parse(dateStr, 'dd/MM/yyyy', new Date());
+    if (isValid(parsedDateSlash)) {
+      return format(parsedDateSlash, 'yyyy-MM-dd');
+    }
+
+    // If already in YYYY-MM-DD format, validate and return
+    const isoDate = new Date(dateStr);
+    if (isValid(isoDate)) {
+      return format(isoDate, 'yyyy-MM-dd');
+    }
+
+    console.error('Invalid date format:', dateStr);
+    return null;
+  } catch (error) {
+    console.error('Error parsing date:', dateStr, error);
+    return null;
+  }
 };
