@@ -75,7 +75,7 @@ serve(async (req) => {
       input_type: type
     });
 
-    // Call the process_payment function
+    // Call the process_payment function with renamed parameters
     const { data: result, error: functionError } = await supabase
       .rpc('process_payment', {
         input_lease_id: leaseId,
