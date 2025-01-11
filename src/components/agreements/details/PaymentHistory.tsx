@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { useOverduePayments } from "../hooks/useOverduePayments";
-import { AlertTriangle, CheckCircle, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Trash2, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -26,6 +26,7 @@ interface PaymentHistoryProps {
 
 export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -87,6 +88,23 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     }
   };
 
+  const handleDeleteHistoricalPayments = async () => {
+    try {
+      const { error } = await supabase
+        .rpc('delete_historical_payments', { agreement_id: agreementId });
+
+      if (error) throw error;
+
+      toast.success("Historical payments deleted successfully");
+      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+    } catch (error) {
+      console.error("Error deleting historical payments:", error);
+      toast.error("Failed to delete historical payments");
+    } finally {
+      setIsHistoricalDeleteDialogOpen(false);
+    }
+  };
+
   // Calculate total balance from all payments
   const totalBalance = payments?.reduce((sum, payment) => sum + (payment.balance || 0), 0) || 0;
 
@@ -97,7 +115,17 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment History</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>Payment History</CardTitle>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsHistoricalDeleteDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <History className="h-4 w-4" />
+            Delete Pre-2025 Payments
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {overduePayment && totalBalance > 0 && (
@@ -126,7 +154,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               >
                 <div>
                   <div className="font-medium">
-                    {payment.payment_date && format(new Date(payment.payment_date), 'PP')}
+                    {payment.payment_date}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {payment.payment_method} - {payment.description || 'Payment'}
@@ -188,6 +216,26 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isHistoricalDeleteDialogOpen} onOpenChange={setIsHistoricalDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Historical Payments</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete all payments made before 2025. This action cannot be undone. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteHistoricalPayments}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Historical Payments
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

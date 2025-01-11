@@ -5193,6 +5193,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      delete_historical_payments: {
+        Args: {
+          agreement_id: string
+        }
+        Returns: undefined
+      }
       has_active_agreements: {
         Args: {
           customer_id: string
