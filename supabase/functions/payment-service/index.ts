@@ -84,9 +84,9 @@ serve(async (req) => {
       );
     }
 
-    // Create payment with explicit table alias to avoid ambiguous column references
+    // Create payment with explicit table alias
     const { data: payment, error: paymentError } = await supabase
-      .from('payments AS p')
+      .from('payments')
       .insert({
         lease_id: leaseId,
         amount: numericAmount,
@@ -99,15 +99,15 @@ serve(async (req) => {
         type: type
       })
       .select(`
-        p.id,
-        p.lease_id,
-        p.amount,
-        p.payment_method,
-        p.status,
-        p.payment_date,
-        p.description,
-        p.type,
-        leases:p.lease_id (
+        id,
+        lease_id,
+        amount,
+        payment_method,
+        status,
+        payment_date,
+        description,
+        type,
+        leases!payments_lease_id_fkey (
           agreement_number
         )
       `)
