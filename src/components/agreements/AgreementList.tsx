@@ -79,19 +79,23 @@ export const AgreementList = () => {
             id,
             payment_date,
             amount,
-            late_fine_amount
+            late_fine_amount,
+            status
           )
         `)
         .eq('status', 'active');
 
       if (fetchError) throw fetchError;
 
+      let finesAdded = 0;
+      
       // Process each agreement
       for (const agreement of agreementsWithPayments || []) {
         const payments = agreement.payments || [];
         
         for (const payment of payments) {
-          if (!payment.payment_date) continue;
+          // Only process completed payments
+          if (!payment.payment_date || payment.status !== 'completed') continue;
 
           const paymentDate = new Date(payment.payment_date);
           const paymentMonth = paymentDate.getMonth();
@@ -101,29 +105,36 @@ export const AgreementList = () => {
           // Calculate days late (if payment was made after the 1st)
           const daysLate = Math.max(0, Math.floor((paymentDate.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24)));
           
-          if (daysLate > 0) {
+          if (daysLate > 0 && !payment.late_fine_amount) {
             const lateFineAmount = 120 * daysLate; // 120 QAR per day
 
-            // Update payment with late fine if not already set
-            if (!payment.late_fine_amount) {
-              const { error: updateError } = await supabase
-                .from('payments')
-                .update({ 
-                  late_fine_amount: lateFineAmount,
-                  days_overdue: daysLate
-                })
-                .eq('id', payment.id);
+            console.log(`Adding fine for payment ${payment.id}: ${lateFineAmount} QAR (${daysLate} days late)`);
 
-              if (updateError) {
-                console.error('Error updating late fine:', updateError);
-                continue;
-              }
+            // Update payment with late fine
+            const { error: updateError } = await supabase
+              .from('payments')
+              .update({ 
+                late_fine_amount: lateFineAmount,
+                days_overdue: daysLate
+              })
+              .eq('id', payment.id);
+
+            if (updateError) {
+              console.error('Error updating late fine:', updateError);
+              continue;
             }
+
+            finesAdded++;
           }
         }
       }
 
-      toast.success('Late fines calculated and updated successfully');
+      if (finesAdded > 0) {
+        toast.success(`Added late fines to ${finesAdded} payment(s)`);
+      } else {
+        toast.info('No new late fines to add');
+      }
+      
       await refetch();
     } catch (error) {
       console.error('Error calculating late fines:', error);
