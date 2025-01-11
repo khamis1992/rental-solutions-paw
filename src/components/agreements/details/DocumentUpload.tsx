@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, Download, Trash2 } from "lucide-react";
+import { Loader2, Upload, Download, Trash2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -37,21 +37,28 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
       const file = event.target.files?.[0];
       if (!file) return;
 
-      // Validate file type and size
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Invalid file type. Please upload a PDF or image file.');
+      // Validate file type
+      if (file.type !== 'application/pdf') {
+        toast.error('Please upload a PDF file');
         return;
       }
 
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        toast.error('File is too large. Maximum size is 5MB.');
+        toast.error('File is too large. Maximum size is 5MB');
         return;
       }
+
+      // Get agreement details for matching
+      const { data: agreement } = await supabase
+        .from('leases')
+        .select('agreement_number')
+        .eq('id', agreementId)
+        .single();
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `${agreementId}/${Math.random()}.${fileExt}`;
+      const filePath = `${agreementId}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('agreement_documents')
@@ -62,23 +69,29 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('agreement_documents')
         .getPublicUrl(filePath);
 
+      // Save document metadata
       const { error: dbError } = await supabase
         .from('agreement_documents')
         .insert({
           lease_id: agreementId,
-          document_type: file.type,
+          document_type: 'agreement',
           document_url: filePath,
+          original_filename: file.name,
+          file_size: file.size,
+          upload_status: 'completed',
+          assignment_method: file.name.includes(agreement?.agreement_number || '') ? 'automatic' : 'manual',
+          matched_agreement_number: agreement?.agreement_number || null
         });
 
       if (dbError) throw dbError;
 
-      toast.success('Document uploaded successfully');
       queryClient.invalidateQueries({ queryKey: ['agreement-documents', agreementId] });
+      toast.success('Document uploaded successfully');
       event.target.value = '';
     } catch (error: any) {
       console.error('Error uploading document:', error);
@@ -96,7 +109,6 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
 
       if (error) throw error;
 
-      // Create a download link
       const url = URL.createObjectURL(data);
       const link = document.createElement('a');
       link.href = url;
@@ -113,14 +125,12 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
 
   const handleDelete = async (documentId: string, documentUrl: string) => {
     try {
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('agreement_documents')
         .remove([documentUrl]);
 
       if (storageError) throw storageError;
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from('agreement_documents')
         .delete()
@@ -140,18 +150,18 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Upload className="h-5 w-5" />
-          Upload Documents
+          <FileText className="h-5 w-5" />
+          Agreement Documents
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="document">Upload Document</Label>
+            <Label htmlFor="document">Upload Agreement Document</Label>
             <Input
               id="document"
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf"
               onChange={handleFileUpload}
               disabled={uploading}
               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
@@ -176,14 +186,19 @@ export const DocumentUpload = ({ agreementId }: DocumentUploadProps) => {
                   key={doc.id}
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
-                  <span className="truncate max-w-[200px]">
-                    {doc.document_url.split('/').pop()}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="truncate max-w-[200px] font-medium">
+                      {doc.original_filename || doc.document_url.split('/').pop()}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {doc.assignment_method === 'automatic' ? 'Automatically matched' : 'Manually assigned'}
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDownload(doc.document_url, doc.document_url.split('/').pop() || 'document')}
+                      onClick={() => handleDownload(doc.document_url, doc.original_filename || 'document.pdf')}
                     >
                       <Download className="h-4 w-4" />
                     </Button>

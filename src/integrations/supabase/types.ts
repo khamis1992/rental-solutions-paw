@@ -180,32 +180,47 @@ export type Database = {
       }
       agreement_documents: {
         Row: {
+          assignment_method: string | null
           created_at: string | null
           document_type: string
           document_url: string
+          file_size: number | null
           id: string
           lease_id: string | null
+          matched_agreement_number: string | null
+          original_filename: string | null
           updated_at: string | null
+          upload_status: string | null
           uploaded_by: string | null
           vehicle_id: string | null
         }
         Insert: {
+          assignment_method?: string | null
           created_at?: string | null
           document_type: string
           document_url: string
+          file_size?: number | null
           id?: string
           lease_id?: string | null
+          matched_agreement_number?: string | null
+          original_filename?: string | null
           updated_at?: string | null
+          upload_status?: string | null
           uploaded_by?: string | null
           vehicle_id?: string | null
         }
         Update: {
+          assignment_method?: string | null
           created_at?: string | null
           document_type?: string
           document_url?: string
+          file_size?: number | null
           id?: string
           lease_id?: string | null
+          matched_agreement_number?: string | null
+          original_filename?: string | null
           updated_at?: string | null
+          upload_status?: string | null
           uploaded_by?: string | null
           vehicle_id?: string | null
         }
