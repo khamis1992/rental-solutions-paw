@@ -50,14 +50,6 @@ export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
         return dateStr;
       }
 
-      // For dates before 2025, swap day and month
-      if (parsedDate.getFullYear() < 2025) {
-        const day = parsedDate.getDate();
-        const month = parsedDate.getMonth();
-        const year = parsedDate.getFullYear();
-        parsedDate = new Date(year, day - 1, month + 1);
-      }
-
       // Format in DD/MM/YYYY
       return format(parsedDate, 'dd/MM/yyyy');
     } catch (error) {
