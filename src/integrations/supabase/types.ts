@@ -5189,6 +5189,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      delete_all_historical_payments: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       delete_all_transactions: {
         Args: Record<PropertyKey, never>
         Returns: undefined

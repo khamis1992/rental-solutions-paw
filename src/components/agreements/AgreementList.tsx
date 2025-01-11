@@ -65,7 +65,9 @@ export const AgreementList = () => {
 
   const handleDeleteHistoricalPayments = async () => {
     try {
-      const { error } = await supabase.rpc('delete_all_historical_payments');
+      const { error } = await supabase.functions.invoke('delete-historical-payments', {
+        method: 'POST'
+      });
 
       if (error) throw error;
 
