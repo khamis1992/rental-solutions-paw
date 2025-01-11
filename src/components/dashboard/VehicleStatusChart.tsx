@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChartStatusSelect } from "./charts/ChartStatusSelect";
 import { DonutChart } from "./charts/DonutChart";
 import { ChartLegend } from "./charts/ChartLegend";
+import { toast } from "@/components/ui/use-toast";
 
 const STATUS_COLORS = {
   accident: "#F97316",      // Orange
@@ -36,7 +37,7 @@ const config = {
 export const VehicleStatusChart = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
-  const { data: vehicleCounts, isLoading } = useQuery({
+  const { data: vehicleCounts, isLoading, error } = useQuery({
     queryKey: ["vehicle-status-counts"],
     queryFn: async () => {
       console.log("Fetching vehicle status counts...");
@@ -46,6 +47,11 @@ export const VehicleStatusChart = () => {
 
       if (error) {
         console.error("Error fetching vehicles:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch vehicle status data",
+          variant: "destructive",
+        });
         throw error;
       }
 
@@ -64,7 +70,22 @@ export const VehicleStatusChart = () => {
       console.log("Vehicle counts:", data);
       return data;
     },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  const filteredData = useMemo(() => {
+    if (!vehicleCounts) return [];
+    return selectedStatus === "all" 
+      ? vehicleCounts 
+      : vehicleCounts.filter(item => 
+          item.name.toLowerCase() === selectedStatus.toLowerCase()
+        );
+  }, [vehicleCounts, selectedStatus]);
+
+  const totalVehicles = useMemo(() => 
+    vehicleCounts?.reduce((sum, item) => sum + item.value, 0) || 0,
+    [vehicleCounts]
+  );
 
   if (isLoading) {
     return (
@@ -76,13 +97,15 @@ export const VehicleStatusChart = () => {
     );
   }
 
-  const filteredData = selectedStatus === "all" 
-    ? vehicleCounts 
-    : vehicleCounts?.filter(item => 
-        item.name.toLowerCase() === selectedStatus.toLowerCase()
-      );
-
-  const totalVehicles = vehicleCounts?.reduce((sum, item) => sum + item.value, 0) || 0;
+  if (error) {
+    return (
+      <Card className="bg-white">
+        <CardContent className="h-[400px] flex items-center justify-center">
+          <div className="text-destructive">Failed to load vehicle status data</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white">
@@ -99,7 +122,7 @@ export const VehicleStatusChart = () => {
         <div className="flex flex-col md:flex-row items-center justify-center gap-8">
           <div className="w-full md:w-2/3 flex justify-center">
             <DonutChart
-              data={filteredData || []}
+              data={filteredData}
               config={config}
               primaryValue={totalVehicles}
               primaryLabel="Total Vehicles"
