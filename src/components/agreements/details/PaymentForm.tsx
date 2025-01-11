@@ -14,10 +14,10 @@ import { usePaymentForm } from "../hooks/usePaymentForm";
 import { RecurringPaymentFields } from "../payments/RecurringPaymentFields";
 import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
-import { paymentService } from "@/services/payment/paymentService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaymentMethodType } from "@/types/database/payment.types";
-import { normalizePaymentMethod } from "@/components/finance/utils/paymentUtils";
+import { Loader2 } from "lucide-react";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -56,18 +56,40 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
-      await paymentService.processPayment({
+      console.log('Processing payment with data:', {
         leaseId: agreementId,
-        amount: Number(data.amountPaid), // Convert to number
-        paymentMethod: normalizePaymentMethod(data.paymentMethod),
-        description: data.description,
-        type: 'Income'
+        amount: Number(data.amountPaid),
+        paymentMethod: data.paymentMethod,
+        description: data.description
       });
-      
+
+      const { data: result, error } = await supabase.functions.invoke('payment-service', {
+        body: {
+          operation: 'process_payment',
+          data: {
+            leaseId: agreementId,
+            amount: Number(data.amountPaid),
+            paymentMethod: data.paymentMethod,
+            description: data.description,
+            type: 'Income'
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Payment processing error:', error);
+        throw error;
+      }
+
+      console.log('Payment processed successfully:', result);
       toast.success("Payment processed successfully");
+      
+      // Reset form
+      setValue("amountPaid", "");
+      setValue("description", "");
     } catch (error) {
-      console.error("Error processing payment:", error);
-      toast.error("Failed to process payment");
+      console.error('Error in payment submission:', error);
+      toast.error("Failed to process payment. Please try again.");
     }
   };
 
@@ -147,12 +169,10 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Invoice">Invoice</SelectItem>
                   <SelectItem value="Cash">Cash</SelectItem>
                   <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
                   <SelectItem value="Cheque">Cheque</SelectItem>
                   <SelectItem value="Deposit">Deposit</SelectItem>
-                  <SelectItem value="On_hold">On Hold</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -177,7 +197,14 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         disabled={isSubmitting}
         className="w-full"
       >
-        {isSubmitting ? "Processing Payment..." : "Add Payment"}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing Payment...
+          </>
+        ) : (
+          'Add Payment'
+        )}
       </Button>
     </form>
   );
