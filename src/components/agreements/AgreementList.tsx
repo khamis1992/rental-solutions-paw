@@ -35,6 +35,7 @@ export const AgreementList = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
   const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     currentPage,
@@ -65,6 +66,7 @@ export const AgreementList = () => {
 
   const handleDeleteHistoricalPayments = async () => {
     try {
+      setIsDeleting(true);
       const { error } = await supabase.functions.invoke('delete-historical-payments', {
         method: 'POST'
       });
@@ -77,6 +79,7 @@ export const AgreementList = () => {
       console.error("Error deleting historical payments:", error);
       toast.error("Failed to delete historical payments");
     } finally {
+      setIsDeleting(false);
       setIsHistoricalDeleteDialogOpen(false);
     }
   };
@@ -116,6 +119,7 @@ export const AgreementList = () => {
             variant="outline"
             size="sm"
             onClick={() => setIsHistoricalDeleteDialogOpen(true)}
+            disabled={isDeleting}
             className="flex items-center gap-2"
           >
             <History className="h-4 w-4" />
@@ -181,8 +185,9 @@ export const AgreementList = () => {
             <AlertDialogAction
               onClick={handleDeleteHistoricalPayments}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
             >
-              Delete All Historical Payments
+              {isDeleting ? "Deleting..." : "Delete All Historical Payments"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
