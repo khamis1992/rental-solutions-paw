@@ -57,7 +57,7 @@ serve(async (req) => {
       );
     }
 
-    // Direct insert into payments table
+    // Direct insert into payments table with explicit column names
     const { data: payment, error: insertError } = await supabase
       .from('payments')
       .insert({
@@ -72,7 +72,7 @@ serve(async (req) => {
         payment_date: new Date().toISOString(),
         include_in_calculation: true
       })
-      .select()
+      .select('id, amount, payment_date, status')
       .single();
 
     if (insertError) {

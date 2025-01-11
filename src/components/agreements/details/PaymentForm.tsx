@@ -56,23 +56,30 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
-      console.log('Processing payment with data:', {
+      if (!data.amountPaid || isNaN(Number(data.amountPaid))) {
+        toast.error("Please enter a valid payment amount");
+        return;
+      }
+
+      if (!data.paymentMethod) {
+        toast.error("Please select a payment method");
+        return;
+      }
+
+      const paymentData = {
         leaseId: agreementId,
         amount: Number(data.amountPaid),
-        paymentMethod: data.paymentMethod,
-        description: data.description
-      });
+        paymentMethod: data.paymentMethod as PaymentMethodType,
+        description: data.description || '',
+        type: 'Income' as const
+      };
+
+      console.log('Processing payment with data:', paymentData);
 
       const { data: result, error } = await supabase.functions.invoke('payment-service', {
         body: {
           operation: 'process_payment',
-          data: {
-            leaseId: agreementId,
-            amount: Number(data.amountPaid),
-            paymentMethod: data.paymentMethod,
-            description: data.description,
-            type: 'Income'
-          }
+          data: paymentData
         }
       });
 
