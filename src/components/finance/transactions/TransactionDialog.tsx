@@ -44,7 +44,7 @@ export const TransactionDialog = ({
       setAmount(transaction.amount.toString());
       setDescription(transaction.description);
       setDate(formatDateToDisplay(new Date(transaction.transaction_date)));
-      setCategory(transaction.category);
+      setCategory(transaction.category?.name || "");
       setType(transaction.type.toLowerCase() as "income" | "expense");
       setStatus(transaction.status);
       setPaymentMethod(transaction.payment_method || "");
@@ -76,11 +76,11 @@ export const TransactionDialog = ({
       }
 
       const transactionData = {
-        amount: Number(amount),
+        amount: amount.toString(),
         description,
         transaction_date: parsedDate.toISOString(),
-        category,
-        type,
+        category_id: category,
+        type: type.toUpperCase(),
         status,
         payment_method: paymentMethod,
         reference,
