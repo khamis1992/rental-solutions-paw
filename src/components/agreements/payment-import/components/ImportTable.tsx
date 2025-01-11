@@ -34,7 +34,7 @@ export const ImportTable = ({ headers, data, onRefresh }: ImportTableProps) => {
                 <TableRow key={index}>
                   {headers.map((header) => (
                     <TableCell key={`${index}-${header}`}>
-                      {/* Preserve raw text value without any conversion */}
+                      {/* Display raw value without any conversion */}
                       {row[header] === null || row[header] === undefined ? '' : `${row[header]}`}
                     </TableCell>
                   ))}

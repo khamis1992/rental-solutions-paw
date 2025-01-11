@@ -14,8 +14,8 @@ export const usePaymentImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = [
-      'Transaction_ID,Agreement_Number,Customer_Name,License_Plate,Amount,Payment_Method,Description,Payment_Date,Type,Status',
-      '1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here'
+      REQUIRED_FIELDS.join(','),
+      '1000,AGR-202401-0001,John Doe,ABC123,1000,cash,Monthly payment,25/01/2024,INCOME,pending'
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -66,13 +66,12 @@ export const usePaymentImport = () => {
                   Amount: Number(row.Amount),
                   Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
                   Description: row.Description as string,
-                  Payment_Date: row.Payment_Date as string, // Store as raw string
+                  Payment_Date: row.Payment_Date as string, // Store raw string value
                   Type: row.Type as string,
                   Status: row.Status as string,
                   is_valid: false
                 };
 
-                // Check if payment already exists
                 const { data: existingPayment } = await supabase
                   .from('raw_payment_imports')
                   .select('id')
@@ -87,11 +86,7 @@ export const usePaymentImport = () => {
                   if (insertError) {
                     console.error('Raw data import error:', insertError);
                     toast.error(`Failed to store raw data for transaction ${rawImport.Transaction_ID}`);
-                  } else {
-                    console.log(`Successfully imported transaction ${rawImport.Transaction_ID}`);
                   }
-                } else {
-                  console.log(`Transaction ${rawImport.Transaction_ID} already exists, skipping`);
                 }
               } catch (error) {
                 console.error('Error processing row:', row, error);
@@ -100,7 +95,7 @@ export const usePaymentImport = () => {
             }
 
             await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-            toast.success('Raw data import completed');
+            toast.success('Raw data imported successfully');
           },
           error: (error) => {
             console.error('CSV Parse Error:', error);
