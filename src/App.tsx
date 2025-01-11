@@ -1,12 +1,24 @@
-import { Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { useSessionContext } from "@supabase/auth-helpers-react";
+import { toast } from "sonner";
 import * as LazyComponents from "@/routes/routes";
 
 export default function App() {
+  const { session, isLoading, error } = useSessionContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (error?.message?.includes('refresh_token_not_found')) {
+      toast.error('Your session has expired. Please sign in again.');
+      navigate('/auth');
+    }
+  }, [error, navigate]);
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
       <div className="min-h-screen bg-background">
