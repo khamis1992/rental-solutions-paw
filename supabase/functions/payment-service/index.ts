@@ -10,126 +10,47 @@ serve(async (req) => {
   try {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-      return new Response(null, { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      });
+      return new Response(null, { headers: corsHeaders });
     }
 
-    // Log request details for debugging
-    console.log('Request method:', req.method);
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    // Validate environment variables with detailed logging
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      const error = 'Missing environment variables';
-      console.error(error, {
-        supabaseUrl: !!supabaseUrl,
-        supabaseKey: !!supabaseKey
-      });
+      console.error('Missing environment variables');
       return new Response(
-        JSON.stringify({ success: false, error }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
-        }
+        JSON.stringify({ success: false, error: 'Missing environment variables' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    // Create Supabase client with error handling
-    let supabase;
-    try {
-      supabase = createClient(supabaseUrl, supabaseKey);
-      console.log('Supabase client created successfully');
-    } catch (error) {
-      console.error('Failed to create Supabase client:', error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Failed to initialize database connection'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      );
-    }
-
-    // Parse request body with error handling
-    let requestData;
-    try {
-      const text = await req.text();
-      console.log('Raw request body:', text);
-      requestData = JSON.parse(text);
-      console.log('Parsed request data:', requestData);
-    } catch (error) {
-      console.error('Failed to parse request body:', error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid JSON in request body'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const requestData = await req.json();
     const { operation, data } = requestData;
     
     if (operation !== 'process_payment') {
-      console.error('Invalid operation:', operation);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Invalid operation',
           details: { operation }
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // Validate payment data
     if (!data) {
-      console.error('Missing payment data');
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Missing payment data'
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
     const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
-
-    // Validate required fields with detailed logging
-    if (!leaseId || typeof leaseId !== 'string') {
-      console.error('Invalid leaseId:', leaseId);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Missing or invalid leaseId',
-          details: { leaseId }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
 
     // Verify lease exists before proceeding
     console.log('Verifying lease:', leaseId);
@@ -147,70 +68,25 @@ serve(async (req) => {
           error: 'Invalid lease ID or lease not found',
           details: leaseError
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
-    if (!lease) {
-      console.error('Lease not found:', leaseId);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Lease not found',
-          details: { leaseId }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 404
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
     const numericAmount = Number(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      console.error('Invalid amount:', amount);
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Invalid amount',
           details: { amount }
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    if (!type || !['Income', 'Expense'].includes(type)) {
-      console.error('Invalid payment type:', type);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Invalid payment type',
-          details: { type }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
-
-    console.log('Creating payment with data:', {
-      lease_id: leaseId,
-      amount: numericAmount,
-      payment_method: paymentMethod,
-      description,
-      type
-    });
-
-    // Create payment with explicit field selection
+    // Create payment with explicit table alias to avoid ambiguous column references
     const { data: payment, error: paymentError } = await supabase
-      .from('payments')
+      .from('payments AS p')
       .insert({
         lease_id: leaseId,
         amount: numericAmount,
@@ -222,7 +98,19 @@ serve(async (req) => {
         balance: 0,
         type: type
       })
-      .select()
+      .select(`
+        p.id,
+        p.lease_id,
+        p.amount,
+        p.payment_method,
+        p.status,
+        p.payment_date,
+        p.description,
+        p.type,
+        leases:p.lease_id (
+          agreement_number
+        )
+      `)
       .single();
 
     if (paymentError) {
@@ -233,10 +121,7 @@ serve(async (req) => {
           error: 'Failed to create payment',
           details: paymentError
         }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
@@ -247,9 +132,7 @@ serve(async (req) => {
         success: true,
         data: payment
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
@@ -260,10 +143,7 @@ serve(async (req) => {
         error: error.message || 'Internal server error',
         details: error
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
