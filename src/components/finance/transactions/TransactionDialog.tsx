@@ -45,7 +45,7 @@ export const TransactionDialog = ({
       setDescription(transaction.description);
       setDate(formatDateToDisplay(new Date(transaction.transaction_date)));
       setCategory(transaction.category);
-      setType(transaction.type);
+      setType(transaction.type.toLowerCase() as "income" | "expense");
       setStatus(transaction.status);
       setPaymentMethod(transaction.payment_method || "");
       setReference(transaction.reference || "");
@@ -88,7 +88,7 @@ export const TransactionDialog = ({
 
       if (transaction) {
         const { error } = await supabase
-          .from("transactions")
+          .from("accounting_transactions")
           .update(transactionData)
           .eq("id", transaction.id);
 
@@ -96,7 +96,7 @@ export const TransactionDialog = ({
         toast.success("Transaction updated successfully");
       } else {
         const { error } = await supabase
-          .from("transactions")
+          .from("accounting_transactions")
           .insert([transactionData]);
 
         if (error) throw error;
