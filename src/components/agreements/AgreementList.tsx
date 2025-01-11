@@ -12,6 +12,7 @@ import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { usePullAgreementData } from "./hooks/usePullAgreementData";
+import { AgreementPDFImport } from "./AgreementPDFImport";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -69,16 +70,18 @@ export const AgreementList = () => {
           onStatusChange={setStatusFilter}
           onSortChange={setSortOrder}
         />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePullData}
-          disabled={isPullingData}
-          className="ml-4"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Pull Data
-        </Button>
+        <div className="flex items-center gap-2">
+          <AgreementPDFImport />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePullData}
+            disabled={isPullingData}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Pull Data
+          </Button>
+        </div>
       </div>
       
       <AgreementListContent
