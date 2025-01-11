@@ -49,7 +49,7 @@ export const ImportTable = ({ headers, data }: ImportTableProps) => {
         return dateStr;
       }
 
-      // For dates before 2025, swap day and month if needed
+      // For dates before 2025, swap day and month
       if (parsedDate.getFullYear() < 2025) {
         const swappedDate = swap_day_month(parsedDate);
         return format(swappedDate, 'dd/MM/yyyy');
