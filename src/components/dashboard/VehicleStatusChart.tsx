@@ -124,8 +124,8 @@ export const VehicleStatusChart = () => {
             <DonutChart
               data={filteredData}
               config={config}
-              primaryValue={totalVehicles}
-              primaryLabel="Total Vehicles"
+              primaryValue={selectedStatus === "all" ? totalVehicles : filteredData[0]?.value || 0}
+              primaryLabel={selectedStatus === "all" ? "Total Vehicles" : selectedStatus}
             />
           </div>
           <div className="w-full md:w-1/3">
