@@ -66,13 +66,13 @@ export const usePaymentImport = () => {
                   Amount: Number(row.Amount),
                   Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
                   Description: row.Description as string,
-                  Payment_Date: row.Payment_Date as string,
+                  Payment_Date: row.Payment_Date as string, // Store as raw string
                   Type: row.Type as string,
                   Status: row.Status as string,
-                  is_valid: false // Start as false until properly assigned
+                  is_valid: false
                 };
 
-                // First, check if this payment is already imported
+                // Check if payment already exists
                 const { data: existingPayment } = await supabase
                   .from('raw_payment_imports')
                   .select('id')
