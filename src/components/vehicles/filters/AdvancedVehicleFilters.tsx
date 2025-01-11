@@ -38,7 +38,7 @@ export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFilter
 
   return (
     <Card className="mb-6">
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <Label>Status</Label>
