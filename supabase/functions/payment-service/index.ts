@@ -29,6 +29,8 @@ serve(async (req) => {
     const requestData = await req.json();
     const { operation, data } = requestData;
     
+    console.log('Processing payment request:', { operation, data });
+
     if (operation !== 'process_payment') {
       return new Response(
         JSON.stringify({
@@ -52,7 +54,28 @@ serve(async (req) => {
 
     const { leaseId, amount, paymentMethod = 'Cash', description = '', type } = data;
 
-    // Call the updated process_payment function with new parameter names
+    // Validate required parameters
+    if (!leaseId || !amount || !type) {
+      console.error('Missing required parameters:', { leaseId, amount, type });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required parameters',
+          details: { leaseId, amount, type }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    console.log('Calling process_payment with parameters:', {
+      input_lease_id: leaseId,
+      input_amount: amount,
+      input_payment_method: paymentMethod,
+      input_description: description,
+      input_type: type
+    });
+
+    // Call the process_payment function
     const { data: result, error: functionError } = await supabase
       .rpc('process_payment', {
         input_lease_id: leaseId,
@@ -77,7 +100,10 @@ serve(async (req) => {
     console.log('Payment processed successfully:', result);
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        success: true,
+        data: result
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
