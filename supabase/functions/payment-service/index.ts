@@ -57,13 +57,13 @@ serve(async (req) => {
       );
     }
 
-    // Insert payment with proper select syntax
+    // Insert payment with basic select
     const { data: payment, error: insertError } = await supabase
       .from('payments')
       .insert({
         lease_id: leaseId,
-        amount: amount,
-        amount_paid: amount,
+        amount: Number(amount),
+        amount_paid: Number(amount),
         balance: 0,
         payment_method: paymentMethod,
         description: description,
@@ -72,7 +72,7 @@ serve(async (req) => {
         payment_date: new Date().toISOString(),
         include_in_calculation: true
       })
-      .select('id, amount, payment_date, status')
+      .select()
       .single();
 
     if (insertError) {

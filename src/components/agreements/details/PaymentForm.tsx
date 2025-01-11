@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/select";
 import { Controller } from "react-hook-form";
 import { usePaymentForm } from "../hooks/usePaymentForm";
-import { RecurringPaymentFields } from "../payments/RecurringPaymentFields";
 import { formatCurrency } from "@/lib/utils";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +55,9 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
-      if (!data.amountPaid || isNaN(Number(data.amountPaid))) {
+      const amountPaid = Number(data.amountPaid);
+      
+      if (isNaN(amountPaid) || amountPaid <= 0) {
         toast.error("Please enter a valid payment amount");
         return;
       }
@@ -68,7 +69,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
       const paymentData = {
         leaseId: agreementId,
-        amount: Number(data.amountPaid),
+        amount: amountPaid,
         paymentMethod: data.paymentMethod as PaymentMethodType,
         description: data.description || '',
         type: 'Income' as const
@@ -156,7 +157,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
               min: {
                 value: 0,
                 message: "Amount paid must be positive"
-              }
+              },
+              valueAsNumber: true
             })}
           />
           {errors.amountPaid && (
