@@ -10,7 +10,7 @@ import { AgreementListHeader } from "./list/AgreementListHeader";
 import { AgreementListContent } from "./list/AgreementListContent";
 import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
-import { Download, History } from "lucide-react";
+import { Download, History, Calculator } from "lucide-react";
 import { usePullAgreementData } from "./hooks/usePullAgreementData";
 import { AgreementPDFImport } from "./AgreementPDFImport";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,7 @@ export const AgreementList = () => {
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
   const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCalculatingFines, setIsCalculatingFines] = useState(false);
 
   const {
     currentPage,
@@ -61,6 +62,74 @@ export const AgreementList = () => {
     const agreement = await handleViewContract(agreementId);
     if (agreement) {
       navigate(`/agreements/${agreementId}/view`);
+    }
+  };
+
+  const calculateLateFines = async () => {
+    if (isCalculatingFines) return;
+    setIsCalculatingFines(true);
+
+    try {
+      // Get all agreements with their payments
+      const { data: agreementsWithPayments, error: fetchError } = await supabase
+        .from('leases')
+        .select(`
+          id,
+          payments (
+            id,
+            payment_date,
+            amount,
+            late_fine_amount
+          )
+        `)
+        .eq('status', 'active');
+
+      if (fetchError) throw fetchError;
+
+      // Process each agreement
+      for (const agreement of agreementsWithPayments || []) {
+        const payments = agreement.payments || [];
+        
+        for (const payment of payments) {
+          if (!payment.payment_date) continue;
+
+          const paymentDate = new Date(payment.payment_date);
+          const paymentMonth = paymentDate.getMonth();
+          const paymentYear = paymentDate.getFullYear();
+          const firstOfMonth = new Date(paymentYear, paymentMonth, 1);
+          
+          // Calculate days late (if payment was made after the 1st)
+          const daysLate = Math.max(0, Math.floor((paymentDate.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24)));
+          
+          if (daysLate > 0) {
+            const lateFineAmount = 120 * daysLate; // 120 QAR per day
+
+            // Update payment with late fine if not already set
+            if (!payment.late_fine_amount) {
+              const { error: updateError } = await supabase
+                .from('payments')
+                .update({ 
+                  late_fine_amount: lateFineAmount,
+                  days_overdue: daysLate
+                })
+                .eq('id', payment.id);
+
+              if (updateError) {
+                console.error('Error updating late fine:', updateError);
+                continue;
+              }
+            }
+          }
+        }
+      }
+
+      toast.success('Late fines calculated and updated successfully');
+      await refetch();
+    } catch (error) {
+      console.error('Error calculating late fines:', error);
+      toast.error('Failed to calculate late fines');
+    } finally {
+      setIsCalculatingFines(false);
     }
   };
 
@@ -124,6 +193,16 @@ export const AgreementList = () => {
           >
             <History className="h-4 w-4" />
             Delete Pre-2025 Payments
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={calculateLateFines}
+            disabled={isCalculatingFines}
+            className="flex items-center gap-2"
+          >
+            <Calculator className="h-4 w-4" />
+            {isCalculatingFines ? 'Calculating...' : 'Add Fine'}
           </Button>
         </div>
       </div>
