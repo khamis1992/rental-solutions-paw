@@ -71,7 +71,7 @@ serve(async (req) => {
         amount_paid: amount,
         balance: 0
       })
-      .select('p.id, p.amount, p.payment_date, p.status')
+      .select('payments.id, payments.amount, payments.payment_date, payments.status')
       .single();
 
     if (paymentError) {
