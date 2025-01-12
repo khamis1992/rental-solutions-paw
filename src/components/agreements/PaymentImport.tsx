@@ -65,31 +65,30 @@ export const PaymentImport = () => {
 
             for (const row of parsedData) {
               try {
-                const formattedDate = formatDateForDB(row.Payment_Date as string);
+                const formattedDate = formatDateForDB(row.payment_date as string);
                 if (!formattedDate) {
-                  toast.error(`Invalid date format for transaction ${row.Transaction_ID}: ${row.Payment_Date}`);
+                  toast.error(`Invalid date format for transaction ${row.transaction_id}: ${row.payment_date}`);
                   continue;
                 }
 
                 const rawImport: Partial<RawPaymentImport> = {
-                  Transaction_ID: row.Transaction_ID as string,
-                  Agreement_Number: row.Agreement_Number as string,
-                  Customer_Name: row.Customer_Name as string,
-                  License_Plate: row.License_Plate as string,
-                  Amount: Number(row.Amount),
-                  Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
-                  Description: row.Description as string,
-                  Payment_Date: formattedDate,
-                  Type: row.Type as string,
-                  Status: row.Status as string,
+                  transaction_id: row.transaction_id as string,
+                  agreement_number: row.agreement_number as string,
+                  customer_name: row.customer_name as string,
+                  license_plate: row.license_plate as string,
+                  amount: Number(row.amount),
+                  payment_method: normalizePaymentMethod(row.payment_method as string),
+                  description: row.description as string,
+                  payment_date: formattedDate,
+                  type: row.type as string,
+                  status: row.status as string,
                   is_valid: false
                 };
 
-                // Check if payment already exists in unified_payments
                 const { data: existingPayment } = await supabase
                   .from('unified_payments')
                   .select('id')
-                  .eq('transaction_id', rawImport.Transaction_ID)
+                  .eq('transaction_id', rawImport.transaction_id)
                   .maybeSingle();
 
                 if (!existingPayment) {
@@ -99,12 +98,12 @@ export const PaymentImport = () => {
 
                   if (insertError) {
                     console.error('Raw data import error:', insertError);
-                    toast.error(`Failed to store raw data for transaction ${rawImport.Transaction_ID}`);
+                    toast.error(`Failed to store raw data for transaction ${rawImport.transaction_id}`);
                   }
                 }
               } catch (error) {
                 console.error('Error processing row:', row, error);
-                toast.error(`Failed to process transaction ${row.Transaction_ID}`);
+                toast.error(`Failed to process transaction ${row.transaction_id}`);
               }
             }
 

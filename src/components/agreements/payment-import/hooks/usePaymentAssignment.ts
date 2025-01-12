@@ -46,9 +46,25 @@ export const usePaymentAssignment = () => {
           }
         }
 
-        await insertPayment(analysisResult.normalizedPayment.lease_id, payment);
-        await updatePaymentStatus(payment.id, true);
+        const { data: paymentData, error: paymentError } = await supabase
+          .from('unified_payments')
+          .insert({
+            lease_id: analysisResult.normalizedPayment.lease_id,
+            amount: payment.amount,
+            payment_method: payment.payment_method,
+            payment_date: payment.payment_date,
+            status: 'completed',
+            description: payment.description,
+            type: payment.type,
+            transaction_id: payment.transaction_id
+          });
 
+        if (paymentError) {
+          console.error('Payment creation error:', paymentError);
+          throw new Error(`Failed to create payment: ${paymentError.message}`);
+        }
+
+        await updatePaymentStatus(payment.id, true);
         return true;
       };
 
@@ -79,62 +95,6 @@ export const usePaymentAssignment = () => {
     }
   };
 
-  const cleanupStuckPayments = async () => {
-    try {
-      setIsAssigning(true);
-      console.log('Starting cleanup of stuck payments...');
-
-      const { data: stuckPayments, error: fetchError } = await supabase
-        .from('raw_payment_imports')
-        .select('*')
-        .eq('is_valid', false);
-
-      if (fetchError) throw fetchError;
-
-      let cleanedCount = 0;
-      for (const payment of (stuckPayments || [])) {
-        const { data: existingPayment, error: checkError } = await supabase
-          .from('payments')
-          .select('id')
-          .eq('transaction_id', payment.transaction_id)
-          .single();
-
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking existing payment:', checkError);
-          continue;
-        }
-
-        if (existingPayment) {
-          const { error: updateError } = await supabase
-            .from('raw_payment_imports')
-            .update({ 
-              is_valid: true,
-              error_description: 'Payment already exists in system'
-            })
-            .eq('id', payment.id);
-
-          if (updateError) {
-            console.error('Error updating payment status:', updateError);
-            continue;
-          }
-
-          cleanedCount++;
-        }
-      }
-
-      if (cleanedCount > 0) {
-        toast.success(`Cleaned up ${cleanedCount} stuck payments`);
-        await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-      }
-
-    } catch (error) {
-      console.error('Cleanup error:', error);
-      toast.error('Failed to cleanup stuck payments');
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-
   const forceAssignAllPayments = async () => {
     setIsAssigning(true);
     try {
@@ -162,8 +122,6 @@ export const usePaymentAssignment = () => {
 
       toast.success(`Successfully assigned ${successCount} payments`);
       await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-      
-      await cleanupStuckPayments();
     } catch (error) {
       console.error('Bulk assign error:', error);
       toast.error('Failed to assign payments');
@@ -176,29 +134,8 @@ export const usePaymentAssignment = () => {
     isAssigning,
     assignmentResults,
     forceAssignPayment,
-    forceAssignAllPayments,
-    cleanupStuckPayments
+    forceAssignAllPayments
   };
-};
-
-const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
-  const { error: paymentError } = await supabase
-    .from('unified_payments')
-    .insert({
-      lease_id: leaseId,
-      amount: payment.amount,
-      payment_method: payment.payment_method,
-      payment_date: payment.payment_date,
-      status: 'completed',
-      description: payment.description,
-      type: payment.type,
-      transaction_id: payment.transaction_id
-    });
-
-  if (paymentError) {
-    console.error('Payment insert error:', paymentError);
-    throw new Error(`Failed to create payment: ${paymentError.message}`);
-  }
 };
 
 const updatePaymentStatus = async (id: string, isValid: boolean, errorDescription?: string) => {
