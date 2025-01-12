@@ -66,17 +66,19 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       }
 
       const { data: payment, error: paymentError } = await supabase
-        .from('payments')
+        .from('unified_payments')
         .insert([{
           lease_id: agreementId,
-          amount: amountPaid,
+          amount: totalAmount,
+          amount_paid: amountPaid,
+          balance: Math.max(0, totalAmount - amountPaid),
           payment_method: data.paymentMethod,
           description: data.description || '',
           type: 'Income',
           status: 'completed',
           payment_date: new Date().toISOString(),
-          amount_paid: amountPaid,
-          balance: 0
+          late_fine_amount: lateFineAmount,
+          days_overdue: daysOverdue
         }])
         .select()
         .single();
@@ -86,28 +88,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         throw paymentError;
       }
 
-      const { error: historyError } = await supabase
-        .from('payment_history')
-        .insert([{
-          lease_id: agreementId,
-          payment_id: payment.id,
-          amount_due: totalAmount,
-          amount_paid: amountPaid,
-          late_fee_applied: lateFineAmount,
-          original_due_date: new Date().toISOString(),
-          actual_payment_date: new Date().toISOString(),
-          status: 'completed',
-          remaining_balance: Math.max(0, totalAmount - amountPaid)
-        }]);
-
-      if (historyError) {
-        console.error('Payment history insert error:', historyError);
-        throw historyError;
-      }
-
-      console.log('Payment recorded in history successfully');
       toast.success("Payment recorded successfully");
-      
       setValue("amountPaid", 0);
       setValue("description", "");
     } catch (error) {

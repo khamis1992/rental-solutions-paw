@@ -34,7 +34,7 @@ export function PaymentHistoryDialog({
       
       try {
         const query = supabase
-          .from("payments")
+          .from("unified_payments")
           .select(`
             *,
             security_deposits (
@@ -64,7 +64,7 @@ export function PaymentHistoryDialog({
           throw error;
         }
 
-        console.log("Fetched payments:", data); // Add this line to debug
+        console.log("Fetched payments:", data);
 
         const transformedData = data.map(payment => ({
           ...payment,
@@ -72,7 +72,7 @@ export function PaymentHistoryDialog({
           agreement_number: payment.leases?.agreement_number || null
         }));
 
-        console.log("Transformed payment data:", transformedData); // Add this line to debug
+        console.log("Transformed payment data:", transformedData);
         return transformedData;
       } catch (err) {
         console.error("Error in payment history query:", err);
@@ -94,7 +94,7 @@ export function PaymentHistoryDialog({
         {
           event: '*',
           schema: 'public',
-          table: 'payments',
+          table: 'unified_payments',
           ...(agreementId ? { filter: `lease_id=eq.${agreementId}` } : {})
         },
         async (payload) => {
@@ -127,7 +127,7 @@ export function PaymentHistoryDialog({
 
   const totalPaid = paymentHistory?.reduce((sum, payment) => {
     if (payment.status === "completed") {
-      return sum + (payment.amount || 0);
+      return sum + (payment.amount_paid || 0);
     }
     return sum;
   }, 0) || 0;

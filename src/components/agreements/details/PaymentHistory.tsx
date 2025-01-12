@@ -35,7 +35,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     queryFn: async () => {
       console.log('Fetching payment history for agreement:', agreementId);
       const { data, error } = await supabase
-        .from('payments')
+        .from('unified_payments')
         .select(`
           id,
           amount,
@@ -73,7 +73,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
     try {
       const { error } = await supabase
-        .from("payments")
+        .from("unified_payments")
         .delete()
         .eq("id", selectedPaymentId);
 
