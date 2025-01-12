@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { paymentService } from '@/services/payment/paymentService';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const usePaymentReconciliation = () => {
   const [isReconciling, setIsReconciling] = useState(false);
@@ -11,29 +9,34 @@ export const usePaymentReconciliation = () => {
   const reconcilePayments = async (agreementId: string) => {
     setIsReconciling(true);
     try {
-      const { data: payments } = await supabase
-        .from('unified_payments')
-        .select('id')
-        .eq('lease_id', agreementId)
-        .eq('status', 'pending');
+      // Get all payments for this agreement
+      const { data: payments, error: fetchError } = await supabase
+        .from("unified_payments")
+        .select("*")
+        .eq("lease_id", agreementId)
+        .eq("reconciliation_status", "pending");
 
-      if (!payments?.length) {
-        toast.info('No pending payments to reconcile');
-        return;
+      if (fetchError) throw fetchError;
+
+      // Update each payment's reconciliation status
+      for (const payment of payments || []) {
+        const { error: updateError } = await supabase
+          .from("unified_payments")
+          .update({
+            reconciliation_status: "completed",
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", payment.id);
+
+        if (updateError) throw updateError;
       }
 
-      for (const payment of payments) {
-        await paymentService.reconcilePayment(payment.id);
-      }
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
+      await queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
 
-      // Invalidate relevant queries
-      await queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
-      
-      toast.success('Payments reconciled successfully');
     } catch (error) {
-      console.error('Reconciliation error:', error);
-      toast.error('Failed to reconcile payments');
+      console.error("Error reconciling payments:", error);
       throw error;
     } finally {
       setIsReconciling(false);
