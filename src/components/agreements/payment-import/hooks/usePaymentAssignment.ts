@@ -15,7 +15,6 @@ export const usePaymentAssignment = () => {
       console.log('Starting payment assignment for:', payment);
 
       const assignPaymentWithRetry = async () => {
-        // First analyze the payment data
         const { data: analysisResult, error: analysisError } = await supabase.functions
           .invoke('analyze-payment-import', {
             body: { payment }
@@ -28,13 +27,12 @@ export const usePaymentAssignment = () => {
 
         if (!analysisResult.success) {
           if (analysisResult.shouldCreateAgreement) {
-            console.log('Creating default agreement for:', payment.Agreement_Number);
-            // Create default agreement if needed
+            console.log('Creating default agreement for:', payment.agreement_number);
             const { data: agreementData, error: agreementError } = await supabase
               .rpc('create_default_agreement_if_not_exists', {
-                p_agreement_number: payment.Agreement_Number,
-                p_customer_name: payment.Customer_Name,
-                p_amount: payment.Amount
+                p_agreement_number: payment.agreement_number,
+                p_customer_name: payment.customer_name,
+                p_amount: payment.amount
               });
 
             if (agreementError) {
@@ -48,67 +46,34 @@ export const usePaymentAssignment = () => {
           }
         }
 
-        // Insert normalized payment
-        const { error: paymentError } = await supabase
-          .from('payments')
-          .insert({
-            lease_id: analysisResult.normalizedPayment.lease_id,
-            amount: analysisResult.normalizedPayment.Amount,
-            payment_method: analysisResult.normalizedPayment.Payment_Method,
-            payment_date: analysisResult.normalizedPayment.Payment_Date,
-            status: 'completed',
-            description: analysisResult.normalizedPayment.Description,
-            type: analysisResult.normalizedPayment.Type
-          });
-
-        if (paymentError) {
-          console.error('Payment insert error:', paymentError);
-          throw new Error(`Failed to create payment: ${paymentError.message}`);
-        }
-
-        // Update raw payment import status
-        const { error: updateError } = await supabase
-          .from('raw_payment_imports')
-          .update({ 
-            is_valid: true,
-            error_description: null // Clear any previous error
-          })
-          .eq('id', payment.id);
-
-        if (updateError) throw updateError;
+        await insertPayment(analysisResult.normalizedPayment.lease_id, payment);
+        await updatePaymentStatus(payment.id, true);
 
         return true;
       };
 
-      // Use retry mechanism
-      const success = await retryOperation(
-        assignPaymentWithRetry,
-        3, // max retries
-        1000 // delay between retries in ms
-      );
+      const success = await retryOperation(assignPaymentWithRetry);
 
       if (success) {
         setAssignmentResults(prev => [...prev, {
           success: true,
-          agreementNumber: payment.Agreement_Number,
-          amountAssigned: payment.Amount,
+          agreementNumber: payment.agreement_number,
+          amountAssigned: payment.amount,
           timestamp: new Date().toISOString()
         }]);
-        toast.success(`Payment assigned to agreement ${payment.Agreement_Number}`);
+        toast.success(`Payment assigned to agreement ${payment.agreement_number}`);
+        
+        await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       }
 
       return success;
     } catch (error) {
       console.error('Force assign error:', error);
-      // Log the error details in raw_payment_imports
-      await supabase
-        .from('raw_payment_imports')
-        .update({ 
-          error_description: error instanceof Error ? error.message : 'Unknown error',
-          is_valid: false 
-        })
-        .eq('id', payment.id);
-
+      await updatePaymentStatus(
+        payment.id, 
+        false, 
+        error instanceof Error ? error.message : 'Unknown error'
+      );
       toast.error('Failed to assign payment');
       return false;
     }
@@ -119,7 +84,6 @@ export const usePaymentAssignment = () => {
       setIsAssigning(true);
       console.log('Starting cleanup of stuck payments...');
 
-      // Find payments that are marked as invalid but might be duplicates
       const { data: stuckPayments, error: fetchError } = await supabase
         .from('raw_payment_imports')
         .select('*')
@@ -129,20 +93,18 @@ export const usePaymentAssignment = () => {
 
       let cleanedCount = 0;
       for (const payment of (stuckPayments || [])) {
-        // Check if this payment already exists in the payments table
         const { data: existingPayment, error: checkError } = await supabase
           .from('payments')
           .select('id')
-          .eq('transaction_id', payment.Transaction_ID)
+          .eq('transaction_id', payment.transaction_id)
           .single();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking existing payment:', checkError);
           continue;
         }
 
         if (existingPayment) {
-          // Payment exists, mark as valid in raw_payment_imports
           const { error: updateError } = await supabase
             .from('raw_payment_imports')
             .update({ 
@@ -184,15 +146,13 @@ export const usePaymentAssignment = () => {
       if (fetchError) throw fetchError;
 
       let successCount = 0;
-      const batchSize = 5; // Process in smaller batches
+      const batchSize = 5;
       const batches = [];
       
-      // Split into batches
       for (let i = 0; i < (unprocessedPayments || []).length; i += batchSize) {
         batches.push(unprocessedPayments.slice(i, i + batchSize));
       }
 
-      // Process each batch
       for (const batch of batches) {
         const results = await Promise.all(
           batch.map(payment => forceAssignPayment(payment as RawPaymentImport))
@@ -203,7 +163,6 @@ export const usePaymentAssignment = () => {
       toast.success(`Successfully assigned ${successCount} payments`);
       await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
       
-      // Run cleanup after bulk assignment
       await cleanupStuckPayments();
     } catch (error) {
       console.error('Bulk assign error:', error);
@@ -220,4 +179,36 @@ export const usePaymentAssignment = () => {
     forceAssignAllPayments,
     cleanupStuckPayments
   };
+};
+
+const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
+  const { error: paymentError } = await supabase
+    .from('unified_payments')
+    .insert({
+      lease_id: leaseId,
+      amount: payment.amount,
+      payment_method: payment.payment_method,
+      payment_date: payment.payment_date,
+      status: 'completed',
+      description: payment.description,
+      type: payment.type,
+      transaction_id: payment.transaction_id
+    });
+
+  if (paymentError) {
+    console.error('Payment insert error:', paymentError);
+    throw new Error(`Failed to create payment: ${paymentError.message}`);
+  }
+};
+
+const updatePaymentStatus = async (id: string, isValid: boolean, errorDescription?: string) => {
+  const { error: updateError } = await supabase
+    .from('raw_payment_imports')
+    .update({ 
+      is_valid: isValid,
+      error_description: errorDescription 
+    })
+    .eq('id', id);
+
+  if (updateError) throw updateError;
 };

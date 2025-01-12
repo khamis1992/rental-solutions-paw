@@ -32,7 +32,26 @@ export const RawDataView = () => {
         .filter('is_valid', 'eq', false);
 
       if (error) throw error;
-      return data as RawPaymentImport[];
+      
+      // Transform the data to match RawPaymentImport interface
+      const transformedData: RawPaymentImport[] = (data || []).map(item => ({
+        id: item.id,
+        transaction_id: item.transaction_id,
+        agreement_number: item.agreement_number,
+        customer_name: item.customer_name,
+        license_plate: item.license_plate,
+        amount: item.amount,
+        payment_method: item.payment_method,
+        description: item.description,
+        payment_date: item.payment_date,
+        type: item.type,
+        status: item.status,
+        is_valid: item.is_valid,
+        error_description: item.error_description,
+        created_at: item.created_at
+      }));
+
+      return transformedData;
     },
   });
 

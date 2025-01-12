@@ -24,18 +24,19 @@ export type TransactionType = 'INCOME' | 'EXPENSE';
 
 export interface RawPaymentImport {
   id: string;
-  Transaction_ID: string;
-  Agreement_Number: string;
-  Customer_Name: string;
-  License_Plate: string;
-  Amount: number;
-  Payment_Method: string;
-  Description: string;
-  Payment_Date: string;
-  Type: string;
-  Status: string;
+  transaction_id: string;
+  agreement_number: string;
+  customer_name: string;
+  license_plate: string;
+  amount: number;
+  payment_method: string;
+  description: string;
+  payment_date: string;
+  type: string;
+  status: string;
   is_valid?: boolean;
   error_description?: string;
+  created_at?: string;
 }
 
 export interface PaymentAssignmentResult {
