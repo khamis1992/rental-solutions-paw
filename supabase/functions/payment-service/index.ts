@@ -57,8 +57,30 @@ serve(async (req) => {
       );
     }
 
-    // Insert payment with correct select syntax
-    const { data: payment, error: insertError } = await supabase
+    // Get the next due payment from payment schedules
+    const { data: nextPayment, error: scheduleError } = await supabase
+      .from('payment_schedules')
+      .select('*')
+      .eq('lease_id', leaseId)
+      .eq('status', 'pending')
+      .order('due_date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (scheduleError) {
+      console.error('Error fetching payment schedule:', scheduleError);
+      throw scheduleError;
+    }
+
+    const paymentDate = new Date().toISOString();
+    const originalDueDate = nextPayment?.due_date || paymentDate;
+    
+    // Calculate late fee if payment is overdue
+    const lateFee = nextPayment && new Date(nextPayment.due_date) < new Date() ? 
+      calculateLateFee(new Date(nextPayment.due_date), new Date()) : 0;
+
+    // Start transaction by inserting payment first
+    const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
         lease_id: leaseId,
@@ -69,22 +91,51 @@ serve(async (req) => {
         description: description,
         type: type,
         status: 'completed',
-        payment_date: new Date().toISOString(),
-        include_in_calculation: true
+        payment_date: paymentDate,
+        include_in_calculation: true,
+        late_fine_amount: lateFee
       })
       .select('id, amount, payment_date, status')
       .single();
 
-    if (insertError) {
-      console.error('Payment insert error:', insertError);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Failed to process payment',
-          details: insertError
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+    if (paymentError) {
+      console.error('Payment insert error:', paymentError);
+      throw paymentError;
+    }
+
+    // Then create payment history record
+    const { error: historyError } = await supabase
+      .from('payment_history')
+      .insert({
+        lease_id: leaseId,
+        payment_id: payment.id,
+        original_due_date: originalDueDate,
+        actual_payment_date: paymentDate,
+        amount_due: amount,
+        amount_paid: amount,
+        late_fee_applied: lateFee,
+        remaining_balance: 0,
+        status: 'completed'
+      });
+
+    if (historyError) {
+      console.error('Payment history insert error:', historyError);
+      // If payment history insert fails, we should ideally roll back the payment
+      // But since we don't have true transactions, we'll log this as an error
+      throw historyError;
+    }
+
+    // Update payment schedule status if it exists
+    if (nextPayment) {
+      const { error: updateError } = await supabase
+        .from('payment_schedules')
+        .update({ status: 'completed' })
+        .eq('id', nextPayment.id);
+
+      if (updateError) {
+        console.error('Error updating payment schedule:', updateError);
+        // Log error but don't throw since payment is already recorded
+      }
     }
 
     console.log('Payment processed successfully:', payment);
@@ -108,3 +159,14 @@ serve(async (req) => {
     );
   }
 });
+
+function calculateLateFee(dueDate: Date, paymentDate: Date): number {
+  const diffTime = Math.abs(paymentDate.getTime() - dueDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  // Default late fee is 120 QAR per day after grace period
+  const DAILY_LATE_FEE = 120;
+  const GRACE_PERIOD_DAYS = 3;
+  
+  return diffDays > GRACE_PERIOD_DAYS ? 
+    (diffDays - GRACE_PERIOD_DAYS) * DAILY_LATE_FEE : 0;
+}
