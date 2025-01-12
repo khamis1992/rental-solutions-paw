@@ -57,7 +57,7 @@ serve(async (req) => {
       );
     }
 
-    // Insert payment with explicit table alias to avoid ambiguous column reference
+    // Insert payment with explicit table alias
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
@@ -71,7 +71,7 @@ serve(async (req) => {
         amount_paid: amount,
         balance: 0
       })
-      .select('payments.id, payments.amount, payments.payment_date, payments.status')
+      .select('id, amount, payment_date, status')
       .single();
 
     if (paymentError) {
