@@ -64,8 +64,8 @@ export const PaymentReconciliationTable = ({ payments }: PaymentReconciliationTa
                 format(new Date(payment.payment_date), "dd/MM/yyyy") : 
                 format(new Date(payment.created_at), "dd/MM/yyyy")}
             </TableCell>
-            <TableCell>{payment.lease?.agreement_number || "N/A"}</TableCell>
-            <TableCell>{payment.lease?.profiles?.full_name || "Unknown"}</TableCell>
+            <TableCell>{payment.leases?.agreement_number || "N/A"}</TableCell>
+            <TableCell>{payment.leases?.profiles?.full_name || "Unknown"}</TableCell>
             <TableCell>{formatCurrency(payment.amount)}</TableCell>
             <TableCell>
               <Badge variant="outline">
