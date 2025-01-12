@@ -136,6 +136,8 @@ export const AgreementDetailsDialog = ({
 
   if (!open) return null;
 
+  const remainingAmount = agreement?.remainingAmount?.remaining_amount || 0;
+
   const mappedAgreement = agreement ? {
     id: agreement.id,
     agreement_number: agreement.agreement_number || '',
@@ -163,7 +165,7 @@ export const AgreementDetailsDialog = ({
             <div className="flex justify-between items-start">
               <AgreementHeader 
                 agreement={mappedAgreement}
-                remainingAmount={agreement.remainingAmount}
+                remainingAmount={remainingAmount}
               />
               <AgreementStatusSelect
                 agreementId={agreement.id}
