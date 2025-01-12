@@ -55,15 +55,15 @@ export function PaymentSchedulesList({
               <TableHead>Due Date</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Reminders Sent</TableHead>
-              <TableHead>Last Reminder</TableHead>
+              <TableHead>Amount Paid</TableHead>
+              <TableHead>Balance</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {payments?.map((payment) => (
               <TableRow key={payment.id}>
                 <TableCell>
-                  {new Date(payment.due_date).toLocaleDateString()}
+                  {new Date(payment.due_date).toLocaleDateString('en-GB')}
                 </TableCell>
                 <TableCell>{formatCurrency(payment.amount)}</TableCell>
                 <TableCell>
@@ -75,12 +75,8 @@ export function PaymentSchedulesList({
                       payment.status.slice(1)}
                   </Badge>
                 </TableCell>
-                <TableCell>{payment.reminder_count || 0}</TableCell>
-                <TableCell>
-                  {payment.last_reminder_sent
-                    ? new Date(payment.last_reminder_sent).toLocaleDateString()
-                    : "No reminders sent"}
-                </TableCell>
+                <TableCell>{formatCurrency(payment.amount_paid || 0)}</TableCell>
+                <TableCell>{formatCurrency(payment.balance || 0)}</TableCell>
               </TableRow>
             ))}
             {!payments?.length && (
