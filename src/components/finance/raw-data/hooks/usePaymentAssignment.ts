@@ -14,7 +14,7 @@ export const usePaymentAssignment = () => {
   const forceAssignPayment = async (payment: RawPaymentImport) => {
     try {
       console.log('Starting payment assignment for:', payment);
-
+      
       const assignPaymentWithRetry = async () => {
         const analysisResult = await analyzePayment(payment);
 
@@ -44,6 +44,9 @@ export const usePaymentAssignment = () => {
           timestamp: new Date().toISOString()
         }]);
         toast.success(`Payment assigned to agreement ${payment.Agreement_Number}`);
+        
+        // Invalidate unified payments queries
+        await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       }
 
       return success;
