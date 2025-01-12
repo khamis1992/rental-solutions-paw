@@ -2,140 +2,159 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
+import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 
 interface PaymentAnalysisProps {
   paymentId: string;
-}
-
-interface PaymentAnalysis {
-  id: string;
-  payment_id: string;
-  analysis_type: string;
-  confidence_score: number;
-  anomaly_detected: boolean;
-  anomaly_details: string[];
-  suggested_corrections: Record<string, string | number>;
-  created_at: string;
-  resolved_at: string | null;
-  resolved_by: string | null;
-  status: string;
 }
 
 export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["payment-analysis", paymentId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: aiAnalysis, error: aiError } = await supabase
         .from("ai_payment_analysis")
         .select("*")
         .eq("payment_id", paymentId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      return data as PaymentAnalysis;
+      if (aiError) throw aiError;
+
+      const { data: payment, error: paymentError } = await supabase
+        .from("unified_payments")
+        .select(`
+          *,
+          leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              id,
+              full_name,
+              phone_number
+            )
+          )
+        `)
+        .eq("id", paymentId)
+        .maybeSingle();
+
+      if (paymentError) throw paymentError;
+
+      return {
+        aiAnalysis,
+        payment
+      };
     },
+    enabled: !!paymentId
   });
-
-  const runAnalysis = async () => {
-    try {
-      const response = await supabase.functions.invoke("analyze-payment", {
-        body: { paymentId },
-      });
-
-      if (response.error) throw response.error;
-
-      toast.success("Payment analysis completed");
-    } catch (error) {
-      console.error("Analysis error:", error);
-      toast.error("Failed to analyze payment");
-    }
-  };
-
-  const getConfidenceColor = (score: number) => {
-    if (score >= 0.8) return "text-green-500";
-    if (score >= 0.6) return "text-yellow-500";
-    return "text-red-500";
-  };
 
   if (isLoading) {
     return <div>Loading analysis...</div>;
   }
 
+  if (!analysis?.payment) {
+    return <div>No payment data found</div>;
+  }
+
+  const { payment, aiAnalysis } = analysis;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          Payment Analysis
-          <Button variant="outline" size="sm" onClick={runAnalysis}>
-            Run Analysis
-          </Button>
-        </CardTitle>
+        <CardTitle>Payment Analysis</CardTitle>
       </CardHeader>
-      <CardContent>
-        {analysis ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {analysis.anomaly_detected ? (
-                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                ) : (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                )}
-                <span className="font-medium">
-                  {analysis.anomaly_detected
-                    ? "Anomalies Detected"
-                    : "Payment Validated"}
-                </span>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Status</span>
+            <Badge 
+              variant={payment.status === 'completed' ? 'default' : 'secondary'}
+              className="flex items-center gap-1"
+            >
+              {payment.status === 'completed' ? (
+                <CheckCircle2 className="h-3 w-3" />
+              ) : payment.status === 'pending' ? (
+                <Clock className="h-3 w-3" />
+              ) : (
+                <AlertTriangle className="h-3 w-3" />
+              )}
+              {payment.status}
+            </Badge>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Amount</span>
+            <span>{formatCurrency(payment.amount)}</span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Amount Paid</span>
+            <span>{formatCurrency(payment.amount_paid)}</span>
+          </div>
+
+          {payment.balance > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Balance</span>
+              <span className="text-red-500">{formatCurrency(payment.balance)}</span>
+            </div>
+          )}
+
+          {payment.payment_date && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Payment Date</span>
+              <span>{format(new Date(payment.payment_date), "dd/MM/yyyy")}</span>
+            </div>
+          )}
+
+          {payment.due_date && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Due Date</span>
+              <span>{format(new Date(payment.due_date), "dd/MM/yyyy")}</span>
+            </div>
+          )}
+
+          {payment.late_fine_amount > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Late Fine</span>
+              <span className="text-red-500">{formatCurrency(payment.late_fine_amount)}</span>
+            </div>
+          )}
+        </div>
+
+        {aiAnalysis && (
+          <div className="pt-4 border-t space-y-2">
+            <h4 className="font-medium">AI Analysis</h4>
+            
+            {aiAnalysis.anomaly_detected && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                <div className="flex items-center gap-2 font-medium">
+                  <AlertTriangle className="h-4 w-4" />
+                  Anomaly Detected
+                </div>
+                <p className="mt-1">{aiAnalysis.anomaly_details?.description}</p>
               </div>
-              <div className={getConfidenceColor(analysis.confidence_score)}>
-                {(analysis.confidence_score * 100).toFixed(0)}% confidence
-              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Confidence Score</span>
+              <Badge variant={aiAnalysis.confidence_score > 0.8 ? 'default' : 'secondary'}>
+                {Math.round(aiAnalysis.confidence_score * 100)}%
+              </Badge>
             </div>
 
-            {analysis.anomaly_detected && analysis.anomaly_details && (
-              <div className="space-y-2">
-                <div className="font-medium">Detected Issues:</div>
-                <div className="space-y-1">
-                  {analysis.anomaly_details.map((anomaly: string, index: number) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
-                    >
-                      <AlertCircle className="h-4 w-4 text-yellow-500" />
-                      {anomaly}
-                    </div>
+            {aiAnalysis.suggested_corrections && (
+              <div className="text-sm space-y-1">
+                <span className="text-muted-foreground">Suggested Corrections:</span>
+                <ul className="list-disc list-inside">
+                  {Object.entries(aiAnalysis.suggested_corrections).map(([field, value]) => (
+                    <li key={field}>
+                      {field}: {value}
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
-
-            {analysis.suggested_corrections && Object.keys(analysis.suggested_corrections).length > 0 && (
-              <div className="space-y-2">
-                <div className="font-medium">Suggested Corrections:</div>
-                <div className="space-y-1">
-                  {Object.entries(analysis.suggested_corrections).map(
-                    ([field, value], index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span className="text-muted-foreground">{field}:</span>
-                        <Badge variant="secondary">{String(value)}</Badge>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center text-muted-foreground">
-            No analysis available. Click "Run Analysis" to analyze this payment.
           </div>
         )}
       </CardContent>
