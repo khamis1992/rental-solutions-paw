@@ -1,50 +1,38 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentMethodType } from "@/types/database/payment.types";
+import { PaymentMethodType, PaymentStatus } from "@/types/database/payment.types";
 
-export interface PaymentRequest {
-  leaseId: string;
+interface PaymentData {
+  lease_id: string;
   amount: number;
-  paymentMethod: PaymentMethodType;
-  description?: string;
-  type: 'Income' | 'Expense';  // Make type required
+  payment_method: PaymentMethodType;
+  payment_date: string;
+  status: PaymentStatus;
+  is_recurring: boolean;
+  recurring_interval?: string | null;
+  next_payment_date?: string | null;
 }
 
 export const paymentService = {
-  async processPayment(paymentData: PaymentRequest) {
-    console.log('Calling payment service to process payment:', paymentData)
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('payment-service', {
-        body: {
-          operation: 'process_payment',
-          data: paymentData
-        }
-      })
+  submitPayment: async (paymentData: PaymentData) => {
+    const { data, error } = await supabase
+      .from("unified_payments")
+      .insert(paymentData)
+      .select()
+      .single();
 
-      if (error) throw error
-      return data
-    } catch (error) {
-      console.error('Payment processing error:', error)
-      throw error
-    }
+    if (error) throw error;
+    return data;
   },
 
-  async reconcilePayment(paymentId: string) {
-    console.log('Calling payment service to reconcile payment:', paymentId)
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('payment-service', {
-        body: {
-          operation: 'reconcile_payment',
-          data: { paymentId }
-        }
-      })
+  reconcilePayment: async (paymentId: string) => {
+    const { data, error } = await supabase
+      .from("unified_payments")
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('id', paymentId)
+      .select()
+      .single();
 
-      if (error) throw error
-      return data
-    } catch (error) {
-      console.error('Payment reconciliation error:', error)
-      throw error
-    }
+    if (error) throw error;
+    return data;
   }
-}
+};

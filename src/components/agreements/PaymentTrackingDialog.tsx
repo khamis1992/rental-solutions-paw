@@ -53,7 +53,7 @@ export function PaymentTrackingDialog({
     queryKey: ["payment-history", agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("payment_history")
+        .from("unified_payments")
         .select("*")
         .eq("lease_id", agreementId)
         .order("created_at", { ascending: false });
@@ -74,24 +74,24 @@ export function PaymentTrackingDialog({
         {
           event: '*',
           schema: 'public',
-          table: 'payment_schedules',
+          table: 'unified_payments',
           filter: `lease_id=eq.${agreementId}`
         },
         async (payload) => {
-          console.log('Real-time update received for payment schedule:', payload);
+          console.log('Real-time update received for payment:', payload);
           
           await queryClient.invalidateQueries({ 
             queryKey: ['payment-schedules', agreementId] 
           });
           
           const eventMessages = {
-            INSERT: 'New payment schedule added',
-            UPDATE: 'Payment schedule updated',
-            DELETE: 'Payment schedule removed'
+            INSERT: 'New payment recorded',
+            UPDATE: 'Payment updated',
+            DELETE: 'Payment removed'
           };
           
           toast.info(
-            eventMessages[payload.eventType as keyof typeof eventMessages] || 'Payment schedule changed',
+            eventMessages[payload.eventType as keyof typeof eventMessages] || 'Payment record changed',
             {
               description: 'The payment schedule has been updated.'
             }

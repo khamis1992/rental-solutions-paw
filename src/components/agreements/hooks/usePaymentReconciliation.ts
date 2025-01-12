@@ -12,7 +12,7 @@ export const usePaymentReconciliation = () => {
     setIsReconciling(true);
     try {
       const { data: payments } = await supabase
-        .from('payments')
+        .from('unified_payments')
         .select('id')
         .eq('lease_id', agreementId)
         .eq('status', 'pending');
