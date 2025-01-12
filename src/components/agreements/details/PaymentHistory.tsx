@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import { AlertTriangle, CheckCircle, Trash2, History } from "lucide-react";
+import { AlertTriangle, CheckCircle, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -42,11 +42,14 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           amount_paid,
           balance,
           payment_date,
+          due_date,
           status,
           payment_method,
           description,
           late_fine_amount,
-          days_overdue
+          days_overdue,
+          type,
+          reconciliation_status
         `)
         .eq('lease_id', agreementId)
         .order('payment_date', { ascending: false });
