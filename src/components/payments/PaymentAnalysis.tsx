@@ -10,6 +10,11 @@ interface PaymentAnalysisProps {
   paymentId: string;
 }
 
+interface AnomalyDetails {
+  description: string;
+  [key: string]: any;
+}
+
 export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["payment-analysis", paymentId],
@@ -132,7 +137,11 @@ export const PaymentAnalysis = ({ paymentId }: PaymentAnalysisProps) => {
                   <AlertTriangle className="h-4 w-4" />
                   Anomaly Detected
                 </div>
-                <p className="mt-1">{aiAnalysis.anomaly_details?.description}</p>
+                <p className="mt-1">
+                  {typeof aiAnalysis.anomaly_details === 'string' 
+                    ? aiAnalysis.anomaly_details 
+                    : (aiAnalysis.anomaly_details as AnomalyDetails)?.description}
+                </p>
               </div>
             )}
 
