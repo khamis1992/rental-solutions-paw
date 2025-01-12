@@ -100,7 +100,14 @@ serve(async (req) => {
 
     if (paymentError) {
       console.error('Payment insert error:', paymentError);
-      throw paymentError;
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to process payment',
+          details: paymentError
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     // Then create payment history record
@@ -111,8 +118,8 @@ serve(async (req) => {
         payment_id: payment.id,
         original_due_date: originalDueDate,
         actual_payment_date: paymentDate,
-        amount_due: amount,
-        amount_paid: amount,
+        amount_due: Number(amount),
+        amount_paid: Number(amount),
         late_fee_applied: lateFee,
         remaining_balance: 0,
         status: 'completed'
@@ -120,9 +127,14 @@ serve(async (req) => {
 
     if (historyError) {
       console.error('Payment history insert error:', historyError);
-      // If payment history insert fails, we should ideally roll back the payment
-      // But since we don't have true transactions, we'll log this as an error
-      throw historyError;
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Failed to create payment history',
+          details: historyError
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     // Update payment schedule status if it exists
@@ -134,7 +146,6 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Error updating payment schedule:', updateError);
-        // Log error but don't throw since payment is already recorded
       }
     }
 
