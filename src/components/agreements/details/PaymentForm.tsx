@@ -108,7 +108,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       console.log('Payment recorded in history successfully');
       toast.success("Payment recorded successfully");
       
-      setValue("amountPaid", "");
+      setValue("amountPaid", 0);
       setValue("description", "");
     } catch (error) {
       console.error('Error in payment submission:', error);
