@@ -33,46 +33,12 @@ export const RawDataView = () => {
 
       if (error) throw error;
       
-      // Transform the data to match RawPaymentImport interface
-      const transformedData: RawPaymentImport[] = (data || []).map(item => ({
-        id: item.id,
-        transaction_id: item.transaction_id,
-        agreement_number: item.agreement_number,
-        customer_name: item.customer_name,
-        license_plate: item.license_plate,
-        amount: item.amount,
-        payment_method: item.payment_method,
-        description: item.description,
-        payment_date: item.payment_date,
-        type: item.type,
-        status: item.status,
-        is_valid: item.is_valid,
-        error_description: item.error_description,
-        created_at: item.created_at
-      }));
-
-      return transformedData;
+      return data as RawPaymentImport[];
     },
   });
 
   const totalAmount = rawTransactions?.reduce((sum, transaction) => 
-    sum + (Number(transaction.Amount) || 0), 0) || 0;
-
-  const cleanTableMutation = useQuery({
-    queryKey: ["clean-table"],
-    queryFn: async () => {
-      const { error } = await supabase
-        .from('raw_payment_imports')
-        .delete()
-        .filter('is_valid', 'eq', true);
-
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
-      toast.success("Table cleaned successfully - removed all processed payments");
-    },
-    enabled: false
-  });
+    sum + (transaction.amount || 0), 0) || 0;
 
   if (isLoading) {
     return (

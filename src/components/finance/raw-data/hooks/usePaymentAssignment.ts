@@ -20,7 +20,7 @@ export const usePaymentAssignment = () => {
 
         if (!analysisResult.success) {
           if (analysisResult.shouldCreateAgreement) {
-            console.log('Creating default agreement for:', payment.Agreement_Number);
+            console.log('Creating default agreement for:', payment.agreement_number);
             const agreementData = await createDefaultAgreement(payment);
             analysisResult.normalizedPayment.lease_id = agreementData;
           } else {
@@ -39,13 +39,12 @@ export const usePaymentAssignment = () => {
       if (success) {
         setAssignmentResults(prev => [...prev, {
           success: true,
-          agreementNumber: payment.Agreement_Number,
-          amountAssigned: payment.Amount,
+          agreementNumber: payment.agreement_number,
+          amountAssigned: payment.amount,
           timestamp: new Date().toISOString()
         }]);
-        toast.success(`Payment assigned to agreement ${payment.Agreement_Number}`);
+        toast.success(`Payment assigned to agreement ${payment.agreement_number}`);
         
-        // Invalidate unified payments queries
         await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       }
 
