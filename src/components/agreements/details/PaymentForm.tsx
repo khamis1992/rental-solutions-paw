@@ -65,7 +65,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         return;
       }
 
-      // Create a new payment record
       const { data: payment, error: paymentError } = await supabase
         .from('payments')
         .insert([{
@@ -87,7 +86,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         throw paymentError;
       }
 
-      // Insert into payment_history table
       const { error: historyError } = await supabase
         .from('payment_history')
         .insert([{
@@ -110,7 +108,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       console.log('Payment recorded in history successfully');
       toast.success("Payment recorded successfully");
       
-      // Reset form
       setValue("amountPaid", "");
       setValue("description", "");
     } catch (error) {
