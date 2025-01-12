@@ -3097,6 +3097,114 @@ export type Database = {
           },
         ]
       }
+      payment_import_tracking: {
+        Row: {
+          agreement_number: string | null
+          amount: number | null
+          batch_id: string | null
+          created_at: string | null
+          customer_name: string | null
+          description: string | null
+          error_details: string | null
+          file_name: string
+          id: string
+          import_date: string | null
+          last_processed_at: string | null
+          license_plate: string | null
+          match_confidence: number | null
+          matched_agreement_id: string | null
+          matched_payment_id: string | null
+          original_file_name: string | null
+          payment_date: string | null
+          payment_method: string | null
+          processed_by: string | null
+          processing_attempts: number | null
+          resolution_notes: string | null
+          row_number: number | null
+          status: Database["public"]["Enums"]["import_status_type"] | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+          validation_errors: Json | null
+          validation_status: boolean | null
+        }
+        Insert: {
+          agreement_number?: string | null
+          amount?: number | null
+          batch_id?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          description?: string | null
+          error_details?: string | null
+          file_name: string
+          id?: string
+          import_date?: string | null
+          last_processed_at?: string | null
+          license_plate?: string | null
+          match_confidence?: number | null
+          matched_agreement_id?: string | null
+          matched_payment_id?: string | null
+          original_file_name?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          processing_attempts?: number | null
+          resolution_notes?: string | null
+          row_number?: number | null
+          status?: Database["public"]["Enums"]["import_status_type"] | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+          validation_errors?: Json | null
+          validation_status?: boolean | null
+        }
+        Update: {
+          agreement_number?: string | null
+          amount?: number | null
+          batch_id?: string | null
+          created_at?: string | null
+          customer_name?: string | null
+          description?: string | null
+          error_details?: string | null
+          file_name?: string
+          id?: string
+          import_date?: string | null
+          last_processed_at?: string | null
+          license_plate?: string | null
+          match_confidence?: number | null
+          matched_agreement_id?: string | null
+          matched_payment_id?: string | null
+          original_file_name?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          processed_by?: string | null
+          processing_attempts?: number | null
+          resolution_notes?: string | null
+          row_number?: number | null
+          status?: Database["public"]["Enums"]["import_status_type"] | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+          validation_errors?: Json | null
+          validation_status?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_import_tracking_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_import_tracking_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_imports: {
         Row: {
           batch_id: string
@@ -5479,6 +5587,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      migrate_to_payment_import_tracking: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       process_payment: {
         Args: {
           input_lease_id: string
@@ -5550,6 +5662,12 @@ export type Database = {
       document_language: "english" | "spanish" | "french" | "arabic"
       document_version_status: "draft" | "published" | "archived"
       import_status: "pending" | "processing" | "completed" | "failed"
+      import_status_type:
+        | "pending"
+        | "processing"
+        | "validated"
+        | "failed"
+        | "completed"
       import_type: "payments" | "customers" | "agreements"
       lease_status:
         | "pending_payment"
