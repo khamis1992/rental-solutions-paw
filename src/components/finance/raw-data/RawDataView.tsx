@@ -14,6 +14,7 @@ import { usePaymentAssignment } from "./hooks/usePaymentAssignment";
 
 export const RawDataView = () => {
   const queryClient = useQueryClient();
+  const [isCleaningTable, setIsCleaningTable] = useState(false);
   const { 
     isAssigning, 
     assignmentResults, 
@@ -40,6 +41,26 @@ export const RawDataView = () => {
   const totalAmount = rawTransactions?.reduce((sum, transaction) => 
     sum + (transaction.amount || 0), 0) || 0;
 
+  const cleanTable = async () => {
+    setIsCleaningTable(true);
+    try {
+      const { error } = await supabase
+        .from('raw_payment_imports')
+        .delete()
+        .filter('is_valid', 'eq', true);
+
+      if (error) throw error;
+      
+      await queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
+      toast.success("Table cleaned successfully - removed all processed payments");
+    } catch (error) {
+      console.error('Clean table error:', error);
+      toast.error('Failed to clean table');
+    } finally {
+      setIsCleaningTable(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -57,10 +78,10 @@ export const RawDataView = () => {
         <PaymentActions
           hasUnprocessedPayments={hasUnprocessedPayments}
           onAnalyzeAll={forceAssignAllPayments}
-          onCleanTable={() => cleanTableMutation.refetch()}
+          onCleanTable={cleanTable}
           onCleanupStuck={cleanupStuckPayments}
           isSubmitting={isAssigning}
-          cleanTableMutationIsPending={cleanTableMutation.isFetching}
+          cleanTableMutationIsPending={isCleaningTable}
         />
       </div>
 
