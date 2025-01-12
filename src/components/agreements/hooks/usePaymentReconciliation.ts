@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const usePaymentReconciliation = () => {
@@ -9,35 +10,18 @@ export const usePaymentReconciliation = () => {
   const reconcilePayments = async (agreementId: string) => {
     setIsReconciling(true);
     try {
-      // Get all payments for this agreement
-      const { data: payments, error: fetchError } = await supabase
-        .from("unified_payments")
-        .select("*")
-        .eq("lease_id", agreementId)
-        .eq("reconciliation_status", "pending");
+      const { error } = await supabase.functions.invoke('process-payment-reconciliation', {
+        body: { agreementId }
+      });
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      // Update each payment's reconciliation status
-      for (const payment of payments || []) {
-        const { error: updateError } = await supabase
-          .from("unified_payments")
-          .update({
-            reconciliation_status: "completed",
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", payment.id);
-
-        if (updateError) throw updateError;
-      }
-
-      // Invalidate queries to refresh data
-      await queryClient.invalidateQueries({ queryKey: ["payment-history"] });
-      await queryClient.invalidateQueries({ queryKey: ["payment-schedules"] });
-
+      await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['agreement-details'] });
+      toast.success('Payments reconciled successfully');
     } catch (error) {
-      console.error("Error reconciling payments:", error);
-      throw error;
+      console.error('Error reconciling payments:', error);
+      toast.error('Failed to reconcile payments');
     } finally {
       setIsReconciling(false);
     }
