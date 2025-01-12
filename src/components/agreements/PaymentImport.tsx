@@ -85,13 +85,22 @@ export const PaymentImport = () => {
                   is_valid: false
                 };
 
-                const { error: insertError } = await supabase
-                  .from('raw_payment_imports')
-                  .insert(rawImport);
+                // Check if payment already exists in unified_payments
+                const { data: existingPayment } = await supabase
+                  .from('unified_payments')
+                  .select('id')
+                  .eq('transaction_id', rawImport.Transaction_ID)
+                  .maybeSingle();
 
-                if (insertError) {
-                  console.error('Raw data import error:', insertError);
-                  toast.error(`Failed to store raw data for transaction ${rawImport.Transaction_ID}`);
+                if (!existingPayment) {
+                  const { error: insertError } = await supabase
+                    .from('raw_payment_imports')
+                    .insert(rawImport);
+
+                  if (insertError) {
+                    console.error('Raw data import error:', insertError);
+                    toast.error(`Failed to store raw data for transaction ${rawImport.Transaction_ID}`);
+                  }
                 }
               } catch (error) {
                 console.error('Error processing row:', row, error);
