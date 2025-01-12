@@ -1,115 +1,92 @@
-import { useQuery } from "@tanstack/react-query";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Check } from "lucide-react";
 
-export const PaymentReconciliationTable = () => {
-  const { data: reconciliations, isLoading } = useQuery({
-    queryKey: ["payment-reconciliation"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payment_matching_logs")
-        .select(`
-          *,
-          payment:payments (
-            amount,
-            payment_date,
-            transaction_id
-          ),
-          customer:profiles!customer_id (
-            full_name,
-            is_ai_generated
-          )
-        `)
-        .order("created_at", { ascending: false });
+interface PaymentReconciliationTableProps {
+  payments: any[];
+}
+
+export const PaymentReconciliationTable = ({ payments }: PaymentReconciliationTableProps) => {
+  const queryClient = useQueryClient();
+
+  const handleReconcile = async (paymentId: string) => {
+    try {
+      const { error } = await supabase
+        .from("unified_payments")
+        .update({ 
+          reconciliation_status: "completed",
+          reconciliation_date: new Date().toISOString()
+        })
+        .eq("id", paymentId);
 
       if (error) throw error;
-      return data;
-    },
-  });
 
-  const handleApproveMatch = async (id: string) => {
-    const { error } = await supabase
-      .from("payment_matching_logs")
-      .update({
-        admin_reviewed: true,
-        admin_reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-
-    if (error) {
-      console.error("Error approving match:", error);
+      await queryClient.invalidateQueries({ queryKey: ["unreconciled-payments"] });
+      toast.success("Payment reconciled successfully");
+    } catch (error) {
+      console.error("Error reconciling payment:", error);
+      toast.error("Failed to reconcile payment");
     }
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (!payments.length) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No payments need reconciliation
+      </div>
+    );
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Transaction ID</TableHead>
-          <TableHead>Amount</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Agreement #</TableHead>
           <TableHead>Customer</TableHead>
-          <TableHead>Match Confidence</TableHead>
+          <TableHead>Amount</TableHead>
+          <TableHead>Method</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {reconciliations?.map((record) => (
-          <TableRow key={record.id}>
-            <TableCell>{record.payment?.transaction_id}</TableCell>
+        {payments.map((payment) => (
+          <TableRow key={payment.id}>
             <TableCell>
-              {record.payment?.amount?.toLocaleString('en-US', {
-                style: 'currency',
-                currency: 'USD'
-              })}
+              {payment.payment_date ? 
+                format(new Date(payment.payment_date), "dd/MM/yyyy") : 
+                format(new Date(payment.created_at), "dd/MM/yyyy")}
             </TableCell>
-            <TableCell className="flex items-center gap-2">
-              {record.customer?.full_name}
-              {record.customer?.is_ai_generated && (
-                <Badge variant="secondary">AI Generated</Badge>
-              )}
-            </TableCell>
+            <TableCell>{payment.lease?.agreement_number || "N/A"}</TableCell>
+            <TableCell>{payment.lease?.profiles?.full_name || "Unknown"}</TableCell>
+            <TableCell>{formatCurrency(payment.amount)}</TableCell>
             <TableCell>
-              <Badge
-                variant={record.match_confidence > 0.8 ? "default" : "secondary"}
-              >
-                {Math.round(record.match_confidence * 100)}%
+              <Badge variant="outline">
+                {payment.payment_method || "Not specified"}
               </Badge>
             </TableCell>
             <TableCell>
-              {record.admin_reviewed ? (
-                <Badge variant="default">Approved</Badge>
-              ) : (
-                <Badge variant="secondary">Pending Review</Badge>
-              )}
+              <Badge variant={payment.status === "completed" ? "success" : "secondary"}>
+                {payment.status}
+              </Badge>
             </TableCell>
             <TableCell>
-              {!record.admin_reviewed && (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleApproveMatch(record.id)}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Approve
-                  </Button>
-                </div>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleReconcile(payment.id)}
+                className="flex items-center gap-2"
+              >
+                <Check className="h-4 w-4" />
+                Reconcile
+              </Button>
             </TableCell>
           </TableRow>
         ))}

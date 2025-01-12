@@ -1,101 +1,81 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PaymentReconciliationTable } from "./PaymentReconciliationTable";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { PaymentReconciliationTable } from "./PaymentReconciliationTable";
+import { Loader2 } from "lucide-react";
 
 export const PaymentReconciliation = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const { data: unreconciled, isLoading } = useQuery({
+    queryKey: ["unreconciled-payments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("unified_payments")
+        .select(`
+          *,
+          lease:leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              id,
+              full_name,
+              phone_number
+            )
+          )
+        `)
+        .eq("reconciliation_status", "pending")
+        .order("created_at", { ascending: false });
 
-    if (file.type !== "text/csv") {
-      toast({
-        title: "Error",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (error) throw error;
+      return data;
+    },
+  });
 
-    setIsUploading(true);
+  const handleReconcileAll = async () => {
     try {
-      // Upload file to storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      console.log('Uploading file to storage:', fileName);
-      const { error: uploadError } = await supabase.storage
-        .from("imports")
-        .upload(fileName, file);
+      const { error } = await supabase
+        .from("unified_payments")
+        .update({ 
+          reconciliation_status: "completed",
+          reconciliation_date: new Date().toISOString()
+        })
+        .eq("reconciliation_status", "pending");
 
-      if (uploadError) throw uploadError;
+      if (error) throw error;
 
-      console.log('File uploaded successfully, processing payments...');
-      
-      // Process the file using Edge Function
-      const { data: functionResponse, error: functionError } = await supabase.functions
-        .invoke('process-payment-reconciliation', {
-          body: { fileName }
-        });
-
-      if (functionError) throw functionError;
-
-      console.log('Processing complete:', functionResponse);
-
-      toast({
-        title: "Success",
-        description: `Successfully processed ${functionResponse.processed} payments`,
-      });
-
-      // Refresh the data
-      await queryClient.invalidateQueries({ queryKey: ["payment-reconciliation"] });
-    } catch (error: any) {
-      console.error('Payment reconciliation error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to process payments",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
+      await queryClient.invalidateQueries({ queryKey: ["unreconciled-payments"] });
+      toast.success("All payments have been reconciled");
+    } catch (error) {
+      console.error("Error reconciling payments:", error);
+      toast.error("Failed to reconcile payments");
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Reconciliation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Input
-              type="file"
-              accept=".csv"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-              className="max-w-md"
-            />
-            {isUploading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Processing payments...</span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-      <PaymentReconciliationTable />
-    </div>
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xl font-bold">Payment Reconciliation</CardTitle>
+        <Button 
+          onClick={handleReconcileAll}
+          disabled={!unreconciled?.length}
+        >
+          Reconcile All
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <PaymentReconciliationTable payments={unreconciled || []} />
+      </CardContent>
+    </Card>
   );
 };
