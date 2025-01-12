@@ -55,6 +55,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
+      // Convert amountPaid to number explicitly
       const amountPaid = Number(data.amountPaid);
       
       if (isNaN(amountPaid) || amountPaid <= 0) {
