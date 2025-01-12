@@ -51,7 +51,7 @@ export function PaymentTrackingDialog({
             )
           `)
           .eq("lease_id", agreementId)
-          .order("due_date");
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
         return data;

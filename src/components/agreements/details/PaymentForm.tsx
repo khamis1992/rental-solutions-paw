@@ -46,9 +46,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       reset();
       
       // Invalidate relevant queries to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
-      await queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
       await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       
     } catch (error) {
       console.error("Error adding payment:", error);
