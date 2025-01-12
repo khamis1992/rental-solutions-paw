@@ -50,7 +50,7 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
 
     try {
       const { error } = await supabase
-        .from("payments")
+        .from("unified_payments")
         .delete()
         .eq("id", selectedPaymentId);
 
@@ -96,9 +96,9 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
                   ? format(new Date(payment.payment_date), "dd/MM/yyyy")
                   : format(new Date(payment.created_at), "dd/MM/yyyy")}
               </TableCell>
-              <TableCell>{payment.agreement_number || "N/A"}</TableCell>
-              <TableCell>{payment.customer?.full_name || "Unknown"}</TableCell>
-              <TableCell>{payment.customer?.phone_number || "N/A"}</TableCell>
+              <TableCell>{payment.leases?.agreement_number || "N/A"}</TableCell>
+              <TableCell>{payment.leases?.profiles?.full_name || "Unknown"}</TableCell>
+              <TableCell>{payment.leases?.profiles?.phone_number || "N/A"}</TableCell>
               <TableCell>{formatCurrency(payment.amount)}</TableCell>
               <TableCell>
                 {payment.late_fine_amount > 0 ? (
@@ -129,15 +129,15 @@ export function PaymentHistoryTable({ paymentHistory, isLoading }: PaymentHistor
                 </Badge>
               </TableCell>
               <TableCell>
-                {payment.invoice ? (
+                {payment.invoice_id ? (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleViewInvoice(payment.invoice.id)}
+                    onClick={() => handleViewInvoice(payment.invoice_id)}
                     className="flex items-center gap-2"
                   >
                     <FileText className="h-4 w-4" />
-                    {payment.invoice.invoice_number}
+                    View Invoice
                   </Button>
                 ) : (
                   <span className="text-muted-foreground text-sm">No invoice</span>
