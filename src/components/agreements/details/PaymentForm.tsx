@@ -38,14 +38,12 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     setValue
   } = usePaymentForm(agreementId);
 
-  // Watch for changes in rent amount to sync with base amount
   const rentAmount = watch("amount");
 
   useEffect(() => {
     calculateLateFine();
   }, [calculateLateFine]);
 
-  // Ensure base amount always matches rent amount
   useEffect(() => {
     if (rentAmount !== baseAmount && baseAmount > 0) {
       console.log('Syncing base amount with rent amount:', rentAmount, baseAmount);
@@ -55,7 +53,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
-      // Convert amountPaid to number explicitly
       const amountPaid = Number(data.amountPaid);
       
       if (isNaN(amountPaid) || amountPaid <= 0) {
@@ -68,37 +65,34 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         return;
       }
 
-      const paymentData = {
-        leaseId: agreementId,
-        amount: amountPaid,
-        paymentMethod: data.paymentMethod as PaymentMethodType,
-        description: data.description || '',
-        type: 'Income' as const
-      };
-
-      console.log('Processing payment with data:', paymentData);
-
-      const { data: result, error } = await supabase.functions.invoke('payment-service', {
-        body: {
-          operation: 'process_payment',
-          data: paymentData
-        }
-      });
+      // Insert directly into payment_history table
+      const { error } = await supabase
+        .from('payment_history')
+        .insert({
+          lease_id: agreementId,
+          amount_due: totalAmount,
+          amount_paid: amountPaid,
+          late_fee_applied: lateFineAmount,
+          original_due_date: new Date(),
+          actual_payment_date: new Date(),
+          status: 'completed',
+          remaining_balance: Math.max(0, totalAmount - amountPaid)
+        });
 
       if (error) {
-        console.error('Payment processing error:', error);
+        console.error('Payment history insert error:', error);
         throw error;
       }
 
-      console.log('Payment processed successfully:', result);
-      toast.success("Payment processed successfully");
+      console.log('Payment recorded in history successfully');
+      toast.success("Payment recorded successfully");
       
       // Reset form
       setValue("amountPaid", "");
       setValue("description", "");
     } catch (error) {
       console.error('Error in payment submission:', error);
-      toast.error("Failed to process payment. Please try again.");
+      toast.error("Failed to record payment. Please try again.");
     }
   };
 
