@@ -79,7 +79,7 @@ serve(async (req) => {
     const lateFee = nextPayment && new Date(nextPayment.due_date) < new Date() ? 
       calculateLateFee(new Date(nextPayment.due_date), new Date()) : 0;
 
-    // Start transaction by inserting payment first
+    // Insert payment first
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
