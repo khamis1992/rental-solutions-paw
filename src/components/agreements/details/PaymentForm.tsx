@@ -65,23 +65,46 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         return;
       }
 
-      // Insert directly into payment_history table
-      const { error } = await supabase
-        .from('payment_history')
-        .insert({
+      // Create a new payment record
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .insert([{
           lease_id: agreementId,
+          amount: amountPaid,
+          payment_method: data.paymentMethod,
+          description: data.description || '',
+          type: 'Income',
+          status: 'completed',
+          payment_date: new Date().toISOString(),
+          amount_paid: amountPaid,
+          balance: 0
+        }])
+        .select()
+        .single();
+
+      if (paymentError) {
+        console.error('Payment insert error:', paymentError);
+        throw paymentError;
+      }
+
+      // Insert into payment_history table
+      const { error: historyError } = await supabase
+        .from('payment_history')
+        .insert([{
+          lease_id: agreementId,
+          payment_id: payment.id,
           amount_due: totalAmount,
           amount_paid: amountPaid,
           late_fee_applied: lateFineAmount,
-          original_due_date: new Date(),
-          actual_payment_date: new Date(),
+          original_due_date: new Date().toISOString(),
+          actual_payment_date: new Date().toISOString(),
           status: 'completed',
           remaining_balance: Math.max(0, totalAmount - amountPaid)
-        });
+        }]);
 
-      if (error) {
-        console.error('Payment history insert error:', error);
-        throw error;
+      if (historyError) {
+        console.error('Payment history insert error:', historyError);
+        throw historyError;
       }
 
       console.log('Payment recorded in history successfully');
