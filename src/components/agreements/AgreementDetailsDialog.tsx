@@ -39,7 +39,6 @@ export const AgreementDetailsDialog = ({
   const [contractValue, setContractValue] = useState(0);
   const [rentAmount, setRentAmount] = useState<number>(0);
 
-  // Initialize dates, rent amount and calculate initial values when agreement loads
   useEffect(() => {
     if (agreement) {
       const start = agreement.start_date ? formatDateToDisplay(new Date(agreement.start_date)) : "";
@@ -78,7 +77,6 @@ export const AgreementDetailsDialog = ({
       return;
     }
 
-    // Calculate new duration and contract value
     const newDuration = calculateDuration(start, end);
     setDuration(newDuration);
     
@@ -132,7 +130,7 @@ export const AgreementDetailsDialog = ({
     }
   };
 
-  const handleStatusChange = (newStatus: LeaseStatus) => {
+  const handleStatusChange = () => {
     refetch();
   };
 

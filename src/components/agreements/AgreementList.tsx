@@ -79,7 +79,7 @@ export const AgreementList = () => {
           id,
           agreement_number,
           rent_due_day,
-          payments (
+          unified_payments (
             id,
             payment_date,
             amount,
@@ -95,14 +95,12 @@ export const AgreementList = () => {
       
       // Process each agreement
       for (const agreement of agreementsWithPayments || []) {
-        console.log(`Processing agreement ${agreement.agreement_number}`);
-        const payments = agreement.payments || [];
+        const payments = agreement.unified_payments || [];
         const dueDay = agreement.rent_due_day || 1;
         
         for (const payment of payments) {
           // Only process completed payments
           if (!payment.payment_date || payment.status !== 'completed') {
-            console.log(`Skipping payment ${payment.id}: No date or not completed`);
             continue;
           }
 
@@ -111,22 +109,13 @@ export const AgreementList = () => {
           
           // Calculate days late (if payment was made after the due day)
           const daysLate = Math.max(0, paymentDay - dueDay);
-          
-          console.log(`Payment ${payment.id} for agreement ${agreement.agreement_number}:`);
-          console.log(`- Payment date: ${paymentDate.toISOString()}`);
-          console.log(`- Due day: ${dueDay}`);
-          console.log(`- Payment day: ${paymentDay}`);
-          console.log(`- Days late: ${daysLate}`);
-          console.log(`- Existing fine: ${payment.late_fine_amount}`);
 
           if (daysLate > 0 && !payment.late_fine_amount) {
             const lateFineAmount = 120 * daysLate; // 120 QAR per day
 
-            console.log(`Adding fine: ${lateFineAmount} QAR (${daysLate} days late)`);
-
             // Update payment with late fine
             const { error: updateError } = await supabase
-              .from('payments')
+              .from('unified_payments')
               .update({ 
                 late_fine_amount: lateFineAmount,
                 days_overdue: daysLate
@@ -139,17 +128,12 @@ export const AgreementList = () => {
             }
 
             finesAdded++;
-          } else {
-            console.log(daysLate > 0 ? 
-              'Fine already exists' : 
-              'Payment made on time, no fine needed');
           }
         }
       }
 
-      // Invalidate all payment-related queries to refresh the UI
-      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
-      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      // Invalidate queries to refresh the UI
+      await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       await refetch();
 
       if (finesAdded > 0) {

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import { AlertTriangle, CheckCircle, History, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useOverduePayments } from "@/components/agreements/hooks/useOverduePayments";
 
 interface PaymentHistoryProps {
   agreementId: string;
@@ -30,10 +29,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: payments, isLoading: isLoadingPayments } = useQuery({
-    queryKey: ['payment-history', agreementId],
+  const { data: payments, isLoading } = useQuery({
+    queryKey: ['unified-payments', agreementId],
     queryFn: async () => {
-      console.log('Fetching payment history for agreement:', agreementId);
       const { data, error } = await supabase
         .from('unified_payments')
         .select(`
@@ -54,17 +52,10 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
         .eq('lease_id', agreementId)
         .order('payment_date', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching payment history:', error);
-        throw error;
-      }
-
-      console.log('Fetched payment history:', data);
+      if (error) throw error;
       return data;
     },
   });
-
-  const { overduePayment, isLoading: isLoadingOverdue } = useOverduePayments(agreementId);
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -83,7 +74,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       if (error) throw error;
 
       toast.success("Payment deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Failed to delete payment");
@@ -103,7 +94,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       if (error) throw error;
 
       toast.success("Historical payments deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
     } catch (error) {
       console.error("Error deleting historical payments:", error);
       toast.error("Failed to delete historical payments");
@@ -112,7 +103,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     }
   };
 
-  if (isLoadingPayments || isLoadingOverdue) {
+  if (isLoading) {
     return <div>Loading payment history...</div>;
   }
 
@@ -135,23 +126,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        {overduePayment && totalBalance > 0 && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2 text-red-600 mb-2">
-              <AlertTriangle className="h-5 w-5" />
-              <span className="font-semibold">Overdue Payment Alert</span>
-            </div>
-            <div className="space-y-1 text-sm">
-              <p>Days Overdue: {overduePayment.days_overdue}</p>
-              <p>Outstanding Balance: {formatCurrency(totalBalance)}</p>
-              <p>Last Payment: {overduePayment.last_payment_date ? 
-                formatDateToDisplay(new Date(overduePayment.last_payment_date)) : 
-                'No payments recorded'}
-              </p>
-            </div>
-          </div>
-        )}
-
         <div className="space-y-4">
           {payments && payments.length > 0 ? (
             payments.map((payment) => (
@@ -188,7 +162,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                       }
                     >
                       {payment.status === 'completed' ? (
-                        <CheckCircle className="h-3 w-3 mr-1" />
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
                       ) : (
                         <AlertTriangle className="h-3 w-3 mr-1" />
                       )}
