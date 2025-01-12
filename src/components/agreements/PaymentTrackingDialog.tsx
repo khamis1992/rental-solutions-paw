@@ -33,8 +33,23 @@ export function PaymentTrackingDialog({
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from("payment_schedules")
-          .select("*")
+          .from("unified_payments")
+          .select(`
+            *,
+            security_deposits (
+              amount,
+              status
+            ),
+            leases (
+              agreement_number,
+              customer_id,
+              profiles:customer_id (
+                id,
+                full_name,
+                phone_number
+              )
+            )
+          `)
           .eq("lease_id", agreementId)
           .order("due_date");
 
@@ -54,7 +69,18 @@ export function PaymentTrackingDialog({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("unified_payments")
-        .select("*")
+        .select(`
+          *,
+          leases (
+            agreement_number,
+            customer_id,
+            profiles:customer_id (
+              id,
+              full_name,
+              phone_number
+            )
+          )
+        `)
         .eq("lease_id", agreementId)
         .order("created_at", { ascending: false });
 
