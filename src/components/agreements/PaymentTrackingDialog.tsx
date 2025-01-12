@@ -29,7 +29,7 @@ export function PaymentTrackingDialog({
   const { isReconciling, reconcilePayments } = usePaymentReconciliation();
 
   const { data: payments, isLoading, error } = useQuery({
-    queryKey: ["payment-schedules", agreementId],
+    queryKey: ["unified-payments", agreementId],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
@@ -107,7 +107,7 @@ export function PaymentTrackingDialog({
           console.log('Real-time update received for payment:', payload);
           
           await queryClient.invalidateQueries({ 
-            queryKey: ['payment-schedules', agreementId] 
+            queryKey: ['unified-payments', agreementId] 
           });
           
           const eventMessages = {

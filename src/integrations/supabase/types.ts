@@ -3329,6 +3329,36 @@ export type Database = {
           },
         ]
       }
+      payment_migration_logs: {
+        Row: {
+          error_details: string | null
+          id: string
+          migration_date: string | null
+          records_failed: number | null
+          records_migrated: number
+          source_table: string
+          status: string | null
+        }
+        Insert: {
+          error_details?: string | null
+          id?: string
+          migration_date?: string | null
+          records_failed?: number | null
+          records_migrated: number
+          source_table: string
+          status?: string | null
+        }
+        Update: {
+          error_details?: string | null
+          id?: string
+          migration_date?: string | null
+          records_failed?: number | null
+          records_migrated?: number
+          source_table?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       payment_reconciliation: {
         Row: {
           auto_matched: boolean | null
@@ -5726,6 +5756,15 @@ export type Database = {
           },
         ]
       }
+      payment_migration_progress: {
+        Row: {
+          migration_status: string | null
+          table_name: string | null
+          total_records: number | null
+          unmigrated_records: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_case_duration_stats: {
@@ -5765,6 +5804,15 @@ export type Database = {
           p_customer_id: string
         }
         Returns: number
+      }
+      check_payment_migration_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          unmigrated_records: number
+          total_records: number
+          migration_status: string
+        }[]
       }
       create_default_agreement_if_not_exists: {
         Args: {

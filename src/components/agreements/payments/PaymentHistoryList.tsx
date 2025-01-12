@@ -21,7 +21,7 @@ export function PaymentHistoryList({ paymentHistory }: PaymentHistoryListProps) 
         {paymentHistory?.map((payment) => (
           <TableRow key={payment.id}>
             <TableCell>
-              {new Date(payment.created_at).toLocaleDateString()}
+              {new Date(payment.payment_date || payment.created_at).toLocaleDateString()}
             </TableCell>
             <TableCell>{formatCurrency(payment.amount_paid || 0)}</TableCell>
             <TableCell>
@@ -37,8 +37,8 @@ export function PaymentHistoryList({ paymentHistory }: PaymentHistoryListProps) 
               </Badge>
             </TableCell>
             <TableCell>
-              {payment.late_fee_applied
-                ? formatCurrency(payment.late_fee_applied)
+              {payment.late_fine_amount > 0
+                ? formatCurrency(payment.late_fine_amount)
                 : "-"}
             </TableCell>
           </TableRow>
