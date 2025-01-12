@@ -5862,6 +5862,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      migrate_to_unified_import_tracking: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       process_payment: {
         Args: {
           input_lease_id: string
