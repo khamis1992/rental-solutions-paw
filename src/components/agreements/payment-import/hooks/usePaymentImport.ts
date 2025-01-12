@@ -59,23 +59,23 @@ export const usePaymentImport = () => {
             for (const row of parsedData) {
               try {
                 const rawImport: Partial<RawPaymentImport> = {
-                  Transaction_ID: row.Transaction_ID as string,
-                  Agreement_Number: row.Agreement_Number as string,
-                  Customer_Name: row.Customer_Name as string,
-                  License_Plate: row.License_Plate as string,
-                  Amount: Number(row.Amount),
-                  Payment_Method: normalizePaymentMethod(row.Payment_Method as string),
-                  Description: row.Description as string,
-                  Payment_Date: row.Payment_Date as string, // Store raw string value
-                  Type: row.Type as string,
-                  Status: row.Status as string,
+                  transaction_id: row.transaction_id as string,
+                  agreement_number: row.agreement_number as string,
+                  customer_name: row.customer_name as string,
+                  license_plate: row.license_plate as string,
+                  amount: Number(row.amount),
+                  payment_method: normalizePaymentMethod(row.payment_method as string),
+                  description: row.description as string,
+                  payment_date: row.payment_date as string,
+                  type: row.type as string,
+                  status: row.status as string,
                   is_valid: false
                 };
 
                 const { data: existingPayment } = await supabase
                   .from('raw_payment_imports')
                   .select('id')
-                  .eq('Transaction_ID', rawImport.Transaction_ID)
+                  .eq('transaction_id', rawImport.transaction_id)
                   .single();
 
                 if (!existingPayment) {
@@ -85,12 +85,12 @@ export const usePaymentImport = () => {
 
                   if (insertError) {
                     console.error('Raw data import error:', insertError);
-                    toast.error(`Failed to store raw data for transaction ${rawImport.Transaction_ID}`);
+                    toast.error(`Failed to store raw data for transaction ${rawImport.transaction_id}`);
                   }
                 }
               } catch (error) {
                 console.error('Error processing row:', row, error);
-                toast.error(`Failed to process transaction ${row.Transaction_ID}`);
+                toast.error(`Failed to process transaction ${row.transaction_id}`);
               }
             }
 

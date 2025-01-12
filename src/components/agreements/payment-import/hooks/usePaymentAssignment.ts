@@ -51,7 +51,7 @@ export const usePaymentAssignment = () => {
           .insert({
             lease_id: analysisResult.normalizedPayment.lease_id,
             amount: payment.amount,
-            payment_method: payment.payment_method,
+            payment_method: payment.payment_method as "Invoice" | "Cash" | "WireTransfer" | "Cheque" | "Deposit" | "On_hold",
             payment_date: payment.payment_date,
             status: 'completed',
             description: payment.description,
