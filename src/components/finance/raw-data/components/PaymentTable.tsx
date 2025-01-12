@@ -51,29 +51,29 @@ export const PaymentTable = ({ rawTransactions, onAnalyzePayment, isAnalyzing, o
         <TableBody>
           {rawTransactions?.map((transaction) => (
             <TableRow key={transaction.id}>
-              <TableCell>{transaction.Transaction_ID}</TableCell>
-              <TableCell>{transaction.Agreement_Number}</TableCell>
-              <TableCell>{transaction.Customer_Name}</TableCell>
-              <TableCell>{formatCurrency(Number(transaction.Amount))}</TableCell>
-              <TableCell>{transaction.Payment_Method}</TableCell>
-              <TableCell className="max-w-md truncate">{transaction.Description}</TableCell>
-              <TableCell>{new Date(transaction.Payment_Date).toLocaleDateString()}</TableCell>
+              <TableCell>{transaction.transaction_id}</TableCell>
+              <TableCell>{transaction.agreement_number}</TableCell>
+              <TableCell>{transaction.customer_name}</TableCell>
+              <TableCell>{formatCurrency(Number(transaction.amount))}</TableCell>
+              <TableCell>{transaction.payment_method}</TableCell>
+              <TableCell className="max-w-md truncate">{transaction.description}</TableCell>
+              <TableCell>{new Date(transaction.payment_date).toLocaleDateString()}</TableCell>
               <TableCell>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  transaction.Type === 'INCOME' 
+                  transaction.type === 'INCOME' 
                     ? 'bg-green-100 text-green-800'
                     : 'bg-red-100 text-red-800'
                 }`}>
-                  {transaction.Type}
+                  {transaction.type}
                 </span>
               </TableCell>
               <TableCell>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  transaction.Status === 'completed' 
+                  transaction.status === 'completed' 
                     ? 'bg-green-100 text-green-800'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {transaction.Status}
+                  {transaction.status}
                 </span>
               </TableCell>
               <TableCell>

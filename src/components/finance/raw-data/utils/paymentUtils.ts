@@ -5,9 +5,9 @@ import { normalizePaymentMethod } from "../../utils/paymentUtils";
 export const createDefaultAgreement = async (payment: RawPaymentImport) => {
   const { data: agreementData, error: agreementError } = await supabase
     .rpc('create_default_agreement_if_not_exists', {
-      p_agreement_number: payment.Agreement_Number,
-      p_customer_name: payment.Customer_Name,
-      p_amount: payment.Amount
+      p_agreement_number: payment.agreement_number,
+      p_customer_name: payment.customer_name,
+      p_amount: payment.amount
     });
 
   if (agreementError) throw agreementError;
@@ -20,8 +20,8 @@ export const insertPayment = async (leaseId: string, payment: RawPaymentImport) 
     .from('unified_payments')
     .select('id')
     .eq('lease_id', leaseId)
-    .eq('payment_date', payment.Payment_Date)
-    .eq('amount', payment.Amount)
+    .eq('payment_date', payment.payment_date)
+    .eq('amount', payment.amount)
     .maybeSingle();
 
   if (checkError) throw checkError;
@@ -32,21 +32,21 @@ export const insertPayment = async (leaseId: string, payment: RawPaymentImport) 
     return existingPayment;
   }
 
-  const normalizedMethod = normalizePaymentMethod(payment.Payment_Method);
+  const normalizedMethod = normalizePaymentMethod(payment.payment_method);
   
   const { data: paymentData, error: paymentError } = await supabase
     .from('unified_payments')
     .insert({
       lease_id: leaseId,
-      amount: payment.Amount,
-      amount_paid: payment.Amount, // Set initial amount paid
+      amount: payment.amount,
+      amount_paid: payment.amount, // Set initial amount paid
       balance: 0, // Initial balance is 0
       payment_method: normalizedMethod,
-      payment_date: payment.Payment_Date,
+      payment_date: payment.payment_date,
       status: 'completed',
-      description: payment.Description,
-      type: payment.Type,
-      transaction_id: payment.Transaction_ID,
+      description: payment.description,
+      type: payment.type,
+      transaction_id: payment.transaction_id,
       import_reference: payment.id, // Track the source import
       reconciliation_status: 'pending'
     })
