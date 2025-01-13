@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UnifiedImportTracking } from "@/components/finance/types/transaction.types";
 
 export const RawDataView = () => {
-  const { isAssigning, forceAssignAllPayments, cleanupStuckPayments } = usePaymentAssignment();
+  const { isAssigning, forceAssignAllPayments } = usePaymentAssignment();
 
   const { data: unprocessedPayments, isLoading } = useQuery({
     queryKey: ['unified-import-tracking', 'unprocessed'],
@@ -42,15 +42,17 @@ export const RawDataView = () => {
           hasUnprocessedPayments={!!(unprocessedPayments?.length)}
           onAnalyzeAll={forceAssignAllPayments}
           onCleanTable={handleCleanTable}
-          onCleanupStuck={cleanupStuckPayments}
           isSubmitting={isAssigning}
           cleanTableMutationIsPending={false}
+          onCleanupStuck={() => {}}
         />
       </CardHeader>
       <CardContent>
         <PaymentTable
-          payments={unprocessedPayments || []}
-          isLoading={isLoading}
+          rawTransactions={unprocessedPayments || []}
+          isAnalyzing={isLoading}
+          onAnalyzePayment={() => {}}
+          onRefresh={() => {}}
         />
       </CardContent>
     </Card>
