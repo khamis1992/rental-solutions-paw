@@ -2,12 +2,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Brain, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
+import { UnifiedImportTracking } from "../../types/transaction.types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentTableProps {
-  rawTransactions: RawPaymentImport[];
+  rawTransactions: UnifiedImportTracking[];
   onAnalyzePayment: (id: string) => void;
   isAnalyzing: boolean;
   onRefresh?: () => void;
@@ -17,7 +17,7 @@ export const PaymentTable = ({ rawTransactions, onAnalyzePayment, isAnalyzing, o
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('raw_payment_imports')
+        .from('unified_import_tracking')
         .delete()
         .eq('id', id);
 
@@ -82,7 +82,7 @@ export const PaymentTable = ({ rawTransactions, onAnalyzePayment, isAnalyzing, o
                     variant="outline"
                     size="sm"
                     onClick={() => onAnalyzePayment(transaction.id)}
-                    disabled={transaction.is_valid || isAnalyzing}
+                    disabled={transaction.validation_status || isAnalyzing}
                     className="flex items-center gap-2"
                   >
                     <Brain className="h-4 w-4" />

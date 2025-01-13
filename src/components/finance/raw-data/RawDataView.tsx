@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { RawPaymentImport } from "../types/transaction.types";
+import { UnifiedImportTracking } from "../types/transaction.types";
 import { PaymentAssignmentCard } from "./components/PaymentAssignmentCard";
 import { PaymentTable } from "./components/PaymentTable";
 import { PaymentActions } from "./components/PaymentActions";
@@ -19,22 +18,21 @@ export const RawDataView = () => {
     isAssigning, 
     assignmentResults, 
     forceAssignPayment, 
-    forceAssignAllPayments,
-    cleanupStuckPayments 
+    forceAssignAllPayments 
   } = usePaymentAssignment();
 
   const { data: rawTransactions, isLoading, refetch } = useQuery({
-    queryKey: ["raw-payment-imports"],
+    queryKey: ["unified-import-tracking"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("raw_payment_imports")
+        .from("unified_import_tracking")
         .select("*")
         .order("created_at", { ascending: false })
-        .filter('is_valid', 'eq', false);
+        .filter('validation_status', 'eq', false);
 
       if (error) throw error;
       
-      return data as RawPaymentImport[];
+      return data as UnifiedImportTracking[];
     },
   });
 
@@ -45,13 +43,13 @@ export const RawDataView = () => {
     setIsCleaningTable(true);
     try {
       const { error } = await supabase
-        .from('raw_payment_imports')
+        .from('unified_import_tracking')
         .delete()
-        .filter('is_valid', 'eq', true);
+        .filter('validation_status', 'eq', true);
 
       if (error) throw error;
       
-      await queryClient.invalidateQueries({ queryKey: ["raw-payment-imports"] });
+      await queryClient.invalidateQueries({ queryKey: ["unified-import-tracking"] });
       toast.success("Table cleaned successfully - removed all processed payments");
     } catch (error) {
       console.error('Clean table error:', error);
@@ -69,7 +67,7 @@ export const RawDataView = () => {
     );
   }
 
-  const hasUnprocessedPayments = rawTransactions?.some(payment => !payment.is_valid);
+  const hasUnprocessedPayments = rawTransactions?.some(payment => !payment.validation_status);
 
   return (
     <div className="space-y-6">
@@ -79,7 +77,6 @@ export const RawDataView = () => {
           hasUnprocessedPayments={hasUnprocessedPayments}
           onAnalyzeAll={forceAssignAllPayments}
           onCleanTable={cleanTable}
-          onCleanupStuck={cleanupStuckPayments}
           isSubmitting={isAssigning}
           cleanTableMutationIsPending={isCleaningTable}
         />

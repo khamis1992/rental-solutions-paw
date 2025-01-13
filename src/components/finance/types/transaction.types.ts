@@ -21,25 +21,8 @@ export interface Category {
 }
 
 export type TransactionType = 'INCOME' | 'EXPENSE';
-export type TransactionStatus = 'pending' | 'completed' | 'failed';
+export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
-
-export interface RawPaymentImport {
-  id: string;
-  transaction_id: string;
-  agreement_number: string;
-  customer_name: string;
-  license_plate: string;
-  amount: number;
-  payment_method: PaymentMethodType;
-  description: string;
-  payment_date: string;
-  type: string;
-  status: string;
-  is_valid: boolean;
-  error_description?: string;
-  created_at?: string;
-}
 
 export interface UnifiedImportTracking {
   id: string;
