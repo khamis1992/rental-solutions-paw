@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import { RawPaymentImport } from "../../types/transaction.types";
+import { UnifiedImportTracking } from "../../types/transaction.types";
 
-export const analyzePayment = async (payment: RawPaymentImport) => {
+export const analyzePayment = async (payment: UnifiedImportTracking) => {
   const { data: analysisResult, error: analysisError } = await supabase.functions
     .invoke('analyze-payment-import', {
       body: { payment }
@@ -17,9 +17,9 @@ export const analyzePayment = async (payment: RawPaymentImport) => {
 
 export const findStuckPayments = async () => {
   const { data: stuckPayments, error: fetchError } = await supabase
-    .from('raw_payment_imports')
+    .from('unified_import_tracking')
     .select('*')
-    .eq('is_valid', false);
+    .eq('validation_status', false);
 
   if (fetchError) throw fetchError;
   return stuckPayments || [];
@@ -27,9 +27,9 @@ export const findStuckPayments = async () => {
 
 export const findUnprocessedPayments = async () => {
   const { data: unprocessedPayments, error: fetchError } = await supabase
-    .from('raw_payment_imports')
+    .from('unified_import_tracking')
     .select('*')
-    .eq('is_valid', false);
+    .eq('validation_status', false);
 
   if (fetchError) throw fetchError;
   return unprocessedPayments || [];

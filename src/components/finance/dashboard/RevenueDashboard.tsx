@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RevenueChart } from "../charts/RevenueChart";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 export const RevenueDashboard = () => {
-  const { data: revenueData, isLoading } = useQuery({
-    queryKey: ["revenue-analysis"],
+  const { data: payments, isLoading } = useQuery({
+    queryKey: ['unified-payments'],
     queryFn: async () => {
-      const { data: payments, error } = await supabase
-        .from("unified_payments")
+      const { data, error } = await supabase
+        .from('unified_payments')
         .select(`
           amount,
           amount_paid,
@@ -17,26 +17,37 @@ export const RevenueDashboard = () => {
             agreement_type
           )
         `)
-        .eq('status', 'completed')
-        .gte('payment_date', '2025-01-01')
-        .order('payment_date');
+        .eq('status', 'completed');
 
       if (error) throw error;
-      return payments;
-    },
+      return data;
+    }
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+  // Transform the data for the chart
+  const chartData = payments?.map(payment => ({
+    date: new Date(payment.payment_date).toLocaleDateString(),
+    revenue: payment.amount_paid
+  })) || [];
 
   return (
-    <div className="space-y-6">
-      <RevenueChart data={revenueData || []} />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Revenue Overview</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : (
+          <LineChart width={600} height={300} data={chartData}>
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" />
+            <Line type="monotone" dataKey="revenue" stroke="#8884d8" />
+          </LineChart>
+        )}
+      </CardContent>
+    </Card>
   );
 };

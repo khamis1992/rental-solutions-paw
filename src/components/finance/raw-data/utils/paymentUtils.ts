@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { RawPaymentImport } from "../../types/transaction.types";
+import { UnifiedImportTracking } from "../../types/transaction.types";
 import { normalizePaymentMethod } from "../../utils/paymentUtils";
 
-export const createDefaultAgreement = async (payment: RawPaymentImport) => {
+export const createDefaultAgreement = async (payment: UnifiedImportTracking) => {
   const { data: agreementData, error: agreementError } = await supabase
     .rpc('create_default_agreement_if_not_exists', {
       p_agreement_number: payment.agreement_number,
@@ -14,7 +14,7 @@ export const createDefaultAgreement = async (payment: RawPaymentImport) => {
   return agreementData;
 };
 
-export const insertPayment = async (leaseId: string, payment: RawPaymentImport) => {
+export const insertPayment = async (leaseId: string, payment: UnifiedImportTracking) => {
   // First check if payment already exists
   const { data: existingPayment, error: checkError } = await supabase
     .from('unified_payments')
@@ -39,15 +39,15 @@ export const insertPayment = async (leaseId: string, payment: RawPaymentImport) 
     .insert({
       lease_id: leaseId,
       amount: payment.amount,
-      amount_paid: payment.amount, // Set initial amount paid
-      balance: 0, // Initial balance is 0
+      amount_paid: payment.amount,
+      balance: 0,
       payment_method: normalizedMethod,
       payment_date: payment.payment_date,
       status: 'completed',
       description: payment.description,
       type: payment.type,
       transaction_id: payment.transaction_id,
-      import_reference: payment.id, // Track the source import
+      import_reference: payment.id,
       reconciliation_status: 'pending'
     })
     .select()
@@ -63,10 +63,10 @@ export const updatePaymentStatus = async (
   errorDescription?: string
 ) => {
   const { error: updateError } = await supabase
-    .from('raw_payment_imports')
+    .from('unified_import_tracking')
     .update({ 
-      is_valid: isValid,
-      error_description: errorDescription || null
+      validation_status: isValid,
+      error_details: errorDescription || null
     })
     .eq('id', paymentId);
 
