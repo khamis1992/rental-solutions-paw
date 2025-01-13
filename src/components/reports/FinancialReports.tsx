@@ -15,7 +15,7 @@ export const FinancialReports = () => {
     queryKey: ["financial-reports"],
     queryFn: async () => {
       const { data: payments, error } = await supabase
-        .from("payments")
+        .from("unified_payments")  // Updated from 'payments' to 'unified_payments'
         .select(`
           *,
           lease:leases (
