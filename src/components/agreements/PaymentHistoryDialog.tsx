@@ -34,7 +34,7 @@ export function PaymentHistoryDialog({
       
       try {
         const query = supabase
-          .from("unified_payments")
+          .from("unified_payments")  // Changed from 'payments' to 'unified_payments'
           .select(`
             *,
             security_deposits (
@@ -94,7 +94,7 @@ export function PaymentHistoryDialog({
         {
           event: '*',
           schema: 'public',
-          table: 'unified_payments',
+          table: 'unified_payments',  // Changed from 'payments' to 'unified_payments'
           ...(agreementId ? { filter: `lease_id=eq.${agreementId}` } : {})
         },
         async (payload) => {
