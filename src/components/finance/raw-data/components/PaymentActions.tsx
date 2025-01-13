@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Brain, Trash2, RefreshCcw, CleaningServices } from "lucide-react";
+import { Brain, Trash2, RefreshCcw, Eraser } from "lucide-react";
 
 interface PaymentActionsProps {
   hasUnprocessedPayments: boolean;
@@ -38,7 +38,7 @@ export const PaymentActions = ({
         disabled={!hasUnprocessedPayments || cleanTableMutationIsPending}
         className="flex items-center gap-2"
       >
-        <CleaningServices className="h-4 w-4" />
+        <Eraser className="h-4 w-4" />
         {cleanTableMutationIsPending ? 'Cleaning...' : 'Clean Table'}
       </Button>
 
