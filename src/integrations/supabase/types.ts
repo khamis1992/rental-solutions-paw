@@ -2932,6 +2932,20 @@ export type Database = {
             foreignKeyName: "payment_audit_logs_payment_id_fkey"
             columns: ["payment_id"]
             isOneToOne: false
+            referencedRelation: "payment_schedules_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_audit_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_audit_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
             referencedRelation: "unified_payments"
             referencedColumns: ["id"]
           },
@@ -4684,6 +4698,20 @@ export type Database = {
             foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
             columns: ["matched_payment_id"]
             isOneToOne: false
+            referencedRelation: "payment_schedules_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
+            columns: ["matched_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
+            columns: ["matched_payment_id"]
+            isOneToOne: false
             referencedRelation: "unified_payments"
             referencedColumns: ["id"]
           },
@@ -5503,49 +5531,164 @@ export type Database = {
       payment_history_view: {
         Row: {
           actual_payment_date: string | null
+          agreement_number: string | null
           amount_due: number | null
           amount_paid: number | null
           created_at: string | null
-          description: string | null
-          late_fine_amount: number | null
+          customer_id: string | null
+          late_fee_applied: number | null
           lease_id: string | null
+          make: string | null
+          model: string | null
           original_due_date: string | null
           payment_id: string | null
+          remaining_balance: number | null
           status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string | null
-        }
-        Insert: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          description?: string | null
-          late_fine_amount?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          payment_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          updated_at?: string | null
-        }
-        Update: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          description?: string | null
-          late_fine_amount?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          payment_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          updated_at?: string | null
+          vehicle_id: string | null
+          year: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unified_payments_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_schedules_view: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          due_date: string | null
+          id: string | null
+          lease_id: string | null
+          make: string | null
+          model: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          updated_at: string | null
+          vehicle_id: string | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments_view: {
+        Row: {
+          agreement_number: string | null
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          customer_id: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          make: string | null
+          match_confidence: number | null
+          model: string | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_payments_security_deposit_id_fkey"
+            columns: ["security_deposit_id"]
+            isOneToOne: false
+            referencedRelation: "security_deposits"
             referencedColumns: ["id"]
           },
         ]
