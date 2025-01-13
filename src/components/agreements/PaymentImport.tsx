@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Upload, FileDown, PlayCircle, Trash2 } from "lucide-react";
 import Papa from 'papaparse';
-import { RawPaymentImport } from "@/components/finance/types/transaction.types";
 import { normalizePaymentMethod, validateHeaders, formatDateForDB, REQUIRED_FIELDS } from "./payment-import/utils/paymentUtils";
 import { usePaymentAssignment } from "./payment-import/hooks/usePaymentAssignment";
 
@@ -63,7 +62,9 @@ export const PaymentImport = () => {
             const parsedData = results.data as ImportedData[];
             setImportedData(parsedData);
 
-            for (const row of parsedData) {
+            const batchId = crypto.randomUUID();
+
+            for (const [index, row] of parsedData.entries()) {
               try {
                 const formattedDate = formatDateForDB(row.payment_date as string);
                 if (!formattedDate) {
@@ -71,35 +72,27 @@ export const PaymentImport = () => {
                   continue;
                 }
 
-                const rawImport: Partial<RawPaymentImport> = {
-                  transaction_id: row.transaction_id as string,
-                  agreement_number: row.agreement_number as string,
-                  customer_name: row.customer_name as string,
-                  license_plate: row.license_plate as string,
-                  amount: Number(row.amount),
-                  payment_method: normalizePaymentMethod(row.payment_method as string),
-                  description: row.description as string,
-                  payment_date: formattedDate,
-                  type: row.type as string,
-                  status: row.status as string,
-                  is_valid: false
-                };
+                const { error: insertError } = await supabase
+                  .from('unified_import_tracking')
+                  .insert({
+                    transaction_id: row.transaction_id as string,
+                    agreement_number: row.agreement_number as string,
+                    customer_name: row.customer_name as string,
+                    license_plate: row.license_plate as string,
+                    amount: Number(row.amount),
+                    payment_method: normalizePaymentMethod(row.payment_method as string),
+                    description: row.description as string,
+                    payment_date: formattedDate,
+                    type: row.type as string,
+                    status: 'pending',
+                    batch_id: batchId,
+                    row_number: index + 1,
+                    file_name: file.name
+                  });
 
-                const { data: existingPayment } = await supabase
-                  .from('unified_payments')
-                  .select('id')
-                  .eq('transaction_id', rawImport.transaction_id)
-                  .maybeSingle();
-
-                if (!existingPayment) {
-                  const { error: insertError } = await supabase
-                    .from('raw_payment_imports')
-                    .insert(rawImport);
-
-                  if (insertError) {
-                    console.error('Raw data import error:', insertError);
-                    toast.error(`Failed to store raw data for transaction ${rawImport.transaction_id}`);
-                  }
+                if (insertError) {
+                  console.error('Import tracking error:', insertError);
+                  toast.error(`Failed to track import for transaction ${row.transaction_id}`);
                 }
               } catch (error) {
                 console.error('Error processing row:', row, error);
@@ -107,8 +100,8 @@ export const PaymentImport = () => {
               }
             }
 
-            await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-            toast.success('Raw data imported successfully');
+            await queryClient.invalidateQueries({ queryKey: ['unified-import-tracking'] });
+            toast.success('Data imported successfully');
           },
           error: (error) => {
             console.error('CSV Parse Error:', error);
