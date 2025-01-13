@@ -5858,6 +5858,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      migrate_payments_to_unified: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       migrate_to_payment_import_tracking: {
         Args: Record<PropertyKey, never>
         Returns: undefined
