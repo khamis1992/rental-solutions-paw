@@ -2896,29 +2896,47 @@ export type Database = {
         Row: {
           action: string
           created_at: string | null
+          entity_type: string | null
           id: string
+          ip_address: string | null
+          metadata: Json | null
           new_state: Json | null
+          operation_type: string | null
           payment_id: string | null
           performed_by: string | null
           previous_state: Json | null
+          session_id: string | null
+          user_agent: string | null
         }
         Insert: {
           action: string
           created_at?: string | null
+          entity_type?: string | null
           id?: string
+          ip_address?: string | null
+          metadata?: Json | null
           new_state?: Json | null
+          operation_type?: string | null
           payment_id?: string | null
           performed_by?: string | null
           previous_state?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
         }
         Update: {
           action?: string
           created_at?: string | null
+          entity_type?: string | null
           id?: string
+          ip_address?: string | null
+          metadata?: Json | null
           new_state?: Json | null
+          operation_type?: string | null
           payment_id?: string | null
           performed_by?: string | null
           previous_state?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
         }
         Relationships: [
           {
@@ -5487,6 +5505,32 @@ export type Database = {
           status?: never
         }
         Relationships: []
+      }
+      payment_audit_summary: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          metadata: Json | null
+          operation_type: string | null
+          payment_id: string | null
+          performed_by_user: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_audit_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payment_schedules_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_audit_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "unified_payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_schedules_view: {
         Row: {
