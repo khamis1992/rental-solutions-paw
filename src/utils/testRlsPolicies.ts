@@ -1,57 +1,57 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const testTableAccess = async (tableName: string) => {
+export interface RlsTestResult {
+  success: boolean;
+  error?: string;
+}
+
+export const testRlsPolicies = async (tableName: string): Promise<RlsTestResult> => {
   try {
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .limit(1);
 
+    if (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+
     return {
-      canRead: !error,
-      data: data
+      success: true
     };
   } catch (error) {
     return {
-      canRead: false,
-      error
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 };
 
-export const testTableWrite = async (tableName: string) => {
+export const testTableOperations = async (tableName: string): Promise<RlsTestResult> => {
   try {
-    const { error } = await supabase
-      .from(tableName)
-      .insert({})
-      .select()
-      .single();
+    // Test read
+    const { error: readError } = await supabase
+      .from(tableName as any)
+      .select('*')
+      .limit(1);
+
+    if (readError) {
+      return {
+        success: false,
+        error: `Read failed: ${readError.message}`
+      };
+    }
 
     return {
-      canWrite: !error
+      success: true
     };
   } catch (error) {
     return {
-      canWrite: false,
-      error
-    };
-  }
-};
-
-export const testTableDelete = async (tableName: string) => {
-  try {
-    const { error } = await supabase
-      .from(tableName)
-      .delete()
-      .eq('id', 'test-id');
-
-    return {
-      canDelete: !error
-    };
-  } catch (error) {
-    return {
-      canDelete: false,
-      error
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 };
