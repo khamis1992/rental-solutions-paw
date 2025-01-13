@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function testTableAccess(tableName: string) {
+export const testTableAccess = async (tableName: string) => {
   try {
     const { data, error } = await supabase
       .from(tableName)
@@ -8,39 +8,34 @@ export async function testTableAccess(tableName: string) {
       .limit(1);
 
     return {
-      success: !error,
+      canRead: !error,
       error: error?.message
     };
   } catch (error) {
     return {
-      success: false,
+      canRead: false,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
-}
+};
 
-export async function testRlsPolicy(tableName: string, action: 'select' | 'insert' | 'update' | 'delete') {
+export const testWriteAccess = async (tableName: string) => {
   try {
-    let query = supabase.from(tableName);
-    
-    switch (action) {
-      case 'select':
-        await query.select('*').limit(1);
-        break;
-      case 'insert':
-        await query.insert({ test: true }).select();
-        break;
-      case 'update':
-        await query.update({ updated: true }).eq('id', '00000000-0000-0000-0000-000000000000');
-        break;
-      case 'delete':
-        await query.delete().eq('id', '00000000-0000-0000-0000-000000000000');
-        break;
-    }
-    
-    return true;
+    // First try to insert a test record
+    const { error: insertError } = await supabase
+      .from(tableName)
+      .insert({})
+      .select()
+      .single();
+
+    return {
+      canWrite: !insertError,
+      error: insertError?.message
+    };
   } catch (error) {
-    console.error(`RLS test failed for ${tableName} - ${action}:`, error);
-    return false;
+    return {
+      canWrite: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
-}
+};

@@ -145,7 +145,8 @@ export const AgreementDetailsDialog = ({
     start_date: agreement.start_date || '',
     end_date: agreement.end_date || '',
     rent_amount: rentAmount,
-    contractValue: contractValue
+    contractValue: contractValue,
+    remainingAmount: remainingAmount
   } : undefined;
 
   return (

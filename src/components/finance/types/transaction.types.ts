@@ -1,6 +1,9 @@
-export type TransactionType = 'INCOME' | 'EXPENSE';
-export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'refunded';
-export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
+import { Database } from "@/integrations/supabase/types";
+
+export type PaymentMethodType = Database['public']['Enums']['payment_method_type'];
+export type PaymentStatus = Database['public']['Enums']['payment_status'];
+export type ImportSourceType = 'csv' | 'manual' | 'api';
+export type ImportStatusType = 'pending' | 'completed' | 'failed';
 
 export interface UnifiedImportTracking {
   id: string;
@@ -13,7 +16,7 @@ export interface UnifiedImportTracking {
   description: string;
   payment_date: string;
   type: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: ImportStatusType;
   validation_status: boolean;
   processing_attempts: number;
   error_details?: string;
@@ -21,53 +24,25 @@ export interface UnifiedImportTracking {
   updated_at?: string;
 }
 
-export interface PaymentAssignmentResult {
-  success: boolean;
-  agreementNumber: string;
-  amountAssigned: number;
-  timestamp: string;
-}
-
-export interface PaymentHistory {
+export interface Transaction {
   id: string;
-  lease_id: string;
-  amount_due: number;
-  amount_paid: number;
-  remaining_balance: number;
-  actual_payment_date: string;
-  original_due_date: string;
-  late_fee_applied: number;
-  status: TransactionStatus;
-  created_at: string;
-  updated_at: string;
-  lease?: {
-    agreement_number: string;
-    customer_id: string;
-    profiles?: {
-      id: string;
-      full_name: string;
-      phone_number: string;
-    };
-  };
+  type: 'INCOME' | 'EXPENSE';
+  amount: number;
+  description: string;
+  category_id?: string;
+  transaction_date: string;
+  status: PaymentStatus;
+  payment_method?: PaymentMethodType;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export const REQUIRED_FIELDS = [
-  'transaction_id',
-  'agreement_number',
-  'customer_name',
-  'license_plate',
-  'amount',
-  'payment_method',
-  'description',
-  'payment_date',
-  'type',
-  'status'
-];
-
-export function validateHeaders(headers: string[]): { isValid: boolean; missingFields: string[] } {
-  const missingFields = REQUIRED_FIELDS.filter(field => !headers.includes(field));
-  return {
-    isValid: missingFields.length === 0,
-    missingFields
-  };
+export interface TransactionImport {
+  id: string;
+  file_name: string;
+  status: ImportStatusType;
+  records_processed: number;
+  errors?: any;
+  created_at?: string;
+  updated_at?: string;
 }
