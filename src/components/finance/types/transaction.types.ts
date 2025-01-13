@@ -5,7 +5,6 @@ export interface Transaction {
   transaction_date: string;
   type: TransactionType;
   status: TransactionStatus;
-  category_id?: string;
   category: Category;
   payment_method?: PaymentMethodType;
   reference?: string;
@@ -26,10 +25,6 @@ export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' |
 
 export interface UnifiedImportTracking {
   id: string;
-  file_name?: string;
-  original_file_name?: string;
-  batch_id?: string;
-  import_source?: 'csv' | 'manual' | 'api';
   transaction_id: string;
   agreement_number: string;
   customer_name: string;
@@ -41,18 +36,10 @@ export interface UnifiedImportTracking {
   type: string;
   status: 'pending' | 'completed' | 'failed';
   validation_status: boolean;
-  validation_errors?: Record<string, any>;
   processing_attempts: number;
-  last_processed_at?: string;
-  matched_payment_id?: string;
-  matched_agreement_id?: string;
-  match_confidence?: number;
   error_details?: string;
-  resolution_notes?: string;
-  processed_by?: string;
   created_at?: string;
   updated_at?: string;
-  row_number?: number;
 }
 
 export interface PaymentAssignmentResult {
