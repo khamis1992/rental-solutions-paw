@@ -12,9 +12,9 @@ export function PaymentHistoryList({ paymentHistory }: PaymentHistoryListProps) 
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
-          <TableHead>Amount</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Amount Paid</TableHead>
           <TableHead>Late Fee</TableHead>
+          <TableHead>Status</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -24,6 +24,15 @@ export function PaymentHistoryList({ paymentHistory }: PaymentHistoryListProps) 
               {new Date(payment.payment_date || payment.created_at).toLocaleDateString()}
             </TableCell>
             <TableCell>{formatCurrency(payment.amount_paid || 0)}</TableCell>
+            <TableCell>
+              {payment.late_fine_amount > 0 ? (
+                <span className="text-red-500">
+                  {formatCurrency(payment.late_fine_amount)}
+                </span>
+              ) : (
+                "-"
+              )}
+            </TableCell>
             <TableCell>
               <Badge
                 variant="secondary"
@@ -35,11 +44,6 @@ export function PaymentHistoryList({ paymentHistory }: PaymentHistoryListProps) 
               >
                 {payment.status}
               </Badge>
-            </TableCell>
-            <TableCell>
-              {payment.late_fine_amount > 0
-                ? formatCurrency(payment.late_fine_amount)
-                : "-"}
             </TableCell>
           </TableRow>
         ))}
