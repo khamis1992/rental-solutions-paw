@@ -9,33 +9,49 @@ export const testTableAccess = async (tableName: string) => {
 
     return {
       canRead: !error,
-      error: error?.message
+      data: data
     };
   } catch (error) {
     return {
       canRead: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error
     };
   }
 };
 
-export const testWriteAccess = async (tableName: string) => {
+export const testTableWrite = async (tableName: string) => {
   try {
-    // First try to insert a test record
-    const { error: insertError } = await supabase
+    const { error } = await supabase
       .from(tableName)
       .insert({})
       .select()
       .single();
 
     return {
-      canWrite: !insertError,
-      error: insertError?.message
+      canWrite: !error
     };
   } catch (error) {
     return {
       canWrite: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error
+    };
+  }
+};
+
+export const testTableDelete = async (tableName: string) => {
+  try {
+    const { error } = await supabase
+      .from(tableName)
+      .delete()
+      .eq('id', 'test-id');
+
+    return {
+      canDelete: !error
+    };
+  } catch (error) {
+    return {
+      canDelete: false,
+      error
     };
   }
 };

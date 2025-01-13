@@ -37,12 +37,9 @@ export interface Transaction {
   updated_at?: string;
 }
 
-export interface TransactionImport {
-  id: string;
-  file_name: string;
-  status: ImportStatusType;
-  records_processed: number;
-  errors?: any;
-  created_at?: string;
-  updated_at?: string;
+export interface PaymentAssignmentResult {
+  success: boolean;
+  agreementNumber: string;
+  amountAssigned: number;
+  timestamp: string;
 }

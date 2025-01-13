@@ -2,17 +2,12 @@ import { useState } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { UnifiedImportTracking } from "@/components/finance/types/transaction.types";
+import { UnifiedImportTracking, PaymentAssignmentResult, PaymentMethodType } from "@/components/finance/types/transaction.types";
 import { retryOperation } from "@/components/agreements/utils/retryUtils";
 
 export const usePaymentAssignment = () => {
   const [isAssigning, setIsAssigning] = useState(false);
-  const [assignmentResults, setAssignmentResults] = useState<Array<{
-    success: boolean;
-    agreementNumber: string;
-    amountAssigned: number;
-    timestamp: string;
-  }>>([]);
+  const [assignmentResults, setAssignmentResults] = useState<PaymentAssignmentResult[]>([]);
   const queryClient = useQueryClient();
 
   const forceAssignPayment = async (payment: UnifiedImportTracking) => {
@@ -56,7 +51,7 @@ export const usePaymentAssignment = () => {
           .insert({
             lease_id: analysisResult.normalizedPayment.lease_id,
             amount: payment.amount,
-            payment_method: payment.payment_method,
+            payment_method: payment.payment_method as PaymentMethodType,
             payment_date: payment.payment_date,
             status: 'completed',
             description: payment.description,
