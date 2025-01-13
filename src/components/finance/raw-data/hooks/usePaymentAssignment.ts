@@ -1,36 +1,81 @@
 import { useState } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { RawPaymentImport } from "../../types/transaction.types";
+import { supabase } from "@/integrations/supabase/client";
+import { UnifiedImportTracking, PaymentAssignmentResult } from "../../types/transaction.types";
 import { retryOperation } from "../utils/retryUtils";
-import { createDefaultAgreement, insertPayment, updatePaymentStatus } from "../utils/paymentUtils";
-import { analyzePayment, findStuckPayments, findUnprocessedPayments } from "../utils/paymentAnalysis";
 
 export const usePaymentAssignment = () => {
   const [isAssigning, setIsAssigning] = useState(false);
-  const [assignmentResults, setAssignmentResults] = useState<any[]>([]);
+  const [assignmentResults, setAssignmentResults] = useState<PaymentAssignmentResult[]>([]);
   const queryClient = useQueryClient();
 
-  const forceAssignPayment = async (payment: RawPaymentImport) => {
+  const forceAssignPayment = async (payment: UnifiedImportTracking) => {
     try {
       console.log('Starting payment assignment for:', payment);
       
       const assignPaymentWithRetry = async () => {
-        const analysisResult = await analyzePayment(payment);
+        const { data: analysisResult, error: analysisError } = await supabase.functions
+          .invoke('analyze-payment-import', {
+            body: { payment }
+          });
+
+        if (analysisError) {
+          console.error('Analysis error:', analysisError);
+          throw new Error(`Failed to analyze payment: ${analysisError.message}`);
+        }
 
         if (!analysisResult.success) {
           if (analysisResult.shouldCreateAgreement) {
             console.log('Creating default agreement for:', payment.agreement_number);
-            const agreementData = await createDefaultAgreement(payment);
+            const { data: agreementData, error: agreementError } = await supabase
+              .rpc('create_default_agreement_if_not_exists', {
+                p_agreement_number: payment.agreement_number,
+                p_customer_name: payment.customer_name,
+                p_amount: payment.amount
+              });
+
+            if (agreementError) {
+              console.error('Agreement creation error:', agreementError);
+              throw new Error(`Failed to create agreement: ${agreementError.message}`);
+            }
+
             analysisResult.normalizedPayment.lease_id = agreementData;
           } else {
             throw new Error(analysisResult.error || 'Unknown analysis error');
           }
         }
 
-        await insertPayment(analysisResult.normalizedPayment.lease_id, payment);
-        await updatePaymentStatus(payment.id, true);
+        const { error: paymentError } = await supabase
+          .from('unified_payments')
+          .insert({
+            lease_id: analysisResult.normalizedPayment.lease_id,
+            amount: payment.amount,
+            payment_method: payment.payment_method as any,
+            payment_date: payment.payment_date,
+            status: 'completed',
+            description: payment.description,
+            type: payment.type,
+            transaction_id: payment.transaction_id
+          });
 
+        if (paymentError) {
+          console.error('Payment creation error:', paymentError);
+          throw new Error(`Failed to create payment: ${paymentError.message}`);
+        }
+
+        // Update import tracking status
+        const { error: updateError } = await supabase
+          .from('unified_import_tracking')
+          .update({ 
+            status: 'completed',
+            validation_status: true,
+            last_processed_at: new Date().toISOString(),
+            processing_attempts: (payment.processing_attempts || 0) + 1
+          })
+          .eq('id', payment.id);
+
+        if (updateError) throw updateError;
         return true;
       };
 
@@ -51,63 +96,48 @@ export const usePaymentAssignment = () => {
       return success;
     } catch (error) {
       console.error('Force assign error:', error);
-      await updatePaymentStatus(
-        payment.id, 
-        false, 
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+      await supabase
+        .from('unified_import_tracking')
+        .update({ 
+          status: 'failed',
+          error_details: error instanceof Error ? error.message : 'Unknown error',
+          processing_attempts: (payment.processing_attempts || 0) + 1,
+          last_processed_at: new Date().toISOString()
+        })
+        .eq('id', payment.id);
+      
       toast.error('Failed to assign payment');
       return false;
-    }
-  };
-
-  const cleanupStuckPayments = async () => {
-    try {
-      setIsAssigning(true);
-      console.log('Starting cleanup of stuck payments...');
-
-      const stuckPayments = await findStuckPayments();
-      let cleanedCount = 0;
-
-      for (const payment of stuckPayments) {
-        const success = await forceAssignPayment(payment as RawPaymentImport);
-        if (success) cleanedCount++;
-      }
-
-      if (cleanedCount > 0) {
-        toast.success(`Cleaned up ${cleanedCount} stuck payments`);
-        await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-      }
-    } catch (error) {
-      console.error('Cleanup error:', error);
-      toast.error('Failed to cleanup stuck payments');
-    } finally {
-      setIsAssigning(false);
     }
   };
 
   const forceAssignAllPayments = async () => {
     setIsAssigning(true);
     try {
-      const unprocessedPayments = await findUnprocessedPayments();
+      const { data: unprocessedPayments, error: fetchError } = await supabase
+        .from('unified_import_tracking')
+        .select('*')
+        .eq('status', 'pending');
+
+      if (fetchError) throw fetchError;
+
       let successCount = 0;
       const batchSize = 5;
       const batches = [];
       
-      for (let i = 0; i < unprocessedPayments.length; i += batchSize) {
+      for (let i = 0; i < (unprocessedPayments || []).length; i += batchSize) {
         batches.push(unprocessedPayments.slice(i, i + batchSize));
       }
 
       for (const batch of batches) {
         const results = await Promise.all(
-          batch.map(payment => forceAssignPayment(payment as RawPaymentImport))
+          batch.map(payment => forceAssignPayment(payment))
         );
         successCount += results.filter(Boolean).length;
       }
 
       toast.success(`Successfully assigned ${successCount} payments`);
-      await queryClient.invalidateQueries({ queryKey: ['raw-payment-imports'] });
-      await cleanupStuckPayments();
+      await queryClient.invalidateQueries({ queryKey: ['unified-import-tracking'] });
     } catch (error) {
       console.error('Bulk assign error:', error);
       toast.error('Failed to assign payments');
@@ -120,7 +150,6 @@ export const usePaymentAssignment = () => {
     isAssigning,
     assignmentResults,
     forceAssignPayment,
-    forceAssignAllPayments,
-    cleanupStuckPayments
+    forceAssignAllPayments
   };
 };

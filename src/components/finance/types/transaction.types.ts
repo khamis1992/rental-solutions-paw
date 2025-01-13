@@ -1,3 +1,13 @@
+export interface Transaction {
+  id: string;
+  amount: number;
+  description: string;
+  transaction_date: string;
+  type: 'income' | 'expense';
+  status: string;
+  category_id?: string;
+}
+
 export interface RawPaymentImport {
   id: string;
   transaction_id: string;
@@ -20,7 +30,7 @@ export interface UnifiedImportTracking {
   file_name?: string;
   original_file_name?: string;
   batch_id?: string;
-  import_source?: 'csv' | 'manual' | 'api';
+  import_source?: 'csv' | 'manual' | 'api' | 'bulk_upload';
   transaction_id: string;
   agreement_number: string;
   customer_name: string;
