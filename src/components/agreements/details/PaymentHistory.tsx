@@ -25,7 +25,6 @@ interface PaymentHistoryProps {
 
 export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -84,25 +83,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     }
   };
 
-  const handleDeleteHistoricalPayments = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('delete-historical-payments', {
-        method: 'POST',
-        body: { agreementId }
-      });
-
-      if (error) throw error;
-
-      toast.success("Historical payments deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
-    } catch (error) {
-      console.error("Error deleting historical payments:", error);
-      toast.error("Failed to delete historical payments");
-    } finally {
-      setIsHistoricalDeleteDialogOpen(false);
-    }
-  };
-
   if (isLoading) {
     return <div>Loading payment history...</div>;
   }
@@ -124,14 +104,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Payment History</CardTitle>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsHistoricalDeleteDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <History className="h-4 w-4" />
-            Delete Pre-2025 Payments
-          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -170,14 +142,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                 <div className="text-right space-y-1">
                   <div>Amount: {formatCurrency(payment.amount)}</div>
                   <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
+                  <div>Balance: {formatCurrency(payment.balance || 0)}</div>
                   {payment.late_fine_amount > 0 && (
                     <div className="text-destructive flex items-center justify-end gap-1">
                       <AlertTriangle className="h-4 w-4" />
                       Late Fine: {formatCurrency(payment.late_fine_amount)}
                     </div>
-                  )}
-                  {payment.balance > 0 && (
-                    <div className="text-destructive">Balance: {formatCurrency(payment.balance)}</div>
                   )}
                   <div className="flex items-center gap-2">
                     <Badge 
@@ -229,26 +199,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={isHistoricalDeleteDialogOpen} onOpenChange={setIsHistoricalDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Historical Payments</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete all payments made before 2025. This action cannot be undone. Are you sure you want to proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteHistoricalPayments}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Historical Payments
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
