@@ -2996,54 +2996,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_history_backup: {
-        Row: {
-          actual_payment_date: string | null
-          amount_due: number | null
-          amount_paid: number | null
-          created_at: string | null
-          early_payment_discount: number | null
-          id: string | null
-          late_fee_applied: number | null
-          lease_id: string | null
-          original_due_date: string | null
-          payment_id: string | null
-          remaining_balance: number | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          early_payment_discount?: number | null
-          id?: string | null
-          late_fee_applied?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          payment_id?: string | null
-          remaining_balance?: number | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          early_payment_discount?: number | null
-          id?: string | null
-          late_fee_applied?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          payment_id?: string | null
-          remaining_balance?: number | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       payment_history_backup_2024: {
         Row: {
           actual_payment_date: string | null
@@ -3233,48 +3185,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_matching_logs_backup: {
-        Row: {
-          admin_reviewed: boolean | null
-          admin_reviewed_at: string | null
-          admin_reviewed_by: string | null
-          created_at: string | null
-          customer_id: string | null
-          id: string | null
-          is_ai_matched: boolean | null
-          match_confidence: number | null
-          matching_factors: Json | null
-          payment_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          admin_reviewed?: boolean | null
-          admin_reviewed_at?: string | null
-          admin_reviewed_by?: string | null
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string | null
-          is_ai_matched?: boolean | null
-          match_confidence?: number | null
-          matching_factors?: Json | null
-          payment_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          admin_reviewed?: boolean | null
-          admin_reviewed_at?: string | null
-          admin_reviewed_by?: string | null
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string | null
-          is_ai_matched?: boolean | null
-          match_confidence?: number | null
-          matching_factors?: Json | null
-          payment_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       payment_migration_logs: {
         Row: {
           error_details: string | null
@@ -3302,42 +3212,6 @@ export type Database = {
           records_migrated?: number
           source_table?: string
           status?: string | null
-        }
-        Relationships: []
-      }
-      payment_reconciliation_backup: {
-        Row: {
-          auto_matched: boolean | null
-          created_at: string | null
-          discrepancy_details: Json | null
-          id: string | null
-          lease_id: string | null
-          match_confidence: number | null
-          payment_id: string | null
-          reconciliation_status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          auto_matched?: boolean | null
-          created_at?: string | null
-          discrepancy_details?: Json | null
-          id?: string | null
-          lease_id?: string | null
-          match_confidence?: number | null
-          payment_id?: string | null
-          reconciliation_status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          auto_matched?: boolean | null
-          created_at?: string | null
-          discrepancy_details?: Json | null
-          id?: string | null
-          lease_id?: string | null
-          match_confidence?: number | null
-          payment_id?: string | null
-          reconciliation_status?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3410,84 +3284,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      payments_backup: {
-        Row: {
-          amount: number | null
-          amount_paid: number | null
-          balance: number | null
-          created_at: string | null
-          days_overdue: number | null
-          description: string | null
-          id: string | null
-          include_in_calculation: boolean | null
-          invoice_id: string | null
-          is_recurring: boolean | null
-          late_fine_amount: number | null
-          lease_id: string | null
-          next_payment_date: string | null
-          payment_date: string | null
-          payment_method:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
-          recurring_interval: unknown | null
-          security_deposit_id: string | null
-          status: Database["public"]["Enums"]["payment_status"] | null
-          transaction_id: string | null
-          type: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          amount?: number | null
-          amount_paid?: number | null
-          balance?: number | null
-          created_at?: string | null
-          days_overdue?: number | null
-          description?: string | null
-          id?: string | null
-          include_in_calculation?: boolean | null
-          invoice_id?: string | null
-          is_recurring?: boolean | null
-          late_fine_amount?: number | null
-          lease_id?: string | null
-          next_payment_date?: string | null
-          payment_date?: string | null
-          payment_method?:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
-          recurring_interval?: unknown | null
-          security_deposit_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          transaction_id?: string | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: number | null
-          amount_paid?: number | null
-          balance?: number | null
-          created_at?: string | null
-          days_overdue?: number | null
-          description?: string | null
-          id?: string | null
-          include_in_calculation?: boolean | null
-          invoice_id?: string | null
-          is_recurring?: boolean | null
-          late_fine_amount?: number | null
-          lease_id?: string | null
-          next_payment_date?: string | null
-          payment_date?: string | null
-          payment_method?:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
-          recurring_interval?: unknown | null
-          security_deposit_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          transaction_id?: string | null
-          type?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       payments_backup_2024: {
         Row: {
@@ -3803,57 +3599,6 @@ export type Database = {
           min_rental_duration?: number | null
           start_date?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      raw_payment_imports_backup: {
-        Row: {
-          agreement_number: string | null
-          amount: number | null
-          created_at: string | null
-          customer_name: string | null
-          description: string | null
-          error_description: string | null
-          id: string | null
-          is_valid: boolean | null
-          license_plate: string | null
-          payment_date: string | null
-          payment_method: string | null
-          status: string | null
-          transaction_id: string | null
-          type: string | null
-        }
-        Insert: {
-          agreement_number?: string | null
-          amount?: number | null
-          created_at?: string | null
-          customer_name?: string | null
-          description?: string | null
-          error_description?: string | null
-          id?: string | null
-          is_valid?: boolean | null
-          license_plate?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          transaction_id?: string | null
-          type?: string | null
-        }
-        Update: {
-          agreement_number?: string | null
-          amount?: number | null
-          created_at?: string | null
-          customer_name?: string | null
-          description?: string | null
-          error_description?: string | null
-          id?: string | null
-          is_valid?: boolean | null
-          license_plate?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          transaction_id?: string | null
-          type?: string | null
         }
         Relationships: []
       }
