@@ -6,10 +6,18 @@ export interface Transaction {
   type: TransactionType;
   status: TransactionStatus;
   category_id?: string;
-  category?: string;
+  category: Category;
   payment_method?: string;
   reference?: string;
   created_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  type: string;
+  budget_limit: number;
+  budget_period: string;
 }
 
 export type TransactionType = 'INCOME' | 'EXPENSE';
@@ -72,7 +80,7 @@ export interface PaymentAssignmentResult {
 
 export const REQUIRED_FIELDS = [
   'transaction_id',
-  'agreement_number',
+  'agreement_number', 
   'customer_name',
   'license_plate',
   'amount',

@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import Papa from 'papaparse';
-import { validateHeaders, REQUIRED_FIELDS } from "../utils/paymentUtils";
+import { validateHeaders, REQUIRED_FIELDS } from "../../types/transaction.types";
 
 export const usePaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
