@@ -3,10 +3,17 @@ export interface Transaction {
   amount: number;
   description: string;
   transaction_date: string;
-  type: 'income' | 'expense';
-  status: string;
+  type: TransactionType;
+  status: TransactionStatus;
   category_id?: string;
+  category?: string;
+  payment_method?: string;
+  reference?: string;
+  created_at: string;
 }
+
+export type TransactionType = 'INCOME' | 'EXPENSE';
+export type TransactionStatus = 'pending' | 'completed' | 'failed';
 
 export interface RawPaymentImport {
   id: string;
@@ -30,7 +37,7 @@ export interface UnifiedImportTracking {
   file_name?: string;
   original_file_name?: string;
   batch_id?: string;
-  import_source?: 'csv' | 'manual' | 'api' | 'bulk_upload';
+  import_source?: 'csv' | 'manual' | 'api';
   transaction_id: string;
   agreement_number: string;
   customer_name: string;
@@ -61,4 +68,25 @@ export interface PaymentAssignmentResult {
   agreementNumber: string;
   amountAssigned: number;
   timestamp: string;
+}
+
+export const REQUIRED_FIELDS = [
+  'transaction_id',
+  'agreement_number',
+  'customer_name',
+  'license_plate',
+  'amount',
+  'payment_method',
+  'description',
+  'payment_date',
+  'type',
+  'status'
+];
+
+export function validateHeaders(headers: string[]): { isValid: boolean; missingFields: string[] } {
+  const missingFields = REQUIRED_FIELDS.filter(field => !headers.includes(field));
+  return {
+    isValid: missingFields.length === 0,
+    missingFields
+  };
 }

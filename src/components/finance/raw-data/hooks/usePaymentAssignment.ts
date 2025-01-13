@@ -91,6 +91,7 @@ export const usePaymentAssignment = () => {
         toast.success(`Payment assigned to agreement ${payment.agreement_number}`);
         
         await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
+        await queryClient.invalidateQueries({ queryKey: ['unified-import-tracking'] });
       }
 
       return success;
