@@ -3325,36 +3325,65 @@ export type Database = {
       }
       payment_schedules: {
         Row: {
+          actual_payment_date: string | null
           amount: number
           created_at: string | null
           due_date: string
           id: string
+          last_reminder_date: string | null
+          late_fee_applied: number | null
           lease_id: string | null
+          payment_reference: string | null
+          reconciliation_status: string | null
           reminder_sent_at: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string | null
         }
         Insert: {
+          actual_payment_date?: string | null
           amount: number
           created_at?: string | null
           due_date: string
           id?: string
+          last_reminder_date?: string | null
+          late_fee_applied?: number | null
           lease_id?: string | null
+          payment_reference?: string | null
+          reconciliation_status?: string | null
           reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
         }
         Update: {
+          actual_payment_date?: string | null
           amount?: number
           created_at?: string | null
           due_date?: string
           id?: string
+          last_reminder_date?: string | null
+          late_fee_applied?: number | null
           lease_id?: string | null
+          payment_reference?: string | null
+          reconciliation_status?: string | null
           reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_schedules_payment_reference_fkey"
+            columns: ["payment_reference"]
+            isOneToOne: false
+            referencedRelation: "payment_schedules_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_schedules_payment_reference_fkey"
+            columns: ["payment_reference"]
+            isOneToOne: false
+            referencedRelation: "unified_payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "simplified_payment_schedules_lease_id_fkey"
             columns: ["lease_id"]
