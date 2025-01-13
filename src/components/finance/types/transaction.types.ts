@@ -5,12 +5,20 @@ export type PaymentStatus = Database['public']['Enums']['payment_status'];
 export type ImportSourceType = 'csv' | 'manual' | 'api';
 export type ImportStatusType = 'pending' | 'completed' | 'failed';
 
+export interface Category {
+  id: string;
+  name: string;
+  type: string;
+  budget_limit: number;
+  budget_period: string;
+}
+
 export interface Transaction {
   id: string;
   type: 'INCOME' | 'EXPENSE';
   amount: number;
   description: string;
-  category: string;
+  category: Category;
   category_id?: string;
   transaction_date: string;
   status: PaymentStatus;
@@ -36,6 +44,13 @@ export interface UnifiedImportTracking {
   error_details?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface PaymentAssignmentResult {
+  success: boolean;
+  agreementNumber: string;
+  amountAssigned: number;
+  timestamp: string;
 }
 
 export const REQUIRED_FIELDS = [
