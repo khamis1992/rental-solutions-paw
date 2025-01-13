@@ -31,17 +31,17 @@ export const DeleteAgreementDialog = ({
     try {
       setIsDeleting(true);
 
-      // 1. Delete payment history
+      // 1. Delete payment history view entries
       const { error: paymentHistoryError } = await supabase
-        .from('payment_history')
+        .from('payment_history_view')
         .delete()
         .eq('lease_id', agreementId);
 
       if (paymentHistoryError) throw paymentHistoryError;
 
-      // 2. Delete payments
+      // 2. Delete unified payments
       const { error: paymentsError } = await supabase
-        .from('payments')
+        .from('unified_payments')
         .delete()
         .eq('lease_id', agreementId);
 
