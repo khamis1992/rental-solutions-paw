@@ -107,8 +107,17 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     return <div>Loading payment history...</div>;
   }
 
-  // Calculate total balance from all payments
-  const totalBalance = payments?.reduce((sum, payment) => sum + (payment.balance || 0), 0) || 0;
+  // Calculate totals
+  const totals = payments?.reduce((acc, payment) => {
+    if (payment.status === "completed") {
+      return {
+        amountPaid: acc.amountPaid + (payment.amount_paid || 0),
+        lateFines: acc.lateFines + (payment.late_fine_amount || 0),
+        balance: acc.balance + (payment.balance || 0)
+      };
+    }
+    return acc;
+  }, { amountPaid: 0, lateFines: 0, balance: 0 }) || { amountPaid: 0, lateFines: 0, balance: 0 };
 
   return (
     <Card>
@@ -127,6 +136,23 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Payment Summary */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Amount Paid</div>
+              <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Late Fines</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Balance</div>
+              <div className="text-lg font-semibold">{formatCurrency(totals.balance)}</div>
+            </div>
+          </div>
+
+          {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => (
               <div
@@ -142,16 +168,16 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   </div>
                 </div>
                 <div className="text-right space-y-1">
-                  <div>Total Amount: {formatCurrency(payment.amount)}</div>
+                  <div>Amount: {formatCurrency(payment.amount)}</div>
                   <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
                   {payment.late_fine_amount > 0 && (
-                    <div className="text-red-600 flex items-center justify-end gap-1">
+                    <div className="text-destructive flex items-center justify-end gap-1">
                       <AlertTriangle className="h-4 w-4" />
                       Late Fine: {formatCurrency(payment.late_fine_amount)}
                     </div>
                   )}
                   {payment.balance > 0 && (
-                    <div className="text-red-600">Balance: {formatCurrency(payment.balance)}</div>
+                    <div className="text-destructive">Balance: {formatCurrency(payment.balance)}</div>
                   )}
                   <div className="flex items-center gap-2">
                     <Badge 
