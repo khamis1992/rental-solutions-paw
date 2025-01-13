@@ -21,13 +21,13 @@ export const DashboardStats = () => {
           .eq("status", "active"),
 
         // Calculate current month revenue
-        supabase.from("payments")
+        supabase.from("unified_payments")  // Updated from 'payments' to 'unified_payments'
           .select('amount')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
           .eq('status', 'completed'),
 
         // Calculate last month revenue for comparison
-        supabase.from("payments")
+        supabase.from("unified_payments")  // Updated from 'payments' to 'unified_payments'
           .select('amount')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString())
           .lt('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
