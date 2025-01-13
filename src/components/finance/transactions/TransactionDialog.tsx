@@ -1,91 +1,92 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { TransactionStatus } from "@/components/finance/types/transaction.types";
 
 interface TransactionDialogProps {
-  transaction: any; // Replace with the actual type
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transactionId?: string;
 }
 
-export const TransactionDialog = ({ transaction, open, onOpenChange }: TransactionDialogProps) => {
-  const [status, setStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
-  const [description, setDescription] = useState<string>('');
+export const TransactionDialog = ({ open, onOpenChange, transactionId }: TransactionDialogProps) => {
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<"pending" | "completed" | "failed">("pending");
 
-  useEffect(() => {
-    if (transaction) {
-      setStatus(transaction.status);
-      setDescription(transaction.description || '');
-    }
-  }, [transaction]);
-
-  const handleStatusChange = (newStatus: 'pending' | 'completed' | 'failed') => {
-    setStatus(newStatus);
-  };
-
-  const handleSave = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
       const { error } = await supabase
-        .from('transactions')
-        .update({ status, description })
-        .eq('id', transaction.id);
+        .from('accounting_transactions')
+        .upsert({
+          id: transactionId,
+          amount: parseFloat(amount),
+          description,
+          status
+        });
 
       if (error) throw error;
-
-      toast.success("Transaction updated successfully");
+      
+      toast.success("Transaction saved successfully");
       onOpenChange(false);
     } catch (error) {
-      console.error("Error updating transaction:", error);
-      toast.error("Failed to update transaction");
+      console.error('Error saving transaction:', error);
+      toast.error("Failed to save transaction");
     }
   };
-
-  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Transaction Details</DialogTitle>
-          <DialogDescription>
-            Update the transaction details below.
-          </DialogDescription>
+          <DialogTitle>{transactionId ? "Edit" : "New"} Transaction</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4">
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="status">Status</Label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => handleStatusChange(e.target.value as 'pending' | 'completed' | 'failed')}
-              className="mt-1 block w-full"
-            >
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-            </select>
+            <Label htmlFor="amount">Amount</Label>
+            <Input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
           </div>
-
+          
           <div>
             <Label htmlFor="description">Description</Label>
             <Input
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1"
+              required
             />
           </div>
-
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button variant="default" onClick={handleSave} className="ml-2">Save</Button>
+          
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Select value={status} onValueChange={(value: "pending" | "completed" | "failed") => setStatus(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
+          
+          <Button type="submit">Save Transaction</Button>
+        </form>
       </DialogContent>
     </Dialog>
   );

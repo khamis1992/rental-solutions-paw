@@ -34,6 +34,18 @@ export const RawDataView = () => {
     }
   };
 
+  const handleCleanupStuck = async () => {
+    const { error } = await supabase
+      .from('unified_import_tracking')
+      .delete()
+      .eq('status', 'failed')
+      .gt('processing_attempts', 3);
+
+    if (error) {
+      console.error('Error cleaning stuck payments:', error);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -42,9 +54,9 @@ export const RawDataView = () => {
           hasUnprocessedPayments={!!(unprocessedPayments?.length)}
           onAnalyzeAll={forceAssignAllPayments}
           onCleanTable={handleCleanTable}
+          onCleanupStuck={handleCleanupStuck}
           isSubmitting={isAssigning}
           cleanTableMutationIsPending={false}
-          onCleanupStuck={() => {}}
         />
       </CardHeader>
       <CardContent>

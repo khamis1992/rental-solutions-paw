@@ -1,24 +1,3 @@
-export interface Transaction {
-  id: string;
-  amount: number;
-  description: string;
-  transaction_date: string;
-  type: TransactionType;
-  status: TransactionStatus;
-  category: Category;
-  payment_method?: PaymentMethodType;
-  reference?: string;
-  created_at: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  type: string;
-  budget_limit: number;
-  budget_period: string;
-}
-
 export type TransactionType = 'INCOME' | 'EXPENSE';
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
@@ -47,6 +26,29 @@ export interface PaymentAssignmentResult {
   agreementNumber: string;
   amountAssigned: number;
   timestamp: string;
+}
+
+export interface PaymentHistory {
+  id: string;
+  lease_id: string;
+  amount_due: number;
+  amount_paid: number;
+  remaining_balance: number;
+  actual_payment_date: string;
+  original_due_date: string;
+  late_fee_applied: number;
+  status: TransactionStatus;
+  created_at: string;
+  updated_at: string;
+  lease?: {
+    agreement_number: string;
+    customer_id: string;
+    profiles?: {
+      id: string;
+      full_name: string;
+      phone_number: string;
+    };
+  };
 }
 
 export const REQUIRED_FIELDS = [
