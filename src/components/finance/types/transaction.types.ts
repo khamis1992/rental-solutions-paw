@@ -7,7 +7,7 @@ export interface Transaction {
   status: TransactionStatus;
   category_id?: string;
   category: Category;
-  payment_method?: string;
+  payment_method?: PaymentMethodType;
   reference?: string;
   created_at: string;
 }
@@ -22,6 +22,7 @@ export interface Category {
 
 export type TransactionType = 'INCOME' | 'EXPENSE';
 export type TransactionStatus = 'pending' | 'completed' | 'failed';
+export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 
 export interface RawPaymentImport {
   id: string;
@@ -30,7 +31,7 @@ export interface RawPaymentImport {
   customer_name: string;
   license_plate: string;
   amount: number;
-  payment_method: string;
+  payment_method: PaymentMethodType;
   description: string;
   payment_date: string;
   type: string;
@@ -51,7 +52,7 @@ export interface UnifiedImportTracking {
   customer_name: string;
   license_plate: string;
   amount: number;
-  payment_method: string;
+  payment_method: PaymentMethodType;
   description: string;
   payment_date: string;
   type: string;
@@ -80,7 +81,7 @@ export interface PaymentAssignmentResult {
 
 export const REQUIRED_FIELDS = [
   'transaction_id',
-  'agreement_number', 
+  'agreement_number',
   'customer_name',
   'license_plate',
   'amount',

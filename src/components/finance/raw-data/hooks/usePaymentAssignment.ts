@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { UnifiedImportTracking, PaymentAssignmentResult } from "../../types/transaction.types";
+import { UnifiedImportTracking, PaymentAssignmentResult, PaymentMethodType } from "../../types/transaction.types";
 import { retryOperation } from "../utils/retryUtils";
 
 export const usePaymentAssignment = () => {
@@ -51,7 +51,7 @@ export const usePaymentAssignment = () => {
           .insert({
             lease_id: analysisResult.normalizedPayment.lease_id,
             amount: payment.amount,
-            payment_method: payment.payment_method,
+            payment_method: payment.payment_method as PaymentMethodType,
             payment_date: payment.payment_date,
             status: 'completed',
             description: payment.description,

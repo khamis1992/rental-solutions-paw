@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import Papa from 'papaparse';
-import { validateHeaders, REQUIRED_FIELDS } from "../../types/transaction.types";
+import { validateHeaders, REQUIRED_FIELDS, PaymentMethodType } from "../../types/transaction.types";
 
 export const usePaymentImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -14,7 +14,7 @@ export const usePaymentImport = () => {
   const downloadTemplate = () => {
     const csvContent = [
       REQUIRED_FIELDS.join(','),
-      '1000,AGR-202401-0001,John Doe,ABC123,1000,cash,Monthly payment,25/01/2024,INCOME,pending'
+      '1000,AGR-202401-0001,John Doe,ABC123,1000,Cash,Monthly payment,25/01/2024,INCOME,pending'
     ].join('\n');
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -67,7 +67,7 @@ export const usePaymentImport = () => {
                     customer_name: row.customer_name as string,
                     license_plate: row.license_plate as string,
                     amount: Number(row.amount),
-                    payment_method: row.payment_method as string,
+                    payment_method: row.payment_method as PaymentMethodType,
                     description: row.description as string,
                     payment_date: row.payment_date as string,
                     type: row.type as string,
