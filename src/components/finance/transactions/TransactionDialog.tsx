@@ -1,54 +1,32 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { TransactionStatus } from "@/components/finance/types/transaction.types";
+import { Label } from "@/components/ui/label";
+import { TransactionStatus } from "../types/transaction.types";
 
 interface TransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  transactionId?: string;
+  onSubmit: (data: { amount: number; status: TransactionStatus }) => void;
 }
 
-export const TransactionDialog = ({ open, onOpenChange, transactionId }: TransactionDialogProps) => {
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+export const TransactionDialog = ({ open, onOpenChange, onSubmit }: TransactionDialogProps) => {
+  const [amount, setAmount] = useState(0);
   const [status, setStatus] = useState<"pending" | "completed" | "failed">("pending");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      const { error } = await supabase
-        .from('accounting_transactions')
-        .upsert({
-          id: transactionId,
-          amount: parseFloat(amount),
-          description,
-          status
-        });
-
-      if (error) throw error;
-      
-      toast.success("Transaction saved successfully");
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error saving transaction:', error);
-      toast.error("Failed to save transaction");
-    }
+    onSubmit({ amount, status });
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{transactionId ? "Edit" : "New"} Transaction</DialogTitle>
+          <DialogTitle>Add Transaction</DialogTitle>
         </DialogHeader>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="amount">Amount</Label>
@@ -56,36 +34,23 @@ export const TransactionDialog = ({ open, onOpenChange, transactionId }: Transac
               id="amount"
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
+              onChange={(e) => setAmount(Number(e.target.value))}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </div>
-          
           <div>
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(value: "pending" | "completed" | "failed") => setStatus(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as TransactionStatus)}
+              className="w-full p-2 border rounded"
+            >
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
           </div>
-          
-          <Button type="submit">Save Transaction</Button>
+          <Button type="submit">Add Transaction</Button>
         </form>
       </DialogContent>
     </Dialog>

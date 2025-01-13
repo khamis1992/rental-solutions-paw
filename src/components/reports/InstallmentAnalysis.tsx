@@ -1,22 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { PaymentHistory } from "@/components/finance/types/transaction.types";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
-interface InstallmentAnalysisProps {
-  agreementId: string;
-}
-
-export const InstallmentAnalysis = ({ agreementId }: InstallmentAnalysisProps) => {
-  const { data: paymentHistory, isLoading } = useQuery({
-    queryKey: ['payment-history', agreementId],
+export const InstallmentAnalysis = () => {
+  const { data: paymentHistory } = useQuery({
+    queryKey: ['payment-history-analysis'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payment_history')
         .select(`
           *,
-          lease:leases (
+          lease:lease_id (
             agreement_number,
             customer_id,
             profiles:customer_id (
@@ -26,52 +21,45 @@ export const InstallmentAnalysis = ({ agreementId }: InstallmentAnalysisProps) =
             )
           )
         `)
-        .eq('lease_id', agreementId)
-        .order('original_due_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as PaymentHistory[];
+      return data;
     }
   });
 
-  if (isLoading) {
-    return <div>Loading analysis...</div>;
-  }
-
-  const totalDue = paymentHistory?.reduce((sum, payment) => sum + payment.amount_due, 0) || 0;
-  const totalPaid = paymentHistory?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
+  const totalAmountDue = paymentHistory?.reduce((sum, payment) => sum + payment.amount_due, 0) || 0;
+  const totalAmountPaid = paymentHistory?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
   const totalLateFees = paymentHistory?.reduce((sum, payment) => sum + payment.late_fee_applied, 0) || 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Payment Analysis</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm text-muted-foreground">Total Amount Due</div>
-            <div className="text-2xl font-bold">{formatCurrency(totalDue)}</div>
-          </div>
-          
-          <div>
-            <div className="text-sm text-muted-foreground">Total Amount Paid</div>
-            <div className="text-2xl font-bold">{formatCurrency(totalPaid)}</div>
-          </div>
-          
-          <div>
-            <div className="text-sm text-muted-foreground">Total Late Fees</div>
-            <div className="text-2xl font-bold text-red-500">{formatCurrency(totalLateFees)}</div>
-          </div>
-          
-          <div>
-            <div className="text-sm text-muted-foreground">Payment Completion</div>
-            <div className="text-2xl font-bold">
-              {totalDue > 0 ? Math.round((totalPaid / totalDue) * 100) : 0}%
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Amount Due</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(totalAmountDue)}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Amount Paid</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(totalAmountPaid)}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Total Late Fees</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(totalLateFees)}</div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

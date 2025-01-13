@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Trash2, RefreshCw } from "lucide-react";
+import { Brain, Trash2, RefreshCcw, CleaningServices } from "lucide-react";
 
 interface PaymentActionsProps {
   hasUnprocessedPayments: boolean;
@@ -19,31 +19,37 @@ export const PaymentActions = ({
   cleanTableMutationIsPending
 }: PaymentActionsProps) => {
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
       <Button
-        variant="default"
+        variant="outline"
+        size="sm"
         onClick={onAnalyzeAll}
         disabled={!hasUnprocessedPayments || isSubmitting}
+        className="flex items-center gap-2"
       >
-        <PlayCircle className="mr-2 h-4 w-4" />
-        Process All
+        <Brain className="h-4 w-4" />
+        {isSubmitting ? 'Processing...' : 'Analyze All'}
       </Button>
 
       <Button
         variant="outline"
+        size="sm"
         onClick={onCleanTable}
         disabled={!hasUnprocessedPayments || cleanTableMutationIsPending}
+        className="flex items-center gap-2"
       >
-        <Trash2 className="mr-2 h-4 w-4" />
-        Clean Table
+        <CleaningServices className="h-4 w-4" />
+        {cleanTableMutationIsPending ? 'Cleaning...' : 'Clean Table'}
       </Button>
 
       <Button
         variant="outline"
+        size="sm"
         onClick={onCleanupStuck}
         disabled={isSubmitting}
+        className="flex items-center gap-2"
       >
-        <RefreshCw className="mr-2 h-4 w-4" />
+        <RefreshCcw className="h-4 w-4" />
         Cleanup Stuck
       </Button>
     </div>
