@@ -121,7 +121,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Balance</div>
-              <div className="text-lg font-semibold">{formatCurrency(balance)}</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(balance)}</div>
             </div>
           </div>
 
@@ -144,13 +144,13 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   <div className="text-right space-y-1">
                     <div>Due Amount: {formatCurrency(payment.amount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
-                    <div>Balance: {formatCurrency(Math.max(0, payment.amount - (payment.amount_paid || 0)))}</div>
                     {payment.late_fine_amount > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
                         Late Fine: {formatCurrency(payment.late_fine_amount)}
                       </div>
                     )}
+                    <div className="text-destructive">Balance: {formatCurrency(Math.max(0, payment.amount - (payment.amount_paid || 0)))}</div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
