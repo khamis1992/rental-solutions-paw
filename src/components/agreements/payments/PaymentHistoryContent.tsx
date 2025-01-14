@@ -2,10 +2,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PaymentHistoryActions } from "./PaymentHistoryActions";
 import { PaymentSummary } from "./PaymentSummary";
 import { PaymentHistoryTable } from "./PaymentHistoryTable";
+import { PaymentHistoryView } from "@/types/database/payment.types";
 
 interface PaymentHistoryContentProps {
   agreementId?: string;
-  paymentHistory: any[];
+  paymentHistory: PaymentHistoryView[];
   isLoading: boolean;
   totalPaid: number;
   totalRefunded: number;
@@ -27,7 +28,7 @@ export function PaymentHistoryContent({
             paymentCount={paymentHistory.length} 
           />
           <PaymentSummary totalPaid={totalPaid} totalRefunded={totalRefunded} />
-          <PaymentHistoryTable paymentHistory={paymentHistory} isLoading={isLoading} />
+          <PaymentHistoryTable payments={paymentHistory} isLoading={isLoading} />
         </div>
       </ScrollArea>
     </div>

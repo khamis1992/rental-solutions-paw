@@ -5466,6 +5466,10 @@ export type Database = {
         }
         Returns: string
       }
+      update_agreement_payment_dates: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_payment_schedule: {
         Args: {
           p_lease_id: string

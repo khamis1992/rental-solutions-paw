@@ -31,17 +31,3 @@ export interface PaymentHistoryView extends Payment {
   customer_name: string | null;
   customer_phone: string | null;
 }
-
-export interface OverduePaymentView {
-  id: string;
-  agreement_id: string;
-  customer_id: string;
-  total_amount: number;
-  amount_paid: number;
-  balance: number;
-  last_payment_date: string | null;
-  days_overdue: number;
-  status: PaymentStatus;
-  created_at: string;
-  updated_at: string;
-}
