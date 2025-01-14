@@ -23,26 +23,15 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Delete all payments before 2025
+    // Delete all payments before 2025 from unified_payments
     const { error: paymentsError } = await supabaseClient
-      .from('payments')
+      .from('unified_payments')
       .delete()
       .lt('payment_date', '2025-01-01');
 
     if (paymentsError) {
       console.error("Error deleting payments:", paymentsError);
       throw paymentsError;
-    }
-
-    // Delete all payment history records before 2025
-    const { error: historyError } = await supabaseClient
-      .from('payment_history')
-      .delete()
-      .lt('actual_payment_date', '2025-01-01');
-
-    if (historyError) {
-      console.error("Error deleting payment history:", historyError);
-      throw historyError;
     }
 
     // Update all agreements' last payment dates
@@ -63,7 +52,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in delete-historical-payments function:", error);
     
     return new Response(
