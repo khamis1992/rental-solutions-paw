@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import {
   AlertDialog,
   AlertDialogAction,
