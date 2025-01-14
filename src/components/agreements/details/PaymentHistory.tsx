@@ -17,7 +17,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateDueAmount } from "../utils/paymentCalculations";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryProps {
@@ -30,7 +29,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const queryClient = useQueryClient();
 
   const { data: payments, isLoading } = useQuery({
-    queryKey: ['unified-payments', agreementId],
+    queryKey: ['payment-history', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('unified_payments')
@@ -86,7 +85,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       if (error) throw error;
 
       toast.success("Payment deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
+      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Failed to delete payment");
