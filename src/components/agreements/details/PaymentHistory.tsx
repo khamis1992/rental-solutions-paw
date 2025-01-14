@@ -1,9 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { formatDateToDisplay } from "@/lib/dateUtils";
 import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +15,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { calculateDueAmount } from "../utils/paymentCalculations";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryProps {
   agreementId: string;
@@ -55,6 +55,19 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     },
   });
 
+  // Calculate totals including late fines in total due amount
+  const totals = payments?.reduce((acc, payment) => {
+    const dueAmount = calculateDueAmount(payment);
+    return {
+      totalDue: acc.totalDue + dueAmount,
+      amountPaid: acc.amountPaid + (payment.amount_paid || 0),
+      lateFines: acc.lateFines + (payment.late_fine_amount || 0),
+    };
+  }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
+
+  // Calculate the actual balance
+  const balance = totals.totalDue - totals.amountPaid;
+
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
     setIsDeleteDialogOpen(true);
@@ -86,19 +99,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     return <div>Loading payment history...</div>;
   }
 
-  // Calculate totals including late fines in total due amount
-  const totals = payments?.reduce((acc, payment) => {
-    const dueAmount = payment.amount + (payment.late_fine_amount || 0);
-    return {
-      totalDue: acc.totalDue + dueAmount,
-      amountPaid: acc.amountPaid + (payment.amount_paid || 0),
-      lateFines: acc.lateFines + (payment.late_fine_amount || 0),
-    };
-  }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
-
-  // Calculate the actual balance
-  const balance = totals.totalDue - totals.amountPaid;
-
   return (
     <Card>
       <CardHeader>
@@ -127,9 +127,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              // Calculate due amount for this payment as rent + late fee
-              const dueAmount = payment.amount + (payment.late_fine_amount || 0);
-              const paymentBalance = dueAmount - (payment.amount_paid || 0);
+              const dueAmount = calculateDueAmount(payment);
               
               return (
                 <div
@@ -147,7 +145,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   <div className="text-right space-y-1">
                     <div>Due Amount: {formatCurrency(dueAmount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
-                    <div>Balance: {formatCurrency(paymentBalance)}</div>
+                    <div>Balance: {formatCurrency(Math.max(0, dueAmount - (payment.amount_paid || 0)))}</div>
                     {payment.late_fine_amount > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
