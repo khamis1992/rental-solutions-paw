@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateDueAmount } from "../utils/paymentCalculations";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryProps {
@@ -29,7 +30,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const queryClient = useQueryClient();
 
   const { data: payments, isLoading } = useQuery({
-    queryKey: ['payment-history', agreementId],
+    queryKey: ['unified-payments', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('unified_payments')
@@ -57,15 +58,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
-    const baseAmount = payment.amount;
+    const dueAmount = payment.amount + (payment.late_fine_amount || 0);
     return {
-      totalDue: acc.totalDue + baseAmount,
+      totalDue: acc.totalDue + dueAmount,
       amountPaid: acc.amountPaid + (payment.amount_paid || 0),
       lateFines: acc.lateFines + (payment.late_fine_amount || 0),
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
 
-  // Calculate the actual balance (without late fines)
+  // Calculate the actual balance
   const balance = totals.totalDue - totals.amountPaid;
 
   const handleDeleteClick = (paymentId: string) => {
@@ -85,7 +86,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       if (error) throw error;
 
       toast.success("Payment deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Failed to delete payment");
@@ -127,8 +128,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const baseBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
-              
               return (
                 <div
                   key={payment.id}
@@ -151,7 +150,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                         Late Fine: {formatCurrency(payment.late_fine_amount)}
                       </div>
                     )}
-                    <div className="text-destructive">Balance: {formatCurrency(baseBalance)}</div>
+                    <div className="text-destructive">Balance: {formatCurrency(Math.max(0, payment.amount - (payment.amount_paid || 0)))}</div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
