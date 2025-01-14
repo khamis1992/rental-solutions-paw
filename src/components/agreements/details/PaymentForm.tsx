@@ -23,16 +23,28 @@ interface PaymentFormProps {
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lateFee, setLateFee] = useState(0);
+  const [rentAmount, setRentAmount] = useState(0);
   const queryClient = useQueryClient();
   const { register, handleSubmit, reset, setValue } = useForm();
 
-  // Calculate late fee based on current date
+  // Fetch rent amount and calculate late fee
   useEffect(() => {
+    const fetchRentAmount = async () => {
+      const { data: lease } = await supabase
+        .from('leases')
+        .select('rent_amount')
+        .eq('id', agreementId)
+        .maybeSingle();
+      
+      if (lease?.rent_amount) {
+        setRentAmount(Number(lease.rent_amount));
+      }
+    };
+
     const calculateLateFee = () => {
       const today = new Date();
       const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       
-      // If today is after the 1st of the month
       if (today > firstOfMonth) {
         const daysLate = Math.floor((today.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24));
         setLateFee(daysLate * 120); // 120 QAR per day
@@ -41,8 +53,9 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       }
     };
 
+    fetchRentAmount();
     calculateLateFee();
-  }, []);
+  }, [agreementId]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -53,8 +66,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       const { error } = await supabase.from("unified_payments").insert({
         lease_id: agreementId,
         amount: totalAmount,
-        amount_paid: paymentAmount, // Store the actual payment amount without late fee
-        balance: lateFee, // Any remaining balance (late fees)
+        amount_paid: paymentAmount,
+        balance: lateFee,
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
@@ -70,7 +83,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       toast.success("Payment added successfully");
       reset();
       
-      // Invalidate relevant queries to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       
@@ -82,8 +94,22 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     }
   };
 
+  const dueAmount = rentAmount + lateFee;
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="bg-muted p-4 rounded-lg mb-4">
+        <div className="text-sm text-muted-foreground mb-1">Due Amount</div>
+        <div className="text-lg font-semibold">
+          {formatCurrency(dueAmount)}
+          {lateFee > 0 && (
+            <span className="text-sm text-muted-foreground ml-2">
+              (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
+            </span>
+          )}
+        </div>
+      </div>
+
       <div>
         <Label htmlFor="amount">Amount (QAR)</Label>
         <Input
@@ -93,12 +119,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
           {...register("amount", { required: true })}
         />
       </div>
-      
-      {lateFee > 0 && (
-        <div className="text-sm text-red-600 font-medium">
-          Late Fee: {formatCurrency(lateFee)}
-        </div>
-      )}
       
       <div>
         <Label htmlFor="paymentMethod">Payment Method</Label>
