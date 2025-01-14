@@ -58,7 +58,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
-    const dueAmount = calculateDueAmount(payment);
+    const dueAmount = payment.amount + (payment.late_fine_amount || 0);
     return {
       totalDue: acc.totalDue + dueAmount,
       amountPaid: acc.amountPaid + (payment.amount_paid || 0),
@@ -128,8 +128,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const dueAmount = calculateDueAmount(payment);
-              
               return (
                 <div
                   key={payment.id}
@@ -144,9 +142,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Due Amount: {formatCurrency(dueAmount)}</div>
+                    <div>Due Amount: {formatCurrency(payment.amount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
-                    <div>Balance: {formatCurrency(Math.max(0, dueAmount - (payment.amount_paid || 0)))}</div>
+                    <div>Balance: {formatCurrency(Math.max(0, payment.amount - (payment.amount_paid || 0)))}</div>
                     {payment.late_fine_amount > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
