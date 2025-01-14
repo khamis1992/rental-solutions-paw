@@ -22,7 +22,7 @@ export const PaymentImport = () => {
 
   const downloadTemplate = () => {
     const csvContent = REQUIRED_FIELDS.join(',') + '\n' +
-                      'TRX001,AGR-202403-0001,John Doe,ABC123,1000,Cash,Monthly Rent Payment,25/03/2024,INCOME';
+                      '1000,20-03-2024,credit_card,completed,Monthly payment for March,INV001,lease-uuid-here';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -204,6 +204,7 @@ export const PaymentImport = () => {
                           variant="destructive"
                           size="sm"
                           onClick={() => {
+                            // Delete functionality will be handled here
                             toast.error('Delete functionality coming soon');
                           }}
                           className="h-8"
