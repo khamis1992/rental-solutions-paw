@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatCurrency } from "@/lib/utils";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -21,23 +22,65 @@ interface PaymentFormProps {
 
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lateFee, setLateFee] = useState(0);
+  const [rentAmount, setRentAmount] = useState(0);
+  const [dueAmount, setDueAmount] = useState(0);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const { register, handleSubmit, reset, setValue, watch } = useForm();
+
+  // Fetch rent amount and calculate late fee
+  useEffect(() => {
+    const fetchRentAmount = async () => {
+      const { data: lease } = await supabase
+        .from('leases')
+        .select('rent_amount')
+        .eq('id', agreementId)
+        .maybeSingle();
+      
+      if (lease?.rent_amount) {
+        setRentAmount(Number(lease.rent_amount));
+      }
+    };
+
+    const calculateLateFee = () => {
+      const today = new Date();
+      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      if (today > firstOfMonth) {
+        const daysLate = Math.floor((today.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24));
+        setLateFee(daysLate * 120); // 120 QAR per day
+      } else {
+        setLateFee(0);
+      }
+    };
+
+    fetchRentAmount();
+    calculateLateFee();
+  }, [agreementId]);
+
+  // Update due amount when rent amount or late fee changes
+  useEffect(() => {
+    setDueAmount(rentAmount + lateFee);
+  }, [rentAmount, lateFee]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      const paymentAmount = Number(data.amount);
+      const balance = dueAmount - paymentAmount;
+
       const { error } = await supabase.from("unified_payments").insert({
         lease_id: agreementId,
-        amount: parseFloat(data.amount),
-        amount_paid: parseFloat(data.amount),
-        balance: 0,
+        amount: dueAmount,
+        amount_paid: paymentAmount,
+        balance: balance,
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
         status: 'completed',
         type: 'Income',
-        reconciliation_status: 'pending'
+        late_fine_amount: lateFee,
+        days_overdue: Math.floor(lateFee / 120)
       });
 
       if (error) throw error;
@@ -45,7 +88,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       toast.success("Payment added successfully");
       reset();
       
-      // Invalidate relevant queries to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       
@@ -59,12 +101,27 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="bg-muted p-4 rounded-lg mb-4">
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <div className="text-sm text-muted-foreground">Due Amount</div>
+            <div className="text-lg font-semibold">
+              {formatCurrency(dueAmount)}
+              <span className="text-sm text-muted-foreground ml-2">
+                (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div>
-        <Label htmlFor="amount">Amount (QAR)</Label>
+        <Label htmlFor="amount">Amount Paid (QAR)</Label>
         <Input
           id="amount"
           type="number"
           step="0.01"
+          min="0"
           {...register("amount", { required: true })}
         />
       </div>

@@ -2896,59 +2896,49 @@ export type Database = {
         Row: {
           action: string
           created_at: string | null
+          entity_type: string | null
           id: string
+          ip_address: string | null
+          metadata: Json | null
           new_state: Json | null
+          operation_type: string | null
           payment_id: string | null
           performed_by: string | null
           previous_state: Json | null
+          session_id: string | null
+          user_agent: string | null
         }
         Insert: {
           action: string
           created_at?: string | null
+          entity_type?: string | null
           id?: string
+          ip_address?: string | null
+          metadata?: Json | null
           new_state?: Json | null
+          operation_type?: string | null
           payment_id?: string | null
           performed_by?: string | null
           previous_state?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
         }
         Update: {
           action?: string
           created_at?: string | null
+          entity_type?: string | null
           id?: string
+          ip_address?: string | null
+          metadata?: Json | null
           new_state?: Json | null
+          operation_type?: string | null
           payment_id?: string | null
           performed_by?: string | null
           previous_state?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "payment_audit_logs_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payment_history"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_audit_logs_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payment_history_view"
-            referencedColumns: ["payment_id"]
-          },
-          {
-            foreignKeyName: "payment_audit_logs_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_audit_logs_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "unified_payments"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "payment_audit_logs_performed_by_fkey"
             columns: ["performed_by"]
@@ -2992,20 +2982,18 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_history_backup: {
+      payment_history_backup_2024: {
         Row: {
           actual_payment_date: string | null
           amount_due: number | null
           amount_paid: number | null
           created_at: string | null
-          early_payment_discount: number | null
           id: string | null
           late_fee_applied: number | null
           lease_id: string | null
           original_due_date: string | null
-          payment_id: string | null
           remaining_balance: number | null
-          status: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string | null
         }
         Insert: {
@@ -3013,14 +3001,12 @@ export type Database = {
           amount_due?: number | null
           amount_paid?: number | null
           created_at?: string | null
-          early_payment_discount?: number | null
           id?: string | null
           late_fee_applied?: number | null
           lease_id?: string | null
           original_due_date?: string | null
-          payment_id?: string | null
           remaining_balance?: number | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
         }
         Update: {
@@ -3028,14 +3014,12 @@ export type Database = {
           amount_due?: number | null
           amount_paid?: number | null
           created_at?: string | null
-          early_payment_discount?: number | null
           id?: string | null
           late_fee_applied?: number | null
           lease_id?: string | null
           original_due_date?: string | null
-          payment_id?: string | null
           remaining_balance?: number | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -3187,48 +3171,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_matching_logs_backup: {
-        Row: {
-          admin_reviewed: boolean | null
-          admin_reviewed_at: string | null
-          admin_reviewed_by: string | null
-          created_at: string | null
-          customer_id: string | null
-          id: string | null
-          is_ai_matched: boolean | null
-          match_confidence: number | null
-          matching_factors: Json | null
-          payment_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          admin_reviewed?: boolean | null
-          admin_reviewed_at?: string | null
-          admin_reviewed_by?: string | null
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string | null
-          is_ai_matched?: boolean | null
-          match_confidence?: number | null
-          matching_factors?: Json | null
-          payment_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          admin_reviewed?: boolean | null
-          admin_reviewed_at?: string | null
-          admin_reviewed_by?: string | null
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string | null
-          is_ai_matched?: boolean | null
-          match_confidence?: number | null
-          matching_factors?: Json | null
-          payment_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       payment_migration_logs: {
         Row: {
           error_details: string | null
@@ -3259,69 +3201,48 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_reconciliation_backup: {
-        Row: {
-          auto_matched: boolean | null
-          created_at: string | null
-          discrepancy_details: Json | null
-          id: string | null
-          lease_id: string | null
-          match_confidence: number | null
-          payment_id: string | null
-          reconciliation_status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          auto_matched?: boolean | null
-          created_at?: string | null
-          discrepancy_details?: Json | null
-          id?: string | null
-          lease_id?: string | null
-          match_confidence?: number | null
-          payment_id?: string | null
-          reconciliation_status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          auto_matched?: boolean | null
-          created_at?: string | null
-          discrepancy_details?: Json | null
-          id?: string | null
-          lease_id?: string | null
-          match_confidence?: number | null
-          payment_id?: string | null
-          reconciliation_status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       payment_schedules: {
         Row: {
+          actual_payment_date: string | null
           amount: number
           created_at: string | null
           due_date: string
           id: string
+          last_reminder_date: string | null
+          late_fee_applied: number | null
           lease_id: string | null
+          payment_reference: string | null
+          reconciliation_status: string | null
           reminder_sent_at: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string | null
         }
         Insert: {
+          actual_payment_date?: string | null
           amount: number
           created_at?: string | null
           due_date: string
           id?: string
+          last_reminder_date?: string | null
+          late_fee_applied?: number | null
           lease_id?: string | null
+          payment_reference?: string | null
+          reconciliation_status?: string | null
           reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
         }
         Update: {
+          actual_payment_date?: string | null
           amount?: number
           created_at?: string | null
           due_date?: string
           id?: string
+          last_reminder_date?: string | null
+          late_fee_applied?: number | null
           lease_id?: string | null
+          payment_reference?: string | null
+          reconciliation_status?: string | null
           reminder_sent_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
@@ -3336,7 +3257,7 @@ export type Database = {
           },
         ]
       }
-      payments_backup: {
+      payments_backup_2024: {
         Row: {
           amount: number | null
           amount_paid: number | null
@@ -3344,17 +3265,23 @@ export type Database = {
           created_at: string | null
           days_overdue: number | null
           description: string | null
+          due_date: string | null
           id: string | null
-          include_in_calculation: boolean | null
+          import_batch_id: string | null
+          import_reference: string | null
           invoice_id: string | null
           is_recurring: boolean | null
           late_fine_amount: number | null
           lease_id: string | null
+          match_confidence: number | null
           next_payment_date: string | null
+          original_due_date: string | null
           payment_date: string | null
           payment_method:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
           recurring_interval: unknown | null
           security_deposit_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
@@ -3369,17 +3296,23 @@ export type Database = {
           created_at?: string | null
           days_overdue?: number | null
           description?: string | null
+          due_date?: string | null
           id?: string | null
-          include_in_calculation?: boolean | null
+          import_batch_id?: string | null
+          import_reference?: string | null
           invoice_id?: string | null
           is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
+          match_confidence?: number | null
           next_payment_date?: string | null
+          original_due_date?: string | null
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
           recurring_interval?: unknown | null
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
@@ -3394,17 +3327,23 @@ export type Database = {
           created_at?: string | null
           days_overdue?: number | null
           description?: string | null
+          due_date?: string | null
           id?: string | null
-          include_in_calculation?: boolean | null
+          import_batch_id?: string | null
+          import_reference?: string | null
           invoice_id?: string | null
           is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
+          match_confidence?: number | null
           next_payment_date?: string | null
+          original_due_date?: string | null
           payment_date?: string | null
           payment_method?:
             | Database["public"]["Enums"]["payment_method_type"]
             | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
           recurring_interval?: unknown | null
           security_deposit_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
@@ -3632,57 +3571,6 @@ export type Database = {
           min_rental_duration?: number | null
           start_date?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      raw_payment_imports_backup: {
-        Row: {
-          agreement_number: string | null
-          amount: number | null
-          created_at: string | null
-          customer_name: string | null
-          description: string | null
-          error_description: string | null
-          id: string | null
-          is_valid: boolean | null
-          license_plate: string | null
-          payment_date: string | null
-          payment_method: string | null
-          status: string | null
-          transaction_id: string | null
-          type: string | null
-        }
-        Insert: {
-          agreement_number?: string | null
-          amount?: number | null
-          created_at?: string | null
-          customer_name?: string | null
-          description?: string | null
-          error_description?: string | null
-          id?: string | null
-          is_valid?: boolean | null
-          license_plate?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          transaction_id?: string | null
-          type?: string | null
-        }
-        Update: {
-          agreement_number?: string | null
-          amount?: number | null
-          created_at?: string | null
-          customer_name?: string | null
-          description?: string | null
-          error_description?: string | null
-          id?: string | null
-          is_valid?: boolean | null
-          license_plate?: string | null
-          payment_date?: string | null
-          payment_method?: string | null
-          status?: string | null
-          transaction_id?: string | null
-          type?: string | null
         }
         Relationships: []
       }
@@ -4550,34 +4438,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
-            columns: ["matched_payment_id"]
-            isOneToOne: false
-            referencedRelation: "payment_history"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
-            columns: ["matched_payment_id"]
-            isOneToOne: false
-            referencedRelation: "payment_history_view"
-            referencedColumns: ["payment_id"]
-          },
-          {
-            foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
-            columns: ["matched_payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_import_tracking_matched_payment_id_fkey"
-            columns: ["matched_payment_id"]
-            isOneToOne: false
-            referencedRelation: "unified_payments"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "unified_import_tracking_processed_by_fkey"
             columns: ["processed_by"]
             isOneToOne: false
@@ -4613,14 +4473,12 @@ export type Database = {
           next_payment_date: string | null
           original_due_date: string | null
           payment_date: string | null
-          payment_method:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
+          payment_method: string | null
           reconciliation_date: string | null
           reconciliation_status: string | null
           recurring_interval: unknown | null
           security_deposit_id: string | null
-          status: Database["public"]["Enums"]["payment_status"] | null
+          status: string | null
           transaction_id: string | null
           type: string | null
           updated_at: string | null
@@ -4644,14 +4502,12 @@ export type Database = {
           next_payment_date?: string | null
           original_due_date?: string | null
           payment_date?: string | null
-          payment_method?:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
+          payment_method?: string | null
           reconciliation_date?: string | null
           reconciliation_status?: string | null
           recurring_interval?: unknown | null
           security_deposit_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
+          status?: string | null
           transaction_id?: string | null
           type?: string | null
           updated_at?: string | null
@@ -4675,14 +4531,12 @@ export type Database = {
           next_payment_date?: string | null
           original_due_date?: string | null
           payment_date?: string | null
-          payment_method?:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
+          payment_method?: string | null
           reconciliation_date?: string | null
           reconciliation_status?: string | null
           recurring_interval?: unknown | null
           security_deposit_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
+          status?: string | null
           transaction_id?: string | null
           type?: string | null
           updated_at?: string | null
@@ -4700,13 +4554,6 @@ export type Database = {
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_payments_security_deposit_id_fkey"
-            columns: ["security_deposit_id"]
-            isOneToOne: false
-            referencedRelation: "security_deposits"
             referencedColumns: ["id"]
           },
         ]
@@ -5352,135 +5199,89 @@ export type Database = {
       overdue_payments_view: {
         Row: {
           agreement_id: string | null
-          agreement_number: string | null
           amount_paid: number | null
           balance: number | null
           created_at: string | null
           customer_id: string | null
-          customer_name: string | null
           days_overdue: number | null
           id: string | null
           last_payment_date: string | null
-          notes: string | null
-          status: Database["public"]["Enums"]["overdue_payment_status"] | null
+          status: string | null
           total_amount: number | null
           updated_at: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "overdue_payments_agreement_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: true
-            referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "overdue_payments_customer_id_fkey"
+            foreignKeyName: "leases_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customer_statuses"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "overdue_payments_customer_id_fkey"
+            foreignKeyName: "leases_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      payment_history: {
-        Row: {
-          actual_payment_date: string | null
-          amount_due: number | null
-          amount_paid: number | null
-          created_at: string | null
-          id: string | null
-          late_fee_applied: number | null
-          lease_id: string | null
-          original_due_date: string | null
-          remaining_balance: number | null
-          status: Database["public"]["Enums"]["payment_status"] | null
-          updated_at: string | null
-        }
-        Insert: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          id?: string | null
-          late_fee_applied?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          remaining_balance?: number | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          updated_at?: string | null
-        }
-        Update: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          id?: string | null
-          late_fee_applied?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          remaining_balance?: number | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          updated_at?: string | null
-        }
-        Relationships: [
           {
             foreignKeyName: "unified_payments_lease_id_fkey"
-            columns: ["lease_id"]
+            columns: ["agreement_id"]
             isOneToOne: false
             referencedRelation: "leases"
             referencedColumns: ["id"]
           },
         ]
       }
+      payment_audit_summary: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          metadata: Json | null
+          operation_type: string | null
+          payment_id: string | null
+          performed_by_user: string | null
+        }
+        Relationships: []
+      }
       payment_history_view: {
         Row: {
           actual_payment_date: string | null
-          amount_due: number | null
+          agreement_number: string | null
+          amount: number | null
           amount_paid: number | null
+          balance: number | null
           created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          days_overdue: number | null
           description: string | null
+          id: string | null
           late_fine_amount: number | null
           lease_id: string | null
           original_due_date: string | null
-          payment_id: string | null
-          status: Database["public"]["Enums"]["payment_status"] | null
+          payment_method: string | null
+          status: string | null
+          type: string | null
           updated_at: string | null
         }
-        Insert: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          description?: string | null
-          late_fine_amount?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          payment_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          updated_at?: string | null
-        }
-        Update: {
-          actual_payment_date?: string | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          created_at?: string | null
-          description?: string | null
-          late_fine_amount?: number | null
-          lease_id?: string | null
-          original_due_date?: string | null
-          payment_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          updated_at?: string | null
-        }
         Relationships: [
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unified_payments_lease_id_fkey"
             columns: ["lease_id"]
@@ -5494,98 +5295,54 @@ export type Database = {
         Row: {
           amount: number | null
           amount_paid: number | null
-          balance: number | null
           created_at: string | null
           days_overdue: number | null
           description: string | null
           id: string | null
-          include_in_calculation: boolean | null
-          invoice_id: string | null
-          is_recurring: boolean | null
           late_fine_amount: number | null
           lease_id: string | null
-          next_payment_date: string | null
           payment_date: string | null
-          payment_method:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
-          recurring_interval: unknown | null
-          security_deposit_id: string | null
-          status: Database["public"]["Enums"]["payment_status"] | null
-          transaction_id: string | null
+          payment_method: string | null
+          status: string | null
           type: string | null
           updated_at: string | null
         }
         Insert: {
           amount?: number | null
           amount_paid?: number | null
-          balance?: number | null
           created_at?: string | null
           days_overdue?: number | null
           description?: string | null
           id?: string | null
-          include_in_calculation?: never
-          invoice_id?: string | null
-          is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
-          next_payment_date?: string | null
           payment_date?: string | null
-          payment_method?:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
-          recurring_interval?: unknown | null
-          security_deposit_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          transaction_id?: string | null
+          payment_method?: string | null
+          status?: string | null
           type?: string | null
           updated_at?: string | null
         }
         Update: {
           amount?: number | null
           amount_paid?: number | null
-          balance?: number | null
           created_at?: string | null
           days_overdue?: number | null
           description?: string | null
           id?: string | null
-          include_in_calculation?: never
-          invoice_id?: string | null
-          is_recurring?: boolean | null
           late_fine_amount?: number | null
           lease_id?: string | null
-          next_payment_date?: string | null
           payment_date?: string | null
-          payment_method?:
-            | Database["public"]["Enums"]["payment_method_type"]
-            | null
-          recurring_interval?: unknown | null
-          security_deposit_id?: string | null
-          status?: Database["public"]["Enums"]["payment_status"] | null
-          transaction_id?: string | null
+          payment_method?: string | null
+          status?: string | null
           type?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "unified_payments_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_invoices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "unified_payments_lease_id_fkey"
             columns: ["lease_id"]
             isOneToOne: false
             referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_payments_security_deposit_id_fkey"
-            columns: ["security_deposit_id"]
-            isOneToOne: false
-            referencedRelation: "security_deposits"
             referencedColumns: ["id"]
           },
         ]
@@ -5683,31 +5440,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      migrate_payment_history_to_unified: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      migrate_payments_to_unified: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      migrate_to_payment_import_tracking: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       migrate_to_unified_import_tracking: {
         Args: Record<PropertyKey, never>
         Returns: undefined
-      }
-      process_payment: {
-        Args: {
-          input_lease_id: string
-          input_amount: number
-          input_payment_method?: Database["public"]["Enums"]["payment_method_type"]
-          input_description?: string
-          input_type?: string
-        }
-        Returns: Json
       }
       process_recurring_payments: {
         Args: Record<PropertyKey, never>
@@ -5730,6 +5465,10 @@ export type Database = {
           input_date: string
         }
         Returns: string
+      }
+      update_agreement_payment_dates: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_payment_schedule: {
         Args: {

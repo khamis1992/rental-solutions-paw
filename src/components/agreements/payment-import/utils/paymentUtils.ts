@@ -1,11 +1,13 @@
 export const REQUIRED_FIELDS = [
-  'Amount',
-  'Payment_Date',
-  'Payment_Method',
-  'Status',
-  'Description',
   'Transaction_ID',
-  'Agreement_Number'
+  'Agreement_Number', 
+  'Customer_Name',
+  'License_Plate',
+  'Amount',
+  'Payment_Method',
+  'Description',
+  'Payment_Date',
+  'Type'
 ];
 
 export const validateHeaders = (headers: string[]) => {
@@ -49,14 +51,12 @@ export const formatDateForDB = (dateStr: string): string | null => {
       if (match) {
         const [_, part1, part2, part3] = match;
         
-        // Convert to YYYY-MM-DD format for DB
-        if (format === formats[0] || format === formats[2]) {
-          // DD-MM-YYYY or DD/MM/YYYY
+        // Convert to DD-MM-YYYY format
+        if (format === formats[1]) {
+          // If YYYY-MM-DD format
           return `${part3}-${part2}-${part1}`;
-        } else {
-          // Already in YYYY-MM-DD
-          return dateStr;
         }
+        return `${part1}-${part2}-${part3}`;
       }
     }
     

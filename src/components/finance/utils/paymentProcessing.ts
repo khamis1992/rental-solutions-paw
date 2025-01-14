@@ -18,16 +18,20 @@ interface ProcessedPayment {
 export async function processPayment(details: PaymentDetails): Promise<ProcessedPayment> {
   try {
     const { data, error } = await supabase
-      .from('payments')
+      .from('unified_payments')
       .insert({
-        amount: details.amount,
         lease_id: details.leaseId,
+        amount: details.amount,
+        amount_paid: details.amount,
+        balance: 0,
         payment_method: details.paymentMethod || 'Cash',
         description: details.description,
+        type: 'Income',
         status: 'completed' as PaymentStatus,
         payment_date: new Date().toISOString(),
+        reconciliation_status: 'pending'
       })
-      .select()
+      .select('id, status, payment_date')
       .single();
 
     if (error) throw error;
@@ -67,7 +71,14 @@ export function formatPaymentAmount(amount: number): string {
 }
 
 export async function getPaymentStatus(id: string): Promise<PaymentStatus> {
-  return 'completed';
+  const { data, error } = await supabase
+    .from('unified_payments')
+    .select('status')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data?.status || 'pending';
 }
 
 export function notifyPaymentStatus(status: PaymentStatus, amount: number): void {
