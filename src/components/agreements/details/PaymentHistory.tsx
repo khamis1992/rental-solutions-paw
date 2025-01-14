@@ -45,8 +45,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           description,
           late_fine_amount,
           days_overdue,
-          type,
-          reconciliation_status
+          type
         `)
         .eq('lease_id', agreementId)
         .order('payment_date', { ascending: false });
@@ -89,15 +88,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
-    if (payment.status === "completed") {
-      const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
-      return {
-        totalDue: acc.totalDue + totalDueForPayment,
-        amountPaid: acc.amountPaid + (payment.amount_paid || 0),
-        lateFines: acc.lateFines + (payment.late_fine_amount || 0),
-      };
-    }
-    return acc;
+    const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
+    return {
+      totalDue: acc.totalDue + totalDueForPayment,
+      amountPaid: acc.amountPaid + (payment.amount_paid || 0),
+      lateFines: acc.lateFines + (payment.late_fine_amount || 0),
+    };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
 
   // Calculate the actual balance
