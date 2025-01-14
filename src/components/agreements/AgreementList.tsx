@@ -11,7 +11,7 @@ import { AgreementListHeader } from "./list/AgreementListHeader";
 import { AgreementListContent } from "./list/AgreementListContent";
 import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
-import { Download, Calculator } from "lucide-react";
+import { Download, History, Calculator } from "lucide-react";
 import { usePullAgreementData } from "./hooks/usePullAgreementData";
 import { AgreementPDFImport } from "./AgreementPDFImport";
 import { supabase } from "@/integrations/supabase/client";
@@ -199,6 +199,16 @@ export const AgreementList = () => {
           >
             <Download className="h-4 w-4 mr-2" />
             Pull Data
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsHistoricalDeleteDialogOpen(true)}
+            disabled={isDeleting}
+            className="flex items-center gap-2"
+          >
+            <History className="h-4 w-4" />
+            Delete Pre-2025 Payments
           </Button>
           <Button
             variant="outline"

@@ -5196,44 +5196,6 @@ export type Database = {
         }
         Relationships: []
       }
-      overdue_payments_view: {
-        Row: {
-          agreement_id: string | null
-          amount_paid: number | null
-          balance: number | null
-          created_at: string | null
-          customer_id: string | null
-          days_overdue: number | null
-          id: string | null
-          last_payment_date: string | null
-          status: string | null
-          total_amount: number | null
-          updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "leases_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leases_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_payments_lease_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: false
-            referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payment_audit_summary: {
         Row: {
           action: string | null
@@ -5244,52 +5206,6 @@ export type Database = {
           performed_by_user: string | null
         }
         Relationships: []
-      }
-      payment_history_view: {
-        Row: {
-          actual_payment_date: string | null
-          agreement_number: string | null
-          amount: number | null
-          amount_paid: number | null
-          balance: number | null
-          created_at: string | null
-          customer_id: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          days_overdue: number | null
-          description: string | null
-          id: string | null
-          late_fine_amount: number | null
-          lease_id: string | null
-          original_due_date: string | null
-          payment_method: string | null
-          status: string | null
-          type: string | null
-          updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "leases_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leases_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_payments_lease_id_fkey"
-            columns: ["lease_id"]
-            isOneToOne: false
-            referencedRelation: "leases"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       payments: {
         Row: {
@@ -5465,10 +5381,6 @@ export type Database = {
           input_date: string
         }
         Returns: string
-      }
-      update_agreement_payment_dates: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       update_payment_schedule: {
         Args: {

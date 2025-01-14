@@ -22,12 +22,3 @@ export interface Payment {
   late_fine_amount: number;
   days_overdue: number;
 }
-
-export interface PaymentHistoryView extends Payment {
-  actual_payment_date: string | null;
-  original_due_date: string | null;
-  agreement_number: string | null;
-  customer_id: string | null;
-  customer_name: string | null;
-  customer_phone: string | null;
-}

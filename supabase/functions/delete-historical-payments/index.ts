@@ -15,11 +15,6 @@ serve(async (req) => {
 
   try {
     console.log("Starting delete historical payments process...");
-    const { agreementId } = await req.json();
-
-    if (!agreementId) {
-      throw new Error('Agreement ID is required');
-    }
 
     // Create Supabase client
     const supabaseClient = createClient(
@@ -28,11 +23,10 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Delete all payments before 2025 from unified_payments for this agreement
+    // Delete all payments before 2025
     const { error: paymentsError } = await supabaseClient
-      .from('unified_payments')
+      .from('payments')
       .delete()
-      .eq('lease_id', agreementId)
       .lt('payment_date', '2025-01-01');
 
     if (paymentsError) {
@@ -40,25 +34,22 @@ serve(async (req) => {
       throw paymentsError;
     }
 
-    // Update agreement's last payment date
-    const { error: updateError } = await supabaseClient
-      .from('leases')
-      .update({
-        last_payment_date: (
-          await supabaseClient
-            .from('unified_payments')
-            .select('payment_date')
-            .eq('lease_id', agreementId)
-            .gte('payment_date', '2025-01-01')
-            .order('payment_date', { ascending: false })
-            .limit(1)
-            .single()
-        ).data?.payment_date || null
-      })
-      .eq('id', agreementId);
+    // Delete all payment history records before 2025
+    const { error: historyError } = await supabaseClient
+      .from('payment_history')
+      .delete()
+      .lt('actual_payment_date', '2025-01-01');
+
+    if (historyError) {
+      console.error("Error deleting payment history:", historyError);
+      throw historyError;
+    }
+
+    // Update all agreements' last payment dates
+    const { error: updateError } = await supabaseClient.rpc('update_agreement_payment_dates');
 
     if (updateError) {
-      console.error("Error updating agreement payment date:", updateError);
+      console.error("Error updating agreement payment dates:", updateError);
       throw updateError;
     }
 
@@ -72,7 +63,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in delete-historical-payments function:", error);
     
     return new Response(

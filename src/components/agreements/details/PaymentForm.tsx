@@ -23,29 +23,16 @@ interface PaymentFormProps {
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lateFee, setLateFee] = useState(0);
-  const [rentAmount, setRentAmount] = useState(0);
-  const [dueAmount, setDueAmount] = useState(0);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue, watch } = useForm();
+  const { register, handleSubmit, reset, setValue } = useForm();
 
-  // Fetch rent amount and calculate late fee
+  // Calculate late fee based on current date
   useEffect(() => {
-    const fetchRentAmount = async () => {
-      const { data: lease } = await supabase
-        .from('leases')
-        .select('rent_amount')
-        .eq('id', agreementId)
-        .maybeSingle();
-      
-      if (lease?.rent_amount) {
-        setRentAmount(Number(lease.rent_amount));
-      }
-    };
-
     const calculateLateFee = () => {
       const today = new Date();
       const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       
+      // If today is after the 1st of the month
       if (today > firstOfMonth) {
         const daysLate = Math.floor((today.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24));
         setLateFee(daysLate * 120); // 120 QAR per day
@@ -54,33 +41,28 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       }
     };
 
-    fetchRentAmount();
     calculateLateFee();
-  }, [agreementId]);
-
-  // Update due amount when rent amount or late fee changes
-  useEffect(() => {
-    setDueAmount(rentAmount + lateFee);
-  }, [rentAmount, lateFee]);
+  }, []);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const paymentAmount = Number(data.amount);
-      const balance = dueAmount - paymentAmount;
+      const totalAmount = parseFloat(data.amount) + lateFee;
+      const paymentAmount = parseFloat(data.amount);
 
       const { error } = await supabase.from("unified_payments").insert({
         lease_id: agreementId,
-        amount: dueAmount,
-        amount_paid: paymentAmount,
-        balance: balance,
+        amount: totalAmount,
+        amount_paid: paymentAmount, // Store the actual payment amount without late fee
+        balance: lateFee, // Any remaining balance (late fees)
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
         status: 'completed',
         type: 'Income',
         late_fine_amount: lateFee,
-        days_overdue: Math.floor(lateFee / 120)
+        days_overdue: lateFee > 0 ? Math.floor(lateFee / 120) : 0,
+        reconciliation_status: 'pending'
       });
 
       if (error) throw error;
@@ -88,6 +70,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       toast.success("Payment added successfully");
       reset();
       
+      // Invalidate relevant queries to refresh the data
       await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       
@@ -101,30 +84,21 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="bg-muted p-4 rounded-lg mb-4">
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <div className="text-sm text-muted-foreground">Due Amount</div>
-            <div className="text-lg font-semibold">
-              {formatCurrency(dueAmount)}
-              <span className="text-sm text-muted-foreground ml-2">
-                (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div>
-        <Label htmlFor="amount">Amount Paid (QAR)</Label>
+        <Label htmlFor="amount">Amount (QAR)</Label>
         <Input
           id="amount"
           type="number"
           step="0.01"
-          min="0"
           {...register("amount", { required: true })}
         />
       </div>
+      
+      {lateFee > 0 && (
+        <div className="text-sm text-red-600 font-medium">
+          Late Fee: {formatCurrency(lateFee)}
+        </div>
+      )}
       
       <div>
         <Label htmlFor="paymentMethod">Payment Method</Label>
@@ -157,7 +131,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         disabled={isSubmitting}
         className="w-full"
       >
-        {isSubmitting ? "Adding Payment..." : "Add Payment"}
+        {isSubmitting ? "Adding Payment..." : `Add Payment ${lateFee > 0 ? `(Including ${formatCurrency(lateFee)} Late Fee)` : ''}`}
       </Button>
     </form>
   );

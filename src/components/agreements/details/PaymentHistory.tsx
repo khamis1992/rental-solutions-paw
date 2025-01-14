@@ -1,9 +1,11 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatDateToDisplay } from "@/lib/dateUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +18,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { calculateDueAmount } from "../utils/paymentCalculations";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryProps {
   agreementId: string;
@@ -46,7 +45,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           description,
           late_fine_amount,
           days_overdue,
-          type
+          type,
+          reconciliation_status
         `)
         .eq('lease_id', agreementId)
         .order('payment_date', { ascending: false });
@@ -55,19 +55,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       return data;
     },
   });
-
-  // Calculate totals including late fines in total due amount
-  const totals = payments?.reduce((acc, payment) => {
-    const baseAmount = payment.amount;
-    return {
-      totalDue: acc.totalDue + baseAmount,
-      amountPaid: acc.amountPaid + (payment.amount_paid || 0),
-      lateFines: acc.lateFines + (payment.late_fine_amount || 0),
-    };
-  }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
-
-  // Calculate the actual balance (without late fines)
-  const balance = totals.totalDue - totals.amountPaid;
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -100,6 +87,18 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     return <div>Loading payment history...</div>;
   }
 
+  // Calculate totals
+  const totals = payments?.reduce((acc, payment) => {
+    if (payment.status === "completed") {
+      return {
+        amountPaid: acc.amountPaid + (payment.amount_paid || 0),
+        lateFines: acc.lateFines + (payment.late_fine_amount || 0),
+        balance: acc.balance + (payment.balance || 0)
+      };
+    }
+    return acc;
+  }, { amountPaid: 0, lateFines: 0, balance: 0 }) || { amountPaid: 0, lateFines: 0, balance: 0 };
+
   return (
     <Card>
       <CardHeader>
@@ -121,14 +120,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Balance</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(balance)}</div>
+              <div className="text-lg font-semibold">{formatCurrency(totals.balance)}</div>
             </div>
           </div>
 
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const baseBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
+              // Calculate balance for each payment
+              const currentBalance = payment.amount + payment.late_fine_amount - payment.amount_paid;
               
               return (
                 <div
@@ -144,15 +144,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Due Amount: {formatCurrency(payment.amount)}</div>
+                    <div>Amount: {formatCurrency(payment.amount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
+                    <div>Balance: {formatCurrency(currentBalance)}</div>
                     {payment.late_fine_amount > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
                         Late Fine: {formatCurrency(payment.late_fine_amount)}
                       </div>
                     )}
-                    <div className="text-destructive">Balance: {formatCurrency(baseBalance)}</div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
