@@ -87,11 +87,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     return <div>Loading payment history...</div>;
   }
 
-  // Calculate totals
+  // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
     if (payment.status === "completed") {
+      const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
       return {
-        totalDue: acc.totalDue + (payment.amount || 0),
+        totalDue: acc.totalDue + totalDueForPayment,
         amountPaid: acc.amountPaid + (payment.amount_paid || 0),
         lateFines: acc.lateFines + (payment.late_fine_amount || 0),
       };
@@ -130,8 +131,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              // Calculate individual payment balance
-              const paymentBalance = payment.amount - payment.amount_paid;
+              // Calculate individual payment balance including late fine
+              const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
+              const paymentBalance = totalDueForPayment - (payment.amount_paid || 0);
               
               return (
                 <div
