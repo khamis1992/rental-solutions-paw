@@ -149,7 +149,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Amount: {formatCurrency(payment.amount)}</div>
+                    <div>Due Payment: {formatCurrency(totalDueForPayment)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
                     <div>Balance: {formatCurrency(paymentBalance)}</div>
                     {payment.late_fine_amount > 0 && (
