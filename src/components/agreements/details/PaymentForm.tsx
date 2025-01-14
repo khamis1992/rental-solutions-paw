@@ -107,9 +107,9 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
             <div className="text-sm text-muted-foreground">Due Amount</div>
             <div className="text-lg font-semibold">
               {formatCurrency(dueAmount)}
-              <span className="text-sm text-muted-foreground ml-2">
-                (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
-              </span>
+              <div className="text-sm text-muted-foreground mt-1">
+                Rent Amount: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)}
+              </div>
             </div>
           </div>
         </div>
