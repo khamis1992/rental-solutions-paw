@@ -10,50 +10,25 @@ export const RevenueDashboard = () => {
       const { data, error } = await supabase
         .from('unified_payments')
         .select(`
+          amount,
           amount_paid,
           payment_date,
           lease:leases (
-            agreement_type,
-            vehicle:vehicles (
-              make,
-              model
-            )
+            agreement_type
           )
         `)
-        .eq('status', 'completed')
-        .order('payment_date');
+        .eq('status', 'completed');
 
       if (error) throw error;
       return data;
-    },
+    }
   });
 
-  const monthlyRevenue = payments?.reduce((acc: any, payment) => {
-    const date = new Date(payment.payment_date);
-    const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-    
-    if (!acc[monthYear]) {
-      acc[monthYear] = {
-        month: monthYear,
-        shortTerm: 0,
-        leaseToOwn: 0,
-        total: 0,
-      };
-    }
-
-    const amount = payment.amount_paid || 0;
-    acc[monthYear].total += amount;
-
-    if (payment.lease?.agreement_type === 'short_term') {
-      acc[monthYear].shortTerm += amount;
-    } else {
-      acc[monthYear].leaseToOwn += amount;
-    }
-
-    return acc;
-  }, {});
-
-  const revenueData = Object.values(monthlyRevenue || {});
+  // Transform the data for the chart
+  const chartData = payments?.map(payment => ({
+    date: new Date(payment.payment_date).toLocaleDateString(),
+    revenue: payment.amount_paid
+  })) || [];
 
   return (
     <Card>
@@ -64,8 +39,8 @@ export const RevenueDashboard = () => {
         {isLoading ? (
           <div>Loading...</div>
         ) : (
-          <LineChart width={600} height={300} data={revenueData}>
-            <XAxis dataKey="month" />
+          <LineChart width={600} height={300} data={chartData}>
+            <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
             <CartesianGrid strokeDasharray="3 3" />

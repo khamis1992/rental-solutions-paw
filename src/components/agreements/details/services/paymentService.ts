@@ -14,19 +14,8 @@ interface PaymentData {
 
 export const submitPayment = async (paymentData: PaymentData) => {
   const { data, error } = await supabase
-    .from("unified_payments")
-    .insert({
-      lease_id: paymentData.lease_id,
-      amount: paymentData.amount,
-      amount_paid: paymentData.amount,
-      payment_method: paymentData.payment_method,
-      payment_date: paymentData.payment_date,
-      status: paymentData.status,
-      is_recurring: paymentData.is_recurring,
-      recurring_interval: paymentData.recurring_interval,
-      next_payment_date: paymentData.next_payment_date,
-      type: 'Income'
-    })
+    .from("payments")
+    .insert(paymentData)
     .select()
     .single();
 

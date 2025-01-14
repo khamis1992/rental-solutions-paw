@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { RevenueChart } from "./charts/RevenueChart";
@@ -15,7 +15,7 @@ export const FinancialReports = () => {
     queryKey: ["financial-reports"],
     queryFn: async () => {
       const { data: payments, error } = await supabase
-        .from("unified_payments")  // Updated from 'payments' to 'unified_payments'
+        .from("payments")
         .select(`
           *,
           lease:leases (

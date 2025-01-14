@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { formatCurrency } from "@/lib/utils";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -22,46 +21,22 @@ interface PaymentFormProps {
 
 export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lateFee, setLateFee] = useState(0);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue, watch } = useForm();
-
-  // Calculate late fee based on current date
-  useEffect(() => {
-    const calculateLateFee = () => {
-      const today = new Date();
-      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      
-      // If today is after the 1st of the month
-      if (today > firstOfMonth) {
-        const daysLate = Math.floor((today.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24));
-        setLateFee(daysLate * 120); // 120 QAR per day
-      } else {
-        setLateFee(0);
-      }
-    };
-
-    calculateLateFee();
-  }, []);
+  const { register, handleSubmit, reset, setValue } = useForm();
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const totalAmount = parseFloat(data.amount) + lateFee;
-      const paymentAmount = parseFloat(data.amount);
-
       const { error } = await supabase.from("unified_payments").insert({
         lease_id: agreementId,
-        amount: totalAmount,
-        amount_paid: paymentAmount, // Store the actual payment amount without late fee
-        balance: lateFee, // Any remaining balance (late fees)
+        amount: parseFloat(data.amount),
+        amount_paid: parseFloat(data.amount),
+        balance: 0,
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
         status: 'completed',
         type: 'Income',
-        late_fine_amount: lateFee,
-        days_overdue: lateFee > 0 ? Math.floor(lateFee / 120) : 0,
         reconciliation_status: 'pending'
       });
 
@@ -94,12 +69,6 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         />
       </div>
       
-      {lateFee > 0 && (
-        <div className="text-sm text-red-600 font-medium">
-          Late Fee: {formatCurrency(lateFee)}
-        </div>
-      )}
-      
       <div>
         <Label htmlFor="paymentMethod">Payment Method</Label>
         <Select onValueChange={(value) => setValue("paymentMethod", value)}>
@@ -131,7 +100,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         disabled={isSubmitting}
         className="w-full"
       >
-        {isSubmitting ? "Adding Payment..." : `Add Payment ${lateFee > 0 ? `(Including ${formatCurrency(lateFee)} Late Fee)` : ''}`}
+        {isSubmitting ? "Adding Payment..." : "Add Payment"}
       </Button>
     </form>
   );

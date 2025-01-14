@@ -1,7 +1,10 @@
-import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { LeaseStatus } from "@/types/agreement.types";
+import { formatCurrency } from "@/lib/utils";
 
-interface AgreementHeaderProps {
+export interface AgreementHeaderProps {
   agreement?: {
     id: string;
     agreement_number: string;
@@ -9,36 +12,67 @@ interface AgreementHeaderProps {
     start_date: string;
     end_date: string;
     rent_amount: number;
-    contractValue: number;
-    remainingAmount: number;
+    contractValue?: number;
   };
-  remainingAmount: number;
+  remainingAmount?: number;
 }
 
-export const AgreementHeader = ({ agreement, remainingAmount }: AgreementHeaderProps) => {
-  if (!agreement) return null;
-
+export const AgreementHeader = ({
+  agreement,
+  remainingAmount = 0,
+}: AgreementHeaderProps) => {
   return (
-    <div className="flex flex-col space-y-2">
-      <div className="flex items-center space-x-2">
-        <h3 className="text-lg font-semibold">
-          Agreement #{agreement.agreement_number}
-        </h3>
-      </div>
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-muted-foreground">Contract Value:</span>
-          <span className="ml-2 font-medium">{formatCurrency(agreement.contractValue)}</span>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-2xl font-bold mb-2">
+              {agreement ? `Agreement #${agreement.agreement_number}` : 'Agreements'}
+            </h2>
+            {agreement && (
+              <Badge
+                variant={agreement.status === "active" ? "success" : "secondary"}
+                className="mb-4"
+              >
+                {agreement.status}
+              </Badge>
+            )}
+          </div>
         </div>
-        <div>
-          <span className="text-muted-foreground">Rent Amount:</span>
-          <span className="ml-2 font-medium">{formatCurrency(agreement.rent_amount)}</span>
-        </div>
-        <div>
-          <span className="text-muted-foreground">Balance:</span>
-          <span className="ml-2 font-medium">{formatCurrency(remainingAmount)}</span>
-        </div>
-      </div>
-    </div>
+
+        {agreement && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Start Date</p>
+              <p className="font-medium">
+                {agreement.start_date
+                  ? new Date(agreement.start_date).toLocaleDateString()
+                  : "Not set"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">End Date</p>
+              <p className="font-medium">
+                {agreement.end_date
+                  ? new Date(agreement.end_date).toLocaleDateString()
+                  : "Not set"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Rent Amount</p>
+              <p className="font-medium">{formatCurrency(agreement.rent_amount)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Contract Value</p>
+              <p className="font-medium">{formatCurrency(agreement.contractValue || 0)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Remaining Amount</p>
+              <p className="font-medium text-red-600">{formatCurrency(remainingAmount)}</p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

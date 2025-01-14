@@ -136,8 +136,8 @@ export const AgreementDetailsDialog = ({
 
   if (!open) return null;
 
-  // Get the remaining amount from the view
-  const remainingAmount = agreement?.remainingAmount?.remaining_amount ?? 0;
+  // Fix: Access remaining_amount directly from the remainingAmount object
+  const remainingAmount = agreement?.remainingAmount?.remaining_amount || 0;
 
   const mappedAgreement = agreement ? {
     id: agreement.id,
