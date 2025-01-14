@@ -127,7 +127,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              // Calculate individual payment balance including late fine
+              // Calculate total due for this payment including late fine
               const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
               const paymentBalance = totalDueForPayment - (payment.amount_paid || 0);
               
