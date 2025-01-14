@@ -91,13 +91,16 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const totals = payments?.reduce((acc, payment) => {
     if (payment.status === "completed") {
       return {
+        totalDue: acc.totalDue + (payment.amount || 0),
         amountPaid: acc.amountPaid + (payment.amount_paid || 0),
         lateFines: acc.lateFines + (payment.late_fine_amount || 0),
-        balance: acc.balance + (payment.balance || 0)
       };
     }
     return acc;
-  }, { amountPaid: 0, lateFines: 0, balance: 0 }) || { amountPaid: 0, lateFines: 0, balance: 0 };
+  }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
+
+  // Calculate the actual balance
+  const balance = totals.totalDue - totals.amountPaid;
 
   return (
     <Card>
@@ -120,15 +123,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Balance</div>
-              <div className="text-lg font-semibold">{formatCurrency(totals.balance)}</div>
+              <div className="text-lg font-semibold">{formatCurrency(balance)}</div>
             </div>
           </div>
 
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              // Calculate balance for each payment
-              const currentBalance = payment.amount + payment.late_fine_amount - payment.amount_paid;
+              // Calculate individual payment balance
+              const paymentBalance = payment.amount - payment.amount_paid;
               
               return (
                 <div
@@ -146,7 +149,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   <div className="text-right space-y-1">
                     <div>Amount: {formatCurrency(payment.amount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
-                    <div>Balance: {formatCurrency(currentBalance)}</div>
+                    <div>Balance: {formatCurrency(paymentBalance)}</div>
                     {payment.late_fine_amount > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
