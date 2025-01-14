@@ -88,9 +88,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
-    const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
+    const dueAmount = payment.amount + (payment.late_fine_amount || 0);
     return {
-      totalDue: acc.totalDue + totalDueForPayment,
+      totalDue: acc.totalDue + dueAmount,
       amountPaid: acc.amountPaid + (payment.amount_paid || 0),
       lateFines: acc.lateFines + (payment.late_fine_amount || 0),
     };
@@ -127,9 +127,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              // Calculate total due for this payment including late fine
-              const totalDueForPayment = (payment.amount || 0) + (payment.late_fine_amount || 0);
-              const paymentBalance = totalDueForPayment - (payment.amount_paid || 0);
+              // Calculate due amount for this payment as rent + late fee
+              const dueAmount = payment.amount + (payment.late_fine_amount || 0);
+              const paymentBalance = dueAmount - (payment.amount_paid || 0);
               
               return (
                 <div
@@ -145,7 +145,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Due Payment: {formatCurrency(totalDueForPayment)}</div>
+                    <div>Due Amount: {formatCurrency(dueAmount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
                     <div>Balance: {formatCurrency(paymentBalance)}</div>
                     {payment.late_fine_amount > 0 && (
