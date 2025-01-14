@@ -10,10 +10,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, History } from "lucide-react";
 import { usePaymentReconciliation } from "./hooks/usePaymentReconciliation";
 import { PaymentTrackingTabs } from "./payments/PaymentTrackingTabs";
 import { PaymentHistoryView } from "@/types/database/payment.types";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface PaymentHistoryDialogProps {
   agreementId: string;
@@ -28,6 +40,8 @@ export function PaymentHistoryDialog({
 }: PaymentHistoryDialogProps) {
   const queryClient = useQueryClient();
   const { isReconciling, reconcilePayments } = usePaymentReconciliation();
+  const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: payments, isLoading, error } = useQuery({
     queryKey: ["payment-history", agreementId],
@@ -101,6 +115,27 @@ export function PaymentHistoryDialog({
     }
   };
 
+  const handleDeleteHistoricalPayments = async () => {
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase.functions.invoke('delete-historical-payments', {
+        method: 'POST',
+        body: { agreementId }
+      });
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] });
+      toast.success("Historical payments deleted successfully");
+    } catch (error) {
+      console.error("Error deleting historical payments:", error);
+      toast.error("Failed to delete historical payments");
+    } finally {
+      setIsDeleting(false);
+      setIsHistoricalDeleteDialogOpen(false);
+    }
+  };
+
   if (error) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,7 +153,19 @@ export function PaymentHistoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Payment History</DialogTitle>
+          <div className="flex justify-between items-center">
+            <DialogTitle>Payment History</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsHistoricalDeleteDialogOpen(true)}
+              disabled={isDeleting}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              Delete Historical Payments
+            </Button>
+          </div>
           <DialogDescription>
             View and manage payment history
           </DialogDescription>
@@ -139,6 +186,27 @@ export function PaymentHistoryDialog({
           />
         )}
       </DialogContent>
+
+      <AlertDialog open={isHistoricalDeleteDialogOpen} onOpenChange={setIsHistoricalDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Historical Payments</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete all payments made before 2025 for this agreement. This action cannot be undone. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteHistoricalPayments}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Historical Payments"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
