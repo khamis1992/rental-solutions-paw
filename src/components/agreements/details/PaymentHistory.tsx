@@ -58,15 +58,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
-    const dueAmount = payment.amount + (payment.late_fine_amount || 0);
+    const baseAmount = payment.amount;
     return {
-      totalDue: acc.totalDue + dueAmount,
+      totalDue: acc.totalDue + baseAmount,
       amountPaid: acc.amountPaid + (payment.amount_paid || 0),
       lateFines: acc.lateFines + (payment.late_fine_amount || 0),
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
 
-  // Calculate the actual balance
+  // Calculate the actual balance (without late fines)
   const balance = totals.totalDue - totals.amountPaid;
 
   const handleDeleteClick = (paymentId: string) => {
@@ -128,6 +128,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
+              const baseBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
+              
               return (
                 <div
                   key={payment.id}
@@ -150,7 +152,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                         Late Fine: {formatCurrency(payment.late_fine_amount)}
                       </div>
                     )}
-                    <div className="text-destructive">Balance: {formatCurrency(Math.max(0, payment.amount - (payment.amount_paid || 0)))}</div>
+                    <div className="text-destructive">Balance: {formatCurrency(baseBalance)}</div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
