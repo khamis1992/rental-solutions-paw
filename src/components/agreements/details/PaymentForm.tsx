@@ -24,7 +24,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lateFee, setLateFee] = useState(0);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const { register, handleSubmit, reset, setValue, watch } = useForm();
 
   // Calculate late fee based on current date
   useEffect(() => {
