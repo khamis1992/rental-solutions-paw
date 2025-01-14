@@ -48,12 +48,13 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     setIsSubmitting(true);
     try {
       const totalAmount = parseFloat(data.amount) + lateFee;
+      const paymentAmount = parseFloat(data.amount);
 
       const { error } = await supabase.from("unified_payments").insert({
         lease_id: agreementId,
         amount: totalAmount,
-        amount_paid: totalAmount,
-        balance: 0,
+        amount_paid: paymentAmount, // Store the actual payment amount without late fee
+        balance: lateFee, // Any remaining balance (late fees)
         payment_method: data.paymentMethod,
         description: data.description,
         payment_date: new Date().toISOString(),
