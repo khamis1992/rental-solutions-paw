@@ -63,10 +63,10 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const lateFine = payment.late_fine_amount || 0;
     
     return {
-      totalDue: acc.totalDue + dueAmount,
+      totalDue: acc.totalDue + (payment.type === 'Income' ? dueAmount : 0),
       amountPaid: acc.amountPaid + amountPaid,
       balance: acc.balance + balance,
-      totalLateFines: acc.totalLateFines + lateFine,
+      totalLateFines: acc.totalLateFines + (payment.type === 'LATE_PAYMENT_FEE' ? dueAmount : lateFine),
     };
   }, { totalDue: 0, amountPaid: 0, balance: 0, totalLateFines: 0 }) || 
   { totalDue: 0, amountPaid: 0, balance: 0, totalLateFines: 0 };
@@ -133,68 +133,62 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
           {/* Payment List */}
           {payments && payments.length > 0 ? (
-            payments.map((payment) => {
-              const dueAmount = payment.amount;
-              const amountPaid = payment.amount_paid || 0;
-              const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
-              const lateFine = payment.late_fine_amount || 0;
-              const daysOverdue = payment.days_overdue || 0;
-              
-              return (
-                <div
-                  key={payment.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div>
-                    <div className="font-medium">
-                      {payment.payment_date ? formatDateToDisplay(new Date(payment.payment_date)) : 'No date'}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {payment.payment_method} - {payment.description || 'No Description'}
-                    </div>
-                    {daysOverdue > 0 && (
-                      <div className="text-sm text-destructive">
-                        {daysOverdue} days overdue
-                      </div>
+            payments.map((payment) => (
+              <div
+                key={payment.id}
+                className={`flex items-center justify-between p-4 border rounded-lg ${
+                  payment.type === 'LATE_PAYMENT_FEE' ? 'bg-red-50' : ''
+                }`}
+              >
+                <div>
+                  <div className="font-medium flex items-center gap-2">
+                    {payment.payment_date ? formatDateToDisplay(new Date(payment.payment_date)) : 'No date'}
+                    {payment.type === 'LATE_PAYMENT_FEE' && (
+                      <Badge variant="destructive">Late Fee</Badge>
                     )}
                   </div>
-                  <div className="text-right space-y-1">
-                    <div>Due Amount: {formatCurrency(dueAmount)}</div>
-                    <div>Amount Paid: {formatCurrency(amountPaid)}</div>
-                    {lateFine > 0 && (
-                      <div className="text-destructive">Late Fine: {formatCurrency(lateFine)}</div>
-                    )}
-                    <div className={`${balance === 0 ? 'text-green-600' : 'text-destructive'}`}>
-                      Balance: {formatCurrency(balance)}
+                  <div className="text-sm text-muted-foreground">
+                    {payment.payment_method} - {payment.description || 'No Description'}
+                  </div>
+                  {payment.days_overdue > 0 && payment.type !== 'LATE_PAYMENT_FEE' && (
+                    <div className="text-sm text-destructive">
+                      {payment.days_overdue} days overdue
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="outline" 
-                        className={payment.status === 'completed' ? 
-                          'bg-green-50 text-green-600 border-green-200' : 
-                          'bg-yellow-50 text-yellow-600 border-yellow-200'
-                        }
-                      >
-                        {payment.status === 'completed' ? (
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                        ) : (
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                        )}
-                        {payment.status}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(payment.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  )}
+                </div>
+                <div className="text-right space-y-1">
+                  <div>Due Amount: {formatCurrency(payment.amount)}</div>
+                  <div>Amount Paid: {formatCurrency(payment.amount_paid || 0)}</div>
+                  {payment.balance > 0 && (
+                    <div className="text-destructive">Balance: {formatCurrency(payment.balance)}</div>
+                  )}
+                  <div className="flex items-center gap-2 justify-end">
+                    <Badge 
+                      variant="outline" 
+                      className={payment.status === 'completed' ? 
+                        'bg-green-50 text-green-600 border-green-200' : 
+                        'bg-yellow-50 text-yellow-600 border-yellow-200'
+                      }
+                    >
+                      {payment.status === 'completed' ? (
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                      ) : (
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                      )}
+                      {payment.status}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(payment.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           ) : (
             <div className="text-center text-muted-foreground py-8">
               No payment history found
