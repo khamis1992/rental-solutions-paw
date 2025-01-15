@@ -66,7 +66,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       totalDue: acc.totalDue + baseAmount,
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + balance
+      totalBalance: acc.totalBalance + balance + lateFine // Include late fine in total balance
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
@@ -135,6 +135,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
               const paymentBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
+              const totalDue = payment.amount + (payment.late_fine_amount || 0);
               
               return (
                 <div
@@ -156,9 +157,16 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
                         Late Fine: {formatCurrency(payment.late_fine_amount)}
+                        {payment.days_overdue > 0 && (
+                          <span className="text-sm ml-1">
+                            ({payment.days_overdue} days @ 120 QAR/day)
+                          </span>
+                        )}
                       </div>
                     )}
-                    <div className="text-destructive">Balance: {formatCurrency(paymentBalance)}</div>
+                    <div className="text-destructive">
+                      Total Due: {formatCurrency(totalDue)}
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
