@@ -4339,7 +4339,9 @@ export type Database = {
           batch_id: string | null
           created_at: string | null
           customer_name: string | null
+          days_overdue: number | null
           description: string | null
+          due_date: string | null
           error_details: string | null
           file_name: string | null
           id: string
@@ -4347,6 +4349,7 @@ export type Database = {
             | Database["public"]["Enums"]["import_source_type"]
             | null
           last_processed_at: string | null
+          late_fine_amount: number | null
           license_plate: string | null
           match_confidence: number | null
           matched_agreement_id: string | null
@@ -4371,7 +4374,9 @@ export type Database = {
           batch_id?: string | null
           created_at?: string | null
           customer_name?: string | null
+          days_overdue?: number | null
           description?: string | null
+          due_date?: string | null
           error_details?: string | null
           file_name?: string | null
           id?: string
@@ -4379,6 +4384,7 @@ export type Database = {
             | Database["public"]["Enums"]["import_source_type"]
             | null
           last_processed_at?: string | null
+          late_fine_amount?: number | null
           license_plate?: string | null
           match_confidence?: number | null
           matched_agreement_id?: string | null
@@ -4403,7 +4409,9 @@ export type Database = {
           batch_id?: string | null
           created_at?: string | null
           customer_name?: string | null
+          days_overdue?: number | null
           description?: string | null
+          due_date?: string | null
           error_details?: string | null
           file_name?: string | null
           id?: string
@@ -4411,6 +4419,7 @@ export type Database = {
             | Database["public"]["Enums"]["import_source_type"]
             | null
           last_processed_at?: string | null
+          late_fine_amount?: number | null
           license_plate?: string | null
           match_confidence?: number | null
           matched_agreement_id?: string | null
@@ -4557,6 +4566,546 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      unified_payments_backup: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unified_payments_backup_2: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unified_payments_backup_3: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unified_payments_backup_4: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unified_payments_backup_5: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      unified_payments_backup_6: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       user_activity: {
         Row: {
@@ -5375,6 +5924,14 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_late_fine: {
+        Args: {
+          p_payment_date: string
+          p_due_date: string
+          p_daily_rate?: number
+        }
+        Returns: number
+      }
       calculate_remaining_amount: {
         Args: {
           lease_id: string
@@ -5441,6 +5998,10 @@ export type Database = {
         Returns: boolean
       }
       migrate_to_unified_import_tracking: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      process_historical_payments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
