@@ -5452,6 +5452,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      process_tracked_import: {
+        Args: {
+          import_id: string
+        }
+        Returns: boolean
+      }
       send_payment_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined

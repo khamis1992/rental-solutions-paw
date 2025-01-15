@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Upload, FileDown, PlayCircle } from "lucide-react";
+import { Loader2, Upload, FileDown, PlayCircle, Cog } from "lucide-react";
 
 type ImportedData = Record<string, unknown>;
 
 export const RawDataView = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessingImports, setIsProcessingImports] = useState(false);
   const [importedData, setImportedData] = useState<ImportedData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
@@ -121,7 +122,6 @@ export const RawDataView = () => {
         toast.error(`Failed to process ${errorCount} records`);
       }
       
-      // Clear the imported data after successful processing
       if (errorCount === 0) {
         setImportedData([]);
         setHeaders([]);
@@ -131,6 +131,48 @@ export const RawDataView = () => {
       toast.error('Failed to process records');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const processImports = async () => {
+    setIsProcessingImports(true);
+    try {
+      const { data: pendingImports, error: fetchError } = await supabase
+        .from('unified_import_tracking')
+        .select('id')
+        .eq('status', 'pending');
+
+      if (fetchError) throw fetchError;
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const importRecord of (pendingImports || [])) {
+        const { data, error } = await supabase.rpc('process_tracked_import', {
+          import_id: importRecord.id
+        });
+
+        if (error) {
+          console.error('Error processing import:', error);
+          errorCount++;
+        } else if (data) {
+          successCount++;
+        }
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+      
+      if (successCount > 0) {
+        toast.success(`Successfully processed ${successCount} payments`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to process ${errorCount} payments`);
+      }
+    } catch (error) {
+      console.error('Error processing imports:', error);
+      toast.error('Failed to process imports');
+    } finally {
+      setIsProcessingImports(false);
     }
   };
 
@@ -147,7 +189,7 @@ export const RawDataView = () => {
                 type="file"
                 accept=".csv"
                 onChange={handleFileUpload}
-                disabled={isUploading || isProcessing}
+                disabled={isUploading || isProcessing || isProcessingImports}
                 className="cursor-pointer"
               />
               <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -156,7 +198,7 @@ export const RawDataView = () => {
               <Button
                 variant="outline"
                 onClick={downloadTemplate}
-                disabled={isUploading || isProcessing}
+                disabled={isUploading || isProcessing || isProcessingImports}
                 className="whitespace-nowrap"
               >
                 <FileDown className="mr-2 h-4 w-4" />
@@ -165,7 +207,7 @@ export const RawDataView = () => {
               <Button
                 variant="default"
                 onClick={processAll}
-                disabled={isUploading || isProcessing || importedData.length === 0}
+                disabled={isUploading || isProcessing || isProcessingImports || importedData.length === 0}
                 className="whitespace-nowrap"
               >
                 {isProcessing ? (
@@ -175,13 +217,28 @@ export const RawDataView = () => {
                 )}
                 Process All
               </Button>
+              <Button
+                variant="secondary"
+                onClick={processImports}
+                disabled={isUploading || isProcessing || isProcessingImports}
+                className="whitespace-nowrap"
+              >
+                {isProcessingImports ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Cog className="mr-2 h-4 w-4" />
+                )}
+                Process Imports
+              </Button>
             </div>
           </div>
           
-          {isUploading && (
+          {(isUploading || isProcessing || isProcessingImports) && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Uploading file...
+              {isUploading ? 'Uploading file...' : 
+               isProcessing ? 'Processing data...' : 
+               'Processing imports...'}
             </div>
           )}
         </CardContent>
