@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import {
@@ -55,12 +55,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     },
   });
 
-  // Calculate totals
+  // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
     const dueAmount = payment.amount;
     const amountPaid = payment.amount_paid || 0;
     const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
-    const lateFine = payment.late_fine_amount || 0;
+    const lateFine = payment.type === 'LATE_PAYMENT_FEE' ? payment.amount : (payment.late_fine_amount || 0);
     
     return {
       totalDue: acc.totalDue + dueAmount,
@@ -134,16 +134,13 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const dueAmount = payment.amount;
-              const amountPaid = payment.amount_paid || 0;
-              const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
-              const lateFine = payment.late_fine_amount || 0;
-              const daysOverdue = payment.days_overdue || 0;
+              const isLateFee = payment.type === 'LATE_PAYMENT_FEE';
+              const bgColor = isLateFee ? 'bg-red-50' : '';
               
               return (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className={`flex items-center justify-between p-4 border rounded-lg ${bgColor}`}
                 >
                   <div>
                     <div className="font-medium">
@@ -152,35 +149,36 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     <div className="text-sm text-muted-foreground">
                       {payment.payment_method} - {payment.description || 'No Description'}
                     </div>
-                    {daysOverdue > 0 && (
+                    {payment.days_overdue > 0 && !isLateFee && (
                       <div className="text-sm text-destructive">
-                        {daysOverdue} days overdue
+                        {payment.days_overdue} days overdue
                       </div>
                     )}
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Due Amount: {formatCurrency(dueAmount)}</div>
-                    <div>Amount Paid: {formatCurrency(amountPaid)}</div>
-                    {lateFine > 0 && (
-                      <div className="text-destructive">Late Fine: {formatCurrency(lateFine)}</div>
-                    )}
-                    <div className={`${balance === 0 ? 'text-green-600' : 'text-destructive'}`}>
-                      Balance: {formatCurrency(balance)}
+                    <div>Due Amount: {formatCurrency(payment.amount)}</div>
+                    <div>Amount Paid: {formatCurrency(payment.amount_paid || 0)}</div>
+                    <div className={`${payment.balance === 0 ? 'text-green-600' : 'text-destructive'}`}>
+                      Balance: {formatCurrency(payment.balance || 0)}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
-                        className={payment.status === 'completed' ? 
-                          'bg-green-50 text-green-600 border-green-200' : 
-                          'bg-yellow-50 text-yellow-600 border-yellow-200'
+                        className={
+                          isLateFee ? 'bg-red-50 text-red-600 border-red-200' :
+                          payment.status === 'completed' ? 
+                            'bg-green-50 text-green-600 border-green-200' : 
+                            'bg-yellow-50 text-yellow-600 border-yellow-200'
                         }
                       >
-                        {payment.status === 'completed' ? (
+                        {isLateFee ? (
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                        ) : payment.status === 'completed' ? (
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                         ) : (
                           <AlertTriangle className="h-3 w-3 mr-1" />
                         )}
-                        {payment.status}
+                        {isLateFee ? 'Late Fee' : payment.status}
                       </Badge>
                       <Button
                         variant="ghost"

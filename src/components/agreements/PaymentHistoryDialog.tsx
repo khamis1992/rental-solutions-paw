@@ -54,7 +54,17 @@ export function PaymentHistoryDialog({
           .order("actual_payment_date", { ascending: false });
 
         if (error) throw error;
-        return data as PaymentHistoryView[];
+        
+        // Sort payments to show late fees immediately after their corresponding payments
+        const sortedData = (data as PaymentHistoryView[]).sort((a, b) => {
+          if (a.actual_payment_date === b.actual_payment_date) {
+            // If dates are the same, show late fees after regular payments
+            return a.type === 'LATE_PAYMENT_FEE' ? 1 : -1;
+          }
+          return new Date(b.actual_payment_date || 0).getTime() - new Date(a.actual_payment_date || 0).getTime();
+        });
+
+        return sortedData;
       } catch (err) {
         console.error("Error fetching payment history:", err);
         throw err;
