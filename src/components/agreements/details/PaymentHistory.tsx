@@ -32,44 +32,44 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     queryKey: ['unified-payments', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('unified_payments')
+        .from('payment_history_view')
         .select(`
           id,
           amount,
           amount_paid,
           balance,
-          payment_date,
-          due_date,
+          actual_payment_date,
+          original_due_date,
+          late_fine_amount,
+          days_overdue,
           status,
           payment_method,
           description,
-          late_fine_amount,
-          days_overdue,
           type
         `)
         .eq('lease_id', agreementId)
-        .order('payment_date', { ascending: false });
+        .order('actual_payment_date', { ascending: false });
 
       if (error) throw error;
       return data;
     },
   });
 
-  // Calculate totals
+  // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
-    const dueAmount = payment.amount;
+    const baseAmount = payment.amount || 0;
     const amountPaid = payment.amount_paid || 0;
-    const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
     const lateFine = payment.late_fine_amount || 0;
-    
+    const balance = Math.max(0, baseAmount - amountPaid);
+
     return {
-      totalDue: acc.totalDue + dueAmount,
+      totalDue: acc.totalDue + baseAmount + lateFine, // Include late fine in total due
       amountPaid: acc.amountPaid + amountPaid,
-      balance: acc.balance + balance,
-      totalLateFines: acc.totalLateFines + lateFine,
+      lateFines: acc.lateFines + lateFine,
+      totalBalance: acc.totalBalance + balance + lateFine
     };
-  }, { totalDue: 0, amountPaid: 0, balance: 0, totalLateFines: 0 }) || 
-  { totalDue: 0, amountPaid: 0, balance: 0, totalLateFines: 0 };
+  }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
+  { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -114,7 +114,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment Summary */}
           <div className="grid grid-cols-4 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
-              <div className="text-sm text-muted-foreground">Due Amount</div>
+              <div className="text-sm text-muted-foreground">Total Due</div>
               <div className="text-lg font-semibold">{formatCurrency(totals.totalDue)}</div>
             </div>
             <div>
@@ -123,22 +123,18 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Late Fines</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalLateFines)}</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground">Balance</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.balance)}</div>
+              <div className="text-sm text-muted-foreground">Total Balance</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalBalance)}</div>
             </div>
           </div>
 
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const dueAmount = payment.amount;
-              const amountPaid = payment.amount_paid || 0;
-              const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
-              const lateFine = payment.late_fine_amount || 0;
-              const daysOverdue = payment.days_overdue || 0;
+              const totalDue = payment.amount + (payment.late_fine_amount || 0);
               
               return (
                 <div
@@ -147,25 +143,28 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                 >
                   <div>
                     <div className="font-medium">
-                      {payment.payment_date ? formatDateToDisplay(new Date(payment.payment_date)) : 'No date'}
+                      {payment.actual_payment_date ? formatDateToDisplay(new Date(payment.actual_payment_date)) : 'No date'}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {payment.payment_method} - {payment.description || 'No Description'}
+                      {payment.payment_method} - {payment.description || 'Payment'}
                     </div>
-                    {daysOverdue > 0 && (
-                      <div className="text-sm text-destructive">
-                        {daysOverdue} days overdue
-                      </div>
-                    )}
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Due Amount: {formatCurrency(dueAmount)}</div>
-                    <div>Amount Paid: {formatCurrency(amountPaid)}</div>
-                    {lateFine > 0 && (
-                      <div className="text-destructive">Late Fine: {formatCurrency(lateFine)}</div>
+                    <div>Due Amount: {formatCurrency(payment.amount)}</div>
+                    <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
+                    {payment.late_fine_amount > 0 && (
+                      <div className="text-destructive flex items-center justify-end gap-1">
+                        <AlertTriangle className="h-4 w-4" />
+                        Late Fine: {formatCurrency(payment.late_fine_amount)}
+                        {payment.days_overdue > 0 && (
+                          <span className="text-sm ml-1">
+                            ({payment.days_overdue} days @ 120 QAR/day)
+                          </span>
+                        )}
+                      </div>
                     )}
-                    <div className={`${balance === 0 ? 'text-green-600' : 'text-destructive'}`}>
-                      Balance: {formatCurrency(balance)}
+                    <div className="text-destructive">
+                      Total Due: {formatCurrency(totalDue)}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge 

@@ -7,7 +7,6 @@ interface PaymentDetails {
   leaseId: string;
   description?: string;
   paymentMethod?: PaymentMethodType;
-  paymentDate?: Date;
 }
 
 interface ProcessedPayment {
@@ -18,15 +17,6 @@ interface ProcessedPayment {
 
 export async function processPayment(details: PaymentDetails): Promise<ProcessedPayment> {
   try {
-    // Calculate due date (1st of the month)
-    const paymentDate = details.paymentDate || new Date();
-    const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 1);
-
-    // Calculate days overdue and late fine
-    const daysOverdue = paymentDate > dueDate ? 
-      Math.floor((paymentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    const lateFineAmount = daysOverdue * 120; // 120 QAR per day
-
     const { data, error } = await supabase
       .from('unified_payments')
       .insert({
@@ -38,10 +28,7 @@ export async function processPayment(details: PaymentDetails): Promise<Processed
         description: details.description,
         type: 'Income',
         status: 'completed' as PaymentStatus,
-        payment_date: paymentDate.toISOString(),
-        due_date: dueDate.toISOString(),
-        days_overdue: daysOverdue,
-        late_fine_amount: lateFineAmount,
+        payment_date: new Date().toISOString(),
         reconciliation_status: 'pending'
       })
       .select('id, status, payment_date')
@@ -55,7 +42,7 @@ export async function processPayment(details: PaymentDetails): Promise<Processed
 
     return {
       id: data.id,
-      status: data.status as PaymentStatus,
+      status: data.status,
       timestamp: data.payment_date,
     };
   } catch (error) {
@@ -91,7 +78,7 @@ export async function getPaymentStatus(id: string): Promise<PaymentStatus> {
     .single();
 
   if (error) throw error;
-  return (data?.status || 'pending') as PaymentStatus;
+  return data?.status || 'pending';
 }
 
 export function notifyPaymentStatus(status: PaymentStatus, amount: number): void {
@@ -106,9 +93,6 @@ export function notifyPaymentStatus(status: PaymentStatus, amount: number): void
       break;
     case 'pending':
       toast.info(`Payment of ${formattedAmount} is being processed`);
-      break;
-    case 'refunded':
-      toast.info(`Payment of ${formattedAmount} has been refunded`);
       break;
   }
 }
