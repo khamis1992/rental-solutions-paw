@@ -72,6 +72,15 @@ export const PaymentImport = () => {
                   continue;
                 }
 
+                // Calculate due date (1st of the month)
+                const paymentDate = new Date(formattedDate);
+                const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 1);
+
+                // Calculate days overdue and late fine
+                const daysOverdue = paymentDate > dueDate ? 
+                  Math.floor((paymentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                const lateFineAmount = daysOverdue * 120; // 120 QAR per day
+
                 const { error: insertError } = await supabase
                   .from('unified_import_tracking')
                   .insert({
@@ -83,6 +92,9 @@ export const PaymentImport = () => {
                     payment_method: normalizePaymentMethod(row.payment_method as string),
                     description: row.description as string,
                     payment_date: formattedDate,
+                    due_date: dueDate.toISOString(),
+                    days_overdue: daysOverdue,
+                    late_fine_amount: lateFineAmount,
                     type: row.type as string,
                     status: 'pending',
                     batch_id: batchId,
@@ -188,32 +200,48 @@ export const PaymentImport = () => {
                         {header}
                       </TableHead>
                     ))}
+                    <TableHead>Late Fine</TableHead>
+                    <TableHead>Days Overdue</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {importedData.map((row, index) => (
-                    <TableRow key={index}>
-                      {headers.map((header) => (
-                        <TableCell key={`${index}-${header}`} className="whitespace-nowrap">
-                          {String(row[header])}
+                  {importedData.map((row, index) => {
+                    const paymentDate = new Date(row.payment_date as string);
+                    const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 1);
+                    const daysOverdue = paymentDate > dueDate ? 
+                      Math.floor((paymentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                    const lateFineAmount = daysOverdue * 120;
+
+                    return (
+                      <TableRow key={index}>
+                        {headers.map((header) => (
+                          <TableCell key={`${index}-${header}`} className="whitespace-nowrap">
+                            {String(row[header])}
+                          </TableCell>
+                        ))}
+                        <TableCell className="whitespace-nowrap text-destructive">
+                          {lateFineAmount > 0 ? `QAR ${lateFineAmount}` : '-'}
                         </TableCell>
-                      ))}
-                      <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            // Delete functionality will be handled here
-                            toast.error('Delete functionality coming soon');
-                          }}
-                          className="h-8"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        <TableCell className="whitespace-nowrap">
+                          {daysOverdue > 0 ? `${daysOverdue} days` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              // Delete functionality will be handled here
+                              toast.error('Delete functionality coming soon');
+                            }}
+                            className="h-8"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
