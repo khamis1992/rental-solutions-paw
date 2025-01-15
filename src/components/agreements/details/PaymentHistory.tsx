@@ -17,7 +17,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateDueAmount } from "../utils/paymentCalculations";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryProps {
@@ -33,41 +32,44 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     queryKey: ['unified-payments', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('unified_payments')
+        .from('payment_history_view')
         .select(`
           id,
           amount,
           amount_paid,
           balance,
-          payment_date,
-          due_date,
+          actual_payment_date,
+          original_due_date,
+          late_fine_amount,
+          days_overdue,
           status,
           payment_method,
           description,
-          late_fine_amount,
-          days_overdue,
           type
         `)
         .eq('lease_id', agreementId)
-        .order('payment_date', { ascending: false });
+        .order('actual_payment_date', { ascending: false });
 
       if (error) throw error;
       return data;
     },
   });
 
-  // Calculate totals including late fines in total due amount
+  // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
-    const baseAmount = payment.amount;
+    const baseAmount = payment.amount || 0;
+    const amountPaid = payment.amount_paid || 0;
+    const lateFine = payment.late_fine_amount || 0;
+    const balance = Math.max(0, baseAmount - amountPaid);
+
     return {
       totalDue: acc.totalDue + baseAmount,
-      amountPaid: acc.amountPaid + (payment.amount_paid || 0),
-      lateFines: acc.lateFines + (payment.late_fine_amount || 0),
+      amountPaid: acc.amountPaid + amountPaid,
+      lateFines: acc.lateFines + lateFine,
+      totalBalance: acc.totalBalance + balance
     };
-  }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
-
-  // Calculate the actual balance (without late fines)
-  const balance = totals.totalDue - totals.amountPaid;
+  }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
+  { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -110,7 +112,11 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       <CardContent>
         <div className="space-y-4">
           {/* Payment Summary */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
+          <div className="grid grid-cols-4 gap-4 p-4 bg-muted rounded-lg mb-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Total Due</div>
+              <div className="text-lg font-semibold">{formatCurrency(totals.totalDue)}</div>
+            </div>
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
               <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
@@ -120,15 +126,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground">Balance</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(balance)}</div>
+              <div className="text-sm text-muted-foreground">Total Balance</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalBalance)}</div>
             </div>
           </div>
 
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const baseBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
+              const paymentBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
               
               return (
                 <div
@@ -137,7 +143,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                 >
                   <div>
                     <div className="font-medium">
-                      {payment.payment_date ? formatDateToDisplay(new Date(payment.payment_date)) : 'No date'}
+                      {payment.actual_payment_date ? formatDateToDisplay(new Date(payment.actual_payment_date)) : 'No date'}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {payment.payment_method} - {payment.description || 'Payment'}
@@ -152,7 +158,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                         Late Fine: {formatCurrency(payment.late_fine_amount)}
                       </div>
                     )}
-                    <div className="text-destructive">Balance: {formatCurrency(baseBalance)}</div>
+                    <div className="text-destructive">Balance: {formatCurrency(paymentBalance)}</div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
