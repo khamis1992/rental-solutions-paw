@@ -12,6 +12,7 @@ type ImportedData = Record<string, unknown>;
 
 export const RawDataView = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [importedData, setImportedData] = useState<ImportedData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const queryClient = useQueryClient();
@@ -69,9 +70,68 @@ export const RawDataView = () => {
     }
   };
 
-  const processAll = () => {
-    toast.success('Processing started');
-    // Implementation for processing all records will go here
+  const processAll = async () => {
+    setIsProcessing(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      const batchId = crypto.randomUUID();
+
+      for (const row of importedData) {
+        try {
+          const { error: insertError } = await supabase
+            .from('unified_import_tracking')
+            .insert({
+              transaction_id: row.Transaction_ID as string,
+              agreement_number: row.Agreement_Number as string,
+              customer_name: row.Customer_Name as string,
+              license_plate: row.License_Plate as string,
+              amount: Number(row.Amount),
+              payment_method: row.Payment_Method as string,
+              description: row.Description as string,
+              payment_date: row.Payment_Date as string,
+              type: row.Type as string,
+              status: 'pending',
+              validation_status: false,
+              processing_attempts: 0,
+              batch_id: batchId,
+              import_source: 'csv',
+              file_name: 'manual_import'
+            });
+
+          if (insertError) {
+            console.error('Import error:', insertError);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          console.error('Error processing row:', error);
+          errorCount++;
+        }
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['unified-import-tracking'] });
+      
+      if (successCount > 0) {
+        toast.success(`Successfully processed ${successCount} records`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to process ${errorCount} records`);
+      }
+      
+      // Clear the imported data after successful processing
+      if (errorCount === 0) {
+        setImportedData([]);
+        setHeaders([]);
+      }
+    } catch (error) {
+      console.error('Processing error:', error);
+      toast.error('Failed to process records');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -87,7 +147,7 @@ export const RawDataView = () => {
                 type="file"
                 accept=".csv"
                 onChange={handleFileUpload}
-                disabled={isUploading}
+                disabled={isUploading || isProcessing}
                 className="cursor-pointer"
               />
               <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -96,7 +156,7 @@ export const RawDataView = () => {
               <Button
                 variant="outline"
                 onClick={downloadTemplate}
-                disabled={isUploading}
+                disabled={isUploading || isProcessing}
                 className="whitespace-nowrap"
               >
                 <FileDown className="mr-2 h-4 w-4" />
@@ -105,10 +165,14 @@ export const RawDataView = () => {
               <Button
                 variant="default"
                 onClick={processAll}
-                disabled={isUploading}
+                disabled={isUploading || isProcessing || importedData.length === 0}
                 className="whitespace-nowrap"
               >
-                <PlayCircle className="mr-2 h-4 w-4" />
+                {isProcessing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <PlayCircle className="mr-2 h-4 w-4" />
+                )}
                 Process All
               </Button>
             </div>
