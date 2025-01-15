@@ -6001,6 +6001,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      process_historical_payments: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       process_recurring_payments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
