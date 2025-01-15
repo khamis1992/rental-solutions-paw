@@ -66,7 +66,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       totalDue: acc.totalDue + baseAmount,
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + balance + lateFine // Include late fine in total balance
+      totalBalance: acc.totalBalance + balance + lateFine
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
@@ -134,7 +134,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const paymentBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
               const totalDue = payment.amount + (payment.late_fine_amount || 0);
               
               return (
