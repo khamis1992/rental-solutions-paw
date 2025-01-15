@@ -63,7 +63,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const balance = Math.max(0, baseAmount - amountPaid);
 
     return {
-      totalDue: acc.totalDue + baseAmount,
+      totalDue: acc.totalDue + baseAmount + lateFine, // Include late fine in total due
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
       totalBalance: acc.totalBalance + balance + lateFine
