@@ -37,71 +37,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           id,
           amount,
           amount_paid,
-          payment_date,
-          due_date,
-          status,
-          payment_method,
-          description,
-          late_fine_amount,
-          days_overdue,
-          type
-        `)
-        .eq('lease_id', agreementId)
-        .order('payment_date', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Calculate totals including late fines in total due amount
-  const totals = payments?.reduce((acc, payment) => {
-    const baseAmount = payment.amount;
-    const lateFI notice that the imported data display needs to be matched with the UI shown in the image. Let me help you update the PaymentHistory component to ensure consistent display between imported and manual payments.
-
-<lov-code>
-Let's update the PaymentHistory component:
-
-<lov-write file_path="src/components/agreements/details/PaymentHistory.tsx">
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils";
-import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { formatDateToDisplay } from "@/lib/dateUtils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useState } from "react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface PaymentHistoryProps {
-  agreementId: string;
-}
-
-export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-
-  const { data: payments, isLoading } = useQuery({
-    queryKey: ['unified-payments', agreementId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('unified_payments')
-        .select(`
-          id,
-          amount,
-          amount_paid,
           balance,
           payment_date,
           due_date,
@@ -124,7 +59,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const totals = payments?.reduce((acc, payment) => {
     const dueAmount = payment.amount;
     const amountPaid = payment.amount_paid || 0;
-    const balance = Math.max(0, dueAmount - amountPaid);
+    const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
     
     return {
       totalDue: acc.totalDue + dueAmount,
@@ -194,7 +129,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             payments.map((payment) => {
               const dueAmount = payment.amount;
               const amountPaid = payment.amount_paid || 0;
-              const balance = Math.max(0, dueAmount - amountPaid);
+              const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
+              const lateFine = payment.late_fine_amount || 0;
               
               return (
                 <div
@@ -212,6 +148,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                   <div className="text-right space-y-1">
                     <div>Due Amount: {formatCurrency(dueAmount)}</div>
                     <div>Amount Paid: {formatCurrency(amountPaid)}</div>
+                    {lateFine > 0 && (
+                      <div className="text-destructive">Late Fine: {formatCurrency(lateFine)}</div>
+                    )}
                     <div className={`${balance === 0 ? 'text-green-600' : 'text-destructive'}`}>
                       Balance: {formatCurrency(balance)}
                     </div>
