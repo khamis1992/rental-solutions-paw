@@ -59,14 +59,17 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   // Calculate totals including late fines in total due amount
   const totals = payments?.reduce((acc, payment) => {
     const baseAmount = payment.amount;
+    const lateFine = payment.late_fine_amount || 0;
+    const totalDue = baseAmount + lateFine;
+    
     return {
-      totalDue: acc.totalDue + baseAmount,
+      totalDue: acc.totalDue + totalDue,
       amountPaid: acc.amountPaid + (payment.amount_paid || 0),
-      lateFines: acc.lateFines + (payment.late_fine_amount || 0),
+      lateFines: acc.lateFines + lateFine,
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0 }) || { totalDue: 0, amountPaid: 0, lateFines: 0 };
 
-  // Calculate the actual balance (without late fines)
+  // Calculate the actual balance including late fines
   const balance = totals.totalDue - totals.amountPaid;
 
   const handleDeleteClick = (paymentId: string) => {
@@ -128,7 +131,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const baseBalance = Math.max(0, payment.amount - (payment.amount_paid || 0));
+              const lateFine = payment.late_fine_amount || 0;
+              const dueAmount = payment.amount + lateFine;
+              const currentBalance = Math.max(0, dueAmount - (payment.amount_paid || 0));
               
               return (
                 <div
@@ -140,19 +145,19 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                       {payment.payment_date ? formatDateToDisplay(new Date(payment.payment_date)) : 'No date'}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {payment.payment_method} - {payment.description || 'Payment'}
+                      {payment.payment_method} - {payment.description || 'No Description'}
                     </div>
                   </div>
                   <div className="text-right space-y-1">
-                    <div>Due Amount: {formatCurrency(payment.amount)}</div>
+                    <div>Due Amount: {formatCurrency(dueAmount)}</div>
                     <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
-                    {payment.late_fine_amount > 0 && (
+                    {lateFine > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
-                        Late Fine: {formatCurrency(payment.late_fine_amount)}
+                        Late Fine: {formatCurrency(lateFine)}
                       </div>
                     )}
-                    <div className="text-destructive">Balance: {formatCurrency(baseBalance)}</div>
+                    <div className="text-destructive">Balance: {formatCurrency(currentBalance)}</div>
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
