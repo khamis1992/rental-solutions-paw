@@ -4567,6 +4567,96 @@ export type Database = {
           },
         ]
       }
+      unified_payments_backup: {
+        Row: {
+          amount: number | null
+          amount_paid: number | null
+          balance: number | null
+          created_at: string | null
+          days_overdue: number | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          import_batch_id: string | null
+          import_reference: string | null
+          invoice_id: string | null
+          is_recurring: boolean | null
+          late_fine_amount: number | null
+          lease_id: string | null
+          match_confidence: number | null
+          next_payment_date: string | null
+          original_due_date: string | null
+          payment_date: string | null
+          payment_method: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
+          recurring_interval: unknown | null
+          security_deposit_id: string | null
+          status: string | null
+          transaction_id: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
+          created_at?: string | null
+          days_overdue?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          import_batch_id?: string | null
+          import_reference?: string | null
+          invoice_id?: string | null
+          is_recurring?: boolean | null
+          late_fine_amount?: number | null
+          lease_id?: string | null
+          match_confidence?: number | null
+          next_payment_date?: string | null
+          original_due_date?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
+          recurring_interval?: unknown | null
+          security_deposit_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_activity: {
         Row: {
           activity_count: number
