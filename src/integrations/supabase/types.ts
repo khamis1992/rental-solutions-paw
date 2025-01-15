@@ -4339,7 +4339,9 @@ export type Database = {
           batch_id: string | null
           created_at: string | null
           customer_name: string | null
+          days_overdue: number | null
           description: string | null
+          due_date: string | null
           error_details: string | null
           file_name: string | null
           id: string
@@ -4347,6 +4349,7 @@ export type Database = {
             | Database["public"]["Enums"]["import_source_type"]
             | null
           last_processed_at: string | null
+          late_fine_amount: number | null
           license_plate: string | null
           match_confidence: number | null
           matched_agreement_id: string | null
@@ -4371,7 +4374,9 @@ export type Database = {
           batch_id?: string | null
           created_at?: string | null
           customer_name?: string | null
+          days_overdue?: number | null
           description?: string | null
+          due_date?: string | null
           error_details?: string | null
           file_name?: string | null
           id?: string
@@ -4379,6 +4384,7 @@ export type Database = {
             | Database["public"]["Enums"]["import_source_type"]
             | null
           last_processed_at?: string | null
+          late_fine_amount?: number | null
           license_plate?: string | null
           match_confidence?: number | null
           matched_agreement_id?: string | null
@@ -4403,7 +4409,9 @@ export type Database = {
           batch_id?: string | null
           created_at?: string | null
           customer_name?: string | null
+          days_overdue?: number | null
           description?: string | null
+          due_date?: string | null
           error_details?: string | null
           file_name?: string | null
           id?: string
@@ -4411,6 +4419,7 @@ export type Database = {
             | Database["public"]["Enums"]["import_source_type"]
             | null
           last_processed_at?: string | null
+          late_fine_amount?: number | null
           license_plate?: string | null
           match_confidence?: number | null
           matched_agreement_id?: string | null
@@ -5374,6 +5383,14 @@ export type Database = {
           p_credit_history_length: number
         }
         Returns: Json
+      }
+      calculate_late_fine: {
+        Args: {
+          p_payment_date: string
+          p_due_date: string
+          p_daily_rate?: number
+        }
+        Returns: number
       }
       calculate_remaining_amount: {
         Args: {

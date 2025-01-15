@@ -60,13 +60,16 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const dueAmount = payment.amount;
     const amountPaid = payment.amount_paid || 0;
     const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
+    const lateFine = payment.late_fine_amount || 0;
     
     return {
       totalDue: acc.totalDue + dueAmount,
       amountPaid: acc.amountPaid + amountPaid,
       balance: acc.balance + balance,
+      totalLateFines: acc.totalLateFines + lateFine,
     };
-  }, { totalDue: 0, amountPaid: 0, balance: 0 }) || { totalDue: 0, amountPaid: 0, balance: 0 };
+  }, { totalDue: 0, amountPaid: 0, balance: 0, totalLateFines: 0 }) || 
+  { totalDue: 0, amountPaid: 0, balance: 0, totalLateFines: 0 };
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -109,7 +112,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       <CardContent>
         <div className="space-y-4">
           {/* Payment Summary */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
+          <div className="grid grid-cols-4 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
               <div className="text-sm text-muted-foreground">Due Amount</div>
               <div className="text-lg font-semibold">{formatCurrency(totals.totalDue)}</div>
@@ -117,6 +120,10 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
               <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Late Fines</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalLateFines)}</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Balance</div>
@@ -131,6 +138,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
               const amountPaid = payment.amount_paid || 0;
               const balance = payment.balance || Math.max(0, dueAmount - amountPaid);
               const lateFine = payment.late_fine_amount || 0;
+              const daysOverdue = payment.days_overdue || 0;
               
               return (
                 <div
@@ -144,6 +152,11 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     <div className="text-sm text-muted-foreground">
                       {payment.payment_method} - {payment.description || 'No Description'}
                     </div>
+                    {daysOverdue > 0 && (
+                      <div className="text-sm text-destructive">
+                        {daysOverdue} days overdue
+                      </div>
+                    )}
                   </div>
                   <div className="text-right space-y-1">
                     <div>Due Amount: {formatCurrency(dueAmount)}</div>
