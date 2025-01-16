@@ -4238,11 +4238,15 @@ export type Database = {
       }
       unified_import_tracking: {
         Row: {
+          actual_payment_date: string | null
           agreement_number: string | null
           amount: number | null
+          amount_paid: number | null
+          balance: number | null
           batch_id: string | null
           created_at: string | null
           customer_name: string | null
+          customer_phone: string | null
           days_overdue: number | null
           description: string | null
           due_date: string | null
@@ -4258,6 +4262,7 @@ export type Database = {
           match_confidence: number | null
           matched_agreement_id: string | null
           matched_payment_id: string | null
+          original_due_date: string | null
           original_file_name: string | null
           payment_date: string | null
           payment_method: string | null
@@ -4273,11 +4278,15 @@ export type Database = {
           validation_status: boolean | null
         }
         Insert: {
+          actual_payment_date?: string | null
           agreement_number?: string | null
           amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
           batch_id?: string | null
           created_at?: string | null
           customer_name?: string | null
+          customer_phone?: string | null
           days_overdue?: number | null
           description?: string | null
           due_date?: string | null
@@ -4293,6 +4302,7 @@ export type Database = {
           match_confidence?: number | null
           matched_agreement_id?: string | null
           matched_payment_id?: string | null
+          original_due_date?: string | null
           original_file_name?: string | null
           payment_date?: string | null
           payment_method?: string | null
@@ -4308,11 +4318,15 @@ export type Database = {
           validation_status?: boolean | null
         }
         Update: {
+          actual_payment_date?: string | null
           agreement_number?: string | null
           amount?: number | null
+          amount_paid?: number | null
+          balance?: number | null
           batch_id?: string | null
           created_at?: string | null
           customer_name?: string | null
+          customer_phone?: string | null
           days_overdue?: number | null
           description?: string | null
           due_date?: string | null
@@ -4328,6 +4342,7 @@ export type Database = {
           match_confidence?: number | null
           matched_agreement_id?: string | null
           matched_payment_id?: string | null
+          original_due_date?: string | null
           original_file_name?: string | null
           payment_date?: string | null
           payment_method?: string | null
