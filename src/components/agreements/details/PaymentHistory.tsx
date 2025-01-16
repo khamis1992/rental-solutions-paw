@@ -65,7 +65,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     return {
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + (isPending ? baseAmount : 0) // Only sum pending payments
+      totalBalance: acc.totalBalance + (isPending ? baseAmount : 0)
     };
   }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { amountPaid: 0, lateFines: 0, totalBalance: 0 };
@@ -122,7 +122,9 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Total Balance</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalBalance)}</div>
+              <div className={`text-lg font-semibold ${totals.totalBalance === 0 ? 'text-green-600' : 'text-destructive'}`}>
+                {formatCurrency(totals.totalBalance)}
+              </div>
             </div>
           </div>
 
