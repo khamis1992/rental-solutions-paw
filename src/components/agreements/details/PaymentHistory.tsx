@@ -57,18 +57,15 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
   // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
-    const baseAmount = payment.amount || 0;
     const amountPaid = payment.amount_paid || 0;
     const lateFine = payment.late_fine_amount || 0;
-    const isPending = payment.status === 'pending';
 
     return {
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + (isPending ? baseAmount : 0)
     };
-  }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
-  { amountPaid: 0, lateFines: 0, totalBalance: 0 };
+  }, { amountPaid: 0, lateFines: 0 }) || 
+  { amountPaid: 0, lateFines: 0 };
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -111,7 +108,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       <CardContent>
         <div className="space-y-4">
           {/* Payment Summary */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
+          <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
               <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
@@ -119,12 +116,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
             <div>
               <div className="text-sm text-muted-foreground">Late Fines</div>
               <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Total Balance</div>
-              <div className={`text-lg font-semibold ${totals.totalBalance === 0 ? 'text-green-600' : 'text-destructive'}`}>
-                {formatCurrency(totals.totalBalance)}
-              </div>
             </div>
           </div>
 
