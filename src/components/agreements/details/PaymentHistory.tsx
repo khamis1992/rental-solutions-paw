@@ -114,10 +114,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment Summary */}
           <div className="grid grid-cols-4 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
-              <div className="text-sm text-muted-foreground">Remaining Balance</div>
-              <div className="text-lg font-semibold text-destructive">
-                {formatCurrency(totals.totalDue - totals.amountPaid)}
-              </div>
+              <div className="text-sm text-muted-foreground">Total Due</div>
+              <div className="text-lg font-semibold">{formatCurrency(totals.totalDue)}</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
