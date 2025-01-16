@@ -160,7 +160,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                         )}
                       </div>
                     )}
-                    <div className="text-destructive">
+                    <div className={remainingBalance === 0 ? "text-green-600" : "text-destructive"}>
                       Total Due: {formatCurrency(remainingBalance)}
                     </div>
                     <div className="flex items-center gap-2">
