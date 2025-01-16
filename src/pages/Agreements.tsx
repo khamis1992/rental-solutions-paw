@@ -4,16 +4,18 @@ import { AgreementList } from "@/components/agreements/AgreementList";
 import { AgreementHeader } from "@/components/agreements/AgreementHeader";
 import { AgreementStats } from "@/components/agreements/AgreementStats";
 import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
-import { AgreementImport } from "@/components/agreements/AgreementImport";
+import { PaymentImport } from "@/components/agreements/PaymentImport";
 
 const Agreements = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showImportDialog, setShowImportDialog] = useState(false);
 
   return (
     <DashboardLayout>
       <div className="container mx-auto space-y-6 px-4 py-8">
-        <AgreementHeader remainingAmount={0} />
+        <div className="flex justify-between items-start">
+          <AgreementHeader remainingAmount={0} />
+          <PaymentImport />
+        </div>
         <AgreementStats />
         <AgreementList />
         
@@ -21,13 +23,6 @@ const Agreements = () => {
           open={showCreateDialog} 
           onOpenChange={setShowCreateDialog}
         />
-        
-        {showImportDialog && (
-          <AgreementImport
-            open={showImportDialog}
-            onOpenChange={setShowImportDialog}
-          />
-        )}
       </div>
     </DashboardLayout>
   );
