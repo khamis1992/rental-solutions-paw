@@ -63,10 +63,10 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const unpaidAmount = Math.max(0, baseAmount - amountPaid);
 
     return {
-      totalDue: acc.totalDue + unpaidAmount, // Changed to only include unpaid amount
+      totalDue: acc.totalDue + baseAmount,
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + unpaidAmount + lateFine // Keep balance calculation as is
+      totalBalance: acc.totalBalance + unpaidAmount + lateFine
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
@@ -134,7 +134,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const totalDue = payment.amount + (payment.late_fine_amount || 0);
+              const remainingBalance = payment.amount - (payment.amount_paid || 0);
               
               return (
                 <div
@@ -164,7 +164,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                       </div>
                     )}
                     <div className="text-destructive">
-                      Total Due: {formatCurrency(totalDue)}
+                      Total Due: {formatCurrency(remainingBalance)}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge 
