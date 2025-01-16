@@ -60,12 +60,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const baseAmount = payment.amount || 0;
     const amountPaid = payment.amount_paid || 0;
     const lateFine = payment.late_fine_amount || 0;
-    const unpaidAmount = Math.max(0, baseAmount - amountPaid);
+    const isPending = payment.status === 'pending';
 
     return {
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + baseAmount // Changed to sum up all due amounts
+      totalBalance: acc.totalBalance + (isPending ? baseAmount : 0) // Only sum pending payments
     };
   }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { amountPaid: 0, lateFines: 0, totalBalance: 0 };
