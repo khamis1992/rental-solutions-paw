@@ -60,12 +60,13 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const baseAmount = payment.amount || 0;
     const amountPaid = payment.amount_paid || 0;
     const lateFine = payment.late_fine_amount || 0;
-    const isPending = payment.status === 'pending';
+    const totalDue = baseAmount + lateFine;
+    const balance = totalDue - amountPaid;
 
     return {
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + (isPending ? baseAmount : 0)
+      totalBalance: acc.totalBalance + balance
     };
   }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { amountPaid: 0, lateFines: 0, totalBalance: 0 };
@@ -131,7 +132,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const remainingBalance = payment.amount - (payment.amount_paid || 0);
+              const remainingBalance = payment.amount + (payment.late_fine_amount || 0) - (payment.amount_paid || 0);
               const paymentStatus = remainingBalance === 0 ? 'completed' : 'pending';
               
               return (
