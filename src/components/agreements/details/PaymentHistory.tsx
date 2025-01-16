@@ -63,13 +63,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const unpaidAmount = Math.max(0, baseAmount - amountPaid);
 
     return {
-      totalDue: acc.totalDue + baseAmount,
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
       totalBalance: acc.totalBalance + unpaidAmount + lateFine
     };
-  }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
-  { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
+  }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
+  { amountPaid: 0, lateFines: 0, totalBalance: 0 };
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -111,12 +110,8 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Payment Summary */}
-          <div className="grid grid-cols-4 gap-4 p-4 bg-muted rounded-lg mb-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Total Due</div>
-              <div className="text-lg font-semibold">{formatCurrency(totals.totalDue)}</div>
-            </div>
+          {/* Payment Summary - Now with 3 columns instead of 4 */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
               <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
