@@ -65,7 +65,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     return {
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + unpaidAmount + lateFine
+      totalBalance: acc.totalBalance + baseAmount // Changed to sum up all due amounts
     };
   }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { amountPaid: 0, lateFines: 0, totalBalance: 0 };
@@ -110,7 +110,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Payment Summary - Now with 3 columns instead of 4 */}
+          {/* Payment Summary - Now with 3 columns */}
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
