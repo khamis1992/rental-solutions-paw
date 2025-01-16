@@ -110,7 +110,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Payment Summary - Now with 3 columns */}
+          {/* Payment Summary */}
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
@@ -132,6 +132,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
               const remainingBalance = payment.amount - (payment.amount_paid || 0);
+              const paymentStatus = remainingBalance === 0 ? 'completed' : 'pending';
               
               return (
                 <div
@@ -166,17 +167,17 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
-                        className={payment.status === 'completed' ? 
+                        className={paymentStatus === 'completed' ? 
                           'bg-green-50 text-green-600 border-green-200' : 
                           'bg-yellow-50 text-yellow-600 border-yellow-200'
                         }
                       >
-                        {payment.status === 'completed' ? (
+                        {paymentStatus === 'completed' ? (
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                         ) : (
                           <AlertTriangle className="h-3 w-3 mr-1" />
                         )}
-                        {payment.status}
+                        {paymentStatus === 'completed' ? 'Completed' : 'Pending'}
                       </Badge>
                       <Button
                         variant="ghost"
