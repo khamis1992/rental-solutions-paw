@@ -109,13 +109,13 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
         <div className="space-y-4">
           {/* Payment Summary */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg mb-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Amount Paid</div>
-              <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
+            <div className="flex flex-col">
+              <div className="text-sm text-muted-foreground mb-1">Amount Paid</div>
+              <div className="text-lg font-semibold text-right">{formatCurrency(totals.amountPaid)}</div>
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Late Fines</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
+            <div className="flex flex-col">
+              <div className="text-sm text-muted-foreground mb-1">Late Fines</div>
+              <div className="text-lg font-semibold text-destructive text-right">{formatCurrency(totals.lateFines)}</div>
             </div>
           </div>
 
@@ -155,7 +155,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     <div className={remainingBalance === 0 ? "text-green-600" : "text-destructive"}>
                       Total Due: {formatCurrency(remainingBalance)}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 justify-end">
                       <Badge 
                         variant="outline" 
                         className={paymentStatus === 'completed' ? 
