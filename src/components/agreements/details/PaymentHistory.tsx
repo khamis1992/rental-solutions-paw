@@ -1,43 +1,61 @@
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { InvoiceDialog } from "../InvoiceDialog";
-import { FileText, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatDateToDisplay } from "@/lib/dateUtils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface PaymentHistoryProps {
   agreementId: string;
 }
 
 export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
-  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
   const { data: payments, isLoading } = useQuery({
-    queryKey: ["agreement-payments", agreementId],
+    queryKey: ['unified-payments', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("payment_history_view")
-        .select("*")
-        .eq("lease_id", agreementId)
-        .order("actual_payment_date", { ascending: false });
+        .from('payment_history_view')
+        .select(`
+          id,
+          amount,
+          amount_paid,
+          balance,
+          actual_payment_date,
+          original_due_date,
+          late_fine_amount,
+          days_overdue,
+          status,
+          payment_method,
+          description,
+          type
+        `)
+        .eq('lease_id', agreementId)
+        .order('actual_payment_date', { ascending: false });
 
       if (error) throw error;
       return data;
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Calculate totals
+  // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
     const baseAmount = payment.amount || 0;
     const amountPaid = payment.amount_paid || 0;
@@ -52,89 +70,152 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   }, { amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { amountPaid: 0, lateFines: 0, totalBalance: 0 };
 
+  const handleDeleteClick = (paymentId: string) => {
+    setSelectedPaymentId(paymentId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedPaymentId) return;
+
+    try {
+      const { error } = await supabase
+        .from("unified_payments")
+        .delete()
+        .eq("id", selectedPaymentId);
+
+      if (error) throw error;
+
+      toast.success("Payment deleted successfully");
+      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast.error("Failed to delete payment");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedPaymentId(null);
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading payment history...</div>;
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Payment History</h3>
-        <Button onClick={() => setSelectedInvoiceId(agreementId)} variant="outline">
-          <FileText className="h-4 w-4 mr-2" />
-          Generate Invoice
-        </Button>
-      </div>
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>Payment History</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Payment Summary - Now with 3 columns */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg mb-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Amount Paid</div>
+              <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Late Fines</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Total Balance</div>
+              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalBalance)}</div>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-        <div>
-          <p className="text-sm text-muted-foreground">Amount Paid</p>
-          <p className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Late Fines</p>
-          <p className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Total Balance</p>
-          <p className={`text-lg font-semibold ${totals.totalBalance === 0 ? 'text-green-600' : ''}`}>
-            {formatCurrency(totals.totalBalance)}
-          </p>
-        </div>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Payment Date</TableHead>
-            <TableHead>Due Amount</TableHead>
-            <TableHead>Amount Paid</TableHead>
-            <TableHead>Late Fine</TableHead>
-            <TableHead>Total Due</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {payments?.map((payment) => {
-            const remainingBalance = Math.max(0, (payment.amount || 0) - (payment.amount_paid || 0));
-            
-            return (
-              <TableRow key={payment.id}>
-                <TableCell>
-                  {payment.actual_payment_date 
-                    ? format(new Date(payment.actual_payment_date), 'dd/MM/yyyy')
-                    : '-'}
-                </TableCell>
-                <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                <TableCell>{formatCurrency(payment.amount_paid)}</TableCell>
-                <TableCell className="text-destructive">
-                  {payment.late_fine_amount ? formatCurrency(payment.late_fine_amount) : '-'}
-                  {payment.days_overdue > 0 && (
-                    <span className="text-xs ml-1">
-                      ({payment.days_overdue} days)
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className={remainingBalance === 0 ? 'text-green-600' : 'text-destructive'}>
-                  {formatCurrency(remainingBalance)}
-                </TableCell>
-                <TableCell className="capitalize">
-                  {payment.status?.toLowerCase() || '-'}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-          {!payments?.length && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                No payment history found
-              </TableCell>
-            </TableRow>
+          {/* Payment List */}
+          {payments && payments.length > 0 ? (
+            payments.map((payment) => {
+              const remainingBalance = payment.amount - (payment.amount_paid || 0);
+              
+              return (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div>
+                    <div className="font-medium">
+                      {payment.actual_payment_date ? formatDateToDisplay(new Date(payment.actual_payment_date)) : 'No date'}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {payment.payment_method} - {payment.description || 'Payment'}
+                    </div>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <div>Due Amount: {formatCurrency(payment.amount)}</div>
+                    <div>Amount Paid: {formatCurrency(payment.amount_paid)}</div>
+                    {payment.late_fine_amount > 0 && (
+                      <div className="text-destructive flex items-center justify-end gap-1">
+                        <AlertTriangle className="h-4 w-4" />
+                        Late Fine: {formatCurrency(payment.late_fine_amount)}
+                        {payment.days_overdue > 0 && (
+                          <span className="text-sm ml-1">
+                            ({payment.days_overdue} days @ 120 QAR/day)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="text-destructive">
+                      Total Due: {formatCurrency(remainingBalance)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        className={payment.status === 'completed' ? 
+                          'bg-green-50 text-green-600 border-green-200' : 
+                          'bg-yellow-50 text-yellow-600 border-yellow-200'
+                        }
+                      >
+                        {payment.status === 'completed' ? (
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                        ) : (
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                        )}
+                        {payment.status}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(payment.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              No payment history found
+            </div>
           )}
-        </TableBody>
-      </Table>
+        </div>
+      </CardContent>
 
-      <InvoiceDialog
-        agreementId={selectedInvoiceId || ""}
-        open={!!selectedInvoiceId}
-        onOpenChange={(open) => !open && setSelectedInvoiceId(null)}
-      />
-    </div>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 };
