@@ -60,13 +60,13 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     const baseAmount = payment.amount || 0;
     const amountPaid = payment.amount_paid || 0;
     const lateFine = payment.late_fine_amount || 0;
-    const balance = Math.max(0, baseAmount - amountPaid);
+    const unpaidAmount = Math.max(0, baseAmount - amountPaid);
 
     return {
-      totalDue: acc.totalDue + baseAmount + lateFine, // Include late fine in total due
+      totalDue: acc.totalDue + unpaidAmount, // Changed to only include unpaid amount
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
-      totalBalance: acc.totalBalance + balance + lateFine
+      totalBalance: acc.totalBalance + unpaidAmount + lateFine // Keep balance calculation as is
     };
   }, { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 }) || 
   { totalDue: 0, amountPaid: 0, lateFines: 0, totalBalance: 0 };
