@@ -28,7 +28,7 @@ interface AgreementTemplateSelectProps {
 }
 
 export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectProps) => {
-  const { data: templates } = useQuery({
+  const { data: templates, isLoading } = useQuery({
     queryKey: ["agreement-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -40,18 +40,40 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
         console.error("Error fetching templates:", error);
         throw error;
       }
-      
+
+      if (!data || data.length === 0) {
+        console.log("No templates found in database");
+        return [];
+      }
+
+      console.log("Fetched templates:", data);
       return data as AgreementTemplate[];
     },
   });
 
   const handleTemplateSelect = (templateId: string) => {
     const selectedTemplate = templates?.find((t) => t.id === templateId);
-    if (!selectedTemplate) return;
+    if (!selectedTemplate) {
+      console.log("No template found with ID:", templateId);
+      return;
+    }
 
     // Convert agreement duration from interval to months
-    const durationMatch = selectedTemplate.agreement_duration.match(/(\d+) months?/);
-    const durationMonths = durationMatch ? parseInt(durationMatch[1]) : 12;
+    const durationMonths = 12; // Default to 12 months if parsing fails
+    try {
+      const durationStr = selectedTemplate.agreement_duration;
+      if (durationStr.includes("months") || durationStr.includes("month")) {
+        const match = durationStr.match(/(\d+)/);
+        if (match) {
+          const months = parseInt(match[1]);
+          if (!isNaN(months)) {
+            durationMonths = months;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing duration:", error);
+    }
 
     // Apply template values to form
     setValue("agreementType", selectedTemplate.agreement_type);
@@ -65,9 +87,22 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
     console.log("Applied template values:", selectedTemplate);
   };
 
+  if (isLoading) {
+    return <div>Loading templates...</div>;
+  }
+
   if (!templates?.length) {
-    console.log("No templates found");
-    return null;
+    console.log("No templates available to display");
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="template">Agreement Template</Label>
+        <Select disabled>
+          <SelectTrigger>
+            <SelectValue placeholder="No templates available" />
+          </SelectTrigger>
+        </Select>
+      </div>
+    );
   }
 
   return (
