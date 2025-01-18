@@ -32,6 +32,10 @@ export interface Agreement {
   late_return_fee: number | null;
   created_at: string;
   updated_at: string;
+  daily_late_fee: number;
+  rent_amount: number;
+  rent_due_day: number | null;
+  remainingAmount: number;
 }
 
 export interface AgreementWithRelations extends Agreement {
