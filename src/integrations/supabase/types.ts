@@ -2012,7 +2012,10 @@ export type Database = {
           is_active: boolean | null
           language: Database["public"]["Enums"]["document_language"] | null
           name: string
+          template_sections: Json[] | null
+          template_structure: Json | null
           updated_at: string
+          variable_mappings: Json | null
           variables: Json | null
         }
         Insert: {
@@ -2024,7 +2027,10 @@ export type Database = {
           is_active?: boolean | null
           language?: Database["public"]["Enums"]["document_language"] | null
           name: string
+          template_sections?: Json[] | null
+          template_structure?: Json | null
           updated_at?: string
+          variable_mappings?: Json | null
           variables?: Json | null
         }
         Update: {
@@ -2036,7 +2042,10 @@ export type Database = {
           is_active?: boolean | null
           language?: Database["public"]["Enums"]["document_language"] | null
           name?: string
+          template_sections?: Json[] | null
+          template_structure?: Json | null
           updated_at?: string
+          variable_mappings?: Json | null
           variables?: Json | null
         }
         Relationships: [
@@ -5547,6 +5556,13 @@ export type Database = {
         | "submitted"
         | "accepted"
         | "rejected"
+      template_section_type:
+        | "header"
+        | "customer_info"
+        | "vehicle_info"
+        | "terms"
+        | "payment_terms"
+        | "signatures"
       transaction_amount_type: "income" | "expense" | "refund"
       transaction_type:
         | "LATE_PAYMENT_FEE"
