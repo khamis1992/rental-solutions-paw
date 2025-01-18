@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { FilePlus2 } from "lucide-react";
 import { useAgreementForm } from "./hooks/useAgreementForm";
 import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
 import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
@@ -21,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { AgreementTemplateSelect } from "./form/AgreementTemplateSelect";
 
 export interface CreateAgreementDialogProps {
   open?: boolean;
@@ -78,6 +78,10 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
         </DialogHeader>
         <ScrollArea className="max-h-[80vh] pr-4">
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+            <AgreementTemplateSelect setValue={setValue} />
+            
+            <Separator className="my-6" />
+            
             <AgreementBasicInfo register={register} errors={errors} />
             
             <Separator className="my-6" />

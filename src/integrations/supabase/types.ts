@@ -293,6 +293,54 @@ export type Database = {
           },
         ]
       }
+      agreement_templates: {
+        Row: {
+          agreement_duration: unknown
+          agreement_type: Database["public"]["Enums"]["agreement_template_type"]
+          created_at: string | null
+          daily_late_fee: number | null
+          damage_penalty_rate: number | null
+          description: string | null
+          final_price: number
+          id: string
+          is_active: boolean | null
+          late_return_fee: number | null
+          name: string
+          rent_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          agreement_duration: unknown
+          agreement_type: Database["public"]["Enums"]["agreement_template_type"]
+          created_at?: string | null
+          daily_late_fee?: number | null
+          damage_penalty_rate?: number | null
+          description?: string | null
+          final_price: number
+          id?: string
+          is_active?: boolean | null
+          late_return_fee?: number | null
+          name: string
+          rent_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          agreement_duration?: unknown
+          agreement_type?: Database["public"]["Enums"]["agreement_template_type"]
+          created_at?: string | null
+          daily_late_fee?: number | null
+          damage_penalty_rate?: number | null
+          description?: string | null
+          final_price?: number
+          id?: string
+          is_active?: boolean | null
+          late_return_fee?: number | null
+          name?: string
+          rent_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_case_analysis: {
         Row: {
           analysis_result: Json
@@ -5434,6 +5482,7 @@ export type Database = {
       }
     }
     Enums: {
+      agreement_template_type: "lease_to_own" | "short_term"
       agreement_type: "lease_to_own" | "short_term"
       audit_action_type:
         | "create"
