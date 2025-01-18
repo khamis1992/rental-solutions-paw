@@ -28,6 +28,7 @@ const variableSuggestions = {
     { name: "vehicle.vin", description: "Vehicle identification number" },
   ],
   Customer: [
+    { name: "customer.id", description: "Customer's unique identifier" },
     { name: "customer.full_name", description: "Customer's full name" },
     { name: "customer.phone_number", description: "Customer's phone number" },
     { name: "customer.address", description: "Customer's address" },
