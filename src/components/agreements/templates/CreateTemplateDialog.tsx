@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TemplatePreview } from "./TemplatePreview";
+import { VariableSuggestions } from "./VariableSuggestions";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -33,16 +36,21 @@ export const CreateTemplateDialog = ({
 }: CreateTemplateDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("edit");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    agreement_type: "short_term",
-    rent_amount: "",
-    final_price: "",
-    agreement_duration: "12",
-    daily_late_fee: "120",
-    damage_penalty_rate: "0",
-    late_return_fee: "0",
+    content: "",
+    language: "english",
+    template_structure: {},
+    template_sections: [],
+    variable_mappings: {
+      agreement: {},
+      vehicle: {},
+      customer: {},
+      terms: {},
+      payment: {},
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,22 +58,20 @@ export const CreateTemplateDialog = ({
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("agreement_templates").insert({
-        ...formData,
-        rent_amount: parseFloat(formData.rent_amount),
-        final_price: parseFloat(formData.final_price),
-        agreement_duration: `${formData.agreement_duration} months`,
-        daily_late_fee: parseFloat(formData.daily_late_fee),
-        damage_penalty_rate: parseFloat(formData.damage_penalty_rate),
-        late_return_fee: parseFloat(formData.late_return_fee),
-      });
+      const { error } = await supabase
+        .from("legal_document_templates")
+        .insert({
+          ...formData,
+          template_structure: JSON.stringify(formData.template_structure),
+          variable_mappings: JSON.stringify(formData.variable_mappings),
+        });
 
       if (error) throw error;
 
       toast.success("Template created successfully");
-      queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["legal-templates"] });
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating template:", error);
       toast.error("Failed to create template");
     } finally {
@@ -73,17 +79,42 @@ export const CreateTemplateDialog = ({
     }
   };
 
+  const handleVariableSelect = (variable: string) => {
+    const textArea = document.getElementById("content") as HTMLTextAreaElement;
+    if (!textArea) return;
+
+    const start = textArea.selectionStart;
+    const end = textArea.selectionEnd;
+    const text = textArea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+
+    setFormData({
+      ...formData,
+      content: before + variable + after,
+    });
+
+    // Reset cursor position after React updates the textarea
+    setTimeout(() => {
+      textArea.focus();
+      textArea.setSelectionRange(
+        start + variable.length,
+        start + variable.length
+      );
+    }, 0);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl h-[80vh]">
         <DialogHeader>
           <DialogTitle>Create Agreement Template</DialogTitle>
           <DialogDescription>
-            Create a new template for lease agreements
+            Create a new template for lease agreements with dynamic variables
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 h-full flex flex-col">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Template Name</Label>
@@ -98,113 +129,65 @@ export const CreateTemplateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="agreement_type">Agreement Type</Label>
+              <Label htmlFor="language">Language</Label>
               <Select
-                value={formData.agreement_type}
+                value={formData.language}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, agreement_type: value })
+                  setFormData({ ...formData, language: value })
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="short_term">Short Term</SelectItem>
-                  <SelectItem value="lease_to_own">Lease to Own</SelectItem>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="arabic">Arabic</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="rent_amount">Rent Amount (QAR)</Label>
-              <Input
-                id="rent_amount"
-                type="number"
-                value={formData.rent_amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, rent_amount: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="final_price">Final Price (QAR)</Label>
-              <Input
-                id="final_price"
-                type="number"
-                value={formData.final_price}
-                onChange={(e) =>
-                  setFormData({ ...formData, final_price: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="agreement_duration">Duration (Months)</Label>
-              <Input
-                id="agreement_duration"
-                type="number"
-                value={formData.agreement_duration}
-                onChange={(e) =>
-                  setFormData({ ...formData, agreement_duration: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="daily_late_fee">Daily Late Fee (QAR)</Label>
-              <Input
-                id="daily_late_fee"
-                type="number"
-                value={formData.daily_late_fee}
-                onChange={(e) =>
-                  setFormData({ ...formData, daily_late_fee: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="damage_penalty_rate">Damage Penalty Rate</Label>
-              <Input
-                id="damage_penalty_rate"
-                type="number"
-                value={formData.damage_penalty_rate}
-                onChange={(e) =>
-                  setFormData({ ...formData, damage_penalty_rate: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="late_return_fee">Late Return Fee</Label>
-              <Input
-                id="late_return_fee"
-                type="number"
-                value={formData.late_return_fee}
-                onChange={(e) =>
-                  setFormData({ ...formData, late_return_fee: e.target.value })
-                }
-                required
-              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
+            <Input
               id="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="min-h-[100px]"
             />
           </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+            <TabsList>
+              <TabsTrigger value="edit">Edit</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+              <TabsTrigger value="variables">Variables</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="edit" className="h-[400px] mt-2">
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
+                className="h-full"
+                placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
+              />
+            </TabsContent>
+
+            <TabsContent value="preview" className="h-[400px] mt-2">
+              <TemplatePreview 
+                content={formData.content}
+                missingVariables={[]} // TODO: Implement validation
+              />
+            </TabsContent>
+
+            <TabsContent value="variables" className="h-[400px] mt-2">
+              <VariableSuggestions onVariableSelect={handleVariableSelect} />
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter>
             <Button
