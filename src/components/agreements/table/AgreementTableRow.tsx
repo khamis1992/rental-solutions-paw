@@ -2,7 +2,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Printer, FileText, Trash2, AlertCircle } from "lucide-react";
+import { Eye, Printer, FileText, Trash2 } from "lucide-react";
 import type { Agreement } from "../hooks/useAgreements";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +75,9 @@ export const AgreementTableRow = ({
     }
   };
 
+  // Calculate payment status based on remaining amount
+  const paymentStatus = agreement.remainingAmount > 0 ? 'pending' : 'completed';
+
   return (
     <TableRow className="hover:bg-muted/50">
       <TableCell>
@@ -108,14 +111,7 @@ export const AgreementTableRow = ({
         </Badge>
       </TableCell>
       <TableCell>
-        <PaymentStatusBadge status={agreement.payment_status || 'pending'} />
-      </TableCell>
-      <TableCell>
-        {agreement.next_payment_date ? (
-          formatDateToDisplay(agreement.next_payment_date)
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        )}
+        <PaymentStatusBadge status={paymentStatus} />
       </TableCell>
       <TableCell className="text-right space-x-1">
         <TooltipProvider>
