@@ -96,7 +96,6 @@ export const CreateTemplateDialog = ({
       content: newContent
     }));
 
-    // Reset cursor position after React updates the textarea
     setTimeout(() => {
       if (textAreaRef.current) {
         textAreaRef.current.focus();
@@ -125,7 +124,7 @@ export const CreateTemplateDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[95vw] w-[1200px] h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Create Agreement Template</DialogTitle>
           <DialogDescription>
@@ -181,46 +180,48 @@ export const CreateTemplateDialog = ({
                 />
               </div>
 
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-                <TabsList>
-                  <TabsTrigger value="edit">Edit</TabsTrigger>
-                  <TabsTrigger value="preview">Preview</TabsTrigger>
-                  <TabsTrigger value="variables">Variables</TabsTrigger>
-                </TabsList>
+              <ScrollArea className="w-full" orientation="horizontal">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-w-[800px]">
+                  <TabsList>
+                    <TabsTrigger value="edit">Edit</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                    <TabsTrigger value="variables">Variables</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="edit" className="h-[400px] mt-2 relative">
-                  <Textarea
-                    ref={textAreaRef}
-                    id="content"
-                    value={formData.content}
-                    onChange={handleTextAreaChange}
-                    onClick={handleTextAreaClick}
-                    onKeyUp={handleTextAreaKeyUp}
-                    className="h-full"
-                    placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
-                  />
-                  {activeTab === "edit" && (
-                    <div className="absolute right-0 top-0 w-64 bg-background border rounded-md shadow-lg">
-                      <VariableSuggestions 
-                        onVariableSelect={handleVariableSelect}
-                        currentContent={formData.content}
-                        cursorPosition={cursorPosition}
-                      />
-                    </div>
-                  )}
-                </TabsContent>
+                  <TabsContent value="edit" className="h-[400px] mt-2 relative">
+                    <Textarea
+                      ref={textAreaRef}
+                      id="content"
+                      value={formData.content}
+                      onChange={handleTextAreaChange}
+                      onClick={handleTextAreaClick}
+                      onKeyUp={handleTextAreaKeyUp}
+                      className="h-full"
+                      placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
+                    />
+                    {activeTab === "edit" && (
+                      <div className="absolute right-0 top-0 w-64 bg-background border rounded-md shadow-lg">
+                        <VariableSuggestions 
+                          onVariableSelect={handleVariableSelect}
+                          currentContent={formData.content}
+                          cursorPosition={cursorPosition}
+                        />
+                      </div>
+                    )}
+                  </TabsContent>
 
-                <TabsContent value="preview" className="h-[400px] mt-2">
-                  <TemplatePreview 
-                    content={formData.content}
-                    missingVariables={[]}
-                  />
-                </TabsContent>
+                  <TabsContent value="preview" className="h-[400px] mt-2">
+                    <TemplatePreview 
+                      content={formData.content}
+                      missingVariables={[]}
+                    />
+                  </TabsContent>
 
-                <TabsContent value="variables" className="h-[400px] mt-2">
-                  <VariableSuggestions onVariableSelect={handleVariableSelect} />
-                </TabsContent>
-              </Tabs>
+                  <TabsContent value="variables" className="h-[400px] mt-2">
+                    <VariableSuggestions onVariableSelect={handleVariableSelect} />
+                  </TabsContent>
+                </Tabs>
+              </ScrollArea>
             </div>
           </ScrollArea>
 
