@@ -89,10 +89,6 @@ export const PaymentImport = () => {
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    toast.success("Suggestion copied! Paste it in the chat to get help implementing it.");
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -117,7 +113,7 @@ export const PaymentImport = () => {
       {importErrors.length > 0 && (
         <ImportErrorAnalysis 
           errors={importErrors}
-          onSuggestionClick={handleSuggestionClick}
+          onSuggestionClick={() => {}}
         />
       )}
     </div>
