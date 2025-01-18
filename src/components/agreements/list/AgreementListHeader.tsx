@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileUp, FilePlus2, Trash2 } from "lucide-react";
+import { FilePlus2 } from "lucide-react";
 import { CreateAgreementDialog } from "../CreateAgreementDialog";
 
 interface AgreementListHeaderProps {
@@ -23,23 +23,6 @@ export const AgreementListHeader = ({
             Create Agreement
           </Button>
         </CreateAgreementDialog>
-        <Button
-          variant="outline"
-          onClick={onImportClick}
-          className="w-full flex items-center"
-        >
-          <FileUp className="h-4 w-4 mr-2" />
-          Import Agreements
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={onDeleteClick}
-          disabled={isDeleting}
-          className="w-full flex items-center"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete All
-        </Button>
       </div>
     </div>
   );
