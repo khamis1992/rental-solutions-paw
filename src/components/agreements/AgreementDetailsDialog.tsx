@@ -147,7 +147,12 @@ export const AgreementDetailsDialog = ({
     end_date: agreement.end_date || '',
     rent_amount: rentAmount,
     contractValue: contractValue,
-    remainingAmount: remainingAmount
+    remainingAmount: remainingAmount,
+    customer: agreement.customer,
+    vehicle: {
+      ...agreement.vehicle,
+      vin: agreement.vehicle?.vin || ''  // Add missing vin property
+    }
   } : undefined;
 
   return (
