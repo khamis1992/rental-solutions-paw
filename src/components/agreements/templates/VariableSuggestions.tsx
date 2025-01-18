@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const variableSuggestions = {
   Agreement: [
@@ -45,21 +45,38 @@ const variableSuggestions = {
 
 interface VariableSuggestionsProps {
   onVariableSelect: (variable: string) => void;
+  currentContent?: string;
+  cursorPosition?: number | null;
 }
 
-export const VariableSuggestions = ({ onVariableSelect }: VariableSuggestionsProps) => {
+export const VariableSuggestions = ({ 
+  onVariableSelect,
+  currentContent,
+  cursorPosition 
+}: VariableSuggestionsProps) => {
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Get the current word being typed
+  const currentWord = useMemo(() => {
+    if (!currentContent || cursorPosition === null || cursorPosition === undefined) return "";
+    
+    const beforeCursor = currentContent.slice(0, cursorPosition);
+    const words = beforeCursor.split(/\s/);
+    return words[words.length - 1];
+  }, [currentContent, cursorPosition]);
+
+  // Filter variables based on search term or current word
   const filterVariables = (variables: typeof variableSuggestions) => {
-    if (!searchTerm) return variables;
+    const term = searchTerm || (currentWord.startsWith("{{") ? currentWord.slice(2) : "");
+    if (!term) return variables;
 
     const filtered: Record<string, typeof variableSuggestions[keyof typeof variableSuggestions]> = {};
     
     Object.entries(variables).forEach(([category, vars]) => {
       const matchedVars = vars.filter(
         v => 
-          v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          v.description.toLowerCase().includes(searchTerm.toLowerCase())
+          v.name.toLowerCase().includes(term.toLowerCase()) ||
+          v.description.toLowerCase().includes(term.toLowerCase())
       );
       
       if (matchedVars.length > 0) {

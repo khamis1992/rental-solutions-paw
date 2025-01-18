@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -38,11 +38,13 @@ export const CreateTemplateDialog = ({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("edit");
+  const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     content: "",
-    language: "english",
+    language: "english" as "english" | "spanish" | "french" | "arabic",
     template_structure: {},
     template_sections: [],
     variable_mappings: {
@@ -80,29 +82,45 @@ export const CreateTemplateDialog = ({
     }
   };
 
-  const handleVariableSelect = (variable: string) => {
-    const textArea = document.getElementById("content") as HTMLTextAreaElement;
-    if (!textArea) return;
+  const handleVariableSelect = useCallback((variable: string) => {
+    if (!textAreaRef.current || cursorPosition === null) return;
 
-    const start = textArea.selectionStart;
-    const end = textArea.selectionEnd;
-    const text = textArea.value;
+    const start = cursorPosition;
+    const text = textAreaRef.current.value;
     const before = text.substring(0, start);
-    const after = text.substring(end);
+    const after = text.substring(start);
 
-    setFormData({
-      ...formData,
-      content: before + variable + after,
-    });
+    const newContent = before + variable + after;
+    setFormData(prev => ({
+      ...prev,
+      content: newContent
+    }));
 
     // Reset cursor position after React updates the textarea
     setTimeout(() => {
-      textArea.focus();
-      textArea.setSelectionRange(
-        start + variable.length,
-        start + variable.length
-      );
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
+        const newPosition = start + variable.length;
+        textAreaRef.current.setSelectionRange(newPosition, newPosition);
+        setCursorPosition(newPosition);
+      }
     }, 0);
+  }, [cursorPosition]);
+
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      content: e.target.value
+    }));
+    setCursorPosition(e.target.selectionStart);
+  };
+
+  const handleTextAreaClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    setCursorPosition(e.currentTarget.selectionStart);
+  };
+
+  const handleTextAreaKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    setCursorPosition(e.currentTarget.selectionStart);
   };
 
   return (
@@ -135,7 +153,7 @@ export const CreateTemplateDialog = ({
                   <Label htmlFor="language">Language</Label>
                   <Select
                     value={formData.language}
-                    onValueChange={(value) =>
+                    onValueChange={(value: "english" | "spanish" | "french" | "arabic") =>
                       setFormData({ ...formData, language: value })
                     }
                   >
@@ -145,6 +163,8 @@ export const CreateTemplateDialog = ({
                     <SelectContent>
                       <SelectItem value="english">English</SelectItem>
                       <SelectItem value="arabic">Arabic</SelectItem>
+                      <SelectItem value="french">French</SelectItem>
+                      <SelectItem value="spanish">Spanish</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -168,22 +188,32 @@ export const CreateTemplateDialog = ({
                   <TabsTrigger value="variables">Variables</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="edit" className="h-[400px] mt-2">
+                <TabsContent value="edit" className="h-[400px] mt-2 relative">
                   <Textarea
+                    ref={textAreaRef}
                     id="content"
                     value={formData.content}
-                    onChange={(e) =>
-                      setFormData({ ...formData, content: e.target.value })
-                    }
+                    onChange={handleTextAreaChange}
+                    onClick={handleTextAreaClick}
+                    onKeyUp={handleTextAreaKeyUp}
                     className="h-full"
                     placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
                   />
+                  {activeTab === "edit" && (
+                    <div className="absolute right-0 top-0 w-64 bg-background border rounded-md shadow-lg">
+                      <VariableSuggestions 
+                        onVariableSelect={handleVariableSelect}
+                        currentContent={formData.content}
+                        cursorPosition={cursorPosition}
+                      />
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="preview" className="h-[400px] mt-2">
                   <TemplatePreview 
                     content={formData.content}
-                    missingVariables={[]} // TODO: Implement validation
+                    missingVariables={[]}
                   />
                 </TabsContent>
 
