@@ -52,14 +52,3 @@ export interface AgreementWithRelations extends Agreement {
     license_plate: string;
   };
 }
-
-export interface AgreementDocument {
-  id: string;
-  lease_id: string | null;
-  document_type: string;
-  document_url: string;
-  uploaded_by: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  vehicle_id: string | null;
-}
