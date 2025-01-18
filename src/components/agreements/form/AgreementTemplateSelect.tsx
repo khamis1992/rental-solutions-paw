@@ -10,18 +10,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { UseFormSetValue } from "react-hook-form";
 import { AgreementFormData } from "../hooks/useAgreementForm";
-
-interface AgreementTemplate {
-  id: string;
-  name: string;
-  agreement_type: "lease_to_own" | "short_term";
-  rent_amount: number;
-  final_price: number;
-  agreement_duration: string;
-  daily_late_fee: number;
-  damage_penalty_rate: number;
-  late_return_fee: number;
-}
+import { Template } from "@/types/agreement.types";
 
 interface AgreementTemplateSelectProps {
   setValue: UseFormSetValue<AgreementFormData>;
@@ -31,6 +20,7 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
   const { data: templates, isLoading } = useQuery({
     queryKey: ["agreement-templates"],
     queryFn: async () => {
+      console.log("Fetching templates...");
       const { data, error } = await supabase
         .from("agreement_templates")
         .select("*")
@@ -47,7 +37,7 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       }
 
       console.log("Fetched templates:", data);
-      return data as AgreementTemplate[];
+      return data as Template[];
     },
   });
 
