@@ -92,31 +92,15 @@ export const PaymentImport = () => {
     toast.success("Suggestion copied! Paste it in the chat to get help implementing it.");
   };
 
-  const downloadTemplate = () => {
-    const csvContent = "Customer Name,Amount,Payment_Date,Payment_Method,Status,Payment_Number,Payment_Description\n" +
-                      "John Doe,1000,20-03-2024,credit_card,completed,INV001,Monthly payment";
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'payment_import_template.csv');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
+        <Input
+          type="file"
+          accept=".csv"
+          onChange={handleFileUpload}
           disabled={isUploading}
-        >
-          Download Template
-        </Button>
+        />
       </div>
       
       {isUploading && (
