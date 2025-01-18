@@ -34,16 +34,6 @@ export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => 
             {...register("interestRate")}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="dailyLateFine">Daily Late Fine (QAR)</Label>
-          <Input
-            id="dailyLateFine"
-            type="number"
-            step="0.01"
-            defaultValue={120}
-            {...register("dailyLateFine")}
-          />
-        </div>
       </div>
     </div>
   );
