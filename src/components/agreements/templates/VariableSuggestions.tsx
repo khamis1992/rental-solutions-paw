@@ -5,6 +5,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 const variableSuggestions = {
   Agreement: [
@@ -29,6 +32,14 @@ const variableSuggestions = {
     { name: "customer.phone_number", description: "Customer's phone number" },
     { name: "customer.address", description: "Customer's address" },
     { name: "customer.nationality", description: "Customer's nationality" },
+    { name: "customer.email", description: "Customer's email address" },
+  ],
+  Payment: [
+    { name: "payment.down_payment", description: "Initial down payment amount" },
+    { name: "payment.monthly_payment", description: "Monthly payment amount" },
+    { name: "payment.payment_due_day", description: "Day of month payment is due" },
+    { name: "payment.late_fee_rate", description: "Late payment fee rate" },
+    { name: "payment.grace_period", description: "Payment grace period" },
   ],
 };
 
@@ -37,32 +48,66 @@ interface VariableSuggestionsProps {
 }
 
 export const VariableSuggestions = ({ onVariableSelect }: VariableSuggestionsProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filterVariables = (variables: typeof variableSuggestions) => {
+    if (!searchTerm) return variables;
+
+    const filtered: Record<string, typeof variableSuggestions[keyof typeof variableSuggestions]> = {};
+    
+    Object.entries(variables).forEach(([category, vars]) => {
+      const matchedVars = vars.filter(
+        v => 
+          v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          v.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      if (matchedVars.length > 0) {
+        filtered[category] = matchedVars;
+      }
+    });
+
+    return filtered;
+  };
+
+  const filteredVariables = filterVariables(variableSuggestions);
+
   return (
-    <Accordion type="single" collapsible className="w-full">
-      {Object.entries(variableSuggestions).map(([category, variables]) => (
-        <AccordionItem key={category} value={category}>
-          <AccordionTrigger>{category} Variables</AccordionTrigger>
-          <AccordionContent>
-            <div className="grid grid-cols-1 gap-2">
-              {variables.map((variable) => (
-                <Button
-                  key={variable.name}
-                  variant="ghost"
-                  className="justify-start text-left"
-                  onClick={() => onVariableSelect(`{{${variable.name}}}`)}
-                >
-                  <div>
-                    <div className="font-mono text-sm">{`{{${variable.name}}}`}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {variable.description}
-                    </div>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <div className="space-y-4">
+      <Input
+        placeholder="Search variables..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="mb-4"
+      />
+      <ScrollArea className="h-[350px]">
+        <Accordion type="single" collapsible className="w-full">
+          {Object.entries(filteredVariables).map(([category, variables]) => (
+            <AccordionItem key={category} value={category}>
+              <AccordionTrigger>{category} Variables</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-1 gap-2">
+                  {variables.map((variable) => (
+                    <Button
+                      key={variable.name}
+                      variant="ghost"
+                      className="justify-start text-left"
+                      onClick={() => onVariableSelect(`{{${variable.name}}}`)}
+                    >
+                      <div>
+                        <div className="font-mono text-sm">{`{{${variable.name}}}`}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {variable.description}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </ScrollArea>
+    </div>
   );
 };

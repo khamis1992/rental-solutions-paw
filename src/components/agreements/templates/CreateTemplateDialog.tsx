@@ -22,6 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TemplatePreview } from "./TemplatePreview";
 import { VariableSuggestions } from "./VariableSuggestions";
 
@@ -106,7 +107,7 @@ export const CreateTemplateDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[80vh]">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Create Agreement Template</DialogTitle>
           <DialogDescription>
@@ -114,82 +115,86 @@ export const CreateTemplateDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 h-full flex flex-col">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Template Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                required
-              />
+        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+          <ScrollArea className="flex-1 px-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Template Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="language">Language</Label>
+                  <Select
+                    value={formData.language}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, language: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="english">English</SelectItem>
+                      <SelectItem value="arabic">Arabic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
+              </div>
+
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+                <TabsList>
+                  <TabsTrigger value="edit">Edit</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                  <TabsTrigger value="variables">Variables</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="edit" className="h-[400px] mt-2">
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) =>
+                      setFormData({ ...formData, content: e.target.value })
+                    }
+                    className="h-full"
+                    placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
+                  />
+                </TabsContent>
+
+                <TabsContent value="preview" className="h-[400px] mt-2">
+                  <TemplatePreview 
+                    content={formData.content}
+                    missingVariables={[]} // TODO: Implement validation
+                  />
+                </TabsContent>
+
+                <TabsContent value="variables" className="h-[400px] mt-2">
+                  <VariableSuggestions onVariableSelect={handleVariableSelect} />
+                </TabsContent>
+              </Tabs>
             </div>
+          </ScrollArea>
 
-            <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <Select
-                value={formData.language}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, language: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="arabic">Arabic</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-            />
-          </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList>
-              <TabsTrigger value="edit">Edit</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
-              <TabsTrigger value="variables">Variables</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="edit" className="h-[400px] mt-2">
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                className="h-full"
-                placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
-              />
-            </TabsContent>
-
-            <TabsContent value="preview" className="h-[400px] mt-2">
-              <TemplatePreview 
-                content={formData.content}
-                missingVariables={[]} // TODO: Implement validation
-              />
-            </TabsContent>
-
-            <TabsContent value="variables" className="h-[400px] mt-2">
-              <VariableSuggestions onVariableSelect={handleVariableSelect} />
-            </TabsContent>
-          </Tabs>
-
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button
               type="button"
               variant="outline"
