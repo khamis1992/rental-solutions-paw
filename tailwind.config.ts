@@ -28,23 +28,23 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#F97316', // Vibrant orange
-          light: '#FB923C',
-          dark: '#EA580C',
+          DEFAULT: '#FF5733', // Vibrant orange
+          light: '#FF7B5C',
+          dark: '#E64A2E',
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
-          DEFAULT: '#222222', // Dark gray
-          light: '#333333',
-          dark: '#111111',
+          DEFAULT: '#333333', // Dark gray
+          light: '#4D4D4D',
+          dark: '#1A1A1A',
           foreground: 'hsl(var(--secondary-foreground))'
         },
         background: {
           DEFAULT: '#FFFFFF',
-          alt: '#F3F4F6',
+          alt: '#F2F2F2',
         },
         neutral: {
-          DEFAULT: '#F1F1F1',
+          DEFAULT: '#F2F2F2',
           dark: '#E5E5E5',
         },
         border: 'hsl(var(--border))',
@@ -84,7 +84,7 @@ export default {
         sm: 'calc(var(--radius) - 4px)'
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Roboto', 'sans-serif'],
       },
       fontSize: {
         'mobile-h1': ['1.75rem', { lineHeight: '2rem' }],
