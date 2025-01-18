@@ -8,7 +8,7 @@ export const InstallmentAnalysis = () => {
     queryKey: ['payment-history-analysis'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('payment_history')
+        .from('payment_history_view')
         .select(`
           *,
           lease:lease_id (
@@ -28,9 +28,17 @@ export const InstallmentAnalysis = () => {
     }
   });
 
-  const totalAmountDue = paymentHistory?.reduce((sum, payment) => sum + payment.amount_due, 0) || 0;
-  const totalAmountPaid = paymentHistory?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
-  const totalLateFees = paymentHistory?.reduce((sum, payment) => sum + payment.late_fee_applied, 0) || 0;
+  const totals = paymentHistory?.reduce((acc, payment) => {
+    const amountDue = payment.amount || 0;
+    const amountPaid = payment.amount_paid || 0;
+    const lateFees = payment.late_fine_amount || 0;
+
+    return {
+      amountPaid: acc.amountPaid + amountPaid,
+      lateFees: acc.lateFees + lateFees,
+    };
+  }, { amountPaid: 0, lateFees: 0 }) || 
+  { amountPaid: 0, lateFees: 0 };
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -39,7 +47,7 @@ export const InstallmentAnalysis = () => {
           <CardTitle>Total Amount Due</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalAmountDue)}</div>
+          <div className="text-2xl font-bold">{formatCurrency(totals.amountPaid)}</div>
         </CardContent>
       </Card>
 
@@ -48,7 +56,7 @@ export const InstallmentAnalysis = () => {
           <CardTitle>Total Amount Paid</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalAmountPaid)}</div>
+          <div className="text-2xl font-bold">{formatCurrency(totals.amountPaid)}</div>
         </CardContent>
       </Card>
 
@@ -57,7 +65,7 @@ export const InstallmentAnalysis = () => {
           <CardTitle>Total Late Fees</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalLateFees)}</div>
+          <div className="text-2xl font-bold">{formatCurrency(totals.lateFees)}</div>
         </CardContent>
       </Card>
     </div>

@@ -6,8 +6,8 @@ export interface Template {
   id: string;
   name: string;
   description: string;
-  content?: string;
-  language?: DocumentLanguage;
+  content: string;
+  language: DocumentLanguage;
   agreement_type: "lease_to_own" | "short_term";
   rent_amount: number;
   final_price: number;
@@ -63,6 +63,8 @@ export interface Payment {
   amount_paid: number;
   balance: number;
   payment_date: string;
+  due_date?: string;
+  transaction_id?: string;
   payment_method: string;
   status: PaymentStatus;
   description: string;
@@ -71,8 +73,7 @@ export interface Payment {
   days_overdue: number;
   created_at: string;
   updated_at: string;
-  transaction_id?: string;
-  security_deposit_id?: string;
   is_recurring?: boolean;
   next_payment_date?: string;
+  security_deposit_id?: string;
 }
