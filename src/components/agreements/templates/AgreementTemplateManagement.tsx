@@ -26,10 +26,24 @@ export const AgreementTemplateManagement = () => {
       
       // Transform the data to match Template interface
       const transformedData: Template[] = data.map(template => ({
-        ...template,
+        id: template.id,
+        name: template.name,
+        description: template.description || '',
+        content: template.content || '',
+        language: template.language || 'english',
+        agreement_type: template.agreement_type,
+        rent_amount: template.rent_amount,
+        final_price: template.final_price,
+        agreement_duration: template.agreement_duration,
+        daily_late_fee: template.daily_late_fee,
+        damage_penalty_rate: template.damage_penalty_rate,
+        late_return_fee: template.late_return_fee,
+        is_active: template.is_active,
+        created_at: template.created_at,
+        updated_at: template.updated_at,
         template_structure: template.template_structure || {},
         template_sections: template.template_sections || [],
-        variable_mappings: template.variable_mappings || {},
+        variable_mappings: template.variable_mappings || {}
       }));
       
       return transformedData;
@@ -85,10 +99,6 @@ export const AgreementTemplateManagement = () => {
       <CreateTemplateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        onClose={() => {
-          setSelectedTemplate(null);
-          refetch();
-        }}
       />
     </Card>
   );
