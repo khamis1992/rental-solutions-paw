@@ -49,18 +49,18 @@ export interface Payment {
   id: string;
   lease_id: string;
   amount: number;
-  status: PaymentStatus;
-  payment_date: string | null;
-  transaction_id: string | null;
-  created_at: string;
-  updated_at: string;
   amount_paid: number;
   balance: number;
+  payment_date: string | null;
+  transaction_id: string | null;
   payment_method: string;
+  status: PaymentStatus;
   description: string;
   type: string;
   late_fine_amount: number;
   days_overdue: number;
   is_recurring?: boolean;
   security_deposit_id?: string;
+  created_at: string;
+  updated_at: string;
 }

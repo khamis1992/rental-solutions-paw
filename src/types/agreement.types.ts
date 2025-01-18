@@ -76,3 +76,18 @@ export interface Payment {
   created_at: string;
   updated_at: string;
 }
+
+export interface AgreementWithRelations extends Agreement {
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+  };
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
