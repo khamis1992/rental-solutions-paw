@@ -29,7 +29,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const queryClient = useQueryClient();
 
   const { data: payments, isLoading } = useQuery({
-    queryKey: ['unified-payments', agreementId],
+    queryKey: ['payment-history', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payment_history_view')
@@ -84,7 +84,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       if (error) throw error;
 
       toast.success("Payment deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["unified-payments", agreementId] });
+      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Failed to delete payment");
@@ -122,7 +122,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           {/* Payment List */}
           {payments && payments.length > 0 ? (
             payments.map((payment) => {
-              const remainingBalance = payment.amount - (payment.amount_paid || 0);
+              const remainingBalance = payment.balance || 0;
               const paymentStatus = remainingBalance === 0 ? 'completed' : 'pending';
               
               return (
@@ -153,7 +153,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                       </div>
                     )}
                     <div className={remainingBalance === 0 ? "text-green-600" : "text-destructive"}>
-                      Total Due: {formatCurrency(remainingBalance)}
+                      Balance: {formatCurrency(remainingBalance)}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge 

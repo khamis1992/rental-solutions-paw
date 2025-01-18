@@ -3,24 +3,33 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const usePaymentHistory = (agreementId: string) => {
   return useQuery({
-    queryKey: ['unified-payments', agreementId],
+    queryKey: ['payment-history', agreementId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('unified_payments')
+        .from('payment_history_view')
         .select(`
-          *,
-          leases (
-            agreement_number,
-            customer_id,
-            profiles:customer_id (
-              id,
-              full_name,
-              phone_number
-            )
-          )
+          id,
+          lease_id,
+          amount,
+          amount_paid,
+          balance,
+          actual_payment_date,
+          original_due_date,
+          days_overdue,
+          late_fine_amount,
+          status,
+          payment_method,
+          description,
+          type,
+          created_at,
+          updated_at,
+          agreement_number,
+          customer_id,
+          customer_name,
+          customer_phone
         `)
         .eq('lease_id', agreementId)
-        .order('created_at', { ascending: false });
+        .order('actual_payment_date', { ascending: false });
 
       if (error) throw error;
       return data;
