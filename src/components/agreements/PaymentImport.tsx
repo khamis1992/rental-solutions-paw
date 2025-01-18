@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ImportErrorAnalysis } from "@/components/finance/import/ImportErrorAnalysis";
@@ -90,16 +89,7 @@ export const PaymentImport = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <Input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          disabled={isUploading}
-        />
-      </div>
-      
+    <div className="space-y-4">      
       {isUploading && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
