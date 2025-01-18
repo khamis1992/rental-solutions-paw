@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileUp, Trash2 } from "lucide-react";
+import { FileUp, FilePlus2, Trash2 } from "lucide-react";
 import { CreateAgreementDialog } from "../CreateAgreementDialog";
 
 interface AgreementListHeaderProps {
@@ -17,7 +17,12 @@ export const AgreementListHeader = ({
     <div className="flex justify-between items-start">
       <h1 className="text-3xl font-bold">Agreements</h1>
       <div className="flex flex-col gap-2">
-        <CreateAgreementDialog />
+        <CreateAgreementDialog>
+          <Button variant="default" className="w-full flex items-center">
+            <FilePlus2 className="h-4 w-4 mr-2" />
+            Create Agreement
+          </Button>
+        </CreateAgreementDialog>
         <Button
           variant="outline"
           onClick={onImportClick}
