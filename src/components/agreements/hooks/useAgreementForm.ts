@@ -22,6 +22,7 @@ export interface AgreementFormData {
   notes?: string;
   interestRate?: number;
   monthlyPayment?: number;
+  dailyLateFee: number;
 }
 
 export const useAgreementForm = (onSuccess?: () => void) => {
@@ -63,7 +64,8 @@ export const useAgreementForm = (onSuccess?: () => void) => {
           status: 'pending_payment',
           down_payment: data.downPayment,
           notes: data.notes,
-          agreement_duration: data.agreementDuration
+          agreement_duration: data.agreementDuration,
+          daily_late_fee: data.dailyLateFee
         })
         .select()
         .single();

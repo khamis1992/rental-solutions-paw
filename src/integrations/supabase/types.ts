@@ -1551,6 +1551,7 @@ export type Database = {
           checkout_date: string | null
           created_at: string
           customer_id: string
+          daily_late_fee: number | null
           daily_late_fine: number | null
           damage_penalty_rate: number | null
           down_payment: number | null
@@ -1594,6 +1595,7 @@ export type Database = {
           checkout_date?: string | null
           created_at?: string
           customer_id: string
+          daily_late_fee?: number | null
           daily_late_fine?: number | null
           damage_penalty_rate?: number | null
           down_payment?: number | null
@@ -1637,6 +1639,7 @@ export type Database = {
           checkout_date?: string | null
           created_at?: string
           customer_id?: string
+          daily_late_fee?: number | null
           daily_late_fine?: number | null
           damage_penalty_rate?: number | null
           down_payment?: number | null

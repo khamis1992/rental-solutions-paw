@@ -9,12 +9,13 @@ export const LateFeesPenaltiesFields = ({ register }: LateFeesPenaltiesFieldsPro
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="lateFeeRate">Late Fee Amount</Label>
+        <Label htmlFor="dailyLateFee">Daily Late Fee (QAR)</Label>
         <Input
+          id="dailyLateFee"
           type="number"
           step="0.01"
-          placeholder="0.00"
-          {...register("lateFeeRate")}
+          defaultValue={120}
+          {...register("dailyLateFee")}
         />
       </div>
 
