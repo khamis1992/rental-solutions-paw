@@ -27,7 +27,7 @@
     --header-height: 56px;
     --sidebar-width: 280px;
     
-    /* New design tokens */
+    /* Design system tokens */
     --shadow-color: 220 3% 15%;
     --shadow-strength: 1%;
     --content-max-width: 1440px;
@@ -63,12 +63,12 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-semibold tracking-tight text-secondary-dark;
   }
 
   h1 {

@@ -11,7 +11,7 @@
 
   /* Content Containers */
   .content-container {
-    @apply mx-auto px-4 w-full max-w-[var(--content-max-width)];
+    @apply mx-auto px-4 w-full max-w-[var(--content-max-width)] bg-background;
   }
 
   .section-container {
@@ -38,6 +38,23 @@
   .form-section {
     @apply space-y-4 max-w-[var(--text-block-width)] mx-auto;
   }
+
+  /* Sidebar Layout */
+  .sidebar-layout {
+    @apply fixed inset-y-0 left-0 z-20 w-[var(--sidebar-width)] 
+    bg-background border-r border-border/50 shadow-lg
+    transition-transform duration-200 ease-in-out;
+  }
+
+  .sidebar-content {
+    @apply h-full overflow-y-auto py-4 px-3;
+  }
+
+  /* Main Content Layout */
+  .main-content {
+    @apply ml-[var(--sidebar-width)] min-h-screen bg-background-alt
+    transition-all duration-200;
+  }
 }
 
 /* Responsive Containers */
@@ -49,6 +66,14 @@
   :root {
     --section-spacing: 1.5rem;
     --component-spacing: 0.75rem;
+  }
+
+  .sidebar-layout {
+    @apply -translate-x-full;
+  }
+
+  .main-content {
+    @apply ml-0;
   }
 }
 

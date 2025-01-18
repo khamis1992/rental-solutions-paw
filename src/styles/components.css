@@ -6,13 +6,13 @@
 
   /* Card Components */
   .enterprise-card {
-    @apply bg-card text-card-foreground rounded-lg border p-6;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    @apply bg-card text-card-foreground rounded-lg border p-6 shadow-card
+    hover:shadow-card-hover transition-all duration-200;
   }
 
   /* Table Components */
   .table-container {
-    @apply w-full overflow-x-auto rounded-lg border bg-card;
+    @apply w-full overflow-x-auto rounded-lg border bg-card shadow-sm;
     min-width: 0;
   }
 
@@ -27,16 +27,34 @@
 
   /* Modal/Dialog Components */
   .dialog-content {
-    @apply max-w-[min(calc(100vw-2rem),500px)] mx-auto;
+    @apply max-w-[min(calc(100vw-2rem),500px)] mx-auto bg-white shadow-lg;
+  }
+
+  /* Interactive Elements */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium
+    transition-colors focus-visible:outline-none focus-visible:ring-2
+    focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50
+    disabled:pointer-events-none ring-offset-background;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-dark shadow-button
+    hover:shadow-button-hover;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary-light shadow-button
+    hover:shadow-button-hover;
   }
 
   /* Hide scrollbar but keep functionality */
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   
   .no-scrollbar::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
   }
 }
