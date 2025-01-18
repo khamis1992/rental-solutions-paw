@@ -42,6 +42,7 @@ export interface Agreement {
   rent_amount: number;
   rent_due_day: number | null;
   remainingAmount: number;
+  daily_late_fee: number;
   customer?: {
     id: string;
     full_name: string | null;
@@ -77,7 +78,7 @@ export interface Payment {
   updated_at: string;
 }
 
-export interface AgreementWithRelations extends Agreement {
+export interface AgreementWithRelations extends Omit<Agreement, 'customer'> {
   customer?: {
     id: string;
     full_name: string | null;
