@@ -54,9 +54,10 @@ export const replaceTemplateVariables = (template: string, data: TemplateData): 
     'customer.phone_number': customer?.phone_number || '',
     'customer.address': customer?.address || '',
     'customer.nationality': customer?.nationality || '',
+    'customer.email': customer?.email || '',
   };
 
-  // Replace all variables in the template
+  // Replace all variables in template
   let result = template;
   Object.entries(variableMappings).forEach(([key, value]) => {
     const regex = new RegExp(`{{${key}}}`, 'g');

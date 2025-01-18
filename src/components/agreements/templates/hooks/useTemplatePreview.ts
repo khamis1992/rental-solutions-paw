@@ -1,36 +1,43 @@
 import { useState } from "react";
 import { replaceTemplateVariables, validateTemplate } from "../utils/templateUtils";
-import { Agreement, AgreementWithRelations } from "@/types/agreement.types";
+import { AgreementWithRelations } from "@/types/agreement.types";
 import { Vehicle } from "@/types/vehicle";
 import { Customer } from "@/types/customer";
 
 interface UseTemplatePreviewProps {
   template: string;
+  agreement?: AgreementWithRelations;
+  vehicle?: Vehicle;
+  customer?: Customer;
 }
 
-export const useTemplatePreview = ({ template }: UseTemplatePreviewProps) => {
-  const [previewData, setPreviewData] = useState<string>("");
+export const useTemplatePreview = ({ 
+  template,
+  agreement,
+  vehicle,
+  customer 
+}: UseTemplatePreviewProps) => {
+  const [previewContent, setPreviewContent] = useState<string>("");
   const [missingVariables, setMissingVariables] = useState<string[]>([]);
 
-  const generatePreview = (data: {
-    agreement: AgreementWithRelations;
-    vehicle?: Vehicle;
-    customer?: Customer;
-  }) => {
-    // Validate template first
+  const generatePreview = () => {
+    if (!template || !agreement) return;
+
     const missing = validateTemplate(template);
     setMissingVariables(missing);
 
-    // Generate preview
-    const preview = replaceTemplateVariables(template, data);
-    setPreviewData(preview);
+    const preview = replaceTemplateVariables(template, {
+      agreement,
+      vehicle,
+      customer
+    });
 
-    return preview;
+    setPreviewContent(preview);
   };
 
   return {
-    previewData,
+    previewContent,
     missingVariables,
-    generatePreview,
+    generatePreview
   };
 };
