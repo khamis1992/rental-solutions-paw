@@ -19,6 +19,7 @@ export interface Agreement {
   agreement_number: string | null;
   rent_amount: number;
   rent_due_day: number | null;
+  remainingAmount: number;
   customer?: {
     id: string;
     full_name: string | null;
