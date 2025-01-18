@@ -1,243 +1,179 @@
-import { useState, useRef, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Template } from "@/types/agreement.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { TemplatePreview } from "./TemplatePreview";
-import { VariableSuggestions } from "./VariableSuggestions";
+import { useQueryClient } from "@tanstack/react-query";
 
-interface CreateTemplateDialogProps {
+export interface CreateTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  selectedTemplate?: Template;
 }
 
-export const CreateTemplateDialog = ({
-  open,
-  onOpenChange,
-}: CreateTemplateDialogProps) => {
+export const CreateTemplateDialog = ({ open, onOpenChange, selectedTemplate }: CreateTemplateDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("edit");
-  const [cursorPosition, setCursorPosition] = useState<number | null>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    content: "",
-    language: "english" as "english" | "spanish" | "french" | "arabic",
-    template_structure: {},
-    template_sections: [],
-    variable_mappings: {
-      agreement: {},
-      vehicle: {},
-      customer: {},
-      terms: {},
-      payment: {},
-    },
-  });
+  const [formData, setFormData] = useState<Partial<Template>>(
+    selectedTemplate || {
+      name: "",
+      description: "",
+      agreement_type: "short_term",
+      rent_amount: 0,
+      final_price: 0,
+      agreement_duration: "",
+      daily_late_fee: 0,
+      damage_penalty_rate: 0,
+      late_return_fee: 0,
+      language: "english",
+      content: "",
+      is_active: true,
+    }
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("legal_document_templates")
-        .insert({
-          ...formData,
-          template_structure: JSON.stringify(formData.template_structure),
-          variable_mappings: JSON.stringify(formData.variable_mappings),
-        });
+      if (selectedTemplate) {
+        const { error } = await supabase
+          .from("agreement_templates")
+          .update(formData)
+          .eq("id", selectedTemplate.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Template updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("agreement_templates")
+          .insert(formData);
 
-      toast.success("Template created successfully");
-      queryClient.invalidateQueries({ queryKey: ["legal-templates"] });
+        if (error) throw error;
+        toast.success("Template created successfully");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
       onOpenChange(false);
-    } catch (error: any) {
-      console.error("Error creating template:", error);
-      toast.error("Failed to create template");
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast.error("Failed to save template");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleVariableSelect = useCallback((variable: string) => {
-    if (!textAreaRef.current || cursorPosition === null) return;
-
-    const start = cursorPosition;
-    const text = textAreaRef.current.value;
-    const before = text.substring(0, start);
-    const after = text.substring(start);
-
-    const newContent = before + variable + after;
-    setFormData(prev => ({
-      ...prev,
-      content: newContent
-    }));
-
-    setTimeout(() => {
-      if (textAreaRef.current) {
-        textAreaRef.current.focus();
-        const newPosition = start + variable.length;
-        textAreaRef.current.setSelectionRange(newPosition, newPosition);
-        setCursorPosition(newPosition);
-      }
-    }, 0);
-  }, [cursorPosition]);
-
-  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      content: e.target.value
-    }));
-    setCursorPosition(e.target.selectionStart);
-  };
-
-  const handleTextAreaClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-    setCursorPosition(e.currentTarget.selectionStart);
-  };
-
-  const handleTextAreaKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    setCursorPosition(e.currentTarget.selectionStart);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-[1200px] h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create Agreement Template</DialogTitle>
-          <DialogDescription>
-            Create a new template for lease agreements with dynamic variables
-          </DialogDescription>
+          <DialogTitle>
+            {selectedTemplate ? "Edit Template" : "Create New Template"}
+          </DialogTitle>
         </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Template Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
-          <ScrollArea className="flex-1 px-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Template Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="language">Language</Label>
-                  <Select
-                    value={formData.language}
-                    onValueChange={(value: "english" | "spanish" | "french" | "arabic") =>
-                      setFormData({ ...formData, language: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="arabic">Arabic</SelectItem>
-                      <SelectItem value="french">French</SelectItem>
-                      <SelectItem value="spanish">Spanish</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-
-              <ScrollArea className="w-full" >
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-w-[800px]">
-                  <TabsList>
-                    <TabsTrigger value="edit">Edit</TabsTrigger>
-                    <TabsTrigger value="preview">Preview</TabsTrigger>
-                    <TabsTrigger value="variables">Variables</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="edit" className="h-[400px] mt-2 relative">
-                    <Textarea
-                      ref={textAreaRef}
-                      id="content"
-                      value={formData.content}
-                      onChange={handleTextAreaChange}
-                      onClick={handleTextAreaClick}
-                      onKeyUp={handleTextAreaKeyUp}
-                      className="h-full"
-                      placeholder="Enter your template content here. Use {{variable.name}} syntax for dynamic values."
-                    />
-                    {activeTab === "edit" && (
-                      <div className="absolute right-0 top-0 w-64 bg-background border rounded-md shadow-lg">
-                        <VariableSuggestions 
-                          onVariableSelect={handleVariableSelect}
-                          currentContent={formData.content}
-                          cursorPosition={cursorPosition}
-                        />
-                      </div>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="preview" className="h-[400px] mt-2">
-                    <TemplatePreview 
-                      content={formData.content}
-                      missingVariables={[]}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="variables" className="h-[400px] mt-2">
-                    <VariableSuggestions onVariableSelect={handleVariableSelect} />
-                  </TabsContent>
-                </Tabs>
-              </ScrollArea>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="agreement_type">Agreement Type</Label>
+              <Select
+                value={formData.agreement_type}
+                onValueChange={(value) => setFormData({ ...formData, agreement_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short_term">Short Term</SelectItem>
+                  <SelectItem value="lease_to_own">Lease to Own</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </ScrollArea>
 
-          <DialogFooter className="mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="language">Language</Label>
+              <Select
+                value={formData.language}
+                onValueChange={(value) => setFormData({ ...formData, language: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="arabic">Arabic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="rent_amount">Rent Amount</Label>
+              <Input
+                id="rent_amount"
+                type="number"
+                value={formData.rent_amount}
+                onChange={(e) => setFormData({ ...formData, rent_amount: Number(e.target.value) })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="final_price">Final Price</Label>
+              <Input
+                id="final_price"
+                type="number"
+                value={formData.final_price}
+                onChange={(e) => setFormData({ ...formData, final_price: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content">Template Content</Label>
+            <Textarea
+              id="content"
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              className="min-h-[200px]"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Template"}
+              {isSubmitting ? "Saving..." : selectedTemplate ? "Update" : "Create"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
