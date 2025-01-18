@@ -1,6 +1,5 @@
 export type LeaseStatus = 'active' | 'pending_payment' | 'pending_deposit' | 'closed' | 'terminated' | 'cancelled';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
-export type PaymentMethodType = 'Invoice' | 'Cash' | 'WireTransfer' | 'Cheque' | 'Deposit' | 'On_hold';
 export type DocumentLanguage = 'english' | 'spanish' | 'french' | 'arabic';
 
 export interface AgreementWithRelations {
@@ -12,6 +11,7 @@ export interface AgreementWithRelations {
   rent_amount: number;
   total_amount: number;
   daily_late_fee: number;
+  remaining_amount?: number;
   customer?: {
     id: string;
     full_name: string | null;
@@ -59,7 +59,7 @@ export interface Payment {
   balance: number;
   payment_date: string | null;
   transaction_id: string | null;
-  payment_method: PaymentMethodType | null;
+  payment_method: string | null;
   status: PaymentStatus;
   description: string | null;
   type: string;
