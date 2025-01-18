@@ -16,6 +16,7 @@ import { usePullAgreementData } from "./hooks/usePullAgreementData";
 import { AgreementPDFImport } from "./AgreementPDFImport";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CreateAgreementDialog } from "./CreateAgreementDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -191,6 +192,16 @@ export const AgreementList = () => {
         />
         <div className="flex flex-wrap items-center gap-3">
           <AgreementPDFImport />
+          <CreateAgreementDialog>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Create Agreement
+            </Button>
+          </CreateAgreementDialog>
           <Button
             variant="outline"
             size="sm"
