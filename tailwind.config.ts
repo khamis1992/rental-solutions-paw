@@ -27,19 +27,30 @@ export default {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
+          DEFAULT: '#F97316', // Vibrant orange
+          light: '#FB923C',
+          dark: '#EA580C',
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
+          DEFAULT: '#222222', // Dark gray
+          light: '#333333',
+          dark: '#111111',
           foreground: 'hsl(var(--secondary-foreground))'
         },
+        background: {
+          DEFAULT: '#FFFFFF',
+          alt: '#F3F4F6',
+        },
+        neutral: {
+          DEFAULT: '#F1F1F1',
+          dark: '#E5E5E5',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        foreground: 'hsl(var(--foreground))',
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'
@@ -60,65 +71,40 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
         },
-        sidebar: {
-          DEFAULT: 'hsl(var(--sidebar-background))',
-          foreground: 'hsl(var(--sidebar-foreground))',
-          primary: 'hsl(var(--sidebar-primary))',
-          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-          accent: 'hsl(var(--sidebar-accent))',
-          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-          border: 'hsl(var(--sidebar-border))',
-          ring: 'hsl(var(--sidebar-ring))'
-        }
+      },
+      boxShadow: {
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        'button': '0 2px 4px rgba(0, 0, 0, 0.1)',
+        'button-hover': '0 4px 6px rgba(0, 0, 0, 0.15)',
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
       },
-      keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0'
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)'
-          }
-        },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)'
-          },
-          to: {
-            height: '0'
-          }
-        }
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
-      },
-      screens: {
-        'print': {'raw': 'print'},
-      },
-      
-      spacing: {
-        'touch': '44px', // Minimum touch target size
-        'touch-lg': '48px',
-      },
-      minHeight: {
-        'touch': '44px',
-        'touch-lg': '48px',
-      },
-      minWidth: {
-        'touch': '44px',
-        'touch-lg': '48px',
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
       },
       fontSize: {
         'mobile-h1': ['1.75rem', { lineHeight: '2rem' }],
         'mobile-h2': ['1.5rem', { lineHeight: '1.75rem' }],
         'mobile-h3': ['1.25rem', { lineHeight: '1.5rem' }],
         'mobile-body': ['1rem', { lineHeight: '1.5rem' }],
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        "accordion-up": {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },

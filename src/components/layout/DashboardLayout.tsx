@@ -17,14 +17,16 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen={!isMobile}>
-        <DashboardHeader />
-        <div className="flex pt-[var(--header-height,56px)]">
+        <div className="flex w-full">
           <DashboardSidebar />
-          <main className="flex-1 w-full min-h-[calc(100vh-56px)] p-4 md:p-6 transition-all duration-200 ease-in-out">
-            <div className="mx-auto max-w-7xl">
-              {children}
-            </div>
-          </main>
+          <div className="flex-1 flex flex-col min-h-screen">
+            <DashboardHeader />
+            <main className="flex-1 p-4 md:p-6 pt-[calc(var(--header-height)+1rem)] transition-all duration-200 ease-in-out">
+              <div className="mx-auto max-w-7xl space-y-6">
+                {children}
+              </div>
+            </main>
+          </div>
         </div>
       </SidebarProvider>
     </div>
