@@ -22,19 +22,24 @@ export const AgreementTemplateManagement = () => {
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching templates:", error);
+        throw error;
+      }
       
+      if (!data) return [];
+
       // Transform the data to match Template interface
       const transformedData: Template[] = data.map(template => ({
         id: template.id,
         name: template.name,
-        description: template.description || '',
-        content: template.content || '',
-        language: template.language || 'english',
+        description: template.description || "",
+        content: template.content || "",
+        language: template.language || "english",
         agreement_type: template.agreement_type,
         rent_amount: template.rent_amount,
         final_price: template.final_price,
-        agreement_duration: template.agreement_duration,
+        agreement_duration: template.agreement_duration || "",
         daily_late_fee: template.daily_late_fee,
         damage_penalty_rate: template.damage_penalty_rate,
         late_return_fee: template.late_return_fee,
@@ -99,6 +104,7 @@ export const AgreementTemplateManagement = () => {
       <CreateTemplateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
+        selectedTemplate={selectedTemplate}
       />
     </Card>
   );
