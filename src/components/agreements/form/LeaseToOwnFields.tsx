@@ -9,8 +9,6 @@ interface LeaseToOwnFieldsProps {
 export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => {
   const totalAmount = watch('rentAmount') || 0;
   const downPayment = watch('downPayment') || 0;
-  const interestRate = watch('interestRate') || 0;
-  const leaseDuration = watch('agreementDuration') || 12;
 
   return (
     <div className="space-y-4">
@@ -23,15 +21,6 @@ export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => 
             type="number"
             step="0.01"
             {...register("downPayment")}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="interestRate">Interest Rate (%)</Label>
-          <Input
-            id="interestRate"
-            type="number"
-            step="0.01"
-            {...register("interestRate")}
           />
         </div>
       </div>
