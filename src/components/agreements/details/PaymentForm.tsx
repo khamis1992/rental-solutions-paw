@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet, Calendar, CreditCard, FileText } from "lucide-react";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -100,65 +102,88 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="bg-muted p-4 rounded-lg mb-4">
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <div className="text-sm text-muted-foreground">Due Amount</div>
-            <div className="text-lg font-semibold">
-              {formatCurrency(dueAmount)}
-              <span className="text-sm text-muted-foreground ml-2">
-                (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
-              </span>
+    <Card className="transition-all duration-200 hover:shadow-md">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-orange-600">
+          <Wallet className="h-5 w-5" />
+          Add Payment
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="rounded-lg bg-orange-50/50 p-4 border border-orange-100">
+            <div className="grid gap-4">
+              <div>
+                <div className="text-sm text-muted-foreground">Due Amount</div>
+                <div className="text-lg font-semibold text-orange-700">
+                  {formatCurrency(dueAmount)}
+                  <span className="text-sm text-muted-foreground ml-2">
+                    (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div>
-        <Label htmlFor="amount">Amount Paid (QAR)</Label>
-        <Input
-          id="amount"
-          type="number"
-          step="0.01"
-          min="0"
-          {...register("amount", { required: true })}
-        />
-      </div>
-      
-      <div>
-        <Label htmlFor="paymentMethod">Payment Method</Label>
-        <Select onValueChange={(value) => setValue("paymentMethod", value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select payment method" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Cash">Cash</SelectItem>
-            <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
-            <SelectItem value="Invoice">Invoice</SelectItem>
-            <SelectItem value="On_hold">On Hold</SelectItem>
-            <SelectItem value="Deposit">Deposit</SelectItem>
-            <SelectItem value="Cheque">Cheque</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="grid gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="amount" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-orange-600" />
+                Amount Paid (QAR)
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                {...register("amount", { required: true })}
+                className="transition-all duration-200 hover:border-orange-300 focus:border-orange-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-orange-600" />
+                Payment Method
+              </Label>
+              <Select onValueChange={(value) => setValue("paymentMethod", value)}>
+                <SelectTrigger className="transition-all duration-200 hover:border-orange-300 focus:border-orange-500">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
+                  <SelectItem value="Invoice">Invoice</SelectItem>
+                  <SelectItem value="On_hold">On Hold</SelectItem>
+                  <SelectItem value="Deposit">Deposit</SelectItem>
+                  <SelectItem value="Cheque">Cheque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          placeholder="Add payment notes or description..."
-          {...register("description")}
-        />
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="description" className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-orange-600" />
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="Add payment notes or description..."
+                {...register("description")}
+                className="min-h-[100px] transition-all duration-200 hover:border-orange-300 focus:border-orange-500"
+              />
+            </div>
+          </div>
 
-      <Button 
-        type="submit" 
-        disabled={isSubmitting}
-        className="w-full"
-      >
-        {isSubmitting ? "Adding Payment..." : "Add Payment"}
-      </Button>
-    </form>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white transition-colors duration-200"
+          >
+            {isSubmitting ? "Adding Payment..." : "Add Payment"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
