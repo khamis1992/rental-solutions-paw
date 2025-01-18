@@ -58,8 +58,8 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       return;
     }
 
-    // Convert agreement duration from interval to months
-    const durationMonths = 12; // Default to 12 months if parsing fails
+    // Parse duration from agreement_duration string
+    let durationMonths = 12; // Default value
     try {
       const durationStr = selectedTemplate.agreement_duration;
       if (durationStr.includes("months") || durationStr.includes("month")) {
