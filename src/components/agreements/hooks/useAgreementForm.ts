@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { UseFormSetValue } from "react-hook-form";
 
 export interface AgreementFormData {
   address: string;
@@ -23,6 +22,7 @@ export interface AgreementFormData {
   lateReturnFee: number;
   agreementDuration: number;
   finalPrice: number;
+  downPayment?: number;
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
@@ -49,7 +49,6 @@ export const useAgreementForm = (onSuccess: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      // Handle form submission
       console.log("Form data:", data);
       onSuccess();
     } catch (error) {

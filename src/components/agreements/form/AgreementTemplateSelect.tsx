@@ -36,7 +36,11 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
         .select("*")
         .eq("is_active", true);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching templates:", error);
+        throw error;
+      }
+      
       return data as AgreementTemplate[];
     },
   });
@@ -49,6 +53,7 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
     const durationMatch = selectedTemplate.agreement_duration.match(/(\d+) months?/);
     const durationMonths = durationMatch ? parseInt(durationMatch[1]) : 12;
 
+    // Apply template values to form
     setValue("agreementType", selectedTemplate.agreement_type);
     setValue("rentAmount", selectedTemplate.rent_amount);
     setValue("finalPrice", selectedTemplate.final_price);
@@ -56,9 +61,14 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
     setValue("dailyLateFee", selectedTemplate.daily_late_fee);
     setValue("damagePenaltyRate", selectedTemplate.damage_penalty_rate);
     setValue("lateReturnFee", selectedTemplate.late_return_fee);
+
+    console.log("Applied template values:", selectedTemplate);
   };
 
-  if (!templates?.length) return null;
+  if (!templates?.length) {
+    console.log("No templates found");
+    return null;
+  }
 
   return (
     <div className="space-y-2">
