@@ -39,7 +39,7 @@ export const AgreementTemplateManagement = () => {
         agreement_type: template.agreement_type,
         rent_amount: template.rent_amount,
         final_price: template.final_price,
-        agreement_duration: template.agreement_duration?.toString() || "",
+        agreement_duration: template.agreement_duration || "",
         daily_late_fee: template.daily_late_fee,
         damage_penalty_rate: template.damage_penalty_rate,
         late_return_fee: template.late_return_fee,

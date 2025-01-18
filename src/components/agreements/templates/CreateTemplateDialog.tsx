@@ -25,18 +25,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TemplatePreview } from "./TemplatePreview";
 import { VariableSuggestions } from "./VariableSuggestions";
-import { Template } from "@/types/agreement.types";
 
 interface CreateTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedTemplate?: Template | null;
 }
 
 export const CreateTemplateDialog = ({
   open,
   onOpenChange,
-  selectedTemplate,
 }: CreateTemplateDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,12 +41,12 @@ export const CreateTemplateDialog = ({
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [formData, setFormData] = useState({
-    name: selectedTemplate?.name || "",
-    description: selectedTemplate?.description || "",
-    content: selectedTemplate?.content || "",
-    language: selectedTemplate?.language || "english" as "english" | "spanish" | "french" | "arabic",
-    template_structure: selectedTemplate?.template_structure || {},
-    template_sections: selectedTemplate?.template_sections || [],
+    name: "",
+    description: "",
+    content: "",
+    language: "english" as "english" | "spanish" | "french" | "arabic",
+    template_structure: {},
+    template_sections: [],
     variable_mappings: {
       agreement: {},
       vehicle: {},

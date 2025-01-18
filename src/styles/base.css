@@ -10,9 +10,9 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 12 100% 60%;
+    --primary: 24 95% 53%;
     --primary-foreground: 60 9.1% 97.8%;
-    --secondary: 0 0% 20%;
+    --secondary: 220 13% 13%;
     --secondary-foreground: 210 40% 98%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -27,7 +27,7 @@
     --header-height: 56px;
     --sidebar-width: 280px;
     
-    /* Design system tokens */
+    /* New design tokens */
     --shadow-color: 220 3% 15%;
     --shadow-strength: 1%;
     --content-max-width: 1440px;
@@ -43,7 +43,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 12 100% 60%;
+    --primary: 24 95% 53%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -63,12 +63,12 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-sans;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight text-secondary-dark;
+    @apply font-semibold tracking-tight;
   }
 
   h1 {

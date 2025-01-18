@@ -6,8 +6,6 @@ export interface Template {
   id: string;
   name: string;
   description: string;
-  content: string;
-  language: DocumentLanguage;
   agreement_type: "lease_to_own" | "short_term";
   rent_amount: number;
   final_price: number;
@@ -18,9 +16,11 @@ export interface Template {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  template_structure: Record<string, any>;
-  template_sections: any[];
-  variable_mappings: Record<string, any>;
+  content?: string;
+  language?: DocumentLanguage;
+  template_structure?: Record<string, any>;
+  template_sections?: any[];
+  variable_mappings?: Record<string, any>;
 }
 
 export interface AgreementWithRelations {
@@ -29,17 +29,17 @@ export interface AgreementWithRelations {
   customer: {
     id: string;
     full_name: string;
-    email?: string;
-    phone_number?: string;
-    address?: string;
-    nationality?: string;
+    email: string;
+    phone_number: string;
+    address: string;
+    nationality: string;
   };
   vehicle: {
     id: string;
     make: string;
     model: string;
     year: number;
-    color?: string;
+    color: string;
     license_plate: string;
     vin: string;
   };
@@ -51,9 +51,7 @@ export interface AgreementWithRelations {
   agreement_type: "lease_to_own" | "short_term";
   payment_status: PaymentStatus;
   daily_late_fee: number;
-  remainingAmount?: {
-    remaining_amount: number;
-  };
+  remaining_amount?: number;
 }
 
 export interface Payment {
@@ -63,8 +61,6 @@ export interface Payment {
   amount_paid: number;
   balance: number;
   payment_date: string;
-  due_date?: string;
-  transaction_id?: string;
   payment_method: string;
   status: PaymentStatus;
   description: string;
@@ -73,7 +69,8 @@ export interface Payment {
   days_overdue: number;
   created_at: string;
   updated_at: string;
+  transaction_id?: string;
+  security_deposit_id?: string;
   is_recurring?: boolean;
   next_payment_date?: string;
-  security_deposit_id?: string;
 }

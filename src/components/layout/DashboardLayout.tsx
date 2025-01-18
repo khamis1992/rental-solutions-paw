@@ -15,7 +15,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen bg-[#F2F2F2]">
+    <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen={!isMobile}>
         <div className="flex w-full">
           <DashboardSidebar />
