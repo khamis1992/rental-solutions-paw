@@ -18,9 +18,9 @@ export interface Template {
   updated_at?: string;
   content?: string;
   language?: DocumentLanguage;
-  template_structure?: Record<string, any>;
-  template_sections?: any[];
-  variable_mappings?: Record<string, any>;
+  template_structure: Record<string, any>;
+  template_sections: any[];
+  variable_mappings: Record<string, any>;
 }
 
 export interface AgreementWithRelations {
@@ -51,7 +51,9 @@ export interface AgreementWithRelations {
   agreement_type: "lease_to_own" | "short_term";
   payment_status: PaymentStatus;
   daily_late_fee: number;
-  remaining_amount?: number;
+  remainingAmount?: {
+    remaining_amount: number;
+  };
 }
 
 export interface Payment {

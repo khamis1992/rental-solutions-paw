@@ -1,40 +1,80 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Car } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Car, Calendar, Palette, Key, Hash, Gauge } from "lucide-react";
 
 interface VehicleInfoCardProps {
   vehicle: {
-    year?: number;
-    make?: string;
-    model?: string;
-    license_plate?: string;
+    make: string;
+    model: string;
+    year: number;
+    color?: string;
+    license_plate: string;
+    vin: string;
   };
-  initialMileage: number;
+  initialMileage?: number;
 }
 
 export const VehicleInfoCard = ({ vehicle, initialMileage }: VehicleInfoCardProps) => {
   return (
-    <Card className="bg-white border border-gray-200 shadow-card hover:shadow-card-hover transition-shadow duration-200">
-      <CardContent className="pt-6 space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Vehicle Information</h3>
-          <Car className="h-5 w-5 text-primary" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-600">Vehicle</Label>
-            <p className="text-base font-medium text-gray-900">
-              {`${vehicle?.year || ''} ${vehicle?.make || ''} ${vehicle?.model || ''}`}
-            </p>
+    <Card className="bg-white hover:shadow-lg transition-shadow duration-200">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <Car className="h-5 w-5 text-orange-500" />
+          Vehicle Information
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Car className="h-4 w-4 text-orange-500" />
+              Make & Model
+            </div>
+            <div className="font-semibold">{vehicle.make} {vehicle.model}</div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-600">License Plate</Label>
-            <p className="text-base font-medium text-gray-900">{vehicle?.license_plate || 'N/A'}</p>
+
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-orange-500" />
+              Year
+            </div>
+            <div>{vehicle.year}</div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-600">Initial Mileage</Label>
-            <p className="text-base font-medium text-gray-900">{initialMileage.toLocaleString()}</p>
+
+          {vehicle.color && (
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Palette className="h-4 w-4 text-orange-500" />
+                Color
+              </div>
+              <div>{vehicle.color}</div>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Key className="h-4 w-4 text-orange-500" />
+              License Plate
+            </div>
+            <div>{vehicle.license_plate}</div>
           </div>
+
+          <div className="space-y-1">
+            <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Hash className="h-4 w-4 text-orange-500" />
+              VIN
+            </div>
+            <div className="font-mono text-sm">{vehicle.vin}</div>
+          </div>
+
+          {initialMileage !== undefined && (
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Gauge className="h-4 w-4 text-orange-500" />
+                Initial Mileage
+              </div>
+              <div>{initialMileage.toLocaleString()} km</div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
