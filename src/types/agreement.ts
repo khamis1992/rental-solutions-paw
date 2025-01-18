@@ -54,4 +54,13 @@ export interface Payment {
   transaction_id: string | null;
   created_at: string;
   updated_at: string;
+  amount_paid: number;
+  balance: number;
+  payment_method: string;
+  description: string;
+  type: string;
+  late_fine_amount: number;
+  days_overdue: number;
+  is_recurring?: boolean;
+  security_deposit_id?: string;
 }
