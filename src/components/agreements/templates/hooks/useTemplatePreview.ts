@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { replaceTemplateVariables, validateTemplate } from "../utils/templateUtils";
-import { Agreement, AgreementWithRelations } from "@/types/database/agreement.types";
+import { Agreement, AgreementWithRelations } from "@/types/agreement.types";
 import { Vehicle } from "@/types/vehicle";
 import { Customer } from "@/types/customer";
 

@@ -11,7 +11,7 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
   return (
     <div className="space-y-4">
       {missingVariables.length > 0 && (
-        <Alert variant="warning">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             The following variables are missing: {missingVariables.join(", ")}
