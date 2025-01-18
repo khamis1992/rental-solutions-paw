@@ -180,7 +180,7 @@ export const CreateTemplateDialog = ({
                 />
               </div>
 
-              <ScrollArea className="w-full" orientation="horizontal">
+              <ScrollArea className="w-full" >
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-w-[800px]">
                   <TabsList>
                     <TabsTrigger value="edit">Edit</TabsTrigger>

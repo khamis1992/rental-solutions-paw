@@ -1,62 +1,46 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useInstallmentData = () => {
-  return useQuery({
-    queryKey: ["installment-analysis"],
+export const useInstallmentData = (agreementId: string) => {
+  const { data: paymentData, isLoading } = useQuery({
+    queryKey: ["payment-history", agreementId],
     queryFn: async () => {
-      const { data: paymentData, error: paymentError } = await supabase
-        .from("payment_history")
-        .select(`
-          *,
-          lease:leases (
-            customer_id,
-            agreement_type,
-            total_amount,
-            monthly_payment
-          )
-        `)
-        .eq("lease.agreement_type", "lease_to_own")
-        .order("created_at");
-
-      if (paymentError) throw paymentError;
-
-      const { data: analyticsData, error: analyticsError } = await supabase
-        .from("installment_analytics")
+      const { data, error } = await supabase
+        .from("payment_history_view")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1);
+        .eq("lease_id", agreementId);
 
-      if (analyticsError) throw analyticsError;
+      if (error) {
+        console.error("Error fetching payment history:", error);
+        throw error;
+      }
 
-      // Calculate summary data
-      const summary = paymentData.reduce((acc, payment) => {
-        acc.totalChecks++;
-        acc.totalAmount += Number(payment.amount_due || 0);
-        
-        if (payment.status === 'completed') {
-          acc.paidChecks++;
-          acc.paidAmount += Number(payment.amount_paid || 0);
-        } else {
-          acc.pendingChecks++;
-          acc.pendingAmount += Number(payment.amount_due || 0);
-        }
-        
-        return acc;
-      }, {
-        totalChecks: 0,
-        paidChecks: 0,
-        pendingChecks: 0,
-        totalAmount: 0,
-        paidAmount: 0,
-        pendingAmount: 0
-      });
-
-      return {
-        payments: paymentData,
-        analytics: analyticsData?.[0],
-        summary
-      };
+      return data || [];
     },
   });
+
+  const calculateMetrics = (payments: any[]) => {
+    const totalDue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount_paid, 0);
+    const totalLateFees = payments.reduce((sum, payment) => sum + (payment.late_fine_amount || 0), 0);
+    const onTimePayments = payments.filter(p => p.days_overdue === 0).length;
+    const latePayments = payments.filter(p => p.days_overdue > 0).length;
+
+    return {
+      totalDue,
+      totalPaid,
+      totalLateFees,
+      onTimePayments,
+      latePayments,
+      paymentRate: payments.length > 0 ? (onTimePayments / payments.length) * 100 : 0,
+    };
+  };
+
+  const metrics = paymentData ? calculateMetrics(paymentData) : null;
+
+  return {
+    paymentData,
+    metrics,
+    isLoading,
+  };
 };
