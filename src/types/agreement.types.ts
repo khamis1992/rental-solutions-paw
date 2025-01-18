@@ -2,33 +2,6 @@ export type LeaseStatus = 'active' | 'pending_payment' | 'pending_deposit' | 'cl
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type DocumentLanguage = 'english' | 'spanish' | 'french' | 'arabic';
 
-export interface AgreementWithRelations {
-  id: string;
-  agreement_number: string | null;
-  agreement_type: "lease_to_own" | "short_term";
-  start_date: string | null;
-  end_date: string | null;
-  rent_amount: number;
-  total_amount: number;
-  daily_late_fee: number;
-  remaining_amount?: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-    nationality: string | null;
-    email: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
 export interface Template {
   id: string;
   name: string;
@@ -73,16 +46,29 @@ export interface Payment {
   updated_at: string;
 }
 
-export interface PaymentHistory {
+export interface AgreementWithRelations {
   id: string;
-  lease_id: string;
-  amount_due: number;
-  amount_paid: number;
-  remaining_balance: number;
-  actual_payment_date: string | null;
-  original_due_date: string | null;
-  late_fee_applied: number;
-  status: PaymentStatus;
-  created_at: string;
-  updated_at: string;
+  agreement_number: string | null;
+  agreement_type: "lease_to_own" | "short_term";
+  start_date: string | null;
+  end_date: string | null;
+  rent_amount: number;
+  total_amount: number;
+  daily_late_fee: number;
+  remaining_amount?: number;
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    address: string | null;
+    nationality: string | null;
+    email: string | null;
+  };
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
 }

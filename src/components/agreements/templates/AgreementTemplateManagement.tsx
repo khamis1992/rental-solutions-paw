@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateTemplateDialog } from "./CreateTemplateDialog";
 import { TemplateList } from "./TemplateList";
 import { toast } from "sonner";
+import { Template } from "@/types/agreement.types";
 
 export const AgreementTemplateManagement = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   const { data: templates, isLoading, refetch } = useQuery({
     queryKey: ["agreement-templates"],
@@ -22,21 +23,30 @@ export const AgreementTemplateManagement = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match Template interface
+      const transformedData: Template[] = data.map(template => ({
+        ...template,
+        template_structure: template.template_structure || {},
+        template_sections: template.template_sections || [],
+        variable_mappings: template.variable_mappings || {},
+      }));
+      
+      return transformedData;
     },
   });
 
-  const handlePreview = (template: any) => {
+  const handlePreview = (template: Template) => {
     // TODO: Implement preview functionality
     toast.info("Preview functionality coming soon");
   };
 
-  const handleEdit = (template: any) => {
+  const handleEdit = (template: Template) => {
     setSelectedTemplate(template);
     setShowCreateDialog(true);
   };
 
-  const handleDelete = async (template: any) => {
+  const handleDelete = async (template: Template) => {
     try {
       const { error } = await supabase
         .from("agreement_templates")
@@ -75,7 +85,6 @@ export const AgreementTemplateManagement = () => {
       <CreateTemplateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        template={selectedTemplate}
         onClose={() => {
           setSelectedTemplate(null);
           refetch();
