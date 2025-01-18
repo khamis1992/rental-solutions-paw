@@ -20,15 +20,6 @@ export const LateFeesPenaltiesFields = ({ register }: LateFeesPenaltiesFieldsPro
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="lateFeeGracePeriod">Grace Period (days)</Label>
-        <Input
-          type="number"
-          placeholder="3"
-          {...register("lateFeeGracePeriod")}
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="damagePenaltyRate">Damage Penalty Amount</Label>
         <Input
           type="number"
