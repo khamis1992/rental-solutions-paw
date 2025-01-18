@@ -11,7 +11,7 @@ import { AgreementListHeader } from "./list/AgreementListHeader";
 import { AgreementListContent } from "./list/AgreementListContent";
 import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
-import { Download, Calculator } from "lucide-react";
+import { Download, Calculator, Upload } from "lucide-react";
 import { usePullAgreementData } from "./hooks/usePullAgreementData";
 import { AgreementPDFImport } from "./AgreementPDFImport";
 import { supabase } from "@/integrations/supabase/client";
@@ -183,19 +183,20 @@ export const AgreementList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <AgreementFilters
           onSearchChange={setSearchQuery}
           onStatusChange={setStatusFilter}
           onSortChange={setSortOrder}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <AgreementPDFImport />
           <Button
             variant="outline"
             size="sm"
             onClick={handlePullData}
             disabled={isPullingData}
+            className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
           >
             <Download className="h-4 w-4 mr-2" />
             Pull Data
@@ -205,9 +206,9 @@ export const AgreementList = () => {
             size="sm"
             onClick={calculateLateFines}
             disabled={isCalculatingFines}
-            className="flex items-center gap-2"
+            className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
           >
-            <Calculator className="h-4 w-4" />
+            <Calculator className="h-4 w-4 mr-2" />
             {isCalculatingFines ? 'Calculating...' : 'Add Fine'}
           </Button>
         </div>
