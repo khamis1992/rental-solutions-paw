@@ -7,6 +7,7 @@ import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { UserManagementSettings } from "@/components/settings/UserManagementSettings";
 import { VehicleStatusSettings } from "@/components/settings/VehicleStatusSettings";
+import { AgreementTemplateManagement } from "@/components/agreements/templates/AgreementTemplateManagement";
 
 const Settings = () => {
   return (
@@ -28,6 +29,7 @@ const Settings = () => {
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="vehicle-status">Vehicle Status</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
           </TabsList>
           <TabsContent value="general">
             <GeneralSettings />
@@ -49,6 +51,9 @@ const Settings = () => {
           </TabsContent>
           <TabsContent value="vehicle-status">
             <VehicleStatusSettings />
+          </TabsContent>
+          <TabsContent value="templates">
+            <AgreementTemplateManagement />
           </TabsContent>
         </Tabs>
       </div>
