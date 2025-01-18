@@ -42,6 +42,13 @@ export interface Template {
   created_at?: string;
   updated_at?: string;
   created_by?: string;
+  agreement_type?: "lease_to_own" | "short_term";
+  rent_amount?: number;
+  final_price?: number;
+  agreement_duration?: string;
+  daily_late_fee?: number;
+  damage_penalty_rate?: number;
+  late_return_fee?: number;
 }
 
 export interface Payment {

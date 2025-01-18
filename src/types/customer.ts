@@ -7,11 +7,12 @@ export interface Customer {
   id_document_url: string | null;
   license_document_url: string | null;
   contract_document_url: string | null;
+  role: string | null;
   created_at: string;
-  role: 'customer' | 'staff' | 'admin';
+  updated_at: string;
+  status: string | null;
+  status_updated_at: string | null;
+  status_notes: string | null;
   nationality: string | null;
   email: string | null;
-  status?: string;
-  status_updated_at?: string;
-  status_notes?: string;
 }
