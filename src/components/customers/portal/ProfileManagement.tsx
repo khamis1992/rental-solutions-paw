@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProfileManagementProps {
   profile: {
@@ -23,6 +24,9 @@ interface ProfileManagementProps {
 export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { session } = useAuth();
+  const userId = session?.user?.id;
+
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || "",
     phone_number: profile?.phone_number || "",
@@ -33,12 +37,14 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
 
   // Fetch latest profile data
   const { data: latestProfile, isLoading } = useQuery({
-    queryKey: ["customer-profile", profile.id],
+    queryKey: ["customer-profile", userId],
     queryFn: async () => {
+      if (!userId) throw new Error("No user ID");
+
       const { data, error } = await supabase
         .from("profiles")
         .select()
-        .eq("id", profile.id)
+        .eq("id", userId)
         .maybeSingle();
 
       if (error) {
@@ -47,26 +53,33 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
       }
 
       // Update form data with latest profile info
-      setFormData({
-        full_name: data?.full_name || "",
-        phone_number: data?.phone_number || "",
-        email: data?.email || "",
-        address: data?.address || "",
-        nationality: data?.nationality || ""
-      });
+      if (data) {
+        setFormData({
+          full_name: data?.full_name || "",
+          phone_number: data?.phone_number || "",
+          email: data?.email || "",
+          address: data?.address || "",
+          nationality: data?.nationality || ""
+        });
+      }
 
       return data;
     },
-    enabled: !!profile.id
+    enabled: !!userId
   });
 
   const handleSubmit = async () => {
+    if (!userId) {
+      toast.error("No user ID found");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from("profiles")
         .update(formData)
-        .eq("id", profile.id);
+        .eq("id", userId);
 
       if (error) throw error;
 
