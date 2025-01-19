@@ -5,27 +5,6 @@ export type AgreementType = Database['public']['Enums']['agreement_type'];
 export type PaymentStatus = Database['public']['Enums']['payment_status'];
 export type DocumentLanguage = 'english' | 'arabic';
 
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  agreement_type: AgreementType;
-  rent_amount: number;
-  final_price: number;
-  agreement_duration: string;
-  daily_late_fee: number;
-  damage_penalty_rate: number;
-  late_return_fee: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  content: string;
-  language: DocumentLanguage;
-  template_structure: Record<string, any>;
-  template_sections: any[];
-  variable_mappings: Record<string, any>;
-}
-
 export interface Agreement {
   id: string;
   vehicle_id: string;
@@ -41,8 +20,7 @@ export interface Agreement {
   agreement_number: string | null;
   rent_amount: number;
   rent_due_day: number | null;
-  remainingAmount: number;
-  daily_late_fee: number;
+  remainingAmount?: number;
   customer?: {
     id: string;
     full_name: string | null;
@@ -56,6 +34,27 @@ export interface Agreement {
     year: number;
     license_plate: string;
   };
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  description: string | null;
+  agreement_type: AgreementType;
+  rent_amount: number;
+  final_price: number;
+  agreement_duration: string;
+  daily_late_fee: number;
+  damage_penalty_rate: number;
+  late_return_fee: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  content: string;
+  language: DocumentLanguage;
+  template_structure: Record<string, any>;
+  template_sections: any[];
+  variable_mappings: Record<string, any>;
 }
 
 export interface Payment {
@@ -76,19 +75,4 @@ export interface Payment {
   security_deposit_id?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface AgreementWithRelations extends Omit<Agreement, 'customer'> {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
 }
