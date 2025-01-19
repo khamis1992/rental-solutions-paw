@@ -29,13 +29,11 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
               license_plate
             ),
             remainingAmount:remaining_amounts!remaining_amounts_lease_id_fkey (
-              rent_amount,
-              final_price,
               remaining_amount
             )
           `)
           .eq('id', agreementId)
-          .maybeSingle(); // Changed from single() to maybeSingle()
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching agreement:', error);
