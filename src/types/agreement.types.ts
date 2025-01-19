@@ -1,64 +1,31 @@
-import { Database } from "@/integrations/supabase/types";
-
-export type LeaseStatus = Database['public']['Enums']['lease_status'];
-export type AgreementType = Database['public']['Enums']['agreement_type'];
-export type PaymentStatus = Database['public']['Enums']['payment_status'];
-export type DocumentLanguage = 'english' | 'arabic';
-
 export interface Agreement {
   id: string;
-  vehicle_id: string;
-  customer_id: string;
-  start_date: string | null;
-  end_date: string | null;
+  agreement_number: string;
   status: LeaseStatus;
-  initial_mileage: number;
-  return_mileage: number | null;
-  total_amount: number;
-  notes: string | null;
-  agreement_type: AgreementType;
-  agreement_number: string | null;
+  start_date: string;
+  end_date: string;
   rent_amount: number;
-  rent_due_day: number | null;
+  contractValue: number;
   remainingAmount: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-  };
   vehicle?: {
-    id: string;
+    license_plate: string;
     make: string;
     model: string;
-    year: number;
-    license_plate: string;
+  };
+  customer?: {
+    full_name: string;
   };
 }
 
-export interface AgreementWithRelations extends Agreement {
-  customer: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    email: string | null;
-    address: string | null;
-  };
-  vehicle: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-    vin: string;
-  };
-}
+export type LeaseStatus = 'active' | 'pending' | 'expired' | 'cancelled';
 
 export interface Template {
   id: string;
   name: string;
-  description: string | null;
-  agreement_type: AgreementType;
+  description: string;
+  content: string;
+  language: DocumentLanguage;
+  agreement_type: 'lease_to_own' | 'short_term';
   rent_amount: number;
   final_price: number;
   agreement_duration: string;
@@ -68,11 +35,36 @@ export interface Template {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  content: string;
-  language: DocumentLanguage;
   template_structure: Record<string, any>;
   template_sections: any[];
   variable_mappings: Record<string, any>;
+}
+
+export type DocumentLanguage = 'english' | 'arabic';
+
+export interface AgreementWithRelations {
+  id: string;
+  agreement_number: string;
+  status: LeaseStatus;
+  start_date: string;
+  end_date: string;
+  rent_amount: number;
+  daily_late_fee: number;
+  customer?: {
+    full_name: string;
+    email: string;
+    phone_number: string;
+    address: string;
+    nationality: string;
+  };
+  vehicle?: {
+    make: string;
+    model: string;
+    year: number;
+    color: string;
+    license_plate: string;
+    vin: string;
+  };
 }
 
 export interface Payment {
@@ -81,16 +73,17 @@ export interface Payment {
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string | null;
-  transaction_id: string | null;
+  payment_date: string;
   payment_method: string;
-  status: PaymentStatus;
+  status: string;
   description: string;
   type: string;
   late_fine_amount: number;
   days_overdue: number;
-  is_recurring?: boolean;
-  security_deposit_id?: string;
   created_at: string;
   updated_at: string;
+  transaction_id: string;
+  security_deposit_id: string;
+  is_recurring: boolean;
+  next_payment_date?: string;
 }
