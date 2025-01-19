@@ -1,40 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfileManagement } from "@/components/customers/portal/ProfileManagement";
-import { PaymentHistory } from "@/components/customers/portal/PaymentHistory";
+import { useQuery } from "@tanstack/react-query";
 import { CustomerFeedback } from "@/components/customers/portal/CustomerFeedback";
+import { PaymentHistory } from "@/components/customers/portal/PaymentHistory";
+import { ProfileManagement } from "@/components/customers/portal/ProfileManagement";
 
-const CustomerPortal = () => {
+export const CustomerPortal = () => {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate('/customer-portal/auth');
+        navigate("/customer-portal/auth");
+        return;
       }
+      setUserId(session.user.id);
     };
 
     checkSession();
   }, [navigate]);
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile'],
+    queryKey: ["customerProfile", userId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return null;
-
+      if (!userId) return null;
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!userId
   });
 
   if (isLoading) {
@@ -42,13 +44,14 @@ const CustomerPortal = () => {
   }
 
   if (!profile) {
-    return <div>No profile found</div>;
+    return <div>Profile not found</div>;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Customer Portal</h1>
-      <div className="grid gap-6">
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-8">Customer Portal</h1>
+      
+      <div className="grid gap-8">
         <ProfileManagement profile={profile} />
         <PaymentHistory customerId={profile.id} />
         <CustomerFeedback customerId={profile.id} />

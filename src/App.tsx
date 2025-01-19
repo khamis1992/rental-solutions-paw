@@ -20,8 +20,8 @@ function App() {
             <Route path="/customer-portal" element={<Pages.CustomerPortal />} />
 
             {/* Protected Routes */}
-            <Route element={<RouteWrapper />}>
-              <Route element={<DashboardLayout />}>
+            <Route element={<RouteWrapper><DashboardLayout>
+              <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Pages.Dashboard />} />
                 <Route path="/vehicles" element={<Pages.Vehicles />} />
@@ -38,8 +38,8 @@ function App() {
                 <Route path="/help" element={<Pages.Help />} />
                 <Route path="/legal" element={<Pages.Legal />} />
                 <Route path="/audit" element={<Pages.Audit />} />
-              </Route>
-            </Route>
+              </Routes>
+            </DashboardLayout></RouteWrapper>} />
           </Routes>
         </Suspense>
         <Toaster />
