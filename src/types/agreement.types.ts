@@ -1,6 +1,7 @@
-export type LeaseStatus = 'active' | 'pending' | 'expired' | 'cancelled' | 'pending_payment' | 'pending_deposit' | 'closed' | 'terminated';
+export type LeaseStatus = 'active' | 'pending_payment' | 'pending_deposit' | 'closed' | 'terminated' | 'cancelled';
 export type AgreementType = 'lease_to_own' | 'short_term';
 export type DocumentLanguage = 'english' | 'arabic';
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Agreement {
   id: string;
@@ -64,7 +65,7 @@ export interface Payment {
   payment_date: string | null;
   transaction_id: string | null;
   payment_method: string;
-  status: string;
+  status: PaymentStatus;
   description: string;
   type: string;
   late_fine_amount: number;
@@ -74,24 +75,4 @@ export interface Payment {
   next_payment_date?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    email: string | null;
-    address: string | null;
-    nationality: string | null;
-  };
-  vehicle: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-    vin: string;
-    color: string;
-  };
 }

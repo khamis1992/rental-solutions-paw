@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { AuthGuard } from "../auth/AuthGuard";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -10,15 +11,17 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <AuthGuard>
-      <div className="min-h-screen">
-        <DashboardHeader />
-        <div className="flex">
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
           <DashboardSidebar />
-          <main className="flex-1 p-4">
-            {children || <Outlet />}
-          </main>
+          <div className="flex-1">
+            <DashboardHeader />
+            <main className="p-4">
+              {children || <Outlet />}
+            </main>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     </AuthGuard>
   );
 }
