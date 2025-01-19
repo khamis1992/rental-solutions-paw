@@ -31,38 +31,49 @@ export default function CustomerPortal() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.rpc('handle_portal_login', {
+      // First check if agreement exists and get customer details
+      const { data: agreement, error: agreementError } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          customer:customer_id (
+            id,
+            full_name,
+            phone_number,
+            email,
+            address,
+            nationality
+          )
+        `)
+        .eq('agreement_number', agreementNumber)
+        .maybeSingle();
+
+      if (agreementError) throw agreementError;
+
+      if (!agreement) {
+        toast.error('Invalid agreement number');
+        return;
+      }
+
+      // Verify phone number matches
+      if (agreement.customer?.phone_number !== phoneNumber) {
+        toast.error('Invalid credentials');
+        return;
+      }
+
+      // If both checks pass, proceed with portal login
+      const { data: portalResponse, error: portalError } = await supabase.rpc('handle_portal_login', {
         p_agreement_number: agreementNumber,
         p_phone_number: phoneNumber
       });
 
-      if (error) throw error;
+      if (portalError) throw portalError;
 
-      // Cast the response to our expected type
-      const response = data as unknown as PortalLoginResponse;
+      const response = portalResponse as PortalLoginResponse;
 
       if (response.success) {
         setIsAuthenticated(true);
-        // Get agreement details for the profile
-        const { data: agreementData } = await supabase
-          .from('leases')
-          .select(`
-            *,
-            customer:customer_id (
-              id,
-              full_name,
-              phone_number,
-              email,
-              address,
-              nationality
-            )
-          `)
-          .eq('agreement_number', agreementNumber)
-          .single();
-
-        if (agreementData) {
-          setProfile(agreementData.customer);
-        }
+        setProfile(agreement.customer);
         toast.success('Login successful');
       } else {
         toast.error(response.message || 'Invalid credentials');
