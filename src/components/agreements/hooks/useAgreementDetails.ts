@@ -55,6 +55,11 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
           return null;
         }
 
+        // Transform the remainingAmount array to a single value if needed
+        if (agreement.remainingAmount && Array.isArray(agreement.remainingAmount)) {
+          agreement.remainingAmount = agreement.remainingAmount[0]?.remaining_amount || 0;
+        }
+
         return agreement;
       } catch (error) {
         console.error('Error in agreement query:', error);
