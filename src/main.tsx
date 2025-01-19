@@ -5,6 +5,7 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SidebarProvider } from '@/components/ui/sidebar/context';
 import App from './App.tsx';
 import './index.css';
 
@@ -32,10 +33,12 @@ const queryClient = new QueryClient({
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <SessionContextProvider supabaseClient={supabase}>
+      <SessionContextProvider supabaseClient={supabase} initialSession={null}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <App />
+            <SidebarProvider>
+              <App />
+            </SidebarProvider>
           </TooltipProvider>
         </QueryClientProvider>
       </SessionContextProvider>
