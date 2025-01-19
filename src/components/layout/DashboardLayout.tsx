@@ -3,7 +3,11 @@ import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { AuthGuard } from "../auth/AuthGuard";
 
-export function DashboardLayout() {
+interface DashboardLayoutProps {
+  children?: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <AuthGuard>
       <div className="min-h-screen">
@@ -11,7 +15,7 @@ export function DashboardLayout() {
         <div className="flex">
           <DashboardSidebar />
           <main className="flex-1 p-4">
-            <Outlet />
+            {children || <Outlet />}
           </main>
         </div>
       </div>
