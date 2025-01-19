@@ -21,7 +21,6 @@ export interface Agreement {
   rent_amount: number;
   rent_due_day: number | null;
   remainingAmount?: number;
-  daily_late_fee: number;
   customer?: {
     id: string;
     full_name: string | null;
@@ -51,7 +50,6 @@ export interface AgreementWithRelations extends Agreement {
     year: number;
     license_plate: string;
   };
-  daily_late_fee: number;
 }
 
 export interface Template {
@@ -81,7 +79,7 @@ export interface Payment {
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string;
+  payment_date: string | null;
   transaction_id: string | null;
   payment_method: string;
   status: PaymentStatus;
@@ -89,7 +87,7 @@ export interface Payment {
   type: string;
   late_fine_amount: number;
   days_overdue: number;
-  is_recurring: boolean;
+  is_recurring?: boolean;
   security_deposit_id?: string;
   created_at: string;
   updated_at: string;
