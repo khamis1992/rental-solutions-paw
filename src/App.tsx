@@ -20,30 +20,28 @@ function App() {
             <Route path="/customer-portal" element={<Pages.CustomerPortal />} />
 
             {/* Protected Routes */}
-            <Route path="/" element={
+            <Route element={
               <RouteWrapper>
-                <DashboardLayout>
-                  <Routes>
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<Pages.Dashboard />} />
-                    <Route path="vehicles" element={<Pages.Vehicles />} />
-                    <Route path="vehicles/:id" element={<Pages.VehicleDetails />} />
-                    <Route path="customers" element={<Pages.Customers />} />
-                    <Route path="customers/:id" element={<Pages.CustomerProfile />} />
-                    <Route path="agreements" element={<Pages.Agreements />} />
-                    <Route path="remaining-amount" element={<Pages.RemainingAmount />} />
-                    <Route path="settings" element={<Pages.Settings />} />
-                    <Route path="maintenance" element={<Pages.Maintenance />} />
-                    <Route path="traffic-fines" element={<Pages.TrafficFines />} />
-                    <Route path="reports" element={<Pages.Reports />} />
-                    <Route path="finance" element={<Pages.Finance />} />
-                    <Route path="help" element={<Pages.Help />} />
-                    <Route path="legal" element={<Pages.Legal />} />
-                    <Route path="audit" element={<Pages.Audit />} />
-                  </Routes>
-                </DashboardLayout>
+                <DashboardLayout />
               </RouteWrapper>
-            } />
+            }>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Pages.Dashboard />} />
+              <Route path="vehicles" element={<Pages.Vehicles />} />
+              <Route path="vehicles/:id" element={<Pages.VehicleDetails />} />
+              <Route path="customers" element={<Pages.Customers />} />
+              <Route path="customers/:id" element={<Pages.CustomerProfile />} />
+              <Route path="agreements" element={<Pages.Agreements />} />
+              <Route path="remaining-amount" element={<Pages.RemainingAmount />} />
+              <Route path="settings" element={<Pages.Settings />} />
+              <Route path="maintenance" element={<Pages.Maintenance />} />
+              <Route path="traffic-fines" element={<Pages.TrafficFines />} />
+              <Route path="reports" element={<Pages.Reports />} />
+              <Route path="finance" element={<Pages.Finance />} />
+              <Route path="help" element={<Pages.Help />} />
+              <Route path="legal" element={<Pages.Legal />} />
+              <Route path="audit" element={<Pages.Audit />} />
+            </Route>
           </Routes>
         </Suspense>
         <Toaster />
