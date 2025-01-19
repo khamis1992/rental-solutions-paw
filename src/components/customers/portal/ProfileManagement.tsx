@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProfileManagementProps {
   profile: {
@@ -30,6 +31,35 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
     nationality: profile?.nationality || ""
   });
 
+  // Fetch latest profile data
+  const { data: latestProfile, isLoading } = useQuery({
+    queryKey: ["customer-profile", profile.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", profile.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+
+      // Update form data with latest profile info
+      setFormData({
+        full_name: data?.full_name || "",
+        phone_number: data?.phone_number || "",
+        email: data?.email || "",
+        address: data?.address || "",
+        nationality: data?.nationality || ""
+      });
+
+      return data;
+    },
+    enabled: !!profile.id
+  });
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -49,6 +79,16 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-6">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -72,7 +112,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{profile.full_name || "Not provided"}</p>
+              <p className="mt-1">{latestProfile?.full_name || "Not provided"}</p>
             )}
           </div>
 
@@ -86,7 +126,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{profile.phone_number || "Not provided"}</p>
+              <p className="mt-1">{latestProfile?.phone_number || "Not provided"}</p>
             )}
           </div>
 
@@ -101,7 +141,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{profile.email || "Not provided"}</p>
+              <p className="mt-1">{latestProfile?.email || "Not provided"}</p>
             )}
           </div>
 
@@ -115,7 +155,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{profile.nationality || "Not provided"}</p>
+              <p className="mt-1">{latestProfile?.nationality || "Not provided"}</p>
             )}
           </div>
 
@@ -129,7 +169,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{profile.address || "Not provided"}</p>
+              <p className="mt-1">{latestProfile?.address || "Not provided"}</p>
             )}
           </div>
 
@@ -140,11 +180,11 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 onClick={() => {
                   setIsEditing(false);
                   setFormData({
-                    full_name: profile.full_name || "",
-                    phone_number: profile.phone_number || "",
-                    email: profile.email || "",
-                    address: profile.address || "",
-                    nationality: profile.nationality || ""
+                    full_name: latestProfile?.full_name || "",
+                    phone_number: latestProfile?.phone_number || "",
+                    email: latestProfile?.email || "",
+                    address: latestProfile?.address || "",
+                    nationality: latestProfile?.nationality || ""
                   });
                 }}
               >
