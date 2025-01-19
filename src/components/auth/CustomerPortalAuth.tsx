@@ -17,7 +17,7 @@ export const CustomerPortalAuth = () => {
     setIsLoading(true);
 
     try {
-      // First verify the agreement number and phone number match
+      // Verify the agreement number and phone number match
       const { data: customer, error: customerError } = await supabase
         .from('leases')
         .select(`
@@ -41,23 +41,33 @@ export const CustomerPortalAuth = () => {
         return;
       }
 
-      // Create a magic link session
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        phone: phoneNumber,
+      // If credentials match, create a session
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${phoneNumber}@temporary.com`,
+        password: agreementNumber
       });
 
-      if (authError) {
-        toast.error('Error sending verification code');
-        return;
+      if (signInError) {
+        // If user doesn't exist, sign them up first
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: `${phoneNumber}@temporary.com`,
+          password: agreementNumber,
+          options: {
+            data: {
+              phone_number: phoneNumber,
+              agreement_number: agreementNumber
+            }
+          }
+        });
+
+        if (signUpError) {
+          toast.error('Error creating account');
+          return;
+        }
       }
 
-      toast.success('Verification code sent to your phone');
-      navigate('/verify', { 
-        state: { 
-          phoneNumber,
-          agreementNumber 
-        }
-      });
+      toast.success('Login successful');
+      navigate('/dashboard');
 
     } catch (error) {
       console.error('Login error:', error);
@@ -104,7 +114,7 @@ export const CustomerPortalAuth = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Verifying...' : 'Sign In'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </Card>
