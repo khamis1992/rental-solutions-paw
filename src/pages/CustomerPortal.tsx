@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { PaymentHistory } from '@/components/customers/portal/PaymentHistory';
@@ -26,7 +25,6 @@ export default function CustomerPortal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +38,8 @@ export default function CustomerPortal() {
 
       if (error) throw error;
 
-      const response = data as PortalLoginResponse;
+      // Cast the response to our expected type
+      const response = data as unknown as PortalLoginResponse;
 
       if (response.success) {
         setIsAuthenticated(true);
@@ -66,11 +65,11 @@ export default function CustomerPortal() {
         }
         toast.success('Login successful');
       } else {
-        toast.error('Invalid credentials');
+        toast.error(response.message || 'Invalid credentials');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Failed to login');
+      toast.error(error.message || 'Failed to login');
     } finally {
       setIsLoading(false);
     }
