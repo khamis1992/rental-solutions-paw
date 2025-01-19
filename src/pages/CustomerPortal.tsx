@@ -9,17 +9,7 @@ import { PaymentHistory } from '@/components/customers/portal/PaymentHistory';
 import { CustomerFeedback } from '@/components/customers/portal/CustomerFeedback';
 import { ProfileManagement } from '@/components/customers/portal/ProfileManagement';
 import { toast } from 'sonner';
-
-interface PortalLoginResponse {
-  success: boolean;
-  message?: string;
-  user?: {
-    agreement_number: string;
-    status: string;
-    customer_name: string;
-    phone_number: string;
-  };
-}
+import { PortalLoginResponse } from "@/types/agreement.types";
 
 export default function CustomerPortal() {
   const [agreementNumber, setAgreementNumber] = useState('');
@@ -48,7 +38,7 @@ export default function CustomerPortal() {
         return;
       }
 
-      const loginResponse = response as PortalLoginResponse;
+      const loginResponse = response as unknown as PortalLoginResponse;
 
       if (loginResponse.success) {
         setIsAuthenticated(true);
