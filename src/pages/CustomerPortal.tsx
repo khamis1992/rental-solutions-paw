@@ -5,6 +5,7 @@ import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { PaymentHistory } from '@/components/customers/portal/PaymentHistory';
+import { CustomerFeedback } from '@/components/customers/portal/CustomerFeedback';
 
 export default function CustomerPortal() {
   const { session } = useSessionContext();
@@ -53,6 +54,8 @@ export default function CustomerPortal() {
       </div>
     );
   }
+
+  const activeAgreement = profile?.leases?.find(lease => lease.status === 'active');
 
   return (
     <div className="min-h-screen bg-background-alt">
@@ -103,6 +106,9 @@ export default function CustomerPortal() {
         {session?.user?.id && (
           <PaymentHistory customerId={session.user.id} />
         )}
+
+        {/* Feedback Section */}
+        <CustomerFeedback agreementId={activeAgreement?.id} />
 
         {/* Agreements Section */}
         <Card>
