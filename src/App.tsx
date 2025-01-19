@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Suspense } from "react";
 import * as Pages from "@/routes/routes";
@@ -20,11 +19,7 @@ function App() {
             <Route path="/customer-portal" element={<Pages.CustomerPortal />} />
 
             {/* Protected Routes */}
-            <Route element={
-              <RouteWrapper>
-                <DashboardLayout />
-              </RouteWrapper>
-            }>
+            <Route path="/" element={<DashboardLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Pages.Dashboard />} />
               <Route path="vehicles" element={<Pages.Vehicles />} />
