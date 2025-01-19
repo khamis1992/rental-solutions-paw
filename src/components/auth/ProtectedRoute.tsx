@@ -5,7 +5,7 @@ import { RouteWrapper } from "@/components/layout/RouteWrapper";
 import { AuthGuard } from "./AuthGuard";
 
 interface ProtectedRouteProps {
-  children?: ReactNode;
+  children: ReactNode;
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {

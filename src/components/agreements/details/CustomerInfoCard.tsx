@@ -13,10 +13,6 @@ interface CustomerInfoCardProps {
 }
 
 export const CustomerInfoCard = ({ customer }: CustomerInfoCardProps) => {
-  if (!customer) {
-    return null;
-  }
-
   return (
     <Card>
       <CardContent className="pt-6">
@@ -37,7 +33,7 @@ export const CustomerInfoCard = ({ customer }: CustomerInfoCardProps) => {
             <User className="h-4 w-4 text-muted-foreground" />
             <div>
               <Label className="text-muted-foreground text-sm">Full Name</Label>
-              <p className="font-medium">{customer.full_name || 'N/A'}</p>
+              <p className="font-medium">{customer?.full_name || 'N/A'}</p>
             </div>
           </div>
 
@@ -45,7 +41,7 @@ export const CustomerInfoCard = ({ customer }: CustomerInfoCardProps) => {
             <Phone className="h-4 w-4 text-muted-foreground" />
             <div>
               <Label className="text-muted-foreground text-sm">Phone Number</Label>
-              <p className="font-medium">{customer.phone_number || 'N/A'}</p>
+              <p className="font-medium">{customer?.phone_number || 'N/A'}</p>
             </div>
           </div>
 
@@ -53,7 +49,7 @@ export const CustomerInfoCard = ({ customer }: CustomerInfoCardProps) => {
             <MapPin className="h-4 w-4 text-muted-foreground" />
             <div>
               <Label className="text-muted-foreground text-sm">Address</Label>
-              <p className="font-medium">{customer.address || 'N/A'}</p>
+              <p className="font-medium">{customer?.address || 'N/A'}</p>
             </div>
           </div>
         </div>
