@@ -1,10 +1,17 @@
 import { ReactNode } from "react";
-import { DashboardLayout } from "./DashboardLayout";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 
 interface RouteWrapperProps {
   children: ReactNode;
 }
 
-export const RouteWrapper = ({ children }: RouteWrapperProps) => {
-  return <DashboardLayout>{children}</DashboardLayout>;
-};
+export function RouteWrapper({ children }: RouteWrapperProps) {
+  const { session } = useAuth();
+
+  if (!session) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+}
