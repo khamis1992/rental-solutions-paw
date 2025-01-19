@@ -7,6 +7,8 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
       try {
+        console.log('Fetching agreement:', agreementId); // Debug log
+
         const { data: agreement, error } = await supabase
           .from('leases')
           .select(`
@@ -42,12 +44,20 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
         }
 
         if (!agreement) {
+          console.log('No agreement found for ID:', agreementId); // Debug log
           toast.error('Agreement not found');
           return null;
         }
 
         // Transform the remainingAmount array to a single value
-        const remainingAmountValue = agreement.remainingAmount?.[0]?.remaining_amount || 0;
+        const remainingAmountValue = agreement.remainingAmount?.[0]?.remaining_amount ?? 0;
+        
+        console.log('Agreement found:', { 
+          id: agreement.id, 
+          agreement_number: agreement.agreement_number,
+          remainingAmount: remainingAmountValue 
+        }); // Debug log
+
         return {
           ...agreement,
           remainingAmount: remainingAmountValue
