@@ -50,21 +50,34 @@ export const CustomerPortalAuth = () => {
         return;
       }
 
-      // Use the phone number as username and agreement number as password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: `${phoneNumber}@temporary.com`,
-        password: agreementNumber
-      });
+      // First try to find if a user already exists with this phone number
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone_number', phoneNumber)
+        .single();
 
-      if (signInError) {
-        // If user doesn't exist, sign them up
+      if (existingUser) {
+        // If user exists, try to sign in
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: `${phoneNumber}@temporary.com`,
+          password: agreementNumber
+        });
+
+        if (signInError) {
+          setError('Error signing in');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // If user doesn't exist, create new account
         const { error: signUpError } = await supabase.auth.signUp({
           email: `${phoneNumber}@temporary.com`,
           password: agreementNumber,
           options: {
             data: {
+              id: lease.customer.id, // Important: Link to existing profile ID
               phone_number: phoneNumber,
-              agreement_number: agreementNumber,
               full_name: lease.customer.full_name,
               email: lease.customer.email,
               address: lease.customer.address,
@@ -83,7 +96,10 @@ export const CustomerPortalAuth = () => {
       // Update the last_login timestamp
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ last_login: new Date().toISOString() })
+        .update({ 
+          last_login: new Date().toISOString(),
+          phone_number: phoneNumber // Ensure phone number is updated
+        })
         .eq('id', lease.customer.id);
 
       if (updateError) {
