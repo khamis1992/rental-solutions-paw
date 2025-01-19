@@ -11,6 +11,15 @@ import { CustomerFeedback } from '@/components/customers/portal/CustomerFeedback
 import { ProfileManagement } from '@/components/customers/portal/ProfileManagement';
 import { toast } from 'sonner';
 
+interface PortalLoginResponse {
+  success: boolean;
+  message?: string;
+  user?: {
+    agreement_number: string;
+    status: string;
+  };
+}
+
 export default function CustomerPortal() {
   const [agreementNumber, setAgreementNumber] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -31,7 +40,9 @@ export default function CustomerPortal() {
 
       if (error) throw error;
 
-      if (data.success) {
+      const response = data as PortalLoginResponse;
+
+      if (response.success) {
         setIsAuthenticated(true);
         // Get agreement details for the profile
         const { data: agreementData } = await supabase
