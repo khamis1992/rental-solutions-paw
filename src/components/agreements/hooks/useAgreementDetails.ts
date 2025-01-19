@@ -30,15 +30,6 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
               rent_amount,
               final_price,
               remaining_amount
-            ),
-            unified_payments (
-              id,
-              amount,
-              amount_paid,
-              payment_date,
-              payment_method,
-              status,
-              late_fine_amount
             )
           `)
           .eq('id', agreementId)
@@ -55,12 +46,13 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
           return null;
         }
 
-        // Transform the remainingAmount array to a single value if needed
-        if (agreement.remainingAmount && Array.isArray(agreement.remainingAmount)) {
-          agreement.remainingAmount = agreement.remainingAmount[0]?.remaining_amount || 0;
-        }
+        // Transform the remainingAmount array to a single value
+        const remainingAmountValue = agreement.remainingAmount?.[0]?.remaining_amount || 0;
+        return {
+          ...agreement,
+          remainingAmount: remainingAmountValue
+        };
 
-        return agreement;
       } catch (error) {
         console.error('Error in agreement query:', error);
         throw error;
