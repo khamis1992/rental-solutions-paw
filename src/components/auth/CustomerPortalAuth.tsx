@@ -1,18 +1,19 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CustomerPortalAuth = () => {
   const navigate = useNavigate();
-  const [agreementNumber, setAgreementNumber] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [agreementNumber, setAgreementNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -22,8 +23,7 @@ export const CustomerPortalAuth = () => {
         .from('leases')
         .select(`
           id,
-          agreement_number,
-          customer:customer_id (
+          customer:profiles(
             id,
             phone_number
           )
@@ -31,13 +31,15 @@ export const CustomerPortalAuth = () => {
         .eq('agreement_number', agreementNumber)
         .single();
 
-      if (customerError || !customer) {
+      if (customerError || !customer?.customer?.phone_number) {
         toast.error('Invalid agreement number');
+        setIsLoading(false);
         return;
       }
 
-      if (customer.customer?.phone_number !== phoneNumber) {
+      if (customer.customer.phone_number !== phoneNumber) {
         toast.error('Phone number does not match agreement');
+        setIsLoading(false);
         return;
       }
 
@@ -78,45 +80,42 @@ export const CustomerPortalAuth = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="m-auto w-full max-w-md p-4">
-        <Card className="p-8">
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold mb-2">Customer Portal</h1>
-            <p className="text-gray-600">Please sign in to continue</p>
-          </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-md p-4">
+        <Card>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="agreementNumber">Agreement Number</Label>
+                <Input
+                  id="agreementNumber"
+                  value={agreementNumber}
+                  onChange={(e) => setAgreementNumber(e.target.value)}
+                  placeholder="Enter your agreement number"
+                  required
+                />
+              </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <Input
-                type="text"
-                placeholder="Agreement Number"
-                value={agreementNumber}
-                onChange={(e) => setAgreementNumber(e.target.value)}
-                required
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
                 className="w-full"
-              />
-            </div>
-
-            <div>
-              <Input
-                type="tel"
-                placeholder="Phone Number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
+                disabled={isLoading}
+              >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>
