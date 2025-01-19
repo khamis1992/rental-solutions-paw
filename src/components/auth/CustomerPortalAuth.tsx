@@ -69,7 +69,7 @@ export const CustomerPortalAuth = () => {
       }
 
       toast.success('Login successful');
-      navigate('/dashboard');
+      navigate('/customer-portal');
 
     } catch (error) {
       console.error('Login error:', error);

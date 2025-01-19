@@ -16,5 +16,4 @@ export const Finance = lazy(() => import("@/pages/Finance"));
 export const Help = lazy(() => import("@/pages/Help"));
 export const Legal = lazy(() => import("@/pages/Legal"));
 export const Audit = lazy(() => import("@/pages/Audit"));
-
 export const CustomerPortal = lazy(() => import("@/pages/CustomerPortal"));

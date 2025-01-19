@@ -1,187 +1,51 @@
-import { Suspense, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import { Skeleton } from "@/components/ui/skeleton";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useSessionContext } from "@supabase/auth-helpers-react";
-import { toast } from "sonner";
-import * as LazyComponents from "@/routes/routes";
+import { RouteWrapper } from "@/components/layout/RouteWrapper";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Suspense } from "react";
+import * as Pages from "@/routes/routes";
+import { AuthContainer } from "./components/auth/AuthContainer";
+import { CustomerPortalAuth } from "./components/auth/CustomerPortalAuth";
 
-export default function App() {
-  const { session, isLoading, error } = useSessionContext();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (error?.message?.includes('refresh_token_not_found')) {
-      toast.error('Your session has expired. Please sign in again.');
-      navigate('/auth');
-    }
-  }, [error, navigate]);
-
+function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-      <div className="min-h-screen bg-background">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <BrowserRouter>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/auth" element={<AuthContainer />} />
+            <Route path="/customer-portal/auth" element={<CustomerPortalAuth />} />
+            <Route path="/customer-portal" element={<Pages.CustomerPortal />} />
+
+            {/* Protected Routes */}
+            <Route element={<RouteWrapper />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Pages.Dashboard />} />
+                <Route path="/vehicles" element={<Pages.Vehicles />} />
+                <Route path="/vehicles/:id" element={<Pages.VehicleDetails />} />
+                <Route path="/customers" element={<Pages.Customers />} />
+                <Route path="/customers/:id" element={<Pages.CustomerProfile />} />
+                <Route path="/agreements" element={<Pages.Agreements />} />
+                <Route path="/remaining-amount" element={<Pages.RemainingAmount />} />
+                <Route path="/settings" element={<Pages.Settings />} />
+                <Route path="/maintenance" element={<Pages.Maintenance />} />
+                <Route path="/traffic-fines" element={<Pages.TrafficFines />} />
+                <Route path="/reports" element={<Pages.Reports />} />
+                <Route path="/finance" element={<Pages.Finance />} />
+                <Route path="/help" element={<Pages.Help />} />
+                <Route path="/legal" element={<Pages.Legal />} />
+                <Route path="/audit" element={<Pages.Audit />} />
+              </Route>
+            </Route>
+          </Routes>
+        </Suspense>
         <Toaster />
-        <Routes>
-          {/* Public Routes */}
-          <Route
-            path="/auth"
-            element={
-              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <LazyComponents.Auth />
-              </Suspense>
-            }
-          />
-
-          <Route
-            path="/customer-portal"
-            element={
-              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                <LazyComponents.CustomerPortal />
-              </Suspense>
-            }
-          />
-
-          {/* Protected Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Dashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/vehicles"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Vehicles />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/vehicles/:id"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.VehicleDetails />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/customers"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Customers />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/customers/:id"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.CustomerProfile />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/agreements"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Agreements />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/remaining-amount"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.RemainingAmount />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Settings />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/maintenance/*"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Maintenance />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/traffic-fines"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.TrafficFines />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Reports />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/finance/*"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Finance />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/help"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Help />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/legal"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Legal />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/audit"
-            element={
-              <ProtectedRoute>
-                <LazyComponents.Audit />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
+
+export default App;
