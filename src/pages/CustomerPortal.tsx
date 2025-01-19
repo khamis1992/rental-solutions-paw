@@ -9,7 +9,15 @@ import { PaymentHistory } from '@/components/customers/portal/PaymentHistory';
 import { CustomerFeedback } from '@/components/customers/portal/CustomerFeedback';
 import { ProfileManagement } from '@/components/customers/portal/ProfileManagement';
 import { toast } from 'sonner';
-import { PortalLoginResponse } from "@/types/agreement.types";
+
+interface PortalLoginResponse {
+  success: boolean;
+  message?: string;
+  user?: {
+    agreement_number: string;
+    status: string;
+  };
+}
 
 export default function CustomerPortal() {
   const [agreementNumber, setAgreementNumber] = useState('');
@@ -38,7 +46,7 @@ export default function CustomerPortal() {
         return;
       }
 
-      const loginResponse = response as unknown as PortalLoginResponse;
+      const loginResponse = response as PortalLoginResponse;
 
       if (loginResponse.success) {
         setIsAuthenticated(true);
@@ -61,7 +69,7 @@ export default function CustomerPortal() {
         <div className="container py-8 space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.customer_name}</h1>
+            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.full_name}</h1>
             <p className="text-muted-foreground">Manage your rentals and account details</p>
           </div>
 
@@ -69,8 +77,8 @@ export default function CustomerPortal() {
           <ProfileManagement profile={profile} />
 
           {/* Payment History Section */}
-          {profile?.agreement_number && (
-            <PaymentHistory customerId={profile.agreement_number} />
+          {profile?.id && (
+            <PaymentHistory customerId={profile.id} />
           )}
 
           {/* Feedback Section */}
