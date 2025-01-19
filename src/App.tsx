@@ -34,6 +34,15 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/customer-portal"
+            element={
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                <LazyComponents.CustomerPortal />
+              </Suspense>
+            }
+          />
+
           {/* Protected Routes */}
           <Route
             path="/"

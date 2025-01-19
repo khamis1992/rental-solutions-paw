@@ -1081,6 +1081,58 @@ export type Database = {
           },
         ]
       }
+      customer_feedback: {
+        Row: {
+          agreement_id: string | null
+          created_at: string | null
+          customer_id: string
+          feedback_text: string | null
+          id: string
+          rating: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agreement_id?: string | null
+          created_at?: string | null
+          customer_id: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agreement_id?: string | null
+          created_at?: string | null
+          customer_id?: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_notes: {
         Row: {
           created_at: string
@@ -3433,6 +3485,8 @@ export type Database = {
           nationality: string | null
           needs_review: boolean | null
           phone_number: string | null
+          portal_password: string | null
+          portal_username: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           status: Database["public"]["Enums"]["customer_status_type"] | null
           status_notes: string | null
@@ -3459,6 +3513,8 @@ export type Database = {
           nationality?: string | null
           needs_review?: boolean | null
           phone_number?: string | null
+          portal_password?: string | null
+          portal_username?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           status?: Database["public"]["Enums"]["customer_status_type"] | null
           status_notes?: string | null
@@ -3485,6 +3541,8 @@ export type Database = {
           nationality?: string | null
           needs_review?: boolean | null
           phone_number?: string | null
+          portal_password?: string | null
+          portal_username?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           status?: Database["public"]["Enums"]["customer_status_type"] | null
           status_notes?: string | null
