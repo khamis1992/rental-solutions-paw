@@ -1,54 +1,59 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const CustomerPortalAuth = () => {
   const navigate = useNavigate();
-  const [agreementNumber, setAgreementNumber] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [agreementNumber, setAgreementNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Verify the agreement number and phone number match
-      const { data: customer, error: customerError } = await supabase
+      // First verify the agreement number and phone number match
+      const { data: lease, error: leaseError } = await supabase
         .from('leases')
         .select(`
           id,
-          agreement_number,
-          customer:customer_id (
+          customer:profiles(
             id,
-            phone_number
+            phone_number,
+            portal_username,
+            portal_password
           )
         `)
         .eq('agreement_number', agreementNumber)
         .single();
 
-      if (customerError || !customer) {
-        toast.error('Invalid agreement number');
+      if (leaseError || !lease?.customer?.phone_number) {
+        setError('Invalid agreement number');
         return;
       }
 
-      if (customer.customer?.phone_number !== phoneNumber) {
-        toast.error('Phone number does not match agreement');
+      if (lease.customer.phone_number !== phoneNumber) {
+        setError('Phone number does not match agreement');
         return;
       }
 
-      // If credentials match, create a session
-      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
+      // Use the phone number as username and agreement number as password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: `${phoneNumber}@temporary.com`,
         password: agreementNumber
       });
 
       if (signInError) {
-        // If user doesn't exist, sign them up first
+        // If user doesn't exist, sign them up
         const { error: signUpError } = await supabase.auth.signUp({
           email: `${phoneNumber}@temporary.com`,
           password: agreementNumber,
@@ -61,62 +66,65 @@ export const CustomerPortalAuth = () => {
         });
 
         if (signUpError) {
-          toast.error('Error creating account');
+          setError('Error creating account');
           return;
         }
       }
 
       toast.success('Login successful');
-      navigate('/dashboard');
+      navigate('/customer-portal');
 
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('An error occurred during login');
+      setError('An error occurred during login');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="m-auto w-full max-w-md p-4">
-        <Card className="p-8">
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold mb-2">Customer Portal</h1>
-            <p className="text-gray-600">Please sign in to continue</p>
-          </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-md p-4">
+        <Card>
+          <CardContent className="pt-6">
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="agreementNumber">Agreement Number</Label>
+                <Input
+                  id="agreementNumber"
+                  value={agreementNumber}
+                  onChange={(e) => setAgreementNumber(e.target.value)}
+                  placeholder="Enter your agreement number"
+                  required
+                />
+              </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <Input
-                type="text"
-                placeholder="Agreement Number"
-                value={agreementNumber}
-                onChange={(e) => setAgreementNumber(e.target.value)}
-                required
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Enter your phone number"
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
                 className="w-full"
-              />
-            </div>
-
-            <div>
-              <Input
-                type="tel"
-                placeholder="Phone Number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
+                disabled={isLoading}
+              >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>
