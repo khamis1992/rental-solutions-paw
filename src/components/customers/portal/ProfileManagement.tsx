@@ -37,9 +37,9 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select()
         .eq("id", profile.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching profile:", error);
