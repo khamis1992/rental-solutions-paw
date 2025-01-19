@@ -35,7 +35,7 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             )
           `)
           .eq('id', agreementId)
-          .maybeSingle();
+          .maybeSingle(); // Changed from single() to maybeSingle()
 
         if (error) {
           console.error('Error fetching agreement:', error);
@@ -45,7 +45,6 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
 
         if (!agreement) {
           console.log('No agreement found for ID:', agreementId); // Debug log
-          toast.error('Agreement not found');
           return null;
         }
 
