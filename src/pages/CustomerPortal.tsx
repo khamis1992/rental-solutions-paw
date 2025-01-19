@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { PaymentHistory } from '@/components/customers/portal/PaymentHistory';
 import { CustomerFeedback } from '@/components/customers/portal/CustomerFeedback';
+import { ProfileManagement } from '@/components/customers/portal/ProfileManagement';
 
 export default function CustomerPortal() {
   const { session } = useSessionContext();
@@ -101,6 +102,9 @@ export default function CustomerPortal() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Profile Management Section */}
+        <ProfileManagement profile={profile} />
 
         {/* Payment History Section */}
         {session?.user?.id && (
