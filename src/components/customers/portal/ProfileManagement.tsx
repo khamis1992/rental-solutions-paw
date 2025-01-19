@@ -10,7 +10,6 @@ import { Loader2 } from "lucide-react";
 
 interface ProfileManagementProps {
   profile: {
-    id: string;
     full_name?: string | null;
     phone_number?: string | null;
     email?: string | null;
@@ -23,11 +22,11 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: profile?.full_name || "",
-    phone_number: profile?.phone_number || "",
-    email: profile?.email || "",
-    address: profile?.address || "",
-    nationality: profile?.nationality || ""
+    full_name: profile.full_name || "",
+    phone_number: profile.phone_number || "",
+    email: profile.email || "",
+    address: profile.address || "",
+    nationality: profile.nationality || ""
   });
 
   const handleSubmit = async () => {
@@ -36,7 +35,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
       const { error } = await supabase
         .from("profiles")
         .update(formData)
-        .eq("id", profile.id);
+        .eq("id", (await supabase.auth.getUser()).data.user?.id);
 
       if (error) throw error;
 
@@ -49,6 +48,8 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
       setIsSubmitting(false);
     }
   };
+
+  if (!profile) return null;
 
   return (
     <Card>
