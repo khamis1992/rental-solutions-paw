@@ -29,8 +29,10 @@ export const CustomerPortalAuth = () => {
           customer:profiles(
             id,
             phone_number,
-            portal_username,
-            portal_password
+            full_name,
+            email,
+            address,
+            nationality
           )
         `)
         .eq('agreement_number', agreementNumber)
@@ -38,11 +40,13 @@ export const CustomerPortalAuth = () => {
 
       if (leaseError || !lease?.customer?.phone_number) {
         setError('Invalid agreement number');
+        setIsLoading(false);
         return;
       }
 
       if (lease.customer.phone_number !== phoneNumber) {
         setError('Phone number does not match agreement');
+        setIsLoading(false);
         return;
       }
 
@@ -60,15 +64,30 @@ export const CustomerPortalAuth = () => {
           options: {
             data: {
               phone_number: phoneNumber,
-              agreement_number: agreementNumber
+              agreement_number: agreementNumber,
+              full_name: lease.customer.full_name,
+              email: lease.customer.email,
+              address: lease.customer.address,
+              nationality: lease.customer.nationality
             }
           }
         });
 
         if (signUpError) {
           setError('Error creating account');
+          setIsLoading(false);
           return;
         }
+      }
+
+      // Update the last_login timestamp
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', lease.customer.id);
+
+      if (updateError) {
+        console.error('Error updating last login:', updateError);
       }
 
       toast.success('Login successful');
