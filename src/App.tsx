@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
-import * as LazyComponents from "@/routes/routes";
+import { Routes } from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function App() {
@@ -48,7 +48,7 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-      <LazyComponents.Routes />
+      <Routes />
       <Toaster />
     </ThemeProvider>
   );
