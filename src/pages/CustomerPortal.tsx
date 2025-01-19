@@ -31,52 +31,29 @@ export default function CustomerPortal() {
     setIsLoading(true);
 
     try {
-      // First check if agreement exists and get customer details
-      const { data: agreement, error: agreementError } = await supabase
-        .from('leases')
-        .select(`
-          *,
-          customer:customer_id (
-            id,
-            full_name,
-            phone_number,
-            email,
-            address,
-            nationality
-          )
-        `)
-        .eq('agreement_number', agreementNumber)
-        .maybeSingle();
-
-      if (agreementError) throw agreementError;
-
-      if (!agreement) {
-        toast.error('Invalid agreement number');
-        return;
-      }
-
-      // Verify phone number matches
-      if (agreement.customer?.phone_number !== phoneNumber) {
-        toast.error('Invalid credentials');
-        return;
-      }
-
-      // If both checks pass, proceed with portal login
-      const { data: portalResponse, error: portalError } = await supabase.rpc('handle_portal_login', {
+      console.log('Attempting login with:', { agreementNumber, phoneNumber });
+      
+      const { data: response, error: portalError } = await supabase.rpc('handle_portal_login', {
         p_agreement_number: agreementNumber,
         p_phone_number: phoneNumber
       });
 
-      if (portalError) throw portalError;
+      console.log('Login response:', response);
 
-      const response = portalResponse as PortalLoginResponse;
+      if (portalError) {
+        console.error('Portal login error:', portalError);
+        toast.error(portalError.message || 'Failed to login');
+        return;
+      }
 
-      if (response.success) {
+      const loginResponse = response as PortalLoginResponse;
+
+      if (loginResponse.success) {
         setIsAuthenticated(true);
-        setProfile(agreement.customer);
+        setProfile(loginResponse.user);
         toast.success('Login successful');
       } else {
-        toast.error(response.message || 'Invalid credentials');
+        toast.error(loginResponse.message || 'Invalid credentials');
       }
     } catch (error: any) {
       console.error('Login error:', error);
