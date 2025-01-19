@@ -10,62 +10,52 @@ import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 
-interface ProfileManagementProps {
-  profile: {
-    id: string;
-    full_name?: string | null;
-    phone_number?: string | null;
-    email?: string | null;
-    address?: string | null;
-    nationality?: string | null;
-  };
-}
-
-export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
+export const ProfileManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { session } = useAuth();
   const userId = session?.user?.id;
 
   const [formData, setFormData] = useState({
-    full_name: profile?.full_name || "",
-    phone_number: profile?.phone_number || "",
-    email: profile?.email || "",
-    address: profile?.address || "",
-    nationality: profile?.nationality || ""
+    full_name: "",
+    phone_number: "",
+    email: "",
+    address: "",
+    nationality: ""
   });
 
-  // Fetch latest profile data
-  const { data: latestProfile, isLoading } = useQuery({
+  // Fetch profile data
+  const { data: profile, isLoading, refetch } = useQuery({
     queryKey: ["customer-profile", userId],
     queryFn: async () => {
       if (!userId) throw new Error("No user ID");
 
       const { data, error } = await supabase
         .from("profiles")
-        .select()
+        .select("*")
         .eq("id", userId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error("Error fetching profile:", error);
         throw error;
       }
 
-      // Update form data with latest profile info
+      // Update form data with fetched profile
       if (data) {
         setFormData({
-          full_name: data?.full_name || "",
-          phone_number: data?.phone_number || "",
-          email: data?.email || "",
-          address: data?.address || "",
-          nationality: data?.nationality || ""
+          full_name: data.full_name || "",
+          phone_number: data.phone_number || "",
+          email: data.email || "",
+          address: data.address || "",
+          nationality: data.nationality || ""
         });
       }
 
       return data;
     },
-    enabled: !!userId
+    enabled: !!userId,
+    retry: 1
   });
 
   const handleSubmit = async () => {
@@ -85,9 +75,10 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
 
       toast.success("Profile updated successfully");
       setIsEditing(false);
+      refetch();
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      toast.error(error.message || "Failed to update profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -125,7 +116,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{latestProfile?.full_name || "Not provided"}</p>
+              <p className="mt-1">{profile?.full_name || "Not provided"}</p>
             )}
           </div>
 
@@ -139,7 +130,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{latestProfile?.phone_number || "Not provided"}</p>
+              <p className="mt-1">{profile?.phone_number || "Not provided"}</p>
             )}
           </div>
 
@@ -154,7 +145,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{latestProfile?.email || "Not provided"}</p>
+              <p className="mt-1">{profile?.email || "Not provided"}</p>
             )}
           </div>
 
@@ -168,7 +159,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{latestProfile?.nationality || "Not provided"}</p>
+              <p className="mt-1">{profile?.nationality || "Not provided"}</p>
             )}
           </div>
 
@@ -182,7 +173,7 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 }
               />
             ) : (
-              <p className="mt-1">{latestProfile?.address || "Not provided"}</p>
+              <p className="mt-1">{profile?.address || "Not provided"}</p>
             )}
           </div>
 
@@ -192,13 +183,16 @@ export const ProfileManagement = ({ profile }: ProfileManagementProps) => {
                 variant="outline"
                 onClick={() => {
                   setIsEditing(false);
-                  setFormData({
-                    full_name: latestProfile?.full_name || "",
-                    phone_number: latestProfile?.phone_number || "",
-                    email: latestProfile?.email || "",
-                    address: latestProfile?.address || "",
-                    nationality: latestProfile?.nationality || ""
-                  });
+                  // Reset form data to current profile values
+                  if (profile) {
+                    setFormData({
+                      full_name: profile.full_name || "",
+                      phone_number: profile.phone_number || "",
+                      email: profile.email || "",
+                      address: profile.address || "",
+                      nationality: profile.nationality || ""
+                    });
+                  }
                 }}
               >
                 Cancel
