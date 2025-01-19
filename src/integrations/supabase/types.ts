@@ -3464,6 +3464,39 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_users: {
+        Row: {
+          agreement_number: string
+          created_at: string
+          id: string
+          last_login: string | null
+          login_attempts: number | null
+          phone_number: string
+          status: Database["public"]["Enums"]["portal_user_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          agreement_number: string
+          created_at?: string
+          id?: string
+          last_login?: string | null
+          login_attempts?: number | null
+          phone_number: string
+          status?: Database["public"]["Enums"]["portal_user_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          agreement_number?: string
+          created_at?: string
+          id?: string
+          last_login?: string | null
+          login_attempts?: number | null
+          phone_number?: string
+          status?: Database["public"]["Enums"]["portal_user_status"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -5460,6 +5493,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      handle_portal_login: {
+        Args: {
+          p_agreement_number: string
+          p_phone_number: string
+        }
+        Returns: Json
+      }
       has_active_agreements: {
         Args: {
           customer_id: string
@@ -5586,6 +5626,7 @@ export type Database = {
         | "Deposit"
         | "On_hold"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      portal_user_status: "active" | "inactive" | "locked"
       tax_filing_status:
         | "pending"
         | "in_progress"
