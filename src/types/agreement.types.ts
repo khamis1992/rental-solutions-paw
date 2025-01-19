@@ -1,23 +1,38 @@
+export type LeaseStatus = 'active' | 'pending' | 'expired' | 'cancelled' | 'pending_payment' | 'pending_deposit' | 'closed' | 'terminated';
+export type AgreementType = 'lease_to_own' | 'short_term';
+export type DocumentLanguage = 'english' | 'arabic';
+
 export interface Agreement {
   id: string;
-  agreement_number: string;
+  vehicle_id: string;
+  customer_id: string;
+  start_date: string | null;
+  end_date: string | null;
   status: LeaseStatus;
-  start_date: string;
-  end_date: string;
+  initial_mileage: number;
+  return_mileage: number | null;
+  total_amount: number;
+  notes: string | null;
+  agreement_type: AgreementType;
+  agreement_number: string | null;
   rent_amount: number;
-  contractValue: number;
+  rent_due_day: number | null;
   remainingAmount: number;
+  daily_late_fee: number;
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    address: string | null;
+  };
   vehicle?: {
-    license_plate: string;
+    id: string;
     make: string;
     model: string;
-  };
-  customer?: {
-    full_name: string;
+    year: number;
+    license_plate: string;
   };
 }
-
-export type LeaseStatus = 'active' | 'pending' | 'expired' | 'cancelled';
 
 export interface Template {
   id: string;
@@ -25,7 +40,7 @@ export interface Template {
   description: string;
   content: string;
   language: DocumentLanguage;
-  agreement_type: 'lease_to_own' | 'short_term';
+  agreement_type: AgreementType;
   rent_amount: number;
   final_price: number;
   agreement_duration: string;
@@ -40,50 +55,43 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
-export type DocumentLanguage = 'english' | 'arabic';
-
-export interface AgreementWithRelations {
-  id: string;
-  agreement_number: string;
-  status: LeaseStatus;
-  start_date: string;
-  end_date: string;
-  rent_amount: number;
-  daily_late_fee: number;
-  customer?: {
-    full_name: string;
-    email: string;
-    phone_number: string;
-    address: string;
-    nationality: string;
-  };
-  vehicle?: {
-    make: string;
-    model: string;
-    year: number;
-    color: string;
-    license_plate: string;
-    vin: string;
-  };
-}
-
 export interface Payment {
   id: string;
   lease_id: string;
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string;
+  payment_date: string | null;
+  transaction_id: string | null;
   payment_method: string;
   status: string;
   description: string;
   type: string;
   late_fine_amount: number;
   days_overdue: number;
+  is_recurring: boolean;
+  security_deposit_id?: string;
+  next_payment_date?: string;
   created_at: string;
   updated_at: string;
-  transaction_id: string;
-  security_deposit_id: string;
-  is_recurring: boolean;
-  next_payment_date?: string;
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    email: string | null;
+    address: string | null;
+    nationality: string | null;
+  };
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+    vin: string;
+    color: string;
+  };
 }
