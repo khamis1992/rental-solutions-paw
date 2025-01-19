@@ -179,4 +179,3 @@ export const AgreementTableRow = ({
       </TableCell>
     </TableRow>
   );
-};

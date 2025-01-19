@@ -137,7 +137,7 @@ export const AgreementDetailsDialog = ({
   if (!open) return null;
 
   // Get the remaining amount from the view
-  const remainingAmount = agreement?.remainingAmount?.remaining_amount ?? 0;
+  const remainingAmount = agreement?.remainingAmount ?? 0;
 
   const mappedAgreement = agreement ? {
     id: agreement.id,

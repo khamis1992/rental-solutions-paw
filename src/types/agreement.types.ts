@@ -22,21 +22,25 @@ export interface Agreement {
   rent_due_day: number | null;
   remainingAmount: number;
   daily_late_fee: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-    email: string | null;
-    nationality: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
+  customer?: CustomerDetails;
+  vehicle?: VehicleDetails;
+}
+
+export interface CustomerDetails {
+  id: string;
+  full_name: string | null;
+  phone_number: string | null;
+  address: string | null;
+  email: string | null;
+  nationality: string | null;
+}
+
+export interface VehicleDetails {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  license_plate: string;
 }
 
 export interface Template {
@@ -78,4 +82,20 @@ export interface Payment {
   security_deposit_id?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer?: CustomerDetails;
+  vehicle?: VehicleDetails;
+}
+
+export interface PortalLoginResponse {
+  success: boolean;
+  message?: string;
+  user?: {
+    agreement_number: string;
+    status: string;
+    customer_name: string;
+    phone_number: string;
+  };
 }
