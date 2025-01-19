@@ -16,6 +16,8 @@ interface PortalLoginResponse {
   user?: {
     agreement_number: string;
     status: string;
+    customer_name: string;
+    phone_number: string;
   };
 }
 
@@ -69,7 +71,7 @@ export default function CustomerPortal() {
         <div className="container py-8 space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.full_name}</h1>
+            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.customer_name}</h1>
             <p className="text-muted-foreground">Manage your rentals and account details</p>
           </div>
 
@@ -77,8 +79,8 @@ export default function CustomerPortal() {
           <ProfileManagement profile={profile} />
 
           {/* Payment History Section */}
-          {profile?.id && (
-            <PaymentHistory customerId={profile.id} />
+          {profile?.agreement_number && (
+            <PaymentHistory customerId={profile.agreement_number} />
           )}
 
           {/* Feedback Section */}
