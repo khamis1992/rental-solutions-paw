@@ -1,39 +1,9 @@
-export type LeaseStatus = 'active' | 'pending_payment' | 'pending_deposit' | 'closed' | 'terminated' | 'cancelled';
-export type AgreementType = 'lease_to_own' | 'short_term';
-export type DocumentLanguage = 'english' | 'arabic';
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+import { Database } from "./database/database.types";
 
-export interface Agreement {
-  id: string;
-  vehicle_id: string;
-  customer_id: string;
-  start_date: string | null;
-  end_date: string | null;
-  status: LeaseStatus;
-  initial_mileage: number;
-  return_mileage: number | null;
-  total_amount: number;
-  notes: string | null;
-  agreement_type: AgreementType;
-  agreement_number: string | null;
-  rent_amount: number;
-  rent_due_day: number | null;
-  remainingAmount: number;
-  daily_late_fee: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
+export type LeaseStatus = Database['public']['Enums']['lease_status'];
+export type AgreementType = "lease_to_own" | "short_term";
+export type DocumentLanguage = "english" | "arabic";
+export type PaymentStatus = "pending" | "completed" | "failed" | "cancelled";
 
 export interface Template {
   id: string;
@@ -49,11 +19,28 @@ export interface Template {
   damage_penalty_rate: number;
   late_return_fee: number;
   is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
   template_structure: Record<string, any>;
   template_sections: any[];
   variable_mappings: Record<string, any>;
+}
+
+export interface Agreement {
+  id: string;
+  agreement_number: string;
+  status: LeaseStatus;
+  start_date: string;
+  end_date: string;
+  rent_amount: number;
+  contractValue: number;
+  remainingAmount: number;
+  customer_id: string;
+  vehicle_id: string;
+  initial_mileage: number;
+  agreement_type: AgreementType;
+  daily_late_fee: number;
+  agreement_duration: string;
 }
 
 export interface Payment {
@@ -62,17 +49,17 @@ export interface Payment {
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string | null;
-  transaction_id: string | null;
+  payment_date: string;
   payment_method: string;
   status: PaymentStatus;
   description: string;
   type: string;
   late_fine_amount: number;
   days_overdue: number;
+  transaction_id: string;
+  security_deposit_id: string;
   is_recurring: boolean;
-  security_deposit_id?: string;
-  next_payment_date?: string;
+  next_payment_date: string;
   created_at: string;
   updated_at: string;
 }
