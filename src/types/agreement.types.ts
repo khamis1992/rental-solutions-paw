@@ -1,25 +1,26 @@
+import { Database } from "@/integrations/supabase/types";
+
+export type LeaseStatus = Database['public']['Enums']['lease_status'];
+export type AgreementType = Database['public']['Enums']['agreement_type'];
+export type PaymentStatus = Database['public']['Enums']['payment_status'];
+export type DocumentLanguage = 'english' | 'arabic';
+
 export interface Agreement {
   id: string;
   vehicle_id: string;
   customer_id: string;
   start_date: string | null;
   end_date: string | null;
-  status: string;
+  status: LeaseStatus;
   initial_mileage: number;
   return_mileage: number | null;
   total_amount: number;
   notes: string | null;
-  created_at: string;
-  updated_at: string;
-  agreement_type: "lease_to_own" | "short_term";
-  down_payment: number | null;
-  monthly_payment: number | null;
-  interest_rate: number | null;
-  lease_duration: string | null;
+  agreement_type: AgreementType;
   agreement_number: string | null;
   rent_amount: number;
   rent_due_day: number | null;
-  remaining_amount: number;
+  remainingAmount: number;
   daily_late_fee: number;
   customer?: {
     id: string;
@@ -39,21 +40,22 @@ export interface Agreement {
 export interface Template {
   id: string;
   name: string;
-  description: string;
-  content: string;
-  language: string;
-  agreement_type: "lease_to_own" | "short_term";
+  description: string | null;
+  agreement_type: AgreementType;
   rent_amount: number;
   final_price: number;
   agreement_duration: string;
   daily_late_fee: number;
   damage_penalty_rate: number;
   late_return_fee: number;
-  created_at: string;
-  updated_at: string;
-  template_structure: any;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  content: string;
+  language: DocumentLanguage;
+  template_structure: Record<string, any>;
   template_sections: any[];
-  variable_mappings: any;
+  variable_mappings: Record<string, any>;
 }
 
 export interface Payment {
@@ -62,16 +64,16 @@ export interface Payment {
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string;
+  payment_date: string | null;
+  transaction_id: string | null;
   payment_method: string;
-  status: string;
+  status: PaymentStatus;
   description: string;
   type: string;
   late_fine_amount: number;
   days_overdue: number;
-  transaction_id: string | null;
-  security_deposit_id: string | null;
-  is_recurring: boolean;
+  is_recurring?: boolean;
+  security_deposit_id?: string;
   created_at: string;
   updated_at: string;
 }
