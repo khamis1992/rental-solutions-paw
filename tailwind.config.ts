@@ -28,33 +28,49 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#F97316',
-          hover: '#F97316CC',
+          DEFAULT: '#F97316', // Vibrant orange
           light: '#FB923C',
           dark: '#EA580C',
+          foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
-          DEFAULT: '#221F26',
-          hover: '#221F26CC',
-          light: '#2C2933',
-          dark: '#18161C',
+          DEFAULT: '#222222', // Dark gray
+          light: '#333333',
+          dark: '#111111',
+          foreground: 'hsl(var(--secondary-foreground))'
         },
-        highlight: '#FEF7CD',
-        success: '#F2FCE2',
-        info: '#D3E4FD',
         background: {
           DEFAULT: '#FFFFFF',
           alt: '#F3F4F6',
         },
-        text: {
-          DEFAULT: '#222222',
-          muted: '#666666',
+        neutral: {
+          DEFAULT: '#F1F1F1',
+          dark: '#E5E5E5',
         },
-        muted: '#F3F4F6',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         foreground: 'hsl(var(--foreground))',
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))'
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))'
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))'
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))'
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))'
+        },
       },
       boxShadow: {
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -63,32 +79,18 @@ export default {
         'button-hover': '0 4px 6px rgba(0, 0, 0, 0.15)',
       },
       borderRadius: {
-        lg: '0.75rem',
-        md: '0.5rem',
-        sm: '0.25rem',
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)'
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       fontSize: {
-        // Headings
-        'h1': ['2rem', { lineHeight: '2.5rem', fontWeight: '700' }],
-        'h2': ['1.5rem', { lineHeight: '2rem', fontWeight: '600' }],
-        'h3': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
-        // Body
-        'body': ['1rem', { lineHeight: '1.5rem', fontWeight: '400' }],
-      },
-      spacing: {
-        'header': '56px',
-        'sidebar': '280px',
-        'section': '2rem',
-        'grid-gap': '1.5rem',
-      },
-      transitionDuration: {
-        DEFAULT: '300ms',
-      },
-      transitionTimingFunction: {
-        DEFAULT: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'mobile-h1': ['1.75rem', { lineHeight: '2rem' }],
+        'mobile-h2': ['1.5rem', { lineHeight: '1.75rem' }],
+        'mobile-h3': ['1.25rem', { lineHeight: '1.5rem' }],
+        'mobile-body': ['1rem', { lineHeight: '1.5rem' }],
       },
       keyframes: {
         "accordion-down": {

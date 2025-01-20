@@ -22,11 +22,11 @@ export interface Agreement {
   rent_due_day: number | null;
   remainingAmount: number;
   daily_late_fee: number;
-  customer?: CustomerDetails;
-  vehicle?: VehicleDetails;
+  customer?: CustomerInfo;
+  vehicle?: VehicleInfo;
 }
 
-export interface CustomerDetails {
+export interface CustomerInfo {
   id: string;
   full_name: string | null;
   phone_number: string | null;
@@ -35,7 +35,7 @@ export interface CustomerDetails {
   nationality: string | null;
 }
 
-export interface VehicleDetails {
+export interface VehicleInfo {
   id: string;
   make: string;
   model: string;
@@ -82,11 +82,6 @@ export interface Payment {
   security_deposit_id?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer?: CustomerDetails;
-  vehicle?: VehicleDetails;
 }
 
 export interface PortalLoginResponse {
