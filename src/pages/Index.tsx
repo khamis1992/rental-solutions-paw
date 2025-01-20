@@ -53,7 +53,7 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="w-full bg-background">
+      <div className="w-full bg-background pt-[var(--header-height,56px)]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col gap-8">
             <div className="w-full">
