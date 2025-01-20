@@ -2,7 +2,7 @@ import { AuthContainer } from "@/components/auth/AuthContainer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { UserRound } from "lucide-react"; // Import the UserRound icon
+import { UserRound } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
