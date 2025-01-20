@@ -110,26 +110,19 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid gap-8 lg:grid-cols-7">
-        {/* Vehicle Status Chart */}
-        <div className="lg:col-span-4">
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold">Vehicle Status</h2>
-              <select className="text-sm border rounded-md px-2 py-1">
-                <option>All Vehicle Types</option>
-              </select>
-            </div>
-            <VehicleStatusChart />
-          </Card>
+      {/* Vehicle Status Chart */}
+      <Card className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold">Vehicle Status</h2>
+          <select className="text-sm border rounded-md px-2 py-1">
+            <option>All Vehicle Types</option>
+          </select>
         </div>
+        <VehicleStatusChart />
+      </Card>
 
-        {/* Alerts & Notifications */}
-        <div className="lg:col-span-3">
-          <DashboardAlerts />
-        </div>
-      </div>
+      {/* Alerts & Notifications */}
+      <DashboardAlerts />
     </div>
   );
 };
