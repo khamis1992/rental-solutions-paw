@@ -1,7 +1,6 @@
 import { Car, FileText, DollarSign, TrendingUp } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
 import { formatCurrency } from "@/lib/utils";
@@ -50,70 +49,76 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-      <WelcomeHeader />
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
+        <div>
+          <WelcomeHeader />
+          <p className="text-gray-300">Welcome back to your dashboard. Here's what's happening today.</p>
+        </div>
+        <Button variant="default" size="lg" className="bg-primary hover:bg-primary/90">
+          + New Agreement
+        </Button>
+      </div>
       
       {/* Stats Grid */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Vehicles
-            </CardTitle>
+        <Card className="p-6 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Total Vehicles</span>
             <Car className="h-5 w-5 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold tracking-tight">
+          </div>
+          <div className="space-y-1">
+            <div className="text-2xl font-bold">
               {stats?.totalVehicles || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1.5">
+            <p className="text-sm text-muted-foreground">
               Fleet size
             </p>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card className="bg-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Rentals
-            </CardTitle>
+        <Card className="p-6 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Active Rentals</span>
             <FileText className="h-5 w-5 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold tracking-tight">
+          </div>
+          <div className="space-y-1">
+            <div className="text-2xl font-bold">
               {stats?.activeRentals || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1.5">
+            <p className="text-sm text-muted-foreground">
               Currently rented
             </p>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card className="bg-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Monthly Revenue
-            </CardTitle>
+        <Card className="p-6 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Monthly Revenue</span>
             <DollarSign className="h-5 w-5 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold tracking-tight">
-              {formatCurrency(stats?.monthlyRevenue || 0)}
+          </div>
+          <div className="space-y-1">
+            <div className="text-2xl font-bold">
+              QAR {formatCurrency(stats?.monthlyRevenue || 0)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1.5 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-1 text-emerald-600" />
-              <span className="text-emerald-600">This month</span>
-            </p>
-          </CardContent>
+            <div className="flex items-center text-sm text-emerald-600">
+              <TrendingUp className="h-4 w-4 mr-1" />
+              <span>This month</span>
+            </div>
+          </div>
         </Card>
       </div>
 
       {/* Vehicle Status Chart */}
-      <div className="space-y-6">
+      <Card className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold">Vehicle Status</h2>
+          <select className="text-sm border rounded-md px-2 py-1">
+            <option>All Vehicle Types</option>
+          </select>
+        </div>
         <VehicleStatusChart />
-      </div>
-
-      <DashboardAlerts />
+      </Card>
     </div>
   );
 };
