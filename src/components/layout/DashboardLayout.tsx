@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { Outlet } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface DashboardLayoutProps {
   children?: ReactNode;
@@ -9,14 +10,16 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
-    <div className="relative flex min-h-screen">
-      <DashboardSidebar />
-      <div className="flex-1">
-        <DashboardHeader />
-        <main className="flex-1">
-          {children || <Outlet />}
-        </main>
+    <SidebarProvider>
+      <div className="relative flex min-h-screen w-full">
+        <DashboardSidebar />
+        <div className="flex-1">
+          <DashboardHeader />
+          <main className="flex-1">
+            {children || <Outlet />}
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
