@@ -1,26 +1,24 @@
-import { useEffect } from "react";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSessionContext } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AuthContainer = () => {
+  const { isLoading, session } = useSessionContext();
   const navigate = useNavigate();
-  const { session, isLoading } = useSessionContext();
 
-  useEffect(() => {
-    if (session) {
-      navigate('/');
-    }
-  }, [session, navigate]);
+  if (session) {
+    navigate("/");
+    return null;
+  }
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-background-alt">
-        <div className="m-auto w-full max-w-md">
+      <div className="flex flex-1 items-center justify-center p-4">
+        <div className="w-full max-w-md">
           <Card className="p-8">
             <div className="space-y-4">
               <Skeleton className="h-8 w-3/4 mx-auto" />
@@ -35,15 +33,15 @@ export const AuthContainer = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background-alt">
-      <div className="m-auto w-full max-w-md">
+    <div className="flex flex-1 items-center justify-center p-4">
+      <div className="w-full max-w-md">
         <Card className="p-8">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Rental Solutions</h1>
             <p className="text-gray-600">Please sign in to continue</p>
           </div>
           
-          <SupabaseAuth
+          <Auth
             supabaseClient={supabase}
             appearance={{
               theme: ThemeSupa,
@@ -57,20 +55,6 @@ export const AuthContainer = () => {
                     inputBorder: '#E5E7EB',
                     inputBorderHover: '#F97316',
                     inputBorderFocus: '#F97316',
-                  },
-                  borderWidths: {
-                    buttonBorderWidth: '1px',
-                    inputBorderWidth: '1px',
-                  },
-                  borderRadii: {
-                    borderRadiusButton: '0.5rem',
-                    buttonBorderRadius: '0.5rem',
-                    inputBorderRadius: '0.5rem',
-                  },
-                  space: {
-                    spaceSmall: '0.75rem',
-                    spaceMedium: '1rem',
-                    spaceLarge: '1.25rem',
                   },
                   fonts: {
                     bodyFontFamily: `'Inter', sans-serif`,
@@ -89,7 +73,6 @@ export const AuthContainer = () => {
               }
             }}
             providers={[]}
-            redirectTo={window.location.origin}
           />
         </Card>
       </div>
