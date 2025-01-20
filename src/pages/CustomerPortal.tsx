@@ -16,8 +16,6 @@ interface PortalLoginResponse {
   user?: {
     agreement_number: string;
     status: string;
-    customer_name: string;
-    phone_number: string;
   };
 }
 
@@ -33,29 +31,41 @@ export default function CustomerPortal() {
     setIsLoading(true);
 
     try {
-      console.log('Attempting login with:', { agreementNumber, phoneNumber });
-      
-      const { data: response, error: portalError } = await supabase.rpc('handle_portal_login', {
+      const { data, error } = await supabase.rpc('handle_portal_login', {
         p_agreement_number: agreementNumber,
         p_phone_number: phoneNumber
       });
 
-      console.log('Login response:', response);
+      if (error) throw error;
 
-      if (portalError) {
-        console.error('Portal login error:', portalError);
-        toast.error(portalError.message || 'Failed to login');
-        return;
-      }
+      // Cast the response to our expected type
+      const response = data as unknown as PortalLoginResponse;
 
-      const loginResponse = response as PortalLoginResponse;
-
-      if (loginResponse.success) {
+      if (response.success) {
         setIsAuthenticated(true);
-        setProfile(loginResponse.user);
+        // Get agreement details for the profile
+        const { data: agreementData } = await supabase
+          .from('leases')
+          .select(`
+            *,
+            customer:customer_id (
+              id,
+              full_name,
+              phone_number,
+              email,
+              address,
+              nationality
+            )
+          `)
+          .eq('agreement_number', agreementNumber)
+          .single();
+
+        if (agreementData) {
+          setProfile(agreementData.customer);
+        }
         toast.success('Login successful');
       } else {
-        toast.error(loginResponse.message || 'Invalid credentials');
+        toast.error(response.message || 'Invalid credentials');
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -71,7 +81,7 @@ export default function CustomerPortal() {
         <div className="container py-8 space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.customer_name}</h1>
+            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.full_name}</h1>
             <p className="text-muted-foreground">Manage your rentals and account details</p>
           </div>
 
@@ -79,8 +89,8 @@ export default function CustomerPortal() {
           <ProfileManagement profile={profile} />
 
           {/* Payment History Section */}
-          {profile?.agreement_number && (
-            <PaymentHistory customerId={profile.agreement_number} />
+          {profile?.id && (
+            <PaymentHistory customerId={profile.id} />
           )}
 
           {/* Feedback Section */}

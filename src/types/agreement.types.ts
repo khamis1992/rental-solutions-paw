@@ -20,17 +20,30 @@ export interface Agreement {
   agreement_number: string | null;
   rent_amount: number;
   rent_due_day: number | null;
-  remainingAmount: number;
-  daily_late_fee: number;
+  remainingAmount?: number;
   customer?: {
     id: string;
     full_name: string | null;
     phone_number: string | null;
     address: string | null;
-    email: string | null;
-    nationality: string | null;
   };
   vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    address: string | null;
+  };
+  vehicle: {
     id: string;
     make: string;
     model: string;
@@ -66,7 +79,7 @@ export interface Payment {
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string;
+  payment_date: string | null;
   transaction_id: string | null;
   payment_method: string;
   status: PaymentStatus;
@@ -74,7 +87,7 @@ export interface Payment {
   type: string;
   late_fine_amount: number;
   days_overdue: number;
-  is_recurring: boolean;
+  is_recurring?: boolean;
   security_deposit_id?: string;
   created_at: string;
   updated_at: string;
