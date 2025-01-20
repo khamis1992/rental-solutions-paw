@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { session } = useAuth();
+  const { session } = useSessionContext();
   const navigate = useNavigate();
 
   useEffect(() => {

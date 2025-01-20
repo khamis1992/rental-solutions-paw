@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
+import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -9,13 +9,19 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { session } = useAuth();
+  const { session } = useSessionContext();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUserRole = async () => {
+      // Allow access to auth and customer portal without session
+      if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
+        setIsLoading(false);
+        return;
+      }
+
       if (!session?.user) {
         navigate("/auth");
         setIsLoading(false);
@@ -60,8 +66,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // For customer users, only allow access to customer portal
   if (userRole === "customer" && window.location.pathname !== "/customer-portal") {
-    navigate("/customer-portal");
-    return null;
+    return null; // Navigate is already called in the effect
   }
 
   return <>{children}</>;

@@ -20,7 +20,8 @@ export interface Agreement {
   agreement_number: string | null;
   rent_amount: number;
   rent_due_day: number | null;
-  remainingAmount?: number;
+  remainingAmount: number;
+  daily_late_fee: number;
   customer?: {
     id: string;
     full_name: string | null;
@@ -28,22 +29,6 @@ export interface Agreement {
     address: string | null;
   };
   vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-  };
-  vehicle: {
     id: string;
     make: string;
     model: string;
