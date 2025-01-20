@@ -1,27 +1,22 @@
-import { Outlet } from 'react-router-dom';
+import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Outlet } from "react-router-dom";
 
-export const DashboardLayout = () => {
-  const isMobile = useIsMobile();
+interface DashboardLayoutProps {
+  children?: ReactNode;
+}
 
+export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
-    <div className="min-h-screen bg-background">
-      <SidebarProvider defaultOpen={!isMobile}>
-        <div className="flex w-full">
-          <DashboardSidebar />
-          <div className="flex-1 flex flex-col min-h-screen">
-            <DashboardHeader />
-            <main className="flex-1 p-4 md:p-6 pt-[calc(var(--header-height)+1rem)] transition-all duration-200 ease-in-out">
-              <div className="mx-auto max-w-7xl space-y-6">
-                <Outlet />
-              </div>
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
+    <div className="relative flex min-h-screen">
+      <DashboardSidebar />
+      <div className="flex-1">
+        <DashboardHeader />
+        <main className="flex-1">
+          {children || <Outlet />}
+        </main>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,24 +17,31 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     const checkUserRole = async () => {
-      // Allow access to auth and customer portal without session
-      if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
-        setIsLoading(false);
-        return;
-      }
-
-      if (!session?.user) {
-        navigate("/auth");
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const { data: profile } = await supabase
+        // Allow access to auth and customer portal without session
+        if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
+          setIsLoading(false);
+          return;
+        }
+
+        if (!session?.user) {
+          navigate("/auth");
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", session.user.id)
-          .single();
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching user role:", error);
+          toast.error("Error fetching user profile");
+          navigate("/auth");
+          return;
+        }
 
         setUserRole(profile?.role || null);
 
@@ -42,10 +50,12 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           navigate("/customer-portal");
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
+        console.error("Error in checkUserRole:", error);
+        toast.error("An error occurred while checking user access");
+        navigate("/auth");
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     checkUserRole();
@@ -66,7 +76,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // For customer users, only allow access to customer portal
   if (userRole === "customer" && window.location.pathname !== "/customer-portal") {
-    return null; // Navigate is already called in the effect
+    return null;
   }
 
   return <>{children}</>;
