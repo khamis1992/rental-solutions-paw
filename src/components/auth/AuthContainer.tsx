@@ -17,7 +17,7 @@ export const AuthContainer = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="w-full max-w-md">
           <Card className="p-8">
             <div className="space-y-4">
@@ -33,7 +33,7 @@ export const AuthContainer = () => {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md">
         <Card className="p-8">
           <div className="mb-8 text-center">
