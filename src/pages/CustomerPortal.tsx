@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import { PaymentHistory } from '@/components/customers/portal/PaymentHistory';
 import { CustomerFeedback } from '@/components/customers/portal/CustomerFeedback';
 import { ProfileManagement } from '@/components/customers/portal/ProfileManagement';
 import { toast } from 'sonner';
+import { useNavigate } from "react-router-dom";
 
 interface PortalLoginResponse {
   success: boolean;
@@ -25,6 +26,7 @@ export default function CustomerPortal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +40,10 @@ export default function CustomerPortal() {
 
       if (error) throw error;
 
-      // Cast the response to our expected type
       const response = data as unknown as PortalLoginResponse;
 
       if (response.success) {
         setIsAuthenticated(true);
-        // Get agreement details for the profile
         const { data: agreementData } = await supabase
           .from('leases')
           .select(`
@@ -75,14 +75,40 @@ export default function CustomerPortal() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear authentication state
+    setIsAuthenticated(false);
+    setProfile(null);
+    
+    // Clear form data
+    setAgreementNumber('');
+    setPhoneNumber('');
+    
+    // Show success message
+    toast.success('Logged out successfully');
+    
+    // Redirect to login page
+    navigate('/customer-portal');
+  };
+
   if (isAuthenticated && profile) {
     return (
       <div className="min-h-screen bg-background-alt">
         <div className="container py-8 space-y-8">
-          {/* Welcome Section */}
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.full_name}</h1>
-            <p className="text-muted-foreground">Manage your rentals and account details</p>
+          {/* Header with Logout Button */}
+          <div className="flex justify-between items-center">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.full_name}</h1>
+              <p className="text-muted-foreground">Manage your rentals and account details</p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Log Out
+            </Button>
           </div>
 
           {/* Profile Management Section */}
