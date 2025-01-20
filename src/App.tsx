@@ -16,7 +16,7 @@ export default function App() {
   useEffect(() => {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (event === 'SIGNED_OUT') {
         navigate('/auth');
       } else if (event === 'SIGNED_IN') {
         // Refresh the session to ensure we have valid JWT
