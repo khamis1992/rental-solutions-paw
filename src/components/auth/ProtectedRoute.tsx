@@ -1,65 +1,68 @@
-import { ReactNode, useEffect, useState } from "react";
-import { Suspense } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
-import { RouteWrapper } from "@/components/layout/RouteWrapper";
-import { AuthGuard } from "./AuthGuard";
-import { useSessionContext } from "@supabase/auth-helpers-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { session } = useSessionContext();
-  const location = useLocation();
-  const [isCustomer, setIsCustomer] = useState<boolean | null>(null);
+  const { session } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkCustomerRole = async () => {
-      if (!session?.user?.id) {
-        setIsCustomer(false);
+    const checkUserRole = async () => {
+      if (!session?.user) {
+        navigate("/auth");
         setIsLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
           .single();
 
-        if (error) throw error;
-        setIsCustomer(data?.role === 'customer');
+        setUserRole(profile?.role || null);
+
+        // Only redirect if we're not already on the customer portal
+        if (profile?.role === "customer" && window.location.pathname !== "/customer-portal") {
+          navigate("/customer-portal");
+        }
       } catch (error) {
-        console.error('Error checking user role:', error);
-        setIsCustomer(false);
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching user role:", error);
       }
+
+      setIsLoading(false);
     };
 
-    checkCustomerRole();
-  }, [session]);
+    checkUserRole();
+  }, [session, navigate]);
 
   if (isLoading) {
-    return <Skeleton className="h-screen w-screen" />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  if (isCustomer && location.pathname !== '/customer-portal') {
-    toast.error('Access restricted. Redirecting to customer portal.');
-    return <Navigate to="/customer-portal" replace />;
+  // Allow access to auth and customer portal without restrictions
+  if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
+    return <>{children}</>;
   }
 
-  return (
-    <AuthGuard>
-      <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-        <RouteWrapper>{children}</RouteWrapper>
-      </Suspense>
-    </AuthGuard>
-  );
+  // For customer users, only allow access to customer portal
+  if (userRole === "customer" && window.location.pathname !== "/customer-portal") {
+    navigate("/customer-portal");
+    return null;
+  }
+
+  return <>{children}</>;
 };

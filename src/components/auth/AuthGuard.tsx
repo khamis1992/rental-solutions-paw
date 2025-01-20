@@ -1,23 +1,23 @@
-import { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
-import { useSessionContext } from "@supabase/auth-helpers-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AuthGuardProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { session, isLoading } = useSessionContext();
-  const location = useLocation();
+  const { session } = useAuth();
+  const navigate = useNavigate();
 
-  if (isLoading) {
-    return <Skeleton className="h-screen w-screen" />;
-  }
-
-  if (!session) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
+  useEffect(() => {
+    // Only redirect if not on auth or customer portal
+    if (!session && 
+        window.location.pathname !== "/auth" && 
+        window.location.pathname !== "/customer-portal") {
+      navigate("/auth");
+    }
+  }, [session, navigate]);
 
   return <>{children}</>;
 };
