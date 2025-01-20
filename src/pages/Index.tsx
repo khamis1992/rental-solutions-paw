@@ -34,6 +34,20 @@ const SystemChatbot = lazyLoadComponent(
   "SystemChatbot"
 );
 
+const ComponentLoader = ({ componentName }: { componentName: string }) => (
+  <div className="w-full h-[200px] space-y-4 p-4">
+    <div className="h-4 w-1/4">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="h-[160px]">
+      <Skeleton className="h-full w-full rounded-lg" />
+    </div>
+    <div className="text-sm text-muted-foreground text-center">
+      Loading {componentName}...
+    </div>
+  </div>
+);
+
 const Index = () => {
   usePerformanceMonitoring();
 
@@ -90,19 +104,5 @@ const Index = () => {
     </DashboardLayout>
   );
 };
-
-const ComponentLoader = ({ componentName }: { componentName: string }) => (
-  <div className="w-full h-[200px] space-y-4 p-4">
-    <div className="h-4 w-1/4">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="h-[160px]">
-      <Skeleton className="h-full w-full rounded-lg" />
-    </div>
-    <div className="text-sm text-muted-foreground text-center">
-      Loading {componentName}...
-    </div>
-  </div>
-);
 
 export default Index;
