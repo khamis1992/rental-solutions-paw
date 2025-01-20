@@ -50,15 +50,38 @@ export const AuthContainer = () => {
               variables: {
                 default: {
                   colors: {
-                    brand: '#2563eb',
-                    brandAccent: '#1d4ed8',
-                  }
+                    brand: '#F97316',
+                    brandAccent: '#EA580C',
+                    inputBackground: 'white',
+                    inputText: 'black',
+                    inputPlaceholder: '#9CA3AF',
+                  },
+                  space: {
+                    inputPadding: '1rem',
+                    buttonPadding: '1rem',
+                  },
+                  borderWidths: {
+                    buttonBorderWidth: '1px',
+                    inputBorderWidth: '1px',
+                  },
+                  radii: {
+                    borderRadiusButton: '0.5rem',
+                    buttonBorderRadius: '0.5rem',
+                    inputBorderRadius: '0.5rem',
+                  },
+                  fonts: {
+                    bodyFontFamily: `'Inter', sans-serif`,
+                    buttonFontFamily: `'Inter', sans-serif`,
+                    inputFontFamily: `'Inter', sans-serif`,
+                  },
                 }
               },
               className: {
                 container: 'w-full',
-                button: 'w-full px-4 py-2 rounded',
-                input: 'w-full px-3 py-2 border rounded',
+                button: 'w-full bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded transition-colors',
+                input: 'w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+                label: 'block text-sm font-medium text-gray-700 mb-1',
+                anchor: 'text-primary hover:text-primary-dark',
               }
             }}
             providers={[]}
