@@ -1,17 +1,10 @@
-'use client';
-
-import { ReactNode } from "react";
+import { Outlet } from 'react-router-dom';
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+export const DashboardLayout = () => {
   const isMobile = useIsMobile();
 
   return (
@@ -23,7 +16,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <DashboardHeader />
             <main className="flex-1 p-4 md:p-6 pt-[calc(var(--header-height)+1rem)] transition-all duration-200 ease-in-out">
               <div className="mx-auto max-w-7xl space-y-6">
-                {children}
+                <Outlet />
               </div>
             </main>
           </div>
