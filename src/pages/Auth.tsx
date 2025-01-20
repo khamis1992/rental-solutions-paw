@@ -2,6 +2,7 @@ import { AuthContainer } from "@/components/auth/AuthContainer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { UserRound } from "lucide-react"; // Import the UserRound icon
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,10 +18,12 @@ const Auth = () => {
 
           <div className="space-y-4">
             <Button 
-              variant="outline" 
-              className="w-full"
+              variant="default" 
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 text-white flex items-center justify-center gap-2"
               onClick={() => navigate("/customer-portal")}
             >
+              <UserRound className="w-5 h-5" />
               Customer Portal Login
             </Button>
             
@@ -30,7 +33,7 @@ const Auth = () => {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or
+                  Or continue with
                 </span>
               </div>
             </div>
