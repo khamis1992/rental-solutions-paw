@@ -39,44 +39,46 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen w-full">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-          <ErrorBoundary>
-            <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
-              <WelcomeHeader />
-            </Suspense>
-          </ErrorBoundary>
+      <div className="w-full bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="space-y-8">
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
+                <WelcomeHeader />
+              </Suspense>
+            </ErrorBoundary>
 
-          <ErrorBoundary>
-            <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-              <DashboardStats />
-            </Suspense>
-          </ErrorBoundary>
-          
-          <div className="grid gap-8 lg:grid-cols-7">
-            <div className="lg:col-span-7">
-              <ErrorBoundary>
-                <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
-                  <DashboardAlerts />
-                </Suspense>
-              </ErrorBoundary>
+            <ErrorBoundary>
+              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
+                <DashboardStats />
+              </Suspense>
+            </ErrorBoundary>
+            
+            <div className="grid gap-8 lg:grid-cols-7">
+              <div className="lg:col-span-7">
+                <ErrorBoundary>
+                  <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
+                    <DashboardAlerts />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
-          </div>
-          
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-            <div className="lg:col-span-4">
-              <ErrorBoundary>
-                <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
-                  <RecentActivity />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-            <div className="lg:col-span-3">
-              <ErrorBoundary>
-                <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
-                  <SystemChatbot />
-                </Suspense>
-              </ErrorBoundary>
+            
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+              <div className="lg:col-span-4">
+                <ErrorBoundary>
+                  <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
+                    <RecentActivity />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+              <div className="lg:col-span-3">
+                <ErrorBoundary>
+                  <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
+                    <SystemChatbot />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
           </div>
         </div>
