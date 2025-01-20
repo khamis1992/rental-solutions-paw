@@ -19,7 +19,7 @@ export const AuthContainer = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-background-alt">
         <div className="m-auto w-full max-w-md">
           <Card className="p-8">
             <div className="space-y-4">
@@ -35,11 +35,11 @@ export const AuthContainer = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-background-alt">
       <div className="m-auto w-full max-w-md">
         <Card className="p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold mb-2">Welcome to Rental Solutions</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Rental Solutions</h1>
             <p className="text-gray-600">Please sign in to continue</p>
           </div>
           
@@ -50,15 +50,42 @@ export const AuthContainer = () => {
               variables: {
                 default: {
                   colors: {
-                    brand: '#2563eb',
-                    brandAccent: '#1d4ed8',
-                  }
+                    brand: '#F97316',
+                    brandAccent: '#EA580C',
+                    inputBackground: 'white',
+                    inputText: '#374151',
+                    inputBorder: '#E5E7EB',
+                    inputBorderHover: '#F97316',
+                    inputBorderFocus: '#F97316',
+                  },
+                  borderWidths: {
+                    buttonBorderWidth: '1px',
+                    inputBorderWidth: '1px',
+                  },
+                  borderRadii: {
+                    borderRadiusButton: '0.5rem',
+                    buttonBorderRadius: '0.5rem',
+                    inputBorderRadius: '0.5rem',
+                  },
+                  space: {
+                    spaceSmall: '0.75rem',
+                    spaceMedium: '1rem',
+                    spaceLarge: '1.25rem',
+                  },
+                  fonts: {
+                    bodyFontFamily: `'Inter', sans-serif`,
+                    buttonFontFamily: `'Inter', sans-serif`,
+                    inputFontFamily: `'Inter', sans-serif`,
+                    labelFontFamily: `'Inter', sans-serif`,
+                  },
                 }
               },
               className: {
                 container: 'w-full',
-                button: 'w-full px-4 py-2 rounded',
-                input: 'w-full px-3 py-2 border rounded',
+                button: 'w-full px-4 py-2 rounded-lg font-medium transition-colors',
+                input: 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20',
+                label: 'text-sm font-medium text-gray-700 mb-1',
+                anchor: 'text-primary hover:text-primary-dark transition-colors',
               }
             }}
             providers={[]}
