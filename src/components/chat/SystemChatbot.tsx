@@ -121,7 +121,7 @@ export const SystemChatbot = () => {
 
   if (isCheckingKey) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
         <CardContent className="flex items-center justify-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
@@ -131,7 +131,7 @@ export const SystemChatbot = () => {
 
   if (isKeyError) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
         <CardContent className="py-10">
           <p className="text-center text-muted-foreground">
             Chat service is currently unavailable. Please try again later.
@@ -142,7 +142,7 @@ export const SystemChatbot = () => {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>Rental Solutions Assistant</span>
