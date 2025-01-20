@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,16 +110,26 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Vehicle Status Chart */}
-      <Card className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold">Vehicle Status</h2>
-          <select className="text-sm border rounded-md px-2 py-1">
-            <option>All Vehicle Types</option>
-          </select>
+      {/* Two Column Layout */}
+      <div className="grid gap-8 lg:grid-cols-7">
+        {/* Vehicle Status Chart */}
+        <div className="lg:col-span-4">
+          <Card className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold">Vehicle Status</h2>
+              <select className="text-sm border rounded-md px-2 py-1">
+                <option>All Vehicle Types</option>
+              </select>
+            </div>
+            <VehicleStatusChart />
+          </Card>
         </div>
-        <VehicleStatusChart />
-      </Card>
+
+        {/* Alerts & Notifications */}
+        <div className="lg:col-span-3">
+          <DashboardAlerts />
+        </div>
+      </div>
     </div>
   );
 };
