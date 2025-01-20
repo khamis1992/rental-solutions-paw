@@ -41,20 +41,24 @@ const Index = () => {
     <DashboardLayout>
       <div className="w-full bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="space-y-8">
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
-                <WelcomeHeader />
-              </Suspense>
-            </ErrorBoundary>
+          <div className="flex flex-col gap-8">
+            <div className="w-full">
+              <ErrorBoundary>
+                <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
+                  <WelcomeHeader />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
 
-            <ErrorBoundary>
-              <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                <DashboardStats />
-              </Suspense>
-            </ErrorBoundary>
+            <div className="w-full">
+              <ErrorBoundary>
+                <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
+                  <DashboardStats />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
             
-            <div className="grid gap-8 lg:grid-cols-7">
+            <div className="w-full">
               <div className="lg:col-span-7">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
