@@ -4,7 +4,8 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   const lowercaseQuery = query.toLowerCase();
   
   // Vehicle-related queries
-  if (lowercaseQuery.includes('how many vehicles') || lowercaseQuery.includes('vehicle count')) {
+  if (lowercaseQuery.includes('how many') && 
+      (lowercaseQuery.includes('vehicle') || lowercaseQuery.includes('car'))) {
     const { data: vehicles, error } = await supabase
       .from('vehicles')
       .select('status', { count: 'exact' });
@@ -25,7 +26,8 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   }
   
   // Customer-related queries
-  if (lowercaseQuery.includes('how many customers') || lowercaseQuery.includes('customer count')) {
+  if ((lowercaseQuery.includes('how many') && lowercaseQuery.includes('customer')) || 
+      lowercaseQuery.includes('customer count')) {
     const { count, error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact' })
@@ -37,7 +39,8 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   }
   
   // Agreement-related queries
-  if (lowercaseQuery.includes('active rentals') || lowercaseQuery.includes('active agreements')) {
+  if (lowercaseQuery.includes('active') && 
+      (lowercaseQuery.includes('rental') || lowercaseQuery.includes('agreement'))) {
     const { data, error } = await supabase
       .from('leases')
       .select('*', { count: 'exact' })
@@ -48,6 +51,50 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
     return `There are currently ${data?.length || 0} active rental agreements.`;
   }
 
-  // If no matching query pattern is found, return null to fallback to AI
-  return null;
+  // Payment-related queries
+  if (lowercaseQuery.includes('payment') || lowercaseQuery.includes('revenue')) {
+    const { data: payments, error } = await supabase
+      .from('unified_payments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    if (payments && payments.length > 0) {
+      const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+      return `Recent payment activity: ${payments.length} payments processed, totaling ${totalAmount} QAR.`;
+    }
+  }
+
+  // Traffic fines queries
+  if (lowercaseQuery.includes('traffic') || lowercaseQuery.includes('fine')) {
+    const { data: fines, error } = await supabase
+      .from('traffic_fines')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (fines) {
+      const pendingFines = fines.filter(f => f.payment_status === 'pending').length;
+      const totalFines = fines.length;
+      return `There are ${pendingFines} pending traffic fines out of ${totalFines} total fines recorded.`;
+    }
+  }
+
+  // Maintenance queries
+  if (lowercaseQuery.includes('maintenance') || lowercaseQuery.includes('repair')) {
+    const { data: maintenance, error } = await supabase
+      .from('maintenance')
+      .select('*')
+      .eq('status', 'in_progress');
+
+    if (error) throw error;
+
+    return `There are currently ${maintenance?.length || 0} vehicles under maintenance.`;
+  }
+
+  // If no matching query pattern is found, return a helpful message
+  return "I can provide information about our vehicles, customers, agreements, payments, traffic fines, and maintenance. Please ask specific questions about these topics.";
 };

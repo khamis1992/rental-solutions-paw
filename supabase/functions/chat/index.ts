@@ -41,7 +41,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant for a vehicle rental company. Provide clear, concise answers about rental policies, vehicle information, and general inquiries.'
+            content: 'You are a helpful assistant for a vehicle rental company. Help understand user queries and rephrase them to match available data categories: vehicles, customers, agreements, payments, or maintenance. Do not provide external information.'
           },
           ...messages
         ],
@@ -58,10 +58,6 @@ serve(async (req) => {
 
     const data = await response.json();
     console.log('DeepSeek API response received');
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response format from DeepSeek API');
-    }
 
     return new Response(
       JSON.stringify({ message: data.choices[0].message.content }),
