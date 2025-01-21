@@ -14,7 +14,6 @@ interface Message {
   content: string;
 }
 
-// Get the current origin for postMessage security
 const TRUSTED_ORIGIN = window.location.origin;
 
 export const SystemChatbot = () => {
@@ -27,7 +26,6 @@ export const SystemChatbot = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
 
-  // Cleanup function for ResizeObserver
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea) return;
@@ -43,7 +41,6 @@ export const SystemChatbot = () => {
     };
   }, []);
 
-  // Set up real-time subscription
   useEffect(() => {
     channelRef.current = supabase
       .channel('chat-updates')
@@ -71,15 +68,48 @@ export const SystemChatbot = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      // Always try to get response from database first
-      const dbResponse = await getDatabaseResponse(message);
-      if (dbResponse) {
-        console.log('Using database response:', dbResponse);
-        return dbResponse;
-      }
+      try {
+        // First, get the database response
+        const dbResponse = await getDatabaseResponse(message);
+        
+        // If we have a direct database response, use it
+        if (dbResponse) {
+          console.log('Using database response:', dbResponse);
+          return dbResponse;
+        }
 
-      // If no database response, return a default message
-      return "I can only provide information about our system data. Please ask about vehicles, customers, agreements, or payments.";
+        // If no direct match, use DeepSeek to understand the query
+        const response = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data. If you cannot find specific data, ask the user to rephrase their question to match available information categories: vehicles, customers, agreements, payments, or maintenance.'
+              },
+              { role: 'user', content: message }
+            ],
+            dbResponse: null // We already tried direct database response
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get AI response');
+        }
+
+        const data = await response.json();
+        
+        // Try database response again with AI-interpreted query
+        const refinedDbResponse = await getDatabaseResponse(data.message);
+        return refinedDbResponse || "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
+      } catch (error) {
+        console.error('Chat error:', error);
+        return "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
+      }
     },
     onSuccess: (response, variables) => {
       setMessages((prev) => [
@@ -90,7 +120,7 @@ export const SystemChatbot = () => {
     },
     onError: (error: Error) => {
       console.error("Chat error:", error);
-      toast.error(error.message || "Failed to get response. Please try again.");
+      toast.error("Failed to get response. Please try again.");
     },
   });
 
