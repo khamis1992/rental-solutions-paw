@@ -1,8 +1,8 @@
 import { Database } from "./database/database.types";
 
-export type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
-export type AgreementType = "lease_to_own" | "short_term";
-export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
+export type LeaseStatus = Database['public']['Enums']['lease_status'];
+export type AgreementType = Database['public']['Enums']['agreement_type'];
+export type PaymentStatus = Database['public']['Enums']['payment_status'];
 export type DocumentLanguage = "english" | "arabic";
 
 export interface Agreement {
@@ -51,14 +51,14 @@ export interface Template {
   daily_late_fee: number;
   damage_penalty_rate?: number;
   late_return_fee?: number;
-  is_active: boolean;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
   content?: string;
   language?: DocumentLanguage;
-  template_structure: Record<string, any>;
-  template_sections: any[];
-  variable_mappings: Record<string, any>;
+  template_structure?: Record<string, any>;
+  template_sections?: any[];
+  variable_mappings?: Record<string, any>;
 }
 
 export interface Payment {
@@ -69,7 +69,7 @@ export interface Payment {
   balance: number;
   payment_date: string;
   payment_method: string;
-  status: string;
+  status: PaymentStatus;
   description: string;
   type: string;
   late_fine_amount: number;

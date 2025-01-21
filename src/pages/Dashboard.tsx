@@ -46,12 +46,11 @@ const Dashboard = () => {
         monthlyRevenue
       };
     },
-    staleTime: 30000,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Section */}
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
         <div>
           <WelcomeHeader />
@@ -63,8 +62,8 @@ const Dashboard = () => {
       </div>
       
       {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-6 rounded-lg">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="p-6 space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Total Vehicles</span>
             <Car className="h-5 w-5 text-blue-500" />
@@ -79,7 +78,7 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <Card className="p-6 rounded-lg">
+        <Card className="p-6 space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Active Rentals</span>
             <FileText className="h-5 w-5 text-purple-500" />
@@ -94,7 +93,7 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <Card className="p-6 rounded-lg">
+        <Card className="p-6 space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Monthly Revenue</span>
             <DollarSign className="h-5 w-5 text-green-500" />
@@ -111,26 +110,19 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-8 grid-cols-1 lg:grid-cols-7">
-        {/* Vehicle Status Chart - 4 columns */}
-        <Card className="p-6 rounded-lg lg:col-span-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold">Vehicle Status</h2>
-            <select className="text-sm border rounded-md px-2 py-1">
-              <option>All Vehicle Types</option>
-            </select>
-          </div>
-          <div className="h-[300px]">
-            <VehicleStatusChart />
-          </div>
-        </Card>
-
-        {/* Alerts Section - 3 columns */}
-        <div className="lg:col-span-3">
-          <DashboardAlerts />
+      {/* Vehicle Status Chart */}
+      <Card className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold">Vehicle Status</h2>
+          <select className="text-sm border rounded-md px-2 py-1">
+            <option>All Vehicle Types</option>
+          </select>
         </div>
-      </div>
+        <VehicleStatusChart />
+      </Card>
+
+      {/* Alerts & Notifications */}
+      <DashboardAlerts />
     </div>
   );
 };
