@@ -23,21 +23,7 @@ export interface Agreement {
   daily_late_fee: number;
   rent_amount: number;
   remainingAmount: number;
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
+  agreement_duration: string;
 }
 
 export interface Template {
@@ -54,8 +40,8 @@ export interface Template {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  content?: string;
-  language?: DocumentLanguage;
+  content: string;
+  language: DocumentLanguage;
   template_structure: Record<string, any>;
   template_sections: any[];
   variable_mappings: Record<string, any>;
@@ -76,7 +62,7 @@ export interface Payment {
   days_overdue: number;
   transaction_id?: string;
   security_deposit_id?: string;
-  is_recurring?: boolean;
+  is_recurring: boolean;
   recurring_interval?: string;
   next_payment_date?: string;
   created_at: string;
