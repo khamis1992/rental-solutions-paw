@@ -131,7 +131,7 @@ export const SystemChatbot = () => {
   return (
     <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
+        <CardTitle className="flex items-center gap-2">
           <span>Rental Solutions Assistant</span>
         </CardTitle>
       </CardHeader>
