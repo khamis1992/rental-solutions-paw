@@ -1,11 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -14,19 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { VehicleStatusCell } from "./VehicleStatusCell";
 import { VehicleLocationCell } from "./VehicleLocationCell";
 import { VehicleInsuranceCell } from "./VehicleInsuranceCell";
-
-interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  status: string;
-  vin: string;
-  mileage: number;
-  license_plate: string;
-  location: string | null;
-  insurance_company: string | null;
-}
+import { Vehicle } from "@/types/vehicle";
 
 interface VehicleTableContentProps {
   vehicles: Vehicle[];

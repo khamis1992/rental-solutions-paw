@@ -58,6 +58,35 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     }
   };
 
+  // Filter vehicles based on all criteria
+  const filteredVehicles = vehicles.filter(vehicle => {
+    const searchTerm = filters.search.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      vehicle.make.toLowerCase().includes(searchTerm) ||
+      vehicle.model.toLowerCase().includes(searchTerm) ||
+      vehicle.license_plate.toLowerCase().includes(searchTerm);
+
+    const matchesStatus = filters.status === "all" || vehicle.status === filters.status;
+    
+    const matchesLocation = !filters.location || 
+      vehicle.location?.toLowerCase().includes(filters.location.toLowerCase());
+
+    const matchesMakeModel = !filters.makeModel ||
+      `${vehicle.make} ${vehicle.model}`.toLowerCase().includes(filters.makeModel.toLowerCase());
+
+    return matchesSearch && matchesStatus && matchesLocation && matchesMakeModel;
+  });
+
+  const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentVehicles = filteredVehicles.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleBulkStatusUpdate = async (status: VehicleStatus) => {
     try {
       const { error } = await supabase
@@ -117,35 +146,6 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Filter vehicles based on all criteria
-  const filteredVehicles = vehicles.filter(vehicle => {
-    const searchTerm = filters.search.toLowerCase();
-    const matchesSearch = !searchTerm || 
-      vehicle.make.toLowerCase().includes(searchTerm) ||
-      vehicle.model.toLowerCase().includes(searchTerm) ||
-      vehicle.license_plate.toLowerCase().includes(searchTerm);
-
-    const matchesStatus = filters.status === "all" || vehicle.status === filters.status;
-    
-    const matchesLocation = !filters.location || 
-      vehicle.location?.toLowerCase().includes(filters.location.toLowerCase());
-
-    const matchesMakeModel = !filters.makeModel ||
-      `${vehicle.make} ${vehicle.model}`.toLowerCase().includes(filters.makeModel.toLowerCase());
-
-    return matchesSearch && matchesStatus && matchesLocation && matchesMakeModel;
-  });
-
-  const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentVehicles = filteredVehicles.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
