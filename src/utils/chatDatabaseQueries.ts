@@ -4,8 +4,7 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   const lowercaseQuery = query.toLowerCase();
   
   // Vehicle-related queries
-  if (lowercaseQuery.includes('how many') && 
-      (lowercaseQuery.includes('vehicle') || lowercaseQuery.includes('car'))) {
+  if (lowercaseQuery.includes('how many vehicles') || lowercaseQuery.includes('vehicle count')) {
     const { data: vehicles, error } = await supabase
       .from('vehicles')
       .select('status', { count: 'exact' });
@@ -26,8 +25,7 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   }
   
   // Customer-related queries
-  if ((lowercaseQuery.includes('how many') && lowercaseQuery.includes('customer')) || 
-      lowercaseQuery.includes('customer count')) {
+  if (lowercaseQuery.includes('how many customers') || lowercaseQuery.includes('customer count')) {
     const { count, error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact' })
@@ -39,8 +37,7 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   }
   
   // Agreement-related queries
-  if (lowercaseQuery.includes('active') && 
-      (lowercaseQuery.includes('rental') || lowercaseQuery.includes('agreement'))) {
+  if (lowercaseQuery.includes('active rentals') || lowercaseQuery.includes('active agreements')) {
     const { data, error } = await supabase
       .from('leases')
       .select('*', { count: 'exact' })
@@ -52,7 +49,7 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   }
 
   // Payment-related queries
-  if (lowercaseQuery.includes('payment') || lowercaseQuery.includes('revenue')) {
+  if (lowercaseQuery.includes('payment') || lowercaseQuery.includes('payments')) {
     const { data: payments, error } = await supabase
       .from('unified_payments')
       .select('*')
@@ -68,7 +65,7 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
   }
 
   // Traffic fines queries
-  if (lowercaseQuery.includes('traffic') || lowercaseQuery.includes('fine')) {
+  if (lowercaseQuery.includes('traffic') || lowercaseQuery.includes('fines')) {
     const { data: fines, error } = await supabase
       .from('traffic_fines')
       .select('*')
@@ -83,18 +80,6 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
     }
   }
 
-  // Maintenance queries
-  if (lowercaseQuery.includes('maintenance') || lowercaseQuery.includes('repair')) {
-    const { data: maintenance, error } = await supabase
-      .from('maintenance')
-      .select('*')
-      .eq('status', 'in_progress');
-
-    if (error) throw error;
-
-    return `There are currently ${maintenance?.length || 0} vehicles under maintenance.`;
-  }
-
-  // If no matching query pattern is found, return a helpful message
-  return "I can provide information about our vehicles, customers, agreements, payments, traffic fines, and maintenance. Please ask specific questions about these topics.";
+  // If no matching query pattern is found, return null to indicate no database response
+  return null;
 };
