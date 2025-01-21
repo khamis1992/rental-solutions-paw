@@ -48,6 +48,38 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
     return `There are currently ${data?.length || 0} active rental agreements.`;
   }
 
-  // If no matching query pattern is found, return null to fallback to AI
+  // Payment-related queries
+  if (lowercaseQuery.includes('payment') || lowercaseQuery.includes('payments')) {
+    const { data: payments, error } = await supabase
+      .from('unified_payments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    if (payments && payments.length > 0) {
+      const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+      return `Recent payment activity: ${payments.length} payments processed, totaling ${totalAmount} QAR.`;
+    }
+  }
+
+  // Traffic fines queries
+  if (lowercaseQuery.includes('traffic') || lowercaseQuery.includes('fines')) {
+    const { data: fines, error } = await supabase
+      .from('traffic_fines')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (fines) {
+      const pendingFines = fines.filter(f => f.payment_status === 'pending').length;
+      const totalFines = fines.length;
+      return `There are ${pendingFines} pending traffic fines out of ${totalFines} total fines recorded.`;
+    }
+  }
+
+  // If no matching query pattern is found, return null to indicate no database response
   return null;
 };

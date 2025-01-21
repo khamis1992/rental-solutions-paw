@@ -21,7 +21,7 @@ export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hello! I'm your Rental Solutions assistant. How can I help you today?",
+      content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. What would you like to know?",
     },
   ]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -32,16 +32,12 @@ export const SystemChatbot = () => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea) return;
 
-    // Create ResizeObserver instance
     const resizeObserver = new ResizeObserver(() => {
-      // Scroll to bottom when content changes
       scrollArea.scrollTop = scrollArea.scrollHeight;
     });
 
-    // Start observing
     resizeObserver.observe(scrollArea);
 
-    // Cleanup
     return () => {
       resizeObserver.disconnect();
     };
@@ -49,7 +45,6 @@ export const SystemChatbot = () => {
 
   // Set up real-time subscription
   useEffect(() => {
-    // Subscribe to chat channel
     channelRef.current = supabase
       .channel('chat-updates')
       .on(
@@ -67,7 +62,6 @@ export const SystemChatbot = () => {
       )
       .subscribe();
 
-    // Cleanup subscription
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
@@ -75,76 +69,17 @@ export const SystemChatbot = () => {
     };
   }, []);
 
-  // Check if Perplexity API key is configured
-  const { isLoading: isCheckingKey, isError: isKeyError } = useQuery({
-    queryKey: ["perplexity-api-key"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("check-perplexity-key", {
-          headers: {
-            'Origin': TRUSTED_ORIGIN
-          }
-        });
-        if (error) throw error;
-        return data;
-      } catch (error) {
-        console.error('Failed to check API key:', error);
-        throw error;
-      }
-    },
-    retry: 1,
-    retryDelay: 1000,
-    meta: {
-      errorMessage: 'Chat service is currently unavailable'
-    }
-  });
-
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      // First try to get response from database
-      try {
-        const dbResponse = await getDatabaseResponse(message);
-        if (dbResponse) {
-          console.log('Using database response:', dbResponse);
-          return dbResponse;
-        }
-      } catch (error) {
-        console.error('Database query error:', error);
+      // Always try to get response from database first
+      const dbResponse = await getDatabaseResponse(message);
+      if (dbResponse) {
+        console.log('Using database response:', dbResponse);
+        return dbResponse;
       }
 
-      const apiMessages = [
-        ...messages.slice(-6),
-        { role: "user" as const, content: message }
-      ];
-
-      console.log('Sending messages to AI:', apiMessages);
-      
-      const { data, error } = await supabase.functions.invoke("chat", {
-        body: { 
-          messages: apiMessages,
-          dbResponse: null
-        },
-        headers: {
-          'Origin': TRUSTED_ORIGIN
-        }
-      });
-      
-      if (error) throw error;
-      
-      if (!data?.message) {
-        throw new Error('Invalid response from chat service');
-      }
-      
-      // Broadcast message to all connected clients
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'chat-message',
-          message: data.message
-        });
-      }
-      
-      return data.message;
+      // If no database response, return a default message
+      return "I can only provide information about our system data. Please ask about vehicles, customers, agreements, or payments.";
     },
     onSuccess: (response, variables) => {
       setMessages((prev) => [
@@ -160,34 +95,8 @@ export const SystemChatbot = () => {
   });
 
   const handleSendMessage = (message: string) => {
-    if (isKeyError) {
-      toast.error("Chat service is not properly configured. Please try again later.");
-      return;
-    }
     chatMutation.mutate(message);
   };
-
-  if (isCheckingKey) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isKeyError) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
-        <CardContent className="py-10">
-          <p className="text-center text-muted-foreground">
-            Chat service is currently unavailable. Please try again later.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
@@ -217,7 +126,7 @@ export const SystemChatbot = () => {
 
         <ChatInput
           onSend={handleSendMessage}
-          disabled={chatMutation.isPending || isCheckingKey}
+          disabled={chatMutation.isPending}
         />
       </CardContent>
     </Card>
