@@ -20,9 +20,9 @@ export default {
       screens: {
         'sm': '640px',
         'md': '768px',
-        'lg': '1024px',
-        'xl': '1080px',  // Reduced from 1280px
-        '2xl': '1200px', // Reduced from 1400px
+        'lg': '960px',      // Reduced from 1024px
+        'xl': '1024px',     // Reduced from 1080px
+        '2xl': '1140px',    // Reduced from 1200px
       }
     },
     extend: {
