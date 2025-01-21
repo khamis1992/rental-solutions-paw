@@ -46,11 +46,11 @@ const Dashboard = () => {
         monthlyRevenue
       };
     },
-    staleTime: 30000, // Cache for 30 seconds
+    staleTime: 30000,
   });
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="pt-[var(--header-height,56px)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
         <div>
           <WelcomeHeader />
