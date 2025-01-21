@@ -1,29 +1,43 @@
-import { AgreementList } from "@/components/agreements/AgreementList";
-import { AgreementStats } from "@/components/agreements/AgreementStats";
-import { AgreementFilters } from "@/components/agreements/AgreementFilters";
 import { useState } from "react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AgreementList } from "@/components/agreements/AgreementList";
+import { AgreementListHeader } from "@/components/agreements/list/AgreementListHeader";
+import { AgreementStats } from "@/components/agreements/AgreementStats";
+import { CreateAgreementDialog } from "@/components/agreements/CreateAgreementDialog";
+import { PaymentImport } from "@/components/agreements/PaymentImport";
 
-export default function Agreements() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("newest");
+const Agreements = () => {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const handleImportClick = () => {
+    // Import handling logic
+  };
+
+  const handleDeleteClick = () => {
+    // Delete handling logic
+  };
 
   return (
-    <div className="w-full bg-background">
-      <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-secondary">Agreements</h1>
-          <p className="text-muted-foreground">Manage rental agreements and contracts</p>
+    <DashboardLayout>
+      <div className="container mx-auto space-y-6 px-4 py-8">
+        <div className="flex justify-between items-start">
+          <AgreementListHeader 
+            onImportClick={handleImportClick}
+            onDeleteClick={handleDeleteClick}
+            isDeleting={false}
+          />
+          <PaymentImport />
         </div>
-        
         <AgreementStats />
-        <AgreementFilters 
-          onSearchChange={setSearchTerm}
-          onStatusChange={setStatusFilter}
-          onSortChange={setSortOrder}
-        />
         <AgreementList />
+        
+        <CreateAgreementDialog 
+          open={showCreateDialog} 
+          onOpenChange={setShowCreateDialog}
+        />
       </div>
-    </div>
+    </DashboardLayout>
   );
-}
+};
+
+export default Agreements;

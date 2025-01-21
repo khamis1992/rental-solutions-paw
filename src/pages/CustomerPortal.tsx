@@ -76,18 +76,25 @@ export default function CustomerPortal() {
   };
 
   const handleLogout = () => {
+    // Clear authentication state
     setIsAuthenticated(false);
     setProfile(null);
+    
+    // Clear form data
     setAgreementNumber('');
     setPhoneNumber('');
+    
+    // Show success message
     toast.success('Logged out successfully');
+    
+    // Redirect to login page
     navigate('/customer-portal');
   };
 
   if (isAuthenticated && profile) {
     return (
-      <div className="w-full bg-background">
-        <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="min-h-screen bg-background-alt">
+        <div className="container py-8 space-y-8">
           {/* Header with Logout Button */}
           <div className="flex justify-between items-center">
             <div className="space-y-2">
@@ -120,7 +127,7 @@ export default function CustomerPortal() {
   }
 
   return (
-    <div className="w-full bg-background min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background-alt p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center">Customer Portal Login</CardTitle>
