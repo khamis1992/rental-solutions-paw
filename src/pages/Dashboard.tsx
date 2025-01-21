@@ -1,50 +1,63 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface DashboardStats {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
-}
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
 const Dashboard = () => {
-  const { data: statsData } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke<DashboardStats>("get_dashboard_stats");
+      const { data, error } = await supabase.rpc("get_dashboard_stats");
+      
       if (error) throw error;
-      return data;
+      
+      const {
+        total_vehicles,
+        available_vehicles,
+        rented_vehicles,
+        maintenance_vehicles,
+        total_customers,
+        active_rentals,
+        monthly_revenue
+      } = data;
+
+      return {
+        totalVehicles: total_vehicles,
+        availableVehicles: available_vehicles,
+        rentedVehicles: rented_vehicles,
+        maintenanceVehicles: maintenance_vehicles,
+        totalCustomers: total_customers,
+        activeRentals: active_rentals,
+        monthlyRevenue: monthly_revenue
+      };
     },
+    staleTime: 30000,
   });
 
-  const stats = {
-    totalVehicles: statsData?.total_vehicles ?? 0,
-    availableVehicles: statsData?.available_vehicles ?? 0,
-    rentedVehicles: statsData?.rented_vehicles ?? 0,
-    maintenanceVehicles: statsData?.maintenance_vehicles ?? 0,
-    totalCustomers: statsData?.total_customers ?? 0,
-    activeRentals: statsData?.active_rentals ?? 0,
-    monthlyRevenue: statsData?.monthly_revenue ?? 0,
-  };
-
   return (
-    <DashboardLayout>
-      <div className="container mx-auto space-y-6 px-4 py-8">
-        <WelcomeHeader />
-        <div className="grid gap-6">
-          <DashboardStats stats={stats} />
-          <DashboardAlerts />
+    <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
+        <div>
+          <WelcomeHeader />
         </div>
       </div>
-    </DashboardLayout>
+
+      <div className="grid gap-8">
+        <DashboardStats stats={stats} />
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <RecentActivity />
+        </div>
+        <div className="lg:col-span-3">
+          <SystemChatbot />
+        </div>
+      </div>
+    </div>
   );
 };
 

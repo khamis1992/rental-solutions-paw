@@ -23,7 +23,6 @@ export interface Agreement {
   daily_late_fee: number;
   rent_amount: number;
   remainingAmount: number;
-  agreement_duration: string;
 }
 
 export interface AgreementWithRelations extends Agreement {
@@ -55,11 +54,11 @@ export interface Template {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  content: string;
-  language: DocumentLanguage;
-  template_structure: Record<string, any>;
-  template_sections: any[];
-  variable_mappings: Record<string, any>;
+  content?: string;
+  language?: DocumentLanguage;
+  template_structure?: Record<string, any>;
+  template_sections?: any[];
+  variable_mappings?: Record<string, any>;
 }
 
 export interface Payment {
@@ -77,7 +76,7 @@ export interface Payment {
   days_overdue: number;
   transaction_id?: string;
   security_deposit_id?: string;
-  is_recurring: boolean;
+  is_recurring?: boolean;
   recurring_interval?: string;
   next_payment_date?: string;
   created_at: string;
