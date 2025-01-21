@@ -52,7 +52,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   }
 
   return (
-    <div className="pt-16 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="pt-24 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex justify-between items-center">
         <AdvancedVehicleFilters onFilterChange={setFilters} />
         <div className="flex gap-2">
