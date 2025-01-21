@@ -25,6 +25,7 @@ export const SystemChatbot = () => {
     },
   ]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<any>(null);
 
   // Cleanup function for ResizeObserver
   useEffect(() => {
@@ -43,6 +44,34 @@ export const SystemChatbot = () => {
     // Cleanup
     return () => {
       resizeObserver.disconnect();
+    };
+  }, []);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    // Subscribe to chat channel
+    channelRef.current = supabase
+      .channel('chat-updates')
+      .on(
+        'broadcast',
+        { event: 'chat-message' },
+        (payload) => {
+          console.log('Received real-time message:', payload);
+          if (payload.message) {
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: payload.message
+            }]);
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
     };
   }, []);
 
@@ -104,6 +133,15 @@ export const SystemChatbot = () => {
       
       if (!data?.message) {
         throw new Error('Invalid response from chat service');
+      }
+      
+      // Broadcast message to all connected clients
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'chat-message',
+          message: data.message
+        });
       }
       
       return data.message;
