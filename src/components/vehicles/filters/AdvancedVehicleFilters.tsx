@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { VehicleStatus } from "@/types/vehicle";
 
 export interface VehicleFilters {
   search: string;
-  status: string;
+  status: VehicleStatus | "all";
   location: string;
   makeModel: string;
   yearRange: {
@@ -26,6 +27,7 @@ interface AdvancedVehicleFiltersProps {
 }
 
 export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFiltersProps) => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [filters, setFilters] = useState<VehicleFilters>({
     search: "",
     status: "all",
@@ -36,8 +38,6 @@ export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFilter
       to: null,
     },
   });
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleFilterChange = (key: keyof VehicleFilters, value: any) => {
     const newFilters = { ...filters, [key]: value };
