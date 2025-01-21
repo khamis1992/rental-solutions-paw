@@ -1,131 +1,133 @@
-import { Car, DollarSign, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
-import { StatsCard } from "@/components/dashboard/StatsCard";
+import { Car, FileText, DollarSign, TrendingUp } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { formatCurrency } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export const DashboardStats = () => {
   const { data: stats } = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse, pendingReturnsResponse] = await Promise.all([
-        // Get vehicles stats
-        supabase.from("vehicles")
-          .select('status', { count: 'exact' })
+      const [vehiclesResponse, rentalsResponse, revenueResponse] = await Promise.all([
+        supabase
+          .from('vehicles')
+          .select('id', { count: 'exact' })
           .eq('is_test_data', false),
-
-        // Get active rentals
-        supabase.from("leases")
-          .select('status', { count: 'exact', head: true })
-          .eq("status", "active"),
-
-        // Calculate current month revenue
-        supabase.from("unified_payments")
+        
+        supabase
+          .from('leases')
+          .select('id', { count: 'exact' })
+          .eq('status', 'active'),
+        
+        supabase
+          .from('payments')
           .select('amount')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('status', 'completed'),
-
-        // Calculate last month revenue for comparison
-        supabase.from("unified_payments")
-          .select('amount')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString())
-          .lt('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('status', 'completed'),
-
-        // Get new vehicles added this month
-        supabase.from("vehicles")
-          .select('id', { count: 'exact' })
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('is_test_data', false),
-
-        // Get pending returns (leases that are active and past their end date)
-        supabase.from("leases")
-          .select('id', { count: 'exact' })
-          .eq('status', 'active')
-          .lt('end_date', new Date().toISOString())
+          .eq('status', 'completed')
       ]);
 
       if (vehiclesResponse.error) throw vehiclesResponse.error;
       if (rentalsResponse.error) throw rentalsResponse.error;
-      if (paymentsResponse.error) throw paymentsResponse.error;
-      if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
-      if (newVehiclesResponse.error) throw newVehiclesResponse.error;
-      if (pendingReturnsResponse.error) throw pendingReturnsResponse.error;
+      if (revenueResponse.error) throw revenueResponse.error;
 
-      const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
+      const monthlyRevenue = revenueResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
-
-      const lastMonthRevenue = lastMonthPaymentsResponse.data?.reduce((sum, payment) => 
-        sum + (payment.amount || 0), 0) || 0;
-
-      // Calculate growth percentage
-      const growth = lastMonthRevenue > 0 
-        ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
-        : 0;
-
-      const totalVehicles = vehiclesResponse.count || 0;
-      const newVehicles = newVehiclesResponse.count || 0;
-      const pendingReturns = pendingReturnsResponse.count || 0;
 
       return {
-        totalVehicles,
+        totalVehicles: vehiclesResponse.count || 0,
         activeRentals: rentalsResponse.count || 0,
-        monthlyRevenue,
-        pendingReturns,
-        growth: {
-          vehicles: `+${newVehicles} this month`,
-          revenue: `${growth.toFixed(1)}% from last month`
-        }
+        monthlyRevenue
       };
     },
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 30000,
   });
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-3">
-        <StatsCard
-          title="Total Vehicles"
-          value={stats?.totalVehicles.toString() || "0"}
-          icon={Car}
-          className="bg-white"
-          iconClassName="h-5 w-5 text-blue-500"
-          description={
-            <span className="flex items-center text-emerald-600 text-xs">
-              <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.vehicles}
-            </span>
-          }
-        />
-        <StatsCard
-          title="Active Rentals"
-          value={stats?.activeRentals.toString() || "0"}
-          icon={FileText}
-          className="bg-white"
-          iconClassName="h-5 w-5 text-purple-500"
-          description={
-            <span className="text-amber-600 text-xs">
-              {stats?.pendingReturns} pending returns
-            </span>
-          }
-        />
-        <StatsCard
-          title="Monthly Revenue"
-          value={formatCurrency(stats?.monthlyRevenue || 0)}
-          icon={DollarSign}
-          className="bg-white"
-          iconClassName="h-5 w-5 text-green-500"
-          description={
-            <span className="flex items-center text-emerald-600 text-xs">
-              <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.revenue}
-            </span>
-          }
-        />
+      {/* Welcome Section */}
+      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
+        <div>
+          <WelcomeHeader />
+          <p className="text-gray-300">Welcome back to your dashboard. Here's what's happening today.</p>
+        </div>
+        <Button variant="default" size="lg" className="bg-primary hover:bg-primary/90">
+          + New Agreement
+        </Button>
       </div>
       
-      <VehicleStatusChart />
+      {/* Stats Grid */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <Card className="p-6 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Total Vehicles</span>
+            <Car className="h-5 w-5 text-blue-500" />
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl font-bold">
+              {stats?.totalVehicles || 0}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Fleet size
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-6 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Active Rentals</span>
+            <FileText className="h-5 w-5 text-purple-500" />
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl font-bold">
+              {stats?.activeRentals || 0}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Currently rented
+            </p>
+          </div>
+        </Card>
+
+        <Card className="p-6 rounded-lg">
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Monthly Revenue</span>
+            <DollarSign className="h-5 w-5 text-green-500" />
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl font-bold">
+              QAR {formatCurrency(stats?.monthlyRevenue || 0)}
+            </div>
+            <div className="flex items-center text-sm text-emerald-600">
+              <TrendingUp className="h-4 w-4 mr-1" />
+              <span>This month</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-8 grid-cols-1">
+        {/* Vehicle Status Chart */}
+        <Card className="p-6 rounded-lg">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold">Vehicle Status</h2>
+            <select className="text-sm border rounded-md px-2 py-1">
+              <option>All Vehicle Types</option>
+            </select>
+          </div>
+          <div className="h-[300px]">
+            <VehicleStatusChart />
+          </div>
+        </Card>
+
+        {/* Alerts Section */}
+        <div>
+          <DashboardAlerts />
+        </div>
+      </div>
     </div>
   );
 };
