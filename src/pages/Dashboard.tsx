@@ -1,63 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
+import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { SystemChatbot } from "@/components/chat/SystemChatbot";
+import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
 
 const Dashboard = () => {
-  const { data: stats } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_dashboard_stats");
-      
-      if (error) throw error;
-      
-      const {
-        total_vehicles,
-        available_vehicles,
-        rented_vehicles,
-        maintenance_vehicles,
-        total_customers,
-        active_rentals,
-        monthly_revenue
-      } = data;
-
-      return {
-        totalVehicles: total_vehicles,
-        availableVehicles: available_vehicles,
-        rentedVehicles: rented_vehicles,
-        maintenanceVehicles: maintenance_vehicles,
-        totalCustomers: total_customers,
-        activeRentals: active_rentals,
-        monthlyRevenue: monthly_revenue
-      };
-    },
-    staleTime: 30000,
-  });
-
   return (
-    <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
-        <div>
-          <WelcomeHeader />
+    <DashboardLayout>
+      <div className="w-full bg-background">
+        <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="space-y-6">
+            <DashboardStats />
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+              <DashboardAlerts />
+              <VehicleStatusChart />
+            </div>
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+              <UpcomingRentals />
+              <RecentActivity />
+            </div>
+            <IntelligentScheduling />
+          </div>
         </div>
       </div>
-
-      <div className="grid gap-8">
-        <DashboardStats stats={stats} />
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-4">
-          <RecentActivity />
-        </div>
-        <div className="lg:col-span-3">
-          <SystemChatbot />
-        </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

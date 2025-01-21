@@ -1,61 +1,14 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CustomerList } from "@/components/customers/CustomerList";
-import { CustomerStats } from "@/components/customers/CustomerStats";
-import { CreateCustomerDialog } from "@/components/customers/CreateCustomerDialog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Users, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const Customers = () => {
   return (
     <DashboardLayout>
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-3xl flex items-center gap-2">
-                <Users className="h-8 w-8 text-primary" />
-                Customer Management
-              </CardTitle>
-              <CardDescription className="mt-2">
-                Manage customer profiles, track relationships, and monitor customer activity
-              </CardDescription>
-            </div>
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CreateCustomerDialog>
-                      <Button className="flex items-center gap-2">
-                        <UserPlus className="h-4 w-4" />
-                        Add Customer
-                      </Button>
-                    </CreateCustomerDialog>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add a new customer to the system</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      <CustomerStats />
-      
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-xl">Customer List</CardTitle>
-          <CardDescription>
-            View and manage all customer profiles and their associated information
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="w-full bg-background">
+        <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <CustomerList />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </DashboardLayout>
   );
 };

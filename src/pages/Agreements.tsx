@@ -19,22 +19,26 @@ const Agreements = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto space-y-6 px-4 py-8">
-        <div className="flex justify-between items-start">
-          <AgreementListHeader 
-            onImportClick={handleImportClick}
-            onDeleteClick={handleDeleteClick}
-            isDeleting={false}
-          />
-          <PaymentImport />
+      <div className="w-full bg-background">
+        <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="space-y-6">
+            <div className="flex justify-between items-start">
+              <AgreementListHeader 
+                onImportClick={handleImportClick}
+                onDeleteClick={handleDeleteClick}
+                isDeleting={false}
+              />
+              <PaymentImport />
+            </div>
+            <AgreementStats />
+            <AgreementList />
+            
+            <CreateAgreementDialog 
+              open={showCreateDialog} 
+              onOpenChange={setShowCreateDialog}
+            />
+          </div>
         </div>
-        <AgreementStats />
-        <AgreementList />
-        
-        <CreateAgreementDialog 
-          open={showCreateDialog} 
-          onOpenChange={setShowCreateDialog}
-        />
       </div>
     </DashboardLayout>
   );
