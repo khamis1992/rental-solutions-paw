@@ -118,71 +118,67 @@ const Vehicles = () => {
 
   return (
     <DashboardLayout>
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-3xl flex items-center gap-2">
-                <Car className="h-8 w-8 text-primary" />
-                Vehicle Management
-              </CardTitle>
-              <CardDescription className="mt-2">
-                Manage your fleet, track vehicle status, and monitor maintenance schedules
-              </CardDescription>
-            </div>
-            <div className="flex gap-4">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={handleExportToExcel}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Export
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Export vehicle data to Excel</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CreateVehicleDialog>
-                      <Button className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add Vehicle
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-3xl flex items-center gap-2">
+                  <Car className="h-8 w-8 text-primary" />
+                  Vehicle Management
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  Manage your fleet, track vehicle status, and monitor maintenance schedules
+                </CardDescription>
+              </div>
+              <div className="flex gap-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        onClick={handleExportToExcel}
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Export
                       </Button>
-                    </CreateVehicleDialog>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add a new vehicle to the fleet</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Export vehicle data to Excel</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-      <VehicleStats vehicles={vehicles} isLoading={isLoading} />
-      
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-xl">Vehicle List</CardTitle>
-          <CardDescription>
-            View and manage all vehicles in your fleet
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <VehicleFilters filters={filters} setFilters={setFilters as (filters: Filters) => void} />
-          <VehicleList vehicles={vehicles} isLoading={isLoading} />
-        </CardContent>
-      </Card>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CreateVehicleDialog>
+                        <Button className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Add Vehicle
+                        </Button>
+                      </CreateVehicleDialog>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add a new vehicle to the fleet</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <VehicleStats vehicles={vehicles} isLoading={isLoading} />
+        
+        <Card>
+          <CardContent className="pt-6">
+            <VehicleFilters filters={filters} setFilters={setFilters as (filters: Filters) => void} />
+            <VehicleList vehicles={vehicles} isLoading={isLoading} />
+          </CardContent>
+        </Card>
+      </div>
     </DashboardLayout>
   );
 };
