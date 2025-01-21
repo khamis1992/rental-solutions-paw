@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
 export interface VehicleFilters {
@@ -37,6 +37,8 @@ export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFilter
     },
   });
 
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   const handleFilterChange = (key: keyof VehicleFilters, value: any) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -44,17 +46,29 @@ export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFilter
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+    <div className="bg-white p-4 rounded-lg shadow-sm mb-6 space-y-4">
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search vehicles..."
+            placeholder="Search vehicles by make, model, license plate..."
             value={filters.search}
             onChange={(e) => handleFilterChange("search", e.target.value)}
-            className="w-full"
+            className="pl-10 w-full"
           />
         </div>
-        <div>
+        <Button
+          variant="outline"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="flex items-center gap-2"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {showAdvanced ? "Hide Filters" : "Show Filters"}
+        </Button>
+      </div>
+
+      {showAdvanced && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
           <Select
             value={filters.status}
             onValueChange={(value) => handleFilterChange("status", value)}
@@ -73,8 +87,14 @@ export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFilter
               <SelectItem value="stolen">Stolen</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div>
+
+          <Input
+            placeholder="Location..."
+            value={filters.location}
+            onChange={(e) => handleFilterChange("location", e.target.value)}
+            className="w-full"
+          />
+
           <Input
             placeholder="Make/Model..."
             value={filters.makeModel}
@@ -82,7 +102,7 @@ export const AdvancedVehicleFilters = ({ onFilterChange }: AdvancedVehicleFilter
             className="w-full"
           />
         </div>
-      </div>
+      )}
     </div>
   );
 };

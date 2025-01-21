@@ -108,19 +108,23 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     document.body.removeChild(link);
   };
 
-  // Filter vehicles based on criteria
+  // Filter vehicles based on all criteria
   const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = filters.search === "" ||
-      vehicle.make.toLowerCase().includes(filters.search.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(filters.search.toLowerCase()) ||
-      vehicle.license_plate.toLowerCase().includes(filters.search.toLowerCase());
+    const searchTerm = filters.search.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      vehicle.make.toLowerCase().includes(searchTerm) ||
+      vehicle.model.toLowerCase().includes(searchTerm) ||
+      vehicle.license_plate.toLowerCase().includes(searchTerm);
 
     const matchesStatus = filters.status === "all" || vehicle.status === filters.status;
+    
+    const matchesLocation = !filters.location || 
+      vehicle.location?.toLowerCase().includes(filters.location.toLowerCase());
 
-    const matchesMakeModel = filters.makeModel === "" ||
+    const matchesMakeModel = !filters.makeModel ||
       `${vehicle.make} ${vehicle.model}`.toLowerCase().includes(filters.makeModel.toLowerCase());
 
-    return matchesSearch && matchesStatus && matchesMakeModel;
+    return matchesSearch && matchesStatus && matchesLocation && matchesMakeModel;
   });
 
   const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
