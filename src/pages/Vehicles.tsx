@@ -1,22 +1,26 @@
 import { VehicleList } from "@/components/vehicles/VehicleList";
 import { VehicleStats } from "@/components/vehicles/VehicleStats";
 import { VehicleFilters } from "@/components/vehicles/VehicleFilters";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Vehicle } from "@/types/vehicle";
 
 export default function Vehicles() {
-  const { data: vehicles = [], isLoading } = useQuery({
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "all",
+    sort: "newest"
+  });
+
+  const { data: vehicles, isLoading } = useQuery({
     queryKey: ["vehicles"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vehicles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
+        .select("*");
       if (error) throw error;
-      return data as Vehicle[];
-    },
+      return data;
+    }
   });
 
   return (
@@ -27,9 +31,9 @@ export default function Vehicles() {
           <p className="text-muted-foreground">Manage your vehicle fleet</p>
         </div>
         
-        <VehicleStats />
-        <VehicleFilters />
-        <VehicleList vehicles={vehicles} isLoading={isLoading} />
+        <VehicleStats vehicles={vehicles || []} isLoading={isLoading} />
+        <VehicleFilters filters={filters} setFilters={setFilters} />
+        <VehicleList />
       </div>
     </div>
   );
