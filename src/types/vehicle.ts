@@ -1,22 +1,36 @@
-import { Database } from "@/integrations/supabase/types";
-
-export type VehicleStatus = Database['public']['Enums']['vehicle_status'];
+export type VehicleStatus = 'maintenance' | 'available' | 'rented' | 'retired' | 'police_station' | 'accident' | 'reserve' | 'stolen';
 
 export interface Vehicle {
   id: string;
   make: string;
   model: string;
   year: number;
-  color: string | null;
+  color?: string;
   license_plate: string;
   vin: string;
   status: VehicleStatus;
-  mileage: number;
-  image_url: string | null;
-  description: string | null;
+  mileage?: number;
+  image_url?: string;
+  description?: string;
   created_at: string;
   updated_at: string;
-  location: string | null;
-  insurance_company: string | null;
-  is_test_data?: boolean;
+  location?: string;
+  insurance_company?: string;
+}
+
+export interface VehicleFilters {
+  status: VehicleStatus;
+  searchQuery: string;
+}
+
+export interface VehicleDetailsDialogProps {
+  vehicleId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export interface DeleteVehicleDialogProps {
+  vehicleId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
