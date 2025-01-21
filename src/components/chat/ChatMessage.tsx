@@ -27,8 +27,8 @@ export const ChatMessage = ({ content, role }: ChatMessageProps) => {
         className={cn(
           "rounded-lg px-4 py-2 max-w-[80%]",
           isAssistant
-            ? "bg-secondary text-secondary-foreground"
-            : "bg-primary text-primary-foreground"
+            ? "bg-secondary/90 text-white"
+            : "bg-primary text-white"
         )}
       >
         <p className="text-sm whitespace-pre-wrap">{content}</p>
