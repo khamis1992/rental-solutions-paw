@@ -30,17 +30,41 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   });
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
 
   const handleVehicleClick = (vehicleId: string) => {
     console.log("Navigating to vehicle:", vehicleId);
     navigate(`/vehicles/${vehicleId}`);
   };
 
+  const handleVehicleSelect = (vehicleId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedVehicles([...selectedVehicles, vehicleId]);
+    } else {
+      setSelectedVehicles(selectedVehicles.filter(id => id !== vehicleId));
+    }
+  };
+
+  // Filter vehicles based on criteria
+  const filteredVehicles = vehicles.filter(vehicle => {
+    const matchesSearch = filters.search === "" ||
+      vehicle.make.toLowerCase().includes(filters.search.toLowerCase()) ||
+      vehicle.model.toLowerCase().includes(filters.search.toLowerCase()) ||
+      vehicle.license_plate.toLowerCase().includes(filters.search.toLowerCase());
+
+    const matchesStatus = filters.status === "all" || vehicle.status === filters.status;
+
+    const matchesMakeModel = filters.makeModel === "" ||
+      `${vehicle.make} ${vehicle.model}`.toLowerCase().includes(filters.makeModel.toLowerCase());
+
+    return matchesSearch && matchesStatus && matchesMakeModel;
+  });
+
   // Calculate pagination
-  const totalPages = Math.ceil(vehicles.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentVehicles = vehicles.slice(startIndex, endIndex);
+  const currentVehicles = filteredVehicles.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -85,11 +109,13 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
           <VehicleListView 
             vehicles={currentVehicles} 
             onVehicleClick={handleVehicleClick}
+            selectedVehicles={selectedVehicles}
+            onVehicleSelect={handleVehicleSelect}
           />
         )}
       </div>
 
-      {vehicles.length > ITEMS_PER_PAGE && (
+      {filteredVehicles.length > ITEMS_PER_PAGE && (
         <VehicleTablePagination
           currentPage={currentPage}
           totalPages={totalPages}
