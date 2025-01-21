@@ -1,67 +1,94 @@
 import { useState } from "react";
-import { Vehicle, VehicleStatus } from "@/types/vehicle";
-import { VehicleTableContent } from "./table/VehicleTableContent";
+import { Vehicle, VehicleStatus, VehicleFilters } from "@/types/vehicle";
 import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
 import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
   isLoading: boolean;
+  onFilterChange: (filters: VehicleFilters) => void;
+  onExportToExcel?: () => void;
 }
 
-export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+export const VehicleList = ({
+  vehicles,
+  isLoading,
+  onFilterChange,
+  onExportToExcel
+}: VehicleListProps) => {
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [filters, setFilters] = useState<{ status: VehicleStatus; searchQuery: string }>({
+  const [filters, setFilters] = useState<VehicleFilters>({
     status: "available",
-    searchQuery: "",
+    searchQuery: ""
   });
 
   const handleVehicleClick = (vehicleId: string) => {
-    const vehicle = vehicles.find(v => v.id === vehicleId);
-    if (vehicle) {
-      setSelectedVehicle(vehicle);
-      setShowDetailsDialog(true);
-    }
+    setSelectedVehicleId(vehicleId);
   };
 
-  const handleDeleteClick = (vehicleId: string) => {
-    const vehicle = vehicles.find(v => v.id === vehicleId);
-    if (vehicle) {
-      setSelectedVehicle(vehicle);
-      setShowDeleteDialog(true);
-    }
+  const handleFilterChange = (newFilters: VehicleFilters) => {
+    setFilters(newFilters);
+    onFilterChange(newFilters);
   };
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
 
   return (
-    <div className="space-y-4 pt-32">
+    <div>
       <AdvancedVehicleFilters
-        onFiltersChange={setFilters}
-        currentFilters={filters}
+        filters={filters}
+        onFilterChange={handleFilterChange}
       />
 
-      <VehicleTableContent
-        vehicles={vehicles}
-        isLoading={isLoading}
-        onVehicleClick={handleVehicleClick}
-        onDeleteClick={handleDeleteClick}
-      />
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Make</TableHead>
+            <TableHead>Model</TableHead>
+            <TableHead>Year</TableHead>
+            <TableHead>License Plate</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {vehicles.map(vehicle => (
+            <TableRow key={vehicle.id}>
+              <TableCell>{vehicle.make}</TableCell>
+              <TableCell>{vehicle.model}</TableCell>
+              <TableCell>{vehicle.year}</TableCell>
+              <TableCell>{vehicle.license_plate}</TableCell>
+              <TableCell>{vehicle.status}</TableCell>
+              <TableCell>
+                <Button onClick={() => handleVehicleClick(vehicle.id)}>View</Button>
+                <Button onClick={() => {
+                  setSelectedVehicleId(vehicle.id);
+                  setShowDeleteDialog(true);
+                }}>Delete</Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
-      {selectedVehicle && (
-        <>
-          <DeleteVehicleDialog
-            open={showDeleteDialog}
-            onOpenChange={setShowDeleteDialog}
-            vehicleId={selectedVehicle.id}
-          />
-          <VehicleDetailsDialog
-            vehicleId={selectedVehicle.id}
-            open={showDetailsDialog}
-            onOpenChange={setShowDetailsDialog}
-          />
-        </>
+      {selectedVehicleId && (
+        <VehicleDetailsDialog
+          vehicleId={selectedVehicleId}
+          open={!!selectedVehicleId}
+          onOpenChange={(open) => !open && setSelectedVehicleId(null)}
+        />
+      )}
+
+      {showDeleteDialog && selectedVehicleId && (
+        <DeleteVehicleDialog
+          vehicleId={selectedVehicleId}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+        />
       )}
     </div>
   );
