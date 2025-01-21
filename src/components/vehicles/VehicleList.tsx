@@ -1,101 +1,91 @@
 import { useState } from "react";
-import { VehicleGrid } from "./VehicleGrid";
-import { VehicleListView } from "./table/VehicleListView";
-import { AdvancedVehicleFilters, VehicleFilters } from "./filters/AdvancedVehicleFilters";
-import { Vehicle } from "@/types/database/vehicle.types";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid, List } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { VehicleTableContent } from "./table/VehicleTableContent";
 import { VehicleTablePagination } from "./table/VehicleTablePagination";
+import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
+import { Button } from "@/components/ui/button";
+import { Download, Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { CreateVehicleDialog } from "./CreateVehicleDialog";
+import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
+import { VehicleDetailsDialog } from "./VehicleDetailsDialog";
+import type { Vehicle } from "@/types/vehicle";
 
-interface VehicleListProps {
-  vehicles: Vehicle[];
-  isLoading: boolean;
-}
+const STATUS_COLORS = {
+  active: "bg-green-100 text-green-800",
+  inactive: "bg-gray-100 text-gray-800",
+  maintenance: "bg-yellow-100 text-yellow-800",
+  sold: "bg-red-100 text-red-800",
+};
 
-const ITEMS_PER_PAGE = 9; // Divisible by 3 for grid layout
+export const VehicleList = () => {
+  const [filters, setFilters] = useState({ status: "all", searchQuery: "" });
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
-  const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState<VehicleFilters>({
-    search: "",
-    status: "all",
-    location: "",
-    makeModel: "",
-    yearRange: {
-      from: null,
-      to: null,
+  const { data: vehicles = [], isLoading } = useQuery({
+    queryKey: ["vehicles", filters],
+    queryFn: async () => {
+      let query = supabase.from("vehicles").select();
+
+      if (filters.status !== "all") {
+        query = query.eq("status", filters.status);
+      }
+
+      if (filters.searchQuery) {
+        query = query.or(
+          `make.ilike.%${filters.searchQuery}%,model.ilike.%${filters.searchQuery}%,license_plate.ilike.%${filters.searchQuery}%`
+        );
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching vehicles:", error);
+        throw error;
+      }
+
+      return (data || []) as Vehicle[];
     },
   });
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  const handleVehicleClick = (vehicleId: string) => {
-    console.log("Navigating to vehicle:", vehicleId);
-    navigate(`/vehicles/${vehicleId}`);
+  const handleDeleteClick = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsDeleteDialogOpen(true);
   };
-
-  // Calculate pagination
-  const totalPages = Math.ceil(vehicles.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentVehicles = vehicles.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  if (isLoading) {
-    return <div className="text-center py-4">Loading vehicles...</div>;
-  }
 
   return (
-    <div className="pt-24 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="pt-32 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
       <div className="flex justify-between items-center">
         <AdvancedVehicleFilters onFilterChange={setFilters} />
         <div className="flex gap-2">
           <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('grid')}
-            title="Grid View"
+            variant="outline"
+            onClick={() => handleExportToExcel()}
+            className="flex items-center gap-2"
           >
-            <LayoutGrid className="h-4 w-4" />
+            <Download className="h-4 w-4" />
+            Export
           </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('list')}
-            title="List View"
-          >
-            <List className="h-4 w-4" />
-          </Button>
+          <CreateVehicleDialog>
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add Vehicle
+            </Button>
+          </CreateVehicleDialog>
         </div>
       </div>
 
-      <div className={viewMode === 'grid' ? 'grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : ''}>
-        {viewMode === 'grid' ? (
-          <VehicleGrid 
-            vehicles={currentVehicles} 
-            onVehicleClick={handleVehicleClick}
-          />
-        ) : (
-          <VehicleListView 
-            vehicles={currentVehicles} 
-            onVehicleClick={handleVehicleClick}
-          />
-        )}
-      </div>
-
-      {vehicles.length > ITEMS_PER_PAGE && (
-        <VehicleTablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      )}
+      <VehicleTableContent vehicles={vehicles} isLoading={isLoading} onDeleteClick={handleDeleteClick} />
+      <VehicleTablePagination currentPage={1} totalPages={1} onPageChange={() => {}} />
+      <DeleteVehicleDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        vehicle={selectedVehicle}
+      />
+      <VehicleDetailsDialog vehicle={selectedVehicle} />
     </div>
   );
 };
