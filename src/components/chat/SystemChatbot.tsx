@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "./ChatMessage";
@@ -24,13 +24,33 @@ export const SystemChatbot = () => {
       content: "Hello! I'm your Rental Solutions assistant. How can I help you today?",
     },
   ]);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Cleanup function for ResizeObserver
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    // Create ResizeObserver instance
+    const resizeObserver = new ResizeObserver(() => {
+      // Scroll to bottom when content changes
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+    });
+
+    // Start observing
+    resizeObserver.observe(scrollArea);
+
+    // Cleanup
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // Check if Perplexity API key is configured
   const { isLoading: isCheckingKey, isError: isKeyError } = useQuery({
     queryKey: ["perplexity-api-key"],
     queryFn: async () => {
       try {
-        // Add origin to request headers
         const { data, error } = await supabase.functions.invoke("check-perplexity-key", {
           headers: {
             'Origin': TRUSTED_ORIGIN
@@ -61,29 +81,19 @@ export const SystemChatbot = () => {
         }
       } catch (error) {
         console.error('Database query error:', error);
-        // Continue to AI if database query fails
       }
 
-      // Process messages to ensure alternation
-      const processedMessages = messages.reduce((acc: Message[], curr, index) => {
-        if (index === 0 || curr.role !== acc[acc.length - 1].role) {
-          acc.push(curr);
-        }
-        return acc;
-      }, []).slice(-6);
-
       const apiMessages = [
-        ...processedMessages,
+        ...messages.slice(-6),
         { role: "user" as const, content: message }
       ];
 
       console.log('Sending messages to AI:', apiMessages);
       
-      // Add origin to request headers
       const { data, error } = await supabase.functions.invoke("chat", {
         body: { 
           messages: apiMessages,
-          dbResponse: null // No database response, use AI
+          dbResponse: null
         },
         headers: {
           'Origin': TRUSTED_ORIGIN
@@ -121,7 +131,7 @@ export const SystemChatbot = () => {
 
   if (isCheckingKey) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
         <CardContent className="flex items-center justify-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
@@ -131,7 +141,7 @@ export const SystemChatbot = () => {
 
   if (isKeyError) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
         <CardContent className="py-10">
           <p className="text-center text-muted-foreground">
             Chat service is currently unavailable. Please try again later.
@@ -142,14 +152,17 @@ export const SystemChatbot = () => {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>Rental Solutions Assistant</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea 
+          ref={scrollAreaRef}
+          className="h-[400px] pr-4"
+        >
           {messages.map((message, index) => (
             <ChatMessage
               key={index}
