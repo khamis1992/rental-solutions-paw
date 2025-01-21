@@ -1,32 +1,21 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
-import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { IntelligentScheduling } from "@/components/dashboard/IntelligentScheduling";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
 
-const Dashboard = () => {
+export default function Dashboard() {
   return (
-    <DashboardLayout>
-      <div className="w-full bg-background">
-        <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="space-y-6">
-            <DashboardStats />
-            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <DashboardAlerts />
-              <VehicleStatusChart />
-            </div>
-            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-              <UpcomingRentals />
-              <RecentActivity />
-            </div>
-            <IntelligentScheduling />
-          </div>
+    <div className="w-full bg-background">
+      <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        <WelcomeHeader />
+        <DashboardStats />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DashboardAlerts />
+          <VehicleStatusChart />
         </div>
+        <RecentActivity />
       </div>
-    </DashboardLayout>
+    </div>
   );
-};
-
-export default Dashboard;
+}
