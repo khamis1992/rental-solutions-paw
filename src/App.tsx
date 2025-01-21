@@ -15,11 +15,19 @@ export default function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (event === 'SIGNED_OUT') {
         navigate('/auth');
       } else if (event === 'SIGNED_IN') {
-        supabase.auth.refreshSession();
+        try {
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) throw refreshError;
+        } catch (err) {
+          console.error('Session refresh error:', err);
+          toast.error('Failed to refresh session. Please sign in again.');
+          await supabase.auth.signOut();
+          navigate('/auth');
+        }
       }
     });
 
