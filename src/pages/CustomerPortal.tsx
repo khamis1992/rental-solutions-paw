@@ -76,20 +76,27 @@ export default function CustomerPortal() {
   };
 
   const handleLogout = () => {
+    // Clear authentication state
     setIsAuthenticated(false);
     setProfile(null);
+    
+    // Clear form data
     setAgreementNumber('');
     setPhoneNumber('');
+    
+    // Show success message
     toast.success('Logged out successfully');
+    
+    // Redirect to login page
     navigate('/customer-portal');
   };
 
   if (isAuthenticated && profile) {
     return (
       <div className="min-h-screen bg-background-alt">
-        <div className="container py-8 mx-auto px-4">
+        <div className="container py-8 space-y-8">
           {/* Header with Logout Button */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-secondary">Welcome, {profile?.full_name}</h1>
               <p className="text-muted-foreground">Manage your rentals and account details</p>
@@ -105,17 +112,15 @@ export default function CustomerPortal() {
           </div>
 
           {/* Profile Management Section */}
-          <div className="space-y-6">
-            <ProfileManagement profile={profile} />
+          <ProfileManagement profile={profile} />
 
-            {/* Payment History Section */}
-            {profile?.id && (
-              <PaymentHistory customerId={profile.id} />
-            )}
+          {/* Payment History Section */}
+          {profile?.id && (
+            <PaymentHistory customerId={profile.id} />
+          )}
 
-            {/* Feedback Section */}
-            <CustomerFeedback agreementId={agreementNumber} />
-          </div>
+          {/* Feedback Section */}
+          <CustomerFeedback agreementId={agreementNumber} />
         </div>
       </div>
     );
