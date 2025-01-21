@@ -2,7 +2,7 @@ import { useState } from "react";
 import { VehicleGrid } from "./VehicleGrid";
 import { VehicleListView } from "./table/VehicleListView";
 import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
-import { Vehicle } from "@/types/database/vehicle.types";
+import { Vehicle, VehicleStatus } from "@/types/vehicle";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -16,12 +16,23 @@ interface VehicleListProps {
   isLoading: boolean;
 }
 
+interface VehicleFilters {
+  search: string;
+  status: VehicleStatus | "all";
+  location: string;
+  makeModel: string;
+  yearRange: {
+    from: number | null;
+    to: number | null;
+  };
+}
+
 const ITEMS_PER_PAGE = 9;
 
 export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<VehicleFilters>({
     search: "",
     status: "all",
     location: "",
@@ -47,7 +58,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     }
   };
 
-  const handleBulkStatusUpdate = async (status: string) => {
+  const handleBulkStatusUpdate = async (status: VehicleStatus) => {
     try {
       const { error } = await supabase
         .from('vehicles')
@@ -78,7 +89,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     try {
       const { error } = await supabase
         .from('vehicles')
-        .update({ status: 'archived' })
+        .update({ status: 'retired' as VehicleStatus })
         .in('id', selectedVehicles);
 
       if (error) throw error;
