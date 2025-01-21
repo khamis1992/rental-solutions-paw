@@ -56,9 +56,9 @@ export interface Template {
   updated_at?: string;
   content?: string;
   language?: DocumentLanguage;
-  template_structure?: Record<string, any>;
-  template_sections?: any[];
-  variable_mappings?: Record<string, any>;
+  template_structure: Record<string, any>;
+  template_sections: any[];
+  variable_mappings: Record<string, any>;
 }
 
 export interface Payment {
@@ -69,7 +69,7 @@ export interface Payment {
   balance: number;
   payment_date: string;
   payment_method: string;
-  status: PaymentStatus;
+  status: string;
   description: string;
   type: string;
   late_fine_amount: number;
