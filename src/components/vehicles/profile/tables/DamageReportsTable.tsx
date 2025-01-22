@@ -1,14 +1,13 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface DamageRecord {
   id: string;
   reported_date: string;
   description: string;
-  damage_location: string;
   source: string;
   reporter: string;
   images?: string[];
@@ -26,7 +25,6 @@ export const DamageReportsTable = ({ records, onViewImages }: DamageReportsTable
       <TableRow>
         <TableHead>Date</TableHead>
         <TableHead>Description</TableHead>
-        <TableHead>Location</TableHead>
         <TableHead>Source</TableHead>
         <TableHead>Reporter</TableHead>
         <TableHead>Photos</TableHead>
@@ -40,7 +38,6 @@ export const DamageReportsTable = ({ records, onViewImages }: DamageReportsTable
             {formatDateToDisplay(new Date(damage.reported_date))}
           </TableCell>
           <TableCell>{damage.description}</TableCell>
-          <TableCell>{damage.damage_location}</TableCell>
           <TableCell>
             <Badge 
               variant="outline" 

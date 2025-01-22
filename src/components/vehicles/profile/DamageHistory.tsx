@@ -103,7 +103,7 @@ export const DamageHistory = ({ vehicleId }: DamageHistoryProps) => {
         ...damage,
         source: damage.leases?.agreement_type === 'short_term' ? 'Rental Agreement' : 
                damage.lease_id ? 'Lease to Own Agreement' : 'Maintenance Inspection',
-        customer_name: damage.leases?.profiles?.full_name || 'System Inspection'
+        reporter: damage.leases?.profiles?.full_name || 'System Inspection'
       }));
 
       return {
