@@ -11,8 +11,7 @@ import { AgreementListHeader } from "./list/AgreementListHeader";
 import { AgreementListContent } from "./list/AgreementListContent";
 import { useAgreementList } from "./list/useAgreementList";
 import { Button } from "@/components/ui/button";
-import { Download, Calculator, Upload } from "lucide-react";
-import { usePullAgreementData } from "./hooks/usePullAgreementData";
+import { Upload } from "lucide-react";
 import { AgreementPDFImport } from "./AgreementPDFImport";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,7 +38,6 @@ export const AgreementList = () => {
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
   const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isCalculatingFines, setIsCalculatingFines] = useState(false);
 
   const {
     currentPage,
@@ -59,94 +57,10 @@ export const AgreementList = () => {
     refetch,
   } = useAgreementList();
 
-  const { isPullingData, handlePullData } = usePullAgreementData(refetch);
-
   const handleViewContractClick = async (agreementId: string) => {
     const agreement = await handleViewContract(agreementId);
     if (agreement) {
       navigate(`/agreements/${agreementId}/view`);
-    }
-  };
-
-  const calculateLateFines = async () => {
-    if (isCalculatingFines) return;
-    setIsCalculatingFines(true);
-
-    try {
-      // Get all agreements with their payments
-      const { data: agreementsWithPayments, error: fetchError } = await supabase
-        .from('leases')
-        .select(`
-          id,
-          agreement_number,
-          rent_due_day,
-          unified_payments (
-            id,
-            payment_date,
-            amount,
-            late_fine_amount,
-            status
-          )
-        `)
-        .eq('status', 'active');
-
-      if (fetchError) throw fetchError;
-
-      let finesAdded = 0;
-      
-      // Process each agreement
-      for (const agreement of agreementsWithPayments || []) {
-        const payments = agreement.unified_payments || [];
-        const dueDay = agreement.rent_due_day || 1;
-        
-        for (const payment of payments) {
-          // Only process completed payments
-          if (!payment.payment_date || payment.status !== 'completed') {
-            continue;
-          }
-
-          const paymentDate = new Date(payment.payment_date);
-          const paymentDay = paymentDate.getDate();
-          
-          // Calculate days late (if payment was made after the due day)
-          const daysLate = Math.max(0, paymentDay - dueDay);
-
-          if (daysLate > 0 && !payment.late_fine_amount) {
-            const lateFineAmount = 120 * daysLate; // 120 QAR per day
-
-            // Update payment with late fine
-            const { error: updateError } = await supabase
-              .from('unified_payments')
-              .update({ 
-                late_fine_amount: lateFineAmount,
-                days_overdue: daysLate
-              })
-              .eq('id', payment.id);
-
-            if (updateError) {
-              console.error('Error updating late fine:', updateError);
-              continue;
-            }
-
-            finesAdded++;
-          }
-        }
-      }
-
-      // Invalidate queries to refresh the UI
-      await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
-      await refetch();
-
-      if (finesAdded > 0) {
-        toast.success(`Added late fines to ${finesAdded} payment(s)`);
-      } else {
-        toast.info('No new late fines to add');
-      }
-    } catch (error) {
-      console.error('Error calculating late fines:', error);
-      toast.error('Failed to calculate late fines');
-    } finally {
-      setIsCalculatingFines(false);
     }
   };
 
@@ -202,26 +116,6 @@ export const AgreementList = () => {
               Create Agreement
             </Button>
           </CreateAgreementDialog>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePullData}
-            disabled={isPullingData}
-            className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Pull Data
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={calculateLateFines}
-            disabled={isCalculatingFines}
-            className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
-          >
-            <Calculator className="h-4 w-4 mr-2" />
-            {isCalculatingFines ? 'Calculating...' : 'Add Fine'}
-          </Button>
         </div>
       </div>
       
