@@ -10,6 +10,8 @@ import { AssociatedAgreements } from "./profile/AssociatedAgreements";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
 import { VehicleInsurance } from "./profile/VehicleInsurance";
 import { VehicleParts } from "./profile/VehicleParts";
+import { VehicleTimeline } from "./profile/VehicleTimeline";
+import { VehicleQRCode } from "./profile/VehicleQRCode";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { injectPrintStyles } from "@/lib/printStyles";
@@ -20,7 +22,7 @@ export const VehicleDetails = () => {
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", id],
     queryFn: async () => {
-      console.log("Fetching vehicle with ID:", id); // Debug log
+      console.log("Fetching vehicle with ID:", id);
       
       if (!id) throw new Error("Vehicle ID is required");
 
@@ -31,7 +33,7 @@ export const VehicleDetails = () => {
         .maybeSingle();
 
       if (error) {
-        console.error("Supabase error:", error); // Debug log
+        console.error("Supabase error:", error);
         throw error;
       }
 
@@ -39,11 +41,11 @@ export const VehicleDetails = () => {
         throw new Error("Vehicle not found");
       }
       
-      console.log("Vehicle data:", data); // Debug log
+      console.log("Vehicle data:", data);
       return data;
     },
-    enabled: !!id, // Only run query if id exists
-    retry: 3, // Retry failed requests 3 times
+    enabled: !!id,
+    retry: 3,
   });
 
   const handlePrint = () => {
@@ -76,20 +78,36 @@ export const VehicleDetails = () => {
         </Button>
       </div>
 
-      {/* Vehicle Image */}
-      <div className="relative h-[300px] w-full overflow-hidden rounded-lg bg-muted">
-        {vehicle.image_url ? (
-          <img
-            src={vehicle.image_url}
-            alt={`${vehicle.make} ${vehicle.model}`}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            No image available
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Vehicle Image */}
+        <div className="md:col-span-2">
+          <div className="relative h-[300px] w-full overflow-hidden rounded-lg bg-muted">
+            {vehicle.image_url ? (
+              <img
+                src={vehicle.image_url}
+                alt={`${vehicle.make} ${vehicle.model}`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                No image available
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* QR Code */}
+        <div className="md:col-span-1">
+          <VehicleQRCode 
+            vehicleId={vehicle.id} 
+            make={vehicle.make} 
+            model={vehicle.model} 
+          />
+        </div>
       </div>
+
+      {/* Timeline */}
+      <VehicleTimeline vehicleId={vehicle.id} />
 
       {/* Vehicle Information Tabs */}
       <Tabs defaultValue="overview" className="w-full">
