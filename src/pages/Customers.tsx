@@ -10,24 +10,25 @@ import { Button } from "@/components/ui/button";
 const Customers = () => {
   return (
     <DashboardLayout>
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-3xl flex items-center gap-2">
-                <Users className="h-8 w-8 text-primary" />
-                Customer Management
-              </CardTitle>
-              <CardDescription className="mt-2">
-                Manage customer profiles, track relationships, and monitor customer activity
-              </CardDescription>
-            </div>
-            <div>
+      {/* Header Section */}
+      <div className="mb-8">
+        <Card className="bg-white shadow-sm border-0">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <Users className="h-8 w-8 text-primary" />
+                  <CardTitle className="text-3xl font-bold">Customer Management</CardTitle>
+                </div>
+                <CardDescription className="text-base text-muted-foreground">
+                  Manage customer profiles, track relationships, and monitor customer activity
+                </CardDescription>
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <CreateCustomerDialog>
-                      <Button className="flex items-center gap-2">
+                      <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
                         <UserPlus className="h-4 w-4" />
                         Add Customer
                       </Button>
@@ -39,20 +40,24 @@ const Customers = () => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
+      </div>
 
-      <CustomerStats />
+      {/* Stats Section */}
+      <div className="mb-8">
+        <CustomerStats />
+      </div>
       
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-xl">Customer List</CardTitle>
+      {/* Customer List Section */}
+      <Card className="bg-white shadow-sm border-0">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold">Customer List</CardTitle>
           <CardDescription>
             View and manage all customer profiles and their associated information
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <CustomerList />
         </CardContent>
       </Card>

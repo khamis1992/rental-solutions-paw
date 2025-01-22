@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserPlus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, UserPlus, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,33 +33,57 @@ export const CustomerStats = () => {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Skeleton className="h-32" />
         <Skeleton className="h-32" />
         <Skeleton className="h-32" />
       </div>
     );
   }
 
+  const cards = [
+    {
+      title: "Total Customers",
+      value: stats?.total || 0,
+      icon: Users,
+      color: "text-blue-500",
+      bgColor: "bg-blue-50",
+    },
+    {
+      title: "New This Month",
+      value: stats?.newThisMonth || 0,
+      icon: UserPlus,
+      color: "text-green-500",
+      bgColor: "bg-green-50",
+    },
+    {
+      title: "Active Customers",
+      value: stats?.total - (stats?.newThisMonth || 0),
+      icon: UserCheck,
+      color: "text-purple-500",
+      bgColor: "bg-purple-50",
+    },
+  ];
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats?.total}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-          <UserPlus className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats?.newThisMonth}</div>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-3">
+      {cards.map((card, index) => (
+        <Card key={index} className="border-0 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">
+                  {card.title}
+                </p>
+                <p className="text-2xl font-bold">{card.value}</p>
+              </div>
+              <div className={`p-3 rounded-full ${card.bgColor}`}>
+                <card.icon className={`h-6 w-6 ${card.color}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };
