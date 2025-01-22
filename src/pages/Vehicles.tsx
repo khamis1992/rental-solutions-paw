@@ -6,11 +6,10 @@ import { VehicleStats } from "@/components/vehicles/VehicleStats";
 import { CreateVehicleDialog } from "@/components/vehicles/CreateVehicleDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Car, Plus, AlertTriangle, Wrench } from "lucide-react";
+import { Car, Plus } from "lucide-react";
 import { Vehicle } from "@/types/vehicle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Vehicles = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,11 +43,6 @@ const Vehicles = () => {
     );
   });
 
-  // Calculate stats
-  const availableVehicles = vehicles.filter(v => v.status === 'available').length;
-  const maintenanceVehicles = vehicles.filter(v => v.status === 'maintenance').length;
-  const needsAttention = vehicles.filter(v => ['accident', 'police_station'].includes(v.status || '')).length;
-
   return (
     <DashboardLayout>
       <div className="container mx-auto py-6 space-y-6">
@@ -73,50 +67,8 @@ const Vehicles = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Available Vehicles</p>
-                  <p className="text-3xl font-bold">{availableVehicles}</p>
-                </div>
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <Car className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">In Maintenance</p>
-                  <p className="text-3xl font-bold">{maintenanceVehicles}</p>
-                </div>
-                <div className="bg-orange-100 p-3 rounded-full">
-                  <Wrench className="h-5 w-5 text-orange-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Needs Attention</p>
-                  <p className="text-3xl font-bold">{needsAttention}</p>
-                </div>
-                <div className="bg-red-100 p-3 rounded-full">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Stats */}
+        <VehicleStats vehicles={vehicles} isLoading={isLoading} />
 
         {/* Vehicle List Section */}
         <Card>
@@ -129,21 +81,6 @@ const Vehicles = () => {
             </div>
 
             <div className="flex gap-4 mb-6">
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="maintenance">In Maintenance</SelectItem>
-                  <SelectItem value="attention">Needs Attention</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Input
                 placeholder="Search vehicles..."
                 value={searchQuery}
