@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Package, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreatePartDialog } from './CreatePartDialog';
-import { useState } from 'react';
+import { SupplierManagement } from './SupplierManagement';
 
 interface PartInventory {
   id: string;
@@ -47,7 +47,7 @@ export const PartsInventory = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -102,6 +102,8 @@ export const PartsInventory = () => {
           )}
         </CardContent>
       </Card>
+
+      <SupplierManagement />
 
       <CreatePartDialog 
         open={isCreateDialogOpen} 
