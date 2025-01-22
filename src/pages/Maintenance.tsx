@@ -10,6 +10,8 @@ import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleIn
 import { Card, CardContent } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
 import { PartsInventory } from "@/components/maintenance/parts/PartsInventory";
+import { PartsOrderList } from "@/components/maintenance/parts/PartsOrderList";
+import { SupplierManagement } from "@/components/maintenance/parts/SupplierManagement";
 import { MaintenanceScheduler } from "@/components/maintenance/scheduler/MaintenanceScheduler";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
