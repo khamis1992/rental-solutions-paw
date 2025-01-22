@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
-import { useQuery } from "@tanstack/react-query";
 
 interface VehicleStatusProps {
   vehicleId: string;
@@ -21,6 +20,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
   const { data: availableStatuses } = useQuery({
     queryKey: ["vehicle-statuses"],
     queryFn: async () => {
+      console.log("Fetching vehicle statuses"); // Debug log
       const { data, error } = await supabase
         .from("vehicle_statuses")
         .select("*")
@@ -32,11 +32,13 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
         throw error;
       }
 
+      console.log("Available statuses:", data); // Debug log
       return data;
     },
   });
 
   const getStatusColor = (status: VehicleStatusType) => {
+    console.log("Getting color for status:", status); // Debug log
     switch (status) {
       case "available":
         return "bg-green-500";
@@ -58,6 +60,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
   };
 
   const getStatusIcon = (status: VehicleStatusType) => {
+    console.log("Getting icon for status:", status); // Debug log
     switch (status) {
       case "available":
         return <CheckCircle2 className="h-4 w-4" />;
@@ -74,22 +77,28 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
 
   const updateStatus = async (newStatus: VehicleStatusType) => {
     try {
-      console.log("Updating status to:", newStatus); // Debug log
+      console.log("Attempting to update status to:", newStatus); // Debug log
+      console.log("Vehicle ID:", vehicleId); // Debug log
       
       const { error } = await supabase
         .from("vehicles")
         .update({ status: newStatus })
         .eq("id", vehicleId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating status:", error); // Debug log
+        throw error;
+      }
 
       setStatus(newStatus);
       toast({
         title: "Status Updated",
-        description: `Vehicle status has been updated to ${newStatus}`,
+        description: `Vehicle status has been updated to ${newStatus.replace('_', ' ')}`,
       });
+      
+      console.log("Status updated successfully"); // Debug log
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error("Error in updateStatus:", error); // Debug log
       toast({
         title: "Error",
         description: "Failed to update vehicle status",
@@ -119,7 +128,10 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
               <Button
                 key={statusOption.id}
                 variant="outline"
-                onClick={() => updateStatus(statusOption.name as VehicleStatusType)}
+                onClick={() => {
+                  console.log("Button clicked for status:", statusOption.name); // Debug log
+                  updateStatus(statusOption.name as VehicleStatusType);
+                }}
                 disabled={status === statusOption.name}
               >
                 Mark as {statusOption.name.replace('_', ' ')}
