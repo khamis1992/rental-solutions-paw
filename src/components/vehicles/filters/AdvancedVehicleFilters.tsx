@@ -13,18 +13,5 @@ export const AdvancedVehicleFilters = ({
   onSearchChange,
   onStatusChange,
 }: AdvancedVehicleFiltersProps) => {
-  return (
-    <Select value={statusFilter} onValueChange={onStatusChange}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Filter by status" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">All Vehicles</SelectItem>
-        <SelectItem value="available">Available</SelectItem>
-        <SelectItem value="rented">Rented</SelectItem>
-        <SelectItem value="maintenance">In Maintenance</SelectItem>
-        <SelectItem value="reserved">Reserved</SelectItem>
-      </SelectContent>
-    </Select>
-  );
+  return null; // Return null since we're removing the entire component
 };
