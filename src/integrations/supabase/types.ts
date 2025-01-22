@@ -2830,6 +2830,79 @@ export type Database = {
           },
         ]
       }
+      maintenance_tasks: {
+        Row: {
+          assigned_to: string | null
+          checklist: Json | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          order_index: number | null
+          priority: string | null
+          qr_code_data: string | null
+          scheduled_date: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          checklist?: Json | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_index?: number | null
+          priority?: string | null
+          qr_code_data?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          checklist?: Json | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_index?: number | null
+          priority?: string | null
+          qr_code_data?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_tasks_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       new_unified_payments: {
         Row: {
           amount: number

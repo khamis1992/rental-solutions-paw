@@ -10,6 +10,8 @@ import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleIn
 import { Card, CardContent } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
 import { PartsInventory } from "@/components/maintenance/parts/PartsInventory";
+import { MaintenanceScheduler } from "@/components/maintenance/scheduler/MaintenanceScheduler";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MaintenanceInspection = () => {
   const { id } = useParams();
@@ -46,8 +48,19 @@ const Maintenance = () => {
               
               <div className="space-y-6">
                 <PredictiveMaintenance />
-                <MaintenanceFilters filters={filters} setFilters={setFilters} />
-                <MaintenanceList />
+                <Tabs defaultValue="list" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="list">List View</TabsTrigger>
+                    <TabsTrigger value="scheduler">Scheduler</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="list">
+                    <MaintenanceFilters filters={filters} setFilters={setFilters} />
+                    <MaintenanceList />
+                  </TabsContent>
+                  <TabsContent value="scheduler">
+                    <MaintenanceScheduler />
+                  </TabsContent>
+                </Tabs>
                 <PartsInventory />
               </div>
             </div>
