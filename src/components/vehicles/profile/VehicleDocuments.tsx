@@ -1,14 +1,13 @@
 import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Upload, Download, Trash2, Folder } from "lucide-react";
+import { FileText, Upload, Download, Trash2, Folder, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDropzone } from 'react-dropzone';
+import { IframeSandbox } from "@/components/common/IframeSandbox";
 
 interface VehicleDocumentsProps {
   vehicleId: string;
@@ -16,21 +15,24 @@ interface VehicleDocumentsProps {
 
 type DocumentCategory = 'registration' | 'insurance' | 'maintenance' | 'other';
 
+type VehicleDocument = {
+  id: string;
+  document_type: string;
+  document_url: string;
+  uploaded_by: string | null;
+  expiry_date: string | null;
+  category: DocumentCategory;
+  created_at: string;
+};
+
 type DocumentsByCategory = {
-  [key in DocumentCategory]: {
-    id: string;
-    document_type: string;
-    document_url: string;
-    uploaded_by: string | null;
-    expiry_date: string | null;
-    category: DocumentCategory;
-    created_at: string;
-  }[];
+  [key in DocumentCategory]: VehicleDocument[];
 };
 
 export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
   const [uploading, setUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<DocumentCategory>("registration");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: documents, isLoading } = useQuery({
@@ -65,7 +67,6 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
         return;
       }
 
-      const fileExt = file.name.split('.').pop();
       const timestamp = new Date().getTime();
       const fileName = `${timestamp}_${file.name}`;
       const filePath = `${vehicleId}/${fileName}`;
@@ -113,6 +114,20 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     multiple: false
   });
 
+  const handlePreview = async (documentUrl: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('vehicle_documents')
+        .createSignedUrl(documentUrl, 3600); // 1 hour expiry
+
+      if (error) throw error;
+      setPreviewUrl(data.signedUrl);
+    } catch (error) {
+      console.error('Error generating preview URL:', error);
+      toast.error('Failed to preview document');
+    }
+  };
+
   const handleDownload = async (documentUrl: string, originalName: string) => {
     try {
       const { data, error } = await supabase.storage
@@ -152,6 +167,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       queryClient.invalidateQueries({ queryKey: ["vehicle-documents", vehicleId] });
       toast.success('Document deleted successfully');
+      setPreviewUrl(null); // Close preview if the deleted document was being previewed
     } catch (error) {
       console.error('Error deleting document:', error);
       toast.error('Failed to delete document');
@@ -232,6 +248,13 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handlePreview(doc.document_url)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleDownload(doc.document_url, doc.document_url.split('/').pop() || '')}
                         >
                           <Download className="h-4 w-4" />
@@ -251,6 +274,24 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
             </TabsContent>
           ))}
         </Tabs>
+
+        {previewUrl && (
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-medium">Document Preview</h3>
+              <Button variant="outline" size="sm" onClick={() => setPreviewUrl(null)}>
+                Close Preview
+              </Button>
+            </div>
+            <IframeSandbox
+              src={previewUrl}
+              title="Document Preview"
+              height="600px"
+              className="w-full border rounded-lg"
+              allowScripts={true}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
