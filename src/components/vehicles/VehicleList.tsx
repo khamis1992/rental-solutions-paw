@@ -9,16 +9,17 @@ import { VehicleStats } from "./VehicleStats";
 import { VehicleListView } from "./table/VehicleListView";
 import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { BulkActionsMenu } from "./components/BulkActionsMenu";
-import { Vehicle } from "@/types/vehicle";
+import { Vehicle, VehicleStatus } from "@/types/vehicle";
+import { toast } from "sonner";
 
 export const VehicleList = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
 
-  const { data: vehicles, isLoading } = useQuery({
+  const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles", searchQuery, statusFilter],
     queryFn: async () => {
       let query = supabase
@@ -37,11 +38,41 @@ export const VehicleList = () => {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
       return data as Vehicle[];
     },
   });
+
+  const handleUpdateStatus = async (status: VehicleStatus) => {
+    try {
+      const { error } = await supabase
+        .from("vehicles")
+        .update({ status })
+        .in("id", selectedVehicles);
+
+      if (error) throw error;
+      toast.success("Vehicles status updated successfully");
+      setSelectedVehicles([]);
+    } catch (error) {
+      console.error("Error updating vehicles status:", error);
+      toast.error("Failed to update vehicles status");
+    }
+  };
+
+  const handleScheduleMaintenance = () => {
+    // TODO: Implement maintenance scheduling
+    toast.info("Maintenance scheduling coming soon");
+  };
+
+  const handleExport = () => {
+    // TODO: Implement export functionality
+    toast.info("Export functionality coming soon");
+  };
+
+  const handleArchive = () => {
+    // TODO: Implement archive functionality
+    toast.info("Archive functionality coming soon");
+  };
 
   const handleDeleteComplete = () => {
     setSelectedVehicles([]);
@@ -58,24 +89,29 @@ export const VehicleList = () => {
         </Button>
       </div>
 
-      <VehicleStats />
+      <VehicleStats vehicles={vehicles} isLoading={isLoading} />
 
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <AdvancedVehicleFilters 
-            onSearch={setSearchQuery}
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            onSearchChange={setSearchQuery}
             onStatusChange={setStatusFilter}
           />
           {selectedVehicles.length > 0 && (
             <BulkActionsMenu
               selectedCount={selectedVehicles.length}
-              onDelete={() => setShowDeleteDialog(true)}
+              onUpdateStatus={handleUpdateStatus}
+              onScheduleMaintenance={handleScheduleMaintenance}
+              onExport={handleExport}
+              onArchive={handleArchive}
             />
           )}
         </div>
 
         <VehicleListView
-          vehicles={vehicles || []}
+          vehicles={vehicles}
           isLoading={isLoading}
           selectedVehicles={selectedVehicles}
           onSelectionChange={setSelectedVehicles}
@@ -83,14 +119,14 @@ export const VehicleList = () => {
       </div>
 
       <CreateVehicleDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
       />
 
       <DeleteVehicleDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        vehicleIds={selectedVehicles}
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        vehicleId={selectedVehicles[0]}
         onDeleteComplete={handleDeleteComplete}
       />
     </div>

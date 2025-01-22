@@ -5,12 +5,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Car, Wrench, Archive, Trash2, FileDown } from "lucide-react";
-import { toast } from "sonner";
+import { Car, Wrench, Archive, FileDown } from "lucide-react";
+import { VehicleStatus } from "@/types/vehicle";
 
 interface BulkActionsMenuProps {
   selectedCount: number;
-  onUpdateStatus: (status: string) => void;
+  onUpdateStatus: (status: VehicleStatus) => void;
   onScheduleMaintenance: () => void;
   onExport: () => void;
   onArchive: () => void;
