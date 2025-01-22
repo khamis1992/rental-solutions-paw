@@ -7,9 +7,27 @@ import { VehicleTimeline } from "./profile/VehicleTimeline";
 import { VehicleQRCode } from "./profile/VehicleQRCode";
 import { VehicleInsurance } from "./profile/VehicleInsurance";
 import { DocumentExpiryNotifications } from "./profile/DocumentExpiryNotifications";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const VehicleDetails = () => {
   const { id } = useParams<{ id: string }>();
+
+  const { data: vehicle } = useQuery({
+    queryKey: ["vehicle", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id
+  });
 
   if (!id) return null;
 
@@ -18,7 +36,12 @@ export const VehicleDetails = () => {
       <DocumentExpiryNotifications vehicleId={id} />
       <div className="grid gap-6 md:grid-cols-2">
         <VehicleOverview vehicleId={id} />
-        <VehicleQRCode vehicleId={id} />
+        {vehicle && (
+          <VehicleQRCode 
+            make={vehicle.make} 
+            model={vehicle.model} 
+          />
+        )}
       </div>
       <VehicleInsurance vehicleId={id} />
       <VehicleDocuments vehicleId={id} />
