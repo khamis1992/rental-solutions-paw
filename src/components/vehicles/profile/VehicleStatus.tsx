@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
+import { useQuery } from "@tanstack/react-query";
 
 interface VehicleStatusProps {
   vehicleId: string;
@@ -15,6 +16,25 @@ interface VehicleStatusProps {
 export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) => {
   const [status, setStatus] = useState<VehicleStatusType>(currentStatus);
   const { toast } = useToast();
+
+  // Fetch available statuses from the database
+  const { data: availableStatuses } = useQuery({
+    queryKey: ["vehicle-statuses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_statuses")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) {
+        console.error("Error fetching vehicle statuses:", error);
+        throw error;
+      }
+
+      return data;
+    },
+  });
 
   const getStatusColor = (status: VehicleStatusType) => {
     switch (status) {
@@ -28,6 +48,10 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
         return "bg-red-500";
       case "reserve":
         return "bg-purple-500";
+      case "police_station":
+        return "bg-pink-500";
+      case "stolen":
+        return "bg-red-700";
       default:
         return "bg-gray-500";
     }
@@ -40,6 +64,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
       case "maintenance":
         return <Clock className="h-4 w-4" />;
       case "accident":
+      case "stolen":
         return <AlertCircle className="h-4 w-4" />;
       default:
         return null;
@@ -87,34 +112,16 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
           </div>
           
           <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => updateStatus("available")}
-              disabled={status === "available"}
-            >
-              Mark Available
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => updateStatus("maintenance")}
-              disabled={status === "maintenance"}
-            >
-              Mark In Maintenance
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => updateStatus("reserve")}
-              disabled={status === "reserve"}
-            >
-              Mark Reserved
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => updateStatus("accident")}
-              disabled={status === "accident"}
-            >
-              Mark In Accident
-            </Button>
+            {availableStatuses?.map((statusOption) => (
+              <Button
+                key={statusOption.id}
+                variant="outline"
+                onClick={() => updateStatus(statusOption.name as VehicleStatusType)}
+                disabled={status === statusOption.name}
+              >
+                Mark as {statusOption.name}
+              </Button>
+            ))}
           </div>
         </div>
       </CardContent>
