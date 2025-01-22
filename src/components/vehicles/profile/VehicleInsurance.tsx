@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, Edit2, Save } from "lucide-react";
 import { InsuranceForm } from "./insurance/InsuranceForm";
-import { useInsurance } from "./insurance/useInsurance";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { InsuranceFormData } from "./insurance/types";
 
 interface VehicleInsuranceProps {
@@ -23,7 +24,19 @@ export const VehicleInsurance = ({ vehicleId }: VehicleInsuranceProps) => {
     end_date: "",
   });
 
-  const { insurance, saveMutation } = useInsurance(vehicleId);
+  const { data: insurance, isLoading } = useQuery({
+    queryKey: ["vehicle-insurance", vehicleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_insurance")
+        .select("*")
+        .eq("vehicle_id", vehicleId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     if (insurance) {
@@ -35,9 +48,30 @@ export const VehicleInsurance = ({ vehicleId }: VehicleInsuranceProps) => {
   }, [insurance, vehicleId]);
 
   const handleSave = async () => {
-    await saveMutation.mutateAsync(formData);
-    setIsEditing(false);
+    try {
+      const { error } = await supabase
+        .from("vehicle_insurance")
+        .upsert({
+          ...formData,
+          vehicle_id: vehicleId,
+        });
+
+      if (error) throw error;
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving insurance:", error);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Loading insurance information...</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
     <Card>

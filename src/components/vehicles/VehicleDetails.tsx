@@ -39,7 +39,8 @@ export const VehicleDetails = () => {
         {vehicle && (
           <VehicleQRCode 
             make={vehicle.make} 
-            model={vehicle.model} 
+            model={vehicle.model}
+            vehicleId={id}
           />
         )}
       </div>
