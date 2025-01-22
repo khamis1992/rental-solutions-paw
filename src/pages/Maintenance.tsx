@@ -52,6 +52,9 @@ const Maintenance = () => {
                   <TabsList>
                     <TabsTrigger value="list">List View</TabsTrigger>
                     <TabsTrigger value="scheduler">Scheduler</TabsTrigger>
+                    <TabsTrigger value="parts">Parts Inventory</TabsTrigger>
+                    <TabsTrigger value="orders">Parts Orders</TabsTrigger>
+                    <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
                   </TabsList>
                   <TabsContent value="list">
                     <MaintenanceFilters filters={filters} setFilters={setFilters} />
@@ -60,8 +63,16 @@ const Maintenance = () => {
                   <TabsContent value="scheduler">
                     <MaintenanceScheduler />
                   </TabsContent>
+                  <TabsContent value="parts">
+                    <PartsInventory />
+                  </TabsContent>
+                  <TabsContent value="orders">
+                    <PartsOrderList />
+                  </TabsContent>
+                  <TabsContent value="suppliers">
+                    <SupplierManagement />
+                  </TabsContent>
                 </Tabs>
-                <PartsInventory />
               </div>
             </div>
           }
