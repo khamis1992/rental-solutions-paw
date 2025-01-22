@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VehicleStatus } from "@/types/vehicle";
 
@@ -17,12 +16,6 @@ export const AdvancedVehicleFilters = ({
 }: AdvancedVehicleFiltersProps) => {
   return (
     <div className="flex gap-4">
-      <Input
-        placeholder="Search vehicles..."
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
-        className="w-[300px]"
-      />
       <Select
         value={statusFilter}
         onValueChange={(value) => onStatusChange(value as VehicleStatus | "all")}
