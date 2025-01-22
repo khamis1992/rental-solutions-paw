@@ -61,18 +61,16 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
   return (
     <TableRow key={customer.id}>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal hover:text-primary"
-            onClick={() => onCustomerClick(customer.id)}
-          >
-            {customer.full_name || 'Unnamed User'}
-          </Button>
-          <Badge variant={getRoleBadgeVariant(customer.role)}>
-            {customer.role}
-          </Badge>
-        </div>
+        <Button
+          variant="link"
+          className="p-0 h-auto font-normal hover:text-primary"
+          onClick={() => onCustomerClick(customer.id)}
+        >
+          {customer.full_name || 'Unnamed User'}
+        </Button>
+        <Badge variant={getRoleBadgeVariant(customer.role)}>
+          {customer.role}
+        </Badge>
       </TableCell>
       <TableCell>{customer.phone_number || 'N/A'}</TableCell>
       <TableCell>{customer.address || 'N/A'}</TableCell>
