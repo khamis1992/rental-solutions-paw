@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Timeline } from "lucide-react";
+import { History } from "lucide-react"; // Changed from Timeline to History
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 
@@ -102,7 +102,7 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Timeline className="h-5 w-5" />
+          <History className="h-5 w-5" />
           Vehicle Timeline
         </CardTitle>
       </CardHeader>
