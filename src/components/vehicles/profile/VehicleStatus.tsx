@@ -86,23 +86,17 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
 
       if (error) {
         console.error("Error updating status:", error); // Debug log
+        toast.error("Failed to update vehicle status");
         throw error;
       }
 
       setStatus(newStatus);
-      toast({
-        title: "Status Updated",
-        description: `Vehicle status has been updated to ${newStatus.replace('_', ' ')}`,
-      });
+      toast.success("Vehicle status updated successfully");
       
       console.log("Status updated successfully"); // Debug log
     } catch (error) {
       console.error("Error in updateStatus:", error); // Debug log
-      toast({
-        title: "Error",
-        description: "Failed to update vehicle status",
-        variant: "destructive",
-      });
+      toast.error("Failed to update vehicle status");
     }
   };
 
