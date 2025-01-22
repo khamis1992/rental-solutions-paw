@@ -1375,6 +1375,58 @@ export type Database = {
           },
         ]
       }
+      document_notifications: {
+        Row: {
+          document_id: string | null
+          id: string
+          metadata: Json | null
+          notification_type: string
+          recipient_id: string | null
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type: string
+          recipient_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          document_id?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          recipient_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_notifications_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_imports: {
         Row: {
           amount: number
@@ -4684,34 +4736,46 @@ export type Database = {
       }
       vehicle_documents: {
         Row: {
+          category: Database["public"]["Enums"]["document_category"] | null
           created_at: string | null
           document_type: string
           document_url: string
           expiry_date: string | null
           id: string
           is_verified: boolean | null
+          metadata: Json | null
+          notification_date: string | null
+          notification_sent: boolean | null
           updated_at: string | null
           uploaded_by: string | null
           vehicle_id: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["document_category"] | null
           created_at?: string | null
           document_type: string
           document_url: string
           expiry_date?: string | null
           id?: string
           is_verified?: boolean | null
+          metadata?: Json | null
+          notification_date?: string | null
+          notification_sent?: boolean | null
           updated_at?: string | null
           uploaded_by?: string | null
           vehicle_id: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["document_category"] | null
           created_at?: string | null
           document_type?: string
           document_url?: string
           expiry_date?: string | null
           id?: string
           is_verified?: boolean | null
+          metadata?: Json | null
+          notification_date?: string | null
+          notification_sent?: boolean | null
           updated_at?: string | null
           uploaded_by?: string | null
           vehicle_id?: string
@@ -5616,6 +5680,7 @@ export type Database = {
         | "blacklisted"
       damage_severity: "none" | "minor" | "moderate" | "severe"
       discount_type: "percentage" | "fixed_amount"
+      document_category: "registration" | "insurance" | "maintenance" | "other"
       document_language: "english" | "spanish" | "french" | "arabic"
       document_version_status: "draft" | "published" | "archived"
       import_source_type: "csv" | "manual" | "api" | "bulk_upload"
