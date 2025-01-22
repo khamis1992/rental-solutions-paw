@@ -56,14 +56,14 @@ export const WelcomeHeader = () => {
   return (
     <div className="space-y-2">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h1 className="text-2xl font-bold text-primary">
+        <h1 className="text-2xl font-bold text-[#FFD700]">
           {getGreeting()}, {profile?.full_name || 'User'}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-[#B0B0B0]">
           {format(currentTime, "EEEE, MMMM do, yyyy • h:mm a")}
         </p>
       </div>
-      <p className="text-sm text-primary italic">
+      <p className="text-sm text-[#D3D3D3] italic">
         "{quote}"
       </p>
     </div>
