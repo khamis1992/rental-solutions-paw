@@ -1,7 +1,6 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
@@ -27,17 +26,6 @@ interface CustomerTableRowProps {
 export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRowProps) => {
   const queryClient = useQueryClient();
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'staff':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
-
   const handleDelete = async () => {
     try {
       const { error } = await supabase
@@ -59,63 +47,74 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
   };
 
   return (
-    <TableRow key={customer.id}>
-      <TableCell>
+    <TableRow 
+      className="hover:bg-muted/50 transition-colors"
+      key={customer.id}
+    >
+      <TableCell className="font-medium">
         <Button
           variant="link"
-          className="p-0 h-auto font-normal hover:text-primary"
+          className="p-0 h-auto hover:text-primary transition-colors"
           onClick={() => onCustomerClick(customer.id)}
         >
           {customer.full_name || 'Unnamed User'}
         </Button>
       </TableCell>
-      <TableCell>{customer.phone_number || 'N/A'}</TableCell>
-      <TableCell>{customer.address || 'N/A'}</TableCell>
-      <TableCell>{customer.driver_license || 'N/A'}</TableCell>
-      <TableCell className="flex gap-2">
-        {customer.id_document_url && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <FileText 
-                className="h-4 w-4 text-green-500" 
-                aria-label="ID Document"
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>ID Document Available</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-
-        {customer.license_document_url && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <FileText 
-                className="h-4 w-4 text-blue-500" 
-                aria-label="License Document"
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>License Document Available</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-
-        {customer.contract_document_url && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <FileText 
-                className="h-4 w-4 text-orange-500" 
-                aria-label="Contract Document"
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Contract Document Available</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
+      <TableCell className="text-muted-foreground">
+        {customer.phone_number || 'N/A'}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {customer.address || 'N/A'}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {customer.driver_license || 'N/A'}
       </TableCell>
       <TableCell>
+        <div className="flex gap-2">
+          {customer.id_document_url && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FileText 
+                  className="h-4 w-4 text-green-500 hover:text-green-600 transition-colors" 
+                  aria-label="ID Document"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>ID Document Available</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {customer.license_document_url && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FileText 
+                  className="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" 
+                  aria-label="License Document"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>License Document Available</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {customer.contract_document_url && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <FileText 
+                  className="h-4 w-4 text-orange-500 hover:text-orange-600 transition-colors" 
+                  aria-label="Contract Document"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Contract Document Available</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
         {new Date(customer.created_at).toLocaleDateString()}
       </TableCell>
       <TableCell>
@@ -124,7 +123,7 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
