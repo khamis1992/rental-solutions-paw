@@ -8,6 +8,7 @@ import { Package, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreatePartDialog } from './CreatePartDialog';
 import { SupplierManagement } from './SupplierManagement';
+import { PartsOrderList } from './PartsOrderList';
 
 interface PartInventory {
   id: string;
@@ -102,6 +103,8 @@ export const PartsInventory = () => {
           )}
         </CardContent>
       </Card>
+
+      <PartsOrderList />
 
       <SupplierManagement />
 
