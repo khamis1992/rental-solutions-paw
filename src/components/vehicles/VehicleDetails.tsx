@@ -114,10 +114,11 @@ export const VehicleDetails = () => {
         <DocumentExpiryNotifications vehicleId={id} />
       </div>
       
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <VehicleOverview vehicleId={id} />
+      </div>
+
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <VehicleOverview vehicleId={id} />
-        </div>
         <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
           <VehicleQRCode 
             make={vehicle.make} 
@@ -125,13 +126,12 @@ export const VehicleDetails = () => {
             vehicleId={id}
           />
         </div>
-      </div>
-
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-        <VehicleStatus 
-          vehicleId={id} 
-          currentStatus={vehicle.status} 
-        />
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+          <VehicleStatus 
+            vehicleId={id} 
+            currentStatus={vehicle.status} 
+          />
+        </div>
       </div>
 
       <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
