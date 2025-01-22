@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDropzone } from 'react-dropzone';
 import { IframeSandbox } from "@/components/common/IframeSandbox";
+import { DateInput } from "@/components/ui/date-input";
 
 interface VehicleDocumentsProps {
   vehicleId: string;
@@ -33,6 +34,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
   const [uploading, setUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<DocumentCategory>("registration");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
   const queryClient = useQueryClient();
 
   const { data: documents, isLoading } = useQuery({
@@ -91,19 +93,21 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
           document_type: file.type,
           document_url: filePath,
           category: selectedCategory,
+          expiry_date: expiryDate ? expiryDate.toISOString() : null
         });
 
       if (dbError) throw dbError;
 
       queryClient.invalidateQueries({ queryKey: ["vehicle-documents", vehicleId] });
       toast.success('Document uploaded successfully');
+      setExpiryDate(null); // Reset expiry date after successful upload
     } catch (error) {
       console.error('Error uploading document:', error);
       toast.error('Failed to upload document');
     } finally {
       setUploading(false);
     }
-  }, [vehicleId, selectedCategory, queryClient]);
+  }, [vehicleId, selectedCategory, queryClient, expiryDate]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -118,7 +122,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     try {
       const { data, error } = await supabase.storage
         .from('vehicle_documents')
-        .createSignedUrl(documentUrl, 3600); // 1 hour expiry
+        .createSignedUrl(documentUrl, 3600);
 
       if (error) throw error;
       setPreviewUrl(data.signedUrl);
@@ -167,7 +171,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       queryClient.invalidateQueries({ queryKey: ["vehicle-documents", vehicleId] });
       toast.success('Document deleted successfully');
-      setPreviewUrl(null); // Close preview if the deleted document was being previewed
+      setPreviewUrl(null);
     } catch (error) {
       console.error('Error deleting document:', error);
       toast.error('Failed to delete document');
@@ -217,6 +221,13 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
                   <p className="text-xs text-muted-foreground mt-1">Supports PDF and images up to 5MB</p>
                 </>
               )}
+            </div>
+            <div className="mt-4">
+              <DateInput
+                label="Document Expiry Date (Optional)"
+                value={expiryDate ? expiryDate.toLocaleDateString() : ''}
+                onDateChange={setExpiryDate}
+              />
             </div>
           </div>
 
