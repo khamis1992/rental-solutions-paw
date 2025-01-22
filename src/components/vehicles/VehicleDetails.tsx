@@ -6,6 +6,7 @@ import { DamageHistory } from "./profile/DamageHistory";
 import { VehicleTimeline } from "./profile/VehicleTimeline";
 import { VehicleQRCode } from "./profile/VehicleQRCode";
 import { VehicleInsurance } from "./profile/VehicleInsurance";
+import { VehicleStatus } from "./profile/VehicleStatus";
 import { DocumentExpiryNotifications } from "./profile/DocumentExpiryNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,12 @@ export const VehicleDetails = () => {
           />
         )}
       </div>
+      {vehicle && (
+        <VehicleStatus 
+          vehicleId={id} 
+          currentStatus={vehicle.status} 
+        />
+      )}
       <VehicleInsurance vehicleId={id} />
       <VehicleDocuments vehicleId={id} />
       <MaintenanceHistory vehicleId={id} />
