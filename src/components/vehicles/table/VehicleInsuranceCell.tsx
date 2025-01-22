@@ -1,48 +1,67 @@
-import { Building2 } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface VehicleInsuranceCellProps {
+export interface VehicleInsuranceCellProps {
+  vehicleId: string;
   isEditing: boolean;
-  insurance: string | null;
-  insuranceValue: string;
-  onInsuranceChange: (value: string) => void;
-  onKeyPress: (e: React.KeyboardEvent) => void;
-  onBlur: () => void;
-  onClick: (e: React.MouseEvent) => void;
+  insurance: string;
+  onEditStart: () => void;
+  onEditEnd: () => void;
 }
 
 export const VehicleInsuranceCell = ({
+  vehicleId,
   isEditing,
   insurance,
-  insuranceValue,
-  onInsuranceChange,
-  onKeyPress,
-  onBlur,
-  onClick,
+  onEditStart,
+  onEditEnd
 }: VehicleInsuranceCellProps) => {
-  if (isEditing) {
+  const [value, setValue] = useState(insurance);
+
+  const handleSave = async () => {
+    try {
+      const { error } = await supabase
+        .from("vehicles")
+        .update({ insurance_company: value })
+        .eq("id", vehicleId);
+
+      if (error) throw error;
+      toast.success("Insurance company updated successfully");
+      onEditEnd();
+    } catch (error) {
+      console.error("Error updating insurance company:", error);
+      toast.error("Failed to update insurance company");
+    }
+  };
+
+  if (!isEditing) {
     return (
-      <div className="flex items-center" onClick={e => e.stopPropagation()}>
-        <Input
-          value={insuranceValue}
-          onChange={(e) => onInsuranceChange(e.target.value)}
-          onKeyDown={onKeyPress}
-          onBlur={onBlur}
-          autoFocus
-          className="w-full"
-          placeholder="Enter insurance company"
-        />
+      <div className="flex items-center justify-between">
+        <span>{insurance}</span>
+        <Button variant="ghost" size="sm" onClick={onEditStart}>
+          Edit
+        </Button>
       </div>
     );
   }
 
   return (
-    <div 
-      className="flex items-center hover:bg-gray-100 p-2 rounded cursor-pointer" 
-      onClick={onClick}
-    >
-      <Building2 className="h-4 w-4 mr-1" />
-      {insurance || <span className="text-muted-foreground">Not available</span>}
+    <div className="flex items-center gap-2">
+      <Input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="h-8"
+      />
+      <Button variant="ghost" size="sm" onClick={handleSave}>
+        <Check className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onEditEnd}>
+        <X className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

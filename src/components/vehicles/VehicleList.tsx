@@ -17,7 +17,7 @@ export const VehicleList = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus>("available");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles", searchQuery, statusFilter],
@@ -60,17 +60,14 @@ export const VehicleList = () => {
   };
 
   const handleScheduleMaintenance = () => {
-    // TODO: Implement maintenance scheduling
     toast.info("Maintenance scheduling coming soon");
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
     toast.info("Export functionality coming soon");
   };
 
   const handleArchive = () => {
-    // TODO: Implement archive functionality
     toast.info("Archive functionality coming soon");
   };
 
