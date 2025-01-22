@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
+import { useQuery } from "@tanstack/react-query";
 
 interface VehicleStatusProps {
   vehicleId: string;
@@ -14,7 +14,6 @@ interface VehicleStatusProps {
 
 export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) => {
   const [status, setStatus] = useState<VehicleStatusType>(currentStatus);
-  const { toast } = useToast();
 
   // Fetch available statuses from the database
   const { data: availableStatuses } = useQuery({
@@ -108,19 +107,17 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="text-lg font-medium">Vehicle Status</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Badge className={`${getStatusColor(status)} text-white`}>
-              <span className="flex items-center gap-1">
-                {getStatusIcon(status)}
-                {status.replace('_', ' ')}
-              </span>
-            </Badge>
+            <div className={`${getStatusColor(status)} text-white px-3 py-1 rounded-full flex items-center gap-1`}>
+              {getStatusIcon(status)}
+              <span className="capitalize">{status.replace('_', ' ')}</span>
+            </div>
           </div>
           
           <div className="grid grid-cols-2 gap-2">
