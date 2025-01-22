@@ -6,40 +6,17 @@ import { toast } from "sonner";
 
 interface DeleteVehicleDialogProps {
   vehicleId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onDeleteComplete: () => void;
 }
 
-export function DeleteVehicleDialog({ vehicleId, open, onOpenChange }: DeleteVehicleDialogProps) {
+export function DeleteVehicleDialog({ vehicleId, isOpen, onClose, onDeleteComplete }: DeleteVehicleDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      // Check for active leases
-      const { data: leases } = await supabase
-        .from("leases")
-        .select("id")
-        .eq("vehicle_id", vehicleId)
-        .eq("status", "active");
-
-      if (leases && leases.length > 0) {
-        toast.error("Cannot delete vehicle with active leases");
-        return;
-      }
-
-      // Check for payment history
-      const { data: payments } = await supabase
-        .from("payment_history_view")
-        .select("id")
-        .eq("vehicle_id", vehicleId);
-
-      if (payments && payments.length > 0) {
-        toast.error("Cannot delete vehicle with payment history");
-        return;
-      }
-
-      // Delete the vehicle
       const { error } = await supabase
         .from("vehicles")
         .delete()
@@ -48,17 +25,18 @@ export function DeleteVehicleDialog({ vehicleId, open, onOpenChange }: DeleteVeh
       if (error) throw error;
 
       toast.success("Vehicle deleted successfully");
-      onOpenChange(false);
+      onDeleteComplete();
     } catch (error) {
       console.error("Error deleting vehicle:", error);
       toast.error("Failed to delete vehicle");
     } finally {
       setIsDeleting(false);
+      onClose();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Vehicle</DialogTitle>
@@ -67,7 +45,7 @@ export function DeleteVehicleDialog({ vehicleId, open, onOpenChange }: DeleteVeh
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
+          <Button variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancel
           </Button>
           <Button onClick={handleDelete} disabled={isDeleting}>
@@ -77,4 +55,4 @@ export function DeleteVehicleDialog({ vehicleId, open, onOpenChange }: DeleteVeh
       </DialogContent>
     </Dialog>
   );
-}
+};

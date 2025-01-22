@@ -7,7 +7,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { Plus } from "lucide-react";
 import { VehicleFormFields } from "./form/VehicleFormFields";
 import { useVehicleForm } from "./hooks/useVehicleForm";
 
@@ -16,17 +15,12 @@ interface CreateVehicleDialogProps {
 }
 
 export const CreateVehicleDialog = ({ children }: CreateVehicleDialogProps) => {
-  const { open, setOpen, form, onSubmit } = useVehicleForm();
+  const { form, onSubmit } = useVehicleForm();
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog>
       <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Vehicle
-          </Button>
-        )}
+        {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -36,9 +30,6 @@ export const CreateVehicleDialog = ({ children }: CreateVehicleDialogProps) => {
           <form onSubmit={onSubmit} className="space-y-4">
             <VehicleFormFields form={form} />
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
               <Button type="submit">Add Vehicle</Button>
             </div>
           </form>

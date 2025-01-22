@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Car, Plus } from "lucide-react";
 import { CreateVehicleDialog } from "./CreateVehicleDialog";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
 import { VehicleStats } from "./VehicleStats";
@@ -11,13 +10,14 @@ import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { BulkActionsMenu } from "./components/BulkActionsMenu";
 import { Vehicle, VehicleStatus } from "@/types/vehicle";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const VehicleList = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<VehicleStatus>("available");
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("available");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles", searchQuery, statusFilter],
@@ -80,10 +80,12 @@ export const VehicleList = () => {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Vehicles</h1>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Vehicle
-        </Button>
+        <CreateVehicleDialog>
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Vehicle
+          </Button>
+        </CreateVehicleDialog>
       </div>
 
       <VehicleStats vehicles={vehicles} isLoading={isLoading} />
@@ -115,15 +117,10 @@ export const VehicleList = () => {
         />
       </div>
 
-      <CreateVehicleDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      />
-
       <DeleteVehicleDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
         vehicleId={selectedVehicles[0]}
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
         onDeleteComplete={handleDeleteComplete}
       />
     </div>
