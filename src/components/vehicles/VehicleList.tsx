@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
-import { VehicleStats } from "./VehicleStats";
 import { VehicleListView } from "./table/VehicleListView";
-import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { BulkActionsMenu } from "./components/BulkActionsMenu";
-import { VehicleTablePagination } from "./table/VehicleTablePagination";
+import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { Vehicle } from "@/types/vehicle";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
@@ -15,60 +13,59 @@ interface VehicleListProps {
 }
 
 export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const handleUpdateStatus = async (status: Vehicle['status']) => {
+  const handleDeleteVehicle = async () => {
     try {
       const { error } = await supabase
-        .from("vehicles")
-        .update({ status })
-        .in("id", selectedVehicles);
+        .from('vehicles')
+        .delete()
+        .eq('id', selectedVehicles[0]);
 
       if (error) throw error;
-      toast.success("Vehicles status updated successfully");
+
+      toast.success('Vehicle deleted successfully');
+      setShowDeleteDialog(false);
       setSelectedVehicles([]);
     } catch (error) {
-      console.error("Error updating vehicles status:", error);
-      toast.error("Failed to update vehicles status");
+      console.error('Error deleting vehicle:', error);
+      toast.error('Failed to delete vehicle');
     }
   };
 
-  const handleScheduleMaintenance = () => {
-    toast.info("Maintenance scheduling coming soon");
-  };
+  const handleBulkDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .delete()
+        .in('id', selectedVehicles);
 
-  const handleExport = () => {
-    toast.info("Export functionality coming soon");
-  };
+      if (error) throw error;
 
-  const handleArchive = () => {
-    toast.info("Archive functionality coming soon");
+      toast.success(`${selectedVehicles.length} vehicles deleted successfully`);
+      setShowDeleteDialog(false);
+      setSelectedVehicles([]);
+    } catch (error) {
+      console.error('Error deleting vehicles:', error);
+      toast.error('Failed to delete vehicles');
+    }
   };
-
-  const handleDeleteComplete = () => {
-    setSelectedVehicles([]);
-    setShowDeleteDialog(false);
-  };
-
-  // Calculate pagination
-  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedVehicles = vehicles.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <VehicleStats vehicles={vehicles} isLoading={isLoading} />
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentVehicles = vehicles.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
 
+  return (
+    <div className="space-y-4">
       <div className="flex flex-col gap-4">
         <AdvancedVehicleFilters 
           searchQuery={searchQuery}
@@ -79,32 +76,32 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         {selectedVehicles.length > 0 && (
           <BulkActionsMenu
             selectedCount={selectedVehicles.length}
-            onUpdateStatus={handleUpdateStatus}
-            onScheduleMaintenance={handleScheduleMaintenance}
-            onExport={handleExport}
-            onArchive={handleArchive}
+            onDelete={() => setShowDeleteDialog(true)}
           />
         )}
-
-        <VehicleListView
-          vehicles={paginatedVehicles}
-          isLoading={isLoading}
-          selectedVehicles={selectedVehicles}
-          onSelectionChange={setSelectedVehicles}
-        />
-
-        <VehicleTablePagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
       </div>
 
+      <VehicleListView
+        vehicles={currentVehicles}
+        isLoading={isLoading}
+        selectedVehicles={selectedVehicles}
+        onSelectVehicle={(id) => {
+          setSelectedVehicles((prev) =>
+            prev.includes(id)
+              ? prev.filter((vehicleId) => vehicleId !== id)
+              : [...prev, id]
+          );
+        }}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+
       <DeleteVehicleDialog
-        vehicleId={selectedVehicles[0]}
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onDeleteComplete={handleDeleteComplete}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleBulkDelete}
+        vehicleCount={selectedVehicles.length}
       />
     </div>
   );

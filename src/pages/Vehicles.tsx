@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 
 const Vehicles = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles"],
