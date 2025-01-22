@@ -76,7 +76,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         {selectedVehicles.length > 0 && (
           <BulkActionsMenu
             selectedCount={selectedVehicles.length}
-            onBulkDelete={() => setShowDeleteDialog(true)}
+            onDelete={() => setShowDeleteDialog(true)}
           />
         )}
       </div>
@@ -85,13 +85,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         vehicles={currentVehicles}
         isLoading={isLoading}
         selectedVehicles={selectedVehicles}
-        onVehicleSelect={(id) => {
-          setSelectedVehicles((prev) =>
-            prev.includes(id)
-              ? prev.filter((vehicleId) => vehicleId !== id)
-              : [...prev, id]
-          );
-        }}
+        onSelectionChange={setSelectedVehicles}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
@@ -100,7 +94,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
       <DeleteVehicleDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onConfirm={handleBulkDelete}
+        onDelete={handleBulkDelete}
         count={selectedVehicles.length}
       />
     </div>

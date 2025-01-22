@@ -6,6 +6,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VehicleTableContent } from "./VehicleTableContent";
+import { VehicleTablePagination } from "./VehicleTablePagination";
 import { Vehicle } from "@/types/vehicle";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -14,6 +15,9 @@ interface VehicleListViewProps {
   isLoading: boolean;
   selectedVehicles: string[];
   onSelectionChange: (selectedIds: string[]) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export const VehicleListView = ({
@@ -21,6 +25,9 @@ export const VehicleListView = ({
   isLoading,
   selectedVehicles,
   onSelectionChange,
+  currentPage,
+  totalPages,
+  onPageChange,
 }: VehicleListViewProps) => {
   if (isLoading) {
     return (
@@ -64,6 +71,12 @@ export const VehicleListView = ({
           />
         </TableBody>
       </Table>
+      
+      <VehicleTablePagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+      />
     </div>
   );
 };
