@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { VehicleList } from "@/components/vehicles/VehicleList";
 import { VehicleStats } from "@/components/vehicles/VehicleStats";
+import { CreateVehicleDialog } from "@/components/vehicles/CreateVehicleDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Car, AlertTriangle, Wrench } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Car, Download, Plus, AlertTriangle, Wrench } from "lucide-react";
 import { Vehicle } from "@/types/vehicle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,18 @@ const Vehicles = () => {
             <p className="text-muted-foreground">
               Manage your fleet, track vehicle status, and monitor maintenance schedules
             </p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+            <CreateVehicleDialog>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add Vehicle
+              </Button>
+            </CreateVehicleDialog>
           </div>
         </div>
 
