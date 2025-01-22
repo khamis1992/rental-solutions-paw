@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Car } from "lucide-react";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
 import { VehicleStats } from "./VehicleStats";
 import { VehicleListView } from "./table/VehicleListView";
@@ -21,7 +19,6 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Vehicle['status'] | "all">("available");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -70,18 +67,14 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Vehicles</h1>
-      </div>
-
       <VehicleStats vehicles={vehicles} isLoading={isLoading} />
 
       <div className="flex flex-col gap-4">
         <AdvancedVehicleFilters 
           searchQuery={searchQuery}
-          statusFilter={statusFilter}
+          statusFilter=""
           onSearchChange={setSearchQuery}
-          onStatusChange={setStatusFilter}
+          onStatusChange={() => {}}
         />
         {selectedVehicles.length > 0 && (
           <BulkActionsMenu
