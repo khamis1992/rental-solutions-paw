@@ -118,9 +118,17 @@ export const DashboardSidebar = () => {
                   >
                     <Link
                       to={item.href}
-                      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent"
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-md transition-colors ${
+                        location.pathname === item.href
+                          ? 'bg-[#FFA500] text-white'
+                          : 'text-black hover:bg-[#F5F5F5] hover:text-[#FFA500]'
+                      }`}
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className={`h-4 w-4 ${
+                        location.pathname === item.href
+                          ? 'text-white'
+                          : 'text-current'
+                      }`} />
                       <span>{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
