@@ -146,11 +146,9 @@ export const VehicleDetails = () => {
           <MaintenanceHistory vehicleId={id} />
         </div>
       </div>
-      
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <DamageHistory vehicleId={id} />
-        </div>
+
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <DamageHistory vehicleId={id} />
       </div>
 
       <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
