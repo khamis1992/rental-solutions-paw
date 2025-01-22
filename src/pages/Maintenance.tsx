@@ -1,74 +1,40 @@
-import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
-import { MaintenanceFilters, type MaintenanceFilters as FilterType } from "@/components/maintenance/MaintenanceFilters";
-import { CreateJobDialog } from "@/components/maintenance/CreateJobDialog";
-import { PredictiveMaintenance } from "@/components/maintenance/PredictiveMaintenance";
-import { Routes, Route, useParams } from "react-router-dom";
-import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleInspectionForm";
-import { Card, CardContent } from "@/components/ui/card";
-import { Wrench } from "lucide-react";
-import { PartsInventory } from "@/components/maintenance/parts/PartsInventory";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const MaintenanceInspection = () => {
-  const { id } = useParams();
-  return <VehicleInspectionForm maintenanceId={id || ''} />;
-};
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Maintenance = () => {
-  const [filters, setFilters] = useState<FilterType>({
-    status: "all",
-    serviceType: "",
-    dateRange: "all"
+  const { data: maintenanceData, isLoading } = useQuery({
+    queryKey: ['maintenance'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('maintenance')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching maintenance data:', error);
+        throw error;
+      }
+
+      return data || [];
+    }
   });
 
   return (
     <DashboardLayout>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <div className="space-y-6">
-              <Card className="border-b">
-                <CardContent className="py-6">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Wrench className="h-6 w-6 text-primary" />
-                      <h1 className="text-3xl font-bold">Maintenance</h1>
-                    </div>
-                    <CreateJobDialog />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <MaintenanceStats />
-              
-              <div className="space-y-6">
-                <PredictiveMaintenance />
-                <Tabs defaultValue="list" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="list">List View</TabsTrigger>
-                    <TabsTrigger value="parts">Parts Inventory</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="list">
-                    <MaintenanceFilters filters={filters} setFilters={setFilters} />
-                    <MaintenanceList />
-                  </TabsContent>
-                  <TabsContent value="parts">
-                    <PartsInventory />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-          }
-        />
-        <Route 
-          path="/:id/inspection" 
-          element={<MaintenanceInspection />} 
-        />
-      </Routes>
+      <div className="container mx-auto space-y-6 px-4 py-8">
+        <div className="flex justify-between items-start">
+          <h1 className="text-3xl font-bold">Maintenance</h1>
+        </div>
+        
+        <MaintenanceStats maintenanceData={maintenanceData || []} />
+        
+        <div className="grid gap-6">
+          <MaintenanceList />
+        </div>
+      </div>
     </DashboardLayout>
   );
 };
