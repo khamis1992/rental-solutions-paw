@@ -77,23 +77,21 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
       <VehicleStats vehicles={vehicles} isLoading={isLoading} />
 
       <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-          <AdvancedVehicleFilters 
-            searchQuery={searchQuery}
-            statusFilter={statusFilter}
-            onSearchChange={setSearchQuery}
-            onStatusChange={setStatusFilter}
+        <AdvancedVehicleFilters 
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatusFilter}
+        />
+        {selectedVehicles.length > 0 && (
+          <BulkActionsMenu
+            selectedCount={selectedVehicles.length}
+            onUpdateStatus={handleUpdateStatus}
+            onScheduleMaintenance={handleScheduleMaintenance}
+            onExport={handleExport}
+            onArchive={handleArchive}
           />
-          {selectedVehicles.length > 0 && (
-            <BulkActionsMenu
-              selectedCount={selectedVehicles.length}
-              onUpdateStatus={handleUpdateStatus}
-              onScheduleMaintenance={handleScheduleMaintenance}
-              onExport={handleExport}
-              onArchive={handleArchive}
-            />
-          )}
-        </div>
+        )}
 
         <VehicleListView
           vehicles={paginatedVehicles}
