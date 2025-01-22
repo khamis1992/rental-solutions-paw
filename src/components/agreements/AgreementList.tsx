@@ -108,9 +108,9 @@ export const AgreementList = () => {
           <AgreementPDFImport />
           <CreateAgreementDialog>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               <Upload className="h-4 w-4 mr-2" />
               Create Agreement
