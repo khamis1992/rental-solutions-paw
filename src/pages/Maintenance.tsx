@@ -10,8 +10,6 @@ import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleIn
 import { Card, CardContent } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
 import { PartsInventory } from "@/components/maintenance/parts/PartsInventory";
-import { PartsOrderList } from "@/components/maintenance/parts/PartsOrderList";
-import { SupplierManagement } from "@/components/maintenance/parts/SupplierManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const MaintenanceInspection = () => {
@@ -53,8 +51,6 @@ const Maintenance = () => {
                   <TabsList>
                     <TabsTrigger value="list">List View</TabsTrigger>
                     <TabsTrigger value="parts">Parts Inventory</TabsTrigger>
-                    <TabsTrigger value="orders">Parts Orders</TabsTrigger>
-                    <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
                   </TabsList>
                   <TabsContent value="list">
                     <MaintenanceFilters filters={filters} setFilters={setFilters} />
@@ -62,12 +58,6 @@ const Maintenance = () => {
                   </TabsContent>
                   <TabsContent value="parts">
                     <PartsInventory />
-                  </TabsContent>
-                  <TabsContent value="orders">
-                    <PartsOrderList />
-                  </TabsContent>
-                  <TabsContent value="suppliers">
-                    <SupplierManagement />
                   </TabsContent>
                 </Tabs>
               </div>
