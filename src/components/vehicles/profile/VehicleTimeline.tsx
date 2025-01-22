@@ -1,15 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { History } from "lucide-react"; // Changed from Timeline to History
+import { History } from "lucide-react"; 
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
+import { useState } from "react";
+import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
 
 interface VehicleTimelineProps {
   vehicleId: string;
 }
 
 export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["vehicle-timeline", vehicleId],
     queryFn: async () => {
@@ -28,6 +32,7 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
         .select(`
           *,
           profiles:customer_id (
+            id,
             full_name
           )
         `)
@@ -90,7 +95,23 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
       case 'maintenance':
         return `${event.service_type} - ${event.status}`;
       case 'rental':
-        return `Rented to ${event.profiles?.full_name} - ${event.status}`;
+        return (
+          <span>
+            Rented to{" "}
+            <button
+              onClick={() => setSelectedCustomerId(event.customer_id)}
+              className="text-blue-600 hover:underline"
+            >
+              {event.profiles?.full_name}
+            </button>
+            {" - "}
+            <span className="text-muted-foreground">
+              Agreement #{event.agreement_number}
+            </span>
+            {" - "}
+            {event.status}
+          </span>
+        );
       case 'damage':
         return event.description;
       default:
@@ -124,6 +145,12 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
             </div>
           ))}
         </div>
+
+        <CustomerDetailsDialog
+          customerId={selectedCustomerId || ""}
+          open={!!selectedCustomerId}
+          onOpenChange={(open) => !open && setSelectedCustomerId(null)}
+        />
       </CardContent>
     </Card>
   );
