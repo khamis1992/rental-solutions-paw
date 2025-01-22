@@ -32,6 +32,18 @@ const Vehicles = () => {
     },
   });
 
+  // Filter vehicles based on search query
+  const filteredVehicles = vehicles.filter(vehicle => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      !searchQuery ||
+      vehicle.make?.toLowerCase().includes(searchLower) ||
+      vehicle.model?.toLowerCase().includes(searchLower) ||
+      vehicle.license_plate?.toLowerCase().includes(searchLower) ||
+      vehicle.vin?.toLowerCase().includes(searchLower)
+    );
+  });
+
   // Calculate stats
   const availableVehicles = vehicles.filter(v => v.status === 'available').length;
   const maintenanceVehicles = vehicles.filter(v => v.status === 'maintenance').length;
@@ -141,7 +153,7 @@ const Vehicles = () => {
             </div>
 
             <VehicleList 
-              vehicles={vehicles} 
+              vehicles={filteredVehicles} 
               isLoading={isLoading} 
             />
           </CardContent>
