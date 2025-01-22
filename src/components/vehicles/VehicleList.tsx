@@ -8,42 +8,23 @@ import { VehicleStats } from "./VehicleStats";
 import { VehicleListView } from "./table/VehicleListView";
 import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { BulkActionsMenu } from "./components/BulkActionsMenu";
-import { Vehicle, VehicleStatus } from "@/types/vehicle";
+import { Vehicle } from "@/types/vehicle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-export const VehicleList = () => {
+interface VehicleListProps {
+  vehicles: Vehicle[];
+  isLoading: boolean;
+}
+
+export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("available");
+  const [statusFilter, setStatusFilter] = useState<Vehicle['status'] | "all">("available");
 
-  const { data: vehicles = [], isLoading } = useQuery({
-    queryKey: ["vehicles", searchQuery, statusFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from("vehicles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (searchQuery) {
-        query = query.or(
-          `license_plate.ilike.%${searchQuery}%,make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`
-        );
-      }
-
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Vehicle[];
-    },
-  });
-
-  const handleUpdateStatus = async (status: VehicleStatus) => {
+  const handleUpdateStatus = async (status: Vehicle['status']) => {
     try {
       const { error } = await supabase
         .from("vehicles")
