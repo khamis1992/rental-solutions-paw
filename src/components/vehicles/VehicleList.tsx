@@ -116,13 +116,13 @@ export const VehicleList = () => {
       </div>
 
       <CreateVehicleDialog
-        isOpen={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
       />
 
       <DeleteVehicleDialog
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
         vehicleId={selectedVehicles[0]}
         onDeleteComplete={handleDeleteComplete}
       />
