@@ -151,9 +151,10 @@ export const VehicleDetails = () => {
         <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
           <DamageHistory vehicleId={id} />
         </div>
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <VehicleTimeline vehicleId={id} />
-        </div>
+      </div>
+
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <VehicleTimeline vehicleId={id} />
       </div>
     </div>
   );
