@@ -18,7 +18,12 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   useEffect(() => {
     const checkUserRole = async () => {
       try {
-        // Allow access to auth and customer portal without session
+        // TEMPORARY: Authentication bypass
+        // Remove or comment out the following block when re-enabling auth
+        setIsLoading(false);
+        return;
+
+        /* Original authentication logic - uncomment to re-enable
         if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
           setIsLoading(false);
           return;
@@ -45,10 +50,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
         setUserRole(profile?.role || null);
 
-        // Only redirect if we're not already on the customer portal
         if (profile?.role === "customer" && window.location.pathname !== "/customer-portal") {
           navigate("/customer-portal");
         }
+        */
       } catch (error) {
         console.error("Error in checkUserRole:", error);
         toast.error("An error occurred while checking user access");
@@ -67,16 +72,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  // Allow access to auth and customer portal without restrictions
-  if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
-    return <>{children}</>;
-  }
-
-  // For customer users, only allow access to customer portal
-  if (userRole === "customer" && window.location.pathname !== "/customer-portal") {
-    return null;
   }
 
   return <>{children}</>;
