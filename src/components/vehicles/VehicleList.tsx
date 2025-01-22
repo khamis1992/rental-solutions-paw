@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Car, Plus } from "lucide-react";
-import { CreateVehicleDialog } from "./CreateVehicleDialog";
+import { Car } from "lucide-react";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
 import { VehicleStats } from "./VehicleStats";
 import { VehicleListView } from "./table/VehicleListView";
@@ -73,12 +72,6 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Vehicles</h1>
-        <CreateVehicleDialog>
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add Vehicle
-          </Button>
-        </CreateVehicleDialog>
       </div>
 
       <VehicleStats vehicles={vehicles} isLoading={isLoading} />
