@@ -56,7 +56,7 @@ export const WelcomeHeader = () => {
   return (
     <div className="space-y-2">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h1 className="text-2xl font-bold text-[#FFD700]">
+        <h1 className="text-2xl font-bold text-white">
           {getGreeting()}, {profile?.full_name || 'User'}
         </h1>
         <p className="text-sm text-[#B0B0B0]">
