@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { useState } from "react";
 import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
+import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
 
 interface VehicleTimelineProps {
   vehicleId: string;
@@ -13,6 +14,7 @@ interface VehicleTimelineProps {
 
 export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["vehicle-timeline", vehicleId],
@@ -106,7 +108,7 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
             </button>
             <span className="text-muted-foreground mx-1">•</span>
             <button
-              onClick={() => setSelectedCustomerId(event.customer_id)}
+              onClick={() => setSelectedAgreementId(event.id)}
               className="flex items-center gap-1 text-blue-600 hover:underline"
             >
               <Link className="h-4 w-4" />
@@ -156,6 +158,12 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
           customerId={selectedCustomerId || ""}
           open={!!selectedCustomerId}
           onOpenChange={(open) => !open && setSelectedCustomerId(null)}
+        />
+
+        <AgreementDetailsDialog
+          agreementId={selectedAgreementId || ""}
+          open={!!selectedAgreementId}
+          onOpenChange={(open) => !open && setSelectedAgreementId(null)}
         />
       </CardContent>
     </Card>
