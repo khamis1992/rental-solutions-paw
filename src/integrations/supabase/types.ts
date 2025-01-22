@@ -3083,6 +3083,185 @@ export type Database = {
           },
         ]
       }
+      parts_inventory: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_reorder_date: string | null
+          location: string | null
+          minimum_stock_level: number
+          part_name: string
+          part_number: string | null
+          quantity_in_stock: number
+          reorder_point: number
+          status: string | null
+          supplier_id: string | null
+          unit_cost: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_reorder_date?: string | null
+          location?: string | null
+          minimum_stock_level?: number
+          part_name: string
+          part_number?: string | null
+          quantity_in_stock?: number
+          reorder_point?: number
+          status?: string | null
+          supplier_id?: string | null
+          unit_cost?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_reorder_date?: string | null
+          location?: string | null
+          minimum_stock_level?: number
+          part_name?: string
+          part_number?: string | null
+          quantity_in_stock?: number
+          reorder_point?: number
+          status?: string | null
+          supplier_id?: string | null
+          unit_cost?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      parts_order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_id: string | null
+          part_id: string | null
+          quantity: number
+          total_price: number
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          part_id?: string | null
+          quantity: number
+          total_price: number
+          unit_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          part_id?: string | null
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "parts_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parts_order_items_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts_orders: {
+        Row: {
+          created_at: string | null
+          expected_delivery_date: string | null
+          id: string
+          notes: string | null
+          order_date: string | null
+          status: string | null
+          supplier_id: string | null
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "parts_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts_suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          lead_time_days: number | null
+          phone: string | null
+          preferred_supplier: boolean | null
+          supplier_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          lead_time_days?: number | null
+          phone?: string | null
+          preferred_supplier?: boolean | null
+          supplier_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          lead_time_days?: number | null
+          phone?: string | null
+          preferred_supplier?: boolean | null
+          supplier_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payment_audit_logs: {
         Row: {
           action: string
@@ -5542,6 +5721,10 @@ export type Database = {
           p_customer_id: string
         }
         Returns: number
+      }
+      check_inventory_levels: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       check_payment_migration_status: {
         Args: Record<PropertyKey, never>

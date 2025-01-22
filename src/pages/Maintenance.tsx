@@ -9,6 +9,7 @@ import { Routes, Route, useParams } from "react-router-dom";
 import VehicleInspectionForm from "@/components/maintenance/inspection/VehicleInspectionForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
+import { PartsInventory } from "@/components/maintenance/parts/PartsInventory";
 
 const MaintenanceInspection = () => {
   const { id } = useParams();
@@ -47,6 +48,7 @@ const Maintenance = () => {
                 <PredictiveMaintenance />
                 <MaintenanceFilters filters={filters} setFilters={setFilters} />
                 <MaintenanceList />
+                <PartsInventory />
               </div>
             </div>
           }
