@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Car, Plus } from "lucide-react";
 import { CreateVehicleDialog } from "./CreateVehicleDialog";
@@ -8,6 +7,7 @@ import { VehicleStats } from "./VehicleStats";
 import { VehicleListView } from "./table/VehicleListView";
 import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { BulkActionsMenu } from "./components/BulkActionsMenu";
+import { VehicleTablePagination } from "./table/VehicleTablePagination";
 import { Vehicle } from "@/types/vehicle";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,8 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<Vehicle['status'] | "all">("available");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleUpdateStatus = async (status: Vehicle['status']) => {
     try {
@@ -55,6 +57,16 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const handleDeleteComplete = () => {
     setSelectedVehicles([]);
     setShowDeleteDialog(false);
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedVehicles = vehicles.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -91,10 +103,16 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         </div>
 
         <VehicleListView
-          vehicles={vehicles}
+          vehicles={paginatedVehicles}
           isLoading={isLoading}
           selectedVehicles={selectedVehicles}
           onSelectionChange={setSelectedVehicles}
+        />
+
+        <VehicleTablePagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       </div>
 
