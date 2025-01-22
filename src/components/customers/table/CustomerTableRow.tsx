@@ -68,9 +68,6 @@ export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRow
         >
           {customer.full_name || 'Unnamed User'}
         </Button>
-        <Badge variant={getRoleBadgeVariant(customer.role)}>
-          {customer.role}
-        </Badge>
       </TableCell>
       <TableCell>{customer.phone_number || 'N/A'}</TableCell>
       <TableCell>{customer.address || 'N/A'}</TableCell>
