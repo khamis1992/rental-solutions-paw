@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { History } from "lucide-react"; 
+import { History, Link } from "lucide-react"; 
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { useState } from "react";
@@ -96,21 +96,27 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
         return `${event.service_type} - ${event.status}`;
       case 'rental':
         return (
-          <span>
-            Rented to{" "}
+          <div className="flex items-center gap-2">
+            <span>Rented to </span>
             <button
               onClick={() => setSelectedCustomerId(event.customer_id)}
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 hover:underline font-medium"
             >
               {event.profiles?.full_name}
             </button>
-            {" - "}
-            <span className="text-muted-foreground">
-              Agreement #{event.agreement_number}
-            </span>
-            {" - "}
-            {event.status}
-          </span>
+            <span className="text-muted-foreground mx-1">•</span>
+            <button
+              onClick={() => setSelectedCustomerId(event.customer_id)}
+              className="flex items-center gap-1 text-blue-600 hover:underline"
+            >
+              <Link className="h-4 w-4" />
+              <span>Agreement #{event.agreement_number}</span>
+            </button>
+            <span className="text-muted-foreground mx-1">•</span>
+            <Badge variant={event.status === 'active' ? 'success' : 'default'}>
+              {event.status}
+            </Badge>
+          </div>
         );
       case 'damage':
         return event.description;
@@ -135,7 +141,7 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getEventBadge(event.type)}
-                    <p className="text-sm font-medium">{getEventDescription(event)}</p>
+                    <div className="text-sm font-medium">{getEventDescription(event)}</div>
                   </div>
                   <time className="text-sm text-muted-foreground">
                     {formatDateToDisplay(new Date(event.date))}
