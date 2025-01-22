@@ -8,6 +8,7 @@ import { OperationalReportSection } from "@/components/reports/sections/Operatio
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
 import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDashboard";
 import { ErrorAnalysisSection } from "@/components/reports/sections/ErrorAnalysisSection";
+import { FleetAnalyticsDashboard } from "@/components/reports/FleetAnalytics/FleetAnalyticsDashboard";
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState("");
@@ -27,7 +28,7 @@ const Reports = () => {
             <TabsList className="bg-muted/50 p-1 rounded-lg flex flex-wrap gap-2">
               <TabsTrigger value="fleet" className="flex items-center gap-2 text-base font-medium">
                 <Car className="h-4 w-4" />
-                Fleet Reports
+                Fleet Analytics
               </TabsTrigger>
               <TabsTrigger value="customer" className="flex items-center gap-2 text-base font-medium">
                 <Users className="h-4 w-4" />
@@ -56,11 +57,7 @@ const Reports = () => {
 
           <div className="mt-16">
             <TabsContent value="fleet">
-              <FleetReportSection
-                selectedReport={selectedReport}
-                setSelectedReport={setSelectedReport}
-                generateReport={() => {}}
-              />
+              <FleetAnalyticsDashboard />
             </TabsContent>
 
             <TabsContent value="customer">
