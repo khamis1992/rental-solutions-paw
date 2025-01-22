@@ -6,7 +6,7 @@ import { VehicleStats } from "@/components/vehicles/VehicleStats";
 import { CreateVehicleDialog } from "@/components/vehicles/CreateVehicleDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Car, Download, Plus, AlertTriangle, Wrench } from "lucide-react";
+import { Car, Plus, AlertTriangle, Wrench } from "lucide-react";
 import { Vehicle } from "@/types/vehicle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,10 +52,6 @@ const Vehicles = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
             <CreateVehicleDialog>
               <Button className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
