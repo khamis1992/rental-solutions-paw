@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,26 +8,29 @@ import { FileText, Upload, Download, Trash2, Folder } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDropzone } from 'react-dropzone';
 
 interface VehicleDocumentsProps {
   vehicleId: string;
 }
 
+type DocumentCategory = 'registration' | 'insurance' | 'maintenance' | 'other';
+
 type DocumentsByCategory = {
-  [key in 'registration' | 'insurance' | 'maintenance' | 'other']: {
+  [key in DocumentCategory]: {
     id: string;
     document_type: string;
     document_url: string;
     uploaded_by: string | null;
     expiry_date: string | null;
-    category: string;
+    category: DocumentCategory;
     created_at: string;
   }[];
 };
 
 export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
   const [uploading, setUploading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("registration");
+  const [selectedCategory, setSelectedCategory] = useState<DocumentCategory>("registration");
   const queryClient = useQueryClient();
 
   const { data: documents, isLoading } = useQuery({
@@ -44,25 +47,23 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     },
   });
 
-  const documentsByCategory = documents?.reduce((acc: DocumentsByCategory, doc) => {
-    const category = doc.category || 'other';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(doc);
-    return acc;
-  }, {
-    registration: [],
-    insurance: [],
-    maintenance: [],
-    other: []
-  } as DocumentsByCategory);
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     try {
       setUploading(true);
-      const file = event.target.files?.[0];
+      const file = acceptedFiles[0];
       if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('application/pdf') && !file.type.startsWith('image/')) {
+        toast.error('Please upload a PDF or image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size should be less than 5MB');
+        return;
+      }
 
       const fileExt = file.name.split('.').pop();
       const timestamp = new Date().getTime();
@@ -95,14 +96,22 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
 
       queryClient.invalidateQueries({ queryKey: ["vehicle-documents", vehicleId] });
       toast.success('Document uploaded successfully');
-      event.target.value = '';
     } catch (error) {
       console.error('Error uploading document:', error);
       toast.error('Failed to upload document');
     } finally {
       setUploading(false);
     }
-  };
+  }, [vehicleId, selectedCategory, queryClient]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/*': ['.png', '.jpg', '.jpeg']
+    },
+    multiple: false
+  });
 
   const handleDownload = async (documentUrl: string, originalName: string) => {
     try {
@@ -149,6 +158,20 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
     }
   };
 
+  const documentsByCategory = documents?.reduce((acc: DocumentsByCategory, doc) => {
+    const category = doc.category || 'other';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(doc);
+    return acc;
+  }, {
+    registration: [],
+    insurance: [],
+    maintenance: [],
+    other: []
+  } as DocumentsByCategory);
+
   return (
     <Card>
       <CardHeader>
@@ -158,7 +181,7 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Tabs defaultValue="registration" value={selectedCategory} onValueChange={setSelectedCategory}>
+        <Tabs defaultValue="registration" value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as DocumentCategory)}>
           <TabsList className="w-full">
             <TabsTrigger value="registration">Registration</TabsTrigger>
             <TabsTrigger value="insurance">Insurance</TabsTrigger>
@@ -167,15 +190,17 @@ export const VehicleDocuments = ({ vehicleId }: VehicleDocumentsProps) => {
           </TabsList>
 
           <div className="mt-4">
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="document">Upload Document</Label>
-              <Input
-                id="document"
-                type="file"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
+            <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'}`}>
+              <input {...getInputProps()} />
+              <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              {isDragActive ? (
+                <p className="text-sm text-muted-foreground">Drop the file here</p>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">Drag & drop a file here, or click to select</p>
+                  <p className="text-xs text-muted-foreground mt-1">Supports PDF and images up to 5MB</p>
+                </>
+              )}
             </div>
           </div>
 
