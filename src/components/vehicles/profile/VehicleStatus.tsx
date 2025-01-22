@@ -65,6 +65,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
         return <Clock className="h-4 w-4" />;
       case "accident":
       case "stolen":
+      case "police_station":
         return <AlertCircle className="h-4 w-4" />;
       default:
         return null;
@@ -73,6 +74,8 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
 
   const updateStatus = async (newStatus: VehicleStatusType) => {
     try {
+      console.log("Updating status to:", newStatus); // Debug log
+      
       const { error } = await supabase
         .from("vehicles")
         .update({ status: newStatus })
@@ -106,7 +109,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
             <Badge className={`${getStatusColor(status)} text-white`}>
               <span className="flex items-center gap-1">
                 {getStatusIcon(status)}
-                {status}
+                {status.replace('_', ' ')}
               </span>
             </Badge>
           </div>
@@ -119,7 +122,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
                 onClick={() => updateStatus(statusOption.name as VehicleStatusType)}
                 disabled={status === statusOption.name}
               >
-                Mark as {statusOption.name}
+                Mark as {statusOption.name.replace('_', ' ')}
               </Button>
             ))}
           </div>
