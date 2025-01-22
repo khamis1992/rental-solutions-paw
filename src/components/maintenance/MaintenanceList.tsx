@@ -10,6 +10,7 @@ import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination
 import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CreateJobDialog } from "./CreateJobDialog";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -160,14 +161,22 @@ export const MaintenanceList = () => {
 
   if (records.length === 0) {
     return (
-      <Card className="p-6 text-center">
-        <p className="text-muted-foreground">No maintenance records found.</p>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <CreateJobDialog />
+        </div>
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground">No maintenance records found.</p>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <CreateJobDialog />
+      </div>
       <Card className="rounded-md border">
         <Table>
           <MaintenanceTableHeader />
