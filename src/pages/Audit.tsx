@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 
 const Audit = () => {
-  const [entityFilter, setEntityFilter] = useState<string>("");
+  const [entityFilter, setEntityFilter] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const { data: auditLogs, isLoading } = useQuery({
@@ -49,7 +49,7 @@ const Audit = () => {
   });
 
   const uniqueEntityTypes = Array.from(
-    new Set(auditLogs?.map((log) => log.entity_type) || [])
+    new Set(auditLogs?.map((log) => log.entity_type).filter(Boolean) || [])
   );
 
   return (
@@ -74,15 +74,18 @@ const Audit = () => {
                 />
               </div>
               <div className="w-[200px]">
-                <Select value={entityFilter} onValueChange={setEntityFilter}>
+                <Select 
+                  value={entityFilter} 
+                  onValueChange={setEntityFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by entity type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     {uniqueEntityTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
+                      <SelectItem key={type} value={type || "unknown"}>
+                        {type || "Unknown"}
                       </SelectItem>
                     ))}
                   </SelectContent>
