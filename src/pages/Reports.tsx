@@ -4,7 +4,6 @@ import {
   BarChart3, 
   Users, 
   FileSpreadsheet, 
-  Code,
   Car,
   FileText,
   Filter,
@@ -15,7 +14,6 @@ import { FleetReportSection } from "@/components/reports/sections/FleetReportSec
 import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
 import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
-import { CodeAnalysisDashboard } from "@/components/codeanalysis/CodeAnalysisDashboard";
 import { FleetAnalyticsDashboard } from "@/components/reports/FleetAnalytics/FleetAnalyticsDashboard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,10 +50,6 @@ const Reports = () => {
                 <TabsTrigger value="financial" className="flex items-center gap-2 text-base font-medium">
                   <FileSpreadsheet className="h-4 w-4" />
                   Financial Reports
-                </TabsTrigger>
-                <TabsTrigger value="code-analysis" className="flex items-center gap-2 text-base font-medium">
-                  <Code className="h-4 w-4" />
-                  Code Analysis
                 </TabsTrigger>
               </TabsList>
 
@@ -99,10 +93,6 @@ const Reports = () => {
 
             <TabsContent value="financial">
               <FinancialReportSection />
-            </TabsContent>
-
-            <TabsContent value="code-analysis">
-              <CodeAnalysisDashboard />
             </TabsContent>
           </div>
         </Tabs>
