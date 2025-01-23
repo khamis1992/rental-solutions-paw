@@ -41,15 +41,14 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
     window.print();
   };
 
-  // Calculate total paid amount and balance
+  // Calculate total paid amount, balance and late fines
   const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
   const totalBalance = data.payments?.reduce((sum, payment) => sum + payment.balance, 0) || 0;
+  const totalLateFines = data.payments?.reduce((sum, payment) => sum + (payment.late_fine_amount || 0), 0) || 0;
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)] w-full">
       <Card className="p-8 max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:p-4 print:max-w-none">
-        <div className="print-content space-y-8">
-          {/* Header Section */}
           <div className="flex justify-between items-start">
             <div className="space-y-4">
               {settings?.logo_url && (
@@ -83,7 +82,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </Button>
           </div>
 
-          {/* Customer & Invoice Details Section */}
           <div className="grid grid-cols-2 gap-8 border-t border-b border-gray-200 py-8">
             <div>
               <h3 className="font-semibold text-gray-700 mb-3">Bill To:</h3>
@@ -106,7 +104,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </div>
           </div>
 
-          {/* Vehicle Details Section */}
           <div className="space-y-2">
             <h3 className="font-semibold text-gray-700">Vehicle Details:</h3>
             <p className="text-gray-600">{data.vehicleDetails}</p>
@@ -115,7 +112,6 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </p>
           </div>
 
-          {/* Items Table */}
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -137,75 +133,85 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
             </table>
           </div>
 
-          {/* Payment History Section */}
-          {data.payments && data.payments.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-700">Payment History</h3>
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-gray-700 font-semibold">Date</th>
-                      <th className="text-left py-3 px-4 text-gray-700 font-semibold">Description</th>
-                      <th className="text-right py-3 px-4 text-gray-700 font-semibold">Amount</th>
-                      <th className="text-right py-3 px-4 text-gray-700 font-semibold">Method</th>
+        {/* Payment History Section with Late Fines */}
+        {data.payments && data.payments.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-700">Payment History</h3>
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Date</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-semibold">Description</th>
+                    <th className="text-right py-3 px-4 text-gray-700 font-semibold">Amount</th>
+                    <th className="text-right py-3 px-4 text-gray-700 font-semibold">Late Fine</th>
+                    <th className="text-right py-3 px-4 text-gray-700 font-semibold">Method</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.payments.map((payment) => (
+                    <tr key={payment.id} className="border-b last:border-b-0">
+                      <td className="py-3 px-4 text-gray-600">
+                        {payment.payment_date 
+                          ? format(new Date(payment.payment_date), 'dd/MM/yyyy')
+                          : format(new Date(payment.created_at), 'dd/MM/yyyy')}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">{payment.description || '-'}</td>
+                      <td className="text-right py-3 px-4 text-gray-800 font-medium">
+                        {formatCurrency(payment.amount_paid)}
+                      </td>
+                      <td className="text-right py-3 px-4 text-red-600 font-medium">
+                        {payment.late_fine_amount ? formatCurrency(payment.late_fine_amount) : '-'}
+                      </td>
+                      <td className="text-right py-3 px-4 text-gray-600 capitalize">
+                        {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {data.payments.map((payment) => (
-                      <tr key={payment.id} className="border-b last:border-b-0">
-                        <td className="py-3 px-4 text-gray-600">
-                          {payment.payment_date 
-                            ? format(new Date(payment.payment_date), 'dd/MM/yyyy')
-                            : format(new Date(payment.created_at), 'dd/MM/yyyy')}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">{payment.description || '-'}</td>
-                        <td className="text-right py-3 px-4 text-gray-800 font-medium">
-                          {formatCurrency(payment.amount_paid)}
-                        </td>
-                        <td className="text-right py-3 px-4 text-gray-600 capitalize">
-                          {payment.payment_method?.toLowerCase().replace('_', ' ') || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Summary Section */}
-          <div className="border-t pt-6 mt-8">
-            <div className="flex flex-col items-end space-y-3">
-              <div className="flex justify-between w-64 text-gray-600">
-                <span>Balance:</span>
-                <span className="font-medium text-red-600">
-                  {formatCurrency(-Math.abs(totalBalance))}
-                </span>
-              </div>
-              <div className="flex justify-between w-64 text-gray-600">
-                <span>Amount Paid:</span>
-                <span className="font-medium text-green-600">
-                  {formatCurrency(totalPaidAmount)}
-                </span>
-              </div>
-              <div className="flex justify-between w-64 bg-gray-50 p-4 rounded-lg mt-2">
-                <span className="font-semibold text-gray-700">Total Due:</span>
-                <span className="font-bold text-xl text-gray-900">
-                  {formatCurrency(Math.max(0, totalBalance))}
-                </span>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
+        )}
 
-          {/* Footer Section */}
+        {/* Summary Section with Late Fines */}
+        <div className="border-t pt-6 mt-8">
+          <div className="flex flex-col items-end space-y-3">
+            <div className="flex justify-between w-64 text-gray-600">
+              <span>Balance:</span>
+              <span className="font-medium text-red-600">
+                {formatCurrency(-Math.abs(totalBalance))}
+              </span>
+            </div>
+            <div className="flex justify-between w-64 text-gray-600">
+              <span>Amount Paid:</span>
+              <span className="font-medium text-green-600">
+                {formatCurrency(totalPaidAmount)}
+              </span>
+            </div>
+            {totalLateFines > 0 && (
+              <div className="flex justify-between w-64 text-gray-600">
+                <span>Late Fines:</span>
+                <span className="font-medium text-red-600">
+                  {formatCurrency(totalLateFines)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between w-64 bg-gray-50 p-4 rounded-lg mt-2">
+              <span className="font-semibold text-gray-700">Total Due:</span>
+              <span className="font-bold text-xl text-gray-900">
+                {formatCurrency(Math.max(0, totalBalance + totalLateFines))}
+              </span>
+            </div>
+          </div>
+        </div>
+
           <div className="text-center text-sm text-gray-500 pt-8 border-t">
             <p>Thank you for your business!</p>
             {settings?.company_name && (
               <p className="mt-1">{settings.company_name}</p>
             )}
           </div>
-        </div>
       </Card>
     </ScrollArea>
   );
