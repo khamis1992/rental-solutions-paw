@@ -16,23 +16,23 @@ export const CustomerReportSection = ({
   generateReport
 }: CustomerReportSectionProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Analytics Summary Cards - Top */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <CustomerAnalytics />
       </div>
 
       {/* Reports Selection Card - Middle */}
-      <Card>
+      <Card className="bg-white shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <FileText className="h-6 w-6" />
             Customer Reports
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <Select onValueChange={value => setSelectedReport(value)}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select report type" />
             </SelectTrigger>
             <SelectContent>
@@ -41,7 +41,12 @@ export const CustomerReportSection = ({
               <SelectItem value="customer-violations">Traffic Violations</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="w-full" onClick={generateReport}>Generate Report</Button>
+          <Button 
+            className="w-full bg-primary hover:bg-primary/90" 
+            onClick={generateReport}
+          >
+            Generate Report
+          </Button>
         </CardContent>
       </Card>
     </div>
