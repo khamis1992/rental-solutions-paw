@@ -341,6 +341,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_analytics_insights: {
+        Row: {
+          action_taken: boolean | null
+          analyzed_at: string | null
+          category: string
+          confidence_score: number | null
+          created_at: string | null
+          data_points: Json | null
+          id: string
+          insight: string
+          priority: number | null
+          status: string | null
+        }
+        Insert: {
+          action_taken?: boolean | null
+          analyzed_at?: string | null
+          category: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          insight: string
+          priority?: number | null
+          status?: string | null
+        }
+        Update: {
+          action_taken?: boolean | null
+          analyzed_at?: string | null
+          category?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          data_points?: Json | null
+          id?: string
+          insight?: string
+          priority?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       ai_case_analysis: {
         Row: {
           analysis_result: Json

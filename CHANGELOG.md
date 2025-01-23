@@ -8,12 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- AI-powered features:
+  - Natural language query processing for data analysis
+  - Automated report summarization with key insights
+  - Predictive maintenance scheduling with confidence scores
+  - Smart recommendations based on operational patterns
+  - Anomaly detection and real-time alerts
 - Vehicle Management System with advanced filtering and search
 - Legal Management module with case tracking and document management
 - Financial Management system with payment processing and tracking
 - Customer Management with profiles and history
 - Traffic Fine Management system
-- AI-powered features for document analysis and case predictions
 - Maintenance tracking system for vehicles
 - Agreement management with templates and automated workflows
 - Multi-language support (English and Arabic)
