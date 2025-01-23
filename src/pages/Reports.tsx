@@ -1,116 +1,45 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileSpreadsheet } from "lucide-react";
-import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
-import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
-import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
-import { FleetAnalyticsDashboard } from "@/components/reports/FleetAnalytics/FleetAnalyticsDashboard";
-import { AdvancedAnalytics } from "@/components/reports/AdvancedAnalytics/AdvancedAnalytics";
 import { BusinessIntelligenceSection } from "@/components/reports/sections/BusinessIntelligenceSection";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { toast } from "sonner";
+import { FinancialAnalyticsSection } from "@/components/reports/sections/FinancialAnalyticsSection";
+import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
+import { FleetReportSection } from "@/components/reports/sections/FleetReportSection";
+import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
 
 const Reports = () => {
-  const [selectedReport, setSelectedReport] = useState("");
-
-  const generateReport = () => {
-    if (!selectedReport) {
-      toast.error("Please select a report type first");
-      return;
-    }
-    
-    toast.success("Generating report...");
-  };
-
   return (
-    <DashboardLayout>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Reports & Analytics
-          </h1>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-            Comprehensive insights into your fleet operations and business performance
-          </p>
-        </div>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Reports & Analytics</h1>
+      
+      <Tabs defaultValue="business" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="business">Business Intelligence</TabsTrigger>
+          <TabsTrigger value="financial">Financial Analytics</TabsTrigger>
+          <TabsTrigger value="customer">Customer Reports</TabsTrigger>
+          <TabsTrigger value="fleet">Fleet Reports</TabsTrigger>
+          <TabsTrigger value="operational">Operational Reports</TabsTrigger>
+        </TabsList>
 
-        <Tabs defaultValue="business" className="space-y-8">
-          <Card className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <CardContent className="p-6">
-              <TabsList className="inline-flex h-12 items-center justify-start space-x-4 rounded-lg bg-muted/50 p-1">
-                <TabsTrigger value="business">
-                  Business Intelligence
-                </TabsTrigger>
-                <TabsTrigger value="fleet">
-                  <FileSpreadsheet className="h-5 w-5 mr-2" />
-                  Fleet Analytics
-                </TabsTrigger>
-                <TabsTrigger value="advanced">
-                  Advanced Analytics
-                </TabsTrigger>
-                <TabsTrigger value="customer">
-                  Customer Reports
-                </TabsTrigger>
-                <TabsTrigger value="operational">
-                  Operational Reports
-                </TabsTrigger>
-                <TabsTrigger value="financial">
-                  Financial Reports
-                </TabsTrigger>
-              </TabsList>
+        <TabsContent value="business">
+          <BusinessIntelligenceSection />
+        </TabsContent>
 
-              <div className="flex items-center justify-end gap-3 mt-6">
-                <Button 
-                  variant="default" 
-                  size="lg" 
-                  className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-                  onClick={generateReport}
-                >
-                  <FileSpreadsheet className="h-5 w-5" />
-                  Generate Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="financial">
+          <FinancialAnalyticsSection />
+        </TabsContent>
 
-          <div className="mt-6 space-y-6">
-            <TabsContent value="business">
-              <BusinessIntelligenceSection />
-            </TabsContent>
+        <TabsContent value="customer">
+          <CustomerReportSection />
+        </TabsContent>
 
-            <TabsContent value="fleet">
-              <FleetAnalyticsDashboard />
-            </TabsContent>
+        <TabsContent value="fleet">
+          <FleetReportSection />
+        </TabsContent>
 
-            <TabsContent value="advanced">
-              <AdvancedAnalytics />
-            </TabsContent>
-
-            <TabsContent value="customer">
-              <CustomerReportSection 
-                selectedReport={selectedReport}
-                setSelectedReport={setSelectedReport}
-                generateReport={generateReport}
-              />
-            </TabsContent>
-
-            <TabsContent value="operational">
-              <OperationalReportSection 
-                selectedReport={selectedReport}
-                setSelectedReport={setSelectedReport}
-                generateReport={generateReport}
-              />
-            </TabsContent>
-
-            <TabsContent value="financial">
-              <FinancialReportSection />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+        <TabsContent value="operational">
+          <OperationalReportSection />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
