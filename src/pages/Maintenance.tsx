@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MaintenanceStats } from "@/components/maintenance/MaintenanceStats";
 import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
+import { MaintenanceAlerts } from "@/components/maintenance/MaintenanceAlerts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,7 +32,8 @@ const Maintenance = () => {
         
         <MaintenanceStats maintenanceData={maintenanceData || []} />
         
-        <div className="grid gap-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <MaintenanceAlerts />
           <MaintenanceList />
         </div>
       </div>
