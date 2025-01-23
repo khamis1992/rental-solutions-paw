@@ -1,8 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Calendar, MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MaintenanceTimeline } from "./MaintenanceTimeline";
 import { Badge } from "@/components/ui/badge";
+import { Loader2, Calendar, MapPin } from "lucide-react";
 
 interface Schedule {
   id: string;
