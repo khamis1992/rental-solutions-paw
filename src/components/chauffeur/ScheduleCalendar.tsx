@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import format from "date-fns/format";
-import parse from "date-fns/parse";
-import startOfWeek from "date-fns/startOfWeek";
-import getDay from "date-fns/getDay";
+import { Calendar } from "react-big-calendar";
+import { format, parse, startOfWeek, getDay } from "date-fns";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -13,13 +10,13 @@ const locales = {
   "en-US": require("date-fns/locale/en-US"),
 };
 
-const localizer = dateFnsLocalizer({
+const localizer = {
   format,
   parse,
   startOfWeek,
   getDay,
   locales,
-});
+};
 
 export const ScheduleCalendar = () => {
   const [events, setEvents] = useState([]);
