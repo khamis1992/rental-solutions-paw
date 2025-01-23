@@ -51,57 +51,57 @@ export const FleetAnalyticsDashboard = () => {
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-6 overflow-hidden">
+        <Card className="p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium truncate">Total Fleet Value</CardTitle>
-            <Car className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-base font-medium">Total Fleet Value</CardTitle>
+            <Car className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold truncate">{formatCurrency(fleetStats?.totalRevenue || 0)}</div>
-            <p className="text-sm text-muted-foreground mt-2 truncate">
+            <div className="text-3xl font-bold">{formatCurrency(fleetStats?.totalRevenue || 0)}</div>
+            <p className="text-sm text-muted-foreground mt-2">
               {fleetStats?.totalVehicles} vehicles in fleet
             </p>
           </CardContent>
         </Card>
 
-        <Card className="p-6 overflow-hidden">
+        <Card className="p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium truncate">Fleet Utilization</CardTitle>
-            <TrendingUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-base font-medium">Fleet Utilization</CardTitle>
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold truncate">
+            <div className="text-3xl font-bold">
               {fleetStats?.fleetUtilization.toFixed(1)}%
             </div>
-            <p className="text-sm text-muted-foreground mt-2 truncate">
+            <p className="text-sm text-muted-foreground mt-2">
               {fleetStats?.activeLeases} active leases
             </p>
           </CardContent>
         </Card>
 
-        <Card className="p-6 overflow-hidden">
+        <Card className="p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium truncate">Maintenance Costs</CardTitle>
-            <Wrench className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-base font-medium">Maintenance Costs</CardTitle>
+            <Wrench className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold truncate">{formatCurrency(fleetStats?.totalMaintenance || 0)}</div>
-            <p className="text-sm text-muted-foreground mt-2 truncate">
+            <div className="text-3xl font-bold">{formatCurrency(fleetStats?.totalMaintenance || 0)}</div>
+            <p className="text-sm text-muted-foreground mt-2">
               Total maintenance expenses
             </p>
           </CardContent>
         </Card>
 
-        <Card className="p-6 overflow-hidden">
+        <Card className="p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium truncate">Avg. Revenue/Vehicle</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            <CardTitle className="text-base font-medium">Avg. Revenue/Vehicle</CardTitle>
+            <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold truncate">
+            <div className="text-3xl font-bold">
               {formatCurrency(fleetStats?.averageRevenuePerVehicle || 0)}
             </div>
-            <p className="text-sm text-muted-foreground mt-2 truncate">
+            <p className="text-sm text-muted-foreground mt-2">
               Per vehicle revenue
             </p>
           </CardContent>
