@@ -1,22 +1,13 @@
 import { useEffect, useState } from "react";
-import { Calendar } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
-const locales = {
-  "en-US": require("date-fns/locale/en-US"),
-};
-
-const localizer = {
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-};
+// Use moment localizer instead of date-fns to avoid require issues
+const localizer = momentLocalizer(moment);
 
 export const ScheduleCalendar = () => {
   const [events, setEvents] = useState([]);
