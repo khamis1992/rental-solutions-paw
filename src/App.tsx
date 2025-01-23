@@ -157,6 +157,15 @@ export default function App() {
             />
 
             <Route
+              path="/chauffeur-service"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.ChauffeurService />
+                </Suspense>
+              }
+            />
+
+            <Route
               path="/traffic-fines"
               element={
                 <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
