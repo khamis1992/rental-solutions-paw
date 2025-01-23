@@ -4349,6 +4349,76 @@ export type Database = {
           },
         ]
       }
+      recurring_schedules: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          end_date: string | null
+          id: string
+          location_address: string
+          location_coordinates: unknown | null
+          recurrence_interval: number
+          recurrence_pattern: string
+          schedule_type: string
+          start_date: string
+          status: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          end_date?: string | null
+          id?: string
+          location_address: string
+          location_coordinates?: unknown | null
+          recurrence_interval?: number
+          recurrence_pattern: string
+          schedule_type: string
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          end_date?: string | null
+          id?: string
+          location_address?: string
+          location_coordinates?: unknown | null
+          recurrence_interval?: number
+          recurrence_pattern?: string
+          schedule_type?: string
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_schedules_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       remaining_amounts: {
         Row: {
           agreement_duration: unknown | null
@@ -4562,6 +4632,115 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      schedule_conflicts: {
+        Row: {
+          conflict_type: string
+          conflicting_schedule_id: string | null
+          created_at: string | null
+          id: string
+          resolution_notes: string | null
+          schedule_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          conflict_type: string
+          conflicting_schedule_id?: string | null
+          created_at?: string | null
+          id?: string
+          resolution_notes?: string | null
+          schedule_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          conflict_type?: string
+          conflicting_schedule_id?: string | null
+          created_at?: string | null
+          id?: string
+          resolution_notes?: string | null
+          schedule_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_conflicts_conflicting_schedule_id_fkey"
+            columns: ["conflicting_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_conflicts_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_reminders: {
+        Row: {
+          created_at: string | null
+          id: string
+          recipient_id: string | null
+          recipient_type: string
+          reminder_type: string
+          schedule_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          recipient_id?: string | null
+          recipient_type: string
+          reminder_type: string
+          schedule_id?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recipient_id?: string | null
+          recipient_type?: string
+          reminder_type?: string
+          schedule_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_reminders_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_reminders_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_reminders_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_deposits: {
         Row: {
