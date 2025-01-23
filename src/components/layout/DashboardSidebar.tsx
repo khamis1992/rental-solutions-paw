@@ -1,7 +1,6 @@
 import { 
-  Home, Car, Users, FileText, Settings, 
-  HelpCircle, Wrench, FilePen, BarChart3, 
-  Gavel, Wallet, FileText as AuditIcon,
+  Home, Car, Users, FileText, HelpCircle, Wrench, 
+  FilePen, BarChart3, Gavel, Wallet, FileText as AuditIcon,
   AlertTriangle, DollarSign, MapPin
 } from "lucide-react";
 import {
@@ -36,8 +35,6 @@ const baseMenuItems = [
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
-const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" };
-
 export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
   const location = useLocation();
@@ -70,11 +67,8 @@ export const DashboardSidebar = () => {
           return;
         }
 
-        if (profile?.role === 'admin') {
-          setMenuItems([...baseMenuItems, settingsMenuItem]);
-        } else {
-          setMenuItems(baseMenuItems);
-        }
+        // Settings has been removed from the menu for all users
+        setMenuItems(baseMenuItems);
       } catch (error) {
         console.error('Error checking user role:', error);
         toast({
