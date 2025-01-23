@@ -103,7 +103,7 @@ export const DashboardSidebar = () => {
   }
 
   return (
-    <Sidebar>
+    <Sidebar className="border-r border-border">
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold">Rental Solutions</span>
@@ -119,18 +119,18 @@ export const DashboardSidebar = () => {
                   >
                     <Link
                       to={item.href}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-md transition-colors ${
+                      className={`flex items-center gap-3 px-6 py-3 rounded-md transition-colors ${
                         location.pathname === item.href
                           ? 'bg-[#FFA500] text-white'
                           : 'text-black hover:bg-[#F5F5F5] hover:text-[#FFA500]'
                       }`}
                     >
-                      <item.icon className={`h-4 w-4 ${
+                      <item.icon className={`h-5 w-5 ${
                         location.pathname === item.href
                           ? 'text-white'
                           : 'text-current'
                       }`} />
-                      <span>{item.label}</span>
+                      <span className="text-base">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
