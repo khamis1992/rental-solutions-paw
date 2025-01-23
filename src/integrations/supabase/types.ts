@@ -5600,6 +5600,18 @@ export type Database = {
       }
     }
     Views: {
+      audit_logs_with_users: {
+        Row: {
+          action: string | null
+          changes: Json | null
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string | null
+          performed_by_name: string | null
+        }
+        Relationships: []
+      }
       customer_statuses: {
         Row: {
           full_name: string | null
