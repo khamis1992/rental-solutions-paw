@@ -50,18 +50,26 @@ export const IntelligentScheduling = () => {
     },
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
-    }
-  };
+  const { data: maintenanceEvents } = useQuery({
+    queryKey: ['maintenance-events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('maintenance')
+        .select(`
+          *,
+          vehicles (
+            make,
+            model,
+            license_plate
+          )
+        `)
+        .order('scheduled_date', { ascending: true })
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   if (isLoading) {
     return (
@@ -87,39 +95,53 @@ export const IntelligentScheduling = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {schedules?.map((schedule) => (
-            <div
-              key={schedule.id}
-              className="flex items-center gap-4 p-4 rounded-lg border"
-            >
-              <div className="h-12 w-12 rounded-full flex items-center justify-center bg-blue-50 text-blue-500">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-medium">
-                    {schedule.vehicles.make} {schedule.vehicles.model}
-                  </h4>
-                  <Badge variant="outline">{schedule.vehicles.license_plate}</Badge>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            {schedules?.map((schedule) => (
+              <div
+                key={schedule.id}
+                className="flex items-center gap-4 p-4 rounded-lg border"
+              >
+                <div className="h-12 w-12 rounded-full flex items-center justify-center bg-blue-50 text-blue-500">
+                  <MapPin className="h-6 w-6" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {schedule.profiles.full_name} • {schedule.schedule_type}
-                </p>
-                <p className="text-sm text-muted-foreground truncate">
-                  {schedule.location_address}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium">
+                      {schedule.vehicles.make} {schedule.vehicles.model}
+                    </h4>
+                    <Badge variant="outline">{schedule.vehicles.license_plate}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {schedule.profiles.full_name} • {schedule.schedule_type}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {schedule.location_address}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge className={
+                    schedule.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    schedule.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                    schedule.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }>
+                    {schedule.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {new Date(schedule.scheduled_time).toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <Badge className={getStatusColor(schedule.status)}>
-                  {schedule.status}
-                </Badge>
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
-                  {new Date(schedule.scheduled_time).toLocaleString()}
-                </span>
-              </div>
+            ))}
+          </div>
+
+          {maintenanceEvents && maintenanceEvents.length > 0 && (
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-medium mb-4">Upcoming Maintenance</h3>
+              <MaintenanceTimeline events={maintenanceEvents} />
             </div>
-          ))}
+          )}
         </div>
       </CardContent>
     </Card>
