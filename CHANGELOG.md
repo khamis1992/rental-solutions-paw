@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mobile responsive design
 - Role-based access control
 - Analytics and reporting dashboard
+- Late Fines display in invoice with detailed breakdown
+- Enhanced invoice design with improved visual hierarchy and readability
 
 ### Changed
 - Consolidated search functionality in Vehicle List page
@@ -31,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated user interface for better accessibility
 - Standardized date format to DD/MM/YYYY
 - Unified payment system implementation
+- Redesigned invoice layout with clear sections and better typography
+- Enhanced invoice summary section with highlighted totals
 
 ### Fixed
 - Vehicle maintenance property access issues
