@@ -549,6 +549,72 @@ export type Database = {
           },
         ]
       }
+      ai_query_history: {
+        Row: {
+          created_at: string
+          detected_intent: string
+          detected_language: string
+          id: string
+          query: string
+          response_data: Json
+          success_rate: number | null
+          user_feedback: string | null
+        }
+        Insert: {
+          created_at?: string
+          detected_intent: string
+          detected_language: string
+          id?: string
+          query: string
+          response_data: Json
+          success_rate?: number | null
+          user_feedback?: string | null
+        }
+        Update: {
+          created_at?: string
+          detected_intent?: string
+          detected_language?: string
+          id?: string
+          query?: string
+          response_data?: Json
+          success_rate?: number | null
+          user_feedback?: string | null
+        }
+        Relationships: []
+      }
+      ai_query_patterns: {
+        Row: {
+          category: string
+          created_at: string
+          examples: string[]
+          id: string
+          language: string
+          query_pattern: string
+          response_template: Json
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          examples: string[]
+          id?: string
+          language: string
+          query_pattern: string
+          response_template: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          examples?: string[]
+          id?: string
+          language?: string
+          query_pattern?: string
+          response_template?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analytics_insights: {
         Row: {
           action_taken: boolean | null
