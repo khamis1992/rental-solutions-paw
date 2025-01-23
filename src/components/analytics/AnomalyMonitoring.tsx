@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Bell, TrendingUp } from "lucide-react";
+import { AlertTriangle, Bell, Clock, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 interface Anomaly {
@@ -11,6 +11,11 @@ interface Anomaly {
   detection_type: string;
   severity: 'low' | 'medium' | 'high';
   description: string;
+  affected_records: {
+    vehicle_id: string;
+    license_plate: string;
+    mileage: number;
+  };
   detected_at: string;
   resolved_at: string | null;
 }
@@ -51,8 +56,29 @@ export const AnomalyMonitoring = () => {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setRealtimeAnomalies(prev => [payload.new as Anomaly, ...prev].slice(0, 5));
-            toast.warning(`New anomaly detected: ${(payload.new as Anomaly).description}`);
+            const newAnomaly = payload.new as Anomaly;
+            setRealtimeAnomalies(prev => [newAnomaly, ...prev].slice(0, 5));
+            
+            // Enhanced toast notifications based on severity
+            const toastConfig = {
+              duration: newAnomaly.severity === 'high' ? 10000 : 5000,
+              action: {
+                label: "View Details",
+                onClick: () => console.log("Viewing details for:", newAnomaly.id)
+              }
+            };
+
+            switch (newAnomaly.severity) {
+              case 'high':
+                toast.error(`Critical Alert: ${newAnomaly.description}`, toastConfig);
+                break;
+              case 'medium':
+                toast.warning(`Warning: ${newAnomaly.description}`, toastConfig);
+                break;
+              case 'low':
+                toast.info(`Notice: ${newAnomaly.description}`, toastConfig);
+                break;
+            }
           } else if (payload.eventType === 'UPDATE') {
             setRealtimeAnomalies(prev => 
               prev.map(anomaly => 
@@ -68,6 +94,32 @@ export const AnomalyMonitoring = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return 'bg-destructive text-destructive-foreground';
+      case 'medium':
+        return 'bg-warning text-warning-foreground';
+      case 'low':
+        return 'bg-secondary text-secondary-foreground';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      case 'medium':
+        return <Clock className="h-4 w-4 text-warning" />;
+      case 'low':
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
+      default:
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
 
   return (
     <Card>
@@ -87,13 +139,7 @@ export const AnomalyMonitoring = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant={
-                      anomaly.severity === "high"
-                        ? "destructive"
-                        : anomaly.severity === "medium"
-                        ? "default"
-                        : "secondary"
-                    }
+                    className={getSeverityColor(anomaly.severity)}
                   >
                     {anomaly.detection_type}
                   </Badge>
@@ -102,12 +148,14 @@ export const AnomalyMonitoring = () => {
                   </span>
                 </div>
                 <p className="text-sm">{anomaly.description}</p>
+                {anomaly.affected_records && (
+                  <p className="text-xs text-muted-foreground">
+                    Vehicle: {anomaly.affected_records.license_plate} | 
+                    Mileage: {anomaly.affected_records.mileage.toLocaleString()} km
+                  </p>
+                )}
               </div>
-              {anomaly.severity === "high" ? (
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              ) : (
-                <Bell className="h-4 w-4 text-muted-foreground" />
-              )}
+              {getSeverityIcon(anomaly.severity)}
             </div>
           ))}
           {(!realtimeAnomalies || realtimeAnomalies.length === 0) && (
