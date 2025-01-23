@@ -22,9 +22,10 @@ export const VehicleUtilizationMetrics = () => {
             status
           ),
           maintenance (
+            id,
             cost,
-            start_date,
-            end_date
+            scheduled_date,
+            completed_date
           )
         `);
 
