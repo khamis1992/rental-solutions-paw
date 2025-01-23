@@ -1,142 +1,95 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-serve(async (req) => {
+const supabase = createClient(supabaseUrl, supabaseServiceRole)
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { includesDiskMetrics } = await req.json();
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    console.log('Starting performance analysis...')
 
-    // Analyze vehicle performance
-    const { data: vehicleData } = await supabaseClient
+    // Analyze vehicle utilization
+    const { data: vehicles } = await supabase
       .from('vehicles')
-      .select(`
-        *,
-        maintenance (
-          cost,
-          service_type,
-          completed_date
-        )
-      `);
+      .select('id, status, leases(id)')
 
-    // Generate insights
-    const insights = generateInsights(vehicleData);
-    
-    // Store insights in the database
-    await supabaseClient
-      .from('ai_analytics_insights')
-      .insert(insights.map(insight => ({
-        category: insight.category,
-        insight: insight.description,
-        data_points: insight.data,
-        confidence_score: insight.confidence,
-        priority: insight.priority
-      })));
+    const utilization = vehicles?.reduce((acc: any, vehicle) => {
+      acc.total++;
+      if (vehicle.leases && vehicle.leases.length > 0) acc.active++;
+      return acc;
+    }, { total: 0, active: 0 })
 
-    // Detect anomalies
-    const anomalies = detectAnomalies(vehicleData);
-    
-    // Store anomalies in the database
-    await supabaseClient
-      .from('operational_anomalies')
-      .insert(anomalies.map(anomaly => ({
-        detection_type: anomaly.type,
-        severity: anomaly.severity,
-        description: anomaly.description,
-        affected_records: anomaly.data
-      })));
+    const utilizationRate = (utilization.active / utilization.total) * 100
+
+    // Analyze payment patterns
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    const latePayments = payments?.filter(payment => 
+      payment.status === 'completed' && 
+      new Date(payment.payment_date) > new Date(payment.created_at)
+    ).length || 0
+
+    const latePaymentRate = (latePayments / (payments?.length || 1)) * 100
+
+    // Generate insights based on analysis
+    if (utilizationRate < 70) {
+      await supabase.from('analytics_insights').insert({
+        category: 'Fleet Utilization',
+        insight: `Fleet utilization is at ${utilizationRate.toFixed(1)}%, which is below optimal levels.`,
+        priority: utilizationRate < 50 ? 1 : 2,
+        confidence_score: 0.85,
+        data_points: { utilizationRate, totalVehicles: utilization.total }
+      })
+    }
+
+    if (latePaymentRate > 15) {
+      await supabase.from('analytics_insights').insert({
+        category: 'Payment Patterns',
+        insight: `High rate of late payments detected (${latePaymentRate.toFixed(1)}%). Consider reviewing payment policies.`,
+        priority: latePaymentRate > 25 ? 1 : 2,
+        confidence_score: 0.9,
+        data_points: { latePaymentRate, analyzedPayments: payments?.length }
+      })
+    }
+
+    // Check for anomalies
+    if (latePaymentRate > 30) {
+      await supabase.from('operational_anomalies').insert({
+        detection_type: 'Payment Pattern',
+        severity: 'high',
+        description: `Unusually high rate of late payments detected (${latePaymentRate.toFixed(1)}%)`,
+        affected_records: { 
+          total_payments: payments?.length,
+          late_payments: latePayments
+        }
+      })
+    }
 
     return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      JSON.stringify({ success: true, message: 'Analysis completed successfully' }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in performance analysis:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    )
   }
-});
-
-function generateInsights(data: any[]) {
-  const insights = [];
-  
-  // Maintenance cost analysis
-  const maintenanceCosts = data.reduce((acc, vehicle) => {
-    const costs = vehicle.maintenance?.reduce((sum, m) => sum + (m.cost || 0), 0) || 0;
-    return acc + costs;
-  }, 0);
-
-  if (maintenanceCosts > 0) {
-    insights.push({
-      category: 'maintenance',
-      description: `Total maintenance costs are ${maintenanceCosts}. Consider optimizing maintenance schedules.`,
-      data: { total_costs: maintenanceCosts },
-      confidence: 0.85,
-      priority: maintenanceCosts > 10000 ? 1 : 2
-    });
-  }
-
-  // Vehicle utilization patterns
-  const utilizationRates = data.map(vehicle => ({
-    id: vehicle.id,
-    status: vehicle.status,
-    daysInStatus: getDaysInStatus(vehicle.updated_at)
-  }));
-
-  const underutilizedVehicles = utilizationRates.filter(v => 
-    v.status === 'available' && v.daysInStatus > 7
-  );
-
-  if (underutilizedVehicles.length > 0) {
-    insights.push({
-      category: 'utilization',
-      description: `${underutilizedVehicles.length} vehicles have been unused for over a week. Consider adjusting pricing or marketing strategies.`,
-      data: { vehicles: underutilizedVehicles },
-      confidence: 0.9,
-      priority: 1
-    });
-  }
-
-  return insights;
-}
-
-function detectAnomalies(data: any[]) {
-  const anomalies = [];
-  
-  // Detect maintenance cost anomalies
-  data.forEach(vehicle => {
-    const maintenanceCosts = vehicle.maintenance || [];
-    const averageCost = maintenanceCosts.reduce((sum, m) => sum + (m.cost || 0), 0) / 
-                       (maintenanceCosts.length || 1);
-
-    const highCostMaintenance = maintenanceCosts.filter(m => m.cost > averageCost * 2);
-    
-    if (highCostMaintenance.length > 0) {
-      anomalies.push({
-        type: 'maintenance_cost',
-        severity: 'high',
-        description: `Unusually high maintenance costs detected for vehicle ${vehicle.license_plate}`,
-        data: { vehicle_id: vehicle.id, costs: highCostMaintenance }
-      });
-    }
-  });
-
-  return anomalies;
-}
-
-function getDaysInStatus(date: string) {
-  return Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
-}
+})

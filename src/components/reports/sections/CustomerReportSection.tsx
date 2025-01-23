@@ -1,50 +1,54 @@
-import { useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import { FileText } from "lucide-react";
+import { CustomerAnalytics } from "@/components/reports/CustomerAnalytics";
 
-export interface CustomerReportSectionProps {
+interface CustomerReportSectionProps {
   selectedReport: string;
-  setSelectedReport: (report: string) => void;
-  generateReport: () => Promise<void>;
+  setSelectedReport: (value: string) => void;
+  generateReport: () => void;
 }
 
 export const CustomerReportSection = ({
   selectedReport,
   setSelectedReport,
-  generateReport,
+  generateReport
 }: CustomerReportSectionProps) => {
-  const [customerId, setCustomerId] = useState("");
-
-  const handleGenerateReport = async () => {
-    if (!customerId) {
-      toast.error("Please enter a customer ID");
-      return;
-    }
-    await generateReport();
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Customer Report</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="customerId">Customer ID</Label>
-            <Input
-              id="customerId"
-              value={customerId}
-              onChange={(e) => setCustomerId(e.target.value)}
-              placeholder="Enter customer ID"
-            />
-          </div>
-          <Button onClick={handleGenerateReport}>Generate Report</Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-8">
+      {/* Analytics Summary Cards - Top */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <CustomerAnalytics />
+      </div>
+
+      {/* Reports Selection Card - Middle */}
+      <Card className="bg-white shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <FileText className="h-6 w-6" />
+            Customer Reports
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Select onValueChange={value => setSelectedReport(value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select report type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="customer-rental">Rental History</SelectItem>
+              <SelectItem value="customer-payment">Payment History</SelectItem>
+              <SelectItem value="customer-violations">Traffic Violations</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            className="w-full bg-primary hover:bg-primary/90" 
+            onClick={generateReport}
+          >
+            Generate Report
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
