@@ -6145,6 +6145,10 @@ export type Database = {
       }
     }
     Functions: {
+      analyze_vehicle_maintenance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       calculate_case_duration_stats: {
         Args: {
           p_case_type: string

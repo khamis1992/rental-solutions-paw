@@ -3,6 +3,7 @@ import { Suspense, lazy } from "react";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { AnomalyMonitoring } from "@/components/analytics/AnomalyMonitoring";
 
 const DashboardStats = lazy(() => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })));
 const DashboardAlerts = lazy(() => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })));
@@ -51,7 +52,13 @@ const Index = () => {
                 </ErrorBoundary>
               </div>
               
-              <div className="w-full">
+              <div className="grid gap-6 md:grid-cols-2">
+                <ErrorBoundary>
+                  <Suspense fallback={<ComponentLoader componentName="Anomaly Monitoring" />}>
+                    <AnomalyMonitoring />
+                  </Suspense>
+                </ErrorBoundary>
+
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
                     <DashboardAlerts />
