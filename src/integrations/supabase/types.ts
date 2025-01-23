@@ -618,6 +618,90 @@ export type Database = {
         }
         Relationships: []
       }
+      business_insights: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          importance_score: number | null
+          insight_type: string
+          metrics: Json | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          importance_score?: number | null
+          insight_type: string
+          metrics?: Json | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          importance_score?: number | null
+          insight_type?: string
+          metrics?: Json | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      business_kpis: {
+        Row: {
+          category: string
+          created_at: string | null
+          current_value: number
+          end_date: string
+          frequency: string
+          id: string
+          name: string
+          start_date: string
+          status: string | null
+          target_value: number
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          current_value: number
+          end_date: string
+          frequency: string
+          id?: string
+          name: string
+          start_date: string
+          status?: string | null
+          target_value: number
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          current_value?: number
+          end_date?: string
+          frequency?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: string | null
+          target_value?: number
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       car_installment_contracts: {
         Row: {
           amount_paid: number | null
@@ -3743,6 +3827,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      performance_benchmarks: {
+        Row: {
+          actual_value: number
+          benchmark_value: number
+          category: string
+          comparison_period: string
+          created_at: string | null
+          id: string
+          industry_average: number | null
+          metric_name: string
+          percentile: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_value: number
+          benchmark_value: number
+          category: string
+          comparison_period: string
+          created_at?: string | null
+          id?: string
+          industry_average?: number | null
+          metric_name: string
+          percentile?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_value?: number
+          benchmark_value?: number
+          category?: string
+          comparison_period?: string
+          created_at?: string | null
+          id?: string
+          industry_average?: number | null
+          metric_name?: string
+          percentile?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       performance_metrics: {
         Row: {

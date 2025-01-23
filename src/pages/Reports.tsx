@@ -6,6 +6,7 @@ import { OperationalReportSection } from "@/components/reports/sections/Operatio
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
 import { FleetAnalyticsDashboard } from "@/components/reports/FleetAnalytics/FleetAnalyticsDashboard";
 import { AdvancedAnalytics } from "@/components/reports/AdvancedAnalytics/AdvancedAnalytics";
+import { BusinessIntelligenceSection } from "@/components/reports/sections/BusinessIntelligenceSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -21,7 +22,6 @@ const Reports = () => {
     }
     
     toast.success("Generating report...");
-    // Add report generation logic here
   };
 
   return (
@@ -36,10 +36,13 @@ const Reports = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="fleet" className="space-y-8">
+        <Tabs defaultValue="business" className="space-y-8">
           <Card className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <CardContent className="p-6">
               <TabsList className="inline-flex h-12 items-center justify-start space-x-4 rounded-lg bg-muted/50 p-1">
+                <TabsTrigger value="business">
+                  Business Intelligence
+                </TabsTrigger>
                 <TabsTrigger value="fleet">
                   <FileSpreadsheet className="h-5 w-5 mr-2" />
                   Fleet Analytics
@@ -73,6 +76,10 @@ const Reports = () => {
           </Card>
 
           <div className="mt-6 space-y-6">
+            <TabsContent value="business">
+              <BusinessIntelligenceSection />
+            </TabsContent>
+
             <TabsContent value="fleet">
               <FleetAnalyticsDashboard />
             </TabsContent>
