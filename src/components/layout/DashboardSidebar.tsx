@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSessionContext } from '@supabase/auth-helpers-react';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const baseMenuItems = [
@@ -103,34 +103,31 @@ export const DashboardSidebar = () => {
   }
 
   return (
-    <Sidebar className="border-r border-border">
+    <Sidebar className="border-r border-border bg-white shadow-sm w-64">
       <SidebarContent>
-        <div className="flex h-14 items-center border-b px-6">
-          <span className="font-semibold">Rental Solutions</span>
+        <div className="flex h-16 items-center border-b px-6 bg-primary">
+          <span className="font-semibold text-lg text-white">Rental Solutions</span>
         </div>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={location.pathname === item.href}
-                  >
+                  <SidebarMenuButton asChild>
                     <Link
                       to={item.href}
-                      className={`flex items-center gap-3 px-6 py-3 rounded-md transition-colors ${
+                      className={`flex items-center gap-4 px-6 py-3.5 rounded-lg transition-all duration-200 ${
                         location.pathname === item.href
-                          ? 'bg-[#FFA500] text-white'
-                          : 'text-black hover:bg-[#F5F5F5] hover:text-[#FFA500]'
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
                       }`}
                     >
-                      <item.icon className={`h-5 w-5 ${
+                      <item.icon className={`h-5 w-5 flex-shrink-0 ${
                         location.pathname === item.href
-                          ? 'text-white'
-                          : 'text-current'
+                          ? 'text-primary'
+                          : 'text-gray-500'
                       }`} />
-                      <span className="text-base">{item.label}</span>
+                      <span className="text-base whitespace-nowrap">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
