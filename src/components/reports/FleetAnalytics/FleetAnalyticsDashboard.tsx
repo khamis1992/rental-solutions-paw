@@ -1,12 +1,12 @@
 import { StatsCard } from "@/components/dashboard/StatsCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { Car, TrendingUp, Wrench, DollarSign } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const FleetAnalyticsDashboard = () => {
-  const { data: fleetStats } = useQuery({
+  const { data: fleetStats, isLoading, error } = useQuery({
     queryKey: ["fleet-stats"],
     queryFn: async () => {
       const { data: vehicles, error } = await supabase
@@ -48,64 +48,62 @@ export const FleetAnalyticsDashboard = () => {
     }
   });
 
+  if (error) {
+    return (
+      <div className="p-4 text-red-500">
+        Error loading fleet statistics. Please try again later.
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-[200px] w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium">Total Fleet Value</CardTitle>
-            <Car className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{formatCurrency(fleetStats?.totalRevenue || 0)}</div>
-            <p className="text-sm text-muted-foreground mt-2">
-              {fleetStats?.totalVehicles} vehicles in fleet
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        <StatsCard
+          title="Total Fleet Value"
+          value={formatCurrency(fleetStats?.totalRevenue || 0)}
+          icon={Car}
+          description={`${fleetStats?.totalVehicles || 0} vehicles in fleet`}
+          className="bg-white p-8 shadow-lg hover:shadow-xl transition-shadow"
+          iconClassName="text-primary h-6 w-6"
+        />
 
-        <Card className="p-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium">Fleet Utilization</CardTitle>
-            <TrendingUp className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {fleetStats?.fleetUtilization.toFixed(1)}%
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              {fleetStats?.activeLeases} active leases
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Fleet Utilization"
+          value={`${fleetStats?.fleetUtilization.toFixed(1)}%`}
+          icon={TrendingUp}
+          description={`${fleetStats?.activeLeases || 0} active leases`}
+          className="bg-white p-8 shadow-lg hover:shadow-xl transition-shadow"
+          iconClassName="text-green-500 h-6 w-6"
+        />
 
-        <Card className="p-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium">Maintenance Costs</CardTitle>
-            <Wrench className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{formatCurrency(fleetStats?.totalMaintenance || 0)}</div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Total maintenance expenses
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Maintenance Costs"
+          value={formatCurrency(fleetStats?.totalMaintenance || 0)}
+          icon={Wrench}
+          description="Total maintenance expenses"
+          className="bg-white p-8 shadow-lg hover:shadow-xl transition-shadow"
+          iconClassName="text-orange-500 h-6 w-6"
+        />
 
-        <Card className="p-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium">Avg. Revenue/Vehicle</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {formatCurrency(fleetStats?.averageRevenuePerVehicle || 0)}
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Per vehicle revenue
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Avg. Revenue/Vehicle"
+          value={formatCurrency(fleetStats?.averageRevenuePerVehicle || 0)}
+          icon={DollarSign}
+          description="Per vehicle revenue"
+          className="bg-white p-8 shadow-lg hover:shadow-xl transition-shadow"
+          iconClassName="text-blue-500 h-6 w-6"
+        />
       </div>
     </div>
   );
