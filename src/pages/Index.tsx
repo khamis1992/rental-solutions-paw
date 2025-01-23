@@ -29,48 +29,64 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-background">
-        <div className="fixed top-0 left-0 right-0 h-[56px] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50" />
+      <div className="min-h-screen bg-[#f8f9fa]">
+        {/* Fixed Header */}
+        <div className="fixed top-0 left-0 right-0 h-[56px] border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-50" />
         
+        {/* Main Content */}
         <div className="pt-[56px] pb-6">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
             <div className="flex flex-col gap-6">
+              {/* Welcome Section */}
               <div className="w-full mt-6">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
-                    <WelcomeHeader />
+                    <div className="bg-[#9b87f5] text-white rounded-lg p-6 shadow-lg">
+                      <WelcomeHeader />
+                    </div>
                   </Suspense>
                 </ErrorBoundary>
               </div>
 
+              {/* Stats Section */}
               <div className="w-full">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                    <DashboardStats />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <DashboardStats />
+                    </div>
                   </Suspense>
                 </ErrorBoundary>
               </div>
               
+              {/* Alerts Section */}
               <div className="w-full">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
-                    <DashboardAlerts />
+                    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
+                      <DashboardAlerts />
+                    </div>
                   </Suspense>
                 </ErrorBoundary>
               </div>
               
+              {/* Activity and Chatbot Section */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 <div className="lg:col-span-4">
                   <ErrorBoundary>
                     <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
-                      <RecentActivity />
+                      <div className="bg-white rounded-lg shadow-md p-6 h-[500px] overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                        <RecentActivity />
+                      </div>
                     </Suspense>
                   </ErrorBoundary>
                 </div>
                 <div className="lg:col-span-3">
                   <ErrorBoundary>
                     <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
-                      <SystemChatbot />
+                      <div className="bg-white rounded-lg shadow-md p-6 h-[500px] overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                        <SystemChatbot />
+                      </div>
                     </Suspense>
                   </ErrorBoundary>
                 </div>
