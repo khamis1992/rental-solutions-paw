@@ -1,47 +1,60 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Car } from "lucide-react";
-import { FleetStatus } from "@/components/reports/FleetStatus";
-
-interface FleetReportSectionProps {
-  selectedReport: string;
-  setSelectedReport: (value: string) => void;
-  generateReport: () => void;
-}
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { FleetReportSectionProps } from "./types";
 
 export const FleetReportSection = ({
   selectedReport,
   setSelectedReport,
-  generateReport
+  generateReport,
 }: FleetReportSectionProps) => {
+  const { data: fleetData, isLoading } = useQuery({
+    queryKey: ["fleet-report", selectedReport],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fleet_reports")
+        .select("*")
+        .eq("report_type", selectedReport);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return <div>Loading fleet report...</div>;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Car className="h-5 w-5" />
-              Vehicle Reports
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Select onValueChange={value => setSelectedReport(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select report type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="vehicle-summary">Vehicle Summary Report</SelectItem>
-                <SelectItem value="vehicle-maintenance">Maintenance History</SelectItem>
-                <SelectItem value="vehicle-utilization">Vehicle Utilization Report</SelectItem>
-                <SelectItem value="vehicle-expenses">Vehicle Expense Report</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button className="w-full" onClick={generateReport}>Generate Report</Button>
-          </CardContent>
-        </Card>
-        <FleetStatus />
-      </div>
+    <div>
+      <h2 className="text-xl font-bold">Fleet Report: {selectedReport}</h2>
+      <Button onClick={generateReport} className="mb-4">
+        Generate Report
+      </Button>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Vehicle ID</TableHead>
+            <TableHead>Make</TableHead>
+            <TableHead>Model</TableHead>
+            <TableHead>Year</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {fleetData?.map((vehicle) => (
+            <TableRow key={vehicle.id}>
+              <TableCell>{vehicle.id}</TableCell>
+              <TableCell>{vehicle.make}</TableCell>
+              <TableCell>{vehicle.model}</TableCell>
+              <TableCell>{vehicle.year}</TableCell>
+              <TableCell>{vehicle.status}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };

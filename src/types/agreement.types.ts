@@ -1,5 +1,3 @@
-import { Database } from "./database/database.types";
-
 export type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
 export type AgreementType = "lease_to_own" | "short_term";
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";

@@ -1,3 +1,15 @@
+interface DashboardStatsProps {
+  stats: {
+    totalVehicles: number;
+    availableVehicles: number;
+    rentedVehicles: number;
+    maintenanceVehicles: number;
+    totalCustomers: number;
+    activeRentals: number;
+    monthlyRevenue: number;
+  }
+}
+
 import { Car, DollarSign, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
