@@ -58,7 +58,7 @@ export const FleetAnalyticsDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         {[1, 2, 3, 4].map((i) => (
           <Skeleton key={i} className="h-[200px] w-full rounded-lg" />
         ))}
@@ -80,7 +80,7 @@ export const FleetAnalyticsDashboard = () => {
 
         <StatsCard
           title="Fleet Utilization"
-          value={`${fleetStats?.fleetUtilization.toFixed(1)}%`}
+          value={`${Math.round(fleetStats?.fleetUtilization || 0)}%`}
           icon={TrendingUp}
           description={`${fleetStats?.activeLeases || 0} active leases`}
           className="bg-white p-8 shadow-lg hover:shadow-xl transition-shadow"
