@@ -3,19 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Bell, Clock, TrendingUp } from "lucide-react";
+import { AlertTriangle, Bell, Clock } from "lucide-react";
 import { toast } from "sonner";
+
+interface AffectedRecords {
+  vehicle_id: string;
+  license_plate: string;
+  mileage: number;
+}
 
 interface Anomaly {
   id: string;
   detection_type: string;
   severity: 'low' | 'medium' | 'high';
   description: string;
-  affected_records: {
-    vehicle_id: string;
-    license_plate: string;
-    mileage: number;
-  };
+  affected_records: AffectedRecords;
   detected_at: string;
   resolved_at: string | null;
 }
@@ -34,7 +36,14 @@ export const AnomalyMonitoring = () => {
         .limit(5);
 
       if (error) throw error;
-      return data as Anomaly[];
+      
+      // Transform the data to ensure it matches the Anomaly type
+      return (data as any[]).map(item => ({
+        ...item,
+        affected_records: typeof item.affected_records === 'string' 
+          ? JSON.parse(item.affected_records)
+          : item.affected_records
+      })) as Anomaly[];
     },
   });
 
