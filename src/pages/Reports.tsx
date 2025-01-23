@@ -5,6 +5,7 @@ import { CustomerReportSection } from "@/components/reports/sections/CustomerRep
 import { OperationalReportSection } from "@/components/reports/sections/OperationalReportSection";
 import { FinancialReportSection } from "@/components/reports/sections/FinancialReportSection";
 import { FleetAnalyticsDashboard } from "@/components/reports/FleetAnalytics/FleetAnalyticsDashboard";
+import { AdvancedAnalytics } from "@/components/reports/AdvancedAnalytics/AdvancedAnalytics";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -39,29 +40,20 @@ const Reports = () => {
           <Card className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <CardContent className="p-6">
               <TabsList className="inline-flex h-12 items-center justify-start space-x-4 rounded-lg bg-muted/50 p-1">
-                <TabsTrigger 
-                  value="fleet" 
-                  className="flex items-center gap-2 px-4 py-2.5 text-base font-medium rounded-md hover:bg-background/80 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  <FileSpreadsheet className="h-5 w-5" />
+                <TabsTrigger value="fleet">
+                  <FileSpreadsheet className="h-5 w-5 mr-2" />
                   Fleet Analytics
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="customer" 
-                  className="flex items-center gap-2 px-4 py-2.5 text-base font-medium rounded-md hover:bg-background/80 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
+                <TabsTrigger value="advanced">
+                  Advanced Analytics
+                </TabsTrigger>
+                <TabsTrigger value="customer">
                   Customer Reports
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="operational" 
-                  className="flex items-center gap-2 px-4 py-2.5 text-base font-medium rounded-md hover:bg-background/80 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
+                <TabsTrigger value="operational">
                   Operational Reports
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="financial" 
-                  className="flex items-center gap-2 px-4 py-2.5 text-base font-medium rounded-md hover:bg-background/80 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
+                <TabsTrigger value="financial">
                   Financial Reports
                 </TabsTrigger>
               </TabsList>
@@ -81,8 +73,12 @@ const Reports = () => {
           </Card>
 
           <div className="mt-6 space-y-6">
-            <TabsContent value="fleet" className="space-y-6">
+            <TabsContent value="fleet">
               <FleetAnalyticsDashboard />
+            </TabsContent>
+
+            <TabsContent value="advanced">
+              <AdvancedAnalytics />
             </TabsContent>
 
             <TabsContent value="customer">

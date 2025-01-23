@@ -3828,6 +3828,50 @@ export type Database = {
         }
         Relationships: []
       }
+      predictive_maintenance_analytics: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          factors: Json | null
+          id: string
+          maintenance_type: string | null
+          predicted_cost: number | null
+          predicted_maintenance_date: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          factors?: Json | null
+          id?: string
+          maintenance_type?: string | null
+          predicted_cost?: number | null
+          predicted_maintenance_date?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          factors?: Json | null
+          id?: string
+          maintenance_type?: string | null
+          predicted_cost?: number | null
+          predicted_maintenance_date?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictive_maintenance_analytics_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -4135,6 +4179,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revenue_forecasts: {
+        Row: {
+          confidence_interval: Json | null
+          created_at: string | null
+          factors_considered: Json | null
+          forecast_date: string | null
+          id: string
+          model_version: string | null
+          predicted_revenue: number | null
+        }
+        Insert: {
+          confidence_interval?: Json | null
+          created_at?: string | null
+          factors_considered?: Json | null
+          forecast_date?: string | null
+          id?: string
+          model_version?: string | null
+          predicted_revenue?: number | null
+        }
+        Update: {
+          confidence_interval?: Json | null
+          created_at?: string | null
+          factors_considered?: Json | null
+          forecast_date?: string | null
+          id?: string
+          model_version?: string | null
+          predicted_revenue?: number | null
+        }
+        Relationships: []
       }
       risk_assessments: {
         Row: {
@@ -5400,6 +5474,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      vehicle_utilization_metrics: {
+        Row: {
+          created_at: string | null
+          id: string
+          location_data: Json | null
+          operating_costs: number | null
+          revenue_generated: number | null
+          roi_percentage: number | null
+          timestamp: string | null
+          utilization_rate: number | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          location_data?: Json | null
+          operating_costs?: number | null
+          revenue_generated?: number | null
+          roi_percentage?: number | null
+          timestamp?: string | null
+          utilization_rate?: number | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          location_data?: Json | null
+          operating_costs?: number | null
+          revenue_generated?: number | null
+          roi_percentage?: number | null
+          timestamp?: string | null
+          utilization_rate?: number | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_utilization_metrics_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicles: {
         Row: {
