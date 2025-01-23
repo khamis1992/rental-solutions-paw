@@ -7,6 +7,20 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+interface AnomalyRecord {
+  id: string;
+  detection_type: string;
+  severity: 'high' | 'medium' | 'low';
+  description: string;
+  affected_records: {
+    vehicle_id: string;
+    license_plate: string;
+    mileage: number;
+  };
+  detected_at: string;
+  resolved_at: string | null;
+}
+
 export function MaintenanceAlerts() {
   const { data: anomalies, isLoading } = useQuery({
     queryKey: ['maintenance-anomalies'],
@@ -21,7 +35,7 @@ export function MaintenanceAlerts() {
         .order('detected_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as AnomalyRecord[];
     }
   });
 
