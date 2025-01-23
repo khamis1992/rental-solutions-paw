@@ -36,58 +36,12 @@ const baseMenuItems = [
   { icon: HelpCircle, label: "Help", href: "/help" },
 ];
 
-const settingsMenuItem = { icon: Settings, label: "Settings", href: "/settings" };
-
 export const DashboardSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseMenuItems);
   const location = useLocation();
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const checkSession = async () => {
-      if (isLoading) return;
-
-      if (!session) {
-        return;
-      }
-
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          toast({
-            title: "Error",
-            description: "Could not fetch user profile",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (profile?.role === 'admin') {
-          setMenuItems([...baseMenuItems, settingsMenuItem]);
-        } else {
-          setMenuItems(baseMenuItems);
-        }
-      } catch (error) {
-        console.error('Error checking user role:', error);
-        toast({
-          title: "Error",
-          description: "Could not verify user permissions",
-          variant: "destructive",
-        });
-        setMenuItems(baseMenuItems);
-      }
-    };
-
-    checkSession();
-  }, [session, isLoading, toast]);
 
   if (isLoading) {
     return (
