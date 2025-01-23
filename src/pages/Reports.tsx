@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CustomerReportSection } from "@/components/reports/sections/CustomerReportSection";
 import { FleetReportSection } from "@/components/reports/sections/FleetReportSection";
+import { NaturalLanguageQuery } from "@/components/reports/NaturalLanguageQuery";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 
@@ -16,6 +17,8 @@ const Reports = () => {
     <DashboardLayout>
       <div className="container mx-auto p-6 space-y-6">
         <h1 className="text-3xl font-bold">Reports</h1>
+        
+        <NaturalLanguageQuery />
         
         <Tabs defaultValue="customer" className="w-full">
           <TabsList>
