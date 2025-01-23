@@ -27,10 +27,21 @@ serve(async (req) => {
       unit: timeframeMatch[2].toLowerCase()
     } : null;
 
+    // Extract metrics and dimensions
+    const metricKeywords = {
+      revenue: ['revenue', 'income', 'earnings', 'money'],
+      maintenance: ['maintenance', 'repairs', 'service'],
+      utilization: ['utilization', 'usage', 'occupancy'],
+      customers: ['customers', 'clients', 'renters'],
+      vehicles: ['vehicles', 'cars', 'fleet'],
+      expenses: ['expenses', 'costs', 'spending'],
+      performance: ['performance', 'efficiency', 'metrics']
+    };
+
     let response;
 
     // Handle revenue-related queries
-    if (query.toLowerCase().includes('revenue')) {
+    if (metricKeywords.revenue.some(keyword => query.toLowerCase().includes(keyword))) {
       const { data: revenueData, error: revenueError } = await supabase
         .from('unified_payments')
         .select('amount, payment_date, type')
@@ -46,7 +57,7 @@ serve(async (req) => {
       };
     }
     // Handle maintenance-related queries
-    else if (query.toLowerCase().includes('maintenance')) {
+    else if (metricKeywords.maintenance.some(keyword => query.toLowerCase().includes(keyword))) {
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from('maintenance_predictions')
         .select(`
@@ -67,11 +78,73 @@ serve(async (req) => {
         summary: 'Showing upcoming maintenance predictions for vehicles'
       };
     }
+    // Handle utilization-related queries
+    else if (metricKeywords.utilization.some(keyword => query.toLowerCase().includes(keyword))) {
+      const { data: utilizationData, error: utilizationError } = await supabase
+        .from('vehicle_utilization_metrics')
+        .select('*')
+        .order('timestamp', { ascending: false });
+
+      if (utilizationError) throw utilizationError;
+
+      response = {
+        type: 'utilization_analysis',
+        data: utilizationData,
+        summary: 'Showing vehicle utilization metrics'
+      };
+    }
+    // Handle customer-related queries
+    else if (metricKeywords.customers.some(keyword => query.toLowerCase().includes(keyword))) {
+      const { data: customerData, error: customerError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'customer')
+        .order('created_at', { ascending: false });
+
+      if (customerError) throw customerError;
+
+      response = {
+        type: 'customer_analysis',
+        data: customerData,
+        summary: 'Showing customer analytics and trends'
+      };
+    }
+    // Handle expense-related queries
+    else if (metricKeywords.expenses.some(keyword => query.toLowerCase().includes(keyword))) {
+      const { data: expenseData, error: expenseError } = await supabase
+        .from('accounting_transactions')
+        .select('*')
+        .eq('type', 'EXPENSE')
+        .order('transaction_date', { ascending: false });
+
+      if (expenseError) throw expenseError;
+
+      response = {
+        type: 'expense_analysis',
+        data: expenseData,
+        summary: 'Showing expense breakdown and analysis'
+      };
+    }
+    // Handle performance-related queries
+    else if (metricKeywords.performance.some(keyword => query.toLowerCase().includes(keyword))) {
+      const { data: performanceData, error: performanceError } = await supabase
+        .from('performance_benchmarks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (performanceError) throw performanceError;
+
+      response = {
+        type: 'performance_analysis',
+        data: performanceData,
+        summary: 'Showing performance metrics and benchmarks'
+      };
+    }
     // Default response for unhandled queries
     else {
       response = {
         type: 'unknown_query',
-        error: 'Could not understand the query. Please try being more specific.'
+        error: 'Could not understand the query. Please try being more specific about what metrics you want to analyze (revenue, maintenance, utilization, customers, expenses, or performance).'
       };
     }
 
