@@ -1616,102 +1616,6 @@ export type Database = {
           },
         ]
       }
-      driver_assignments: {
-        Row: {
-          assigned_at: string | null
-          completed_at: string | null
-          created_at: string | null
-          driver_id: string | null
-          id: string
-          notes: string | null
-          schedule_id: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          assigned_at?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          driver_id?: string | null
-          id?: string
-          notes?: string | null
-          schedule_id?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          assigned_at?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          driver_id?: string | null
-          id?: string
-          notes?: string | null
-          schedule_id?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "driver_assignments_driver_id_fkey"
-            columns: ["driver_id"]
-            isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "driver_assignments_schedule_id_fkey"
-            columns: ["schedule_id"]
-            isOneToOne: false
-            referencedRelation: "vehicle_schedules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      drivers: {
-        Row: {
-          created_at: string | null
-          current_location: unknown | null
-          email: string | null
-          full_name: string
-          id: string
-          license_expiry: string
-          license_number: string
-          phone_number: string | null
-          rating: number | null
-          status: Database["public"]["Enums"]["driver_status"] | null
-          total_trips: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          current_location?: unknown | null
-          email?: string | null
-          full_name: string
-          id?: string
-          license_expiry: string
-          license_number: string
-          phone_number?: string | null
-          rating?: number | null
-          status?: Database["public"]["Enums"]["driver_status"] | null
-          total_trips?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          current_location?: unknown | null
-          email?: string | null
-          full_name?: string
-          id?: string
-          license_expiry?: string
-          license_number?: string
-          phone_number?: string | null
-          rating?: number | null
-          status?: Database["public"]["Enums"]["driver_status"] | null
-          total_trips?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       financial_imports: {
         Row: {
           amount: number
@@ -6614,7 +6518,6 @@ export type Database = {
       document_category: "registration" | "insurance" | "maintenance" | "other"
       document_language: "english" | "spanish" | "french" | "arabic"
       document_version_status: "draft" | "published" | "archived"
-      driver_status: "available" | "busy" | "off_duty" | "on_leave"
       import_source_type: "csv" | "manual" | "api" | "bulk_upload"
       import_status: "pending" | "processing" | "completed" | "failed"
       import_status_type:
