@@ -1656,6 +1656,44 @@ export type Database = {
           },
         ]
       }
+      fleet_reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          metrics: Json
+          report_date: string | null
+          report_type: string
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metrics?: Json
+          report_date?: string | null
+          report_type: string
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metrics?: Json
+          report_date?: string | null
+          report_type?: string
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_reports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       help_faqs: {
         Row: {
           answer: string
