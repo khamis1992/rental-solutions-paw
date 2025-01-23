@@ -129,25 +129,6 @@ export const FleetAnalytics = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Fleet Utilization</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={utilizationData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="utilization" fill="#8884d8" name="Utilization %" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Revenue per Vehicle</CardTitle>
         </CardHeader>
         <CardContent>
