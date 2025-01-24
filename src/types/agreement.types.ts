@@ -1,5 +1,3 @@
-import { Database } from "./database/database.types";
-
 export type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
 export type AgreementType = "lease_to_own" | "short_term";
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
@@ -23,21 +21,6 @@ export interface Agreement {
   daily_late_fee: number;
   rent_amount: number;
   remainingAmount: number;
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
 }
 
 export interface Template {
@@ -81,4 +64,30 @@ export interface Payment {
   next_payment_date?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface AnomalyRecord {
+  id: string;
+  detection_type: string;
+  severity: string;
+  description: string;
+  affected_records: {
+    vehicle_id: string;
+    license_plate: string;
+    mileage: number;
+  };
+  detected_at: string;
+  resolved_at: string | null;
+  resolution_notes: string | null;
+  false_positive: boolean;
+}
+
+export interface DashboardStats {
+  totalVehicles: number;
+  availableVehicles: number;
+  rentedVehicles: number;
+  maintenanceVehicles: number;
+  totalCustomers: number;
+  activeRentals: number;
+  monthlyRevenue: number;
 }
