@@ -26,7 +26,7 @@ interface MaintenanceRecord {
   vehicle_id: string;
   service_type: string;
   description?: string | null;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+  status: MaintenanceStatus | "urgent";
   cost?: number | null;
   scheduled_date: string;
   completed_date?: string | null;
@@ -34,7 +34,12 @@ interface MaintenanceRecord {
   notes?: string | null;
   created_at?: string;
   updated_at?: string;
-  vehicles?: Vehicle;
+  vehicles?: {
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
 }
 
 export const MaintenanceList = () => {

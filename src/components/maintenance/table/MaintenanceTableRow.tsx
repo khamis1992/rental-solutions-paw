@@ -7,7 +7,7 @@ interface MaintenanceRecord {
   vehicle_id: string;
   service_type: string;
   description?: string | null;
-  status: MaintenanceStatus;
+  status: MaintenanceStatus | "urgent";
   cost?: number | null;
   scheduled_date: string;
   completed_date?: string | null;
@@ -28,9 +28,10 @@ interface MaintenanceTableRowProps {
 }
 
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
-  // Map 'urgent' to 'accident' for display
-  const displayStatus = record.status === 'urgent' ? 'accident' : record.status;
-  const recordId = record.status === 'urgent' ? `accident-${record.vehicle_id}` : record.id;
+  // Extract vehicle ID from accident record ID if it exists
+  const vehicleId = record.id.startsWith('accident-') 
+    ? record.id.replace('accident-', '')
+    : record.vehicle_id;
 
   return (
     <TableRow>
@@ -45,8 +46,10 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
       <TableCell>{record.service_type}</TableCell>
       <TableCell>
         <MaintenanceStatusSelect 
-          id={recordId}
-          currentStatus={displayStatus as MaintenanceStatus}
+          id={record.id}
+          vehicleId={vehicleId}
+          currentStatus={record.status}
+          isAccidentRecord={record.id.startsWith('accident-')}
         />
       </TableCell>
       <TableCell>

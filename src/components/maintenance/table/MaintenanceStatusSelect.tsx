@@ -7,13 +7,17 @@ import { MaintenanceStatus } from "@/types/maintenance";
 
 interface MaintenanceStatusSelectProps {
   id: string;
-  currentStatus: MaintenanceStatus;
+  vehicleId: string;
+  currentStatus: MaintenanceStatus | "urgent";
+  isAccidentRecord: boolean;
   onStatusChange?: (newStatus: MaintenanceStatus) => void;
 }
 
 export const MaintenanceStatusSelect = ({ 
   id, 
+  vehicleId,
   currentStatus,
+  isAccidentRecord,
   onStatusChange 
 }: MaintenanceStatusSelectProps) => {
   const [statuses, setStatuses] = useState<MaintenanceStatus[]>([]);
@@ -41,13 +45,13 @@ export const MaintenanceStatusSelect = ({
     try {
       setIsUpdating(true);
       
-      // Check if this is an accident record (prefixed ID)
-      if (id.startsWith('accident-')) {
-        // For accident records, we update the vehicle status instead
-        const vehicleId = id.replace('accident-', '');
+      if (isAccidentRecord) {
+        // For accident records, update the vehicle status
         const { error } = await supabase
           .from('vehicles')
-          .update({ status: newStatus === 'completed' ? 'available' : 'maintenance' })
+          .update({ 
+            status: newStatus === 'completed' ? 'available' : 'maintenance'
+          })
           .eq('id', vehicleId);
 
         if (error) throw error;
@@ -71,8 +75,8 @@ export const MaintenanceStatusSelect = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusColor = (status: MaintenanceStatus | "urgent") => {
+    switch (status) {
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'in_progress':
@@ -81,7 +85,7 @@ export const MaintenanceStatusSelect = ({
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'cancelled':
         return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'accident':
+      case 'urgent':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -94,13 +98,13 @@ export const MaintenanceStatusSelect = ({
   return (
     <div className="flex items-center gap-2">
       <Select
-        value={displayStatus}
+        value={currentStatus}
         onValueChange={handleStatusChange}
         disabled={isUpdating}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue>
-            <Badge variant="outline" className={`${getStatusColor(displayStatus)} capitalize`}>
+            <Badge variant="outline" className={`${getStatusColor(currentStatus)} capitalize`}>
               {displayStatus.replace('_', ' ')}
             </Badge>
           </SelectValue>
