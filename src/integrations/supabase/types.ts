@@ -1213,21 +1213,21 @@ export type Database = {
           created_at: string | null
           id: string
           last_updated: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           context_data?: Json
           created_at?: string | null
           id?: string
           last_updated?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           context_data?: Json
           created_at?: string | null
           id?: string
           last_updated?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }

@@ -6,10 +6,11 @@ import { Car, Users, FileText, AlertTriangle } from "lucide-react";
 export interface DashboardStats {
   totalVehicles: number;
   availableVehicles: number;
+  rentedVehicles: number;
+  maintenanceVehicles: number;
   totalCustomers: number;
-  activeAgreements: number;
-  pendingMaintenance: number;
-  overduePayments: number;
+  activeRentals: number;
+  monthlyRevenue: number;
 }
 
 export const DashboardStats = () => {
@@ -17,90 +18,88 @@ export const DashboardStats = () => {
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       // Get vehicles stats
-      const { data: vehicles, error: vehiclesError } = await supabase
+      const { data: vehicles } = await supabase
         .from("vehicles")
-        .select("id, status");
-      
-      if (vehiclesError) throw vehiclesError;
+        .select("status");
 
-      // Get customers count
-      const { count: customersCount, error: customersError } = await supabase
+      const { data: customers } = await supabase
         .from("profiles")
-        .select("*", { count: 'exact', head: true });
+        .select("id")
+        .eq("role", "customer");
 
-      if (customersError) throw customersError;
-
-      // Get agreements stats
-      const { data: agreements, error: agreementsError } = await supabase
+      const { data: activeLeases } = await supabase
         .from("leases")
-        .select("id, status");
+        .select("id")
+        .eq("status", "active");
 
-      if (agreementsError) throw agreementsError;
+      const { data: payments } = await supabase
+        .from("unified_payments")
+        .select("amount")
+        .gte("payment_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+        .lte("payment_date", new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString())
+        .eq("status", "completed");
 
-      // Get maintenance stats
-      const { data: maintenance, error: maintenanceError } = await supabase
-        .from("maintenance")
-        .select("id, status");
-
-      if (maintenanceError) throw maintenanceError;
-
-      // Get overdue payments count
-      const { count: overdueCount, error: overdueError } = await supabase
-        .from("overdue_payments")
-        .select("*", { count: 'exact', head: true });
-
-      if (overdueError) throw overdueError;
+      const vehiclesData = vehicles || [];
+      const monthlyRevenue = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
 
       return {
-        totalVehicles: vehicles?.length ?? 0,
-        availableVehicles: vehicles?.filter(v => v.status === 'available')?.length ?? 0,
-        totalCustomers: customersCount ?? 0,
-        activeAgreements: agreements?.filter(a => a.status === 'active')?.length ?? 0,
-        pendingMaintenance: maintenance?.filter(m => m.status === 'pending')?.length ?? 0,
-        overduePayments: overdueCount ?? 0
+        totalVehicles: vehiclesData.length,
+        availableVehicles: vehiclesData.filter(v => v.status === "available").length,
+        rentedVehicles: vehiclesData.filter(v => v.status === "rented").length,
+        maintenanceVehicles: vehiclesData.filter(v => v.status === "maintenance").length,
+        totalCustomers: customers?.length || 0,
+        activeRentals: activeLeases?.length || 0,
+        monthlyRevenue
       };
     }
   });
 
   if (isLoading) {
-    return <div>Loading stats...</div>;
+    return (
+      <div className="grid gap-4 md:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+        ))}
+      </div>
+    );
   }
 
   const defaultStats: DashboardStats = {
     totalVehicles: 0,
     availableVehicles: 0,
+    rentedVehicles: 0,
+    maintenanceVehicles: 0,
     totalCustomers: 0,
-    activeAgreements: 0,
-    pendingMaintenance: 0,
-    overduePayments: 0
+    activeRentals: 0,
+    monthlyRevenue: 0
   };
 
   const currentStats = stats || defaultStats;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-4">
       <StatsCard
         title="Total Vehicles"
-        value={currentStats.totalVehicles}
+        value={currentStats.totalVehicles.toString()}
         description={`${currentStats.availableVehicles} available`}
         icon={Car}
       />
       <StatsCard
         title="Total Customers"
-        value={currentStats.totalCustomers}
+        value={currentStats.totalCustomers.toString()}
         description="Active customers"
         icon={Users}
       />
       <StatsCard
-        title="Active Agreements"
-        value={currentStats.activeAgreements}
+        title="Active Rentals"
+        value={currentStats.activeRentals.toString()}
         description="Current agreements"
         icon={FileText}
       />
       <StatsCard
-        title="Pending Actions"
-        value={currentStats.pendingMaintenance + currentStats.overduePayments}
-        description={`${currentStats.pendingMaintenance} maintenance, ${currentStats.overduePayments} payments`}
+        title="In Maintenance"
+        value={currentStats.maintenanceVehicles.toString()}
+        description="Vehicles under maintenance"
         icon={AlertTriangle}
       />
     </div>
