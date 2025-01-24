@@ -1,10 +1,11 @@
-import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
+import { useState } from "react";
+import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 interface VehicleStatusProps {
   vehicleId: string;
@@ -62,7 +63,7 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
     console.log("Getting icon for status:", status); // Debug log
     switch (status) {
       case "available":
-        return <CheckCircle2 className="h-4 w-4" />;
+        return <CheckCircle className="h-4 w-4" />;
       case "maintenance":
         return <Clock className="h-4 w-4" />;
       case "accident":
