@@ -53,6 +53,7 @@ export function MaintenanceFilters({ filters, setFilters }: MaintenanceFiltersPr
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
                 <SelectItem value="accident">Accident</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>
           </div>
