@@ -1,10 +1,10 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
-import { useState } from "react";
 import { AlertCircle, CheckCircle, Clock, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -103,7 +103,6 @@ export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) 
   };
 
   const getStatusIcon = (status: VehicleStatusType) => {
-    console.log("Getting icon for status:", status); // Debug log
     switch (status) {
       case "available":
         return <CheckCircle className="h-4 w-4" />;
@@ -137,7 +136,7 @@ export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) 
             {initialStatus === "maintenance" && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="icon">
+                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
@@ -150,7 +149,7 @@ export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) 
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
