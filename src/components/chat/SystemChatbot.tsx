@@ -91,12 +91,14 @@ export const SystemChatbot = () => {
           table: 'maintenance',
           filter: `status=eq.scheduled`
         },
-        (payload) => {
-          const notification = `Maintenance Alert: Vehicle maintenance is scheduled for ${new Date(payload.new.scheduled_date).toLocaleDateString()}`;
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: notification
-          }]);
+        (payload: any) => {
+          if (payload.new && payload.new.scheduled_date) {
+            const notification = `Maintenance Alert: Vehicle maintenance is scheduled for ${new Date(payload.new.scheduled_date).toLocaleDateString()}`;
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: notification
+            }]);
+          }
         }
       )
       // Subscribe to overdue payments
@@ -107,12 +109,14 @@ export const SystemChatbot = () => {
           schema: 'public',
           table: 'overdue_payments_view'
         },
-        (payload) => {
-          const notification = `Payment Alert: Payment overdue for ${payload.new.days_overdue} days`;
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: notification
-          }]);
+        (payload: any) => {
+          if (payload.new && payload.new.days_overdue) {
+            const notification = `Payment Alert: Payment overdue for ${payload.new.days_overdue} days`;
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: notification
+            }]);
+          }
         }
       )
       // Subscribe to expiring agreements
@@ -124,16 +128,18 @@ export const SystemChatbot = () => {
           table: 'leases',
           filter: `status=eq.active`
         },
-        (payload) => {
-          const endDate = new Date(payload.new.end_date);
-          const daysUntilExpiry = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          
-          if (daysUntilExpiry <= 7) {
-            const notification = `Agreement Alert: Agreement #${payload.new.agreement_number} expires in ${daysUntilExpiry} days`;
-            setMessages(prev => [...prev, {
-              role: "assistant",
-              content: notification
-            }]);
+        (payload: any) => {
+          if (payload.new && payload.new.end_date) {
+            const endDate = new Date(payload.new.end_date);
+            const daysUntilExpiry = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntilExpiry <= 7) {
+              const notification = `Agreement Alert: Agreement #${payload.new.agreement_number} expires in ${daysUntilExpiry} days`;
+              setMessages(prev => [...prev, {
+                role: "assistant",
+                content: notification
+              }]);
+            }
           }
         }
       )
@@ -169,11 +175,10 @@ export const SystemChatbot = () => {
         }
 
         // Fallback to DeepSeek for low confidence or unclear queries
-        const aiResponse = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
+        const aiResponse = await fetch(`${TRUSTED_ORIGIN}/api/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
             messages: [
