@@ -84,7 +84,7 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
       case 'maintenance':
         return <Badge variant="secondary">Maintenance</Badge>;
       case 'rental':
-        return <Badge variant="default">Rental</Badge>;
+        return <Badge className="bg-primary hover:bg-primary/90">Rental</Badge>;
       case 'damage':
         return <Badge variant="destructive">Damage</Badge>;
       default:
@@ -95,27 +95,44 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
   const getEventDescription = (event: any) => {
     switch (event.type) {
       case 'maintenance':
-        return `${event.service_type} - ${event.status}`;
-      case 'rental':
         return (
           <div className="flex items-center gap-2">
+            <span>{event.service_type}</span>
+            <Badge 
+              variant="outline" 
+              className={
+                event.status === 'completed' 
+                  ? 'bg-neutral-100 text-neutral-600 border-neutral-200' 
+                  : ''
+              }
+            >
+              {event.status}
+            </Badge>
+          </div>
+        );
+      case 'rental':
+        return (
+          <div className="flex items-center gap-2 flex-wrap">
             <span>Rented to </span>
             <button
               onClick={() => setSelectedCustomerId(event.customer_id)}
-              className="text-blue-600 hover:underline font-medium"
+              className="text-primary hover:underline font-medium"
             >
               {event.profiles?.full_name}
             </button>
             <span className="text-muted-foreground mx-1">•</span>
             <button
               onClick={() => setSelectedAgreementId(event.id)}
-              className="flex items-center gap-1 text-blue-600 hover:underline"
+              className="flex items-center gap-1 text-primary hover:underline"
             >
               <Link className="h-4 w-4" />
               <span>Agreement #{event.agreement_number}</span>
             </button>
             <span className="text-muted-foreground mx-1">•</span>
-            <Badge variant={event.status === 'active' ? 'success' : 'default'}>
+            <Badge 
+              variant={event.status === 'active' ? 'default' : 'outline'}
+              className={event.status === 'closed' ? 'bg-neutral-100 text-neutral-600 border-neutral-200' : ''}
+            >
               {event.status}
             </Badge>
           </div>
@@ -138,7 +155,16 @@ export const VehicleTimeline = ({ vehicleId }: VehicleTimelineProps) => {
       <CardContent>
         <div className="space-y-4">
           {events.map((event) => (
-            <div key={`${event.type}-${event.id}`} className="flex items-start gap-4 border-l-2 border-muted pl-4">
+            <div 
+              key={`${event.type}-${event.id}`} 
+              className={`flex items-start gap-4 border-l-2 pl-4 ${
+                event.type === 'rental' && event.status === 'closed' 
+                  ? 'border-neutral-200' 
+                  : event.type === 'rental' 
+                    ? 'border-primary' 
+                    : 'border-muted'
+              }`}
+            >
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
