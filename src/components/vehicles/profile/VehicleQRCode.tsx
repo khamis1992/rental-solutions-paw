@@ -25,14 +25,48 @@ export const VehicleQRCode = ({
   const vehicleUrl = `${baseUrl}/vehicles/${vehicleId}`;
 
   const downloadQRCode = () => {
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      const url = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `vehicle-qr-${licensePlate}.png`;
-      link.href = url;
-      link.click();
+    // Create a temporary canvas element
+    const canvas = document.createElement('canvas');
+    const svg = document.querySelector('.vehicle-qr-code svg');
+    
+    if (!svg) {
+      console.error('QR Code SVG not found');
+      return;
     }
+
+    // Get SVG data
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
+    // Create image from SVG
+    const img = new Image();
+    img.onload = () => {
+      // Set canvas dimensions
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // Draw image to canvas
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `vehicle-qr-${licensePlate || vehicleId}.png`;
+            link.href = url;
+            link.click();
+            
+            // Cleanup
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/png');
+      }
+    };
+    img.src = svgUrl;
   };
 
   return (
@@ -47,12 +81,14 @@ export const VehicleQRCode = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
-        <QRCodeSVG
-          value={vehicleUrl}
-          size={200}
-          level="H"
-          includeMargin={true}
-        />
+        <div className="vehicle-qr-code">
+          <QRCodeSVG
+            value={vehicleUrl}
+            size={200}
+            level="H"
+            includeMargin={true}
+          />
+        </div>
         <p className="text-sm text-muted-foreground text-center">
           Scan this QR code to view vehicle details and report damages
         </p>
