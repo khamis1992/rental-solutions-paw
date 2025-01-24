@@ -26,6 +26,17 @@ export const SystemChatbot = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
 
+  // Track user activity
+  useEffect(() => {
+    const trackActivity = async () => {
+      await supabase
+        .from('user_activity')
+        .insert([{ activity_count: 1 }]);
+    };
+
+    trackActivity();
+  }, []);
+
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea) return;
