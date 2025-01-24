@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Bot, User } from "lucide-react";
 
 interface ChatMessageProps {
   content: string;
@@ -10,28 +10,24 @@ export const ChatMessage = ({ content, role }: ChatMessageProps) => {
   const isAssistant = role === "assistant";
 
   return (
-    <div className={cn("flex gap-3 mb-4", isAssistant ? "flex-row" : "flex-row-reverse")}>
-      <Avatar className="h-8 w-8">
-        {isAssistant ? (
-          <>
-            <AvatarImage src="/lovable-uploads/5ff2d160-bf38-4dbe-ab65-223663cc86b2.png" />
-            <AvatarFallback>AI</AvatarFallback>
-          </>
-        ) : (
-          <>
-            <AvatarFallback>U</AvatarFallback>
-          </>
-        )}
-      </Avatar>
-      <div
-        className={cn(
-          "rounded-lg px-4 py-2 max-w-[80%]",
-          isAssistant
-            ? "bg-secondary/90 text-white"
-            : "bg-primary text-white"
-        )}
-      >
-        <p className="text-sm whitespace-pre-wrap">{content}</p>
+    <div
+      className={cn(
+        "flex w-full gap-4 rounded-lg p-4",
+        isAssistant ? "bg-muted/50" : "bg-background"
+      )}
+    >
+      <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-md border shadow">
+        {isAssistant ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+      </div>
+      <div className="flex-1 space-y-2">
+        <p className="text-sm leading-loose">
+          {content.split('\n').map((line, i) => (
+            <span key={i}>
+              {line}
+              <br />
+            </span>
+          ))}
+        </p>
       </div>
     </div>
   );
