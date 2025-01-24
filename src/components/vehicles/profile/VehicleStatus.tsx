@@ -79,15 +79,36 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
       console.log("Attempting to update status to:", newStatus); // Debug log
       console.log("Vehicle ID:", vehicleId); // Debug log
       
-      const { error } = await supabase
+      const { error: vehicleError } = await supabase
         .from("vehicles")
         .update({ status: newStatus })
         .eq("id", vehicleId);
 
-      if (error) {
-        console.error("Error updating status:", error); // Debug log
+      if (vehicleError) {
+        console.error("Error updating status:", vehicleError); // Debug log
         toast.error("Failed to update vehicle status");
-        throw error;
+        throw vehicleError;
+      }
+
+      // If status is changed to maintenance, create a maintenance record
+      if (newStatus === "maintenance") {
+        const { error: maintenanceError } = await supabase
+          .from("maintenance")
+          .insert([
+            {
+              vehicle_id: vehicleId,
+              service_type: "General Maintenance",
+              status: "scheduled",
+              description: "Vehicle status changed to maintenance",
+              scheduled_date: new Date().toISOString(),
+            },
+          ]);
+
+        if (maintenanceError) {
+          console.error("Error creating maintenance record:", maintenanceError);
+          toast.error("Failed to create maintenance record");
+          throw maintenanceError;
+        }
       }
 
       setStatus(newStatus);
