@@ -52,7 +52,6 @@ export const SystemChatbot = () => {
     };
   }, []);
 
-  // Subscribe to real-time notifications
   useEffect(() => {
     channelRef.current = supabase
       .channel('chat-updates')
@@ -69,72 +68,7 @@ export const SystemChatbot = () => {
           }
         }
       )
-      // Subscribe to maintenance notifications
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'maintenance',
-          filter: `status=eq.scheduled`
-        },
-        (payload) => {
-          const notification = `Maintenance Alert: Vehicle maintenance is scheduled for ${new Date(payload.new.scheduled_date).toLocaleDateString()}`;
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: notification
-          }]);
-        }
-      )
-      // Subscribe to overdue payments
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'overdue_payments_view'
-        },
-        (payload) => {
-          const notification = `Payment Alert: Payment overdue for ${payload.new.days_overdue} days`;
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: notification
-          }]);
-        }
-      )
-      // Subscribe to expiring agreements
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leases',
-          filter: `status=eq.active`
-        },
-        (payload) => {
-          const endDate = new Date(payload.new.end_date);
-          const daysUntilExpiry = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          
-          if (daysUntilExpiry <= 7) {
-            const notification = `Agreement Alert: Agreement #${payload.new.agreement_number} expires in ${daysUntilExpiry} days`;
-            setMessages(prev => [...prev, {
-              role: "assistant",
-              content: notification
-            }]);
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to chat updates and notifications');
-        } else if (status === 'CLOSED') {
-          console.log('Subscription to chat updates closed');
-          toast.error('Lost connection to real-time updates');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Error in chat subscription channel');
-          toast.error('Error in real-time updates connection');
-        }
-      });
+      .subscribe();
 
     return () => {
       if (channelRef.current) {

@@ -6,16 +6,6 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
-interface DashboardData {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
-}
-
 const Dashboard = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
@@ -24,17 +14,24 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      // Type assertion to ensure the data matches our interface
-      const dashboardData = data as DashboardData;
-      
+      const {
+        total_vehicles,
+        available_vehicles,
+        rented_vehicles,
+        maintenance_vehicles,
+        total_customers,
+        active_rentals,
+        monthly_revenue
+      } = data;
+
       return {
-        totalVehicles: dashboardData.total_vehicles,
-        availableVehicles: dashboardData.available_vehicles,
-        rentedVehicles: dashboardData.rented_vehicles,
-        maintenanceVehicles: dashboardData.maintenance_vehicles,
-        totalCustomers: dashboardData.total_customers,
-        activeRentals: dashboardData.active_rentals,
-        monthlyRevenue: dashboardData.monthly_revenue
+        totalVehicles: total_vehicles,
+        availableVehicles: available_vehicles,
+        rentedVehicles: rented_vehicles,
+        maintenanceVehicles: maintenance_vehicles,
+        totalCustomers: total_customers,
+        activeRentals: active_rentals,
+        monthlyRevenue: monthly_revenue
       };
     },
     staleTime: 30000,
