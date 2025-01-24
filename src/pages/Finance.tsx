@@ -5,6 +5,7 @@ import { PaymentManagement } from "@/components/finance/payments/PaymentManageme
 import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
 import { CarInstallmentDetails } from "@/components/finance/car-installments/CarInstallmentDetails";
+import { VirtualCFO } from "@/components/finance/virtual-cfo/VirtualCFO";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { 
@@ -13,7 +14,8 @@ import {
   FileText, 
   Tags, 
   Database,
-  Car
+  Car,
+  Brain
 } from "lucide-react";
 
 const Finance = () => {
@@ -85,6 +87,14 @@ const Finance = () => {
               <Car className="h-4 w-4" />
               <span>Car Installments</span>
             </TabsTrigger>
+
+            <TabsTrigger 
+              value="virtual-cfo" 
+              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
+              <Brain className="h-4 w-4" />
+              <span>Virtual CFO</span>
+            </TabsTrigger>
           </div>
         </TabsList>
 
@@ -113,6 +123,10 @@ const Finance = () => {
             <Route index element={<CarInstallmentContracts />} />
             <Route path=":id" element={<CarInstallmentDetails />} />
           </Routes>
+        </TabsContent>
+
+        <TabsContent value="virtual-cfo">
+          <VirtualCFO />
         </TabsContent>
       </Tabs>
     </div>
