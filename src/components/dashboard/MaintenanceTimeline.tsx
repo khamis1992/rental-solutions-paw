@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Wrench, Clock, AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MaintenanceEvent {
   id: string;
@@ -16,11 +18,33 @@ interface MaintenanceEvent {
   };
 }
 
-interface MaintenanceTimelineProps {
-  events: MaintenanceEvent[];
-}
+export const MaintenanceTimeline = () => {
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ['maintenance-timeline'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('maintenance')
+        .select(`
+          id,
+          vehicle_id,
+          service_type,
+          status,
+          scheduled_date,
+          description,
+          vehicles (
+            make,
+            model,
+            license_plate
+          )
+        `)
+        .order('scheduled_date', { ascending: false })
+        .limit(5);
 
-export const MaintenanceTimeline = ({ events }: MaintenanceTimelineProps) => {
+      if (error) throw error;
+      return data as MaintenanceEvent[];
+    }
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -46,6 +70,10 @@ export const MaintenanceTimeline = ({ events }: MaintenanceTimelineProps) => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-4">

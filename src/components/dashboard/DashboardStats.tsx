@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 
 export const DashboardStats = () => {
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse, pendingReturnsResponse] = await Promise.all([
@@ -46,12 +46,9 @@ export const DashboardStats = () => {
           .lt('end_date', new Date().toISOString())
       ]);
 
-      if (vehiclesResponse.error) throw vehiclesResponse.error;
-      if (rentalsResponse.error) throw rentalsResponse.error;
-      if (paymentsResponse.error) throw paymentsResponse.error;
-      if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
-      if (newVehiclesResponse.error) throw newVehiclesResponse.error;
-      if (pendingReturnsResponse.error) throw pendingReturnsResponse.error;
+      const totalVehicles = vehiclesResponse.count || 0;
+      const newVehicles = newVehiclesResponse.count || 0;
+      const pendingReturns = pendingReturnsResponse.count || 0;
 
       const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
@@ -63,10 +60,6 @@ export const DashboardStats = () => {
       const growth = lastMonthRevenue > 0 
         ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
         : 0;
-
-      const totalVehicles = vehiclesResponse.count || 0;
-      const newVehicles = newVehiclesResponse.count || 0;
-      const pendingReturns = pendingReturnsResponse.count || 0;
 
       return {
         totalVehicles,
@@ -81,6 +74,10 @@ export const DashboardStats = () => {
     },
     staleTime: 60000, // Cache for 1 minute
   });
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-8">
