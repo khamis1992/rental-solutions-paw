@@ -35,12 +35,7 @@ interface MaintenanceRecord {
   notes?: string | null;
   created_at?: string;
   updated_at?: string;
-  vehicles?: {
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
+  vehicles?: Vehicle;
 }
 
 export const MaintenanceList = () => {
