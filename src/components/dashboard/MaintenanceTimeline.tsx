@@ -1,95 +1,83 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import { Wrench } from "lucide-react";
+import { Wrench, Clock, AlertTriangle } from "lucide-react";
 
 interface MaintenanceEvent {
   id: string;
   vehicle_id: string;
   service_type: string;
-  description: string;
-  status: 'scheduled' | 'in_progress' | 'completed';
+  status: string;
   scheduled_date: string;
-  completed_date: string | null;
-  vehicle?: {
+  description?: string;
+  vehicles?: {
     make: string;
     model: string;
     license_plate: string;
   };
 }
 
-export const MaintenanceTimeline = () => {
-  const { data: events, isLoading } = useQuery({
-    queryKey: ["maintenance-timeline"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("maintenance")
-        .select(`
-          *,
-          vehicle:vehicles (
-            make,
-            model,
-            license_plate
-          )
-        `)
-        .order('scheduled_date', { ascending: false })
-        .limit(5);
+interface MaintenanceTimelineProps {
+  events: MaintenanceEvent[];
+}
 
-      if (error) throw error;
-      return data as MaintenanceEvent[];
+export const MaintenanceTimeline = ({ events }: MaintenanceTimelineProps) => {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Wrench className="h-4 w-4 text-green-500" />;
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-blue-500" />;
+      case 'urgent':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
-  });
+  };
 
-  if (isLoading) {
-    return <div>Loading maintenance timeline...</div>;
-  }
-
-  const maintenanceEvents = events || [];
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wrench className="h-5 w-5" />
-          Recent Maintenance
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {maintenanceEvents.length === 0 ? (
-            <p className="text-muted-foreground">No recent maintenance events</p>
-          ) : (
-            maintenanceEvents.map((event) => (
-              <div key={event.id} className="flex items-start gap-4 border-l-2 border-muted pl-4">
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={
-                        event.status === 'completed' ? 'default' :
-                        event.status === 'in_progress' ? 'secondary' : 'outline'
-                      }>
-                        {event.status}
-                      </Badge>
-                      <span className="font-medium">{event.service_type}</span>
-                    </div>
-                    <time className="text-sm text-muted-foreground">
-                      {formatDateToDisplay(event.scheduled_date)}
-                    </time>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{event.description}</p>
-                  {event.vehicle && (
-                    <p className="text-sm">
-                      Vehicle: {event.vehicle.make} {event.vehicle.model} ({event.vehicle.license_plate})
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+    <div className="space-y-4">
+      {events.map((event) => (
+        <div key={event.id} className="flex items-start gap-4 p-4 rounded-lg border bg-card">
+          <div className="flex-shrink-0">{getStatusIcon(event.status)}</div>
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="font-medium">{event.service_type}</p>
+              <Badge className={getStatusColor(event.status)}>
+                {event.status}
+              </Badge>
+            </div>
+            {event.vehicles && (
+              <p className="text-sm text-muted-foreground">
+                {event.vehicles.make} {event.vehicles.model} ({event.vehicles.license_plate})
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground">
+              {formatDateToDisplay(new Date(event.scheduled_date))}
+            </p>
+            {event.description && (
+              <p className="text-sm text-muted-foreground">{event.description}</p>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+      {events.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          No maintenance events scheduled
+        </div>
+      )}
+    </div>
   );
 };
