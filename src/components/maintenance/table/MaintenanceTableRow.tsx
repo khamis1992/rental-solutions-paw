@@ -34,6 +34,9 @@ interface MaintenanceTableRowProps {
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
 
+  // Map 'urgent' status to 'accident' for display
+  const displayStatus = record.status === 'urgent' ? 'accident' : record.status;
+
   return (
     <>
       <TableRow>
@@ -54,7 +57,7 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
         <TableCell>
           <MaintenanceStatusSelect 
             id={record.id}
-            status={record.status}
+            status={displayStatus}
             vehicleId={record.vehicle_id}
           />
         </TableCell>
