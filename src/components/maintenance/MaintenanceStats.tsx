@@ -34,16 +34,14 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
     record.status?.toLowerCase() === 'scheduled' || 
     record.status?.toLowerCase() === 'in_progress').length || 0;
   
-  // Count both explicit 'urgent' status and records from accident vehicles
-  const urgentCount = maintenanceData?.filter(record => 
-    record.status?.toLowerCase() === 'urgent' || 
+  // Count records with accident service type
+  const accidentCount = maintenanceData?.filter(record => 
     record.service_type?.toLowerCase().includes('accident')).length || 0;
 
   console.log('Maintenance Data:', maintenanceData); // Debug log
-  console.log('Stats:', { totalCost, completedCount, pendingCount, urgentCount }); // Debug log
-  console.log('Urgent Records:', maintenanceData?.filter(record => 
-    record.status?.toLowerCase() === 'urgent' || 
-    record.service_type?.toLowerCase().includes('accident'))); // Debug specific urgent records
+  console.log('Stats:', { totalCost, completedCount, pendingCount, accidentCount }); // Debug log
+  console.log('Accident Records:', maintenanceData?.filter(record => 
+    record.service_type?.toLowerCase().includes('accident'))); // Debug specific accident records
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
@@ -87,11 +85,11 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-muted-foreground">
-              Urgent
+              Accident
             </h3>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </div>
-          <div className="text-2xl font-bold">{urgentCount}</div>
+          <div className="text-2xl font-bold">{accidentCount}</div>
         </CardContent>
       </Card>
     </div>
