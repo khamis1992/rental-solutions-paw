@@ -6,32 +6,32 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
-interface DashboardStats {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
-}
-
 const Dashboard = () => {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc<DashboardStats>("get_dashboard_stats");
+      const { data, error } = await supabase.rpc("get_dashboard_stats");
       
       if (error) throw error;
       
+      const {
+        total_vehicles,
+        available_vehicles,
+        rented_vehicles,
+        maintenance_vehicles,
+        total_customers,
+        active_rentals,
+        monthly_revenue
+      } = data;
+
       return {
-        totalVehicles: data.total_vehicles,
-        availableVehicles: data.available_vehicles,
-        rentedVehicles: data.rented_vehicles,
-        maintenanceVehicles: data.maintenance_vehicles,
-        totalCustomers: data.total_customers,
-        activeRentals: data.active_rentals,
-        monthlyRevenue: data.monthly_revenue
+        totalVehicles: total_vehicles,
+        availableVehicles: available_vehicles,
+        rentedVehicles: rented_vehicles,
+        maintenanceVehicles: maintenance_vehicles,
+        totalCustomers: total_customers,
+        activeRentals: active_rentals,
+        monthlyRevenue: monthly_revenue
       };
     },
     staleTime: 30000,

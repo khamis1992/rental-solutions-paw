@@ -6581,10 +6581,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      get_dashboard_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       handle_portal_login: {
         Args: {
           p_agreement_number: string

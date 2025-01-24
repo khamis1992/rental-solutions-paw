@@ -20,7 +20,7 @@ export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. I can also help you upload and analyze documents. What would you like to know?",
+      content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. What would you like to know?",
     },
   ]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -139,13 +139,6 @@ export const SystemChatbot = () => {
     chatMutation.mutate(message);
   };
 
-  const handleDocumentAnalyzed = (summary: string) => {
-    setMessages(prev => [...prev, {
-      role: "assistant",
-      content: summary
-    }]);
-  };
-
   return (
     <Card className="w-full max-w-2xl mx-auto pt-[var(--header-height,56px)]">
       <CardHeader>
@@ -163,7 +156,6 @@ export const SystemChatbot = () => {
               key={index}
               content={message.content}
               role={message.role}
-              onDocumentAnalyzed={handleDocumentAnalyzed}
             />
           ))}
           {chatMutation.isPending && (
