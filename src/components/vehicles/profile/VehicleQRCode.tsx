@@ -24,19 +24,6 @@ export const VehicleQRCode = ({
   const baseUrl = window.location.origin;
   const vehicleUrl = `${baseUrl}/vehicles/${vehicleId}`;
 
-  // Include both the URL and additional vehicle data in QR
-  const qrData = JSON.stringify({
-    url: vehicleUrl,
-    vehicleDetails: {
-      make,
-      model,
-      year,
-      licensePlate,
-      vin,
-    },
-    qrType: 'vehicle-details'
-  });
-
   const downloadQRCode = () => {
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -61,7 +48,7 @@ export const VehicleQRCode = ({
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
         <QRCodeSVG
-          value={qrData}
+          value={vehicleUrl}
           size={200}
           level="H"
           includeMargin={true}
