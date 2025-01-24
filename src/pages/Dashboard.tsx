@@ -4,6 +4,17 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
+
+interface DashboardData {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
 
 const Dashboard = () => {
   const { data: stats } = useQuery({
@@ -13,24 +24,14 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      const {
-        total_vehicles,
-        available_vehicles,
-        rented_vehicles,
-        maintenance_vehicles,
-        total_customers,
-        active_rentals,
-        monthly_revenue
-      } = data;
-
       return {
-        totalVehicles: total_vehicles,
-        availableVehicles: available_vehicles,
-        rentedVehicles: rented_vehicles,
-        maintenanceVehicles: maintenance_vehicles,
-        totalCustomers: total_customers,
-        activeRentals: active_rentals,
-        monthlyRevenue: monthly_revenue
+        totalVehicles: data.total_vehicles,
+        availableVehicles: data.available_vehicles,
+        rentedVehicles: data.rented_vehicles,
+        maintenanceVehicles: data.maintenance_vehicles,
+        totalCustomers: data.total_customers,
+        activeRentals: data.active_rentals,
+        monthlyRevenue: data.monthly_revenue
       };
     },
     staleTime: 30000,
@@ -49,6 +50,9 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
+        <div className="col-span-2">
+          <PredictiveAnalytics />
+        </div>
         <div className="col-span-2">
           <RecentActivity />
         </div>
