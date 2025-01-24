@@ -19,36 +19,50 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface VehicleStatusProps {
-  vehicleId: string;
+  id: string;
   initialStatus: VehicleStatusType;
 }
 
-export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) => {
+export const VehicleStatus = ({ id, initialStatus }: VehicleStatusProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: maintenanceRecords } = useQuery({
-    queryKey: ["maintenance", vehicleId],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  const handleDelete = async () => {
+    try {
+      // Delete maintenance record
+      const { error: maintenanceError } = await supabase
         .from("maintenance")
-        .select("*")
-        .eq("vehicle_id", vehicleId);
+        .delete()
+        .eq("vehicle_id", id);
 
-      if (error) throw error;
-      return data;
-    },
-  });
+      if (maintenanceError) throw maintenanceError;
+
+      // Update vehicle status back to available
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "available" })
+        .eq("id", id);
+
+      if (vehicleError) throw vehicleError;
+
+      await queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      toast.success("Maintenance record deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting maintenance:", error);
+      toast.error(error.message || "Failed to delete maintenance record");
+    }
+  };
 
   const handleStatusChange = async (newStatus: VehicleStatusType) => {
     try {
       // Update vehicle status
-      const { error: updateError } = await supabase
+      const { error: vehicleError } = await supabase
         .from("vehicles")
         .update({ status: newStatus })
-        .eq("id", vehicleId);
+        .eq("id", id);
 
-      if (updateError) throw updateError;
+      if (vehicleError) throw vehicleError;
 
       // If changing to maintenance, create a maintenance record
       if (newStatus === "maintenance") {
@@ -56,7 +70,7 @@ export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) 
           .from("maintenance")
           .insert([
             {
-              vehicle_id: vehicleId,
+              vehicle_id: id,
               service_type: "General Maintenance",
               status: "scheduled",
               scheduled_date: new Date().toISOString(),
@@ -73,32 +87,6 @@ export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) 
     } catch (error: any) {
       console.error("Error updating status:", error);
       toast.error(error.message || "Failed to update status");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      const { error } = await supabase
-        .from("maintenance")
-        .delete()
-        .eq("vehicle_id", vehicleId);
-
-      if (error) throw error;
-
-      // Update vehicle status back to available
-      const { error: updateError } = await supabase
-        .from("vehicles")
-        .update({ status: "available" })
-        .eq("id", vehicleId);
-
-      if (updateError) throw updateError;
-
-      await queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      await queryClient.invalidateQueries({ queryKey: ["maintenance"] });
-      toast.success("Maintenance record deleted successfully");
-    } catch (error: any) {
-      console.error("Error deleting maintenance:", error);
-      toast.error(error.message || "Failed to delete maintenance record");
     }
   };
 
