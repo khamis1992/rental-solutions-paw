@@ -137,6 +137,22 @@ export const VehicleDetails = () => {
         <VehicleOverview vehicleId={id} />
       </div>
 
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+          <VehicleQRCode 
+            make={vehicle.make} 
+            model={vehicle.model}
+            vehicleId={id}
+          />
+        </div>
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+          <VehicleStatus 
+            vehicleId={id} 
+            currentStatus={vehicle.status} 
+          />
+        </div>
+      </div>
+
       <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
         <VehicleInsurance vehicleId={id} />
       </div>
