@@ -7,10 +7,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { CoordinatorAgent } from "./agents/CoordinatorAgent";
-import { VehicleAgent } from "./agents/VehicleAgent";
-import { PaymentAgent } from "./agents/PaymentAgent";
-import { LegalAgent } from "./agents/LegalAgent";
 
 interface Message {
   role: "assistant" | "user";
@@ -26,27 +22,6 @@ export const SystemChatbot = () => {
   ]);
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const channelRef = useRef<any>(null);
-  const coordinatorRef = useRef<CoordinatorAgent>(new CoordinatorAgent());
-
-  // Initialize agents
-  useEffect(() => {
-    const coordinator = coordinatorRef.current;
-    coordinator.registerAgent(new VehicleAgent());
-    coordinator.registerAgent(new PaymentAgent());
-    coordinator.registerAgent(new LegalAgent());
-  }, []);
-
-  // Track user activity
-  useEffect(() => {
-    const trackActivity = async () => {
-      await supabase
-        .from('user_activity')
-        .insert([{ activity_count: 1 }]);
-    };
-
-    trackActivity();
-  }, []);
 
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
@@ -63,141 +38,23 @@ export const SystemChatbot = () => {
     };
   }, []);
 
-  // Subscribe to real-time notifications
-  useEffect(() => {
-    channelRef.current = supabase
-      .channel('chat-updates')
-      .on(
-        'broadcast',
-        { event: 'chat-message' },
-        (payload: any) => {
-          console.log('Received real-time message:', payload);
-          if (payload.message) {
-            setMessages(prev => [...prev, {
-              role: "assistant",
-              content: payload.message
-            }]);
-          }
-        }
-      )
-      // Subscribe to maintenance notifications
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'maintenance',
-          filter: `status=eq.scheduled`
-        },
-        (payload: any) => {
-          if (payload.new && payload.new.scheduled_date) {
-            const notification = `Maintenance Alert: Vehicle maintenance is scheduled for ${new Date(payload.new.scheduled_date).toLocaleDateString()}`;
-            setMessages(prev => [...prev, {
-              role: "assistant",
-              content: notification
-            }]);
-          }
-        }
-      )
-      // Subscribe to overdue payments
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'overdue_payments_view'
-        },
-        (payload: any) => {
-          if (payload.new && payload.new.days_overdue) {
-            const notification = `Payment Alert: Payment overdue for ${payload.new.days_overdue} days`;
-            setMessages(prev => [...prev, {
-              role: "assistant",
-              content: notification
-            }]);
-          }
-        }
-      )
-      // Subscribe to expiring agreements
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leases',
-          filter: `status=eq.active`
-        },
-        (payload: any) => {
-          if (payload.new && payload.new.end_date) {
-            const endDate = new Date(payload.new.end_date);
-            const daysUntilExpiry = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            
-            if (daysUntilExpiry <= 7) {
-              const notification = `Agreement Alert: Agreement #${payload.new.agreement_number} expires in ${daysUntilExpiry} days`;
-              setMessages(prev => [...prev, {
-                role: "assistant",
-                content: notification
-              }]);
-            }
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to chat updates and notifications');
-        } else if (status === 'CLOSED') {
-          console.log('Subscription to chat updates closed');
-          toast.error('Lost connection to real-time updates');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Error in chat subscription channel');
-          toast.error('Error in real-time updates connection');
-        }
-      });
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
-    };
-  }, []);
-
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // Route message through coordinator agent
-        const response = await coordinatorRef.current.route(message);
-        console.log('Agent response:', response);
-        
-        // If we have a response with good confidence, use it
-        if (response.confidence > 0.5) {
-          return response.content;
-        }
-
-        // Fallback to DeepSeek for low confidence or unclear queries
-        const aiResponse = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        const { data, error } = await supabase.functions.invoke('chat', {
+          body: {
             messages: [
-              {
-                role: 'system',
-                content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data.'
-              },
+              ...messages,
               { role: 'user', content: message }
             ]
-          }),
+          }
         });
 
-        if (!aiResponse.ok) {
-          throw new Error('Failed to get AI response');
-        }
-
-        const data = await aiResponse.json();
+        if (error) throw error;
         return data.message;
       } catch (error) {
         console.error('Chat error:', error);
-        return "I encountered an error. Please try again or rephrase your question.";
+        throw new Error('Failed to get response');
       }
     },
     onSuccess: (response, variables) => {
