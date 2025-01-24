@@ -1,62 +1,26 @@
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Car, Wrench, Archive, FileDown } from "lucide-react";
-import { VehicleStatus } from "@/types/vehicle";
+import { Trash2 } from "lucide-react";
 
-interface BulkActionsMenuProps {
+export interface BulkActionsMenuProps {
   selectedCount: number;
-  onUpdateStatus: (status: VehicleStatus) => void;
-  onScheduleMaintenance: () => void;
-  onExport: () => void;
-  onArchive: () => void;
-  disabled?: boolean;
+  onDelete: () => void;
 }
 
-export const BulkActionsMenu = ({
-  selectedCount,
-  onUpdateStatus,
-  onScheduleMaintenance,
-  onExport,
-  onArchive,
-  disabled
-}: BulkActionsMenuProps) => {
-  if (selectedCount === 0) return null;
-
+export const BulkActionsMenu = ({ selectedCount, onDelete }: BulkActionsMenuProps) => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={disabled}>
-          <Car className="mr-2 h-4 w-4" />
-          {selectedCount} vehicle{selectedCount !== 1 ? 's' : ''} selected
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[200px]">
-        <DropdownMenuItem onClick={() => onUpdateStatus('available')}>
-          <Car className="mr-2 h-4 w-4" />
-          Mark as Available
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onUpdateStatus('maintenance')}>
-          <Wrench className="mr-2 h-4 w-4" />
-          Mark as Maintenance
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onScheduleMaintenance}>
-          <Wrench className="mr-2 h-4 w-4" />
-          Schedule Maintenance
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onExport}>
-          <FileDown className="mr-2 h-4 w-4" />
-          Export Selected
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onArchive} className="text-destructive">
-          <Archive className="mr-2 h-4 w-4" />
-          Archive Selected
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">
+        {selectedCount} items selected
+      </span>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onDelete}
+        className="gap-2"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete Selected
+      </Button>
+    </div>
   );
 };
