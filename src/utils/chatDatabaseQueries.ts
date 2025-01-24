@@ -3,6 +3,27 @@ import { supabase } from "@/integrations/supabase/client";
 export async function getDatabaseResponse(message: string): Promise<string | null> {
   const lowerMessage = message.toLowerCase();
 
+  // Check if this is a DeepThink request
+  if (lowerMessage.includes('analyze') || 
+      lowerMessage.includes('think') || 
+      lowerMessage.includes('solve') ||
+      lowerMessage.includes('help me with')) {
+    try {
+      const { data, error } = await supabase.functions.invoke('deep-think', {
+        body: {
+          messages: [{ role: 'user', content: message }],
+          context: determineContext(message)
+        }
+      });
+
+      if (error) throw error;
+      return data.message;
+    } catch (error) {
+      console.error('Error in deep think analysis:', error);
+      return "I encountered an error while analyzing your request. Please try again with more specific details.";
+    }
+  }
+
   // Vehicle queries
   if (lowerMessage.includes('vehicle') || lowerMessage.includes('car')) {
     const { data: vehicles } = await supabase
@@ -139,4 +160,23 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
   }
 
   return null;
+}
+
+function determineContext(message: string): string {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('vehicle') || lowerMessage.includes('car') || lowerMessage.includes('maintenance')) {
+    return 'vehicle management';
+  }
+  if (lowerMessage.includes('payment') || lowerMessage.includes('invoice') || lowerMessage.includes('finance')) {
+    return 'financial operations';
+  }
+  if (lowerMessage.includes('customer') || lowerMessage.includes('client')) {
+    return 'customer relations';
+  }
+  if (lowerMessage.includes('agreement') || lowerMessage.includes('contract')) {
+    return 'agreement management';
+  }
+  
+  return 'general rental business';
 }
