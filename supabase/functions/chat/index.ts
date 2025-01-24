@@ -30,7 +30,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data.'
+            content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data. Always verify numbers and statistics before responding.'
           },
           ...messages
         ],

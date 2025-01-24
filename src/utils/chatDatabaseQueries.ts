@@ -6,7 +6,7 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
   const lowerMessage = message.toLowerCase();
 
   // Vehicle count queries
-  if (normalizedMessage.match(/how many vehicle|vehicle count|total vehicle/i)) {
+  if (normalizedMessage.match(/how many vehicle|vehicle count|total vehicle|available vehicle|show vehicle/i)) {
     const { data: vehicles, error } = await supabase
       .from('vehicles')
       .select('status', { count: 'exact' });
@@ -16,8 +16,25 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
       return "I encountered an error while fetching vehicle information.";
     }
 
-    const count = vehicles?.length || 0;
-    return `We currently have ${count} vehicles in our fleet.`;
+    // Get specific status counts
+    const counts = {
+      total: vehicles?.length || 0,
+      available: vehicles?.filter(v => v.status === 'available').length || 0,
+      rented: vehicles?.filter(v => v.status === 'rented').length || 0,
+      maintenance: vehicles?.filter(v => v.status === 'maintenance').length || 0
+    };
+
+    // Check if query is specifically about available vehicles
+    if (normalizedMessage.match(/available|free|rent/i)) {
+      return `We currently have ${counts.available} vehicles available for rent.`;
+    }
+
+    // Return detailed vehicle count information
+    return `Current vehicle status:\n` +
+           `- Total vehicles: ${counts.total}\n` +
+           `- Available: ${counts.available}\n` +
+           `- Rented: ${counts.rented}\n` +
+           `- In maintenance: ${counts.maintenance}`;
   }
 
   // Available vehicles query
