@@ -35,7 +35,7 @@ export function MaintenanceAlerts() {
         .order('detected_at', { ascending: false });
 
       if (error) throw error;
-      return data as AnomalyRecord[];
+      return data as unknown as AnomalyRecord[];
     }
   });
 
@@ -91,7 +91,7 @@ export function MaintenanceAlerts() {
   };
 
   return (
-    <Card>
+    <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wrench className="h-5 w-5" />
@@ -99,7 +99,7 @@ export function MaintenanceAlerts() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="h-[300px] pr-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
