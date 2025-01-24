@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
-import { useQuery } from "@tanstack/react-query";
 
 interface VehicleStatusProps {
   vehicleId: string;
@@ -14,6 +13,7 @@ interface VehicleStatusProps {
 
 export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) => {
   const [status, setStatus] = useState<VehicleStatusType>(currentStatus);
+  const queryClient = useQueryClient();
 
   // Fetch available statuses from the database
   const { data: availableStatuses } = useQuery({
@@ -101,6 +101,12 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
               status: "scheduled",
               description: "Vehicle status changed to maintenance",
               scheduled_date: new Date().toISOString(),
+              category_id: (await supabase
+                .from("maintenance_categories")
+                .select("id")
+                .eq("name", "General")
+                .single()
+              ).data?.id,
             },
           ]);
 
@@ -113,6 +119,11 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
 
       setStatus(newStatus);
       toast.success("Vehicle status updated successfully");
+      
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] });
       
       console.log("Status updated successfully"); // Debug log
     } catch (error) {
