@@ -1024,6 +1024,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_flow_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          current_amount: number
+          id: string
+          message: string
+          resolved_at: string | null
+          severity: string | null
+          status: string | null
+          threshold_amount: number
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          current_amount: number
+          id?: string
+          message: string
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          threshold_amount: number
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          current_amount?: number
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          threshold_amount?: number
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           conversation_context: Json | null
@@ -1748,6 +1784,87 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_analysis: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          frequency: string
+          id: string
+          implemented: boolean | null
+          potential_savings: number | null
+          priority: string | null
+          recommendation: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          frequency: string
+          id?: string
+          implemented?: boolean | null
+          potential_savings?: number | null
+          priority?: string | null
+          recommendation?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          implemented?: boolean | null
+          potential_savings?: number | null
+          priority?: string | null
+          recommendation?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      financial_goals: {
+        Row: {
+          category: string
+          created_at: string | null
+          current_amount: number | null
+          id: string
+          name: string
+          priority: string | null
+          start_date: string
+          status: string | null
+          target_amount: number
+          target_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          current_amount?: number | null
+          id?: string
+          name: string
+          priority?: string | null
+          start_date: string
+          status?: string | null
+          target_amount: number
+          target_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          current_amount?: number | null
+          id?: string
+          name?: string
+          priority?: string | null
+          start_date?: string
+          status?: string | null
+          target_amount?: number
+          target_date?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       financial_imports: {
         Row: {
           amount: number
@@ -1806,6 +1923,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      financial_scenarios: {
+        Row: {
+          assumptions: Json
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          projected_outcomes: Json
+          recommendation: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assumptions: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          projected_outcomes: Json
+          recommendation?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assumptions?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          projected_outcomes?: Json
+          recommendation?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       fleet_optimization_recommendations: {
         Row: {

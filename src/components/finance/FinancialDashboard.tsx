@@ -5,8 +5,10 @@ import { RevenueChart } from "./charts/RevenueChart";
 import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
+import { VirtualCFO } from "./virtual-cfo/VirtualCFO";
 import { Loader2 } from "lucide-react";
 import { Transaction } from "./types/transaction.types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const FinancialDashboard = () => {
   const { data: financialData, isLoading } = useQuery({
@@ -22,7 +24,6 @@ export const FinancialDashboard = () => {
 
       if (error) throw error;
       
-      // Convert string amounts to numbers
       return (data as any[]).map(transaction => ({
         ...transaction,
         amount: parseFloat(transaction.amount) || 0
@@ -129,45 +130,60 @@ export const FinancialDashboard = () => {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-3">
-        <FinancialMetricsCard
-          title="Monthly Revenue"
-          value={currentMonthRevenue}
-          previousValue={previousMonthRevenue}
-          percentageChange={percentageChangeRevenue}
-        />
-        <FinancialMetricsCard
-          title="Monthly Expenses"
-          value={currentMonthExpenses}
-          previousValue={previousMonthExpenses}
-          percentageChange={percentageChangeExpenses}
-        />
-        <FinancialMetricsCard
-          title="Net Profit"
-          value={currentMonthRevenue - currentMonthExpenses}
-          previousValue={previousMonthRevenue - previousMonthExpenses}
-          percentageChange={
-            ((currentMonthRevenue - currentMonthExpenses) - (previousMonthRevenue - previousMonthExpenses)) / 
-            Math.abs(previousMonthRevenue - previousMonthExpenses) * 100
-          }
-        />
-      </div>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="virtual-cfo">Virtual CFO</TabsTrigger>
+        </TabsList>
 
-      <BudgetTrackingSection 
-        transactions={financialData || []}
-        categories={Array.from(new Set(financialData?.map(t => t.category)
-          .filter(Boolean))) as Transaction['category'][]}
-      />
+        <TabsContent value="overview">
+          <div className="space-y-8">
+            <div className="grid gap-4 md:grid-cols-3">
+              <FinancialMetricsCard
+                title="Monthly Revenue"
+                value={currentMonthRevenue}
+                previousValue={previousMonthRevenue}
+                percentageChange={percentageChangeRevenue}
+              />
+              <FinancialMetricsCard
+                title="Monthly Expenses"
+                value={currentMonthExpenses}
+                previousValue={previousMonthExpenses}
+                percentageChange={percentageChangeExpenses}
+              />
+              <FinancialMetricsCard
+                title="Net Profit"
+                value={currentMonthRevenue - currentMonthExpenses}
+                previousValue={previousMonthRevenue - previousMonthExpenses}
+                percentageChange={
+                  ((currentMonthRevenue - currentMonthExpenses) - (previousMonthRevenue - previousMonthExpenses)) / 
+                  Math.abs(previousMonthRevenue - previousMonthExpenses) * 100
+                }
+              />
+            </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <RevenueChart 
-          data={revenueData} 
-          onExport={() => {}} 
-        />
-        <ExpenseBreakdownChart data={expenseData} />
-      </div>
+            <BudgetTrackingSection 
+              transactions={financialData || []}
+              categories={Array.from(new Set(financialData?.map(t => t.category)
+                .filter(Boolean))) as Transaction['category'][]}
+            />
 
-      <ProfitLossChart data={profitLossData} />
+            <div className="grid gap-6 md:grid-cols-2">
+              <RevenueChart 
+                data={revenueData} 
+                onExport={() => {}} 
+              />
+              <ExpenseBreakdownChart data={expenseData} />
+            </div>
+
+            <ProfitLossChart data={profitLossData} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="virtual-cfo">
+          <VirtualCFO />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
