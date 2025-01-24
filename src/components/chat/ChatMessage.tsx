@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { AlertTriangle, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { AlertCircle, FileText, CheckCircle, XCircle } from "lucide-react";
 
 interface ChatMessageProps {
   content: string;
@@ -9,39 +10,81 @@ interface ChatMessageProps {
     label: string;
     urgency: string;
   };
+  documentAnalysis?: {
+    documentType: string;
+    classification: string;
+    extractedData: any;
+    isComplete: boolean;
+    missingFields: string[];
+    summary: string;
+    confidence: number;
+  };
 }
 
-export const ChatMessage = ({ content, role, sentiment }: ChatMessageProps) => {
+export const ChatMessage = ({ content, role, sentiment, documentAnalysis }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex w-full gap-2 rounded-lg p-4",
-        role === "assistant"
-          ? "bg-muted"
-          : "bg-primary text-primary-foreground"
+        "flex w-full mb-4",
+        role === "assistant" ? "justify-start" : "justify-end"
       )}
     >
-      <div className="flex-1">
-        <p className="whitespace-pre-wrap">{content}</p>
-        {sentiment && role === "user" && (
-          <div className="flex items-center gap-2 mt-2 text-sm opacity-80">
-            {sentiment.urgency === 'high' && (
-              <span className="flex items-center gap-1">
-                <AlertTriangle className="h-4 w-4" />
-                Urgent
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              {sentiment.label === 'positive' ? (
-                <ThumbsUp className="h-4 w-4" />
-              ) : (
-                <ThumbsDown className="h-4 w-4" />
-              )}
-              {sentiment.label}
-            </span>
-          </div>
+      <Card
+        className={cn(
+          "max-w-[80%] p-4",
+          role === "assistant"
+            ? "bg-muted"
+            : "bg-primary text-primary-foreground"
         )}
-      </div>
+      >
+        <div className="space-y-2">
+          <p className="text-sm whitespace-pre-wrap">{content}</p>
+          
+          {sentiment?.urgency === "high" && (
+            <div className="flex items-center gap-2 text-destructive text-xs mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <span>High Priority Message</span>
+            </div>
+          )}
+
+          {documentAnalysis && (
+            <div className="mt-4 space-y-3 border-t pt-3">
+              <div className="flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4" />
+                <span>Document Type: {documentAnalysis.documentType}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm">
+                {documentAnalysis.isComplete ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-destructive" />
+                )}
+                <span>
+                  {documentAnalysis.isComplete 
+                    ? "Document is complete" 
+                    : "Document is incomplete"}
+                </span>
+              </div>
+
+              {documentAnalysis.missingFields.length > 0 && (
+                <div className="text-sm text-destructive">
+                  Missing fields:
+                  <ul className="list-disc ml-4">
+                    {documentAnalysis.missingFields.map((field, index) => (
+                      <li key={index}>{field}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="text-xs text-muted-foreground">
+                Confidence Score: {Math.round(documentAnalysis.confidence * 100)}%
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };

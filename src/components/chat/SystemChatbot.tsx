@@ -6,8 +6,9 @@ import { ChatInput } from "./ChatInput";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { getDatabaseResponse } from "@/utils/chatDatabaseQueries";
+import { Input } from "@/components/ui/input";
 
 interface Message {
   role: "assistant" | "user";
@@ -17,6 +18,15 @@ interface Message {
     label: string;
     urgency: string;
   };
+  documentAnalysis?: {
+    documentType: string;
+    classification: string;
+    extractedData: any;
+    isComplete: boolean;
+    missingFields: string[];
+    summary: string;
+    confidence: number;
+  };
 }
 
 const TRUSTED_ORIGIN = window.location.origin;
@@ -25,9 +35,10 @@ export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. What would you like to know?",
+      content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. I can also analyze documents for you - just upload them and I'll help extract the important information.",
     },
   ]);
+  const [uploading, setUploading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
   const contextRef = useRef<any>(null);
@@ -76,7 +87,6 @@ export const SystemChatbot = () => {
         'broadcast',
         { event: 'chat-message' },
         (payload) => {
-          console.log('Received real-time message:', payload);
           if (payload.message) {
             setMessages(prev => [...prev, {
               role: "assistant",
@@ -93,6 +103,71 @@ export const SystemChatbot = () => {
       }
     };
   }, []);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      // Upload file to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('customer_documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('customer_documents')
+        .getPublicUrl(fileName);
+
+      // Analyze document
+      const response = await fetch(`${TRUSTED_ORIGIN}/functions/v1/analyze-document`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ 
+          documentUrl: publicUrl,
+          documentType: fileExt 
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to analyze document');
+
+      const analysis = await response.json();
+
+      // Add analysis results to chat
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "user",
+          content: `Uploaded document: ${file.name}`,
+        },
+        {
+          role: "assistant",
+          content: `I've analyzed the document. Here's what I found:\n\n${analysis.summary}\n\n${
+            analysis.isComplete 
+              ? "✅ The document appears to be complete." 
+              : `⚠️ The document is missing some fields: ${analysis.missingFields.join(', ')}`
+          }`,
+          documentAnalysis: analysis
+        }
+      ]);
+
+    } catch (error: any) {
+      console.error('Error processing document:', error);
+      toast.error('Failed to process document');
+    } finally {
+      setUploading(false);
+      if (event.target) event.target.value = '';
+    }
+  };
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
@@ -218,6 +293,7 @@ export const SystemChatbot = () => {
               content={message.content}
               role={message.role}
               sentiment={message.sentiment}
+              documentAnalysis={message.documentAnalysis}
             />
           ))}
           {chatMutation.isPending && (
@@ -226,6 +302,22 @@ export const SystemChatbot = () => {
             </div>
           )}
         </ScrollArea>
+
+        <div className="space-y-2">
+          <Input
+            type="file"
+            accept=".pdf,.doc,.docx,.txt"
+            onChange={handleFileUpload}
+            disabled={uploading}
+            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+          />
+          {uploading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing document...
+            </div>
+          )}
+        </div>
 
         <ChatInput
           onSend={handleSendMessage}

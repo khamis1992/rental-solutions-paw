@@ -12,92 +12,112 @@ serve(async (req) => {
   }
 
   try {
-    const { documentId, documentUrl, documentType } = await req.json()
-    console.log('Analyzing document:', { documentId, documentUrl, documentType })
+    const { documentUrl, documentType } = await req.json()
+    console.log('Analyzing document:', { documentUrl, documentType })
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Analyze document content and classify
-    const classification = await analyzeDocument(documentUrl, documentType)
-    console.log('Classification results:', classification)
+    // Download document content
+    const { data: documentData, error: downloadError } = await supabase
+      .storage
+      .from('customer_documents')
+      .download(documentUrl.split('/').pop())
 
-    // Store classification results
-    const { error: classificationError } = await supabase
-      .from('ai_document_classification')
-      .insert({
-        document_id: documentId,
-        classification_type: classification.type,
-        confidence_score: classification.confidence,
-        metadata: classification.metadata
-      })
+    if (downloadError) {
+      console.error('Error downloading document:', downloadError)
+      throw new Error(`Error downloading document: ${downloadError.message}`)
+    }
 
-    if (classificationError) throw classificationError
+    const documentText = await documentData.text()
+    console.log('Document text retrieved, length:', documentText.length)
 
-    // Update document metadata with classification
-    const { error: documentError } = await supabase
-      .from('legal_documents')
-      .update({
-        metadata: {
-          classification: classification.type,
-          confidence_score: classification.confidence,
-          analyzed_at: new Date().toISOString()
-        }
-      })
-      .eq('id', documentId)
-
-    if (documentError) throw documentError
+    // Analyze document using DeepSeek
+    const analysis = await analyzeDocument(documentText, documentType)
+    console.log('Analysis completed:', analysis)
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        classification 
-      }),
+      JSON.stringify(analysis),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error in document analysis:', error)
+    console.error('Error in analyze-document function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }
 })
 
-async function analyzeDocument(documentUrl: string, documentType: string) {
-  // This is a simplified document classification system
-  // In production, this would use more sophisticated ML models
-  
-  const documentCategories = {
-    'contract': ['agreement', 'contract', 'terms'],
-    'court_filing': ['motion', 'petition', 'complaint'],
-    'correspondence': ['letter', 'email', 'notice'],
-    'evidence': ['exhibit', 'proof', 'documentation'],
-    'financial': ['invoice', 'statement', 'receipt']
+async function analyzeDocument(text: string, documentType: string) {
+  const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
+  if (!deepseekApiKey) {
+    throw new Error('DeepSeek API key not configured')
   }
+  
+  console.log('Calling DeepSeek API...')
+  
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a document analysis expert. Analyze the provided ${documentType} and extract:
+              - Document type and classification
+              - Key information and data points
+              - Validation status (completeness check)
+              - Summary of content
+              Format your response as a JSON object with these fields:
+              {
+                "documentType": string,
+                "classification": string,
+                "extractedData": object,
+                "isComplete": boolean,
+                "missingFields": string[],
+                "summary": string,
+                "confidence": number
+              }`
+          },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      }),
+    })
 
-  // Simulate document content analysis
-  const mockAnalysis = {
-    type: 'contract',
-    confidence: 0.85,
-    metadata: {
-      detected_entities: ['dates', 'parties', 'terms'],
-      key_terms: ['agreement', 'liability', 'termination'],
-      document_structure: {
-        has_signature: true,
-        has_dates: true,
-        has_numbered_sections: true
-      }
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('DeepSeek API error response:', errorText)
+      throw new Error(`DeepSeek API error: ${response.status} ${errorText}`)
     }
-  }
 
-  // In production, this would perform actual document analysis
-  // using ML models and natural language processing
-  
-  return mockAnalysis
+    const data = await response.json()
+    console.log('DeepSeek API raw response:', data)
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from DeepSeek API')
+    }
+
+    try {
+      return JSON.parse(data.choices[0].message.content)
+    } catch (parseError) {
+      console.error('Error parsing DeepSeek response:', parseError)
+      throw new Error('Failed to parse document analysis response')
+    }
+  } catch (error) {
+    console.error('Error in analyzeDocument:', error)
+    throw new Error(`Failed to analyze document: ${error.message}`)
+  }
 }
