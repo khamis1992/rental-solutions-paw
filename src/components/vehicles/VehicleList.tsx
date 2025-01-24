@@ -30,8 +30,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
         {
           event: '*',
           schema: 'public',
-          table: 'vehicles',
-          filter: 'status=eq.maintenance'
+          table: 'vehicles'
         },
         async (payload) => {
           console.log('Vehicle status changed:', payload);
@@ -43,10 +42,9 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
           ]);
 
           // Show toast notification
-          if (payload.eventType === 'UPDATE') {
-            const newStatus = payload.new.status;
+          if (payload.eventType === 'UPDATE' && payload.new.status !== payload.old.status) {
             const vehicleInfo = `${payload.new.make} ${payload.new.model} (${payload.new.license_plate})`;
-            toast.info(`Vehicle ${vehicleInfo} status updated to ${newStatus}`);
+            toast.info(`Vehicle ${vehicleInfo} status updated to ${payload.new.status}`);
           }
         }
       )

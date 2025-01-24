@@ -55,7 +55,7 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
-      // Start a Supabase transaction
+      // Start a transaction using multiple queries
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
@@ -83,7 +83,7 @@ export function CreateJobDialog() {
         throw vehicleError;
       }
 
-      // Invalidate relevant queries
+      // Invalidate relevant queries to trigger UI updates
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["maintenance"] }),
         queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
