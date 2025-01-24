@@ -7,7 +7,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { getDatabaseResponse } from "@/utils/chatDatabaseQueries";
+import { CoordinatorAgent } from "./agents/CoordinatorAgent";
+import { VehicleAgent } from "./agents/VehicleAgent";
+import { PaymentAgent } from "./agents/PaymentAgent";
+import { LegalAgent } from "./agents/LegalAgent";
 
 interface Message {
   role: "assistant" | "user";
@@ -23,8 +26,18 @@ export const SystemChatbot = () => {
       content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. What would you like to know?",
     },
   ]);
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
+  const coordinatorRef = useRef<CoordinatorAgent>(new CoordinatorAgent());
+
+  // Initialize agents
+  useEffect(() => {
+    const coordinator = coordinatorRef.current;
+    coordinator.registerAgent(new VehicleAgent());
+    coordinator.registerAgent(new PaymentAgent());
+    coordinator.registerAgent(new LegalAgent());
+  }, []);
 
   // Track user activity
   useEffect(() => {
@@ -146,17 +159,17 @@ export const SystemChatbot = () => {
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // First, get the database response
-        const dbResponse = await getDatabaseResponse(message);
+        // Route message through coordinator agent
+        const response = await coordinatorRef.current.route(message);
+        console.log('Agent response:', response);
         
-        // If we have a direct database response, use it
-        if (dbResponse) {
-          console.log('Using database response:', dbResponse);
-          return dbResponse;
+        // If we have a response with good confidence, use it
+        if (response.confidence > 0.5) {
+          return response.content;
         }
 
-        // If no direct match, use DeepSeek to understand the query
-        const response = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
+        // Fallback to DeepSeek for low confidence or unclear queries
+        const aiResponse = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -166,26 +179,22 @@ export const SystemChatbot = () => {
             messages: [
               {
                 role: 'system',
-                content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data. If you cannot find specific data, ask the user to rephrase their question to match available information categories: vehicles, customers, agreements, payments, or maintenance.'
+                content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data.'
               },
               { role: 'user', content: message }
-            ],
-            dbResponse: null // We already tried direct database response
+            ]
           }),
         });
 
-        if (!response.ok) {
+        if (!aiResponse.ok) {
           throw new Error('Failed to get AI response');
         }
 
-        const data = await response.json();
-        
-        // Try database response again with AI-interpreted query
-        const refinedDbResponse = await getDatabaseResponse(data.message);
-        return refinedDbResponse || "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
+        const data = await aiResponse.json();
+        return data.message;
       } catch (error) {
         console.error('Chat error:', error);
-        return "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
+        return "I encountered an error. Please try again or rephrase your question.";
       }
     },
     onSuccess: (response, variables) => {
