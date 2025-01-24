@@ -5,6 +5,16 @@ export type AgreementType = Database['public']['Enums']['agreement_type'];
 export type PaymentStatus = Database['public']['Enums']['payment_status'];
 export type DocumentLanguage = 'english' | 'arabic';
 
+export interface DashboardStats {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
+
 export interface Template {
   id: string;
   name: string;
@@ -92,14 +102,4 @@ export interface AnomalyRecord {
   resolved_at?: string;
   resolution_notes?: string;
   false_positive: boolean;
-}
-
-export interface DashboardStats {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
 }
