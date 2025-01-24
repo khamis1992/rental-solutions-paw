@@ -1,11 +1,13 @@
 export type AgreementType = 'lease_to_own' | 'short_term';
 export type DocumentLanguage = 'english' | 'arabic';
+export type LeaseStatus = 'pending_payment' | 'pending_deposit' | 'active' | 'closed';
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Template {
   id: string;
   name: string;
-  description?: string;
-  content: any;
+  description: string;
+  content: string;
   language: DocumentLanguage;
   agreement_type: AgreementType;
   rent_amount: number;
@@ -41,20 +43,6 @@ export interface Agreement {
   remainingAmount: number;
   agreement_duration: string;
   daily_late_fee: number;
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer: {
-    full_name: string;
-    phone_number?: string;
-    email?: string;
-  };
-  vehicle: {
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
 }
 
 export interface Payment {
