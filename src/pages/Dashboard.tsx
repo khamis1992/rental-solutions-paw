@@ -1,74 +1,64 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardStats } from "@/types/agreement.types";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { DashboardStats as DashboardStatsComponent } from "@/components/dashboard/DashboardStats";
-import { MaintenanceTimeline } from "@/components/dashboard/MaintenanceTimeline";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { UpcomingRentals } from "@/components/dashboard/UpcomingRentals";
-import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
-export default function Dashboard() {
-  const { data: stats, isLoading } = useQuery({
+const Dashboard = () => {
+  const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { data: vehicles } = await supabase
-        .from('vehicles')
-        .select('status', { count: 'exact' });
-
-      const { data: customers } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
-        .eq('role', 'customer');
-
-      const { data: activeRentals } = await supabase
-        .from('leases')
-        .select('*', { count: 'exact' })
-        .eq('status', 'active');
-
-      const { data: payments } = await supabase
-        .from('unified_payments')
-        .select('amount')
-        .gte('payment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-        .eq('status', 'completed');
-
-      const monthlyRevenue = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+      const { data, error } = await supabase.rpc("get_dashboard_stats");
+      
+      if (error) throw error;
+      
+      const {
+        total_vehicles,
+        available_vehicles,
+        rented_vehicles,
+        maintenance_vehicles,
+        total_customers,
+        active_rentals,
+        monthly_revenue
+      } = data;
 
       return {
-        totalVehicles: vehicles?.length || 0,
-        availableVehicles: vehicles?.filter(v => v.status === 'available').length || 0,
-        rentedVehicles: vehicles?.filter(v => v.status === 'rented').length || 0,
-        maintenanceVehicles: vehicles?.filter(v => v.status === 'maintenance').length || 0,
-        totalCustomers: customers?.length || 0,
-        activeRentals: activeRentals?.length || 0,
-        monthlyRevenue
-      } as DashboardStats;
-    }
+        totalVehicles: total_vehicles,
+        availableVehicles: available_vehicles,
+        rentedVehicles: rented_vehicles,
+        maintenanceVehicles: maintenance_vehicles,
+        totalCustomers: total_customers,
+        activeRentals: active_rentals,
+        monthlyRevenue: monthly_revenue
+      };
+    },
+    staleTime: 30000,
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <WelcomeHeader />
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardStatsComponent stats={stats!} />
+    <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
+        <div>
+          <WelcomeHeader />
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <VehicleStatusChart />
-        <DashboardAlerts />
-        <UpcomingRentals />
+      <div className="grid gap-8">
+        <DashboardStats stats={stats} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <MaintenanceTimeline />
-        <RecentActivity />
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <RecentActivity />
+        </div>
+        <div className="lg:col-span-3">
+          <SystemChatbot />
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

@@ -1,4 +1,4 @@
-import { Car, DollarSign, FileText, TrendingUp } from "lucide-react";
+import { Car, DollarSign, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 
 export const DashboardStats = () => {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse, pendingReturnsResponse] = await Promise.all([
@@ -46,9 +46,12 @@ export const DashboardStats = () => {
           .lt('end_date', new Date().toISOString())
       ]);
 
-      const totalVehicles = vehiclesResponse.count || 0;
-      const newVehicles = newVehiclesResponse.count || 0;
-      const pendingReturns = pendingReturnsResponse.count || 0;
+      if (vehiclesResponse.error) throw vehiclesResponse.error;
+      if (rentalsResponse.error) throw rentalsResponse.error;
+      if (paymentsResponse.error) throw paymentsResponse.error;
+      if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
+      if (newVehiclesResponse.error) throw newVehiclesResponse.error;
+      if (pendingReturnsResponse.error) throw pendingReturnsResponse.error;
 
       const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
         sum + (payment.amount || 0), 0) || 0;
@@ -60,6 +63,10 @@ export const DashboardStats = () => {
       const growth = lastMonthRevenue > 0 
         ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
         : 0;
+
+      const totalVehicles = vehiclesResponse.count || 0;
+      const newVehicles = newVehiclesResponse.count || 0;
+      const pendingReturns = pendingReturnsResponse.count || 0;
 
       return {
         totalVehicles,
@@ -75,35 +82,31 @@ export const DashboardStats = () => {
     staleTime: 60000, // Cache for 1 minute
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-3">
         <StatsCard
           title="Total Vehicles"
-          value={stats?.totalVehicles?.toString() || "0"}
+          value={stats?.totalVehicles.toString() || "0"}
           icon={Car}
           className="bg-white"
           iconClassName="h-5 w-5 text-blue-500"
           description={
             <span className="flex items-center text-emerald-600 text-xs">
               <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth?.vehicles || "+0 this month"}
+              {stats?.growth.vehicles}
             </span>
           }
         />
         <StatsCard
           title="Active Rentals"
-          value={stats?.activeRentals?.toString() || "0"}
+          value={stats?.activeRentals.toString() || "0"}
           icon={FileText}
           className="bg-white"
           iconClassName="h-5 w-5 text-purple-500"
           description={
             <span className="text-amber-600 text-xs">
-              {stats?.pendingReturns || 0} pending returns
+              {stats?.pendingReturns} pending returns
             </span>
           }
         />
@@ -116,7 +119,7 @@ export const DashboardStats = () => {
           description={
             <span className="flex items-center text-emerald-600 text-xs">
               <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth?.revenue || "0% from last month"}
+              {stats?.growth.revenue}
             </span>
           }
         />
