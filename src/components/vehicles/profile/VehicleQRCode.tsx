@@ -20,13 +20,20 @@ export const VehicleQRCode = ({
   licensePlate,
   vin 
 }: VehicleQRCodeProps) => {
+  // Get the current window location to build the absolute URL
+  const baseUrl = window.location.origin;
+  const vehicleUrl = `${baseUrl}/vehicles/${vehicleId}`;
+
+  // Include both the URL and additional vehicle data in QR
   const qrData = JSON.stringify({
-    make,
-    model,
-    id: vehicleId,
-    year,
-    licensePlate,
-    vin,
+    url: vehicleUrl,
+    vehicleDetails: {
+      make,
+      model,
+      year,
+      licensePlate,
+      vin,
+    },
     qrType: 'vehicle-details'
   });
 
