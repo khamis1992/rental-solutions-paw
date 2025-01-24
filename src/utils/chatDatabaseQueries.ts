@@ -3,29 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 export async function getDatabaseResponse(message: string): Promise<string | null> {
   const lowerMessage = message.toLowerCase();
 
-  // Help Center Integration
-  const helpMatch = lowerMessage.match(/how to|help with|guide for|tutorial/i);
-  if (helpMatch) {
-    const { data: guides } = await supabase
-      .from('help_guides')
-      .select(`
-        *,
-        category:help_guide_categories(name)
-      `)
-      .textSearch('title', message.replace(/how to|help with|guide for|tutorial/gi, '').trim())
-      .limit(3);
-
-    if (guides?.length) {
-      return `Here are some relevant guides that might help:\n\n${
-        guides.map(g => 
-          `📚 ${g.title}\nCategory: ${g.category?.name}\n${g.steps ? 
-            `Steps:\n${JSON.parse(g.steps.toString()).join('\n')}\n` : ''
-          }`
-        ).join('\n\n')
-      }`;
-    }
-  }
-
   // Check if this is a DeepThink request
   if (lowerMessage.includes('analyze') || 
       lowerMessage.includes('think') || 
@@ -56,7 +33,7 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
       .limit(5);
 
     if (vehicles?.length) {
-      return `Here are some available vehicles:\n${vehicles.map(v => 
+      return `Here are some available vehicles: ${vehicles.map(v => 
         `${v.make} ${v.model} (${v.year}) - License Plate: ${v.license_plate}`
       ).join('\n')}`;
     }
@@ -171,25 +148,6 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
             ).join('\n')
           }`;
       }
-    }
-  }
-
-  // Proactive Support Suggestions
-  const { data: userActivity } = await supabase
-    .from('user_activity')
-    .select('*')
-    .order('timestamp', { ascending: false })
-    .limit(5);
-
-  if (userActivity?.length) {
-    const activityCount = userActivity[0]?.activity_count || 0;
-    
-    if (activityCount > 3) {
-      return `I notice you've been working on this task for a while. Here are some helpful resources:\n\n` +
-        `📚 Check our Help Center for detailed guides\n` +
-        `🎯 Use quick filters to find what you need faster\n` +
-        `💡 Try our new search feature for faster navigation\n\n` +
-        `Can I help you find anything specific?`;
     }
   }
 
