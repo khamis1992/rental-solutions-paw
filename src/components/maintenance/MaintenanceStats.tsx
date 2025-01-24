@@ -28,20 +28,21 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
 
   // Count records by status
   const completedCount = maintenanceData?.filter(record => 
-    record.status?.toLowerCase() === 'completed').length || 0;
+    record.status === 'completed').length || 0;
   
   const pendingCount = maintenanceData?.filter(record => 
-    record.status?.toLowerCase() === 'scheduled' || 
-    record.status?.toLowerCase() === 'in_progress').length || 0;
+    record.status === 'scheduled' || 
+    record.status === 'in_progress').length || 0;
   
-  // Count records with accident service type
+  // Count records with accident service type or urgent status
   const accidentCount = maintenanceData?.filter(record => 
-    record.service_type?.toLowerCase().includes('accident')).length || 0;
+    record.service_type === 'Accident Repair' || 
+    record.status === 'urgent').length || 0;
 
   console.log('Maintenance Data:', maintenanceData); // Debug log
   console.log('Stats:', { totalCost, completedCount, pendingCount, accidentCount }); // Debug log
   console.log('Accident Records:', maintenanceData?.filter(record => 
-    record.service_type?.toLowerCase().includes('accident'))); // Debug specific accident records
+    record.service_type === 'Accident Repair' || record.status === 'urgent')); // Debug specific accident records
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
