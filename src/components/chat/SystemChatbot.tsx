@@ -50,7 +50,15 @@ export const SystemChatbot = () => {
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Chat error:', error);
+          throw error;
+        }
+        
+        if (!data?.message) {
+          throw new Error('No response received from chat function');
+        }
+
         return data.message;
       } catch (error) {
         console.error('Chat error:', error);
@@ -71,6 +79,7 @@ export const SystemChatbot = () => {
   });
 
   const handleSendMessage = (message: string) => {
+    if (!message.trim()) return;
     chatMutation.mutate(message);
   };
 
