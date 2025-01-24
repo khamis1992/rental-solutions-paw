@@ -1,4 +1,4 @@
-import { Car, DollarSign, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
+import { Car, DollarSign, FileText, TrendingUp } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
 import { useQuery } from "@tanstack/react-query";
@@ -84,26 +84,26 @@ export const DashboardStats = () => {
       <div className="grid gap-6 md:grid-cols-3">
         <StatsCard
           title="Total Vehicles"
-          value={stats?.totalVehicles.toString() || "0"}
+          value={stats?.totalVehicles?.toString() || "0"}
           icon={Car}
           className="bg-white"
           iconClassName="h-5 w-5 text-blue-500"
           description={
             <span className="flex items-center text-emerald-600 text-xs">
               <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.vehicles}
+              {stats?.growth?.vehicles || "+0 this month"}
             </span>
           }
         />
         <StatsCard
           title="Active Rentals"
-          value={stats?.activeRentals.toString() || "0"}
+          value={stats?.activeRentals?.toString() || "0"}
           icon={FileText}
           className="bg-white"
           iconClassName="h-5 w-5 text-purple-500"
           description={
             <span className="text-amber-600 text-xs">
-              {stats?.pendingReturns} pending returns
+              {stats?.pendingReturns || 0} pending returns
             </span>
           }
         />
@@ -116,7 +116,7 @@ export const DashboardStats = () => {
           description={
             <span className="flex items-center text-emerald-600 text-xs">
               <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.revenue}
+              {stats?.growth?.revenue || "0% from last month"}
             </span>
           }
         />

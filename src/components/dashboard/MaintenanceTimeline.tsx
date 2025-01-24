@@ -77,31 +77,32 @@ export const MaintenanceTimeline = () => {
 
   return (
     <div className="space-y-4">
-      {events.map((event) => (
-        <div key={event.id} className="flex items-start gap-4 p-4 rounded-lg border bg-card">
-          <div className="flex-shrink-0">{getStatusIcon(event.status)}</div>
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between">
-              <p className="font-medium">{event.service_type}</p>
-              <Badge className={getStatusColor(event.status)}>
-                {event.status}
-              </Badge>
-            </div>
-            {event.vehicles && (
+      {events && events.length > 0 ? (
+        events.map((event) => (
+          <div key={event.id} className="flex items-start gap-4 p-4 rounded-lg border bg-card">
+            <div className="flex-shrink-0">{getStatusIcon(event.status)}</div>
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="font-medium">{event.service_type}</p>
+                <Badge className={getStatusColor(event.status)}>
+                  {event.status}
+                </Badge>
+              </div>
+              {event.vehicles && (
+                <p className="text-sm text-muted-foreground">
+                  {event.vehicles.make} {event.vehicles.model} ({event.vehicles.license_plate})
+                </p>
+              )}
               <p className="text-sm text-muted-foreground">
-                {event.vehicles.make} {event.vehicles.model} ({event.vehicles.license_plate})
+                {formatDateToDisplay(new Date(event.scheduled_date))}
               </p>
-            )}
-            <p className="text-sm text-muted-foreground">
-              {formatDateToDisplay(new Date(event.scheduled_date))}
-            </p>
-            {event.description && (
-              <p className="text-sm text-muted-foreground">{event.description}</p>
-            )}
+              {event.description && (
+                <p className="text-sm text-muted-foreground">{event.description}</p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
-      {events.length === 0 && (
+        ))
+      ) : (
         <div className="text-center py-8 text-muted-foreground">
           No maintenance events scheduled
         </div>
