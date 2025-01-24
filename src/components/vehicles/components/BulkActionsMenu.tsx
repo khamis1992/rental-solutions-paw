@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Trash2 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Trash2 } from "lucide-react";
 
 export interface BulkActionsMenuProps {
   selectedCount: number;
@@ -14,19 +8,19 @@ export interface BulkActionsMenuProps {
 
 export const BulkActionsMenu = ({ selectedCount, onDelete }: BulkActionsMenuProps) => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <MoreHorizontal className="h-4 w-4" />
-          <span className="ml-2">{selectedCount} selected</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onDelete} className="text-destructive">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete selected
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
+      <span className="text-sm text-muted-foreground">
+        {selectedCount} items selected
+      </span>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={onDelete}
+        className="flex items-center gap-2"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete Selected
+      </Button>
+    </div>
   );
 };

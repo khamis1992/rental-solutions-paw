@@ -24,29 +24,11 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
       const { error } = await supabase
         .from('vehicles')
         .delete()
-        .eq('id', selectedVehicles[0]);
-
-      if (error) throw error;
-
-      toast.success('Vehicle deleted successfully');
-      setShowDeleteDialog(false);
-      setSelectedVehicles([]);
-    } catch (error) {
-      console.error('Error deleting vehicle:', error);
-      toast.error('Failed to delete vehicle');
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    try {
-      const { error } = await supabase
-        .from('vehicles')
-        .delete()
         .in('id', selectedVehicles);
 
       if (error) throw error;
 
-      toast.success(`${selectedVehicles.length} vehicles deleted successfully`);
+      toast.success(`${selectedVehicles.length} vehicle(s) deleted successfully`);
       setShowDeleteDialog(false);
       setSelectedVehicles([]);
     } catch (error) {
@@ -94,7 +76,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
       <DeleteVehicleDialog
         isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
-        onDelete={handleBulkDelete}
+        onDelete={handleDeleteVehicle}
         count={selectedVehicles.length}
       />
     </div>

@@ -22,19 +22,26 @@ export const DeleteVehicleDialog = ({
   onDelete,
   count,
 }: DeleteVehicleDialogProps) => {
+  const handleDelete = async () => {
+    await onDelete();
+    onClose();
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {count} vehicle{count !== 1 ? 's' : ''}?</AlertDialogTitle>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the selected
-            vehicle{count !== 1 ? 's' : ''} and remove all associated data.
+            This action cannot be undone. This will permanently delete {count === 1 ? 'this vehicle' : `${count} vehicles`} and remove all associated data.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground">
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>
