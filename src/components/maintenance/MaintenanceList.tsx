@@ -11,7 +11,6 @@ import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
-import { MaintenanceStatus } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -27,7 +26,7 @@ interface MaintenanceRecord {
   vehicle_id: string;
   service_type: string;
   description?: string | null;
-  status: MaintenanceStatus | "urgent";
+  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
   cost?: number | null;
   scheduled_date: string;
   completed_date?: string | null;
@@ -78,7 +77,6 @@ export const MaintenanceList = () => {
   const { data: records = [], isLoading, error } = useQuery({
     queryKey: ["maintenance-and-accidents"],
     queryFn: async () => {
-      // Fetch regular maintenance records
       const { data: maintenanceRecords, error: maintenanceError } = await supabase
         .from("maintenance")
         .select(`
@@ -94,7 +92,6 @@ export const MaintenanceList = () => {
 
       if (maintenanceError) throw maintenanceError;
 
-      // Fetch vehicles in accident status
       const { data: accidentVehicles, error: vehiclesError } = await supabase
         .from("vehicles")
         .select(`
@@ -108,7 +105,6 @@ export const MaintenanceList = () => {
 
       if (vehiclesError) throw vehiclesError;
 
-      // Create maintenance records for accident vehicles
       const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
@@ -120,7 +116,6 @@ export const MaintenanceList = () => {
         vehicles: vehicle
       }));
 
-      // Combine and sort all records
       return [...maintenanceRecords, ...accidentRecords].sort((a, b) => 
         new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime()
       );

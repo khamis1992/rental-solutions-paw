@@ -1,124 +1,112 @@
-import { useState, useEffect } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MaintenanceStatus } from "@/types/maintenance";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MaintenanceStatusSelectProps {
   id: string;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
   vehicleId: string;
-  currentStatus: MaintenanceStatus | "urgent";
-  isAccidentRecord: boolean;
-  onStatusChange?: (newStatus: MaintenanceStatus) => void;
 }
 
-export const MaintenanceStatusSelect = ({ 
-  id, 
-  vehicleId,
-  currentStatus,
-  isAccidentRecord,
-  onStatusChange 
-}: MaintenanceStatusSelectProps) => {
-  const [statuses, setStatuses] = useState<MaintenanceStatus[]>([]);
-  const [isUpdating, setIsUpdating] = useState(false);
+export const MaintenanceStatusSelect = ({ id, status, vehicleId }: MaintenanceStatusSelectProps) => {
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchStatuses = async () => {
-      const { data, error } = await supabase
-        .from('maintenance')
-        .select('status');
-
-      if (error) {
-        console.error('Error fetching statuses:', error);
-        return;
-      }
-
-      const uniqueStatuses = Array.from(new Set(data.map(item => item.status).filter(Boolean))) as MaintenanceStatus[];
-      setStatuses(uniqueStatuses);
-    };
-
-    fetchStatuses();
-  }, []);
-
-  const handleStatusChange = async (newStatus: MaintenanceStatus) => {
+  const handleStatusChange = async (newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
-      setIsUpdating(true);
+      console.log("Current record:", { id, status, vehicleId });
+      console.log("Updating maintenance status to:", newStatus);
+
+      const { error: maintenanceError } = await supabase
+        .from('maintenance')
+        .update({ 
+          status: newStatus,
+          completed_date: newStatus === 'completed' ? new Date().toISOString() : null
+        })
+        .eq('id', id);
+
+      if (maintenanceError) throw maintenanceError;
+
+      const newVehicleStatus = (newStatus === 'completed' || newStatus === 'cancelled') 
+        ? 'available' 
+        : 'maintenance';
+
+      console.log("Updating vehicle status to:", newVehicleStatus);
       
-      if (isAccidentRecord) {
-        // For accident records, update the vehicle status
-        const { error } = await supabase
-          .from('vehicles')
-          .update({ 
-            status: newStatus === 'completed' ? 'available' : 'maintenance'
-          })
-          .eq('id', vehicleId);
+      const { error: vehicleError } = await supabase
+        .from('vehicles')
+        .update({ status: newVehicleStatus })
+        .eq('id', vehicleId);
 
-        if (error) throw error;
-      } else {
-        // Regular maintenance record update
-        const { error } = await supabase
-          .from('maintenance')
-          .update({ status: newStatus })
-          .eq('id', id);
+      if (vehicleError) throw vehicleError;
 
-        if (error) throw error;
-      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['maintenance'] }),
+        queryClient.invalidateQueries({ queryKey: ['vehicles'] }),
+        queryClient.invalidateQueries({ queryKey: ['vehicle-status-counts'] })
+      ]);
 
-      onStatusChange?.(newStatus);
       toast.success('Status updated successfully');
-    } catch (error) {
-      console.error('Error updating status:', error);
+    } catch (error: any) {
+      console.error("Error in handleStatusChange:", error);
       toast.error('Failed to update status');
-    } finally {
-      setIsUpdating(false);
     }
   };
 
-  const getStatusColor = (status: MaintenanceStatus | "urgent") => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
       case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
       case 'scheduled':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
       case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
     }
   };
 
-  // Map 'urgent' to 'accident' for display
-  const displayStatus = currentStatus === 'urgent' ? 'accident' : currentStatus;
+  if (status === 'urgent') {
+    return <Badge variant="destructive" className={getStatusColor('urgent')}>Urgent</Badge>;
+  }
 
   return (
-    <div className="flex items-center gap-2">
-      <Select
-        value={currentStatus}
-        onValueChange={handleStatusChange}
-        disabled={isUpdating}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue>
-            <Badge variant="outline" className={`${getStatusColor(currentStatus)} capitalize`}>
-              {displayStatus.replace('_', ' ')}
-            </Badge>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {statuses.map((status) => (
-            <SelectItem key={status} value={status}>
-              <Badge variant="outline" className={`${getStatusColor(status)} capitalize`}>
-                {status.replace('_', ' ')}
-              </Badge>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select
+      value={status}
+      onValueChange={handleStatusChange}
+    >
+      <SelectTrigger className="w-[130px]">
+        <SelectValue>
+          <Badge className={getStatusColor(status)}>
+            {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+          </Badge>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="scheduled">
+          <Badge className={getStatusColor('scheduled')}>Scheduled</Badge>
+        </SelectItem>
+        <SelectItem value="in_progress">
+          <Badge className={getStatusColor('in_progress')}>In Progress</Badge>
+        </SelectItem>
+        <SelectItem value="completed">
+          <Badge className={getStatusColor('completed')}>Completed</Badge>
+        </SelectItem>
+        <SelectItem value="cancelled">
+          <Badge className={getStatusColor('cancelled')}>Cancelled</Badge>
+        </SelectItem>
+      </SelectContent>
+    </Select>
   );
 };

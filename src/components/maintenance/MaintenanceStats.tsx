@@ -2,23 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { Wrench, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 
-interface MaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  description?: string | null;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
-  cost?: number;
-  scheduled_date: string;
-  completed_date?: string | null;
-  performed_by?: string | null;
-  notes?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
 interface MaintenanceStatsProps {
-  maintenanceData?: MaintenanceRecord[];
+  maintenanceData?: {
+    id: string;
+    status: string;
+    cost?: number;
+  }[];
 }
 
 export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps) => {
@@ -28,21 +17,14 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
 
   // Count records by status
   const completedCount = maintenanceData?.filter(record => 
-    record.status === 'completed').length || 0;
+    record.status?.toLowerCase() === 'completed').length || 0;
   
   const pendingCount = maintenanceData?.filter(record => 
-    record.status === 'scheduled' || 
-    record.status === 'in_progress').length || 0;
+    record.status?.toLowerCase() === 'scheduled' || 
+    record.status?.toLowerCase() === 'in_progress').length || 0;
   
-  // Count records with accident service type or urgent status
-  const accidentCount = maintenanceData?.filter(record => 
-    record.service_type === 'Accident Repair' || 
-    record.status === 'urgent').length || 0;
-
-  console.log('Maintenance Data:', maintenanceData); // Debug log
-  console.log('Stats:', { totalCost, completedCount, pendingCount, accidentCount }); // Debug log
-  console.log('Accident Records:', maintenanceData?.filter(record => 
-    record.service_type === 'Accident Repair' || record.status === 'urgent')); // Debug specific accident records
+  const urgentCount = maintenanceData?.filter(record => 
+    record.status?.toLowerCase() === 'urgent').length || 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
@@ -86,11 +68,11 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-muted-foreground">
-              Accident
+              Urgent
             </h3>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </div>
-          <div className="text-2xl font-bold">{accidentCount}</div>
+          <div className="text-2xl font-bold">{urgentCount}</div>
         </CardContent>
       </Card>
     </div>
