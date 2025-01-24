@@ -5,57 +5,100 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { VehicleStatus as VehicleStatusType } from "@/types/vehicle";
 import { useState } from "react";
-import { AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface VehicleStatusProps {
   vehicleId: string;
-  currentStatus: VehicleStatusType;
+  initialStatus: VehicleStatusType;
 }
 
-export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) => {
-  const [status, setStatus] = useState<VehicleStatusType>(currentStatus);
+export const VehicleStatus = ({ vehicleId, initialStatus }: VehicleStatusProps) => {
+  const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch available statuses from the database
-  const { data: availableStatuses } = useQuery({
-    queryKey: ["vehicle-statuses"],
+  const { data: maintenanceRecords } = useQuery({
+    queryKey: ["maintenance", vehicleId],
     queryFn: async () => {
-      console.log("Fetching vehicle statuses"); // Debug log
       const { data, error } = await supabase
-        .from("vehicle_statuses")
+        .from("maintenance")
         .select("*")
-        .eq("is_active", true)
-        .order("name");
+        .eq("vehicle_id", vehicleId);
 
-      if (error) {
-        console.error("Error fetching vehicle statuses:", error);
-        throw error;
-      }
-
-      console.log("Available statuses:", data); // Debug log
+      if (error) throw error;
       return data;
     },
   });
 
-  const getStatusColor = (status: VehicleStatusType) => {
-    console.log("Getting color for status:", status); // Debug log
-    switch (status) {
-      case "available":
-        return "bg-green-500";
-      case "maintenance":
-        return "bg-yellow-500";
-      case "rented":
-        return "bg-blue-500";
-      case "accident":
-        return "bg-red-500";
-      case "reserve":
-        return "bg-purple-500";
-      case "police_station":
-        return "bg-pink-500";
-      case "stolen":
-        return "bg-red-700";
-      default:
-        return "bg-gray-500";
+  const handleStatusChange = async (newStatus: VehicleStatusType) => {
+    try {
+      // Update vehicle status
+      const { error: updateError } = await supabase
+        .from("vehicles")
+        .update({ status: newStatus })
+        .eq("id", vehicleId);
+
+      if (updateError) throw updateError;
+
+      // If changing to maintenance, create a maintenance record
+      if (newStatus === "maintenance") {
+        const { error: maintenanceError } = await supabase
+          .from("maintenance")
+          .insert([
+            {
+              vehicle_id: vehicleId,
+              service_type: "General Maintenance",
+              status: "scheduled",
+              scheduled_date: new Date().toISOString(),
+              description: "Vehicle status changed to maintenance",
+            },
+          ]);
+
+        if (maintenanceError) throw maintenanceError;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      toast.success("Vehicle status updated successfully");
+    } catch (error: any) {
+      console.error("Error updating status:", error);
+      toast.error(error.message || "Failed to update status");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("maintenance")
+        .delete()
+        .eq("vehicle_id", vehicleId);
+
+      if (error) throw error;
+
+      // Update vehicle status back to available
+      const { error: updateError } = await supabase
+        .from("vehicles")
+        .update({ status: "available" })
+        .eq("id", vehicleId);
+
+      if (updateError) throw updateError;
+
+      await queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      await queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      toast.success("Maintenance record deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting maintenance:", error);
+      toast.error(error.message || "Failed to delete maintenance record");
     }
   };
 
@@ -67,102 +110,78 @@ export const VehicleStatus = ({ vehicleId, currentStatus }: VehicleStatusProps) 
       case "maintenance":
         return <Clock className="h-4 w-4" />;
       case "accident":
-      case "stolen":
-      case "police_station":
         return <AlertCircle className="h-4 w-4" />;
       default:
         return null;
     }
   };
 
-  const updateStatus = async (newStatus: VehicleStatusType) => {
-    try {
-      console.log("Attempting to update status to:", newStatus); // Debug log
-      console.log("Vehicle ID:", vehicleId); // Debug log
-      
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ status: newStatus })
-        .eq("id", vehicleId);
-
-      if (vehicleError) {
-        console.error("Error updating status:", vehicleError); // Debug log
-        toast.error("Failed to update vehicle status");
-        throw vehicleError;
-      }
-
-      // If status is changed to maintenance, create a maintenance record
-      if (newStatus === "maintenance") {
-        const { error: maintenanceError } = await supabase
-          .from("maintenance")
-          .insert([
-            {
-              vehicle_id: vehicleId,
-              service_type: "General Maintenance",
-              status: "scheduled",
-              description: "Vehicle status changed to maintenance",
-              scheduled_date: new Date().toISOString(),
-              category_id: (await supabase
-                .from("maintenance_categories")
-                .select("id")
-                .eq("name", "General")
-                .single()
-              ).data?.id,
-            },
-          ]);
-
-        if (maintenanceError) {
-          console.error("Error creating maintenance record:", maintenanceError);
-          toast.error("Failed to create maintenance record");
-          throw maintenanceError;
-        }
-      }
-
-      setStatus(newStatus);
-      toast.success("Vehicle status updated successfully");
-      
-      // Invalidate relevant queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] });
-      
-      console.log("Status updated successfully"); // Debug log
-    } catch (error) {
-      console.error("Error in updateStatus:", error); // Debug log
-      toast.error("Failed to update vehicle status");
-    }
-  };
-
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-medium">Vehicle Status</CardTitle>
+        <CardTitle>Vehicle Status</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={`${getStatusColor(status)} text-white px-3 py-1 rounded-full flex items-center gap-1`}>
-              {getStatusIcon(status)}
-              <span className="capitalize">{status.replace('_', ' ')}</span>
-            </div>
+            {getStatusIcon(initialStatus)}
+            <span className="capitalize">{initialStatus}</span>
           </div>
-          
-          <div className="grid grid-cols-2 gap-2">
-            {availableStatuses?.map((statusOption) => (
-              <Button
-                key={statusOption.id}
-                variant="outline"
-                onClick={() => {
-                  console.log("Button clicked for status:", statusOption.name); // Debug log
-                  updateStatus(statusOption.name as VehicleStatusType);
-                }}
-                disabled={status === statusOption.name}
-              >
-                Mark as {statusOption.name.replace('_', ' ')}
-              </Button>
-            ))}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              Change Status
+            </Button>
+            {initialStatus === "maintenance" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="icon">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Maintenance Record</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this maintenance record? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
+
+        {isEditing && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleStatusChange("available")}
+            >
+              Available
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleStatusChange("maintenance")}
+            >
+              Maintenance
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleStatusChange("accident")}
+            >
+              Accident
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
