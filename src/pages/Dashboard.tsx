@@ -4,7 +4,6 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
 const Dashboard = () => {
   const { data: stats } = useQuery({
@@ -49,12 +48,9 @@ const Dashboard = () => {
         <DashboardStats stats={stats} />
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
-        <div className="lg:col-span-4">
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="col-span-2">
           <RecentActivity />
-        </div>
-        <div className="lg:col-span-3">
-          <SystemChatbot />
         </div>
       </div>
     </div>
