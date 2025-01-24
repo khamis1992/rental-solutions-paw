@@ -37,10 +37,13 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
   // Count both explicit 'urgent' status and records from accident vehicles
   const urgentCount = maintenanceData?.filter(record => 
     record.status?.toLowerCase() === 'urgent' || 
-    record.service_type?.toLowerCase() === 'accident repair').length || 0;
+    record.service_type?.toLowerCase().includes('accident')).length || 0;
 
   console.log('Maintenance Data:', maintenanceData); // Debug log
   console.log('Stats:', { totalCost, completedCount, pendingCount, urgentCount }); // Debug log
+  console.log('Urgent Records:', maintenanceData?.filter(record => 
+    record.status?.toLowerCase() === 'urgent' || 
+    record.service_type?.toLowerCase().includes('accident'))); // Debug specific urgent records
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
