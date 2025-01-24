@@ -1026,27 +1026,39 @@ export type Database = {
       }
       chat_messages: {
         Row: {
+          conversation_context: Json | null
           created_at: string | null
           id: string
           message: string
           role: string
+          sentiment_label: string | null
+          sentiment_score: number | null
           updated_at: string | null
+          urgency_level: string | null
           user_id: string | null
         }
         Insert: {
+          conversation_context?: Json | null
           created_at?: string | null
           id?: string
           message: string
           role: string
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           updated_at?: string | null
+          urgency_level?: string | null
           user_id?: string | null
         }
         Update: {
+          conversation_context?: Json | null
           created_at?: string | null
           id?: string
           message?: string
           role?: string
+          sentiment_label?: string | null
+          sentiment_score?: number | null
           updated_at?: string | null
+          urgency_level?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -1194,6 +1206,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      conversation_contexts: {
+        Row: {
+          context_data: Json
+          created_at: string | null
+          id: string
+          last_updated: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context_data?: Json
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context_data?: Json
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       credit_assessments: {
         Row: {
@@ -4363,6 +4399,36 @@ export type Database = {
           min_rental_duration?: number | null
           start_date?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      query_patterns: {
+        Row: {
+          category: string | null
+          context_requirements: Json | null
+          created_at: string | null
+          id: string
+          pattern: string
+          response_template: Json
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          context_requirements?: Json | null
+          created_at?: string | null
+          id?: string
+          pattern: string
+          response_template: Json
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          context_requirements?: Json | null
+          created_at?: string | null
+          id?: string
+          pattern?: string
+          response_template?: Json
+          updated_at?: string | null
         }
         Relationships: []
       }

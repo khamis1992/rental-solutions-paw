@@ -12,6 +12,11 @@ import { getDatabaseResponse } from "@/utils/chatDatabaseQueries";
 interface Message {
   role: "assistant" | "user";
   content: string;
+  sentiment?: {
+    score: number;
+    label: string;
+    urgency: string;
+  };
 }
 
 const TRUSTED_ORIGIN = window.location.origin;
@@ -25,6 +30,7 @@ export const SystemChatbot = () => {
   ]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
+  const contextRef = useRef<any>(null);
 
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
@@ -42,6 +48,28 @@ export const SystemChatbot = () => {
   }, []);
 
   useEffect(() => {
+    // Initialize conversation context
+    const initContext = async () => {
+      const { data: existingContext } = await supabase
+        .from('conversation_contexts')
+        .select('context_data')
+        .single();
+
+      if (!existingContext) {
+        const { data } = await supabase
+          .from('conversation_contexts')
+          .insert([{ context_data: {} }])
+          .select()
+          .single();
+        
+        contextRef.current = data?.context_data || {};
+      } else {
+        contextRef.current = existingContext.context_data;
+      }
+    };
+
+    initContext();
+
     channelRef.current = supabase
       .channel('chat-updates')
       .on(
@@ -69,17 +97,37 @@ export const SystemChatbot = () => {
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       try {
-        // First, get the database response
-        const dbResponse = await getDatabaseResponse(message);
+        // First, analyze sentiment
+        const response = await fetch(`${TRUSTED_ORIGIN}/functions/v1/analyze-sentiment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ text: message }),
+        });
+
+        const sentimentData = await response.json();
         
-        // If we have a direct database response, use it
+        // Store message with sentiment analysis
+        await supabase.from('chat_messages').insert([{
+          message,
+          role: 'user',
+          sentiment_score: sentimentData.score,
+          sentiment_label: sentimentData.label,
+          urgency_level: sentimentData.urgency,
+          conversation_context: contextRef.current
+        }]);
+
+        // Get database response if available
+        const dbResponse = await getDatabaseResponse(message);
         if (dbResponse) {
           console.log('Using database response:', dbResponse);
-          return dbResponse;
+          return { content: dbResponse, sentiment: sentimentData };
         }
 
-        // If no direct match, use DeepSeek to understand the query
-        const response = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
+        // If no direct match, use DeepSeek with context
+        const aiResponse = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -93,30 +141,54 @@ export const SystemChatbot = () => {
               },
               { role: 'user', content: message }
             ],
-            dbResponse: null // We already tried direct database response
+            context: contextRef.current,
+            sentiment: sentimentData
           }),
         });
 
-        if (!response.ok) {
+        if (!aiResponse.ok) {
           throw new Error('Failed to get AI response');
         }
 
-        const data = await response.json();
+        const data = await aiResponse.json();
         
-        // Try database response again with AI-interpreted query
-        const refinedDbResponse = await getDatabaseResponse(data.message);
-        return refinedDbResponse || "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
+        // Update conversation context
+        contextRef.current = {
+          ...contextRef.current,
+          lastQuery: message,
+          lastResponse: data.message,
+          timestamp: new Date().toISOString()
+        };
+
+        await supabase
+          .from('conversation_contexts')
+          .update({ context_data: contextRef.current })
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+
+        return { content: data.message, sentiment: sentimentData };
       } catch (error) {
         console.error('Chat error:', error);
-        return "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
+        return {
+          content: "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.",
+          sentiment: null
+        };
       }
     },
     onSuccess: (response, variables) => {
       setMessages((prev) => [
         ...prev,
         { role: "user", content: variables },
-        { role: "assistant", content: response },
+        { 
+          role: "assistant", 
+          content: response.content,
+          sentiment: response.sentiment 
+        },
       ]);
+
+      // Show urgent message notification if detected
+      if (response.sentiment?.urgency === 'high') {
+        toast.warning("This query has been marked as urgent and will be prioritized.");
+      }
     },
     onError: (error: Error) => {
       console.error("Chat error:", error);
@@ -145,6 +217,7 @@ export const SystemChatbot = () => {
               key={index}
               content={message.content}
               role={message.role}
+              sentiment={message.sentiment}
             />
           ))}
           {chatMutation.isPending && (
