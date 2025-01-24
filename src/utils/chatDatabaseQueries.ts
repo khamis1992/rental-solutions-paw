@@ -1,4 +1,3 @@
-<lov-code>
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeQuery } from "./chatSynonyms";
 
@@ -182,5 +181,5 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
     }
   }
 
-  // Store user feedback for synonym learning
- 
+  return null;
+}
