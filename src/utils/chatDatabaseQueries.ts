@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export async function getDatabaseResponse(message: string): Promise<string | null> {
   const lowerMessage = message.toLowerCase();
@@ -194,6 +195,51 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
   }
 
   return null;
+}
+
+export async function handleChatDocumentUpload(
+  file: File,
+  customerId: string,
+  documentType: string
+): Promise<string | null> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${customerId}/${crypto.randomUUID()}.${fileExt}`;
+
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('customer_documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('customer_documents')
+      .getPublicUrl(filePath);
+
+    // Analyze document
+    const { data: analysisData, error: analysisError } = await supabase.functions
+      .invoke('analyze-chat-document', {
+        body: {
+          documentUrl: publicUrl,
+          documentType,
+          customerId
+        }
+      });
+
+    if (analysisError) throw analysisError;
+
+    // Return the analysis summary
+    return `Document analyzed successfully:\n${analysisData.data.extractedText}`;
+  } catch (error: any) {
+    console.error('Error handling document upload:', error);
+    toast.error(error.message || 'Failed to process document');
+    return null;
+  }
 }
 
 function determineContext(message: string): string {
