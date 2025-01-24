@@ -26,6 +26,9 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
   const urgentCount = maintenanceData?.filter(record => 
     record.status?.toLowerCase() === 'urgent').length || 0;
 
+  console.log('Maintenance Data:', maintenanceData); // Debug log
+  console.log('Stats:', { totalCost, completedCount, pendingCount, urgentCount }); // Debug log
+
   return (
     <div className="grid gap-4 md:grid-cols-4">
       <Card>
