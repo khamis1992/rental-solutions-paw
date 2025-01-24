@@ -6,18 +6,18 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
 
-interface DashboardData {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
+interface DashboardStats {
+  totalVehicles: number;
+  availableVehicles: number;
+  rentedVehicles: number;
+  maintenanceVehicles: number;
+  totalCustomers: number;
+  activeRentals: number;
+  monthlyRevenue: number;
 }
 
 const Dashboard = () => {
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dashboard_stats");
@@ -25,13 +25,13 @@ const Dashboard = () => {
       if (error) throw error;
       
       return {
-        totalVehicles: data.total_vehicles,
-        availableVehicles: data.available_vehicles,
-        rentedVehicles: data.rented_vehicles,
-        maintenanceVehicles: data.maintenance_vehicles,
-        totalCustomers: data.total_customers,
-        activeRentals: data.active_rentals,
-        monthlyRevenue: data.monthly_revenue
+        totalVehicles: data.total_vehicles || 0,
+        availableVehicles: data.available_vehicles || 0,
+        rentedVehicles: data.rented_vehicles || 0,
+        maintenanceVehicles: data.maintenance_vehicles || 0,
+        totalCustomers: data.total_customers || 0,
+        activeRentals: data.active_rentals || 0,
+        monthlyRevenue: data.monthly_revenue || 0
       };
     },
     staleTime: 30000,
@@ -46,7 +46,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-8">
-        <DashboardStats stats={stats} />
+        {stats && <DashboardStats stats={stats} />}
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
