@@ -1,12 +1,10 @@
 export type AgreementType = 'lease_to_own' | 'short_term';
 export type DocumentLanguage = 'english' | 'arabic';
-export type LeaseStatus = 'active' | 'pending' | 'expired' | 'cancelled' | 'terminated' | 'pending_payment' | 'pending_deposit';
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
 
 export interface Template {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   content: any;
   language: DocumentLanguage;
   agreement_type: AgreementType;
@@ -30,7 +28,7 @@ export interface Agreement {
   customer_id: string;
   start_date?: string;
   end_date?: string;
-  status: LeaseStatus;
+  status: string;
   initial_mileage: number;
   return_mileage?: number;
   total_amount: number;
@@ -67,7 +65,7 @@ export interface Payment {
   balance: number;
   payment_date: string;
   payment_method: string;
-  status: PaymentStatus;
+  status: string;
   description: string;
   type: string;
   transaction_id?: string;

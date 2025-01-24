@@ -6,7 +6,7 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
 
-interface DashboardStats {
+interface DashboardData {
   total_vehicles: number;
   available_vehicles: number;
   rented_vehicles: number;
@@ -17,7 +17,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { data: stats } = useQuery<DashboardStats>({
+  const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dashboard_stats");
@@ -25,13 +25,13 @@ const Dashboard = () => {
       if (error) throw error;
       
       return {
-        total_vehicles: data.total_vehicles || 0,
-        available_vehicles: data.available_vehicles || 0,
-        rented_vehicles: data.rented_vehicles || 0,
-        maintenance_vehicles: data.maintenance_vehicles || 0,
-        total_customers: data.total_customers || 0,
-        active_rentals: data.active_rentals || 0,
-        monthly_revenue: data.monthly_revenue || 0
+        totalVehicles: data.total_vehicles,
+        availableVehicles: data.available_vehicles,
+        rentedVehicles: data.rented_vehicles,
+        maintenanceVehicles: data.maintenance_vehicles,
+        totalCustomers: data.total_customers,
+        activeRentals: data.active_rentals,
+        monthlyRevenue: data.monthly_revenue
       };
     },
     staleTime: 30000,
@@ -46,7 +46,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-8">
-        {stats && <DashboardStats stats={stats} />}
+        <DashboardStats stats={stats} />
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
