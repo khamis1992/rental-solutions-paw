@@ -1,6 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
-import { TransactionCategorization } from "@/components/finance/transactions/TransactionCategorization";
 import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
 import { RawDataView } from "@/components/finance/raw-data/RawDataView";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
@@ -12,7 +11,6 @@ import {
   BarChart3, 
   CreditCard, 
   FileText, 
-  Tags, 
   Database,
   Car,
   Brain
@@ -57,22 +55,6 @@ const Finance = () => {
             </TabsTrigger>
 
             <TabsTrigger 
-              value="transactions" 
-              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              <FileText className="h-4 w-4" />
-              <span>Transactions</span>
-            </TabsTrigger>
-
-            <TabsTrigger 
-              value="categorization" 
-              className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              <Tags className="h-4 w-4" />
-              <span>Categorization</span>
-            </TabsTrigger>
-
-            <TabsTrigger 
               value="raw-data" 
               className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
             >
@@ -102,16 +84,8 @@ const Finance = () => {
           <RevenueDashboard />
         </TabsContent>
 
-        <TabsContent value="payments" className="space-y-6">
+        <TabsContent value="payments">
           <PaymentManagement />
-        </TabsContent>
-
-        <TabsContent value="transactions">
-          {/* Transaction management components will go here */}
-        </TabsContent>
-
-        <TabsContent value="categorization">
-          <TransactionCategorization />
         </TabsContent>
 
         <TabsContent value="raw-data">
