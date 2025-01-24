@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Filter } from "lucide-react";
+import { MaintenanceStatus } from "@/types/maintenance";
 
 export interface MaintenanceFilters {
-  status: string;
+  status: MaintenanceStatus | "all" | "accident" | "urgent";
   serviceType: string;
   dateRange: string;
   categoryId?: string;
@@ -41,7 +42,7 @@ export function MaintenanceFilters({ filters, setFilters }: MaintenanceFiltersPr
           <div className="flex-1">
             <Select
               value={filters.status}
-              onValueChange={(value) => setFilters({ ...filters, status: value })}
+              onValueChange={(value) => setFilters({ ...filters, status: value as MaintenanceFilters["status"] })}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Filter by status" />
