@@ -55,7 +55,17 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
-      // Start a transaction using multiple queries
+      // First update vehicle status to maintenance
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "maintenance" })
+        .eq("id", formData.vehicle_id);
+
+      if (vehicleError) {
+        throw vehicleError;
+      }
+
+      // Then create maintenance record
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
@@ -66,21 +76,13 @@ export function CreateJobDialog() {
         .select()
         .single();
 
-      if (maintenanceError) throw maintenanceError;
-
-      // Update vehicle status to maintenance
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ status: "maintenance" })
-        .eq("id", formData.vehicle_id);
-
-      if (vehicleError) {
-        // Rollback maintenance record if vehicle update fails
+      if (maintenanceError) {
+        // Rollback vehicle status if maintenance creation fails
         await supabase
-          .from("maintenance")
-          .delete()
-          .eq("id", maintenanceData.id);
-        throw vehicleError;
+          .from("vehicles")
+          .update({ status: "available" })
+          .eq("id", formData.vehicle_id);
+        throw maintenanceError;
       }
 
       // Invalidate relevant queries to trigger UI updates

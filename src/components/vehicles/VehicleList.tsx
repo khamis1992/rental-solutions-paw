@@ -41,14 +41,14 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
             queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] })
           ]);
 
-          // Show toast notification
+          // Show toast notification for status changes
           if (payload.eventType === 'UPDATE' && payload.new.status !== payload.old.status) {
             const vehicleInfo = `${payload.new.make} ${payload.new.model} (${payload.new.license_plate})`;
             toast.info(`Vehicle ${vehicleInfo} status updated to ${payload.new.status}`);
           }
         }
       )
-      .subscribe();
+      .subscribe();   
 
     return () => {
       supabase.removeChannel(channel);
