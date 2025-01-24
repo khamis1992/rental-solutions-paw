@@ -4,6 +4,21 @@ import { toast } from "sonner";
 export async function getDatabaseResponse(message: string): Promise<string | null> {
   const lowerMessage = message.toLowerCase();
 
+  // Vehicle count queries
+  if (lowerMessage.match(/how many (cars|vehicles)|vehicle count|total (cars|vehicles)/i)) {
+    const { data: vehicles, error } = await supabase
+      .from('vehicles')
+      .select('status', { count: 'exact' });
+
+    if (error) {
+      console.error('Error fetching vehicle count:', error);
+      return "I encountered an error while fetching vehicle information.";
+    }
+
+    const count = vehicles?.length || 0;
+    return `We currently have ${count} vehicles in our fleet.`;
+  }
+
   // Agreement Generation Command
   const agreementMatch = lowerMessage.match(/create.*(rental|lease).*(agreement|contract)\s+for\s+(.+)/i);
   if (agreementMatch) {
@@ -124,27 +139,6 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
           }`
         ).join('\n\n')
       }`;
-    }
-  }
-
-  // Check if this is a DeepThink request
-  if (lowerMessage.includes('analyze') || 
-      lowerMessage.includes('think') || 
-      lowerMessage.includes('solve') ||
-      lowerMessage.includes('help me with')) {
-    try {
-      const { data, error } = await supabase.functions.invoke('deep-think', {
-        body: {
-          messages: [{ role: 'user', content: message }],
-          context: determineContext(message)
-        }
-      });
-
-      if (error) throw error;
-      return data.message;
-    } catch (error) {
-      console.error('Error in deep think analysis:', error);
-      return "I encountered an error while analyzing your request. Please try again with more specific details.";
     }
   }
 
@@ -295,23 +289,4 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
   }
 
   return null;
-}
-
-function determineContext(message: string): string {
-  const lowerMessage = message.toLowerCase();
-  
-  if (lowerMessage.includes('vehicle') || lowerMessage.includes('car') || lowerMessage.includes('maintenance')) {
-    return 'vehicle management';
-  }
-  if (lowerMessage.includes('payment') || lowerMessage.includes('invoice') || lowerMessage.includes('finance')) {
-    return 'financial operations';
-  }
-  if (lowerMessage.includes('case') || lowerMessage.includes('legal') || lowerMessage.includes('fine')) {
-    return 'legal management';
-  }
-  if (lowerMessage.includes('customer') || lowerMessage.includes('client')) {
-    return 'customer relations';
-  }
-  
-  return 'general rental business';
 }
