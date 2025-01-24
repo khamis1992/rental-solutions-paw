@@ -22,7 +22,7 @@ export interface Agreement {
   updated_at: string;
   daily_late_fee: number;
   rent_amount: number;
-  remainingAmount: number;
+  remainingAmount?: number;
 }
 
 export interface AgreementWithRelations extends Agreement {
@@ -30,6 +30,9 @@ export interface AgreementWithRelations extends Agreement {
     id: string;
     full_name: string | null;
     phone_number: string | null;
+    email?: string | null;
+    address?: string | null;
+    nationality?: string | null;
   };
   vehicle?: {
     id: string;
@@ -38,20 +41,23 @@ export interface AgreementWithRelations extends Agreement {
     year: number;
     license_plate: string;
   };
+  remainingAmount?: {
+    remaining_amount: number;
+  };
 }
 
 export interface Template {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   agreement_type: AgreementType;
   rent_amount: number;
   final_price: number;
   agreement_duration: string;
-  daily_late_fee: number;
+  daily_late_fee?: number;
   damage_penalty_rate?: number;
   late_return_fee?: number;
-  is_active: boolean;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
   content?: string;
