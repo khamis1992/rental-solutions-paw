@@ -1,59 +1,60 @@
-export type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
-export type AgreementType = "lease_to_own" | "short_term";
-export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
-export type DocumentLanguage = "english" | "arabic";
+export type AgreementType = 'lease_to_own' | 'short_term';
+export type DocumentLanguage = 'english' | 'arabic';
+
+export interface Template {
+  id: string;
+  name: string;
+  description?: string;
+  content: any;
+  language: DocumentLanguage;
+  agreement_type: AgreementType;
+  rent_amount: number;
+  final_price: number;
+  agreement_duration: string;
+  daily_late_fee?: number;
+  damage_penalty_rate?: number;
+  late_return_fee?: number;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  template_structure: any;
+  template_sections: any[];
+  variable_mappings: any;
+}
 
 export interface Agreement {
   id: string;
-  agreement_number: string | null;
-  agreement_type: AgreementType;
-  customer_id: string;
   vehicle_id: string;
-  start_date: string | null;
-  end_date: string | null;
-  status: LeaseStatus;
-  total_amount: number;
+  customer_id: string;
+  start_date?: string;
+  end_date?: string;
+  status: string;
   initial_mileage: number;
-  return_mileage: number | null;
-  notes: string | null;
+  return_mileage?: number;
+  total_amount: number;
+  notes?: string;
   created_at: string;
   updated_at: string;
-  daily_late_fee: number;
+  agreement_type: AgreementType;
+  agreement_number: string;
   rent_amount: number;
   remainingAmount: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
+  agreement_duration: string;
+  daily_late_fee: number;
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    full_name: string;
+    phone_number?: string;
+    email?: string;
   };
-  vehicle?: {
-    id: string;
+  vehicle: {
     make: string;
     model: string;
     year: number;
     license_plate: string;
   };
-}
-
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  agreement_type: AgreementType;
-  rent_amount: number;
-  final_price: number;
-  agreement_duration: string;
-  daily_late_fee: number;
-  damage_penalty_rate?: number;
-  late_return_fee?: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  content?: string;
-  language?: DocumentLanguage;
-  template_structure: Record<string, any>;
-  template_sections: any[];
-  variable_mappings: Record<string, any>;
 }
 
 export interface Payment {
@@ -64,16 +65,15 @@ export interface Payment {
   balance: number;
   payment_date: string;
   payment_method: string;
-  status: PaymentStatus;
+  status: string;
   description: string;
   type: string;
-  late_fine_amount: number;
-  days_overdue: number;
   transaction_id?: string;
   security_deposit_id?: string;
-  is_recurring?: boolean;
+  is_recurring: boolean;
   recurring_interval?: string;
-  next_payment_date?: string;
+  late_fine_amount: number;
+  days_overdue: number;
   created_at: string;
   updated_at: string;
 }
