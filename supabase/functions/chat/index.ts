@@ -14,6 +14,7 @@ const detectLanguage = (text: string): 'en' | 'ar' => {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -35,23 +36,40 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      throw new Error('Invalid or empty messages array');
+    }
+
     const userMessage = messages[messages.length - 1].content;
+    if (!userMessage) {
+      throw new Error('Invalid user message');
+    }
+
     const detectedLanguage = detectLanguage(userMessage);
 
     // Get matching query patterns
-    const { data: patterns } = await supabase
+    const { data: patterns, error: patternsError } = await supabase
       .from('ai_query_patterns')
       .select('*')
       .eq('language', detectedLanguage);
 
+    if (patternsError) {
+      console.error('Error fetching patterns:', patternsError);
+      throw patternsError;
+    }
+
     // Log the query for analysis
-    await supabase.from('ai_query_history').insert({
+    const { error: logError } = await supabase.from('ai_query_history').insert({
       query: userMessage,
       detected_language: detectedLanguage,
       detected_intent: 'general_query',
       response_data: {},
       success_rate: 1.0
     });
+
+    if (logError) {
+      console.error('Error logging query:', logError);
+    }
 
     const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
     if (!deepseekApiKey) {
@@ -93,14 +111,22 @@ serve(async (req) => {
     const data = await response.json();
     console.log('DeepSeek API response received');
 
+    if (!data.choices?.[0]?.message) {
+      throw new Error('Invalid response format from DeepSeek API');
+    }
+
     // Update query history with the response
-    await supabase
+    const { error: updateError } = await supabase
       .from('ai_query_history')
       .update({
         response_data: data.choices[0].message,
         success_rate: 1.0
       })
       .eq('query', userMessage);
+
+    if (updateError) {
+      console.error('Error updating query history:', updateError);
+    }
 
     return new Response(
       JSON.stringify({ message: data.choices[0].message.content }),
