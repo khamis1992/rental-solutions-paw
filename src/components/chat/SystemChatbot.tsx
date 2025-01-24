@@ -7,11 +7,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { getDatabaseResponse } from "@/utils/chatDatabaseQueries";
 
 interface Message {
   role: "assistant" | "user";
   content: string;
 }
+
+const TRUSTED_ORIGIN = window.location.origin;
 
 export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -20,8 +23,19 @@ export const SystemChatbot = () => {
       content: "Hello! I'm your Rental Solutions assistant. I can help you with information about vehicles, customers, agreements, and payments. What would you like to know?",
     },
   ]);
-  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<any>(null);
+
+  // Track user activity
+  useEffect(() => {
+    const trackActivity = async () => {
+      await supabase
+        .from('user_activity')
+        .insert([{ activity_count: 1 }]);
+    };
+
+    trackActivity();
+  }, []);
 
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
@@ -38,31 +52,140 @@ export const SystemChatbot = () => {
     };
   }, []);
 
+  // Subscribe to real-time notifications
+  useEffect(() => {
+    channelRef.current = supabase
+      .channel('chat-updates')
+      .on(
+        'broadcast',
+        { event: 'chat-message' },
+        (payload) => {
+          console.log('Received real-time message:', payload);
+          if (payload.message) {
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: payload.message
+            }]);
+          }
+        }
+      )
+      // Subscribe to maintenance notifications
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'maintenance',
+          filter: `status=eq.scheduled`
+        },
+        (payload) => {
+          const notification = `Maintenance Alert: Vehicle maintenance is scheduled for ${new Date(payload.new.scheduled_date).toLocaleDateString()}`;
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: notification
+          }]);
+        }
+      )
+      // Subscribe to overdue payments
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'overdue_payments_view'
+        },
+        (payload) => {
+          const notification = `Payment Alert: Payment overdue for ${payload.new.days_overdue} days`;
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: notification
+          }]);
+        }
+      )
+      // Subscribe to expiring agreements
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leases',
+          filter: `status=eq.active`
+        },
+        (payload) => {
+          const endDate = new Date(payload.new.end_date);
+          const daysUntilExpiry = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          
+          if (daysUntilExpiry <= 7) {
+            const notification = `Agreement Alert: Agreement #${payload.new.agreement_number} expires in ${daysUntilExpiry} days`;
+            setMessages(prev => [...prev, {
+              role: "assistant",
+              content: notification
+            }]);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to chat updates and notifications');
+        } else if (status === 'CLOSED') {
+          console.log('Subscription to chat updates closed');
+          toast.error('Lost connection to real-time updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error in chat subscription channel');
+          toast.error('Error in real-time updates connection');
+        }
+      });
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, []);
+
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       try {
-        const { data, error } = await supabase.functions.invoke('chat', {
-          body: {
+        // First, get the database response
+        const dbResponse = await getDatabaseResponse(message);
+        
+        // If we have a direct database response, use it
+        if (dbResponse) {
+          console.log('Using database response:', dbResponse);
+          return dbResponse;
+        }
+
+        // If no direct match, use DeepSeek to understand the query
+        const response = await fetch(`${TRUSTED_ORIGIN}/functions/v1/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
             messages: [
-              ...messages,
+              {
+                role: 'system',
+                content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data. If you cannot find specific data, ask the user to rephrase their question to match available information categories: vehicles, customers, agreements, payments, or maintenance.'
+              },
               { role: 'user', content: message }
-            ]
-          }
+            ],
+            dbResponse: null // We already tried direct database response
+          }),
         });
 
-        if (error) {
-          console.error('Chat error:', error);
-          throw error;
-        }
-        
-        if (!data?.message) {
-          throw new Error('No response received from chat function');
+        if (!response.ok) {
+          throw new Error('Failed to get AI response');
         }
 
-        return data.message;
+        const data = await response.json();
+        
+        // Try database response again with AI-interpreted query
+        const refinedDbResponse = await getDatabaseResponse(data.message);
+        return refinedDbResponse || "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
       } catch (error) {
         console.error('Chat error:', error);
-        throw new Error('Failed to get response');
+        return "I can only provide information about our system data. Please ask about vehicles, customers, agreements, payments, or maintenance.";
       }
     },
     onSuccess: (response, variables) => {
@@ -79,7 +202,6 @@ export const SystemChatbot = () => {
   });
 
   const handleSendMessage = (message: string) => {
-    if (!message.trim()) return;
     chatMutation.mutate(message);
   };
 

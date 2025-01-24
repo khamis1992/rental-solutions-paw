@@ -5,84 +5,8 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
   const normalizedMessage = normalizeQuery(message);
   const lowerMessage = message.toLowerCase();
 
-  // Rental Extension Command
-  const extendMatch = lowerMessage.match(/extend\s+rental\s+for\s+vehicle\s+(\w+)\s+by\s+(\d+)\s+days/i);
-  if (extendMatch) {
-    const [_, licensePlate, days] = extendMatch;
-    try {
-      // Get the active lease for this vehicle
-      const { data: lease, error: leaseError } = await supabase
-        .from('leases')
-        .select('*, vehicles(*)')
-        .eq('status', 'active')
-        .eq('vehicles.license_plate', licensePlate)
-        .single();
-
-      if (leaseError || !lease) {
-        return `No active rental found for vehicle ${licensePlate}`;
-      }
-
-      // Update the lease end date
-      const { error: updateError } = await supabase
-        .from('leases')
-        .update({ 
-          end_date: new Date(new Date(lease.end_date).getTime() + (parseInt(days) * 24 * 60 * 60 * 1000)).toISOString()
-        })
-        .eq('id', lease.id);
-
-      if (updateError) throw updateError;
-
-      return `✅ Rental extended successfully!\nVehicle: ${licensePlate}\nNew end date: ${new Date(new Date(lease.end_date).getTime() + (parseInt(days) * 24 * 60 * 60 * 1000)).toLocaleDateString()}`;
-    } catch (error) {
-      console.error('Error extending rental:', error);
-      return "Failed to extend rental. Please try again or contact support.";
-    }
-  }
-
-  // Fine Dispute Command
-  const disputeMatch = lowerMessage.match(/dispute\s+fine\s+#?(\w+)\s+because\s+(.+)/i);
-  if (disputeMatch) {
-    const [_, fineNumber, reason] = disputeMatch;
-    try {
-      // Get the fine details
-      const { data: fine, error: fineError } = await supabase
-        .from('traffic_fines')
-        .select('*')
-        .eq('violation_number', fineNumber)
-        .single();
-
-      if (fineError || !fine) {
-        return `Fine #${fineNumber} not found`;
-      }
-
-      // Create a legal case for the dispute
-      const { data: legalCase, error: caseError } = await supabase
-        .from('legal_cases')
-        .insert({
-          case_type: 'fine_dispute',
-          customer_id: fine.lease_id ? (await supabase
-            .from('leases')
-            .select('customer_id')
-            .eq('id', fine.lease_id)
-            .single()).data?.customer_id : null,
-          status: 'pending_reminder',
-          description: `Fine Dispute - ${reason}\nFine Number: ${fineNumber}\nAmount: ${fine.fine_amount} QAR`,
-          priority: 'medium'
-        })
-        .select()
-        .single();
-
-      if (caseError) throw caseError;
-
-      return `✅ Fine dispute case created successfully!\nCase ID: ${legalCase.id}\nStatus: Pending Review\n\nOur legal team will review your dispute and contact you soon.`;
-    } catch (error) {
-      console.error('Error creating fine dispute:', error);
-      return "Failed to create fine dispute. Please try again or contact support.";
-    }
-  }
-
   // Vehicle count queries
-  if (normalizedMessage.match(/how many vehicle|vehicle count|total vehicle|available vehicle|show vehicle/i)) {
+  if (normalizedMessage.match(/how many vehicle|vehicle count|total vehicle/i)) {
     const { data: vehicles, error } = await supabase
       .from('vehicles')
       .select('status', { count: 'exact' });
@@ -92,25 +16,8 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
       return "I encountered an error while fetching vehicle information.";
     }
 
-    // Get specific status counts
-    const counts = {
-      total: vehicles?.length || 0,
-      available: vehicles?.filter(v => v.status === 'available').length || 0,
-      rented: vehicles?.filter(v => v.status === 'rented').length || 0,
-      maintenance: vehicles?.filter(v => v.status === 'maintenance').length || 0
-    };
-
-    // Check if query is specifically about available vehicles
-    if (normalizedMessage.match(/available|free|rent/i)) {
-      return `We currently have ${counts.available} vehicles available for rent.`;
-    }
-
-    // Return detailed vehicle count information
-    return `Current vehicle status:\n` +
-           `- Total vehicles: ${counts.total}\n` +
-           `- Available: ${counts.available}\n` +
-           `- Rented: ${counts.rented}\n` +
-           `- In maintenance: ${counts.maintenance}`;
+    const count = vehicles?.length || 0;
+    return `We currently have ${count} vehicles in our fleet.`;
   }
 
   // Available vehicles query
@@ -125,114 +32,6 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
       return `Here are some available vehicles:\n${vehicles.map(v => 
         `${v.make} ${v.model} (${v.year}) - License Plate: ${v.license_plate}`
       ).join('\n')}`;
-    }
-  }
-
-  // Predictive Maintenance Assistance
-  if (normalizedMessage.match(/maintenance|service|repair|check/i)) {
-    const { data: predictions } = await supabase
-      .from('maintenance_predictions')
-      .select(`
-        *,
-        vehicles(make, model, license_plate)
-      `)
-      .order('predicted_date', { ascending: true })
-      .limit(3);
-
-    if (predictions?.length) {
-      return `Here are some upcoming maintenance predictions:\n${
-        predictions.map(p => 
-          `🔧 ${p.vehicles?.make} ${p.vehicles?.model} (${p.vehicles?.license_plate})
-           - Due: ${new Date(p.predicted_date || '').toLocaleDateString()}
-           - Service: ${p.prediction_type}
-           - Priority: ${p.priority}
-           ${p.recommended_services ? `\nRecommended services:\n${p.recommended_services.join('\n')}` : ''}`
-        ).join('\n\n')
-      }`;
-    }
-  }
-
-  // Case Outcome Simulation
-  const penaltyMatch = lowerMessage.match(/penalties|late return|overdue|fines.*agreement.*#?(\w+)/i);
-  if (penaltyMatch) {
-    const agreementNumber = penaltyMatch[1];
-    try {
-      const { data: agreement } = await supabase
-        .from('leases')
-        .select(`
-          *,
-          vehicle:vehicles(make, model, license_plate)
-        `)
-        .eq('agreement_number', agreementNumber)
-        .single();
-
-      if (!agreement) {
-        return `Agreement #${agreementNumber} not found. Please verify the agreement number.`;
-      }
-
-      const dailyLateFee = agreement.daily_late_fee || 120;
-      const damagePenalty = agreement.damage_penalty_rate || 0;
-      const fuelPenalty = agreement.fuel_penalty_rate || 0;
-
-      return `For Agreement #${agreementNumber} (${agreement.vehicle?.make} ${agreement.vehicle?.model}):
-        - Late return fee: ${dailyLateFee} QAR per day
-        - Damage penalty rate: ${damagePenalty}%
-        - Fuel penalty rate: ${fuelPenalty}%
-        
-        Based on historical data, late returns typically result in:
-        - Average late fee: ${dailyLateFee * 3} QAR (3 days average)
-        - Common issues: Fuel level below requirement, minor damages
-        
-        💡 Tip: Return the vehicle on time to avoid these penalties.`;
-    } catch (error) {
-      console.error('Error fetching agreement penalties:', error);
-      return "Failed to retrieve penalty information. Please try again.";
-    }
-  }
-
-  // Multi-Hop Reasoning Queries
-  const availabilityMatch = lowerMessage.match(/available|free|rent.*next.*(?:week|month)|no.*(?:fines|penalties)/i);
-  if (availabilityMatch) {
-    try {
-      // First hop: Get vehicles without active agreements
-      const { data: vehicles } = await supabase
-        .from('vehicles')
-        .select(`
-          *,
-          traffic_fines(id, payment_status),
-          maintenance(id, status)
-        `)
-        .eq('status', 'available');
-
-      if (!vehicles?.length) {
-        return "No vehicles are currently available.";
-      }
-
-      // Second hop: Filter vehicles with no pending fines
-      const cleanVehicles = vehicles.filter(v => 
-        !v.traffic_fines?.some(f => f.payment_status === 'pending')
-      );
-
-      // Third hop: Filter out vehicles with pending maintenance
-      const readyVehicles = cleanVehicles.filter(v =>
-        !v.maintenance?.some(m => m.status === 'scheduled' || m.status === 'in_progress')
-      );
-
-      if (!readyVehicles.length) {
-        return "No vehicles are available that meet all criteria (no fines, no pending maintenance).";
-      }
-
-      return `Found ${readyVehicles.length} vehicles available with no issues:\n${
-        readyVehicles.map(v => 
-          `🚗 ${v.make} ${v.model} (${v.year})
-           - License Plate: ${v.license_plate}
-           - Mileage: ${v.mileage} km
-           - Status: Ready for rental`
-        ).join('\n\n')
-      }`;
-    } catch (error) {
-      console.error('Error in multi-hop query:', error);
-      return "Failed to process complex query. Please try a simpler request.";
     }
   }
 
