@@ -35,6 +35,114 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
     }
   }
 
+  // Predictive Maintenance Assistance
+  if (normalizedMessage.match(/maintenance|service|repair|check/i)) {
+    const { data: predictions } = await supabase
+      .from('maintenance_predictions')
+      .select(`
+        *,
+        vehicles(make, model, license_plate)
+      `)
+      .order('predicted_date', { ascending: true })
+      .limit(3);
+
+    if (predictions?.length) {
+      return `Here are some upcoming maintenance predictions:\n${
+        predictions.map(p => 
+          `🔧 ${p.vehicles?.make} ${p.vehicles?.model} (${p.vehicles?.license_plate})
+           - Due: ${new Date(p.predicted_date || '').toLocaleDateString()}
+           - Service: ${p.prediction_type}
+           - Priority: ${p.priority}
+           ${p.recommended_services ? `\nRecommended services:\n${p.recommended_services.join('\n')}` : ''}`
+        ).join('\n\n')
+      }`;
+    }
+  }
+
+  // Case Outcome Simulation
+  const penaltyMatch = lowerMessage.match(/penalties|late return|overdue|fines.*agreement.*#?(\w+)/i);
+  if (penaltyMatch) {
+    const agreementNumber = penaltyMatch[1];
+    try {
+      const { data: agreement } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          vehicle:vehicles(make, model, license_plate)
+        `)
+        .eq('agreement_number', agreementNumber)
+        .single();
+
+      if (!agreement) {
+        return `Agreement #${agreementNumber} not found. Please verify the agreement number.`;
+      }
+
+      const dailyLateFee = agreement.daily_late_fee || 120;
+      const damagePenalty = agreement.damage_penalty_rate || 0;
+      const fuelPenalty = agreement.fuel_penalty_rate || 0;
+
+      return `For Agreement #${agreementNumber} (${agreement.vehicle?.make} ${agreement.vehicle?.model}):
+        - Late return fee: ${dailyLateFee} QAR per day
+        - Damage penalty rate: ${damagePenalty}%
+        - Fuel penalty rate: ${fuelPenalty}%
+        
+        Based on historical data, late returns typically result in:
+        - Average late fee: ${dailyLateFee * 3} QAR (3 days average)
+        - Common issues: Fuel level below requirement, minor damages
+        
+        💡 Tip: Return the vehicle on time to avoid these penalties.`;
+    } catch (error) {
+      console.error('Error fetching agreement penalties:', error);
+      return "Failed to retrieve penalty information. Please try again.";
+    }
+  }
+
+  // Multi-Hop Reasoning Queries
+  const availabilityMatch = lowerMessage.match(/available|free|rent.*next.*(?:week|month)|no.*(?:fines|penalties)/i);
+  if (availabilityMatch) {
+    try {
+      // First hop: Get vehicles without active agreements
+      const { data: vehicles } = await supabase
+        .from('vehicles')
+        .select(`
+          *,
+          traffic_fines(id, payment_status),
+          maintenance(id, status)
+        `)
+        .eq('status', 'available');
+
+      if (!vehicles?.length) {
+        return "No vehicles are currently available.";
+      }
+
+      // Second hop: Filter vehicles with no pending fines
+      const cleanVehicles = vehicles.filter(v => 
+        !v.traffic_fines?.some(f => f.payment_status === 'pending')
+      );
+
+      // Third hop: Filter out vehicles with pending maintenance
+      const readyVehicles = cleanVehicles.filter(v =>
+        !v.maintenance?.some(m => m.status === 'scheduled' || m.status === 'in_progress')
+      );
+
+      if (!readyVehicles.length) {
+        return "No vehicles are available that meet all criteria (no fines, no pending maintenance).";
+      }
+
+      return `Found ${readyVehicles.length} vehicles available with no issues:\n${
+        readyVehicles.map(v => 
+          `🚗 ${v.make} ${v.model} (${v.year})
+           - License Plate: ${v.license_plate}
+           - Mileage: ${v.mileage} km
+           - Status: Ready for rental`
+        ).join('\n\n')
+      }`;
+    } catch (error) {
+      console.error('Error in multi-hop query:', error);
+      return "Failed to process complex query. Please try a simpler request.";
+    }
+  }
+
   // Agreement Generation Command
   const agreementMatch = lowerMessage.match(/create.*(rental|lease).*(agreement|contract)\s+for\s+(.+)/i);
   if (agreementMatch) {
