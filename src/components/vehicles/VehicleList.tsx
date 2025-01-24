@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DeleteVehicleDialog } from "./DeleteVehicleDialog";
 import { VehicleListView } from "./table/VehicleListView";
 import { BulkActionsMenu } from "./components/BulkActionsMenu";
@@ -6,6 +6,7 @@ import { AdvancedVehicleFilters } from "./filters/AdvancedVehicleFilters";
 import { Vehicle } from "@/types/vehicle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
@@ -18,6 +19,43 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription for vehicle status changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('vehicle-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vehicles',
+          filter: 'status=eq.maintenance'
+        },
+        async (payload) => {
+          console.log('Vehicle status changed:', payload);
+          
+          // Invalidate and refetch relevant queries
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
+            queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] })
+          ]);
+
+          // Show toast notification
+          if (payload.eventType === 'UPDATE') {
+            const newStatus = payload.new.status;
+            const vehicleInfo = `${payload.new.make} ${payload.new.model} (${payload.new.license_plate})`;
+            toast.info(`Vehicle ${vehicleInfo} status updated to ${newStatus}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleDeleteVehicle = async () => {
     try {

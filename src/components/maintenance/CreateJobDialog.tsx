@@ -37,7 +37,6 @@ export function CreateJobDialog() {
     },
   });
 
-  // Fetch maintenance categories
   const { data: categories = [] } = useQuery({
     queryKey: ["maintenance-categories"],
     queryFn: async () => {
@@ -56,7 +55,7 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
-      // Create maintenance record
+      // Start a Supabase transaction
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
@@ -69,18 +68,27 @@ export function CreateJobDialog() {
 
       if (maintenanceError) throw maintenanceError;
 
-      // Update vehicle status
+      // Update vehicle status to maintenance
       const { error: vehicleError } = await supabase
         .from("vehicles")
         .update({ status: "maintenance" })
         .eq("id", formData.vehicle_id);
 
-      if (vehicleError) throw vehicleError;
+      if (vehicleError) {
+        // Rollback maintenance record if vehicle update fails
+        await supabase
+          .from("maintenance")
+          .delete()
+          .eq("id", maintenanceData.id);
+        throw vehicleError;
+      }
 
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["maintenance"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] })
+      ]);
 
       toast.success("Job card created successfully");
       
