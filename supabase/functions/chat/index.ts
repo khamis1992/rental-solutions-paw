@@ -9,7 +9,6 @@ const corsHeaders = {
 const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')!;
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,8 +17,7 @@ serve(async (req) => {
     const { messages } = await req.json();
     console.log('Processing chat request:', { messageCount: messages.length });
 
-    // Call DeepSeek API
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://api.perplexity.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
@@ -30,7 +28,23 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant for a vehicle rental company. Only provide information based on the system data. Always verify numbers and statistics before responding.'
+            content: `You are a helpful assistant for a vehicle rental company. Only provide information based on the system data. 
+            
+Available commands:
+- Extend rental: "extend rental for Vehicle [LICENSE_PLATE] by [NUMBER] days"
+- Dispute fine: "dispute fine #[FINE_NUMBER] because [REASON]"
+
+For rental extensions:
+1. Verify the vehicle exists and has an active rental
+2. Confirm the extension period is reasonable (1-30 days)
+3. Process the extension and confirm the new end date
+
+For fine disputes:
+1. Verify the fine exists in the system
+2. Create a legal case with the provided reason
+3. Provide the case reference number for tracking
+
+Always verify numbers and statistics before responding. If a command is not properly formatted, explain the correct format.`
           },
           ...messages
         ],

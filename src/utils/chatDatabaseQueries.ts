@@ -5,6 +5,82 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
   const normalizedMessage = normalizeQuery(message);
   const lowerMessage = message.toLowerCase();
 
+  // Rental Extension Command
+  const extendMatch = lowerMessage.match(/extend\s+rental\s+for\s+vehicle\s+(\w+)\s+by\s+(\d+)\s+days/i);
+  if (extendMatch) {
+    const [_, licensePlate, days] = extendMatch;
+    try {
+      // Get the active lease for this vehicle
+      const { data: lease, error: leaseError } = await supabase
+        .from('leases')
+        .select('*, vehicles(*)')
+        .eq('status', 'active')
+        .eq('vehicles.license_plate', licensePlate)
+        .single();
+
+      if (leaseError || !lease) {
+        return `No active rental found for vehicle ${licensePlate}`;
+      }
+
+      // Update the lease end date
+      const { error: updateError } = await supabase
+        .from('leases')
+        .update({ 
+          end_date: new Date(new Date(lease.end_date).getTime() + (parseInt(days) * 24 * 60 * 60 * 1000)).toISOString()
+        })
+        .eq('id', lease.id);
+
+      if (updateError) throw updateError;
+
+      return `✅ Rental extended successfully!\nVehicle: ${licensePlate}\nNew end date: ${new Date(new Date(lease.end_date).getTime() + (parseInt(days) * 24 * 60 * 60 * 1000)).toLocaleDateString()}`;
+    } catch (error) {
+      console.error('Error extending rental:', error);
+      return "Failed to extend rental. Please try again or contact support.";
+    }
+  }
+
+  // Fine Dispute Command
+  const disputeMatch = lowerMessage.match(/dispute\s+fine\s+#?(\w+)\s+because\s+(.+)/i);
+  if (disputeMatch) {
+    const [_, fineNumber, reason] = disputeMatch;
+    try {
+      // Get the fine details
+      const { data: fine, error: fineError } = await supabase
+        .from('traffic_fines')
+        .select('*')
+        .eq('violation_number', fineNumber)
+        .single();
+
+      if (fineError || !fine) {
+        return `Fine #${fineNumber} not found`;
+      }
+
+      // Create a legal case for the dispute
+      const { data: legalCase, error: caseError } = await supabase
+        .from('legal_cases')
+        .insert({
+          case_type: 'fine_dispute',
+          customer_id: fine.lease_id ? (await supabase
+            .from('leases')
+            .select('customer_id')
+            .eq('id', fine.lease_id)
+            .single()).data?.customer_id : null,
+          status: 'pending_reminder',
+          description: `Fine Dispute - ${reason}\nFine Number: ${fineNumber}\nAmount: ${fine.fine_amount} QAR`,
+          priority: 'medium'
+        })
+        .select()
+        .single();
+
+      if (caseError) throw caseError;
+
+      return `✅ Fine dispute case created successfully!\nCase ID: ${legalCase.id}\nStatus: Pending Review\n\nOur legal team will review your dispute and contact you soon.`;
+    } catch (error) {
+      console.error('Error creating fine dispute:', error);
+      return "Failed to create fine dispute. Please try again or contact support.";
+    }
+  }
+
   // Vehicle count queries
   if (normalizedMessage.match(/how many vehicle|vehicle count|total vehicle|available vehicle|show vehicle/i)) {
     const { data: vehicles, error } = await supabase
