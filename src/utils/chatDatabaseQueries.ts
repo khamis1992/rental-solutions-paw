@@ -35,59 +35,101 @@ export const getDatabaseResponse = async (query: string): Promise<string | null>
          - ${counts.maintenance} under maintenance`;
   }
   
-  // Customer-related queries
-  if (lowercaseQuery.includes('how many') && lowercaseQuery.includes('customer') || 
-      lowercaseQuery.includes('customer count') ||
-      query.includes('كم عدد العملاء') ||
-      query.includes('عدد الزبائن')) {
-    const { count, error } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact' })
-      .eq('role', 'customer');
-      
-    if (error) throw error;
-    
-    return isArabic
-      ? `لدينا حالياً ${count} عميل مسجل في نظامنا.`
-      : `We currently have ${count} registered customers in our system.`;
-  }
-  
-  // Agreement-related queries
-  if ((lowercaseQuery.includes('active') && 
-       (lowercaseQuery.includes('rental') || lowercaseQuery.includes('agreement'))) ||
-      (query.includes('نشط') && 
-       (query.includes('إيجار') || query.includes('عقد')))) {
-    const { data, error } = await supabase
-      .from('leases')
-      .select('*', { count: 'exact' })
-      .eq('status', 'active');
-      
-    if (error) throw error;
-    
-    return isArabic
-      ? `يوجد حالياً ${data?.length || 0} عقد إيجار نشط.`
-      : `There are currently ${data?.length || 0} active rental agreements.`;
-  }
-
-  // Payment-related queries
-  if (lowercaseQuery.includes('payment') || 
-      lowercaseQuery.includes('revenue') ||
-      query.includes('دفع') ||
-      query.includes('إيرادات')) {
-    const { data: payments, error } = await supabase
-      .from('unified_payments')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
+  // Overdue payments query
+  if (lowercaseQuery.includes('overdue') || 
+      lowercaseQuery.includes('late payment') ||
+      query.includes('متأخرات') ||
+      query.includes('دفعات متأخرة')) {
+    const { data: overduePayments, error } = await supabase
+      .from('overdue_payments_view')
+      .select(`
+        *,
+        customer:customer_id (
+          full_name,
+          phone_number
+        )
+      `)
+      .eq('status', 'pending');
 
     if (error) throw error;
 
-    if (payments && payments.length > 0) {
-      const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    if (!overduePayments?.length) {
       return isArabic
-        ? `نشاط الدفع الأخير: تمت معالجة ${payments.length} دفعة، بإجمالي ${totalAmount} ريال قطري.`
-        : `Recent payment activity: ${payments.length} payments processed, totaling ${totalAmount} QAR.`;
+        ? "لا توجد مدفوعات متأخرة حالياً"
+        : "There are no overdue payments at the moment";
     }
+
+    const summary = overduePayments.map(payment => 
+      isArabic
+        ? `${payment.customer.full_name}: ${payment.balance} ريال قطري (${payment.days_overdue} يوم)`
+        : `${payment.customer.full_name}: ${payment.balance} QAR (${payment.days_overdue} days)`
+    ).join('\n');
+
+    return isArabic
+      ? `المدفوعات المتأخرة:\n${summary}`
+      : `Overdue payments:\n${summary}`;
+  }
+
+  // Vehicle status update
+  if ((lowercaseQuery.includes('change status') || lowercaseQuery.includes('update status')) &&
+      (lowercaseQuery.includes('vehicle') || lowercaseQuery.includes('car'))) {
+    const matches = query.match(/vehicle\s+([A-Za-z0-9-]+)\s+to\s+(available|maintenance)/i);
+    if (!matches) return "Please specify the vehicle license plate and desired status (available/maintenance)";
+
+    const [, licensePlate, newStatus] = matches;
+    const { error } = await supabase
+      .from('vehicles')
+      .update({ status: newStatus.toLowerCase() })
+      .eq('license_plate', licensePlate);
+
+    if (error) throw error;
+    
+    return `Vehicle ${licensePlate} status updated to ${newStatus}`;
+  }
+
+  // Invoice generation request
+  if (lowercaseQuery.includes('generate invoice') || 
+      lowercaseQuery.includes('create invoice') ||
+      query.includes('إنشاء فاتورة')) {
+    const matches = query.match(/agreement\s+([A-Za-z0-9-]+)/i);
+    if (!matches) {
+      return isArabic
+        ? "الرجاء تحديد رقم الاتفاقية"
+        : "Please specify the agreement number";
+    }
+
+    const agreementNumber = matches[1];
+    const { data: lease, error } = await supabase
+      .from('leases')
+      .select('id')
+      .eq('agreement_number', agreementNumber)
+      .single();
+
+    if (error || !lease) {
+      return isArabic
+        ? "لم يتم العثور على الاتفاقية"
+        : "Agreement not found";
+    }
+
+    // Create invoice
+    const { data: invoice, error: invoiceError } = await supabase
+      .from('accounting_invoices')
+      .insert({
+        customer_id: lease.id,
+        invoice_number: `INV-${Date.now()}`,
+        amount: 0, // This should be calculated based on your business logic
+        status: 'pending',
+        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        issued_date: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (invoiceError) throw invoiceError;
+
+    return isArabic
+      ? `تم إنشاء الفاتورة رقم ${invoice.invoice_number}`
+      : `Invoice ${invoice.invoice_number} has been generated`;
   }
 
   // If no matching query pattern is found, return a helpful message
