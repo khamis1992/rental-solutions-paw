@@ -1,5 +1,3 @@
-import { Database } from "./database/database.types";
-
 export type LeaseStatus = "pending_payment" | "pending_deposit" | "active" | "closed" | "terminated" | "cancelled";
 export type AgreementType = "lease_to_own" | "short_term";
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
@@ -23,9 +21,6 @@ export interface Agreement {
   daily_late_fee: number;
   rent_amount: number;
   remainingAmount: number;
-}
-
-export interface AgreementWithRelations extends Agreement {
   customer?: {
     id: string;
     full_name: string | null;
@@ -56,9 +51,9 @@ export interface Template {
   updated_at?: string;
   content?: string;
   language?: DocumentLanguage;
-  template_structure?: Record<string, any>;
-  template_sections?: any[];
-  variable_mappings?: Record<string, any>;
+  template_structure: Record<string, any>;
+  template_sections: any[];
+  variable_mappings: Record<string, any>;
 }
 
 export interface Payment {

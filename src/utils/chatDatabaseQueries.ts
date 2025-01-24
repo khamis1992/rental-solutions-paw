@@ -66,89 +66,10 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
     }
   }
 
-  // Handle document analysis requests
-  if (lowerMessage.includes('analyze document') || 
-      lowerMessage.includes('explain document') ||
-      lowerMessage.includes('document terms')) {
-    
-    // Get the most recently uploaded document
-    const { data: documents } = await supabase
-      .from('agreement_documents')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!documents) {
-      return "I don't see any recently uploaded documents to analyze. Please upload a document first.";
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-legal-document', {
-        body: {
-          documentUrl: documents.document_url,
-          documentId: documents.id
-        }
-      });
-
-      if (error) throw error;
-      return data.analysis;
-    } catch (error) {
-      console.error('Error analyzing document:', error);
-      return "I encountered an error while analyzing the document. Please try again later.";
-    }
-  }
-
-  // Handle specific document queries
-  if (lowerMessage.includes('what does') && 
-      (lowerMessage.includes('document') || lowerMessage.includes('agreement'))) {
-    
-    const { data: documents } = await supabase
-      .from('agreement_documents')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!documents) {
-      return "I don't see any recently uploaded documents to analyze. Please upload a document first.";
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-legal-document', {
-        body: {
-          documentUrl: documents.document_url,
-          documentId: documents.id,
-          query: message
-        }
-      });
-
-      if (error) throw error;
-      return data.analysis;
-    } catch (error) {
-      console.error('Error analyzing document:', error);
-      return "I encountered an error while analyzing the document. Please try again later.";
-    }
-  }
-
-  // Payment queries
-  if (lowerMessage.includes('payment') || lowerMessage.includes('invoice')) {
-    const { data: payments } = await supabase
-      .from('payments')
-      .select('*')
-      .limit(5);
-
-    if (payments?.length) {
-      return `Recent payments: ${payments.map(p => 
-        `${p.payment_method} - QAR ${p.amount}`
-      ).join(', ')}`;
-    }
-  }
-
   // Maintenance queries
   if (lowerMessage.includes('maintenance') || lowerMessage.includes('repair')) {
     const { data: maintenance } = await supabase
-      .from('maintenance_records')
+      .from('maintenance')
       .select('*')
       .limit(5);
 
