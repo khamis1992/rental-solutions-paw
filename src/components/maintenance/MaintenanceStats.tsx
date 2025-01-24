@@ -3,14 +3,28 @@ import { formatCurrency } from "@/lib/utils";
 import { Wrench, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 
 interface MaintenanceStatsProps {
-  maintenanceData: any[];
+  maintenanceData?: {
+    id: string;
+    status: string;
+    cost?: number;
+  }[];
 }
 
 export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps) => {
-  const totalCost = maintenanceData?.reduce((sum, record) => sum + (record.cost || 0), 0) || 0;
-  const completedCount = maintenanceData?.filter(record => record.status === 'completed').length || 0;
-  const pendingCount = maintenanceData?.filter(record => record.status === 'scheduled').length || 0;
-  const urgentCount = maintenanceData?.filter(record => record.status === 'urgent').length || 0;
+  // Calculate total cost - only sum defined cost values
+  const totalCost = maintenanceData?.reduce((sum, record) => 
+    sum + (typeof record.cost === 'number' ? record.cost : 0), 0) || 0;
+
+  // Count records by status
+  const completedCount = maintenanceData?.filter(record => 
+    record.status?.toLowerCase() === 'completed').length || 0;
+  
+  const pendingCount = maintenanceData?.filter(record => 
+    record.status?.toLowerCase() === 'scheduled' || 
+    record.status?.toLowerCase() === 'in_progress').length || 0;
+  
+  const urgentCount = maintenanceData?.filter(record => 
+    record.status?.toLowerCase() === 'urgent').length || 0;
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
