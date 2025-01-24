@@ -12,36 +12,76 @@ serve(async (req) => {
   }
 
   try {
-    const { documentId, documentContent, documentType } = await req.json()
-    console.log('Analyzing document:', { documentId, documentType })
-
+    const { documentUrl, query, documentId } = await req.json()
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Analyze document content and classify
-    // This is a simplified classification system
-    // In production, you would use more sophisticated ML models
-    const classification = analyzeDocument(documentContent, documentType)
-    console.log('Classification results:', classification)
+    // Get document content from storage
+    const { data: fileData, error: fileError } = await supabase.storage
+      .from('agreement_documents')
+      .download(documentUrl)
 
-    // Store classification results
-    const { error: classificationError } = await supabase
+    if (fileError) throw fileError
+
+    const documentContent = await fileData.text()
+
+    // Call Perplexity AI for document analysis
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('PERPLEXITY_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a legal document analysis expert. ${
+              query ? 'Answer questions about the document.' : 
+              'Analyze the document and provide: 1) Simple explanations of legal terms, 2) Key highlights including payment terms, liabilities, and obligations, 3) A summary of critical sections.'
+            }`
+          },
+          {
+            role: 'user',
+            content: query ? 
+              `Based on this document: ${documentContent}\n\nAnswer this question: ${query}` :
+              `Analyze this document: ${documentContent}`
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 2000,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Perplexity API error: ${response.status}`)
+    }
+
+    const analysisResult = await response.json()
+
+    // Store analysis results
+    const { error: dbError } = await supabase
       .from('ai_document_classification')
       .insert({
         document_id: documentId,
-        classification_type: classification.type,
-        confidence_score: classification.confidence,
-        metadata: classification.metadata
+        classification_type: 'legal_analysis',
+        confidence_score: 0.9,
+        metadata: {
+          analysis: analysisResult.choices[0].message.content,
+          analyzed_at: new Date().toISOString(),
+          query: query || null
+        }
       })
 
-    if (classificationError) throw classificationError
+    if (dbError) throw dbError
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        classification 
+        analysis: analysisResult.choices[0].message.content
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -50,49 +90,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }
 })
-
-function analyzeDocument(content: string, type: string) {
-  // This is a simplified document classification system
-  // In production, this would use ML models for more accurate classification
-  
-  const documentTypes = {
-    'contract': ['agreement', 'contract', 'terms'],
-    'court_filing': ['motion', 'petition', 'complaint'],
-    'correspondence': ['letter', 'email', 'notice'],
-    'evidence': ['exhibit', 'proof', 'documentation']
-  }
-
-  let maxMatches = 0
-  let classifiedType = 'unknown'
-  let confidence = 0
-
-  // Count keyword matches for each document type
-  for (const [docType, keywords] of Object.entries(documentTypes)) {
-    const matches = keywords.filter(keyword => 
-      content.toLowerCase().includes(keyword.toLowerCase())
-    ).length
-
-    if (matches > maxMatches) {
-      maxMatches = matches
-      classifiedType = docType
-      confidence = Math.min(matches / keywords.length, 0.95) // Cap at 95% confidence
-    }
-  }
-
-  return {
-    type: classifiedType,
-    confidence: confidence,
-    metadata: {
-      analysis_method: 'keyword_matching',
-      analyzed_at: new Date().toISOString(),
-      content_length: content.length,
-      detected_keywords: documentTypes[classifiedType as keyof typeof documentTypes] || []
-    }
-  }
-}

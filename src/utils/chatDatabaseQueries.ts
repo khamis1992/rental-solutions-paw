@@ -1,139 +1,142 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const getDatabaseResponse = async (query: string): Promise<string | null> => {
-  const lowercaseQuery = query.toLowerCase();
-  const isArabic = /[\u0600-\u06FF]/.test(query);
-  
-  // Vehicle-related queries
-  if (lowercaseQuery.includes('how many') || 
-      lowercaseQuery.includes('vehicle') || 
-      lowercaseQuery.includes('car') ||
-      query.includes('كم عدد') ||
-      query.includes('سيارات') ||
-      query.includes('مركبات')) {
-    const { data: vehicles, error } = await supabase
+export async function getDatabaseResponse(message: string): Promise<string | null> {
+  const lowerMessage = message.toLowerCase();
+
+  // Vehicle queries
+  if (lowerMessage.includes('vehicle') || lowerMessage.includes('car')) {
+    const { data: vehicles } = await supabase
       .from('vehicles')
-      .select('status', { count: 'exact' });
-      
-    if (error) throw error;
-    
-    const counts = {
-      total: vehicles?.length || 0,
-      available: vehicles?.filter(v => v.status === 'available').length || 0,
-      rented: vehicles?.filter(v => v.status === 'rented').length || 0,
-      maintenance: vehicles?.filter(v => v.status === 'maintenance').length || 0
-    };
-    
-    return isArabic
-      ? `لدينا حالياً ${counts.total} مركبة في أسطولنا:
-         - ${counts.available} متاحة للإيجار
-         - ${counts.rented} مؤجرة حالياً
-         - ${counts.maintenance} تحت الصيانة`
-      : `Currently, we have ${counts.total} vehicles in our fleet:
-         - ${counts.available} available for rent
-         - ${counts.rented} currently rented
-         - ${counts.maintenance} under maintenance`;
-  }
-  
-  // Overdue payments query
-  if (lowercaseQuery.includes('overdue') || 
-      lowercaseQuery.includes('late payment') ||
-      query.includes('متأخرات') ||
-      query.includes('دفعات متأخرة')) {
-    const { data: overduePayments, error } = await supabase
-      .from('overdue_payments_view')
-      .select(`
-        *,
-        customer:customer_id (
-          full_name,
-          phone_number
-        )
-      `)
-      .eq('status', 'pending');
+      .select('*')
+      .limit(5);
 
-    if (error) throw error;
-
-    if (!overduePayments?.length) {
-      return isArabic
-        ? "لا توجد مدفوعات متأخرة حالياً"
-        : "There are no overdue payments at the moment";
+    if (vehicles?.length) {
+      return `Here are some vehicles in our fleet: ${vehicles.map(v => 
+        `${v.make} ${v.model} (${v.year})`
+      ).join(', ')}`;
     }
-
-    const summary = overduePayments.map(payment => 
-      isArabic
-        ? `${payment.customer.full_name}: ${payment.balance} ريال قطري (${payment.days_overdue} يوم)`
-        : `${payment.customer.full_name}: ${payment.balance} QAR (${payment.days_overdue} days)`
-    ).join('\n');
-
-    return isArabic
-      ? `المدفوعات المتأخرة:\n${summary}`
-      : `Overdue payments:\n${summary}`;
   }
 
-  // Vehicle status update
-  if ((lowercaseQuery.includes('change status') || lowercaseQuery.includes('update status')) &&
-      (lowercaseQuery.includes('vehicle') || lowercaseQuery.includes('car'))) {
-    const matches = query.match(/vehicle\s+([A-Za-z0-9-]+)\s+to\s+(available|maintenance)/i);
-    if (!matches) return "Please specify the vehicle license plate and desired status (available/maintenance)";
+  // Customer queries
+  if (lowerMessage.includes('customer') || lowerMessage.includes('client')) {
+    const { data: customers } = await supabase
+      .from('profiles')
+      .select('*')
+      .limit(5);
 
-    const [, licensePlate, newStatus] = matches;
-    const { error } = await supabase
-      .from('vehicles')
-      .update({ status: newStatus.toLowerCase() })
-      .eq('license_plate', licensePlate);
-
-    if (error) throw error;
-    
-    return `Vehicle ${licensePlate} status updated to ${newStatus}`;
-  }
-
-  // Invoice generation request
-  if (lowercaseQuery.includes('generate invoice') || 
-      lowercaseQuery.includes('create invoice') ||
-      query.includes('إنشاء فاتورة')) {
-    const matches = query.match(/agreement\s+([A-Za-z0-9-]+)/i);
-    if (!matches) {
-      return isArabic
-        ? "الرجاء تحديد رقم الاتفاقية"
-        : "Please specify the agreement number";
+    if (customers?.length) {
+      return `We have ${customers.length} registered customers. Here are some recent ones: ${
+        customers.map(c => c.full_name).join(', ')
+      }`;
     }
+  }
 
-    const agreementNumber = matches[1];
-    const { data: lease, error } = await supabase
+  // Agreement queries
+  if (lowerMessage.includes('agreement') || lowerMessage.includes('lease')) {
+    const { data: agreements } = await supabase
       .from('leases')
-      .select('id')
-      .eq('agreement_number', agreementNumber)
-      .single();
+      .select('*')
+      .limit(5);
 
-    if (error || !lease) {
-      return isArabic
-        ? "لم يتم العثور على الاتفاقية"
-        : "Agreement not found";
+    if (agreements?.length) {
+      return `We have ${agreements.length} active agreements. Recent agreement numbers: ${
+        agreements.map(a => a.agreement_number).join(', ')
+      }`;
     }
-
-    // Create invoice
-    const { data: invoice, error: invoiceError } = await supabase
-      .from('accounting_invoices')
-      .insert({
-        customer_id: lease.id,
-        invoice_number: `INV-${Date.now()}`,
-        amount: 0, // This should be calculated based on your business logic
-        status: 'pending',
-        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        issued_date: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (invoiceError) throw invoiceError;
-
-    return isArabic
-      ? `تم إنشاء الفاتورة رقم ${invoice.invoice_number}`
-      : `Invoice ${invoice.invoice_number} has been generated`;
   }
 
-  // If no matching query pattern is found, return a helpful message
-  return isArabic
-    ? "يمكنني تقديم معلومات حول مركباتنا، عملائنا، العقود، المدفوعات، والصيانة. يرجى طرح أسئلة محددة حول هذه المواضيع."
-    : "I can provide information about our vehicles, customers, agreements, payments, and maintenance. Please ask specific questions about these topics.";
-};
+  // Handle document analysis requests
+  if (lowerMessage.includes('analyze document') || 
+      lowerMessage.includes('explain document') ||
+      lowerMessage.includes('document terms')) {
+    
+    // Get the most recently uploaded document
+    const { data: documents } = await supabase
+      .from('agreement_documents')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!documents) {
+      return "I don't see any recently uploaded documents to analyze. Please upload a document first.";
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-legal-document', {
+        body: {
+          documentUrl: documents.document_url,
+          documentId: documents.id
+        }
+      });
+
+      if (error) throw error;
+      return data.analysis;
+    } catch (error) {
+      console.error('Error analyzing document:', error);
+      return "I encountered an error while analyzing the document. Please try again later.";
+    }
+  }
+
+  // Handle specific document queries
+  if (lowerMessage.includes('what does') && 
+      (lowerMessage.includes('document') || lowerMessage.includes('agreement'))) {
+    
+    const { data: documents } = await supabase
+      .from('agreement_documents')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!documents) {
+      return "I don't see any recently uploaded documents to analyze. Please upload a document first.";
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-legal-document', {
+        body: {
+          documentUrl: documents.document_url,
+          documentId: documents.id,
+          query: message
+        }
+      });
+
+      if (error) throw error;
+      return data.analysis;
+    } catch (error) {
+      console.error('Error analyzing document:', error);
+      return "I encountered an error while analyzing the document. Please try again later.";
+    }
+  }
+
+  // Payment queries
+  if (lowerMessage.includes('payment') || lowerMessage.includes('invoice')) {
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('*')
+      .limit(5);
+
+    if (payments?.length) {
+      return `Recent payments: ${payments.map(p => 
+        `${p.payment_method} - QAR ${p.amount}`
+      ).join(', ')}`;
+    }
+  }
+
+  // Maintenance queries
+  if (lowerMessage.includes('maintenance') || lowerMessage.includes('repair')) {
+    const { data: maintenance } = await supabase
+      .from('maintenance_records')
+      .select('*')
+      .limit(5);
+
+    if (maintenance?.length) {
+      return `Recent maintenance records: ${maintenance.map(m => 
+        `${m.service_type} - ${m.status}`
+      ).join(', ')}`;
+    }
+  }
+
+  return null;
+}
