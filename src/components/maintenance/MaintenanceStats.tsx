@@ -2,12 +2,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { Wrench, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 
+interface MaintenanceRecord {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  description?: string | null;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+  cost?: number;
+  scheduled_date: string;
+  completed_date?: string | null;
+  performed_by?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface MaintenanceStatsProps {
-  maintenanceData?: {
-    id: string;
-    status: string;
-    cost?: number;
-  }[];
+  maintenanceData?: MaintenanceRecord[];
 }
 
 export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps) => {
