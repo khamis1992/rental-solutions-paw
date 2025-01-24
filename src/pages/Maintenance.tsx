@@ -32,7 +32,7 @@ const Maintenance = () => {
         
         <MaintenanceStats maintenanceData={maintenanceData || []} />
         
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
           <MaintenanceAlerts />
           <MaintenanceList />
         </div>
