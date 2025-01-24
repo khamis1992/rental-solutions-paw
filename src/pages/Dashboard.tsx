@@ -1,49 +1,55 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { DashboardData } from "@/types/agreement.types";
+import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { SystemChatbot } from "@/components/chat/SystemChatbot";
+
+interface DashboardData {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
 
 const Dashboard = () => {
-  const { data: dashboardData } = useQuery({
+  const { data: stats } = useQuery<DashboardData>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_dashboard_stats');
+      const { data, error } = await supabase.rpc("get_dashboard_stats");
       
-      if (error) {
-        throw error;
-      }
-
-      // Type assertion after validating the shape
-      const typedData = data as DashboardData;
+      if (error) throw error;
       
-      // Validate required properties
-      if (
-        typeof typedData.total_vehicles !== 'number' ||
-        typeof typedData.available_vehicles !== 'number' ||
-        typeof typedData.rented_vehicles !== 'number' ||
-        typeof typedData.maintenance_vehicles !== 'number' ||
-        typeof typedData.total_customers !== 'number' ||
-        typeof typedData.active_rentals !== 'number' ||
-        typeof typedData.monthly_revenue !== 'number'
-      ) {
-        throw new Error('Invalid dashboard data format');
-      }
-
-      return typedData;
-    }
+      return data as DashboardData;
+    },
+    staleTime: 30000,
   });
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto space-y-6 px-4 py-8">
-        <WelcomeHeader />
-        <DashboardStats data={dashboardData} />
-        <DashboardAlerts />
+    <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
+        <div>
+          <WelcomeHeader />
+        </div>
       </div>
-    </DashboardLayout>
+
+      <div className="grid gap-8">
+        <DashboardStats />
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <RecentActivity />
+        </div>
+        <div className="lg:col-span-3">
+          <SystemChatbot />
+        </div>
+      </div>
+    </div>
   );
 };
 
