@@ -73,7 +73,9 @@ export async function getDatabaseResponse(message: string): Promise<string | nul
           total_amount: template.rent_amount,
           rent_amount: template.rent_amount,
           agreement_duration: template.agreement_duration,
-          daily_late_fee: template.daily_late_fee
+          daily_late_fee: template.daily_late_fee,
+          initial_mileage: 0,
+          vehicle_id: null // This will be set later when a vehicle is assigned
         })
         .select()
         .single();

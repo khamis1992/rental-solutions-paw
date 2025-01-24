@@ -6,33 +6,25 @@ import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { SystemChatbot } from "@/components/chat/SystemChatbot";
 
+interface DashboardData {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
+
 const Dashboard = () => {
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<DashboardData>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dashboard_stats");
       
       if (error) throw error;
       
-      const {
-        total_vehicles,
-        available_vehicles,
-        rented_vehicles,
-        maintenance_vehicles,
-        total_customers,
-        active_rentals,
-        monthly_revenue
-      } = data;
-
-      return {
-        totalVehicles: total_vehicles,
-        availableVehicles: available_vehicles,
-        rentedVehicles: rented_vehicles,
-        maintenanceVehicles: maintenance_vehicles,
-        totalCustomers: total_customers,
-        activeRentals: active_rentals,
-        monthlyRevenue: monthly_revenue
-      };
+      return data as DashboardData;
     },
     staleTime: 30000,
   });
@@ -46,7 +38,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-8">
-        <DashboardStats stats={stats} />
+        <DashboardStats />
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-7">
