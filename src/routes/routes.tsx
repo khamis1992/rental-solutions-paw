@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 
 export const Auth = lazy(() => import('@/pages/Auth'));
 export const CustomerPortal = lazy(() => import('@/pages/CustomerPortal'));
