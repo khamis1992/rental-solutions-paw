@@ -17,8 +17,6 @@ interface Message {
   content: string;
 }
 
-const TRUSTED_ORIGIN = window.location.origin;
-
 export const SystemChatbot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -72,7 +70,7 @@ export const SystemChatbot = () => {
       .on(
         'broadcast',
         { event: 'chat-message' },
-        (payload) => {
+        (payload: any) => {
           console.log('Received real-time message:', payload);
           if (payload.message) {
             setMessages(prev => [...prev, {
@@ -175,7 +173,7 @@ export const SystemChatbot = () => {
         }
 
         // Fallback to DeepSeek for low confidence or unclear queries
-        const aiResponse = await fetch(`${TRUSTED_ORIGIN}/api/chat`, {
+        const aiResponse = await fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
