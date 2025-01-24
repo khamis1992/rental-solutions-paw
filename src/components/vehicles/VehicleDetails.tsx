@@ -110,6 +110,25 @@ export const VehicleDetails = () => {
         </div>
       </div>
 
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+          <VehicleQRCode 
+            make={vehicle.make} 
+            model={vehicle.model}
+            vehicleId={id}
+            year={vehicle.year}
+            licensePlate={vehicle.license_plate}
+            vin={vehicle.vin}
+          />
+        </div>
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+          <VehicleStatus 
+            vehicleId={id} 
+            currentStatus={vehicle.status} 
+          />
+        </div>
+      </div>
+
       <div className="bg-background-alt rounded-lg p-4">
         <DocumentExpiryNotifications vehicleId={id} />
       </div>
