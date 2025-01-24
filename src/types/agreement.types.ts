@@ -1,25 +1,11 @@
-import { Database } from "@/integrations/supabase/types";
-
-export type LeaseStatus = Database['public']['Enums']['lease_status'];
-export type AgreementType = Database['public']['Enums']['agreement_type'];
-export type PaymentStatus = Database['public']['Enums']['payment_status'];
+export type AgreementType = 'lease_to_own' | 'short_term';
 export type DocumentLanguage = 'english' | 'arabic';
-
-export interface DashboardStats {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
-}
 
 export interface Template {
   id: string;
   name: string;
-  description: string;
-  content: string;
+  description?: string;
+  content: any;
   language: DocumentLanguage;
   agreement_type: AgreementType;
   rent_amount: number;
@@ -31,9 +17,9 @@ export interface Template {
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
-  template_structure?: Record<string, any>;
-  template_sections?: any[];
-  variable_mappings?: Record<string, any>;
+  template_structure: any;
+  template_sections: any[];
+  variable_mappings: any;
 }
 
 export interface Agreement {
@@ -42,23 +28,28 @@ export interface Agreement {
   customer_id: string;
   start_date?: string;
   end_date?: string;
-  status: LeaseStatus;
+  status: string;
   initial_mileage: number;
   return_mileage?: number;
   total_amount: number;
   notes?: string;
+  created_at: string;
+  updated_at: string;
   agreement_type: AgreementType;
   agreement_number: string;
   rent_amount: number;
   remainingAmount: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
+  agreement_duration: string;
+  daily_late_fee: number;
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    full_name: string;
+    phone_number?: string;
+    email?: string;
   };
-  vehicle?: {
-    id: string;
+  vehicle: {
     make: string;
     model: string;
     year: number;
@@ -73,33 +64,16 @@ export interface Payment {
   amount_paid: number;
   balance: number;
   payment_date: string;
-  transaction_id?: string;
   payment_method: string;
-  status: PaymentStatus;
+  status: string;
   description: string;
   type: string;
-  late_fine_amount: number;
-  days_overdue: number;
+  transaction_id?: string;
+  security_deposit_id?: string;
   is_recurring: boolean;
   recurring_interval?: string;
-  next_payment_date?: string;
-  security_deposit_id?: string;
+  late_fine_amount: number;
+  days_overdue: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface AnomalyRecord {
-  id: string;
-  detection_type: string;
-  severity: string;
-  description: string;
-  affected_records: {
-    vehicle_id: string;
-    license_plate: string;
-    mileage: number;
-  };
-  detected_at: string;
-  resolved_at?: string;
-  resolution_notes?: string;
-  false_positive: boolean;
 }
