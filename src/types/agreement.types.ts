@@ -13,9 +13,9 @@ export interface Template {
   rent_amount: number;
   final_price: number;
   agreement_duration: string;
-  daily_late_fee?: number;
-  damage_penalty_rate?: number;
-  late_return_fee?: number;
+  daily_late_fee: number;
+  damage_penalty_rate: number;
+  late_return_fee: number;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -78,4 +78,30 @@ export interface Payment {
   days_overdue: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface DashboardData {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
+
+export interface AnomalyRecord {
+  id: string;
+  detection_type: string;
+  severity: string;
+  description: string;
+  affected_records: {
+    vehicle_id: string;
+    license_plate: string;
+    mileage: number;
+  };
+  detected_at: string;
+  resolved_at: string | null;
+  resolution_notes: string | null;
+  false_positive: boolean;
 }
