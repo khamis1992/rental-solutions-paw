@@ -1,6 +1,6 @@
 export type AgreementType = 'lease_to_own' | 'short_term';
 export type DocumentLanguage = 'english' | 'arabic';
-export type LeaseStatus = 'pending_payment' | 'pending_deposit' | 'active' | 'closed';
+export type LeaseStatus = 'pending_payment' | 'pending_deposit' | 'active' | 'closed' | 'terminated' | 'cancelled';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface Template {
@@ -13,9 +13,9 @@ export interface Template {
   rent_amount: number;
   final_price: number;
   agreement_duration: string;
-  daily_late_fee?: number;
-  damage_penalty_rate?: number;
-  late_return_fee?: number;
+  daily_late_fee: number;
+  damage_penalty_rate: number;
+  late_return_fee: number;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -30,7 +30,7 @@ export interface Agreement {
   customer_id: string;
   start_date?: string;
   end_date?: string;
-  status: string;
+  status: LeaseStatus;
   initial_mileage: number;
   return_mileage?: number;
   total_amount: number;
@@ -45,6 +45,22 @@ export interface Agreement {
   daily_late_fee: number;
 }
 
+export interface AgreementWithRelations extends Agreement {
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    address: string | null;
+  };
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
+
 export interface Payment {
   id: string;
   lease_id: string;
@@ -53,7 +69,7 @@ export interface Payment {
   balance: number;
   payment_date: string;
   payment_method: string;
-  status: string;
+  status: PaymentStatus;
   description: string;
   type: string;
   transaction_id?: string;
