@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
+import { AlertTriangle, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const CashFlowMonitoring = () => {
-  const { data: alerts } = useQuery({
+  const { data: alerts, isLoading, error } = useQuery({
     queryKey: ["cash-flow-alerts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -15,7 +16,10 @@ export const CashFlowMonitoring = () => {
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast.error("Failed to fetch cash flow alerts");
+        throw error;
+      }
       return data;
     },
   });
@@ -41,6 +45,23 @@ export const CashFlowMonitoring = () => {
         return "default";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Failed to load cash flow alerts</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-6">
