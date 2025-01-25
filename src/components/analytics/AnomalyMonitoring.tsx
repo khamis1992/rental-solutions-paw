@@ -66,9 +66,14 @@ export const AnomalyMonitoring = () => {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newAnomaly = payload.new as Anomaly;
-            setRealtimeAnomalies(prev => [newAnomaly, ...prev].slice(0, 5));
+            // Check if anomaly already exists before adding
+            setRealtimeAnomalies(prev => {
+              const exists = prev.some(a => a.id === newAnomaly.id);
+              if (exists) return prev;
+              return [newAnomaly, ...prev].slice(0, 5);
+            });
             
-            // Enhanced toast notifications based on severity
+            // Only show toast if it's a new anomaly
             const toastConfig = {
               duration: newAnomaly.severity === 'high' ? 10000 : 5000,
               action: {
