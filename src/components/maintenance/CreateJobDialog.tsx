@@ -1,13 +1,16 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import VehicleInspectionDialog from "./inspection/VehicleInspectionDialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { JobCardForm } from "./job-card/JobCardForm";
 import { MaintenanceDocumentUpload } from "./job-card/MaintenanceDocumentUpload";
+import VehicleInspectionDialog from "./inspection/VehicleInspectionDialog";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
@@ -62,6 +65,8 @@ export function CreateJobDialog() {
         .eq("id", formData.vehicle_id);
 
       if (vehicleError) {
+        console.error("Error updating vehicle status:", vehicleError);
+        toast.error("Failed to update vehicle status");
         throw vehicleError;
       }
 
@@ -77,11 +82,14 @@ export function CreateJobDialog() {
         .single();
 
       if (maintenanceError) {
+        console.error("Error creating maintenance record:", maintenanceError);
         // Rollback vehicle status if maintenance creation fails
         await supabase
           .from("vehicles")
           .update({ status: "available" })
           .eq("id", formData.vehicle_id);
+        
+        toast.error("Failed to create maintenance record");
         throw maintenanceError;
       }
 
@@ -130,9 +138,6 @@ export function CreateJobDialog() {
         <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Job Card</DialogTitle>
-            <DialogDescription>
-              Create a new maintenance job card. After creation, you'll need to perform a vehicle inspection.
-            </DialogDescription>
           </DialogHeader>
           
           <JobCardForm
