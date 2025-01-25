@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { Brain, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
+import { Brain, TrendingUp, TrendingDown, AlertCircle, Loader2 } from "lucide-react";
 
 export const ScenarioAnalysis = () => {
-  const { data: scenarios } = useQuery({
+  const { data: scenarios, isLoading } = useQuery({
     queryKey: ["financial-scenarios"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,6 +17,19 @@ export const ScenarioAnalysis = () => {
       return data;
     },
   });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center text-center space-y-3">
+            <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+            <div className="text-xl font-semibold">Loading Scenarios</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!scenarios?.length) {
     return (
