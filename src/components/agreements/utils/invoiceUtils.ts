@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { Payment } from "@/types/database/payment.types";
 
@@ -21,7 +20,7 @@ export type InvoiceData = {
   total: number;
   dueDate?: string;
   payments?: Payment[];
-  agreementId: string; // Added this field
+  agreementId: string;
 };
 
 export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData | null> => {
@@ -68,17 +67,19 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
   if (lease.agreement_type === "short_term") {
     items.push({
       description: `Short-term rental (${format(new Date(lease.start_date), "PP")} - ${format(new Date(lease.end_date), "PP")})`,
-      amount: remainingAmount?.final_price || lease.total_amount || 0
+      amount: lease.rent_amount || 0  // Use rent_amount instead of final_price
     });
   } else {
-    items.push({
-      description: "Down payment",
-      amount: lease.down_payment || 0
-    });
-    if (lease.monthly_payment) {
+    if (lease.down_payment) {
+      items.push({
+        description: "Down payment",
+        amount: lease.down_payment
+      });
+    }
+    if (lease.rent_amount) {
       items.push({
         description: `Monthly payment (${format(new Date(lease.start_date), "MMMM yyyy")})`,
-        amount: lease.monthly_payment
+        amount: lease.rent_amount
       });
     }
   }
@@ -95,7 +96,7 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
     agreementType: lease.agreement_type === "short_term" ? "Short-term Rental" : "Lease-to-Own",
     startDate: format(new Date(lease.start_date), "PP"),
     endDate: format(new Date(lease.end_date), "PP"),
-    amount: remainingAmount?.final_price || lease.total_amount || 0,
+    amount: lease.rent_amount || 0,  // Use rent_amount as the main amount
     items,
     subtotal,
     discount: totalDiscount,
@@ -104,6 +105,6 @@ export const generateInvoiceData = async (leaseId: string): Promise<InvoiceData 
       ? format(new Date(lease.start_date), "PP") 
       : undefined,
     payments: payments || [],
-    agreementId: lease.id // Added this field
+    agreementId: lease.id
   };
 };
