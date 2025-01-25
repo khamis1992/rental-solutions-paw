@@ -3,20 +3,75 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { AlertTriangle, TrendingDown, CheckCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const ExpenseAnalysis = () => {
-  const { data: expenseAnalysis } = useQuery({
+  const { data: expenseAnalysis, isError, isLoading } = useQuery({
     queryKey: ["expense-analysis"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First check if table exists and has data
+      const { data: existingData, error: existingError } = await supabase
         .from("expense_analysis")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (existingError) throw existingError;
+
+      // If no data exists, let's create some sample data
+      if (!existingData || existingData.length === 0) {
+        const sampleData = [
+          {
+            category: "Vehicle Maintenance",
+            amount: 25000,
+            frequency: "Monthly",
+            recommendation: "Consider preventive maintenance schedule to reduce costs",
+            potential_savings: 5000,
+            priority: "high"
+          },
+          {
+            category: "Fuel Costs",
+            amount: 15000,
+            frequency: "Monthly",
+            recommendation: "Implement fuel efficiency monitoring system",
+            potential_savings: 3000,
+            priority: "medium"
+          },
+          {
+            category: "Insurance",
+            amount: 35000,
+            frequency: "Quarterly",
+            recommendation: "Review insurance policies for better rates",
+            potential_savings: 7000,
+            priority: "low"
+          }
+        ];
+
+        const { data: insertedData, error: insertError } = await supabase
+          .from("expense_analysis")
+          .insert(sampleData)
+          .select();
+
+        if (insertError) throw insertError;
+        return insertedData;
+      }
+
+      return existingData;
     },
   });
+
+  if (isLoading) {
+    return <div className="p-4">Loading expense analysis...</div>;
+  }
+
+  if (isError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertDescription>
+          Failed to load expense analysis. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-6">
