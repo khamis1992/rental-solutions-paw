@@ -28,12 +28,14 @@ export function CreateJobDialog() {
   const { data: vehicles = [] } = useQuery({
     queryKey: ["vehicles"],
     queryFn: async () => {
+      console.log("Fetching available vehicles...");
       const { data, error } = await supabase
         .from("vehicles")
         .select("id, make, model, license_plate")
         .eq('status', 'available');
       
       if (error) throw error;
+      console.log("Available vehicles:", data);
       return data || [];
     },
   });
@@ -57,6 +59,8 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
+      console.log("Creating maintenance record for vehicle:", formData.vehicle_id);
+      
       // Create maintenance record first
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
@@ -73,6 +77,8 @@ export function CreateJobDialog() {
         toast.error("Failed to create maintenance record");
         throw maintenanceError;
       }
+
+      console.log("Maintenance record created successfully:", maintenanceData);
 
       // Invalidate relevant queries to trigger UI updates
       await Promise.all([
