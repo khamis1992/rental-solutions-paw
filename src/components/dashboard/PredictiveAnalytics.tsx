@@ -14,23 +14,23 @@ export const PredictiveAnalytics = () => {
         .from("revenue_forecasts")
         .select("*")
         .order("forecast_date", { ascending: true })
-        .limit(6);
+        .limit(12); // Get 12 months of predictions
 
       if (error) throw error;
       return data;
     },
   });
 
-  const currentRevenue = predictions?.[0]?.predicted_revenue || 0;
-  const nextQuarterRevenue = predictions?.[3]?.predicted_revenue || 0;
-  const percentageChange = ((nextQuarterRevenue - currentRevenue) / currentRevenue) * 100;
+  const currentMonthRevenue = predictions?.[0]?.predicted_revenue || 0;
+  const threeMonthsLaterRevenue = predictions?.[2]?.predicted_revenue || 0;
+  const percentageChange = ((threeMonthsLaterRevenue - currentMonthRevenue) / currentMonthRevenue) * 100;
   const isDecline = percentageChange < 0;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Predictive Analytics</CardTitle>
+          <CardTitle>Monthly Revenue Forecast</CardTitle>
         </CardHeader>
         <CardContent>
           {isDecline && (
@@ -50,12 +50,18 @@ export const PredictiveAnalytics = () => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="forecast_date" 
-                  tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                  }}
                 />
                 <YAxis tickFormatter={(value) => formatCurrency(value)} />
                 <Tooltip 
                   formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                  labelFormatter={(label) => {
+                    const date = new Date(label);
+                    return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+                  }}
                 />
                 <Line
                   type="monotone"
@@ -80,7 +86,7 @@ export const PredictiveAnalytics = () => {
               </span>
             </div>
             <div>
-              Next Quarter Forecast: {formatCurrency(nextQuarterRevenue)}
+              Next Quarter Forecast: {formatCurrency(threeMonthsLaterRevenue)}
             </div>
           </div>
         </CardContent>
