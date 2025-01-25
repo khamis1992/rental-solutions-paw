@@ -45,8 +45,8 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
   const totalPaidAmount = data.payments?.reduce((sum, payment) => sum + payment.amount_paid, 0) || 0;
   const totalLateFines = data.payments?.reduce((sum, payment) => sum + (payment.late_fine_amount || 0), 0) || 0;
   
-  // Calculate balance as total paid + late fines
-  const totalBalance = totalPaidAmount + totalLateFines;
+  // Calculate due amount as total paid minus late fines
+  const dueAmount = totalPaidAmount - totalLateFines;
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)] w-full">
@@ -163,7 +163,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
           </div>
         )}
 
-        {/* Summary Section with Late Fines */}
+        {/* Summary Section with Due Amount */}
         <div className="border-t pt-6 mt-8">
           <div className="flex flex-col items-end space-y-3">
             <div className="flex justify-between w-64 text-gray-600">
@@ -181,9 +181,9 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
               </div>
             )}
             <div className="flex justify-between w-64 bg-gray-50 p-4 rounded-lg mt-2">
-              <span className="font-semibold text-gray-700">Total Balance:</span>
+              <span className="font-semibold text-gray-700">Due Amount:</span>
               <span className="font-bold text-xl text-gray-900">
-                {formatCurrency(totalBalance)}
+                {formatCurrency(dueAmount)}
               </span>
             </div>
           </div>
