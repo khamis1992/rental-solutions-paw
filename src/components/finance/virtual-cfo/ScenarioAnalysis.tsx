@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { Brain, TrendingUp, TrendingDown, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const ScenarioAnalysis = () => {
-  const { data: scenarios, isLoading } = useQuery({
+  const { data: scenarios, isLoading, error } = useQuery({
     queryKey: ["financial-scenarios"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -13,7 +14,10 @@ export const ScenarioAnalysis = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast.error("Failed to load scenarios");
+        throw error;
+      }
       return data;
     },
   });
@@ -22,9 +26,28 @@ export const ScenarioAnalysis = () => {
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center text-center space-y-3">
+          <div className="flex flex-col items-center justify-center text-center space-y-3 py-12">
             <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
-            <div className="text-xl font-semibold">Loading Scenarios</div>
+            <div className="text-xl font-semibold">Analyzing Scenarios</div>
+            <p className="text-muted-foreground">
+              Our AI is processing financial data to generate insights...
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center text-center space-y-3">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <div className="text-xl font-semibold">Error Loading Scenarios</div>
+            <p className="text-muted-foreground">
+              Please try again later or contact support if the problem persists.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -35,11 +58,11 @@ export const ScenarioAnalysis = () => {
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center text-center space-y-3">
+          <div className="flex flex-col items-center justify-center text-center space-y-3 py-12">
             <Brain className="h-12 w-12 text-muted-foreground" />
             <div className="text-xl font-semibold">No Scenarios Available</div>
             <p className="text-muted-foreground">
-              Financial scenarios will appear here once they are created.
+              Click "New Scenario" to create your first financial scenario analysis.
             </p>
           </div>
         </CardContent>

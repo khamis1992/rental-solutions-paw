@@ -5,6 +5,8 @@ import { CashFlowMonitoring } from "./CashFlowMonitoring";
 import { ScenarioAnalysis } from "./ScenarioAnalysis";
 import { FinancialGoals } from "./FinancialGoals";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 export const VirtualCFO = () => {
   return (
@@ -60,6 +62,34 @@ export const VirtualCFO = () => {
             </TabsContent>
 
             <TabsContent value="scenarios" className="space-y-4">
+              <div className="flex justify-end mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    const scenario = {
+                      type: "fleet_expansion",
+                      amount: 500000,
+                      name: "Fleet Expansion Analysis",
+                      totalFixedCosts: 200000,
+                      totalVariableCosts: 150000
+                    };
+                    
+                    fetch('https://vqdlsidkucrownbfuouq.supabase.co/functions/v1/analyze-financial-data', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+                      },
+                      body: JSON.stringify(scenario)
+                    });
+                  }}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  New Scenario
+                </Button>
+              </div>
               <ScenarioAnalysis />
             </TabsContent>
 
