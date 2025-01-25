@@ -44,7 +44,8 @@ export function CreateJobDialog() {
       const { data, error } = await supabase
         .from("maintenance_categories")
         .select("*")
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('name');
       
       if (error) throw error;
       return data || [];
@@ -56,19 +57,7 @@ export function CreateJobDialog() {
     setLoading(true);
 
     try {
-      // First update vehicle status to maintenance
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ status: "maintenance" })
-        .eq("id", formData.vehicle_id);
-
-      if (vehicleError) {
-        console.error("Error updating vehicle status:", vehicleError);
-        toast.error("Failed to update vehicle status");
-        throw vehicleError;
-      }
-
-      // Then create maintenance record
+      // Create maintenance record first
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
@@ -81,12 +70,6 @@ export function CreateJobDialog() {
 
       if (maintenanceError) {
         console.error("Error creating maintenance record:", maintenanceError);
-        // Rollback vehicle status if maintenance creation fails
-        await supabase
-          .from("vehicles")
-          .update({ status: "available" })
-          .eq("id", formData.vehicle_id);
-        
         toast.error("Failed to create maintenance record");
         throw maintenanceError;
       }
