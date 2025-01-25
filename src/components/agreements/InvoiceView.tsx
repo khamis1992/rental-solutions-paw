@@ -97,7 +97,7 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
           <h3 className="font-semibold text-gray-700">Vehicle Details:</h3>
           <p className="text-gray-600">{data.vehicleDetails}</p>
           <p className="text-gray-600">
-            {data.agreementType}: {data.startDate} - {data.endDate}
+            Rental Agreement: {data.agreementId}
           </p>
         </div>
 
@@ -110,14 +110,14 @@ export const InvoiceView = ({ data, onPrint }: InvoiceViewProps) => {
               </tr>
             </thead>
             <tbody>
-              {data.items.map((item, index) => (
-                <tr key={index} className="border-b last:border-b-0">
-                  <td className="py-3 px-4 text-gray-600">{item.description}</td>
-                  <td className="text-right py-3 px-4 text-gray-800 font-medium">
-                    {formatCurrency(item.amount)}
-                  </td>
-                </tr>
-              ))}
+              <tr className="border-b last:border-b-0">
+                <td className="py-3 px-4 text-gray-600">
+                  Rental Agreement #{data.agreementId}
+                </td>
+                <td className="text-right py-3 px-4 text-gray-800 font-medium">
+                  {formatCurrency(data.amount)}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
