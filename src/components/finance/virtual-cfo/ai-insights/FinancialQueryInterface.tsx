@@ -23,6 +23,7 @@ export const FinancialQueryInterface = () => {
       // Store query and response in history
       await supabase.from('ai_query_history').insert({
         query,
+        detected_language: 'english',
         detected_intent: data.intent,
         response_data: data.response,
         success_rate: data.confidence

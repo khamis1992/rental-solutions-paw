@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Line } from "recharts";
 import { FileDown, FileText, FileSpreadsheet, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,7 +16,7 @@ interface MetricConfig {
 }
 
 export const CustomDashboard = () => {
-  const [selectedMetrics, setSelectedMetrics] = useState<MetricConfig[]>([
+  const [selectedMetrics] = useState<MetricConfig[]>([
     { id: "revenue", type: "line", title: "Revenue Trend", dataKey: "revenue" },
     { id: "expenses", type: "bar", title: "Expense Categories", dataKey: "amount" }
   ]);
@@ -52,7 +52,7 @@ export const CustomDashboard = () => {
     if (!financialData) return null;
 
     const ChartComponent = metric.type === 'bar' ? BarChart : LineChart;
-    const DataElement = metric.type === 'bar' ? Bar : Line;
+    const DataComponent = metric.type === 'bar' ? Bar : Line;
 
     return (
       <Card key={metric.id} className="col-span-1">
@@ -73,7 +73,7 @@ export const CustomDashboard = () => {
                   formatter={(value: number) => formatCurrency(value)}
                   labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
-                <DataElement 
+                <DataComponent 
                   type="monotone" 
                   dataKey={metric.dataKey}
                   fill="#60a5fa"
