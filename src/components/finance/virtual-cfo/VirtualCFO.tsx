@@ -15,17 +15,22 @@ export const VirtualCFO = () => {
     try {
       const scenario = {
         type: "fleet_expansion",
-        amount: 500000,
         name: "Fleet Expansion Analysis",
+        amount: 500000,
         totalFixedCosts: 200000,
         totalVariableCosts: 150000
       };
       
       const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
-        body: scenario
+        body: JSON.stringify(scenario)
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating scenario:', error);
+        toast.error("Failed to create scenario");
+        return;
+      }
+
       toast.success("New scenario created successfully");
     } catch (error) {
       console.error('Error creating scenario:', error);
