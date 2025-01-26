@@ -9,6 +9,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface CreateTemplateDialogProps {
   open: boolean;
@@ -76,105 +77,107 @@ export const CreateTemplateDialog = ({ open, onOpenChange, selectedTemplate }: C
             {selectedTemplate ? "Edit Template" : "Create New Template"}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Template Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="max-h-[80vh]">
+          <form onSubmit={handleSubmit} className="space-y-4 px-4">
             <div className="space-y-2">
-              <Label htmlFor="agreement_type">Agreement Type</Label>
-              <Select
-                value={formData.agreement_type}
-                onValueChange={(value) => setFormData({ ...formData, agreement_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="short_term">Short Term</SelectItem>
-                  <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <Select
-                value={formData.language}
-                onValueChange={(value) => setFormData({ ...formData, language: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="arabic">Arabic</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="rent_amount">Rent Amount</Label>
+              <Label htmlFor="name">Template Name</Label>
               <Input
-                id="rent_amount"
-                type="number"
-                value={formData.rent_amount}
-                onChange={(e) => setFormData({ ...formData, rent_amount: Number(e.target.value) })}
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="final_price">Final Price</Label>
-              <Input
-                id="final_price"
-                type="number"
-                value={formData.final_price}
-                onChange={(e) => setFormData({ ...formData, final_price: Number(e.target.value) })}
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">Template Content</Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="min-h-[200px]"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="agreement_type">Agreement Type</Label>
+                <Select
+                  value={formData.agreement_type}
+                  onValueChange={(value) => setFormData({ ...formData, agreement_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="short_term">Short Term</SelectItem>
+                    <SelectItem value="lease_to_own">Lease to Own</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : selectedTemplate ? "Update" : "Create"}
-            </Button>
-          </div>
-        </form>
+              <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <Select
+                  value={formData.language}
+                  onValueChange={(value) => setFormData({ ...formData, language: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="arabic">Arabic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="rent_amount">Rent Amount</Label>
+                <Input
+                  id="rent_amount"
+                  type="number"
+                  value={formData.rent_amount}
+                  onChange={(e) => setFormData({ ...formData, rent_amount: Number(e.target.value) })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="final_price">Final Price</Label>
+                <Input
+                  id="final_price"
+                  type="number"
+                  value={formData.final_price}
+                  onChange={(e) => setFormData({ ...formData, final_price: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="content">Template Content</Label>
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                className="min-h-[200px]"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : selectedTemplate ? "Update" : "Create"}
+              </Button>
+            </div>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
