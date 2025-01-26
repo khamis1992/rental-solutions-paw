@@ -12,8 +12,32 @@ import { BudgetOptimization } from "./BudgetOptimization";
 import { CustomDashboard } from "./reporting/CustomDashboard";
 import { ReportScheduler } from "./reporting/ReportScheduler";
 import { BarChart3, FileSpreadsheet } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const VirtualCFO = () => {
+  // Shared data fetching for all tabs
+  const { data: activeAgreements, isLoading } = useQuery({
+    queryKey: ["active-rent-amounts"],
+    queryFn: async () => {
+      const { data: agreements, error } = await supabase
+        .from("leases")
+        .select(`
+          agreement_number,
+          rent_amount,
+          total_amount,
+          start_date,
+          end_date,
+          status
+        `)
+        .eq("status", "active")
+        .order("agreement_number");
+
+      if (error) throw error;
+      return agreements;
+    },
+  });
+
   return (
     <Tabs defaultValue="dashboard" className="space-y-6">
       <TabsList className="w-full justify-start bg-background border-b rounded-none p-0 h-auto">
@@ -101,50 +125,48 @@ export const VirtualCFO = () => {
         <CustomDashboard />
       </TabsContent>
 
-      <TabsContent value="reports" className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ReportScheduler />
-        </div>
+      <TabsContent value="reports">
+        <ReportScheduler />
       </TabsContent>
 
-      <TabsContent value="profitability" className="space-y-6">
-        <ProfitabilityTracking />
+      <TabsContent value="profitability">
+        <ProfitabilityTracking agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="costs" className="space-y-6">
-        <CostAllocation />
+      <TabsContent value="costs">
+        <CostAllocation agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="budget-optimization" className="space-y-6">
-        <BudgetOptimization />
+      <TabsContent value="budget-optimization">
+        <BudgetOptimization agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="break-even" className="space-y-6">
-        <BreakEvenAnalysis />
+      <TabsContent value="break-even">
+        <BreakEvenAnalysis agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="health" className="space-y-6">
-        <FinancialHealth />
+      <TabsContent value="health">
+        <FinancialHealth agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="expense-analysis" className="space-y-6">
-        <ExpenseAnalysis />
+      <TabsContent value="expense-analysis">
+        <ExpenseAnalysis agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="budgeting" className="space-y-6">
-        <BudgetingAssistance />
+      <TabsContent value="budgeting">
+        <BudgetingAssistance agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="cash-flow" className="space-y-6">
-        <CashFlowMonitoring />
+      <TabsContent value="cash-flow">
+        <CashFlowMonitoring agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="scenarios" className="space-y-6">
-        <ScenarioAnalysis />
+      <TabsContent value="scenarios">
+        <ScenarioAnalysis agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
-      <TabsContent value="goals" className="space-y-6">
-        <FinancialGoals />
+      <TabsContent value="goals">
+        <FinancialGoals agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
     </Tabs>
   );
