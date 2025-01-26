@@ -15,6 +15,11 @@ serve(async (req) => {
   try {
     const { type, amount, name, totalFixedCosts, totalVariableCosts } = await req.json()
 
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabase = createClient(supabaseUrl!, supabaseKey!)
+
     // Create scenario analysis
     const scenario = {
       name,
@@ -33,11 +38,6 @@ serve(async (req) => {
       },
       recommendation: `Based on the analysis, this ${type} scenario shows a potential ROI of ${(((amount * 1.2) - (totalFixedCosts + totalVariableCosts)) / amount * 100).toFixed(1)}%`
     }
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const supabase = createClient(supabaseUrl!, supabaseKey!)
 
     // Insert into financial_scenarios table
     const { data, error } = await supabase
