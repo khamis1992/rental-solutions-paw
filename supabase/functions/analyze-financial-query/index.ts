@@ -12,103 +12,38 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, dbResponse } = await req.json();
-    console.log('Processing financial query:', { messageCount: messages.length, hasDbResponse: !!dbResponse });
-
-    // If we have a database response, use it directly
-    if (dbResponse) {
-      console.log('Using database response:', dbResponse);
-      return new Response(
-        JSON.stringify({ message: dbResponse }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { messages, context } = await req.json();
+    console.log('Processing financial query:', { messageCount: messages.length, context });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get financial context from database
-    const { data: financialContext } = await supabase
+    // Analyze budget and generate recommendations
+    const recommendations = analyzeBudget(context);
+
+    // Store insights in the database
+    const { error: insertError } = await supabase
       .from('ai_analytics_insights')
-      .select('*')
-      .limit(5);
+      .insert(recommendations.map(rec => ({
+        category: 'budget_optimization',
+        insight: rec.title,
+        data_points: {
+          recommendation: rec.description,
+          current_amount: rec.currentAmount,
+          recommended_amount: rec.recommendedAmount,
+          savings_potential: rec.savingsPotential
+        },
+        priority: rec.priority,
+        confidence_score: 0.85
+      })));
 
-    const systemMessage = {
-      role: 'system',
-      content: `You are a Virtual CFO assistant. You must:
-        1. Only provide information based on internal financial data
-        2. Never use external information
-        3. Clearly indicate when requested information is not available
-        4. Ask for clarification when more context is needed
-        
-        Available data categories: revenue, expenses, budgets, cash flow, profitability.
-        Current financial context: ${JSON.stringify(financialContext)}`
-    };
-
-    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!deepseekApiKey) {
-      throw new Error('DeepSeek API key not configured');
-    }
-
-    // Log the query for analysis
-    const { error: logError } = await supabase.from('ai_query_history').insert({
-      query: messages[messages.length - 1].content,
-      detected_language: 'en',
-      detected_intent: 'financial_query',
-      response_data: {},
-      success_rate: 1.0
-    });
-
-    if (logError) {
-      console.error('Error logging query:', logError);
-    }
-
-    console.log('Calling DeepSeek API...');
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          systemMessage,
-          ...messages
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-        top_p: 0.95,
-        frequency_penalty: 0.5,
-        presence_penalty: 0.5
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('DeepSeek API error:', errorText);
-      throw new Error(`DeepSeek API error: ${response.status} ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log('DeepSeek API response received');
-
-    // Update query history with the response
-    const { error: updateError } = await supabase
-      .from('ai_query_history')
-      .update({
-        response_data: data.choices[0].message,
-        success_rate: 1.0
-      })
-      .eq('query', messages[messages.length - 1].content);
-
-    if (updateError) {
-      console.error('Error updating query history:', updateError);
+    if (insertError) {
+      console.error('Error storing insights:', insertError);
     }
 
     return new Response(
-      JSON.stringify({ message: data.choices[0].message.content }),
+      JSON.stringify({ success: true, recommendations }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
@@ -122,3 +57,47 @@ serve(async (req) => {
     );
   }
 });
+
+function analyzeBudget(context: any) {
+  const recommendations = [];
+  const { currentSpending, categories, targetBudget } = context;
+
+  // Calculate total current spending
+  const totalCurrentSpending = categories.reduce(
+    (sum: number, cat: any) => sum + cat.currentSpending, 
+    0
+  );
+
+  // If total spending exceeds target budget, generate reduction recommendations
+  if (totalCurrentSpending > targetBudget) {
+    const reductionNeeded = totalCurrentSpending - targetBudget;
+    
+    // Analyze each category for potential savings
+    categories.forEach((category: any) => {
+      const spendingRatio = category.currentSpending / totalCurrentSpending;
+      
+      if (spendingRatio > 0.3) { // High spending category
+        recommendations.push({
+          title: `High Spending Alert: ${category.name}`,
+          description: `Consider reducing spending in ${category.name} by ${Math.round(spendingRatio * 100)}% to optimize budget allocation.`,
+          currentAmount: category.currentSpending,
+          recommendedAmount: category.currentSpending * 0.7,
+          savingsPotential: category.currentSpending * 0.3,
+          priority: 1
+        });
+      }
+    });
+  }
+
+  // Add general optimization recommendations
+  recommendations.push({
+    title: "Budget Allocation Strategy",
+    description: `Based on current spending patterns, consider reallocating resources to maintain a balanced budget of ${targetBudget} QAR.`,
+    currentAmount: totalCurrentSpending,
+    recommendedAmount: targetBudget,
+    savingsPotential: Math.max(0, totalCurrentSpending - targetBudget),
+    priority: 2
+  });
+
+  return recommendations;
+}
