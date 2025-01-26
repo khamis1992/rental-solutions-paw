@@ -1,15 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { formatCurrency } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 export const ProfitabilityTracking = () => {
   const { data: profitabilityData, isLoading } = useQuery({
     queryKey: ["vehicle-profitability"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get vehicles with their leases
+      const { data: vehicles, error: vehiclesError } = await supabase
         .from("vehicles")
         .select(`
           id,
@@ -19,20 +20,25 @@ export const ProfitabilityTracking = () => {
           leases (
             total_amount,
             start_date,
-            end_date,
-            maintenance (
-              cost
-            )
+            end_date
           )
         `);
 
-      if (error) throw error;
+      if (vehiclesError) throw vehiclesError;
 
-      return data.map(vehicle => {
+      // Then get maintenance costs separately
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from("maintenance")
+        .select("vehicle_id, cost");
+
+      if (maintenanceError) throw maintenanceError;
+
+      // Combine the data
+      return vehicles.map(vehicle => {
         const revenue = vehicle.leases?.reduce((sum, lease) => sum + (lease.total_amount || 0), 0) || 0;
-        const costs = vehicle.leases?.reduce((sum, lease) => 
-          sum + (lease.maintenance?.reduce((mSum, m) => mSum + (m.cost || 0), 0) || 0), 0
-        ) || 0;
+        const costs = maintenanceData
+          .filter(m => m.vehicle_id === vehicle.id)
+          .reduce((sum, m) => sum + (m.cost || 0), 0);
         
         return {
           vehicle: `${vehicle.make} ${vehicle.model} (${vehicle.license_plate})`,
