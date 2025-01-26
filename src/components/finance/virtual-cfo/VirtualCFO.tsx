@@ -3,11 +3,8 @@ import { ExpenseAnalysis } from "./ExpenseAnalysis";
 import { BudgetingAssistance } from "./BudgetingAssistance";
 import { CashFlowMonitoring } from "./CashFlowMonitoring";
 import { ScenarioAnalysis } from "./ScenarioAnalysis";
-import { FinancialGoals } from "./FinancialGoals";
 import { ProfitabilityTracking } from "./ProfitabilityTracking";
 import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
-import { FinancialHealth } from "./FinancialHealth";
-import { BudgetOptimization } from "./BudgetOptimization";
 import { CustomDashboard } from "./reporting/CustomDashboard";
 import { ReportScheduler } from "./reporting/ReportScheduler";
 import { BarChart3, FileSpreadsheet } from "lucide-react";
@@ -64,40 +61,16 @@ export const VirtualCFO = () => {
             Profitability
           </TabsTrigger>
           <TabsTrigger 
-            value="costs" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            Cost Analysis
-          </TabsTrigger>
-          <TabsTrigger 
-            value="budget-optimization" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            Budget Optimization
-          </TabsTrigger>
-          <TabsTrigger 
             value="break-even" 
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
           >
             Break-Even
           </TabsTrigger>
           <TabsTrigger 
-            value="health" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            Financial Health
-          </TabsTrigger>
-          <TabsTrigger 
             value="expense-analysis" 
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
           >
             Expense Analysis
-          </TabsTrigger>
-          <TabsTrigger 
-            value="budgeting" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            Budgeting
           </TabsTrigger>
           <TabsTrigger 
             value="cash-flow" 
@@ -111,12 +84,6 @@ export const VirtualCFO = () => {
           >
             Scenarios
           </TabsTrigger>
-          <TabsTrigger 
-            value="goals" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            Goals
-          </TabsTrigger>
         </div>
       </TabsList>
 
@@ -129,39 +96,23 @@ export const VirtualCFO = () => {
       </TabsContent>
 
       <TabsContent value="profitability">
-        <ProfitabilityTracking agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
-
-      <TabsContent value="budget-optimization">
-        <BudgetOptimization agreements={activeAgreements} isLoading={isLoading} />
+        <ProfitabilityTracking />
       </TabsContent>
 
       <TabsContent value="break-even">
-        <BreakEvenAnalysis agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
-
-      <TabsContent value="health">
-        <FinancialHealth agreements={activeAgreements} isLoading={isLoading} />
+        <BreakEvenAnalysis />
       </TabsContent>
 
       <TabsContent value="expense-analysis">
-        <ExpenseAnalysis agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
-
-      <TabsContent value="budgeting">
-        <BudgetingAssistance agreements={activeAgreements} isLoading={isLoading} />
+        <ExpenseAnalysis />
       </TabsContent>
 
       <TabsContent value="cash-flow">
-        <CashFlowMonitoring agreements={activeAgreements} isLoading={isLoading} />
+        <CashFlowMonitoring />
       </TabsContent>
 
       <TabsContent value="scenarios">
-        <ScenarioAnalysis agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
-
-      <TabsContent value="goals">
-        <FinancialGoals agreements={activeAgreements} isLoading={isLoading} />
+        <ScenarioAnalysis />
       </TabsContent>
     </Tabs>
   );
