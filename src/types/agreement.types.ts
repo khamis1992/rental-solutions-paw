@@ -6,7 +6,7 @@ export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export interface Template {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   content: string;
   language: DocumentLanguage;
   agreement_type: AgreementType;
@@ -16,7 +16,7 @@ export interface Template {
   daily_late_fee: number;
   damage_penalty_rate: number;
   late_return_fee: number;
-  is_active?: boolean;
+  is_active: boolean;
   created_at?: string;
   updated_at?: string;
   template_structure: any;
