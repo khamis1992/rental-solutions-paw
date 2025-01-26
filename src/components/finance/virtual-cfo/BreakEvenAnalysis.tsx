@@ -1,115 +1,117 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { Agreement } from "@/types/agreement.types";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Loader2 } from "lucide-react";
 
-interface BreakEvenAnalysisProps {
-  agreements: Agreement[] | undefined;
-  isLoading: boolean;
-}
+export const BreakEvenAnalysis = () => {
+  const [fixedCosts, setFixedCosts] = useState(10000);
+  const [variableCostPerUnit, setVariableCostPerUnit] = useState(100);
+  const [pricePerUnit, setPricePerUnit] = useState(150);
 
-export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisProps) => {
-  const [pricePerUnit, setPricePerUnit] = useState<number>(150); // Default daily rental rate
-  const [variableCost, setVariableCost] = useState<number>(100); // Default variable cost per vehicle
-  const [fixedCosts, setFixedCosts] = useState<number>(10000); // Default monthly fixed costs
+  const { data: breakEvenData, isLoading } = useQuery({
+    queryKey: ["break-even", fixedCosts, variableCostPerUnit, pricePerUnit],
+    queryFn: async () => {
+      // Generate break-even analysis data points
+      const dataPoints = [];
+      const contributionMargin = pricePerUnit - variableCostPerUnit;
+      const breakEvenUnits = Math.ceil(fixedCosts / contributionMargin);
 
-  const calculateBreakEven = useCallback(() => {
-    if (pricePerUnit === variableCost) return { units: 0, revenue: 0 };
-    const breakEvenUnits = fixedCosts / (pricePerUnit - variableCost);
-    const breakEvenRevenue = breakEvenUnits * pricePerUnit;
-    return {
-      units: Math.ceil(breakEvenUnits),
-      revenue: breakEvenRevenue
-    };
-  }, [pricePerUnit, variableCost, fixedCosts]);
+      for (let units = 0; units <= breakEvenUnits * 2; units += Math.ceil(breakEvenUnits / 10)) {
+        const revenue = units * pricePerUnit;
+        const totalCosts = fixedCosts + (units * variableCostPerUnit);
+        const profit = revenue - totalCosts;
 
-  const { units, revenue } = calculateBreakEven();
+        dataPoints.push({
+          units,
+          revenue,
+          totalCosts,
+          profit
+        });
+      }
 
-  const handleInputChange = (setter: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0;
-    setter(value);
-  };
+      return {
+        breakEvenUnits,
+        breakEvenRevenue: breakEvenUnits * pricePerUnit,
+        dataPoints
+      };
+    }
+  });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>Break-Even Analysis Inputs</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="pricePerUnit">Daily Rental Rate (QAR)</Label>
-            <Input
-              id="pricePerUnit"
-              type="number"
-              value={pricePerUnit}
-              onChange={handleInputChange(setPricePerUnit)}
-              placeholder="Enter daily rental rate"
-            />
-            <p className="text-sm text-muted-foreground">
-              The daily rate you charge for renting a vehicle
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="variableCost">Variable Cost per Vehicle (QAR)</Label>
-            <Input
-              id="variableCost"
-              type="number"
-              value={variableCost}
-              onChange={handleInputChange(setVariableCost)}
-              placeholder="Enter variable cost per vehicle"
-            />
-            <p className="text-sm text-muted-foreground">
-              Daily costs that vary with each rental (maintenance, insurance, etc.)
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="fixedCosts">Monthly Fixed Costs (QAR)</Label>
+    <Card>
+      <CardHeader>
+        <CardTitle>Break-Even Analysis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div>
+            <Label htmlFor="fixedCosts">Fixed Costs (QAR)</Label>
             <Input
               id="fixedCosts"
               type="number"
               value={fixedCosts}
-              onChange={handleInputChange(setFixedCosts)}
-              placeholder="Enter monthly fixed costs"
+              onChange={(e) => setFixedCosts(Number(e.target.value))}
             />
-            <p className="text-sm text-muted-foreground">
-              Monthly costs that don't change with rentals (rent, salaries, etc.)
-            </p>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <Label htmlFor="variableCosts">Variable Cost per Unit (QAR)</Label>
+            <Input
+              id="variableCosts"
+              type="number"
+              value={variableCostPerUnit}
+              onChange={(e) => setVariableCostPerUnit(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="price">Price per Unit (QAR)</Label>
+            <Input
+              id="price"
+              type="number"
+              value={pricePerUnit}
+              onChange={(e) => setPricePerUnit(Number(e.target.value))}
+            />
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Break-Even Results</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Break-Even Point (Rentals)</p>
-            <p className="text-2xl font-bold">{units} rentals</p>
-          </div>
+        <div className="space-y-4 mb-6">
+          <p className="text-sm">
+            Break-even Point: {breakEvenData?.breakEvenUnits.toLocaleString()} units
+          </p>
+          <p className="text-sm">
+            Break-even Revenue: {formatCurrency(breakEvenData?.breakEvenRevenue || 0)}
+          </p>
+        </div>
 
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Break-Even Revenue</p>
-            <p className="text-2xl font-bold">{formatCurrency(revenue)}</p>
-          </div>
-
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm">
-              You need to rent {units} vehicles at {formatCurrency(pricePerUnit)} per day
-              to cover your monthly costs of {formatCurrency(fixedCosts)}.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={breakEvenData?.dataPoints}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="units"
+                label={{ value: 'Units', position: 'insideBottom', offset: -5 }}
+              />
+              <YAxis tickFormatter={(value) => formatCurrency(value)} />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#4ade80" />
+              <Line type="monotone" dataKey="totalCosts" name="Total Costs" stroke="#f43f5e" />
+              <Line type="monotone" dataKey="profit" name="Profit" stroke="#60a5fa" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
