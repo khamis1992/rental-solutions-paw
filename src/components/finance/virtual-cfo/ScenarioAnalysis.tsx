@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -12,10 +11,7 @@ import { formatCurrency } from "@/lib/utils";
 export const ScenarioAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [scenario, setScenario] = useState({
-    description: "",
-    investment: "",
-    expectedRoi: "",
-    expectedProfit: ""
+    description: ""
   });
 
   // Fetch active agreements total rent amount (monthly income)
@@ -48,7 +44,7 @@ export const ScenarioAnalysis = () => {
   });
 
   // Fetch historical analyses
-  const { data: analyses = [] } = useQuery({
+  const { data: analyses = [], refetch } = useQuery({
     queryKey: ["scenario-analyses"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -124,24 +120,6 @@ export const ScenarioAnalysis = () => {
                 onChange={(e) => setScenario(prev => ({ ...prev, description: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Input
-                  type="number"
-                  placeholder="Investment Amount (QAR)"
-                  value={scenario.investment}
-                  onChange={(e) => setScenario(prev => ({ ...prev, investment: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Input
-                  type="number"
-                  placeholder="Expected ROI (%)"
-                  value={scenario.expectedRoi}
-                  onChange={(e) => setScenario(prev => ({ ...prev, expectedRoi: e.target.value }))}
-                />
-              </div>
-            </div>
             <Button 
               onClick={handleAnalyze} 
               disabled={isAnalyzing}
@@ -172,17 +150,11 @@ export const ScenarioAnalysis = () => {
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">{analysis.insight}</p>
                     {analysis.data_points && (
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4">
                         <div>
-                          <div className="text-sm text-muted-foreground">ROI</div>
+                          <div className="text-sm text-muted-foreground">Analysis Result</div>
                           <div className="text-lg font-semibold">
-                            {(analysis.data_points.roi_percentage || 0).toFixed(1)}%
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-muted-foreground">Net Profit</div>
-                          <div className="text-lg font-semibold">
-                            {formatCurrency(analysis.data_points.net_profit || 0)}
+                            {analysis.data_points.analysis_result || 'No result available'}
                           </div>
                         </div>
                       </div>
