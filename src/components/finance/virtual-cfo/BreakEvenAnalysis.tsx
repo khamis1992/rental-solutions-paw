@@ -15,7 +15,7 @@ interface BreakEvenAnalysisProps {
 
 export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisProps) => {
   const [pricePerUnit, setPricePerUnit] = useState<number>(150); // Default monthly rental rate
-  const [variableCost, setVariableCost] = useState<number>(100);
+  const [variableCost, setVariableCost] = useState<number>(100); // Default monthly variable cost
   const [fixedCosts, setFixedCosts] = useState<number>(10000);
 
   const calculateBreakEven = useCallback(() => {
@@ -65,7 +65,7 @@ export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisPr
 
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label htmlFor="variableCost">Variable Cost per Vehicle (QAR)</Label>
+              <Label htmlFor="variableCost">Monthly Variable Cost per Vehicle (QAR)</Label>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -82,7 +82,7 @@ export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisPr
               type="number"
               value={variableCost}
               onChange={(e) => setVariableCost(Number(e.target.value))}
-              placeholder="Enter variable cost per vehicle"
+              placeholder="Enter monthly variable cost per vehicle"
             />
             <p className="text-sm text-muted-foreground">
               Monthly costs that vary with each rental (maintenance, insurance, etc.)
