@@ -35,6 +35,7 @@ export const useDashboardSubscriptions = () => {
       () => {
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         queryClient.invalidateQueries({ queryKey: ['agreements'] });
+        queryClient.invalidateQueries({ queryKey: ['active-rent-amounts'] });
       }
     );
 
@@ -52,16 +53,26 @@ export const useDashboardSubscriptions = () => {
       }
     );
 
-    // Subscribe to the channel
+    // Subscribe to the channel with better error handling
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         console.log('Successfully subscribed to dashboard changes');
       } else if (status === 'CLOSED') {
         console.log('Subscription to dashboard changes closed');
-        toast.error('Lost connection to real-time updates');
+        toast.error('Lost connection to real-time updates. Attempting to reconnect...');
+        
+        // Attempt to resubscribe after a delay
+        setTimeout(() => {
+          channel.subscribe();
+        }, 5000);
       } else if (status === 'CHANNEL_ERROR') {
         console.error('Error in dashboard subscription channel');
-        toast.error('Error in real-time updates connection');
+        toast.error('Error in real-time updates connection. Attempting to reconnect...');
+        
+        // Attempt to resubscribe after a delay
+        setTimeout(() => {
+          channel.subscribe();
+        }, 5000);
       }
     });
 
