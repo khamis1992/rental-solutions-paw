@@ -1,21 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { Agreement } from "@/types/agreement.types";
 
 interface ProfitabilityTrackingProps {
-  agreements: {
-    agreement_number: string;
-    rent_amount: number;
-    total_amount: number;
-    start_date: string;
-    end_date: string;
-    status: string;
-  }[] | null;
+  agreements: Agreement[] | null;
   isLoading: boolean;
 }
 
 export const ProfitabilityTracking = ({ agreements, isLoading }: ProfitabilityTrackingProps) => {
-  const totalMonthlyRevenue = agreements?.reduce((sum, agreement) => sum + agreement.rent_amount, 0) || 0;
-  const totalContractValue = agreements?.reduce((sum, agreement) => sum + agreement.total_amount, 0) || 0;
+  const totalMonthlyRevenue = agreements?.reduce((sum, agreement) => sum + (agreement.rent_amount || 0), 0) || 0;
+  const totalContractValue = agreements?.reduce((sum, agreement) => sum + (agreement.total_amount || 0), 0) || 0;
 
   return (
     <div className="space-y-4">

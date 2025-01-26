@@ -16,11 +16,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Agreement } from "@/types/agreement.types";
 
-interface VirtualCFOComponentProps {
-  agreements: Agreement[];
-  isLoading: boolean;
-}
-
 export const VirtualCFO = () => {
   const { data: activeAgreements, isLoading } = useQuery({
     queryKey: ["active-rent-amounts"],
@@ -39,7 +34,7 @@ export const VirtualCFO = () => {
         .order("agreement_number");
 
       if (error) throw error;
-      return agreements;
+      return agreements as Agreement[];
     },
   });
 
