@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { FileDown, FilePdf, FileSpreadsheet, BarChart3 } from "lucide-react";
+import { FileDown, FileText, FileSpreadsheet, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
 interface MetricConfig {
@@ -52,7 +52,7 @@ export const CustomDashboard = () => {
     if (!financialData) return null;
 
     const ChartComponent = metric.type === 'bar' ? BarChart : LineChart;
-    const DataComponent = metric.type === 'bar' ? Bar : Line;
+    const DataElement = metric.type === 'bar' ? Bar : Line;
 
     return (
       <Card key={metric.id} className="col-span-1">
@@ -73,7 +73,7 @@ export const CustomDashboard = () => {
                   formatter={(value: number) => formatCurrency(value)}
                   labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
-                <DataComponent 
+                <DataElement 
                   type="monotone" 
                   dataKey={metric.dataKey}
                   fill="#60a5fa"
@@ -97,7 +97,7 @@ export const CustomDashboard = () => {
             size="sm"
             onClick={() => exportData('pdf')}
           >
-            <FilePdf className="h-4 w-4 mr-2" />
+            <FileText className="h-4 w-4 mr-2" />
             PDF
           </Button>
           <Button 
