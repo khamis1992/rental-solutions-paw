@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Clock, CheckCircle } from "lucide-react";
+import { Car, Clock, CheckCircle, Banknote } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/utils";
 
 export const RecentActivity = () => {
   const { data: recentActivities } = useQuery({
@@ -41,10 +42,27 @@ export const RecentActivity = () => {
         .order("updated_at", { ascending: false })
         .limit(1);
 
+      // Fetch recent payments
+      const { data: payments } = await supabase
+        .from("unified_payments")
+        .select(`
+          *,
+          leases (
+            agreement_number,
+            vehicles (
+              make,
+              model
+            )
+          )
+        `)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
       return {
         vehicleAddition: vehicles?.[0],
         agreementUpdate: agreements?.[0],
         vehicleReturn: returns?.[0],
+        recentPayments: payments || []
       };
     },
   });
@@ -60,29 +78,36 @@ export const RecentActivity = () => {
     return `${Math.floor(diffInHours / 24)}d ago`;
   };
 
-  const activities = recentActivities ? [
-    recentActivities.vehicleAddition && {
+  const activities = [
+    ...(recentActivities?.recentPayments || []).map(payment => ({
+      icon: Banknote,
+      title: "Payment Received",
+      description: `${formatCurrency(payment.amount)} - Agreement ${payment.leases?.agreement_number || 'N/A'}`,
+      time: getTimeAgo(payment.created_at),
+      status: "success"
+    })),
+    recentActivities?.vehicleAddition && {
       icon: Car,
       title: "New Vehicle Added",
       description: `${recentActivities.vehicleAddition.year} ${recentActivities.vehicleAddition.make} ${recentActivities.vehicleAddition.model} - Added to fleet`,
       time: getTimeAgo(recentActivities.vehicleAddition.created_at),
       status: "success"
     },
-    recentActivities.agreementUpdate && {
+    recentActivities?.agreementUpdate && {
       icon: Clock,
       title: "Rental Agreement Updated",
       description: `Agreement #${recentActivities.agreementUpdate.agreement_number} - ${recentActivities.agreementUpdate.vehicles.make} ${recentActivities.agreementUpdate.vehicles.model}`,
       time: getTimeAgo(recentActivities.agreementUpdate.updated_at),
       status: "warning"
     },
-    recentActivities.vehicleReturn && {
+    recentActivities?.vehicleReturn && {
       icon: CheckCircle,
       title: "Vehicle Returned",
       description: `${recentActivities.vehicleReturn.vehicles.make} ${recentActivities.vehicleReturn.vehicles.model} returned`,
       time: getTimeAgo(recentActivities.vehicleReturn.updated_at),
       status: "info"
     }
-  ].filter(Boolean) : [];
+  ].filter(Boolean);
 
   return (
     <Card className="lg:col-span-4">
