@@ -1,14 +1,19 @@
-import { serve } from 'https://deno.fresh.dev/std@v1/http/server.ts';
-import { corsHeaders } from '../_shared/cors.ts';
+import { serve } from 'https://deno.fresh.dev/std@v1/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { type, amount, name, totalFixedCosts, totalVariableCosts } = await req.json();
+    const { type, amount, name, totalFixedCosts, totalVariableCosts } = await req.json()
 
     // Create scenario analysis
     const scenario = {
@@ -27,25 +32,31 @@ serve(async (req) => {
         roi_percentage: ((amount * 1.2) - (totalFixedCosts + totalVariableCosts)) / amount * 100
       },
       recommendation: `Based on the analysis, this ${type} scenario shows a potential ROI of ${(((amount * 1.2) - (totalFixedCosts + totalVariableCosts)) / amount * 100).toFixed(1)}%`
-    };
+    }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabase = createClient(supabaseUrl!, supabaseKey!)
 
     // Insert into financial_scenarios table
     const { data, error } = await supabase
       .from('financial_scenarios')
       .insert([scenario])
-      .select();
+      .select()
 
-    if (error) throw error;
+    if (error) throw error
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    });
+    })
 
   } catch (error) {
+    console.error('Error:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
-    });
+    })
   }
-});
+})

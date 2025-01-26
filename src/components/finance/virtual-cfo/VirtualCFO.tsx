@@ -11,6 +11,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const VirtualCFO = () => {
+  const handleCreateScenario = async () => {
+    try {
+      const scenario = {
+        type: "fleet_expansion",
+        amount: 500000,
+        name: "Fleet Expansion Analysis",
+        totalFixedCosts: 200000,
+        totalVariableCosts: 150000
+      };
+      
+      const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
+        body: scenario
+      });
+
+      if (error) throw error;
+      toast.success("New scenario created successfully");
+    } catch (error) {
+      console.error('Error creating scenario:', error);
+      toast.error("Failed to create scenario");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -69,27 +91,7 @@ export const VirtualCFO = () => {
                   variant="outline" 
                   size="sm"
                   className="flex items-center gap-2"
-                  onClick={async () => {
-                    try {
-                      const scenario = {
-                        type: "fleet_expansion",
-                        amount: 500000,
-                        name: "Fleet Expansion Analysis",
-                        totalFixedCosts: 200000,
-                        totalVariableCosts: 150000
-                      };
-                      
-                      const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
-                        body: JSON.stringify(scenario)
-                      });
-
-                      if (error) throw error;
-                      toast.success("New scenario created successfully");
-                    } catch (error) {
-                      console.error('Error creating scenario:', error);
-                      toast.error("Failed to create scenario");
-                    }
-                  }}
+                  onClick={handleCreateScenario}
                 >
                   <PlusCircle className="h-4 w-4" />
                   New Scenario
