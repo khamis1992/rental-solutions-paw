@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
-import { Brain, TrendingUp, TrendingDown, AlertCircle, Loader2 } from "lucide-react";
+import { Brain, TrendingUp, TrendingDown, AlertCircle, Loader2, Scale } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const ScenarioAnalysis = () => {
   const { data: scenarios, isLoading, error } = useQuery({
@@ -12,7 +13,7 @@ export const ScenarioAnalysis = () => {
       const { data, error } = await supabase
         .from("financial_scenarios")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) {
         toast.error("Failed to load scenarios");
@@ -72,65 +73,100 @@ export const ScenarioAnalysis = () => {
 
   return (
     <div className="space-y-6">
-      {scenarios?.map((scenario) => (
-        <Card key={scenario.id}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {scenario.name}
-              {scenario.recommendation && (
-                <AlertCircle className="h-5 w-5 text-yellow-500" />
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-muted-foreground">{scenario.description}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Key Assumptions</h4>
-                <ul className="list-disc list-inside space-y-1">
-                  {Object.entries(scenario.assumptions || {}).map(([key, value]) => (
-                    <li key={key} className="text-muted-foreground">
-                      {key}: {value}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Projected Outcomes</h4>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {Object.entries(scenario.projected_outcomes || {}).map(([key, value]) => (
-                    <div key={key} className="p-4 rounded-lg bg-muted">
-                      <p className="text-sm font-medium">{key}</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-2xl font-bold">
-                          {typeof value === "number" ? formatCurrency(value) : value}
-                        </p>
-                        {typeof value === "number" && value > 0 ? (
-                          <TrendingUp className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-500" />
-                        )}
+      {/* Scenario Comparison Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Scenario Comparison</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {scenarios.map((scenario) => (
+              <Card key={scenario.id} className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle className="text-base">{scenario.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Financial Impact Analysis */}
+                  <div>
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Financial Impact
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>ROI</span>
+                        <span className={scenario.projected_outcomes.roi_percentage > 0 ? "text-green-600" : "text-red-600"}>
+                          {scenario.projected_outcomes.roi_percentage?.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Net Profit</span>
+                        <span>{formatCurrency(scenario.projected_outcomes.net_profit || 0)}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {scenario.recommendation && (
-                <div>
-                  <h4 className="font-semibold mb-2">Recommendation</h4>
-                  <p className="text-muted-foreground">{scenario.recommendation}</p>
+                  {/* Risk Assessment */}
+                  <div>
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Risk Assessment
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {scenario.assumptions && Object.entries(scenario.assumptions).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-muted-foreground">{key.replace(/_/g, ' ')}</span>
+                          <span>{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Metrics Impact */}
+                  <div>
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <Scale className="h-4 w-4" />
+                      Key Metrics
+                    </h4>
+                    <div className="space-y-2">
+                      {scenario.projected_outcomes && Object.entries(scenario.projected_outcomes)
+                        .filter(([key]) => !['roi_percentage', 'net_profit'].includes(key))
+                        .map(([key, value]) => (
+                          <div key={key} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{key.replace(/_/g, ' ')}</span>
+                            <span>{typeof value === 'number' ? formatCurrency(value) : value}</span>
+                          </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recommendations Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Recommendations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {scenarios.map((scenario) => (
+              scenario.recommendation && (
+                <div key={scenario.id} className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
+                  <Brain className="h-5 w-5 mt-1 text-primary" />
+                  <div>
+                    <h4 className="font-semibold mb-1">{scenario.name}</h4>
+                    <p className="text-muted-foreground text-sm">{scenario.recommendation}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+              )
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
