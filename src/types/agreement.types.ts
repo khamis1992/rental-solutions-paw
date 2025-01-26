@@ -6,7 +6,7 @@ export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export interface Template {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   content: string;
   language: DocumentLanguage;
   agreement_type: AgreementType;
@@ -43,22 +43,6 @@ export interface Agreement {
   remainingAmount: number;
   agreement_duration: string;
   daily_late_fee: number;
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    address: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
 }
 
 export interface Payment {

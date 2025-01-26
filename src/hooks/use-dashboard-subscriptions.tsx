@@ -7,6 +7,8 @@ export const useDashboardSubscriptions = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    let retryTimeout: number;
+    
     // Create a single channel for all subscriptions
     const channel = supabase.channel('dashboard-changes');
 
@@ -53,31 +55,43 @@ export const useDashboardSubscriptions = () => {
       }
     );
 
-    // Subscribe to the channel with better error handling
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('Successfully subscribed to dashboard changes');
-      } else if (status === 'CLOSED') {
-        console.log('Subscription to dashboard changes closed');
-        toast.error('Lost connection to real-time updates. Attempting to reconnect...');
-        
-        // Attempt to resubscribe after a delay
-        setTimeout(() => {
-          channel.subscribe();
-        }, 5000);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error('Error in dashboard subscription channel');
-        toast.error('Error in real-time updates connection. Attempting to reconnect...');
-        
-        // Attempt to resubscribe after a delay
-        setTimeout(() => {
-          channel.subscribe();
-        }, 5000);
+    const handleSubscribe = () => {
+      // Clear any existing retry timeout
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
       }
-    });
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to dashboard changes');
+        } else if (status === 'CLOSED') {
+          console.log('Subscription to dashboard changes closed');
+          toast.error('Lost connection to real-time updates. Attempting to reconnect...');
+          
+          // Attempt to resubscribe after a delay
+          retryTimeout = window.setTimeout(() => {
+            handleSubscribe();
+          }, 5000);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error in dashboard subscription channel');
+          toast.error('Error in real-time updates connection. Attempting to reconnect...');
+          
+          // Attempt to resubscribe after a delay
+          retryTimeout = window.setTimeout(() => {
+            handleSubscribe();
+          }, 5000);
+        }
+      });
+    };
+
+    // Initial subscription
+    handleSubscribe();
 
     // Cleanup subscription on unmount
     return () => {
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
       channel.unsubscribe();
     };
   }, [queryClient]);
