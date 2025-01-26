@@ -8,6 +8,7 @@ import { ProfitabilityTracking } from "./ProfitabilityTracking";
 import { CostAllocation } from "./CostAllocation";
 import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
 import { FinancialHealth } from "./FinancialHealth";
+import { BudgetOptimization } from "./BudgetOptimization";
 
 export const VirtualCFO = () => {
   return (
@@ -25,6 +26,12 @@ export const VirtualCFO = () => {
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
           >
             Cost Analysis
+          </TabsTrigger>
+          <TabsTrigger 
+            value="budget-optimization" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+          >
+            Budget Optimization
           </TabsTrigger>
           <TabsTrigger 
             value="break-even" 
@@ -77,6 +84,10 @@ export const VirtualCFO = () => {
 
       <TabsContent value="costs" className="space-y-6">
         <CostAllocation />
+      </TabsContent>
+
+      <TabsContent value="budget-optimization" className="space-y-6">
+        <BudgetOptimization />
       </TabsContent>
 
       <TabsContent value="break-even" className="space-y-6">
