@@ -19,10 +19,7 @@ export const CustomDashboard = () => {
         .from("leases")
         .select(`
           agreement_number,
-          rent_amount,
-          customer:customer_id (
-            full_name
-          )
+          rent_amount
         `)
         .eq("status", "active")
         .order("agreement_number");
@@ -38,13 +35,13 @@ export const CustomDashboard = () => {
   ) || 0;
 
   return (
-    <div className="space-y-8">
-      <Card>
+    <div className="space-y-4">
+      <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Active Agreement Rent Amounts</CardTitle>
-              <CardDescription>Monthly rent amounts for all active lease agreements</CardDescription>
+              <CardDescription>Monthly rent amounts for active lease agreements</CardDescription>
             </div>
             <TooltipProvider>
               <Tooltip>
@@ -63,7 +60,6 @@ export const CustomDashboard = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Agreement Number</TableHead>
-                <TableHead>Customer Name</TableHead>
                 <TableHead className="text-right">Monthly Rent</TableHead>
               </TableRow>
             </TableHeader>
@@ -72,13 +68,12 @@ export const CustomDashboard = () => {
                 Array.from({ length: 3 }).map((_, index) => (
                   <TableRow key={index}>
                     <TableCell><Skeleton className="h-4 w-[140px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
                   </TableRow>
                 ))
               ) : activeAgreements?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={2} className="text-center text-muted-foreground py-6">
                     No active agreements found
                   </TableCell>
                 </TableRow>
@@ -86,7 +81,6 @@ export const CustomDashboard = () => {
                 activeAgreements?.map((item) => (
                   <TableRow key={item.agreement_number}>
                     <TableCell className="font-medium">{item.agreement_number}</TableCell>
-                    <TableCell>{item.customer?.full_name || 'N/A'}</TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(item.rent_amount)}
                     </TableCell>
@@ -96,7 +90,7 @@ export const CustomDashboard = () => {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={2}>Total Monthly Rent</TableCell>
+                <TableCell>Total Monthly Rent</TableCell>
                 <TableCell className="text-right font-bold">
                   {isLoading ? (
                     <Skeleton className="h-4 w-[100px] ml-auto" />
