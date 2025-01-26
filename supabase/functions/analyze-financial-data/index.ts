@@ -1,78 +1,51 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from '../_shared/cors.ts'
+import { serve } from 'https://deno.fresh.dev/std@v1/http/server.ts';
+import { corsHeaders } from '../_shared/cors.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { type, amount, name, totalFixedCosts, totalVariableCosts } = await req.json()
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY')
+    const { type, amount, name, totalFixedCosts, totalVariableCosts } = await req.json();
 
-    if (!perplexityApiKey) {
-      throw new Error('Perplexity API key not configured')
-    }
-
-    console.log('Analyzing financial data:', { type, amount, name })
-
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
-        'Content-Type': 'application/json',
+    // Create scenario analysis
+    const scenario = {
+      name,
+      description: `Analysis of ${type} with investment of ${amount} QAR`,
+      assumptions: {
+        initial_investment: amount,
+        fixed_costs: totalFixedCosts,
+        variable_costs: totalVariableCosts,
+        time_horizon: '12 months'
       },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a financial analyst AI. Analyze expense patterns and provide insights on financial health and recommendations.'
-          },
-          {
-            role: 'user',
-            content: `Analyze this new ${type} cost: Name: ${name}, Amount: ${amount}. 
-                     Current total fixed costs: ${totalFixedCosts}, total variable costs: ${totalVariableCosts}.
-                     Consider the following in your analysis:
-                     1. Impact on overall financial health
-                     2. Cost optimization opportunities
-                     3. Comparison with industry standards
-                     4. Future implications and trends
-                     Provide specific, actionable insights and recommendations.`
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 1000,
-      }),
-    })
+      projected_outcomes: {
+        revenue_increase: amount * 1.2,
+        operational_costs: totalFixedCosts + totalVariableCosts,
+        net_profit: (amount * 1.2) - (totalFixedCosts + totalVariableCosts),
+        roi_percentage: ((amount * 1.2) - (totalFixedCosts + totalVariableCosts)) / amount * 100
+      },
+      recommendation: `Based on the analysis, this ${type} scenario shows a potential ROI of ${(((amount * 1.2) - (totalFixedCosts + totalVariableCosts)) / amount * 100).toFixed(1)}%`
+    };
 
-    const analysis = await response.json()
-    
-    // Process the AI response and format it for the application
-    const insight = {
-      message: analysis.choices[0].message.content,
-      priority: determinePriority(amount, totalFixedCosts, totalVariableCosts),
-    }
+    // Insert into financial_scenarios table
+    const { data, error } = await supabase
+      .from('financial_scenarios')
+      .insert([scenario])
+      .select();
 
-    return new Response(
-      JSON.stringify(insight),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
+    if (error) throw error;
+
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+
   } catch (error) {
-    console.error('Error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-    )
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 400,
+    });
   }
-})
-
-function determinePriority(amount: number, totalFixedCosts: number, totalVariableCosts: number): number {
-  const totalCosts = totalFixedCosts + totalVariableCosts
-  const impactPercentage = (amount / totalCosts) * 100
-  
-  if (impactPercentage > 20) return 1 // High priority
-  if (impactPercentage > 10) return 2 // Medium priority
-  return 3 // Low priority
-}
+});
