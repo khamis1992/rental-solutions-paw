@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
 import { Agreement } from "@/types/agreement.types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BreakEvenAnalysisProps {
   agreements: Agreement[] | undefined;
@@ -11,9 +14,9 @@ interface BreakEvenAnalysisProps {
 }
 
 export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisProps) => {
-  const [pricePerUnit, setPricePerUnit] = useState<number>(150); // Default daily rental rate
-  const [variableCost, setVariableCost] = useState<number>(100); // Default variable cost per vehicle
-  const [fixedCosts, setFixedCosts] = useState<number>(10000); // Default monthly fixed costs
+  const [pricePerUnit, setPricePerUnit] = useState<number>(150); // Default monthly rental rate
+  const [variableCost, setVariableCost] = useState<number>(100);
+  const [fixedCosts, setFixedCosts] = useState<number>(10000);
 
   const calculateBreakEven = useCallback(() => {
     if (pricePerUnit === variableCost) return { units: 0, revenue: 0 };
@@ -27,15 +30,6 @@ export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisPr
 
   const { units, revenue } = calculateBreakEven();
 
-  const handleInputChange = (setter: (value: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0;
-    setter(value);
-  };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
@@ -44,44 +38,80 @@ export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisPr
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="pricePerUnit">Daily Rental Rate (QAR)</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="pricePerUnit">Monthly Rental Rate (QAR)</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>The monthly rate you charge for renting a vehicle</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="pricePerUnit"
               type="number"
               value={pricePerUnit}
-              onChange={handleInputChange(setPricePerUnit)}
-              placeholder="Enter daily rental rate"
+              onChange={(e) => setPricePerUnit(Number(e.target.value))}
+              placeholder="Enter monthly rental rate"
             />
             <p className="text-sm text-muted-foreground">
-              The daily rate you charge for renting a vehicle
+              The monthly rate you charge for renting a vehicle
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="variableCost">Variable Cost per Vehicle (QAR)</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="variableCost">Variable Cost per Vehicle (QAR)</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Monthly costs that vary with each rental (maintenance, insurance, etc.)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="variableCost"
               type="number"
               value={variableCost}
-              onChange={handleInputChange(setVariableCost)}
+              onChange={(e) => setVariableCost(Number(e.target.value))}
               placeholder="Enter variable cost per vehicle"
             />
             <p className="text-sm text-muted-foreground">
-              Daily costs that vary with each rental (maintenance, insurance, etc.)
+              Monthly costs that vary with each rental (maintenance, insurance, etc.)
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="fixedCosts">Monthly Fixed Costs (QAR)</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="fixedCosts">Monthly Fixed Costs (QAR)</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Monthly costs that don't change with number of rentals (rent, salaries, etc.)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Input
               id="fixedCosts"
               type="number"
               value={fixedCosts}
-              onChange={handleInputChange(setFixedCosts)}
+              onChange={(e) => setFixedCosts(Number(e.target.value))}
               placeholder="Enter monthly fixed costs"
             />
             <p className="text-sm text-muted-foreground">
-              Monthly costs that don't change with rentals (rent, salaries, etc.)
+              Monthly costs that don't change with number of rentals (rent, salaries, etc.)
             </p>
           </div>
         </CardContent>
@@ -104,7 +134,7 @@ export const BreakEvenAnalysis = ({ agreements, isLoading }: BreakEvenAnalysisPr
 
           <div className="mt-6 p-4 bg-muted rounded-lg">
             <p className="text-sm">
-              You need to rent {units} vehicles at {formatCurrency(pricePerUnit)} per day
+              You need to rent {units} vehicles at {formatCurrency(pricePerUnit)} per month
               to cover your monthly costs of {formatCurrency(fixedCosts)}.
             </p>
           </div>
