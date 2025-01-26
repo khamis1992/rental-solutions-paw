@@ -5,7 +5,6 @@ import { CashFlowMonitoring } from "./CashFlowMonitoring";
 import { ScenarioAnalysis } from "./ScenarioAnalysis";
 import { FinancialGoals } from "./FinancialGoals";
 import { ProfitabilityTracking } from "./ProfitabilityTracking";
-import { CostAllocation } from "./CostAllocation";
 import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
 import { FinancialHealth } from "./FinancialHealth";
 import { BudgetOptimization } from "./BudgetOptimization";
@@ -131,10 +130,6 @@ export const VirtualCFO = () => {
 
       <TabsContent value="profitability">
         <ProfitabilityTracking agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
-
-      <TabsContent value="costs">
-        <CostAllocation agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
       <TabsContent value="budget-optimization">
