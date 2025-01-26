@@ -43,6 +43,34 @@ export interface Agreement {
   remainingAmount: number;
   agreement_duration: string;
   daily_late_fee: number;
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+  };
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    address: string | null;
+  };
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
 }
 
 export interface Payment {
@@ -51,7 +79,7 @@ export interface Payment {
   amount: number;
   amount_paid: number;
   balance: number;
-  payment_date: string;
+  payment_date: string | null;
   payment_method: string;
   status: PaymentStatus;
   description: string;

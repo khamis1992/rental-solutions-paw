@@ -14,9 +14,14 @@ import { ReportScheduler } from "./reporting/ReportScheduler";
 import { BarChart3, FileSpreadsheet } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Agreement } from "@/types/agreement.types";
+
+interface VirtualCFOComponentProps {
+  agreements: Agreement[];
+  isLoading: boolean;
+}
 
 export const VirtualCFO = () => {
-  // Shared data fetching for all tabs
   const { data: activeAgreements, isLoading } = useQuery({
     queryKey: ["active-rent-amounts"],
     queryFn: async () => {
