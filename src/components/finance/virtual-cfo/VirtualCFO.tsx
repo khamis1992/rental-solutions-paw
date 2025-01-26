@@ -9,12 +9,31 @@ import { CostAllocation } from "./CostAllocation";
 import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
 import { FinancialHealth } from "./FinancialHealth";
 import { BudgetOptimization } from "./BudgetOptimization";
+import { CustomDashboard } from "./reporting/CustomDashboard";
+import { ReportScheduler } from "./reporting/ReportScheduler";
+import { BarChart3, FileSpreadsheet } from "lucide-react";
 
 export const VirtualCFO = () => {
   return (
-    <Tabs defaultValue="profitability" className="space-y-6">
+    <Tabs defaultValue="dashboard" className="space-y-6">
       <TabsList className="w-full justify-start bg-background border-b rounded-none p-0 h-auto">
         <div className="flex overflow-x-auto no-scrollbar">
+          <TabsTrigger 
+            value="dashboard" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="reports" 
+            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Reports
+          </TabsTrigger>
+          
           <TabsTrigger 
             value="profitability" 
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
@@ -77,6 +96,16 @@ export const VirtualCFO = () => {
           </TabsTrigger>
         </div>
       </TabsList>
+
+      <TabsContent value="dashboard" className="space-y-6">
+        <CustomDashboard />
+      </TabsContent>
+
+      <TabsContent value="reports" className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ReportScheduler />
+        </div>
+      </TabsContent>
 
       <TabsContent value="profitability" className="space-y-6">
         <ProfitabilityTracking />
