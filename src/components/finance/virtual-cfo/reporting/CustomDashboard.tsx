@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { useDashboardSubscriptions } from "@/hooks/use-dashboard-subscriptions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const CustomDashboard = () => {
   // Use the dashboard subscriptions hook for real-time updates
@@ -16,7 +19,10 @@ export const CustomDashboard = () => {
         .from("leases")
         .select(`
           agreement_number,
-          rent_amount
+          rent_amount,
+          customer:customer_id (
+            full_name
+          )
         `)
         .eq("status", "active")
         .order("agreement_number");
@@ -32,36 +38,55 @@ export const CustomDashboard = () => {
   ) || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Active Agreement Rent Amounts</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Active Agreement Rent Amounts</CardTitle>
+              <CardDescription>Monthly rent amounts for all active lease agreements</CardDescription>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Real-time overview of active agreements and their monthly rent amounts</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Agreement Number</TableHead>
-                <TableHead className="text-right">Rent Amount</TableHead>
+                <TableHead>Customer Name</TableHead>
+                <TableHead className="text-right">Monthly Rent</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center">
-                    Loading rent amounts...
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 3 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-4 w-[140px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                  </TableRow>
+                ))
               ) : activeAgreements?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2} className="text-center">
+                  <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
                     No active agreements found
                   </TableCell>
                 </TableRow>
               ) : (
                 activeAgreements?.map((item) => (
                   <TableRow key={item.agreement_number}>
-                    <TableCell>{item.agreement_number}</TableCell>
+                    <TableCell className="font-medium">{item.agreement_number}</TableCell>
+                    <TableCell>{item.customer?.full_name || 'N/A'}</TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(item.rent_amount)}
                     </TableCell>
@@ -71,17 +96,19 @@ export const CustomDashboard = () => {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell>Total Rent Amount</TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(totalRentAmount)}
+                <TableCell colSpan={2}>Total Monthly Rent</TableCell>
+                <TableCell className="text-right font-bold">
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-[100px] ml-auto" />
+                  ) : (
+                    formatCurrency(totalRentAmount)
+                  )}
                 </TableCell>
               </TableRow>
             </TableFooter>
           </Table>
         </CardContent>
       </Card>
-
-      {/* Other dashboard components can be added here */}
     </div>
   );
 };
