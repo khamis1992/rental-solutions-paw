@@ -1,99 +1,124 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { query } = await req.json()
+    const { messages, dbResponse } = await req.json();
+    console.log('Processing financial query:', { messageCount: messages.length, hasDbResponse: !!dbResponse });
 
-    // Initialize OpenAI
-    const configuration = new Configuration({
-      apiKey: Deno.env.get('OPENAI_API_KEY'),
-    })
-    const openai = new OpenAIApi(configuration)
+    // If we have a database response, use it directly
+    if (dbResponse) {
+      console.log('Using database response:', dbResponse);
+      return new Response(
+        JSON.stringify({ message: dbResponse }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const supabase = createClient(supabaseUrl!, supabaseKey!)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Analyze query intent
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are a financial analysis assistant. Analyze the user's query to determine the financial metrics and data needed."
-        },
-        {
-          role: "user",
-          content: query
-        }
-      ]
-    })
-
-    const intent = completion.data.choices[0].message?.content || ''
-
-    // Fetch relevant financial data
-    const { data: transactions } = await supabase
-      .from('accounting_transactions')
+    // Get financial context from database
+    const { data: financialContext } = await supabase
+      .from('ai_analytics_insights')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100)
+      .limit(5);
 
-    // Generate insights
-    const insightCompletion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "Generate financial insights based on the data and user query."
-        },
-        {
-          role: "user",
-          content: `Query: ${query}\nData: ${JSON.stringify(transactions)}`
-        }
-      ]
-    })
+    const systemMessage = {
+      role: 'system',
+      content: `You are a Virtual CFO assistant. You must:
+        1. Only provide information based on internal financial data
+        2. Never use external information
+        3. Clearly indicate when requested information is not available
+        4. Ask for clarification when more context is needed
+        
+        Available data categories: revenue, expenses, budgets, cash flow, profitability.
+        Current financial context: ${JSON.stringify(financialContext)}`
+    };
 
-    const insights = insightCompletion.data.choices[0].message?.content || ''
+    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    if (!deepseekApiKey) {
+      throw new Error('DeepSeek API key not configured');
+    }
 
-    // Calculate confidence score based on data availability and relevance
-    const confidenceScore = 0.85 // Simplified for demo
+    // Log the query for analysis
+    const { error: logError } = await supabase.from('ai_query_history').insert({
+      query: messages[messages.length - 1].content,
+      detected_language: 'en',
+      detected_intent: 'financial_query',
+      response_data: {},
+      success_rate: 1.0
+    });
 
-    return new Response(
-      JSON.stringify({
-        intent: intent,
-        response: {
-          insights,
-          data: transactions,
-          recommendations: []
-        },
-        confidence: confidenceScore
+    if (logError) {
+      console.error('Error logging query:', logError);
+    }
+
+    console.log('Calling DeepSeek API...');
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          systemMessage,
+          ...messages
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+        top_p: 0.95,
+        frequency_penalty: 0.5,
+        presence_penalty: 0.5
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    )
+    });
 
-  } catch (error) {
-    console.error('Error:', error)
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('DeepSeek API error:', errorText);
+      throw new Error(`DeepSeek API error: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('DeepSeek API response received');
+
+    // Update query history with the response
+    const { error: updateError } = await supabase
+      .from('ai_query_history')
+      .update({
+        response_data: data.choices[0].message,
+        success_rate: 1.0
+      })
+      .eq('query', messages[messages.length - 1].content);
+
+    if (updateError) {
+      console.error('Error updating query history:', updateError);
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ message: data.choices[0].message.content }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error in analyze-financial-query:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'An error occurred processing your request' }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});

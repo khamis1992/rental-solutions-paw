@@ -11,34 +11,6 @@ export const FinancialQueryInterface = () => {
   const [query, setQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleQuerySubmit = async () => {
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-financial-query', {
-        body: { query }
-      });
-
-      if (error) throw error;
-
-      // Store query and response in history
-      await supabase.from('ai_query_history').insert({
-        query,
-        detected_language: 'english',
-        detected_intent: data.intent,
-        response_data: data.response,
-        success_rate: data.confidence
-      });
-
-      toast.success("Analysis complete");
-      setQuery("");
-    } catch (error) {
-      console.error("Error processing query:", error);
-      toast.error("Failed to process query");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const { data: recentQueries } = useQuery({
     queryKey: ["recent-financial-queries"],
     queryFn: async () => {
@@ -52,6 +24,27 @@ export const FinancialQueryInterface = () => {
       return data;
     }
   });
+
+  const handleQuerySubmit = async () => {
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-financial-query', {
+        body: { 
+          messages: [{ role: 'user', content: query }]
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("Analysis complete");
+      setQuery("");
+    } catch (error) {
+      console.error("Error processing query:", error);
+      toast.error("Failed to process query");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <Card>
