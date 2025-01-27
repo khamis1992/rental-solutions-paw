@@ -1,16 +1,15 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseAnalysis } from "./ExpenseAnalysis";
-import { BudgetingAssistance } from "./BudgetingAssistance";
 import { CashFlowMonitoring } from "./CashFlowMonitoring";
 import { ScenarioAnalysis } from "./ScenarioAnalysis";
 import { ProfitabilityTracking } from "./ProfitabilityTracking";
 import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
 import { CustomDashboard } from "./reporting/CustomDashboard";
 import { ReportScheduler } from "./reporting/ReportScheduler";
-import { BarChart3, FileSpreadsheet } from "lucide-react";
+import { PricingAnalysis } from "./PricingAnalysis";
+import { BarChart3, FileSpreadsheet, Calculator } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Agreement } from "@/types/agreement.types";
 
 export const VirtualCFO = () => {
   const { data: activeAgreements, isLoading } = useQuery({
@@ -30,7 +29,7 @@ export const VirtualCFO = () => {
         .order("agreement_number");
 
       if (error) throw error;
-      return agreements as Agreement[];
+      return agreements;
     },
   });
 
@@ -55,33 +54,30 @@ export const VirtualCFO = () => {
           </TabsTrigger>
           
           <TabsTrigger 
-            value="profitability" 
+            value="pricing" 
             className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
           >
+            <Calculator className="h-4 w-4" />
+            Pricing Analysis
+          </TabsTrigger>
+          
+          <TabsTrigger value="profitability">
             Profitability
           </TabsTrigger>
-          <TabsTrigger 
-            value="break-even" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
+          
+          <TabsTrigger value="break-even">
             Break-Even
           </TabsTrigger>
-          <TabsTrigger 
-            value="expense-analysis" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
+          
+          <TabsTrigger value="expense-analysis">
             Expense Analysis
           </TabsTrigger>
-          <TabsTrigger 
-            value="cash-flow" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
+          
+          <TabsTrigger value="cash-flow">
             Cash Flow
           </TabsTrigger>
-          <TabsTrigger 
-            value="scenarios" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
+          
+          <TabsTrigger value="scenarios">
             Scenarios
           </TabsTrigger>
         </div>
@@ -95,12 +91,16 @@ export const VirtualCFO = () => {
         <ReportScheduler />
       </TabsContent>
 
+      <TabsContent value="pricing">
+        <PricingAnalysis />
+      </TabsContent>
+
       <TabsContent value="profitability">
-        <ProfitabilityTracking />
+        <ProfitabilityTracking agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
       <TabsContent value="break-even">
-        <BreakEvenAnalysis />
+        <BreakEvenAnalysis agreements={activeAgreements} isLoading={isLoading} />
       </TabsContent>
 
       <TabsContent value="expense-analysis">

@@ -121,6 +121,7 @@ export type Database = {
           agreement_number: string | null
           amount: string | null
           category_id: string | null
+          cost_type: string | null
           created_at: string | null
           customer_name: string | null
           description: string | null
@@ -138,6 +139,7 @@ export type Database = {
           agreement_number?: string | null
           amount?: string | null
           category_id?: string | null
+          cost_type?: string | null
           created_at?: string | null
           customer_name?: string | null
           description?: string | null
@@ -155,6 +157,7 @@ export type Database = {
           agreement_number?: string | null
           amount?: string | null
           category_id?: string | null
+          cost_type?: string | null
           created_at?: string | null
           customer_name?: string | null
           description?: string | null
