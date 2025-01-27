@@ -1,14 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 
-interface VehicleRentalData {
-  make: string;
+interface AverageRent {
   model: string;
-  year: number;
-  rent_amount: number;
-  total_amount: number;
-  agreement_duration: string;
-  maintenance_cost: number;
-  insurance_cost: number;
+  averageRent: number;
+  count: number;
+}
+
+interface ProfitMargin {
+  vehicleId: string;
+  vehicle: string;
+  revenue: number;
+  costs: number;
+  profitMargin: number;
 }
 
 interface PricingSuggestion {
