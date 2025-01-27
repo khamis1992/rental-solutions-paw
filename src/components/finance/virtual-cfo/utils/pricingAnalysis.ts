@@ -17,6 +17,7 @@ interface ProfitMargin {
 
 interface PricingSuggestion {
   vehicleId: string;
+  licensePlate: string;
   currentPrice: number;
   suggestedPrice: number;
   profitMargin: number;
@@ -107,9 +108,6 @@ export const calculateProfitMargins = async (): Promise<ProfitMargin[]> => {
 };
 
 export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]> => {
-  const averageRents = await calculateAverageRentByModel();
-  const margins = await calculateProfitMargins();
-  
   const { data: vehicles, error } = await supabase
     .from('vehicles')
     .select(`
@@ -117,6 +115,7 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
       make,
       model,
       year,
+      license_plate,
       leases (
         rent_amount,
         status
@@ -130,29 +129,21 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
     const currentLease = vehicle.leases?.find(l => l.status === 'active');
     const currentPrice = currentLease?.rent_amount || 0;
     const modelKey = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
-    const averageForModel = averageRents.find(a => a.model === modelKey)?.averageRent || 0;
-    const margin = margins.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
 
     // Get AI analysis for pricing
     const aiAnalysis = await analyzeMarketPricing({
       vehicle,
       currentPrice,
-      averageForModel,
-      margin,
       marketData: {
-        averageRents,
-        margins
+        averageRents: await calculateAverageRentByModel(),
+        margins: await calculateProfitMargins()
       }
     });
 
-    let suggestedPrice = averageForModel;
+    let suggestedPrice = currentPrice;
     let reason = '';
 
-    // Apply demand factor
-    const demandFactor = 1.1; // 10% increase for high demand
-    suggestedPrice *= demandFactor;
-
-    // Adjust based on AI analysis if available
+    // Apply AI analysis if available
     if (aiAnalysis) {
       try {
         const analysis = JSON.parse(aiAnalysis);
@@ -167,26 +158,26 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
 
     // If no AI reason, use default logic
     if (!reason) {
-      if (margin < 20) {
-        suggestedPrice *= 1.15; // Increase price by 15% if profit margin is low
-        reason = 'Low profit margin';
-      } else if (currentPrice < averageForModel * 0.85) {
-        reason = 'Underpriced compared to similar vehicles';
-      } else if (currentPrice > averageForModel * 1.15) {
-        reason = 'Overpriced compared to similar vehicles';
+      if (currentPrice === 0) {
+        reason = 'No current price set';
+        suggestedPrice = 3000; // Default starting price
       } else {
         reason = 'Price is within market range';
       }
     }
 
+    const margin = await calculateProfitMargins();
+    const vehicleMargin = margin.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
+
     return {
       vehicleId: vehicle.id,
+      licensePlate: vehicle.license_plate,
       currentPrice,
       suggestedPrice: Math.round(suggestedPrice),
-      profitMargin: margin,
+      profitMargin: vehicleMargin,
       reason
     };
   }));
 
   return suggestions;
-};
+});

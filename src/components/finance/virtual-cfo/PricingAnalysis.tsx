@@ -63,7 +63,7 @@ export const PricingAnalysis = () => {
             <TableBody>
               {suggestions?.map((suggestion) => (
                 <TableRow key={suggestion.vehicleId}>
-                  <TableCell className="font-medium">{suggestion.vehicleId}</TableCell>
+                  <TableCell className="font-medium">{suggestion.licensePlate}</TableCell>
                   <TableCell>{formatCurrency(suggestion.currentPrice)}</TableCell>
                   <TableCell className="flex items-center gap-2">
                     {formatCurrency(suggestion.suggestedPrice)}
