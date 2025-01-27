@@ -27,7 +27,13 @@ export const RiskAssessmentTab = () => {
         .select('*')
         .order('default_rate', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching risk metrics:", error);
+        throw error;
+      }
+      
+      // Log the data to verify what we're getting
+      console.log("Risk metrics data:", data);
       return data as RiskMetrics[];
     }
   });
@@ -89,7 +95,7 @@ export const RiskAssessmentTab = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    {formatCurrency(metric.risk_adjusted_price)}
+                    {formatCurrency(metric.risk_adjusted_price || 0)}
                   </TableCell>
                 </TableRow>
               ))}
