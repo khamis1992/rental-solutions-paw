@@ -9,6 +9,7 @@ export interface MaintenanceFilters {
   serviceType: string;
   dateRange: string;
   categoryId?: string;
+  vehicleStatus?: string;
 }
 
 interface MaintenanceFiltersProps {
@@ -22,6 +23,19 @@ export function MaintenanceFilters({ filters, setFilters }: MaintenanceFiltersPr
     queryFn: async () => {
       const { data, error } = await supabase
         .from("maintenance_categories")
+        .select("*")
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: vehicleStatuses = [] } = useQuery({
+    queryKey: ["vehicle-statuses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicle_statuses")
         .select("*")
         .eq('is_active', true);
       
@@ -69,6 +83,25 @@ export function MaintenanceFilters({ filters, setFilters }: MaintenanceFiltersPr
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1">
+            <Select
+              value={filters.vehicleStatus || "all"}
+              onValueChange={(value) => setFilters({ ...filters, vehicleStatus: value === "all" ? undefined : value })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by vehicle status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Vehicle Statuses</SelectItem>
+                {vehicleStatuses.map((status) => (
+                  <SelectItem key={status.id} value={status.name}>
+                    {status.name}
                   </SelectItem>
                 ))}
               </SelectContent>

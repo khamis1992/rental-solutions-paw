@@ -1,8 +1,8 @@
 import { Table, TableBody } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
+import { MaintenanceFilters } from "./MaintenanceFilters";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,6 +20,7 @@ interface Vehicle {
   model: string;
   year: number;
   license_plate: string;
+  status: string;
 }
 
 interface MaintenanceRecord {
@@ -40,6 +42,12 @@ interface MaintenanceRecord {
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    status: "all",
+    serviceType: "all",
+    dateRange: "all",
+    vehicleStatus: "all"
+  });
 
   useEffect(() => {
     const channel = supabase
@@ -85,7 +93,8 @@ export const MaintenanceList = () => {
             make,
             model,
             year,
-            license_plate
+            license_plate,
+            status
           )
         `)
         .order('scheduled_date', { ascending: false });
@@ -99,7 +108,8 @@ export const MaintenanceList = () => {
           make,
           model,
           year,
-          license_plate
+          license_plate,
+          status
         `)
         .eq('status', 'accident');
 
@@ -116,7 +126,41 @@ export const MaintenanceList = () => {
         vehicles: vehicle
       }));
 
-      return [...maintenanceRecords, ...accidentRecords].sort((a, b) => 
+      let filteredRecords = [...maintenanceRecords, ...accidentRecords];
+
+      // Apply filters
+      if (filters.status !== "all") {
+        filteredRecords = filteredRecords.filter(record => record.status === filters.status);
+      }
+
+      if (filters.vehicleStatus !== "all") {
+        filteredRecords = filteredRecords.filter(record => record.vehicles?.status === filters.vehicleStatus);
+      }
+
+      // Apply date range filter
+      if (filters.dateRange !== "all") {
+        const now = new Date();
+        const startDate = new Date();
+        
+        switch (filters.dateRange) {
+          case "today":
+            startDate.setHours(0, 0, 0, 0);
+            break;
+          case "week":
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case "month":
+            startDate.setMonth(now.getMonth() - 1);
+            break;
+        }
+
+        filteredRecords = filteredRecords.filter(record => 
+          new Date(record.scheduled_date) >= startDate && 
+          new Date(record.scheduled_date) <= now
+        );
+      }
+
+      return filteredRecords.sort((a, b) => 
         new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime()
       );
     },
@@ -159,21 +203,9 @@ export const MaintenanceList = () => {
     );
   }
 
-  if (records.length === 0) {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-end">
-          <CreateJobDialog />
-        </div>
-        <Card className="p-6 text-center">
-          <p className="text-muted-foreground">No maintenance records found.</p>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      <MaintenanceFilters filters={filters} setFilters={setFilters} />
       <div className="flex justify-end">
         <CreateJobDialog />
       </div>
