@@ -126,60 +126,41 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
   const averageRents = await calculateAverageRentByModel();
   const margins = await calculateProfitMargins();
 
-  const suggestions = await Promise.all(vehicles.map(async vehicle => {
+  const suggestions = vehicles.map(vehicle => {
     const currentLease = vehicle.leases?.find(l => l.status === 'active');
     const currentPrice = currentLease?.rent_amount || 0;
     const modelKey = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
     
-    // Get average rent for this model
+    // Get average rent for this model from our system
     const modelAverage = averageRents.find(avg => avg.model === modelKey);
-    const marketAverage = modelAverage?.averageRent || currentPrice;
+    const systemAverage = modelAverage?.averageRent || currentPrice;
     
-    // Get profit margin for this vehicle
+    // Get profit margin from our system data
     const vehicleMargin = margins.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
     
-    // Calculate suggested price based on our data
+    // Calculate suggested price based on our system data
     let suggestedPrice = currentPrice;
     let reason = '';
 
-    if (marketAverage > currentPrice && vehicleMargin < 20) {
-      // If market average is higher and profit margin is low, suggest increase
-      suggestedPrice = Math.round(marketAverage * 1.1); // 10% above market average
-      reason = 'Price increase recommended based on market average and low profit margin';
-    } else if (marketAverage < currentPrice && vehicleMargin > 30) {
-      // If market average is lower and profit margin is high, suggest competitive price
-      suggestedPrice = Math.round(marketAverage * 0.95); // 5% below market average
-      reason = 'Price adjustment recommended to stay competitive while maintaining good profit';
-    } else if (Math.abs(marketAverage - currentPrice) / currentPrice > 0.2) {
-      // If price differs from market average by more than 20%
-      suggestedPrice = Math.round(marketAverage);
-      reason = 'Price adjustment recommended to align with market average';
+    if (vehicleMargin < 15) {
+      // If profit margin is very low, suggest higher price
+      suggestedPrice = Math.round(currentPrice * 1.15);
+      reason = 'Low profit margin (below 15%) - price increase recommended';
+    } else if (vehicleMargin < 25 && currentPrice < systemAverage) {
+      // If margin is below target and price is below system average
+      suggestedPrice = Math.round(systemAverage);
+      reason = 'Below average system price with moderate profit margin - adjustment recommended';
+    } else if (vehicleMargin > 40) {
+      // If margin is very high, consider competitive pricing
+      suggestedPrice = Math.round(currentPrice * 0.95);
+      reason = 'High profit margin (above 40%) - consider competitive pricing';
+    } else if (Math.abs(systemAverage - currentPrice) / currentPrice > 0.25) {
+      // If price significantly differs from system average
+      suggestedPrice = Math.round(systemAverage);
+      reason = 'Significant deviation from system average price - alignment recommended';
     } else {
       suggestedPrice = currentPrice;
-      reason = 'Current price is within optimal range';
-    }
-
-    // Use AI analysis as additional insight if available
-    try {
-      const aiAnalysis = await analyzeMarketPricing({
-        vehicle,
-        currentPrice,
-        marketData: {
-          averageRents,
-          margins
-        }
-      });
-
-      if (aiAnalysis) {
-        try {
-          const analysis = JSON.parse(aiAnalysis);
-          reason += ` | AI Insight: ${analysis.reason || ''}`;
-        } catch (e) {
-          console.error('Error parsing AI analysis:', e);
-        }
-      }
-    } catch (error) {
-      console.error('Error analyzing market pricing:', error);
+      reason = 'Price is optimal based on system data';
     }
 
     return {
@@ -188,9 +169,9 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
       currentPrice,
       suggestedPrice,
       profitMargin: vehicleMargin,
-      reason: reason || 'Price is within market range'
+      reason
     };
-  }));
+  });
 
   return suggestions;
 };
