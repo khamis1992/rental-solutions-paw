@@ -123,58 +123,73 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
 
   if (error) throw error;
 
+  const averageRents = await calculateAverageRentByModel();
+  const margins = await calculateProfitMargins();
+
   const suggestions = await Promise.all(vehicles.map(async vehicle => {
     const currentLease = vehicle.leases?.find(l => l.status === 'active');
     const currentPrice = currentLease?.rent_amount || 0;
     const modelKey = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
+    
+    // Get average rent for this model
+    const modelAverage = averageRents.find(avg => avg.model === modelKey);
+    const marketAverage = modelAverage?.averageRent || currentPrice;
+    
+    // Get profit margin for this vehicle
+    const vehicleMargin = margins.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
+    
+    // Calculate suggested price based on our data
+    let suggestedPrice = currentPrice;
+    let reason = '';
 
+    if (marketAverage > currentPrice && vehicleMargin < 20) {
+      // If market average is higher and profit margin is low, suggest increase
+      suggestedPrice = Math.round(marketAverage * 1.1); // 10% above market average
+      reason = 'Price increase recommended based on market average and low profit margin';
+    } else if (marketAverage < currentPrice && vehicleMargin > 30) {
+      // If market average is lower and profit margin is high, suggest competitive price
+      suggestedPrice = Math.round(marketAverage * 0.95); // 5% below market average
+      reason = 'Price adjustment recommended to stay competitive while maintaining good profit';
+    } else if (Math.abs(marketAverage - currentPrice) / currentPrice > 0.2) {
+      // If price differs from market average by more than 20%
+      suggestedPrice = Math.round(marketAverage);
+      reason = 'Price adjustment recommended to align with market average';
+    } else {
+      suggestedPrice = currentPrice;
+      reason = 'Current price is within optimal range';
+    }
+
+    // Use AI analysis as additional insight if available
     try {
       const aiAnalysis = await analyzeMarketPricing({
         vehicle,
         currentPrice,
         marketData: {
-          averageRents: await calculateAverageRentByModel(),
-          margins: await calculateProfitMargins()
+          averageRents,
+          margins
         }
       });
-
-      let suggestedPrice = currentPrice;
-      let reason = '';
 
       if (aiAnalysis) {
         try {
           const analysis = JSON.parse(aiAnalysis);
-          if (analysis.suggestedPrice) {
-            suggestedPrice = analysis.suggestedPrice;
-            reason = analysis.reason || '';
-          }
+          reason += ` | AI Insight: ${analysis.reason || ''}`;
         } catch (e) {
           console.error('Error parsing AI analysis:', e);
         }
       }
-
-      const margin = await calculateProfitMargins();
-      const vehicleMargin = margin.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
-
-      return {
-        vehicleId: vehicle.id,
-        licensePlate: vehicle.license_plate,
-        currentPrice,
-        suggestedPrice: Math.round(suggestedPrice),
-        profitMargin: vehicleMargin,
-        reason: reason || 'Price is within market range'
-      };
     } catch (error) {
       console.error('Error analyzing market pricing:', error);
-      return {
-        vehicleId: vehicle.id,
-        licensePlate: vehicle.license_plate,
-        currentPrice,
-        suggestedPrice: currentPrice,
-        profitMargin: 0,
-        reason: 'Unable to analyze pricing at this time'
-      };
     }
+
+    return {
+      vehicleId: vehicle.id,
+      licensePlate: vehicle.license_plate,
+      currentPrice,
+      suggestedPrice,
+      profitMargin: vehicleMargin,
+      reason: reason || 'Price is within market range'
+    };
   }));
 
   return suggestions;

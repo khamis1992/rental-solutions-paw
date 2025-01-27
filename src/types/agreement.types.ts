@@ -20,7 +20,8 @@ export interface Agreement {
   notes?: string;
   created_at: string;
   updated_at: string;
-  remainingAmount?: number;
+  remainingAmount: number;
+  daily_late_fee?: number;
   vehicle?: {
     make: string;
     model: string;
@@ -77,7 +78,7 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
-export interface AgreementWithRelations extends Agreement {
+export interface AgreementWithRelations extends Omit<Agreement, 'remainingAmount'> {
   remainingAmount: {
     remaining_amount: number;
   }[];
