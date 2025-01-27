@@ -85,6 +85,7 @@ export const MaintenanceList = () => {
         throw error;
       }
 
+      console.log("Maintenance data:", data); // Debug log
       return data;
     },
   });
@@ -98,6 +99,8 @@ export const MaintenanceList = () => {
       </div>
     );
   }
+
+  console.log("Rendered maintenance:", maintenance); // Debug log
 
   return (
     <div className="space-y-4">
