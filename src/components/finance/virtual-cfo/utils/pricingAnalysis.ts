@@ -130,54 +130,67 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
     const currentPrice = currentLease?.rent_amount || 0;
     const modelKey = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
 
-    // Get AI analysis for pricing
-    const aiAnalysis = await analyzeMarketPricing({
-      vehicle,
-      currentPrice,
-      marketData: {
-        averageRents: await calculateAverageRentByModel(),
-        margins: await calculateProfitMargins()
-      }
-    });
-
-    let suggestedPrice = currentPrice;
-    let reason = '';
-
-    // Apply AI analysis if available
-    if (aiAnalysis) {
-      try {
-        const analysis = JSON.parse(aiAnalysis);
-        if (analysis.suggestedPrice) {
-          suggestedPrice = analysis.suggestedPrice;
-          reason = analysis.reason || '';
+    try {
+      // Get AI analysis for pricing
+      const aiAnalysis = await analyzeMarketPricing({
+        vehicle,
+        currentPrice,
+        marketData: {
+          averageRents: await calculateAverageRentByModel(),
+          margins: await calculateProfitMargins()
         }
-      } catch (e) {
-        console.error('Error parsing AI analysis:', e);
+      });
+
+      let suggestedPrice = currentPrice;
+      let reason = '';
+
+      // Apply AI analysis if available
+      if (aiAnalysis) {
+        try {
+          const analysis = JSON.parse(aiAnalysis);
+          if (analysis.suggestedPrice) {
+            suggestedPrice = analysis.suggestedPrice;
+            reason = analysis.reason || '';
+          }
+        } catch (e) {
+          console.error('Error parsing AI analysis:', e);
+        }
       }
-    }
 
-    // If no AI reason, use default logic
-    if (!reason) {
-      if (currentPrice === 0) {
-        reason = 'No current price set';
-        suggestedPrice = 3000; // Default starting price
-      } else {
-        reason = 'Price is within market range';
+      // If no AI reason, use default logic
+      if (!reason) {
+        if (currentPrice === 0) {
+          reason = 'No current price set';
+          suggestedPrice = 3000; // Default starting price
+        } else {
+          reason = 'Price is within market range';
+        }
       }
+
+      const margin = await calculateProfitMargins();
+      const vehicleMargin = margin.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
+
+      return {
+        vehicleId: vehicle.id,
+        licensePlate: vehicle.license_plate,
+        currentPrice,
+        suggestedPrice: Math.round(suggestedPrice),
+        profitMargin: vehicleMargin,
+        reason
+      };
+    } catch (error) {
+      console.error('Error analyzing market pricing:', error);
+      // Return a default suggestion if AI analysis fails
+      return {
+        vehicleId: vehicle.id,
+        licensePlate: vehicle.license_plate,
+        currentPrice,
+        suggestedPrice: currentPrice,
+        profitMargin: 0,
+        reason: 'Unable to analyze pricing at this time'
+      };
     }
-
-    const margin = await calculateProfitMargins();
-    const vehicleMargin = margin.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
-
-    return {
-      vehicleId: vehicle.id,
-      licensePlate: vehicle.license_plate,
-      currentPrice,
-      suggestedPrice: Math.round(suggestedPrice),
-      profitMargin: vehicleMargin,
-      reason
-    };
   }));
 
   return suggestions;
-});
+};
