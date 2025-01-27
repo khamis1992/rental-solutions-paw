@@ -3,169 +3,150 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
 
 export const ScenarioAnalysis = () => {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [scenario, setScenario] = useState({
-    description: ""
+  const [currentScenario, setCurrentScenario] = useState({
+    name: "",
+    description: "",
+    assumptions: {} as Record<string, number>,
   });
 
-  // Fetch active agreements total rent amount (monthly income)
-  const { data: monthlyIncome = 0 } = useQuery({
-    queryKey: ["monthly-income"],
+  const { data: scenarios } = useQuery({
+    queryKey: ["financial-scenarios"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('leases')
-        .select('rent_amount')
-        .eq('status', 'active');
-
-      if (error) throw error;
-      return data.reduce((sum, lease) => sum + (lease.rent_amount || 0), 0);
-    }
-  });
-
-  // Fetch monthly fixed costs
-  const { data: monthlyFixedCosts = 0 } = useQuery({
-    queryKey: ["monthly-fixed-costs"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('accounting_transactions')
-        .select('amount')
-        .eq('type', 'EXPENSE')
-        .eq('cost_type', 'fixed');
-
-      if (error) throw error;
-      return data.reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
-    }
-  });
-
-  // Fetch historical analyses
-  const { data: analyses = [], refetch } = useQuery({
-    queryKey: ["scenario-analyses"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ai_analytics_insights')
-        .select('*')
-        .eq('category', 'financial_scenario')
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .from("financial_scenarios")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
-    }
+    },
   });
 
-  const handleAnalyze = async () => {
-    setIsAnalyzing(true);
-    try {
-      const response = await fetch('/api/analyze-financial-scenario', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...scenario,
-          monthlyIncome,
-          monthlyFixedCosts
-        })
-      });
+  const handleAssumptionChange = (key: string, value: string) => {
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      setCurrentScenario((prev) => ({
+        ...prev,
+        assumptions: {
+          ...prev.assumptions,
+          [key]: numValue,
+        },
+      }));
+    }
+  };
 
-      if (!response.ok) throw new Error('Analysis failed');
-      
-      toast.success("Scenario analysis completed");
-      // Refresh the analyses list
-      refetch();
+  const analyzeScenario = async () => {
+    try {
+      const { data, error } = await supabase.from("financial_scenarios").insert([
+        {
+          name: currentScenario.name,
+          description: currentScenario.description,
+          assumptions: currentScenario.assumptions,
+          projected_outcomes: {
+            revenue: Object.values(currentScenario.assumptions).reduce(
+              (sum, val) => sum + (typeof val === "number" ? val : 0),
+              0
+            ),
+          },
+        },
+      ]);
+
+      if (error) throw error;
+      toast.success("Scenario analyzed successfully");
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error("Error analyzing scenario:", error);
       toast.error("Failed to analyze scenario");
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Monthly Income (Active Agreements)</div>
-              <div className="text-2xl font-bold">{formatCurrency(monthlyIncome)}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Monthly Fixed Costs</div>
-              <div className="text-2xl font-bold">{formatCurrency(monthlyFixedCosts)}</div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Net Monthly Income</div>
-              <div className="text-2xl font-bold">{formatCurrency(monthlyIncome - monthlyFixedCosts)}</div>
-            </div>
-          </CardContent>
-        </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>Scenario Analysis</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Scenario Name</Label>
+          <Input
+            value={currentScenario.name}
+            onChange={(e) =>
+              setCurrentScenario((prev) => ({ ...prev, name: e.target.value }))
+            }
+            placeholder="Enter scenario name"
+          />
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>New Scenario Analysis</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Textarea
-                placeholder="Describe your financial scenario..."
-                value={scenario.description}
-                onChange={(e) => setScenario(prev => ({ ...prev, description: e.target.value }))}
+        <div className="space-y-2">
+          <Label>Description</Label>
+          <Textarea
+            value={currentScenario.description}
+            onChange={(e) =>
+              setCurrentScenario((prev) => ({
+                ...prev,
+                description: e.target.value,
+              }))
+            }
+            placeholder="Describe the scenario"
+          />
+        </div>
+
+        <div className="space-y-4">
+          <Label>Assumptions</Label>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-2">
+              <Label>Revenue Growth (%)</Label>
+              <Input
+                type="number"
+                onChange={(e) =>
+                  handleAssumptionChange("revenueGrowth", e.target.value)
+                }
               />
             </div>
-            <Button 
-              onClick={handleAnalyze} 
-              disabled={isAnalyzing}
-              className="w-full"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                'Analyze Scenario'
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Analyses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {analyses.map((analysis) => (
-              <Card key={analysis.id}>
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">{analysis.insight}</p>
-                    {analysis.data_points && (
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <div className="text-sm text-muted-foreground">Analysis Result</div>
-                          <div className="text-lg font-semibold">
-                            {analysis.data_points.analysis_result || 'No result available'}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <div className="grid grid-cols-2 gap-2">
+              <Label>Cost Reduction (%)</Label>
+              <Input
+                type="number"
+                onChange={(e) =>
+                  handleAssumptionChange("costReduction", e.target.value)
+                }
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Button onClick={analyzeScenario}>Analyze Scenario</Button>
+
+        {scenarios && scenarios.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-4">Previous Scenarios</h3>
+            <div className="space-y-4">
+              {scenarios.map((scenario) => (
+                <Card key={scenario.id}>
+                  <CardContent className="p-4">
+                    <h4 className="font-medium">{scenario.name}</h4>
+                    <p className="text-sm text-gray-500">
+                      {scenario.description}
+                    </p>
+                    {typeof scenario.projected_outcomes === "object" && (
+                      <p className="mt-2">
+                        Projected Revenue:{" "}
+                        {(scenario.projected_outcomes as any).revenue?.toFixed(2)}{" "}
+                        QAR
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
