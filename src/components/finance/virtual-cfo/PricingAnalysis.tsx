@@ -8,6 +8,7 @@ import { TrendingDown, TrendingUp, Calculator, Shield } from "lucide-react";
 import { calculateAverageRentByModel, calculateProfitMargins, generatePricingSuggestions } from "./utils/pricingAnalysis";
 import { RiskAssessmentTab } from "./RiskAssessmentTab";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const PricingAnalysis = () => {
   const { data: averageRents, isLoading: isLoadingRents } = useQuery({
@@ -25,15 +26,7 @@ export const PricingAnalysis = () => {
     queryFn: generatePricingSuggestions
   });
 
-  if (isLoadingRents || isLoadingMargins || isLoadingSuggestions) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const { data: riskMetrics } = useQuery({
+  const { data: riskMetrics, isLoading: isLoadingRisk } = useQuery({
     queryKey: ["risk-metrics"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,6 +36,14 @@ export const PricingAnalysis = () => {
       return data;
     }
   });
+
+  if (isLoadingRents || isLoadingMargins || isLoadingSuggestions || isLoadingRisk) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Combine pricing suggestions with risk metrics
   const enhancedSuggestions = suggestions?.map(suggestion => {
