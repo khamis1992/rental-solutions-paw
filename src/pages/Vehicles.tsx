@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Car, Plus } from "lucide-react";
 import { Vehicle } from "@/types/vehicle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 const Vehicles = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,15 +76,6 @@ const Vehicles = () => {
               <p className="text-muted-foreground">
                 View and manage all vehicles in your fleet
               </p>
-            </div>
-
-            <div className="flex gap-4 mb-6">
-              <Input
-                placeholder="Search vehicles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
             </div>
 
             <VehicleList 
