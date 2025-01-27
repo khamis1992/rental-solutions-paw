@@ -37,7 +37,7 @@ export const MaintenanceList = () => {
         `);
 
       if (filters.status !== "all") {
-        query = query.eq("status", filters.status);
+        query = query.eq("status", filters.status as "scheduled" | "in_progress" | "completed" | "cancelled");
       }
 
       if (filters.serviceType !== "all") {
@@ -114,9 +114,9 @@ export const MaintenanceList = () => {
           <MaintenanceTableHeader />
           <TableBody>
             {maintenance?.map((record) => (
-              <MaintenanceTableRow key={record.id} maintenance={record} />
+              <MaintenanceTableRow key={record.id} record={record} />
             ))}
-            {maintenance?.length === 0 && (
+            {(!maintenance || maintenance.length === 0) && (
               <tr>
                 <td colSpan={7} className="py-6 text-center text-muted-foreground">
                   No maintenance records found
