@@ -126,7 +126,6 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
   const suggestions = await Promise.all(vehicles.map(async vehicle => {
     const currentLease = vehicle.leases?.find(l => l.status === 'active');
     const currentPrice = currentLease?.rent_amount || 0;
-    const modelKey = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
 
     try {
       const aiAnalysis = await analyzeMarketPricing({
@@ -144,10 +143,8 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
       if (aiAnalysis) {
         try {
           const analysis = JSON.parse(aiAnalysis);
-          if (analysis.suggestedPrice) {
-            suggestedPrice = analysis.suggestedPrice;
-            reason = analysis.reason || '';
-          }
+          suggestedPrice = analysis.suggestedPrice || currentPrice;
+          reason = analysis.reason || 'Price is within market range';
         } catch (e) {
           console.error('Error parsing AI analysis:', e);
         }
