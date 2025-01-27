@@ -97,6 +97,7 @@ export const PricingAnalysis = () => {
                 <TableHead>Model</TableHead>
                 <TableHead>Average Rent (QAR)</TableHead>
                 <TableHead>Number of Rentals</TableHead>
+                <TableHead>Available Cars</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,6 +106,7 @@ export const PricingAnalysis = () => {
                   <TableCell>{rent.model}</TableCell>
                   <TableCell>{formatCurrency(rent.averageRent)}</TableCell>
                   <TableCell>{rent.count}</TableCell>
+                  <TableCell>{rent.availableCars}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

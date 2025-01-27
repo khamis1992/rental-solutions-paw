@@ -4,6 +4,7 @@ interface AverageRent {
   model: string;
   averageRent: number;
   count: number;
+  availableCars: number;
 }
 
 interface ProfitMargin {
@@ -38,15 +39,26 @@ export const calculateAverageRentByModel = async (): Promise<AverageRent[]> => {
 
   if (error) throw error;
 
+  // Get available vehicles count
+  const { data: availableVehicles, error: availableError } = await supabase
+    .from('vehicles')
+    .select('make, model, year')
+    .eq('status', 'available');
+
+  if (availableError) throw availableError;
+
   const rentsByModel: { [key: string]: number[] } = {};
   const countByModel: { [key: string]: number } = {};
+  const availableByModel: { [key: string]: number } = {};
 
+  // Process rents data
   data.forEach((lease) => {
     if (!lease.vehicle) return;
     const key = `${lease.vehicle.make} ${lease.vehicle.model} ${lease.vehicle.year}`;
     if (!rentsByModel[key]) {
       rentsByModel[key] = [];
       countByModel[key] = 0;
+      availableByModel[key] = 0;
     }
     if (lease.rent_amount) {
       rentsByModel[key].push(lease.rent_amount);
@@ -54,10 +66,20 @@ export const calculateAverageRentByModel = async (): Promise<AverageRent[]> => {
     }
   });
 
+  // Process available vehicles
+  availableVehicles?.forEach((vehicle) => {
+    const key = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
+    if (!availableByModel[key]) {
+      availableByModel[key] = 0;
+    }
+    availableByModel[key]++;
+  });
+
   return Object.entries(rentsByModel).map(([model, rents]) => ({
     model,
     averageRent: rents.reduce((a, b) => a + b, 0) / rents.length,
-    count: countByModel[model]
+    count: countByModel[model],
+    availableCars: availableByModel[model] || 0
   }));
 };
 
