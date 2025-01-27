@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
+import type { Maintenance } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -21,19 +22,7 @@ interface Vehicle {
   license_plate: string;
 }
 
-interface MaintenanceRecord {
-  id: string;
-  vehicle_id: string;
-  service_type: string;
-  description?: string | null;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
-  cost?: number | null;
-  scheduled_date: string;
-  completed_date?: string | null;
-  performed_by?: string | null;
-  notes?: string | null;
-  created_at?: string;
-  updated_at?: string;
+interface MaintenanceRecord extends Maintenance {
   vehicles?: Vehicle;
 }
 

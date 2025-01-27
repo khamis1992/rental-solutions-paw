@@ -1,4 +1,7 @@
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +9,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { JobCardForm } from "./job-card/JobCardForm";
 import { MaintenanceDocumentUpload } from "./job-card/MaintenanceDocumentUpload";
 import VehicleInspectionDialog from "./inspection/VehicleInspectionDialog";
-
-type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+import type { MaintenanceStatus } from "@/types/maintenance";
 
 interface EditMaintenanceDialogProps {
   record: {
