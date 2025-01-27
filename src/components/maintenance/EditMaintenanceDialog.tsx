@@ -15,13 +15,15 @@ import { JobCardForm } from "./job-card/JobCardForm";
 import { MaintenanceDocumentUpload } from "./job-card/MaintenanceDocumentUpload";
 import VehicleInspectionDialog from "./inspection/VehicleInspectionDialog";
 
+type MaintenanceStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+
 interface EditMaintenanceDialogProps {
   record: {
     id: string;
     vehicle_id: string;
     service_type: string;
     description?: string;
-    status: "scheduled" | "in_progress" | "completed" | "cancelled";
+    status: MaintenanceStatus;
     cost?: number;
     scheduled_date: string;
     notes?: string;
@@ -97,7 +99,7 @@ export function EditMaintenanceDialog({ record }: EditMaintenanceDialogProps) {
       
       // Show inspection dialog after successful update
       setShowInspection(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating maintenance record:", error);
       toast.error("Failed to update maintenance record");
     } finally {
