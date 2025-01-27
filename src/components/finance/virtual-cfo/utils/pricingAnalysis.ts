@@ -60,7 +60,8 @@ export const calculateAverageRentByModel = async (): Promise<AverageRent[]> => {
 };
 
 export const calculateProfitMargins = async (): Promise<ProfitMargin[]> => {
-  const { data, error } = await supabase
+  // First get active leases with their vehicles
+  const { data: leases, error: leaseError } = await supabase
     .from('leases')
     .select(`
       id,
@@ -70,28 +71,39 @@ export const calculateProfitMargins = async (): Promise<ProfitMargin[]> => {
         make,
         model,
         year
-      ),
-      maintenance:maintenance (
-        cost
       )
     `)
     .eq('status', 'active');
 
-  if (error) throw error;
+  if (leaseError) throw leaseError;
 
-  return data.map(lease => {
-    const maintenanceCosts = lease.maintenance?.reduce((sum, m) => sum + (m.cost || 0), 0) || 0;
-    const monthlyRevenue = lease.rent_amount || 0;
-    const profitMargin = ((monthlyRevenue - maintenanceCosts) / monthlyRevenue) * 100;
+  // Then get maintenance costs for each vehicle
+  const profitMargins = await Promise.all(
+    leases.map(async (lease) => {
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from('maintenance')
+        .select('cost')
+        .eq('vehicle_id', lease.vehicle_id);
 
-    return {
-      vehicleId: lease.vehicle_id,
-      vehicle: lease.vehicle ? `${lease.vehicle.make} ${lease.vehicle.model} ${lease.vehicle.year}` : 'Unknown',
-      revenue: monthlyRevenue,
-      costs: maintenanceCosts,
-      profitMargin
-    };
-  });
+      if (maintenanceError) throw maintenanceError;
+
+      const maintenanceCosts = maintenanceData?.reduce((sum, m) => sum + (m.cost || 0), 0) || 0;
+      const monthlyRevenue = lease.rent_amount || 0;
+      const profitMargin = monthlyRevenue > 0 
+        ? ((monthlyRevenue - maintenanceCosts) / monthlyRevenue) * 100 
+        : 0;
+
+      return {
+        vehicleId: lease.vehicle_id,
+        vehicle: lease.vehicle ? `${lease.vehicle.make} ${lease.vehicle.model} ${lease.vehicle.year}` : 'Unknown',
+        revenue: monthlyRevenue,
+        costs: maintenanceCosts,
+        profitMargin
+      };
+    })
+  );
+
+  return profitMargins;
 };
 
 export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]> => {
