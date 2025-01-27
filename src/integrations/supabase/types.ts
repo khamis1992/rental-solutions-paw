@@ -4423,6 +4423,42 @@ export type Database = {
           },
         ]
       }
+      pricing_risk_metrics: {
+        Row: {
+          analysis_date: string | null
+          created_at: string | null
+          default_rate: number | null
+          id: string
+          payment_reliability_score: number | null
+          price_elasticity_score: number | null
+          risk_adjusted_markup: number | null
+          updated_at: string | null
+          vehicle_model: string
+        }
+        Insert: {
+          analysis_date?: string | null
+          created_at?: string | null
+          default_rate?: number | null
+          id?: string
+          payment_reliability_score?: number | null
+          price_elasticity_score?: number | null
+          risk_adjusted_markup?: number | null
+          updated_at?: string | null
+          vehicle_model: string
+        }
+        Update: {
+          analysis_date?: string | null
+          created_at?: string | null
+          default_rate?: number | null
+          id?: string
+          payment_reliability_score?: number | null
+          price_elasticity_score?: number | null
+          risk_adjusted_markup?: number | null
+          updated_at?: string | null
+          vehicle_model?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -6676,6 +6712,20 @@ export type Database = {
           },
         ]
       }
+      risk_adjusted_pricing_view: {
+        Row: {
+          current_avg_rent: number | null
+          default_rate: number | null
+          make: string | null
+          model: string | null
+          payment_reliability_score: number | null
+          price_elasticity_score: number | null
+          risk_adjusted_markup: number | null
+          risk_adjusted_price: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       analyze_vehicle_maintenance: {
@@ -6715,6 +6765,12 @@ export type Database = {
           p_daily_rate?: number
         }
         Returns: number
+      }
+      calculate_model_risk_metrics: {
+        Args: {
+          p_vehicle_model: string
+        }
+        Returns: undefined
       }
       calculate_remaining_amount: {
         Args: {
