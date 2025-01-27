@@ -60,7 +60,7 @@ export const AdvancedVehicleFilters = ({
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             {statuses.map((status) => (
               <SelectItem key={status.id} value={status.name}>
                 {status.name}

@@ -17,7 +17,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const queryClient = useQueryClient();
@@ -85,7 +85,7 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
       vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.license_plate?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = !statusFilter || vehicle.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
