@@ -37,7 +37,7 @@ export const MaintenanceList = () => {
         `);
 
       if (filters.status !== "all") {
-        query = query.eq("status", filters.status as "scheduled" | "in_progress" | "completed" | "cancelled");
+        query = query.eq("status", filters.status);
       }
 
       if (filters.serviceType !== "all") {
@@ -85,7 +85,6 @@ export const MaintenanceList = () => {
         throw error;
       }
 
-      console.log("Maintenance data:", data); // Debug log
       return data;
     },
   });
@@ -99,8 +98,6 @@ export const MaintenanceList = () => {
       </div>
     );
   }
-
-  console.log("Rendered maintenance:", maintenance); // Debug log
 
   return (
     <div className="space-y-4">
@@ -117,9 +114,9 @@ export const MaintenanceList = () => {
           <MaintenanceTableHeader />
           <TableBody>
             {maintenance?.map((record) => (
-              <MaintenanceTableRow key={record.id} record={record} />
+              <MaintenanceTableRow key={record.id} maintenance={record} />
             ))}
-            {(!maintenance || maintenance.length === 0) && (
+            {maintenance?.length === 0 && (
               <tr>
                 <td colSpan={7} className="py-6 text-center text-muted-foreground">
                   No maintenance records found

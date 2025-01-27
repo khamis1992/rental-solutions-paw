@@ -3,8 +3,6 @@ import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog
 import { useState } from "react";
 import { MaintenanceStatusSelect } from "./MaintenanceStatusSelect";
 import { DeleteMaintenanceDialog } from "./DeleteMaintenanceDialog";
-import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
 
 interface Vehicle {
   make: string;
@@ -35,11 +33,6 @@ interface MaintenanceTableRowProps {
 
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
   const [showVehicleDetails, setShowVehicleDetails] = useState(false);
-
-  const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log("Edit maintenance record:", record.id);
-  };
 
   return (
     <>
@@ -72,21 +65,11 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
           {record.cost ? `${record.cost} QAR` : '-'}
         </TableCell>
         <TableCell>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleEdit}
-              className="h-8 w-8"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <DeleteMaintenanceDialog 
-              id={record.id}
-              vehicleId={record.vehicle_id}
-              status={record.status}
-            />
-          </div>
+          <DeleteMaintenanceDialog 
+            id={record.id}
+            vehicleId={record.vehicle_id}
+            status={record.status}
+          />
         </TableCell>
       </TableRow>
 
