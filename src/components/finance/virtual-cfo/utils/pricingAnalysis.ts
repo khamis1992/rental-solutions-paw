@@ -61,7 +61,6 @@ export const calculateAverageRentByModel = async (): Promise<AverageRent[]> => {
 };
 
 export const calculateProfitMargins = async (): Promise<ProfitMargin[]> => {
-  // First get active leases with their vehicles
   const { data: leases, error: leaseError } = await supabase
     .from('leases')
     .select(`
@@ -78,7 +77,6 @@ export const calculateProfitMargins = async (): Promise<ProfitMargin[]> => {
 
   if (leaseError) throw leaseError;
 
-  // Then get maintenance costs for each vehicle
   const profitMargins = await Promise.all(
     leases.map(async (lease) => {
       const { data: maintenanceData, error: maintenanceError } = await supabase
@@ -131,7 +129,6 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
     const modelKey = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
 
     try {
-      // Get AI analysis for pricing
       const aiAnalysis = await analyzeMarketPricing({
         vehicle,
         currentPrice,
@@ -144,7 +141,6 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
       let suggestedPrice = currentPrice;
       let reason = '';
 
-      // Apply AI analysis if available
       if (aiAnalysis) {
         try {
           const analysis = JSON.parse(aiAnalysis);
@@ -157,16 +153,6 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
         }
       }
 
-      // If no AI reason, use default logic
-      if (!reason) {
-        if (currentPrice === 0) {
-          reason = 'No current price set';
-          suggestedPrice = 3000; // Default starting price
-        } else {
-          reason = 'Price is within market range';
-        }
-      }
-
       const margin = await calculateProfitMargins();
       const vehicleMargin = margin.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
 
@@ -176,11 +162,10 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
         currentPrice,
         suggestedPrice: Math.round(suggestedPrice),
         profitMargin: vehicleMargin,
-        reason
+        reason: reason || 'Price is within market range'
       };
     } catch (error) {
       console.error('Error analyzing market pricing:', error);
-      // Return a default suggestion if AI analysis fails
       return {
         vehicleId: vehicle.id,
         licensePlate: vehicle.license_plate,
