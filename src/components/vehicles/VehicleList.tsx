@@ -17,7 +17,6 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const queryClient = useQueryClient();
@@ -78,31 +77,19 @@ export const VehicleList = ({ vehicles, isLoading }: VehicleListProps) => {
     setCurrentPage(page);
   };
 
-  // Filter vehicles based on search query and status
-  const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = !searchQuery || 
-      vehicle.make?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.license_plate?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentVehicles = filteredVehicles.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
+  const currentVehicles = vehicles.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(vehicles.length / itemsPerPage);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4">
         <AdvancedVehicleFilters 
           searchQuery={searchQuery}
-          statusFilter={statusFilter}
+          statusFilter=""
           onSearchChange={setSearchQuery}
-          onStatusChange={setStatusFilter}
+          onStatusChange={() => {}}
         />
         {selectedVehicles.length > 0 && (
           <BulkActionsMenu
