@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { analyzeMarketPricing } from "./deepseekAnalysis";
 
 interface AverageRent {
   model: string;
@@ -49,8 +48,10 @@ export const calculateAverageRentByModel = async (): Promise<AverageRent[]> => {
       rentsByModel[key] = [];
       countByModel[key] = 0;
     }
-    rentsByModel[key].push(lease.rent_amount || 0);
-    countByModel[key]++;
+    if (lease.rent_amount) {
+      rentsByModel[key].push(lease.rent_amount);
+      countByModel[key]++;
+    }
   });
 
   return Object.entries(rentsByModel).map(([model, rents]) => ({
@@ -133,34 +134,37 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
     
     // Get average rent for this model from our system
     const modelAverage = averageRents.find(avg => avg.model === modelKey);
-    const systemAverage = modelAverage?.averageRent || currentPrice;
+    const systemAverage = modelAverage?.averageRent || 0;
     
     // Get profit margin from our system data
     const vehicleMargin = margins.find(m => m.vehicleId === vehicle.id)?.profitMargin || 0;
     
     // Calculate suggested price based on our system data
-    let suggestedPrice = currentPrice;
+    let suggestedPrice = systemAverage > 0 ? systemAverage : currentPrice;
     let reason = '';
 
     if (vehicleMargin < 15) {
-      // If profit margin is very low, suggest higher price
-      suggestedPrice = Math.round(currentPrice * 1.15);
+      suggestedPrice = Math.max(currentPrice * 1.15, systemAverage);
       reason = 'Low profit margin (below 15%) - price increase recommended';
     } else if (vehicleMargin < 25 && currentPrice < systemAverage) {
-      // If margin is below target and price is below system average
-      suggestedPrice = Math.round(systemAverage);
+      suggestedPrice = systemAverage;
       reason = 'Below average system price with moderate profit margin - adjustment recommended';
     } else if (vehicleMargin > 40) {
-      // If margin is very high, consider competitive pricing
-      suggestedPrice = Math.round(currentPrice * 0.95);
+      suggestedPrice = Math.min(currentPrice * 0.95, systemAverage);
       reason = 'High profit margin (above 40%) - consider competitive pricing';
-    } else if (Math.abs(systemAverage - currentPrice) / currentPrice > 0.25) {
-      // If price significantly differs from system average
-      suggestedPrice = Math.round(systemAverage);
+    } else if (systemAverage > 0 && Math.abs(systemAverage - currentPrice) / currentPrice > 0.25) {
+      suggestedPrice = systemAverage;
       reason = 'Significant deviation from system average price - alignment recommended';
     } else {
-      suggestedPrice = currentPrice;
+      suggestedPrice = currentPrice > 0 ? currentPrice : systemAverage;
       reason = 'Price is optimal based on system data';
+    }
+
+    // Ensure we never return 0 as a suggested price
+    if (suggestedPrice === 0 && systemAverage > 0) {
+      suggestedPrice = systemAverage;
+    } else if (suggestedPrice === 0 && currentPrice > 0) {
+      suggestedPrice = currentPrice;
     }
 
     return {
