@@ -31,7 +31,8 @@ export const MaintenanceList = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const channel = supabase
+    // Subscribe to both maintenance and vehicle status changes
+    const maintenanceChannel = supabase
       .channel('maintenance-changes')
       .on(
         'postgres_changes',
@@ -41,10 +42,8 @@ export const MaintenanceList = () => {
           table: 'maintenance'
         },
         async (payload) => {
-          console.log('Real-time update received:', payload);
-          
-          await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
-          await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+          console.log('Maintenance update received:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
           
           const eventType = payload.eventType;
           const message = eventType === 'INSERT' 
@@ -58,8 +57,26 @@ export const MaintenanceList = () => {
       )
       .subscribe();
 
+    const vehicleChannel = supabase
+      .channel('vehicle-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'vehicles',
+          filter: 'status=eq.maintenance'
+        },
+        async (payload) => {
+          console.log('Vehicle status changed to maintenance:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(maintenanceChannel);
+      supabase.removeChannel(vehicleChannel);
     };
   }, [queryClient]);
 
