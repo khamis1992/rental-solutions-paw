@@ -9,7 +9,7 @@ import {
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { JobCardForm } from "./job-card/JobCardForm";
 import { MaintenanceDocumentUpload } from "./job-card/MaintenanceDocumentUpload";
