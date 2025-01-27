@@ -2,6 +2,7 @@ import { Database } from "@/integrations/supabase/types";
 
 export type LeaseStatus = Database['public']['Enums']['lease_status'];
 export type AgreementType = Database['public']['Enums']['agreement_type'];
+export type PaymentStatus = Database['public']['Enums']['payment_status'];
 
 export interface Agreement {
   id: string;
@@ -43,7 +44,7 @@ export interface Payment {
   transaction_id: string | null;
   payment_method: string | null;
   security_deposit_id: string | null;
-  status: string;
+  status: PaymentStatus;
   description: string | null;
   type: string;
   is_recurring: boolean;
@@ -74,6 +75,12 @@ export interface Template {
   template_structure: Record<string, any>;
   template_sections: any[];
   variable_mappings: Record<string, any>;
+}
+
+export interface AgreementWithRelations extends Agreement {
+  remainingAmount: {
+    remaining_amount: number;
+  }[];
 }
 
 export interface DashboardStats {

@@ -10,6 +10,7 @@ import { PricingAnalysis } from "./PricingAnalysis";
 import { BarChart3, FileSpreadsheet, Calculator } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Agreement } from "@/types/agreement.types";
 
 export const VirtualCFO = () => {
   const { data: activeAgreements, isLoading } = useQuery({
@@ -18,18 +19,22 @@ export const VirtualCFO = () => {
       const { data: agreements, error } = await supabase
         .from("leases")
         .select(`
+          id,
           agreement_number,
-          rent_amount,
-          total_amount,
+          agreement_type,
+          customer_id,
+          vehicle_id,
           start_date,
           end_date,
-          status
+          status,
+          total_amount,
+          rent_amount
         `)
         .eq("status", "active")
         .order("agreement_number");
 
       if (error) throw error;
-      return agreements;
+      return agreements as Agreement[];
     },
   });
 
