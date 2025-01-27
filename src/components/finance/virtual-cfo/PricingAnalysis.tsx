@@ -4,23 +4,31 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { calculateAverageRentByModel, calculateProfitMargins, generatePricingSuggestions } from "./utils/pricingAnalysis";
 import { formatCurrency } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp, Loader2 } from "lucide-react";
 
 export const PricingAnalysis = () => {
-  const { data: averageRents } = useQuery({
+  const { data: averageRents, isLoading: isLoadingRents } = useQuery({
     queryKey: ["average-rents"],
     queryFn: calculateAverageRentByModel
   });
 
-  const { data: margins } = useQuery({
+  const { data: margins, isLoading: isLoadingMargins } = useQuery({
     queryKey: ["profit-margins"],
     queryFn: calculateProfitMargins
   });
 
-  const { data: suggestions } = useQuery({
+  const { data: suggestions, isLoading: isLoadingSuggestions } = useQuery({
     queryKey: ["pricing-suggestions"],
     queryFn: generatePricingSuggestions
   });
+
+  if (isLoadingRents || isLoadingMargins || isLoadingSuggestions) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const lowMarginVehicles = margins?.filter(m => m.profitMargin < 20) || [];
   const underPricedVehicles = suggestions?.filter(s => s.currentPrice < s.suggestedPrice * 0.85) || [];
@@ -46,16 +54,16 @@ export const PricingAnalysis = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Vehicle</TableHead>
-                <TableHead>Current Price</TableHead>
-                <TableHead>Suggested Price</TableHead>
+                <TableHead>Current Price (QAR)</TableHead>
+                <TableHead>Suggested Price (QAR)</TableHead>
                 <TableHead>Profit Margin</TableHead>
-                <TableHead>Reason</TableHead>
+                <TableHead>Analysis</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {suggestions?.map((suggestion) => (
                 <TableRow key={suggestion.vehicleId}>
-                  <TableCell>{suggestion.vehicleId}</TableCell>
+                  <TableCell className="font-medium">{suggestion.vehicleId}</TableCell>
                   <TableCell>{formatCurrency(suggestion.currentPrice)}</TableCell>
                   <TableCell className="flex items-center gap-2">
                     {formatCurrency(suggestion.suggestedPrice)}
@@ -65,7 +73,11 @@ export const PricingAnalysis = () => {
                       <TrendingDown className="h-4 w-4 text-red-500" />
                     )}
                   </TableCell>
-                  <TableCell>{suggestion.profitMargin.toFixed(1)}%</TableCell>
+                  <TableCell>
+                    <span className={suggestion.profitMargin < 20 ? 'text-red-500' : 'text-green-500'}>
+                      {suggestion.profitMargin.toFixed(1)}%
+                    </span>
+                  </TableCell>
                   <TableCell>{suggestion.reason}</TableCell>
                 </TableRow>
               ))}
@@ -83,7 +95,7 @@ export const PricingAnalysis = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Model</TableHead>
-                <TableHead>Average Rent</TableHead>
+                <TableHead>Average Rent (QAR)</TableHead>
                 <TableHead>Number of Rentals</TableHead>
               </TableRow>
             </TableHeader>

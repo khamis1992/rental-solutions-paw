@@ -23,7 +23,7 @@ interface PricingSuggestion {
   reason: string;
 }
 
-export const calculateAverageRentByModel = async () => {
+export const calculateAverageRentByModel = async (): Promise<AverageRent[]> => {
   const { data, error } = await supabase
     .from('leases')
     .select(`
@@ -39,21 +39,27 @@ export const calculateAverageRentByModel = async () => {
   if (error) throw error;
 
   const rentsByModel: { [key: string]: number[] } = {};
+  const countByModel: { [key: string]: number } = {};
+
   data.forEach((lease) => {
     if (!lease.vehicle) return;
     const key = `${lease.vehicle.make} ${lease.vehicle.model} ${lease.vehicle.year}`;
-    if (!rentsByModel[key]) rentsByModel[key] = [];
-    rentsByModel[key].push(lease.rent_amount);
+    if (!rentsByModel[key]) {
+      rentsByModel[key] = [];
+      countByModel[key] = 0;
+    }
+    rentsByModel[key].push(lease.rent_amount || 0);
+    countByModel[key]++;
   });
 
   return Object.entries(rentsByModel).map(([model, rents]) => ({
     model,
     averageRent: rents.reduce((a, b) => a + b, 0) / rents.length,
-    count: rents.length
+    count: countByModel[model]
   }));
 };
 
-export const calculateProfitMargins = async () => {
+export const calculateProfitMargins = async (): Promise<ProfitMargin[]> => {
   const { data, error } = await supabase
     .from('leases')
     .select(`
@@ -83,7 +89,7 @@ export const calculateProfitMargins = async () => {
       vehicle: lease.vehicle ? `${lease.vehicle.make} ${lease.vehicle.model} ${lease.vehicle.year}` : 'Unknown',
       revenue: monthlyRevenue,
       costs: maintenanceCosts,
-      profitMargin: profitMargin
+      profitMargin
     };
   });
 };
@@ -130,8 +136,8 @@ export const generatePricingSuggestions = async (): Promise<PricingSuggestion[]>
     let suggestedPrice = averageForModel;
     let reason = '';
 
-    // Apply demand factor (simplified)
-    const demandFactor = 1.1; // Example: 10% increase for high demand
+    // Apply demand factor
+    const demandFactor = 1.1; // 10% increase for high demand
     suggestedPrice *= demandFactor;
 
     // Adjust based on AI analysis if available
