@@ -6,40 +6,69 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { JobCardForm } from "./job-card/JobCardForm";
+import { MaintenanceDocumentUpload } from "./job-card/MaintenanceDocumentUpload";
+import VehicleInspectionDialog from "./inspection/VehicleInspectionDialog";
 
 interface EditMaintenanceDialogProps {
   record: {
     id: string;
+    vehicle_id: string;
     service_type: string;
     description?: string;
     status: "scheduled" | "in_progress" | "completed" | "cancelled";
     cost?: number;
     scheduled_date: string;
     notes?: string;
+    category_id?: string;
   };
 }
 
 export function EditMaintenanceDialog({ record }: EditMaintenanceDialogProps) {
   const [open, setOpen] = useState(false);
+  const [showInspection, setShowInspection] = useState(false);
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
+    vehicle_id: record.vehicle_id,
+    category_id: record.category_id || "",
     service_type: record.service_type,
     description: record.description || "",
-    status: record.status,
-    cost: record.cost || 0,
     scheduled_date: record.scheduled_date,
-    notes: record.notes || "",
+    cost: record.cost?.toString() || "",
+    status: record.status
+  });
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ["vehicles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("id, make, model, license_plate");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["maintenance-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance_categories")
+        .select("*")
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,12 +79,13 @@ export function EditMaintenanceDialog({ record }: EditMaintenanceDialogProps) {
       const { error } = await supabase
         .from("maintenance")
         .update({
+          vehicle_id: formData.vehicle_id,
+          category_id: formData.category_id,
           service_type: formData.service_type,
           description: formData.description,
-          status: formData.status,
-          cost: formData.cost,
           scheduled_date: formData.scheduled_date,
-          notes: formData.notes,
+          cost: formData.cost ? parseFloat(formData.cost) : null,
+          status: formData.status,
           updated_at: new Date().toISOString(),
         })
         .eq("id", record.id);
@@ -64,7 +94,9 @@ export function EditMaintenanceDialog({ record }: EditMaintenanceDialogProps) {
 
       await queryClient.invalidateQueries({ queryKey: ["maintenance"] });
       toast.success("Maintenance record updated successfully");
-      setOpen(false);
+      
+      // Show inspection dialog after successful update
+      setShowInspection(true);
     } catch (error) {
       console.error("Error updating maintenance record:", error);
       toast.error("Failed to update maintenance record");
@@ -73,111 +105,48 @@ export function EditMaintenanceDialog({ record }: EditMaintenanceDialogProps) {
     }
   };
 
+  const handleInspectionComplete = () => {
+    setShowInspection(false);
+    setOpen(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit Maintenance Record</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="service_type">Service Type</Label>
-            <Input
-              id="service_type"
-              value={formData.service_type}
-              onChange={(e) =>
-                setFormData({ ...formData, service_type: e.target.value })
-              }
-              required
-            />
-          </div>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Job Card</DialogTitle>
+          </DialogHeader>
+          
+          <JobCardForm
+            formData={formData}
+            vehicles={vehicles}
+            categories={categories}
+            onFormDataChange={setFormData}
+            onSubmit={handleSubmit}
+            loading={loading}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-            />
-          </div>
+          <MaintenanceDocumentUpload
+            maintenanceId={record.id}
+            onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ["maintenance"] })}
+          />
+        </DialogContent>
+      </Dialog>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value: "scheduled" | "in_progress" | "completed" | "cancelled") =>
-                setFormData({ ...formData, status: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="cost">Cost</Label>
-            <Input
-              id="cost"
-              type="number"
-              value={formData.cost}
-              onChange={(e) =>
-                setFormData({ ...formData, cost: parseFloat(e.target.value) })
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="scheduled_date">Scheduled Date</Label>
-            <Input
-              id="scheduled_date"
-              type="datetime-local"
-              value={formData.scheduled_date}
-              onChange={(e) =>
-                setFormData({ ...formData, scheduled_date: e.target.value })
-              }
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {showInspection && (
+        <VehicleInspectionDialog
+          open={showInspection}
+          onOpenChange={setShowInspection}
+          maintenanceId={record.id}
+          onComplete={handleInspectionComplete}
+        />
+      )}
+    </>
   );
 }
