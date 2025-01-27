@@ -11,10 +11,10 @@ interface RiskMetrics {
   make: string;
   year: number;
   current_avg_rent: number;
-  default_rate: number;
-  payment_reliability_score: number;
-  price_elasticity_score: number;
-  risk_adjusted_markup: number;
+  default_rate: number | null;
+  payment_reliability_score: number | null;
+  price_elasticity_score: number | null;
+  risk_adjusted_markup: number | null;
   risk_adjusted_price: number;
 }
 
@@ -36,7 +36,7 @@ export const RiskAssessmentTab = () => {
     return <div>Loading risk metrics...</div>;
   }
 
-  const highRiskModels = riskMetrics?.filter(m => m.default_rate > 15) || [];
+  const highRiskModels = riskMetrics?.filter(m => (m.default_rate || 0) > 15) || [];
 
   return (
     <div className="space-y-6">
@@ -74,15 +74,15 @@ export const RiskAssessmentTab = () => {
                   <TableCell className="font-medium">
                     {metric.make} {metric.model} {metric.year}
                   </TableCell>
-                  <TableCell className={metric.default_rate > 15 ? 'text-red-500' : 'text-green-500'}>
-                    {metric.default_rate.toFixed(1)}%
+                  <TableCell className={(metric.default_rate || 0) > 15 ? 'text-red-500' : 'text-green-500'}>
+                    {(metric.default_rate || 0).toFixed(1)}%
                   </TableCell>
-                  <TableCell className={metric.payment_reliability_score < 70 ? 'text-red-500' : 'text-green-500'}>
-                    {metric.payment_reliability_score.toFixed(1)}%
+                  <TableCell className={(metric.payment_reliability_score || 0) < 70 ? 'text-red-500' : 'text-green-500'}>
+                    {(metric.payment_reliability_score || 0).toFixed(1)}%
                   </TableCell>
                   <TableCell className="flex items-center gap-2">
-                    {metric.price_elasticity_score.toFixed(1)}
-                    {metric.price_elasticity_score > 75 ? (
+                    {(metric.price_elasticity_score || 0).toFixed(1)}
+                    {(metric.price_elasticity_score || 0) > 75 ? (
                       <TrendingUp className="h-4 w-4 text-green-500" />
                     ) : (
                       <TrendingDown className="h-4 w-4 text-red-500" />
