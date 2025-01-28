@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { LeaseStatus } from "@/types/agreement.types";
 
 export interface AgreementFormData {
   address: string;
@@ -11,7 +12,7 @@ export interface AgreementFormData {
   vehicleId: string;
   customerId: string;
   rentAmount: number;
-  agreementType: string;
+  agreementType: "lease_to_own" | "short_term";
   initialMileage: number;
   agreementNumber: string;
   drivingLicense: string;
@@ -56,19 +57,19 @@ export const useAgreementForm = (onSuccess: () => void) => {
       const formattedData = {
         customer_id: data.customerId,
         vehicle_id: data.vehicleId,
-        agreement_type: data.agreementType as "lease_to_own" | "short_term",
-        rent_amount: data.rentAmount,
-        total_amount: data.finalPrice,
-        initial_mileage: data.initialMileage,
+        agreement_type: data.agreementType,
+        rent_amount: Number(data.rentAmount) || 0,
+        total_amount: Number(data.finalPrice) || 0,
+        initial_mileage: Number(data.initialMileage) || 0,
         agreement_duration: `${data.agreementDuration} months`,
         start_date: data.startDate,
         end_date: data.endDate,
-        daily_late_fee: data.dailyLateFee,
-        damage_penalty_rate: data.damagePenaltyRate,
-        late_return_fee: data.lateReturnFee,
-        down_payment: data.downPayment || 0,
+        daily_late_fee: Number(data.dailyLateFee) || 120,
+        damage_penalty_rate: Number(data.damagePenaltyRate) || 0,
+        late_return_fee: Number(data.lateReturnFee) || 0,
+        down_payment: Number(data.downPayment) || 0,
         notes: data.notes,
-        status: 'pending_payment'
+        status: 'pending_payment' as LeaseStatus
       };
 
       const { error } = await supabase
