@@ -6,12 +6,15 @@ import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateTemplateDialog } from "./CreateTemplateDialog";
 import { TemplateList } from "./TemplateList";
+import { TemplatePreview } from "./TemplatePreview";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Template } from "@/types/agreement.types";
 
 export const AgreementTemplateManagement = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const { data: templates, isLoading, refetch } = useQuery({
     queryKey: ["agreement-templates"],
@@ -56,8 +59,8 @@ export const AgreementTemplateManagement = () => {
   });
 
   const handlePreview = (template: Template) => {
-    // TODO: Implement preview functionality
-    toast.info("Preview functionality coming soon");
+    setSelectedTemplate(template);
+    setShowPreview(true);
   };
 
   const handleEdit = (template: Template) => {
@@ -106,6 +109,15 @@ export const AgreementTemplateManagement = () => {
         onOpenChange={setShowCreateDialog}
         selectedTemplate={selectedTemplate}
       />
+
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl">
+          <TemplatePreview 
+            content={selectedTemplate?.content || ""}
+            missingVariables={[]}
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

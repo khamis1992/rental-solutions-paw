@@ -298,8 +298,9 @@ export type Database = {
       }
       agreement_templates: {
         Row: {
-          agreement_duration: unknown
+          agreement_duration: string
           agreement_type: Database["public"]["Enums"]["agreement_template_type"]
+          content: string | null
           created_at: string | null
           daily_late_fee: number | null
           damage_penalty_rate: number | null
@@ -307,14 +308,19 @@ export type Database = {
           final_price: number | null
           id: string
           is_active: boolean | null
+          language: string | null
           late_return_fee: number | null
           name: string
           rent_amount: number | null
+          template_sections: Json[] | null
+          template_structure: Json | null
           updated_at: string | null
+          variable_mappings: Json | null
         }
         Insert: {
-          agreement_duration: unknown
+          agreement_duration: string
           agreement_type: Database["public"]["Enums"]["agreement_template_type"]
+          content?: string | null
           created_at?: string | null
           daily_late_fee?: number | null
           damage_penalty_rate?: number | null
@@ -322,14 +328,19 @@ export type Database = {
           final_price?: number | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           late_return_fee?: number | null
           name: string
           rent_amount?: number | null
+          template_sections?: Json[] | null
+          template_structure?: Json | null
           updated_at?: string | null
+          variable_mappings?: Json | null
         }
         Update: {
-          agreement_duration?: unknown
+          agreement_duration?: string
           agreement_type?: Database["public"]["Enums"]["agreement_template_type"]
+          content?: string | null
           created_at?: string | null
           daily_late_fee?: number | null
           damage_penalty_rate?: number | null
@@ -337,10 +348,14 @@ export type Database = {
           final_price?: number | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           late_return_fee?: number | null
           name?: string
           rent_amount?: number | null
+          template_sections?: Json[] | null
+          template_structure?: Json | null
           updated_at?: string | null
+          variable_mappings?: Json | null
         }
         Relationships: []
       }

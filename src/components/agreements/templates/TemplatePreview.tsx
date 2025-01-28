@@ -1,6 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TemplatePreviewProps {
   content: string;
@@ -10,6 +11,10 @@ interface TemplatePreviewProps {
 export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePreviewProps) => {
   return (
     <div className="space-y-4">
+      <DialogHeader>
+        <DialogTitle>Template Preview</DialogTitle>
+      </DialogHeader>
+      
       {missingVariables.length > 0 && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
