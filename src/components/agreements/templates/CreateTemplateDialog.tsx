@@ -25,10 +25,10 @@ export const CreateTemplateDialog = ({ open, onOpenChange, selectedTemplate }: C
       name: "",
       description: "",
       agreement_type: "short_term",
-      rent_amount: 0,
-      final_price: 0,
+      rent_amount: undefined,
+      final_price: undefined,
       agreement_duration: "",
-      daily_late_fee: 0,
+      daily_late_fee: 120,
       damage_penalty_rate: 0,
       late_return_fee: 0,
       language: "english",
@@ -134,22 +134,22 @@ export const CreateTemplateDialog = ({ open, onOpenChange, selectedTemplate }: C
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="rent_amount">Rent Amount</Label>
+                <Label htmlFor="rent_amount">Rent Amount (Optional)</Label>
                 <Input
                   id="rent_amount"
                   type="number"
-                  value={formData.rent_amount}
-                  onChange={(e) => setFormData({ ...formData, rent_amount: Number(e.target.value) })}
+                  value={formData.rent_amount || ''}
+                  onChange={(e) => setFormData({ ...formData, rent_amount: Number(e.target.value) || undefined })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="final_price">Final Price</Label>
+                <Label htmlFor="final_price">Final Price (Optional)</Label>
                 <Input
                   id="final_price"
                   type="number"
-                  value={formData.final_price}
-                  onChange={(e) => setFormData({ ...formData, final_price: Number(e.target.value) })}
+                  value={formData.final_price || ''}
+                  onChange={(e) => setFormData({ ...formData, final_price: Number(e.target.value) || undefined })}
                 />
               </div>
             </div>

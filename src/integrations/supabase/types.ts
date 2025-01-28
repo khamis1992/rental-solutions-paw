@@ -304,12 +304,12 @@ export type Database = {
           daily_late_fee: number | null
           damage_penalty_rate: number | null
           description: string | null
-          final_price: number
+          final_price: number | null
           id: string
           is_active: boolean | null
           late_return_fee: number | null
           name: string
-          rent_amount: number
+          rent_amount: number | null
           updated_at: string | null
         }
         Insert: {
@@ -319,12 +319,12 @@ export type Database = {
           daily_late_fee?: number | null
           damage_penalty_rate?: number | null
           description?: string | null
-          final_price: number
+          final_price?: number | null
           id?: string
           is_active?: boolean | null
           late_return_fee?: number | null
           name: string
-          rent_amount: number
+          rent_amount?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -334,12 +334,12 @@ export type Database = {
           daily_late_fee?: number | null
           damage_penalty_rate?: number | null
           description?: string | null
-          final_price?: number
+          final_price?: number | null
           id?: string
           is_active?: boolean | null
           late_return_fee?: number | null
           name?: string
-          rent_amount?: number
+          rent_amount?: number | null
           updated_at?: string | null
         }
         Relationships: []
