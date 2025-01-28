@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LeaseStatus } from "@/types/agreement.types";
+import { addMonths } from "date-fns";
 
 export interface AgreementFormData {
   address: string;
@@ -39,7 +39,6 @@ export const useAgreementForm = (onSuccess: () => void) => {
     defaultValues: {
       agreementType: "short_term",
       rentAmount: 0,
-      dailyLateFee: 120,
       agreementDuration: 12,
       finalPrice: 0,
       downPayment: 0,
@@ -47,10 +46,25 @@ export const useAgreementForm = (onSuccess: () => void) => {
     }
   });
 
+  // Watch for changes in start date and agreement duration
+  const startDate = watch('startDate');
+  const agreementDuration = watch('agreementDuration');
+
+  // Update end date whenever start date or duration changes
+  const updateEndDate = () => {
+    if (startDate && agreementDuration) {
+      const endDate = addMonths(new Date(startDate), agreementDuration);
+      setValue('endDate', endDate.toISOString().split('T')[0]);
+    }
+  };
+
+  // Watch for changes and update end date
+  watch(() => {
+    updateEndDate();
+  });
+
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      console.log("Starting agreement creation with data:", data);
-
       // First create or get customer
       const { data: customerData, error: customerError } = await supabase
         .from('profiles')
