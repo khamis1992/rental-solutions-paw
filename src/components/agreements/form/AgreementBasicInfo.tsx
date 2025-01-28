@@ -43,19 +43,6 @@ export const AgreementBasicInfo = ({ register, errors, watch }: AgreementBasicIn
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="finalPrice">Final Price</Label>
-          <Input
-            id="finalPrice"
-            type="number"
-            step="0.01"
-            {...register("finalPrice", { required: "Final price is required" })}
-          />
-          {errors.finalPrice && (
-            <span className="text-sm text-red-500">{errors.finalPrice.message}</span>
-          )}
-        </div>
-
         {agreementType === "lease_to_own" && (
           <div className="space-y-2">
             <Label htmlFor="downPayment">Down Payment</Label>
