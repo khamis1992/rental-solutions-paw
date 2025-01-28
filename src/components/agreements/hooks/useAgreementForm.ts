@@ -71,6 +71,16 @@ export const useAgreementForm = (onSuccess: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
+      if (!data.customerId) {
+        toast.error("Please select a customer");
+        return;
+      }
+
+      if (!data.vehicleId) {
+        toast.error("Please select a vehicle");
+        return;
+      }
+
       const { error } = await supabase
         .from('leases')
         .insert({
@@ -89,7 +99,11 @@ export const useAgreementForm = (onSuccess: () => void) => {
           agreement_duration: `${data.agreementDuration} months`
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating agreement:', error);
+        toast.error(error.message);
+        throw error;
+      }
 
       onSuccess();
       toast.success("Agreement created successfully");
