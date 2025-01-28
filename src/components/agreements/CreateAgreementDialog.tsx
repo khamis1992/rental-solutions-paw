@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { AgreementTemplateSelect } from "./form/AgreementTemplateSelect";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface CreateAgreementDialogProps {
   open?: boolean;
@@ -31,6 +32,8 @@ export interface CreateAgreementDialogProps {
 export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, children }: CreateAgreementDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
   const {
     open,
     setOpen,
@@ -41,9 +44,10 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
     watch,
     setValue,
     errors,
-  } = useAgreementForm(() => {
+  } = useAgreementForm(async () => {
     setOpen(false);
     setSelectedCustomerId("");
+    await queryClient.invalidateQueries({ queryKey: ["agreements"] });
     toast.success("Agreement created successfully");
   });
 

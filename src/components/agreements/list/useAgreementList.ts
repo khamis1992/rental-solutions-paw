@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAgreements } from "../hooks/useAgreements";
+import { useQuery } from "@tanstack/react-query";
+import { Agreement } from "@/types/agreement.types";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -10,7 +11,68 @@ export const useAgreementList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
-  const { data: agreements = [], isLoading, error, refetch } = useAgreements();
+
+  const { data: agreements = [], isLoading, error, refetch } = useQuery({
+    queryKey: ["agreements", searchQuery, statusFilter, sortOrder],
+    queryFn: async () => {
+      let query = supabase
+        .from('leases')
+        .select(`
+          *,
+          customer:customer_id (
+            id,
+            full_name
+          ),
+          vehicle:vehicle_id (
+            id,
+            make,
+            model,
+            year,
+            license_plate
+          )
+        `);
+
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(
+          `agreement_number.ilike.%${searchQuery}%,` +
+          `customer.full_name.ilike.%${searchQuery}%,` +
+          `vehicle.license_plate.ilike.%${searchQuery}%`
+        );
+      }
+
+      // Apply status filter
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      // Apply sorting
+      switch (sortOrder) {
+        case "oldest":
+          query = query.order("created_at", { ascending: true });
+          break;
+        case "amount-high":
+          query = query.order("total_amount", { ascending: false });
+          break;
+        case "amount-low":
+          query = query.order("total_amount", { ascending: true });
+          break;
+        default: // newest
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching agreements:", error);
+        throw error;
+      }
+
+      return data as Agreement[];
+    },
+    refetchOnWindowFocus: true,
+    staleTime: 1000, // Consider data stale after 1 second
+  });
 
   const handleViewContract = async (agreementId: string) => {
     try {
@@ -114,37 +176,11 @@ export const useAgreementList = () => {
     }
   };
 
-  // Filter and sort agreements
-  const filteredAgreements = agreements.filter((agreement) => {
-    const matchesSearch =
-      !searchQuery ||
-      agreement.agreement_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agreement.customer?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agreement.vehicle?.license_plate?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = statusFilter === "all" || agreement.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Sort agreements
-  const sortedAgreements = [...filteredAgreements].sort((a, b) => {
-    switch (sortOrder) {
-      case "oldest":
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      case "amount-high":
-        return b.total_amount - a.total_amount;
-      case "amount-low":
-        return a.total_amount - b.total_amount;
-      default: // newest
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-  });
-
-  const totalPages = Math.ceil(sortedAgreements.length / ITEMS_PER_PAGE);
+  const filteredAgreements = agreements || [];
+  const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentAgreements = sortedAgreements.slice(startIndex, endIndex);
+  const currentAgreements = filteredAgreements.slice(startIndex, endIndex);
 
   return {
     currentPage,

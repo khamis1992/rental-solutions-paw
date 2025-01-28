@@ -42,7 +42,7 @@ export const useAgreementForm = (onSuccess: () => void) => {
       dailyLateFee: 120,
       agreementDuration: 12,
       finalPrice: 0,
-      downPayment: 0
+      downPayment: 0,
     }
   });
 
@@ -98,7 +98,7 @@ export const useAgreementForm = (onSuccess: () => void) => {
         down_payment: Number(data.downPayment) || 0,
         notes: data.notes,
         status: 'pending_payment' as LeaseStatus,
-        initial_mileage: 0 // Adding default value for required field
+        initial_mileage: 0
       };
 
       console.log("Formatted data for agreement creation:", formattedData);
