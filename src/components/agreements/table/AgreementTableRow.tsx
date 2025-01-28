@@ -3,11 +3,10 @@ import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Printer, FileText, Trash2 } from "lucide-react";
-import type { Agreement } from "@/types/agreement.types";
+import type { Agreement } from "../hooks/useAgreements";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -76,6 +75,9 @@ export const AgreementTableRow = ({
     }
   };
 
+  // Calculate payment status based on remaining amount
+  const paymentStatus = agreement.remainingAmount > 0 ? 'pending' : 'completed';
+
   return (
     <TableRow className="hover:bg-muted/50">
       <TableCell>
@@ -109,17 +111,7 @@ export const AgreementTableRow = ({
         </Badge>
       </TableCell>
       <TableCell>
-        <div className="space-y-1">
-          <div>Total: {formatCurrency(agreement.total_amount)}</div>
-          {agreement.down_payment > 0 && (
-            <div className="text-sm text-muted-foreground">
-              Down Payment: {formatCurrency(agreement.down_payment)}
-            </div>
-          )}
-        </div>
-      </TableCell>
-      <TableCell>
-        <PaymentStatusBadge status={agreement.payment_status || 'pending'} />
+        <PaymentStatusBadge status={paymentStatus} />
       </TableCell>
       <TableCell className="text-right space-x-1">
         <TooltipProvider>
