@@ -25,7 +25,7 @@ export interface AgreementFormData {
   lateReturnFee: number;
   agreementDuration: number;
   finalPrice: number;
-  downPayment?: number;
+  downPayment: number;
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
