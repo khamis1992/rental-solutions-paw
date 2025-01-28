@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 
 interface LeaseToOwnFieldsProps {
   register: any;
@@ -14,15 +15,23 @@ export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => 
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Lease-to-Own Details</h3>
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="downPayment">Down Payment</Label>
-          <Input
-            id="downPayment"
-            type="number"
-            step="0.01"
-            {...register("downPayment")}
-          />
-        </div>
+        <FormField
+          name="downPayment"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Down Payment (QAR)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Enter down payment amount"
+                  {...register("downPayment")}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );

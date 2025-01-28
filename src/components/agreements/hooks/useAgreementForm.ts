@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface AgreementFormData {
   address: string;
@@ -43,16 +45,29 @@ export const useAgreementForm = (onSuccess: () => void) => {
       damagePenaltyRate: 0,
       lateReturnFee: 0,
       agreementDuration: 12,
-      finalPrice: 0
+      finalPrice: 0,
+      downPayment: 0
     }
   });
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      console.log("Form data:", data);
+      const { error } = await supabase
+        .from('leases')
+        .insert({
+          ...data,
+          status: 'pending_payment',
+          down_payment: data.downPayment || 0
+        });
+
+      if (error) throw error;
+      
+      console.log("Agreement created successfully");
       onSuccess();
+      toast.success("Agreement created successfully");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error creating agreement:", error);
+      toast.error("Failed to create agreement");
       throw error;
     }
   };
