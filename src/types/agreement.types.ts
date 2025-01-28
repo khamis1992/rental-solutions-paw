@@ -1,4 +1,5 @@
 import { Database } from "@/integrations/supabase/types";
+import { Json } from "@/types/database/database.types";
 
 export type LeaseStatus = Database['public']['Enums']['lease_status'];
 export type AgreementType = Database['public']['Enums']['agreement_type'];
@@ -22,6 +23,7 @@ export interface Agreement {
   daily_late_fee?: number;
   down_payment?: number;
   initial_mileage: number;
+  remainingAmount?: number;
   vehicle?: {
     make: string;
     model: string;
@@ -68,6 +70,8 @@ export interface Template {
   final_price: number;
   agreement_duration: string;
   daily_late_fee: number;
+  damage_penalty_rate?: number;
+  late_return_fee?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
