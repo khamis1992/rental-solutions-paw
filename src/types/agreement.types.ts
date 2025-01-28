@@ -84,7 +84,7 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
-export interface AgreementWithRelations extends Omit<Agreement, 'remaining_amount'> {
+export interface AgreementWithRelations extends Agreement {
   remainingAmount: {
     remaining_amount: number;
   };

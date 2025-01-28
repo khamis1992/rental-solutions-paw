@@ -16,6 +16,15 @@ export interface AgreementFormData {
   dailyLateFee: number;
   notes?: string;
   downPayment?: number;
+  // Additional customer fields
+  nationality?: string;
+  drivingLicense?: string;
+  phoneNumber?: string;
+  email?: string;
+  address?: string;
+  // Template fields
+  finalPrice?: number;
+  agreementNumber?: string;
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
@@ -46,17 +55,14 @@ export const useAgreementForm = (onSuccess: () => void) => {
     if (startDate && duration) {
       try {
         const endDate = addMonths(new Date(startDate), duration);
-        setValue('endDate', endDate.toISOString().split('T')[0], { 
-          shouldValidate: true,
-          shouldDirty: true 
-        });
+        setValue('endDate', endDate.toISOString().split('T')[0]);
       } catch (error) {
         console.error('Error calculating end date:', error);
       }
     }
   };
 
-  // Use effect to update end date
+  // Use watch callback to update end date
   watch((data, { name }) => {
     if (name === 'startDate' || name === 'agreementDuration') {
       updateEndDate();
