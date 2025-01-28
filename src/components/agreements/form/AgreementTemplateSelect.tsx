@@ -65,14 +65,24 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       console.error("Error parsing duration:", error);
     }
 
-    // Apply template values to form
+    // Only set values if they exist in the template
     setValue("agreementType", selectedTemplate.agreement_type);
-    setValue("rentAmount", selectedTemplate.rent_amount);
-    setValue("finalPrice", selectedTemplate.final_price);
+    if (selectedTemplate.rent_amount) {
+      setValue("rentAmount", selectedTemplate.rent_amount);
+    }
+    if (selectedTemplate.final_price) {
+      setValue("finalPrice", selectedTemplate.final_price);
+    }
     setValue("agreementDuration", durationMonths);
-    setValue("dailyLateFee", selectedTemplate.daily_late_fee);
-    setValue("damagePenaltyRate", selectedTemplate.damage_penalty_rate);
-    setValue("lateReturnFee", selectedTemplate.late_return_fee);
+    if (selectedTemplate.daily_late_fee) {
+      setValue("dailyLateFee", selectedTemplate.daily_late_fee);
+    }
+    if (selectedTemplate.damage_penalty_rate) {
+      setValue("damagePenaltyRate", selectedTemplate.damage_penalty_rate);
+    }
+    if (selectedTemplate.late_return_fee) {
+      setValue("lateReturnFee", selectedTemplate.late_return_fee);
+    }
 
     console.log("Applied template values:", selectedTemplate);
   };
