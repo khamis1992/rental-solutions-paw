@@ -52,13 +52,28 @@ export const useAgreementForm = (onSuccess: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
+      // Format the data to match the database schema
+      const formattedData = {
+        customer_id: data.customerId,
+        vehicle_id: data.vehicleId,
+        agreement_type: data.agreementType as "lease_to_own" | "short_term",
+        rent_amount: data.rentAmount,
+        total_amount: data.finalPrice,
+        initial_mileage: data.initialMileage,
+        agreement_duration: `${data.agreementDuration} months`,
+        start_date: data.startDate,
+        end_date: data.endDate,
+        daily_late_fee: data.dailyLateFee,
+        damage_penalty_rate: data.damagePenaltyRate,
+        late_return_fee: data.lateReturnFee,
+        down_payment: data.downPayment || 0,
+        notes: data.notes,
+        status: 'pending_payment'
+      };
+
       const { error } = await supabase
         .from('leases')
-        .insert({
-          ...data,
-          status: 'pending_payment',
-          down_payment: data.downPayment || 0
-        });
+        .insert(formattedData);
 
       if (error) throw error;
       
