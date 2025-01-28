@@ -82,7 +82,7 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
             
             <Separator className="my-6" />
             
-            <AgreementBasicInfo register={register} errors={errors} />
+            <AgreementBasicInfo register={register} errors={errors} watch={watch} />
             
             <Separator className="my-6" />
             
@@ -102,18 +102,8 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
               watch={watch}
               setValue={setValue}
             />
-            
-            <Separator className="my-6" />
 
-            {agreementType === "lease_to_own" && (
-              <>
-                <LeaseToOwnFields
-                  register={register}
-                  watch={watch}
-                />
-                <Separator className="my-6" />
-              </>
-            )}
+            <Separator className="my-6" />
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Late Fees & Penalties</h3>
