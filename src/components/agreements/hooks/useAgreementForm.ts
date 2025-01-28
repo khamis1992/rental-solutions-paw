@@ -43,6 +43,7 @@ export const useAgreementForm = (onSuccess: () => void) => {
       agreementDuration: 12,
       finalPrice: 0,
       downPayment: 0,
+      startDate: new Date().toISOString().split('T')[0], // Set default start date to today
     }
   });
 
