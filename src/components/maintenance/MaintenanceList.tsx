@@ -119,7 +119,13 @@ export const MaintenanceList = () => {
         scheduled_date: new Date().toISOString(),
         cost: null,
         description: 'Vehicle reported in accident status',
-        vehicles: vehicle
+        vehicles: vehicle,
+        completed_date: null,
+        performed_by: null,
+        notes: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        category_id: null
       }));
 
       return [...maintenanceRecords, ...accidentRecords].sort((a, b) => 
