@@ -13,7 +13,6 @@ export interface AgreementFormData {
   customerId: string;
   rentAmount: number;
   agreementType: "lease_to_own" | "short_term";
-  initialMileage: number;
   agreementNumber: string;
   drivingLicense: string;
   phoneNumber: string;
@@ -21,8 +20,6 @@ export interface AgreementFormData {
   startDate: string;
   endDate: string;
   dailyLateFee: number;
-  damagePenaltyRate: number;
-  lateReturnFee: number;
   agreementDuration: number;
   finalPrice: number;
   downPayment: number;
@@ -43,8 +40,6 @@ export const useAgreementForm = (onSuccess: () => void) => {
       agreementType: "short_term",
       rentAmount: 0,
       dailyLateFee: 120,
-      damagePenaltyRate: 0,
-      lateReturnFee: 0,
       agreementDuration: 12,
       finalPrice: 0,
       downPayment: 0
@@ -53,6 +48,42 @@ export const useAgreementForm = (onSuccess: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
+      console.log("Starting agreement creation with data:", data);
+
+      // First create or get customer
+      const { data: customerData, error: customerError } = await supabase
+        .from('profiles')
+        .insert({
+          full_name: data.fullName,
+          phone_number: data.phoneNumber,
+          email: data.email,
+          address: data.address,
+          nationality: data.nationality,
+          driver_license: data.drivingLicense,
+          role: 'customer'
+        })
+        .select()
+        .single();
+
+      if (customerError) {
+        // If insert fails, try to find existing customer
+        const { data: existingCustomer, error: findError } = await supabase
+          .from('profiles')
+          .select()
+          .eq('phone_number', data.phoneNumber)
+          .single();
+
+        if (findError) {
+          throw new Error('Failed to create or find customer');
+        }
+        
+        console.log("Found existing customer:", existingCustomer);
+        data.customerId = existingCustomer.id;
+      } else {
+        console.log("Created new customer:", customerData);
+        data.customerId = customerData.id;
+      }
+
       // Format the data to match the database schema
       const formattedData = {
         customer_id: data.customerId,
@@ -60,17 +91,16 @@ export const useAgreementForm = (onSuccess: () => void) => {
         agreement_type: data.agreementType,
         rent_amount: Number(data.rentAmount) || 0,
         total_amount: Number(data.finalPrice) || 0,
-        initial_mileage: Number(data.initialMileage) || 0,
         agreement_duration: `${data.agreementDuration} months`,
         start_date: data.startDate,
         end_date: data.endDate,
         daily_late_fee: Number(data.dailyLateFee) || 120,
-        damage_penalty_rate: Number(data.damagePenaltyRate) || 0,
-        late_return_fee: Number(data.lateReturnFee) || 0,
         down_payment: Number(data.downPayment) || 0,
         notes: data.notes,
         status: 'pending_payment' as LeaseStatus
       };
+
+      console.log("Formatted data for agreement creation:", formattedData);
 
       const { error } = await supabase
         .from('leases')

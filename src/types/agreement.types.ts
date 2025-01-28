@@ -13,8 +13,6 @@ export interface Agreement {
   start_date: string;
   end_date: string;
   status: LeaseStatus;
-  initial_mileage: number;
-  return_mileage?: number;
   total_amount: number;
   rent_amount: number;
   notes?: string;
@@ -69,8 +67,6 @@ export interface Template {
   final_price: number;
   agreement_duration: string;
   daily_late_fee: number;
-  damage_penalty_rate: number;
-  late_return_fee: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -79,31 +75,8 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
-export interface AgreementWithRelations extends Omit<Agreement, 'remaining_amount'> {
+export interface AgreementWithRelations extends Agreement {
   remainingAmount: {
     remaining_amount: number;
-  }[];
-}
-
-export interface DashboardStats {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
-}
-
-export interface ReportSchedule {
-  id?: string;
-  report_type: string;
-  frequency: string;
-  recipients: string[];
-  format: string;
-  last_run_at?: string;
-  next_run_at?: string;
-  is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  };
 }
