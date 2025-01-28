@@ -2,9 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Agreement } from "@/types/agreement.types";
-
-const ITEMS_PER_PAGE = 10;
+import type { Agreement } from "@/types/agreement.types";
 
 export const useAgreementList = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +19,9 @@ export const useAgreementList = () => {
           *,
           customer:customer_id (
             id,
-            full_name
+            full_name,
+            phone_number,
+            email
           ),
           vehicle:vehicle_id (
             id,
@@ -68,7 +68,15 @@ export const useAgreementList = () => {
         throw error;
       }
 
-      return data as Agreement[];
+      // Transform the data to match the Agreement type
+      const transformedData = data?.map(agreement => ({
+        ...agreement,
+        customer: agreement.customer || null,
+        vehicle: agreement.vehicle || null,
+        remainingAmount: agreement.remaining_amount || 0
+      })) as Agreement[];
+
+      return transformedData;
     },
     refetchOnWindowFocus: true,
     staleTime: 1000, // Consider data stale after 1 second
@@ -177,9 +185,9 @@ export const useAgreementList = () => {
   };
 
   const filteredAgreements = agreements || [];
-  const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const totalPages = Math.ceil(filteredAgreements.length / 10);
+  const startIndex = (currentPage - 1) * 10;
+  const endIndex = startIndex + 10;
   const currentAgreements = filteredAgreements.slice(startIndex, endIndex);
 
   return {
