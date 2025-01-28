@@ -27,6 +27,10 @@ export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => 
                   placeholder="Enter down payment amount"
                   {...register("downPayment", {
                     setValueAs: (v: string) => v === "" ? 0 : parseFloat(v),
+                    min: {
+                      value: 0,
+                      message: "Down payment cannot be negative"
+                    }
                   })}
                 />
               </FormControl>
