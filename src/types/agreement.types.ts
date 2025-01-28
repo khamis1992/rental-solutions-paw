@@ -23,7 +23,11 @@ export interface Agreement {
   daily_late_fee?: number;
   down_payment?: number;
   initial_mileage: number;
-  remainingAmount?: number;
+  return_mileage?: number;
+  payment_status?: string;
+  last_payment_date?: string;
+  next_payment_date?: string;
+  payment_frequency?: string;
   vehicle?: {
     make: string;
     model: string;
@@ -80,7 +84,7 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
-export interface AgreementWithRelations extends Agreement {
+export interface AgreementWithRelations extends Omit<Agreement, 'remaining_amount'> {
   remainingAmount: {
     remaining_amount: number;
   };

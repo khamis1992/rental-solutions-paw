@@ -1,33 +1,26 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { addMonths } from "date-fns";
+import { toast } from "sonner";
+import { AgreementType, LeaseStatus } from "@/types/agreement.types";
 
 export interface AgreementFormData {
-  address: string;
-  email: string;
-  notes: string;
-  nationality: string;
-  vehicleId: string;
+  agreementType: AgreementType;
   customerId: string;
+  vehicleId: string;
   rentAmount: number;
-  agreementType: "lease_to_own" | "short_term";
-  agreementNumber: string;
-  drivingLicense: string;
-  phoneNumber: string;
-  fullName: string;
+  agreementDuration: number;
   startDate: string;
   endDate: string;
   dailyLateFee: number;
-  agreementDuration: number;
-  finalPrice: number;
-  downPayment: number;
+  notes?: string;
+  downPayment?: number;
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
   const [open, setOpen] = useState(false);
-  const [agreementType, setAgreementType] = useState<string>("short_term");
+  const [agreementType, setAgreementType] = useState<AgreementType>("short_term");
 
   const {
     register,
@@ -38,97 +31,64 @@ export const useAgreementForm = (onSuccess: () => void) => {
   } = useForm<AgreementFormData>({
     defaultValues: {
       agreementType: "short_term",
-      rentAmount: 0,
+      startDate: new Date().toISOString().split('T')[0],
       agreementDuration: 12,
-      finalPrice: 0,
-      downPayment: 0,
-      startDate: new Date().toISOString().split('T')[0], // Set default start date to today
+      dailyLateFee: 120,
     }
   });
 
-  // Watch for changes in start date and agreement duration
+  // Watch for changes in start date and duration
   const startDate = watch('startDate');
-  const agreementDuration = watch('agreementDuration');
+  const duration = watch('agreementDuration');
 
-  // Update end date whenever start date or duration changes
+  // Update end date when start date or duration changes
   const updateEndDate = () => {
-    if (startDate && agreementDuration) {
-      const endDate = addMonths(new Date(startDate), agreementDuration);
-      setValue('endDate', endDate.toISOString().split('T')[0]);
+    if (startDate && duration) {
+      try {
+        const endDate = addMonths(new Date(startDate), duration);
+        setValue('endDate', endDate.toISOString().split('T')[0], { 
+          shouldValidate: true,
+          shouldDirty: true 
+        });
+      } catch (error) {
+        console.error('Error calculating end date:', error);
+      }
     }
   };
 
-  // Watch for changes and update end date
-  watch(() => {
-    updateEndDate();
+  // Use effect to update end date
+  watch((data, { name }) => {
+    if (name === 'startDate' || name === 'agreementDuration') {
+      updateEndDate();
+    }
   });
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      // First create or get customer
-      const { data: customerData, error: customerError } = await supabase
-        .from('profiles')
-        .insert({
-          full_name: data.fullName,
-          phone_number: data.phoneNumber,
-          email: data.email,
-          address: data.address,
-          nationality: data.nationality,
-          driver_license: data.drivingLicense,
-          role: 'customer'
-        })
-        .select()
-        .single();
-
-      if (customerError) {
-        // If insert fails, try to find existing customer
-        const { data: existingCustomer, error: findError } = await supabase
-          .from('profiles')
-          .select()
-          .eq('phone_number', data.phoneNumber)
-          .single();
-
-        if (findError) {
-          throw new Error('Failed to create or find customer');
-        }
-        
-        console.log("Found existing customer:", existingCustomer);
-        data.customerId = existingCustomer.id;
-      } else {
-        console.log("Created new customer:", customerData);
-        data.customerId = customerData.id;
-      }
-
-      // Format the data to match the database schema
-      const formattedData = {
-        customer_id: data.customerId,
-        vehicle_id: data.vehicleId,
-        agreement_type: data.agreementType,
-        rent_amount: Number(data.rentAmount) || 0,
-        total_amount: Number(data.finalPrice) || 0,
-        agreement_duration: `${data.agreementDuration} months`,
-        start_date: data.startDate,
-        end_date: data.endDate,
-        daily_late_fee: Number(data.dailyLateFee) || 120,
-        down_payment: Number(data.downPayment) || 0,
-        notes: data.notes,
-        status: 'pending_payment' as LeaseStatus,
-        initial_mileage: 0
-      };
-
-      console.log("Formatted data for agreement creation:", formattedData);
-
       const { error } = await supabase
         .from('leases')
-        .insert(formattedData);
+        .insert({
+          agreement_type: data.agreementType,
+          customer_id: data.customerId,
+          vehicle_id: data.vehicleId,
+          rent_amount: data.rentAmount,
+          total_amount: data.rentAmount * data.agreementDuration,
+          start_date: data.startDate,
+          end_date: data.endDate,
+          daily_late_fee: data.dailyLateFee,
+          notes: data.notes,
+          down_payment: data.downPayment,
+          status: 'pending_payment' as LeaseStatus,
+          initial_mileage: 0,
+          agreement_duration: `${data.agreementDuration} months`
+        });
 
       if (error) throw error;
-      
-      console.log("Agreement created successfully");
+
       onSuccess();
       toast.success("Agreement created successfully");
     } catch (error) {
-      console.error("Error creating agreement:", error);
+      console.error('Error creating agreement:', error);
       toast.error("Failed to create agreement");
       throw error;
     }
