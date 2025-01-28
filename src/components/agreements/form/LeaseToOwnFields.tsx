@@ -25,7 +25,9 @@ export const LeaseToOwnFields = ({ register, watch }: LeaseToOwnFieldsProps) => 
                   type="number"
                   step="0.01"
                   placeholder="Enter down payment amount"
-                  {...register("downPayment")}
+                  {...register("downPayment", {
+                    setValueAs: (v: string) => v === "" ? 0 : parseFloat(v),
+                  })}
                 />
               </FormControl>
               <FormMessage />
