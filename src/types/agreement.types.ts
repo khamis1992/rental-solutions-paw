@@ -21,6 +21,7 @@ export interface Agreement {
   remaining_amount: number;
   daily_late_fee?: number;
   down_payment?: number;
+  initial_mileage: number;
   vehicle?: {
     make: string;
     model: string;
@@ -79,4 +80,27 @@ export interface AgreementWithRelations extends Agreement {
   remainingAmount: {
     remaining_amount: number;
   };
+}
+
+export interface DashboardStats {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
+
+export interface ReportSchedule {
+  id?: string;
+  report_type: string;
+  frequency: string;
+  recipients: string[];
+  format: string;
+  last_run_at?: string;
+  next_run_at?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
