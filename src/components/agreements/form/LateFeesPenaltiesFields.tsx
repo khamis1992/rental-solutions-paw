@@ -20,16 +20,6 @@ export const LateFeesPenaltiesFields = ({ register }: LateFeesPenaltiesFieldsPro
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="damagePenaltyRate">Damage Penalty Amount</Label>
-        <Input
-          type="number"
-          step="0.01"
-          placeholder="0.00"
-          {...register("damagePenaltyRate")}
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="lateReturnFee">Late Return Fee</Label>
         <Input
           type="number"
