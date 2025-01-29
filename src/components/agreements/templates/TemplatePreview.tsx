@@ -1,8 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface TemplatePreviewProps {
   content: string;
@@ -10,6 +12,8 @@ interface TemplatePreviewProps {
 }
 
 export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePreviewProps) => {
+  const [textAlignment, setTextAlignment] = useState<'left' | 'center' | 'right'>('left');
+  
   // Check if content contains Arabic text
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
@@ -18,12 +22,47 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
 
   const isArabic = containsArabic(content);
 
+  // Default to right alignment for Arabic text
+  useState(() => {
+    if (isArabic) {
+      setTextAlignment('right');
+    }
+  });
+
   return (
     <div className="space-y-6">
       <DialogHeader>
-        <DialogTitle className="text-xl font-semibold">
-          {isArabic ? "معاينة النموذج" : "Template Preview"}
-        </DialogTitle>
+        <div className="flex justify-between items-center">
+          <DialogTitle className="text-xl font-semibold">
+            {isArabic ? "معاينة النموذج" : "Template Preview"}
+          </DialogTitle>
+          <div className="flex gap-2">
+            <Button
+              variant={textAlignment === 'left' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTextAlignment('left')}
+              className="w-9 h-9 p-0"
+            >
+              <AlignLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={textAlignment === 'center' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTextAlignment('center')}
+              className="w-9 h-9 p-0"
+            >
+              <AlignCenter className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={textAlignment === 'right' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTextAlignment('right')}
+              className="w-9 h-9 p-0"
+            >
+              <AlignRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </DialogHeader>
       
       {missingVariables.length > 0 && (
@@ -42,8 +81,13 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
         <div 
           className={cn(
             "p-8",
-            isArabic ? "text-right font-arabic" : "text-left",
-            "text-base leading-relaxed"
+            isArabic ? "font-arabic" : "",
+            "text-base leading-relaxed",
+            {
+              'text-left': textAlignment === 'left',
+              'text-center': textAlignment === 'center',
+              'text-right': textAlignment === 'right'
+            }
           )}
           style={{
             direction: isArabic ? 'rtl' : 'ltr',
