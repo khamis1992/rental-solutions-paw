@@ -2672,6 +2672,7 @@ export type Database = {
       }
       legal_document_templates: {
         Row: {
+          agreement_type: Database["public"]["Enums"]["agreement_type"] | null
           content: string
           created_at: string
           created_by: string | null
@@ -2687,6 +2688,7 @@ export type Database = {
           variables: Json | null
         }
         Insert: {
+          agreement_type?: Database["public"]["Enums"]["agreement_type"] | null
           content: string
           created_at?: string
           created_by?: string | null
@@ -2702,6 +2704,7 @@ export type Database = {
           variables?: Json | null
         }
         Update: {
+          agreement_type?: Database["public"]["Enums"]["agreement_type"] | null
           content?: string
           created_at?: string
           created_by?: string | null

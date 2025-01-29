@@ -39,18 +39,6 @@ interface CreateTemplateDialogProps {
   selectedTemplate?: Template | null;
 }
 
-type DocumentLanguage = "english" | "spanish" | "french" | "arabic";
-
-interface TemplateFormData {
-  name: string;
-  description: string;
-  content: string;
-  language: DocumentLanguage;
-  agreement_type: string;
-  textStyle?: TextStyle;
-  tables?: Table[];
-}
-
 export const CreateTemplateDialog = ({
   open,
   onOpenChange,
@@ -58,12 +46,20 @@ export const CreateTemplateDialog = ({
 }: CreateTemplateDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<TemplateFormData>({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    content: string;
+    language: "english" | "arabic";
+    agreement_type: "short_term" | "lease_to_own";
+    textStyle: TextStyle;
+    tables: Table[];
+  }>({
     name: selectedTemplate?.name || "",
     description: selectedTemplate?.description || "",
     content: selectedTemplate?.content || "",
-    language: selectedTemplate?.language || "english",
-    agreement_type: selectedTemplate?.agreement_type || "",
+    language: selectedTemplate?.language as "english" | "arabic" || "english",
+    agreement_type: selectedTemplate?.agreement_type || "short_term",
     textStyle: {
       bold: false,
       italic: false,
@@ -79,9 +75,17 @@ export const CreateTemplateDialog = ({
     setIsSubmitting(true);
 
     try {
+      const templateData = {
+        ...formData,
+        template_structure: {
+          textStyle: formData.textStyle,
+          tables: formData.tables
+        }
+      };
+
       const { error } = await supabase
         .from("legal_document_templates")
-        .insert(formData);
+        .insert(templateData);
 
       if (error) throw error;
 
@@ -95,14 +99,40 @@ export const CreateTemplateDialog = ({
     }
   };
 
-  const handleTextStyle = (type: keyof TextStyle | "align", value?: string) => {
+  const handleTextStyle = (type: keyof TextStyle | "alignment", value?: string) => {
     setFormData(prev => ({
       ...prev,
       textStyle: {
-        ...prev.textStyle!,
-        [type]: type === "align" ? value : !prev.textStyle![type as keyof TextStyle],
+        ...prev.textStyle,
+        [type]: type === "alignment" ? value : !prev.textStyle[type as keyof TextStyle],
       }
     }));
+
+    // Apply style to selected text
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = formData.content.substring(start, end);
+      
+      if (selectedText) {
+        const prefix = formData.content.substring(0, start);
+        const suffix = formData.content.substring(end);
+        let styledText = selectedText;
+
+        if (type === "alignment") {
+          styledText = `<div style="text-align: ${value};">${selectedText}</div>`;
+        } else {
+          const style = type.toLowerCase();
+          styledText = `<span style="${style}: ${type === 'bold' ? 'bold' : type === 'italic' ? 'italic' : 'underline'};">${selectedText}</span>`;
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          content: prefix + styledText + suffix
+        }));
+      }
+    }
   };
 
   const handleInsertTable = () => {
@@ -128,10 +158,39 @@ export const CreateTemplateDialog = ({
       }
     };
 
+    const tableHtml = `
+<table style="width: 100%; border-collapse: collapse;">
+  <tr>
+    <th style="border: 1px solid #ddd; padding: 8px;">Header 1</th>
+    <th style="border: 1px solid #ddd; padding: 8px;">Header 2</th>
+  </tr>
+  <tr>
+    <td style="border: 1px solid #ddd; padding: 8px;">Cell 1</td>
+    <td style="border: 1px solid #ddd; padding: 8px;">Cell 2</td>
+  </tr>
+</table>
+`;
+
     setFormData(prev => ({
       ...prev,
-      tables: [...(prev.tables || []), newTable],
-      content: prev.content + "\n\n[TABLE]\n\n"
+      tables: [...prev.tables, newTable],
+      content: prev.content + tableHtml
+    }));
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/html') || e.clipboardData.getData('text');
+    
+    // Insert the text at the cursor position
+    const textarea = e.target as HTMLTextAreaElement;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentContent = formData.content;
+    
+    setFormData(prev => ({
+      ...prev,
+      content: currentContent.substring(0, start) + text + currentContent.substring(end)
     }));
   };
 
@@ -145,7 +204,7 @@ export const CreateTemplateDialog = ({
         </DialogHeader>
         
         <ScrollArea className="h-full pr-4">
-          <div className="space-y-6 pb-6">
+          <form onSubmit={handleSubmit} className="space-y-6 pb-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Template Name</Label>
@@ -163,7 +222,7 @@ export const CreateTemplateDialog = ({
                 <Label htmlFor="agreement_type">Agreement Type</Label>
                 <Select
                   value={formData.agreement_type}
-                  onValueChange={(value) =>
+                  onValueChange={(value: "short_term" | "lease_to_own") =>
                     setFormData({ ...formData, agreement_type: value })
                   }
                 >
@@ -193,7 +252,7 @@ export const CreateTemplateDialog = ({
               <Label>Language</Label>
               <Select
                 value={formData.language}
-                onValueChange={(value: DocumentLanguage) =>
+                onValueChange={(value: "english" | "arabic") =>
                   setFormData({ ...formData, language: value })
                 }
               >
@@ -215,7 +274,8 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleTextStyle("align", "left")}
+                    onClick={() => handleTextStyle("alignment", "left")}
+                    className={formData.textStyle.alignment === 'left' ? 'bg-secondary' : ''}
                   >
                     <AlignLeft className="h-4 w-4" />
                   </Button>
@@ -223,7 +283,8 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleTextStyle("align", "center")}
+                    onClick={() => handleTextStyle("alignment", "center")}
+                    className={formData.textStyle.alignment === 'center' ? 'bg-secondary' : ''}
                   >
                     <AlignCenter className="h-4 w-4" />
                   </Button>
@@ -231,7 +292,8 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleTextStyle("align", "right")}
+                    onClick={() => handleTextStyle("alignment", "right")}
+                    className={formData.textStyle.alignment === 'right' ? 'bg-secondary' : ''}
                   >
                     <AlignRight className="h-4 w-4" />
                   </Button>
@@ -239,7 +301,8 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleTextStyle("align", "justify")}
+                    onClick={() => handleTextStyle("alignment", "justify")}
+                    className={formData.textStyle.alignment === 'justify' ? 'bg-secondary' : ''}
                   >
                     <AlignJustify className="h-4 w-4" />
                   </Button>
@@ -249,6 +312,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("bold")}
+                    className={formData.textStyle.bold ? 'bg-secondary' : ''}
                   >
                     <Bold className="h-4 w-4" />
                   </Button>
@@ -257,6 +321,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("italic")}
+                    className={formData.textStyle.italic ? 'bg-secondary' : ''}
                   >
                     <Italic className="h-4 w-4" />
                   </Button>
@@ -265,6 +330,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("underline")}
+                    className={formData.textStyle.underline ? 'bg-secondary' : ''}
                   >
                     <Underline className="h-4 w-4" />
                   </Button>
@@ -284,7 +350,9 @@ export const CreateTemplateDialog = ({
                 onChange={(e) =>
                   setFormData({ ...formData, content: e.target.value })
                 }
+                onPaste={handlePaste}
                 className="min-h-[400px] font-mono"
+                dir={formData.language === "arabic" ? "rtl" : "ltr"}
                 required
               />
             </div>
@@ -297,12 +365,12 @@ export const CreateTemplateDialog = ({
               >
                 Cancel
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting}>
                 <Save className="h-4 w-4 mr-2" />
                 {isSubmitting ? "Saving..." : "Save Template"}
               </Button>
             </div>
-          </div>
+          </form>
         </ScrollArea>
       </DialogContent>
     </Dialog>
