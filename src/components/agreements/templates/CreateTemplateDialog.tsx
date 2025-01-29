@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -22,6 +22,19 @@ import {
 import { toast } from "sonner";
 import { Template, TextStyle, Table, TableRow } from "@/types/agreement.types";
 import { TemplatePreview } from "./TemplatePreview";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Bold,
+  Italic,
+  Underline,
+  Table as TableIcon,
+  Save
+} from "lucide-react";
 
 interface CreateTemplateDialogProps {
   open: boolean;
