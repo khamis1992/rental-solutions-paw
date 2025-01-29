@@ -52,22 +52,26 @@ export const CreateTemplateDialog = ({
     content: string;
     language: "english" | "arabic";
     agreement_type: "short_term" | "lease_to_own";
-    textStyle: TextStyle;
-    tables: Table[];
+    template_structure: {
+      textStyle: TextStyle;
+      tables: Table[];
+    };
   }>({
     name: selectedTemplate?.name || "",
     description: selectedTemplate?.description || "",
     content: selectedTemplate?.content || "",
     language: selectedTemplate?.language as "english" | "arabic" || "english",
     agreement_type: selectedTemplate?.agreement_type || "short_term",
-    textStyle: {
-      bold: false,
-      italic: false,
-      underline: false,
-      fontSize: 14,
-      alignment: 'left'
-    },
-    tables: []
+    template_structure: {
+      textStyle: {
+        bold: false,
+        italic: false,
+        underline: false,
+        fontSize: 14,
+        alignment: 'left'
+      },
+      tables: []
+    }
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,17 +79,12 @@ export const CreateTemplateDialog = ({
     setIsSubmitting(true);
 
     try {
-      const templateData = {
-        ...formData,
-        template_structure: {
-          textStyle: formData.textStyle,
-          tables: formData.tables
-        }
-      };
-
       const { error } = await supabase
         .from("legal_document_templates")
-        .insert(templateData);
+        .insert({
+          ...formData,
+          is_active: true
+        });
 
       if (error) throw error;
 
@@ -102,9 +101,12 @@ export const CreateTemplateDialog = ({
   const handleTextStyle = (type: keyof TextStyle | "alignment", value?: string) => {
     setFormData(prev => ({
       ...prev,
-      textStyle: {
-        ...prev.textStyle,
-        [type]: type === "alignment" ? value : !prev.textStyle[type as keyof TextStyle],
+      template_structure: {
+        ...prev.template_structure,
+        textStyle: {
+          ...prev.template_structure.textStyle,
+          [type]: type === "alignment" ? value : !prev.template_structure.textStyle[type as keyof TextStyle],
+        }
       }
     }));
 
@@ -140,14 +142,14 @@ export const CreateTemplateDialog = ({
       rows: [
         {
           cells: [
-            { content: "Header 1", style: { ...formData.textStyle } },
-            { content: "Header 2", style: { ...formData.textStyle } }
+            { content: "Header 1", style: { ...formData.template_structure.textStyle } },
+            { content: "Header 2", style: { ...formData.template_structure.textStyle } }
           ]
         },
         {
           cells: [
-            { content: "Cell 1", style: { ...formData.textStyle } },
-            { content: "Cell 2", style: { ...formData.textStyle } }
+            { content: "Cell 1", style: { ...formData.template_structure.textStyle } },
+            { content: "Cell 2", style: { ...formData.template_structure.textStyle } }
           ]
         }
       ],
@@ -173,7 +175,10 @@ export const CreateTemplateDialog = ({
 
     setFormData(prev => ({
       ...prev,
-      tables: [...prev.tables, newTable],
+      template_structure: {
+        ...prev.template_structure,
+        tables: [...prev.template_structure.tables, newTable]
+      },
       content: prev.content + tableHtml
     }));
   };
@@ -275,7 +280,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("alignment", "left")}
-                    className={formData.textStyle.alignment === 'left' ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.alignment === 'left' ? 'bg-secondary' : ''}
                   >
                     <AlignLeft className="h-4 w-4" />
                   </Button>
@@ -284,7 +289,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("alignment", "center")}
-                    className={formData.textStyle.alignment === 'center' ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.alignment === 'center' ? 'bg-secondary' : ''}
                   >
                     <AlignCenter className="h-4 w-4" />
                   </Button>
@@ -293,7 +298,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("alignment", "right")}
-                    className={formData.textStyle.alignment === 'right' ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.alignment === 'right' ? 'bg-secondary' : ''}
                   >
                     <AlignRight className="h-4 w-4" />
                   </Button>
@@ -302,7 +307,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("alignment", "justify")}
-                    className={formData.textStyle.alignment === 'justify' ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.alignment === 'justify' ? 'bg-secondary' : ''}
                   >
                     <AlignJustify className="h-4 w-4" />
                   </Button>
@@ -312,7 +317,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("bold")}
-                    className={formData.textStyle.bold ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.bold ? 'bg-secondary' : ''}
                   >
                     <Bold className="h-4 w-4" />
                   </Button>
@@ -321,7 +326,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("italic")}
-                    className={formData.textStyle.italic ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.italic ? 'bg-secondary' : ''}
                   >
                     <Italic className="h-4 w-4" />
                   </Button>
@@ -330,7 +335,7 @@ export const CreateTemplateDialog = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleTextStyle("underline")}
-                    className={formData.textStyle.underline ? 'bg-secondary' : ''}
+                    className={formData.template_structure.textStyle.underline ? 'bg-secondary' : ''}
                   >
                     <Underline className="h-4 w-4" />
                   </Button>
