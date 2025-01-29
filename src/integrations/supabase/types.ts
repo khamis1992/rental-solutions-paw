@@ -2681,6 +2681,7 @@ export type Database = {
           is_active: boolean | null
           language: Database["public"]["Enums"]["document_language"] | null
           name: string
+          tables: Json | null
           template_sections: Json[] | null
           template_structure: Json | null
           updated_at: string
@@ -2697,6 +2698,7 @@ export type Database = {
           is_active?: boolean | null
           language?: Database["public"]["Enums"]["document_language"] | null
           name: string
+          tables?: Json | null
           template_sections?: Json[] | null
           template_structure?: Json | null
           updated_at?: string
@@ -2713,6 +2715,7 @@ export type Database = {
           is_active?: boolean | null
           language?: Database["public"]["Enums"]["document_language"] | null
           name?: string
+          tables?: Json | null
           template_sections?: Json[] | null
           template_structure?: Json | null
           updated_at?: string
