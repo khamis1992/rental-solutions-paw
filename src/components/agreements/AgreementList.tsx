@@ -107,9 +107,10 @@ export const AgreementList = () => {
         .replace(/{{agreement\.daily_late_fee}}/g, `${agreement.daily_late_fee} QAR`)
         .replace(/{{agreement\.agreement_duration}}/g, agreement.agreement_duration || '')
         .replace(/{{agreement\.total_amount}}/g, `${agreement.total_amount} QAR`)
-        .replace(/{{agreement\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR');
+        .replace(/{{agreement\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR')
+        .replace(/{{payment\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR');
 
-      // Replace customer variables - handle both name and full_name
+      // Replace customer variables
       if (agreement.customer) {
         templateContent = templateContent
           .replace(/{{customer\.name}}/g, agreement.customer.full_name || '')
