@@ -120,9 +120,24 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleViewContract()}
+                onClick={() => onNameClick(agreement.id)}
               >
                 <Eye className="h-4 w-4 text-primary hover:text-primary/80" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View Agreement</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewContract()}
+              >
+                <FileText className="h-4 w-4 text-violet-600 hover:text-violet-500" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -142,21 +157,6 @@ export const AgreementTableRow = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>Print Contract</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onAgreementClick(agreement.id)}
-              >
-                <FileText className="h-4 w-4 text-violet-600 hover:text-violet-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>View Invoice</p>
             </TooltipContent>
           </Tooltip>
 
