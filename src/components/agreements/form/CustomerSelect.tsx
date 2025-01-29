@@ -46,20 +46,18 @@ export const CustomerSelect = ({ register, onCustomerSelect }: CustomerSelectPro
 
   const filteredCustomers = customers || [];
 
+  const handleCustomerSelect = (value: string) => {
+    console.log("Selected customer ID:", value);
+    register("customerId").onChange({ target: { value } });
+    if (onCustomerSelect) {
+      onCustomerSelect(value);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label htmlFor="customerId">Customer</Label>
-      <Select 
-        {...register("customerId")}
-        onValueChange={(value) => {
-          register("customerId").onChange({
-            target: { value },
-          });
-          if (onCustomerSelect) {
-            onCustomerSelect(value);
-          }
-        }}
-      >
+      <Select onValueChange={handleCustomerSelect}>
         <SelectTrigger>
           <SelectValue placeholder="Select customer" />
         </SelectTrigger>

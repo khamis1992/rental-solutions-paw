@@ -71,12 +71,14 @@ export const useAgreementForm = (onSuccess: () => void) => {
 
   const onSubmit = async (data: AgreementFormData) => {
     try {
-      if (!data.customerId) {
+      console.log("Form data before submission:", data);
+
+      if (!data.customerId || data.customerId === "") {
         toast.error("Please select a customer");
         return;
       }
 
-      if (!data.vehicleId) {
+      if (!data.vehicleId || data.vehicleId === "") {
         toast.error("Please select a vehicle");
         return;
       }
