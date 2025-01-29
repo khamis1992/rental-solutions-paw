@@ -48,6 +48,9 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       return;
     }
 
+    // Set the template ID
+    setValue("templateId", templateId);
+
     // Parse duration from agreement_duration string
     let durationMonths = 12; // Default value
     try {

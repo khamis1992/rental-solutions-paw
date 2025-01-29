@@ -2287,6 +2287,7 @@ export type Database = {
           return_mileage: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["lease_status"] | null
+          template_id: string | null
           total_amount: number
           trade_in_value: number | null
           updated_at: string
@@ -2331,6 +2332,7 @@ export type Database = {
           return_mileage?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["lease_status"] | null
+          template_id?: string | null
           total_amount: number
           trade_in_value?: number | null
           updated_at?: string
@@ -2375,6 +2377,7 @@ export type Database = {
           return_mileage?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["lease_status"] | null
+          template_id?: string | null
           total_amount?: number
           trade_in_value?: number | null
           updated_at?: string
@@ -2393,6 +2396,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_templates"
             referencedColumns: ["id"]
           },
           {

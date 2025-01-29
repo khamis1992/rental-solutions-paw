@@ -25,6 +25,7 @@ export interface AgreementFormData {
   // Template fields
   finalPrice?: number;
   agreementNumber?: string;
+  templateId?: string; // Add this field
 }
 
 export const useAgreementForm = (onSuccess: () => void) => {
@@ -98,7 +99,8 @@ export const useAgreementForm = (onSuccess: () => void) => {
           down_payment: data.downPayment,
           status: 'pending_payment' as LeaseStatus,
           initial_mileage: 0,
-          agreement_duration: `${data.agreementDuration} months`
+          agreement_duration: `${data.agreementDuration} months`,
+          template_id: data.templateId // Add the template ID
         });
 
       if (error) {

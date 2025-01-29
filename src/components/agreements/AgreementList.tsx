@@ -61,26 +61,26 @@ export const AgreementList = () => {
 
   const handleAgreementClick = async (agreementId: string) => {
     try {
-      // Get the agreement template content
+      // Get the agreement template content using the template_id relationship
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .select(`
           *,
-          template:agreement_templates (
+          agreement_templates!leases_template_id_fkey (
             content
           )
         `)
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (agreementError) throw agreementError;
 
-      if (!agreement?.template?.content) {
+      if (!agreement?.agreement_templates?.content) {
         toast.error('No template found for this agreement');
         return;
       }
 
-      setSelectedTemplate(agreement.template.content);
+      setSelectedTemplate(agreement.agreement_templates.content);
       setShowTemplatePreview(true);
     } catch (error) {
       console.error('Error fetching template:', error);
