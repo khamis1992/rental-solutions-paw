@@ -16,16 +16,11 @@ import { AgreementPDFImport } from "./AgreementPDFImport";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreateAgreementDialog } from "./CreateAgreementDialog";
+import { TemplatePreview } from "./templates/TemplatePreview";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -36,8 +31,8 @@ export const AgreementList = () => {
   const [selectedDetailsId, setSelectedDetailsId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
-  const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   const {
     currentPage,
@@ -64,23 +59,32 @@ export const AgreementList = () => {
     }
   };
 
-  const handleDeleteHistoricalPayments = async () => {
+  const handleAgreementClick = async (agreementId: string) => {
     try {
-      setIsDeleting(true);
-      const { error } = await supabase.functions.invoke('delete-historical-payments', {
-        method: 'POST'
-      });
+      // Get the agreement template content
+      const { data: agreement, error: agreementError } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          template:agreement_templates (
+            content
+          )
+        `)
+        .eq('id', agreementId)
+        .single();
 
-      if (error) throw error;
+      if (agreementError) throw agreementError;
 
-      toast.success("All historical payments deleted successfully");
-      await refetch();
+      if (!agreement?.template?.content) {
+        toast.error('No template found for this agreement');
+        return;
+      }
+
+      setSelectedTemplate(agreement.template.content);
+      setShowTemplatePreview(true);
     } catch (error) {
-      console.error("Error deleting historical payments:", error);
-      toast.error("Failed to delete historical payments");
-    } finally {
-      setIsDeleting(false);
-      setIsHistoricalDeleteDialogOpen(false);
+      console.error('Error fetching template:', error);
+      toast.error('Failed to load agreement template');
     }
   };
 
@@ -126,7 +130,7 @@ export const AgreementList = () => {
         onPageChange={setCurrentPage}
         onViewContract={handleViewContractClick}
         onPrintContract={handlePrintContract}
-        onAgreementClick={setSelectedAgreementId}
+        onAgreementClick={handleAgreementClick}
         onNameClick={setSelectedDetailsId}
         onDeleteClick={setAgreementToDelete}
         onDeleted={refetch}
@@ -163,26 +167,14 @@ export const AgreementList = () => {
         onDeleted={refetch}
       />
 
-      <AlertDialog open={isHistoricalDeleteDialogOpen} onOpenChange={setIsHistoricalDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete All Historical Payments</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will delete all payments made before 2025 across all agreements. This action cannot be undone. Are you sure you want to proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteHistoricalPayments}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete All Historical Payments"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={showTemplatePreview} onOpenChange={setShowTemplatePreview}>
+        <DialogContent className="max-w-4xl">
+          <TemplatePreview 
+            content={selectedTemplate}
+            missingVariables={[]}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

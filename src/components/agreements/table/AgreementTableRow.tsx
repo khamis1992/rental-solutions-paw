@@ -102,13 +102,13 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onNameClick(agreement.id)}
+                onClick={() => onAgreementClick(agreement.id)}
               >
                 <Eye className="h-4 w-4 text-primary hover:text-primary/80" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>View Agreement</p>
+              <p>View Agreement Template</p>
             </TooltipContent>
           </Tooltip>
 
