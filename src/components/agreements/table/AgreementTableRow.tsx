@@ -1,5 +1,4 @@
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Printer, FileText, Trash2 } from "lucide-react";
@@ -13,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 export interface AgreementTableRowProps {
   agreement: Agreement;
@@ -87,7 +87,7 @@ export const AgreementTableRow = ({
       <TableCell>
         <Badge 
           variant="outline" 
-          className={`capitalize`}
+          className="capitalize"
         >
           {agreement.status}
         </Badge>

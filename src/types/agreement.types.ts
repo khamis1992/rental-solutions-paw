@@ -16,10 +16,10 @@ export interface Agreement {
   status: LeaseStatus;
   total_amount: number;
   rent_amount: number;
+  remaining_amount: number;
   notes?: string;
   created_at: string;
   updated_at: string;
-  remaining_amount: number;
   daily_late_fee?: number;
   down_payment?: number;
   initial_mileage: number;
@@ -41,24 +41,20 @@ export interface Agreement {
   };
 }
 
-export interface AgreementFormData {
-  agreementType: AgreementType;
-  customerId: string;
-  vehicleId: string;
-  rentAmount: number;
-  agreementDuration: number;
-  startDate: string;
-  endDate: string;
-  dailyLateFee: number;
-  notes?: string;
-  downPayment?: number;
-  nationality?: string;
-  drivingLicense?: string;
-  phoneNumber?: string;
-  email?: string;
-  address?: string;
-  agreementNumber?: string;
-  finalPrice?: number;
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    id: string;
+    full_name: string;
+    phone_number?: string;
+    email?: string;
+  };
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
 }
 
 export interface Template {
@@ -80,4 +76,24 @@ export interface Template {
   template_structure: Record<string, any>;
   template_sections: any[];
   variable_mappings: Record<string, any>;
+}
+
+export interface Payment {
+  id: string;
+  lease_id: string;
+  amount: number;
+  amount_paid: number;
+  balance: number;
+  payment_date: string | null;
+  transaction_id: string | null;
+  payment_method: string;
+  status: PaymentStatus;
+  description: string;
+  type: string;
+  late_fine_amount: number;
+  days_overdue: number;
+  is_recurring?: boolean;
+  security_deposit_id?: string;
+  created_at: string;
+  updated_at: string;
 }
