@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Template } from "@/types/agreement.types";
+import { Template, TextStyle, Table } from "@/types/agreement.types";
 import { 
   AlignLeft, 
   AlignCenter, 
@@ -39,7 +39,6 @@ interface CreateTemplateDialogProps {
   selectedTemplate?: Template | null;
 }
 
-// Define the allowed language types to match the database enum
 type DocumentLanguage = "english" | "spanish" | "french" | "arabic";
 
 interface TemplateFormData {
@@ -48,6 +47,8 @@ interface TemplateFormData {
   content: string;
   language: DocumentLanguage;
   agreement_type: string;
+  textStyle?: TextStyle;
+  tables?: Table[];
 }
 
 export const CreateTemplateDialog = ({
@@ -63,6 +64,14 @@ export const CreateTemplateDialog = ({
     content: selectedTemplate?.content || "",
     language: selectedTemplate?.language || "english",
     agreement_type: selectedTemplate?.agreement_type || "",
+    textStyle: {
+      bold: false,
+      italic: false,
+      underline: false,
+      fontSize: 14,
+      alignment: 'left'
+    },
+    tables: []
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +93,46 @@ export const CreateTemplateDialog = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleTextStyle = (type: keyof TextStyle | "align", value?: string) => {
+    setFormData(prev => ({
+      ...prev,
+      textStyle: {
+        ...prev.textStyle!,
+        [type]: type === "align" ? value : !prev.textStyle![type as keyof TextStyle],
+      }
+    }));
+  };
+
+  const handleInsertTable = () => {
+    const newTable: Table = {
+      rows: [
+        {
+          cells: [
+            { content: "Header 1", style: { ...formData.textStyle } },
+            { content: "Header 2", style: { ...formData.textStyle } }
+          ]
+        },
+        {
+          cells: [
+            { content: "Cell 1", style: { ...formData.textStyle } },
+            { content: "Cell 2", style: { ...formData.textStyle } }
+          ]
+        }
+      ],
+      style: {
+        width: "100%",
+        borderCollapse: "collapse",
+        borderSpacing: "0"
+      }
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      tables: [...(prev.tables || []), newTable],
+      content: prev.content + "\n\n[TABLE]\n\n"
+    }));
   };
 
   return (
@@ -115,7 +164,7 @@ export const CreateTemplateDialog = ({
                 <Select
                   value={formData.agreement_type}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, agreement_type: value as any })
+                    setFormData({ ...formData, agreement_type: value })
                   }
                 >
                   <SelectTrigger>
@@ -144,7 +193,7 @@ export const CreateTemplateDialog = ({
               <Label>Language</Label>
               <Select
                 value={formData.language}
-                onValueChange={(value) =>
+                onValueChange={(value: DocumentLanguage) =>
                   setFormData({ ...formData, language: value })
                 }
               >
