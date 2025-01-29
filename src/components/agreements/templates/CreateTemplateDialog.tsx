@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -18,21 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
-  AlignJustify,
-  Bold,
-  Italic,
-  Underline,
-  Save,
-  Table as TableIcon,
-  Plus,
-  Trash2
-} from "lucide-react";
 import { toast } from "sonner";
-import { Template, TextStyle, Table, TableRow, TableCell } from "@/types/agreement.types";
+import { Template, TextStyle, Table, TableRow } from "@/types/agreement.types";
 import { TemplatePreview } from "./TemplatePreview";
 
 interface CreateTemplateDialogProps {
@@ -333,7 +321,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.alignment === 'left' ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('alignment', 'left')}
+                    onClick={() => setTextStyle(prev => ({ ...prev, alignment: 'left' }))}
                     className="w-8 h-8 p-0"
                   >
                     <AlignLeft className="h-4 w-4" />
@@ -342,7 +330,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.alignment === 'center' ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('alignment', 'center')}
+                    onClick={() => setTextStyle(prev => ({ ...prev, alignment: 'center' }))}
                     className="w-8 h-8 p-0"
                   >
                     <AlignCenter className="h-4 w-4" />
@@ -351,7 +339,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.alignment === 'right' ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('alignment', 'right')}
+                    onClick={() => setTextStyle(prev => ({ ...prev, alignment: 'right' }))}
                     className="w-8 h-8 p-0"
                   >
                     <AlignRight className="h-4 w-4" />
@@ -360,7 +348,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.alignment === 'justify' ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('alignment', 'justify')}
+                    onClick={() => setTextStyle(prev => ({ ...prev, alignment: 'justify' }))}
                     className="w-8 h-8 p-0"
                   >
                     <AlignJustify className="h-4 w-4" />
@@ -372,7 +360,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.bold ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('bold', !textStyle.bold)}
+                    onClick={() => setTextStyle(prev => ({ ...prev, bold: !prev.bold }))}
                     className="w-8 h-8 p-0"
                   >
                     <Bold className="h-4 w-4" />
@@ -381,7 +369,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.italic ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('italic', !textStyle.italic)}
+                    onClick={() => setTextStyle(prev => ({ ...prev, italic: !prev.italic }))}
                     className="w-8 h-8 p-0"
                   >
                     <Italic className="h-4 w-4" />
@@ -390,7 +378,7 @@ export const CreateTemplateDialog = ({
                     type="button"
                     variant={textStyle.underline ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => applyStyle('underline', !textStyle.underline)}
+                    onClick={() => setTextStyle(prev => ({ ...prev, underline: !prev.underline }))}
                     className="w-8 h-8 p-0"
                   >
                     <Underline className="h-4 w-4" />
@@ -403,7 +391,7 @@ export const CreateTemplateDialog = ({
                     min="8"
                     max="24"
                     value={textStyle.fontSize}
-                    onChange={(e) => applyStyle('fontSize', e.target.value)}
+                    onChange={(e) => setTextStyle(prev => ({ ...prev, fontSize: parseInt(e.target.value) }))}
                     className="w-16 h-8"
                   />
                 </div>
@@ -428,76 +416,22 @@ export const CreateTemplateDialog = ({
                 missingVariables={[]}
               />
             ) : (
-              <div className="space-y-4">
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
-                  }
-                  onPaste={handlePaste}
-                  required
-                  className={`min-h-[200px] font-serif text-base leading-relaxed p-6 ${
-                    formData.language === 'arabic' ? 'font-arabic text-right' : ''
-                  }`}
-                  style={{
-                    direction: formData.language === 'arabic' ? 'rtl' : 'ltr',
-                    textAlign: textStyle.alignment,
-                  }}
-                />
-
-                {formData.template_structure?.tables?.map((table, tableIndex) => (
-                  <div key={tableIndex} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-medium">Table {tableIndex + 1}</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddRow(tableIndex)}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Row
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteTable(tableIndex)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <table className="w-full border-collapse">
-                      <tbody>
-                        {table.rows.map((row, rowIndex) => (
-                          <tr key={rowIndex}>
-                            {row.cells.map((cell, cellIndex) => (
-                              <td key={cellIndex} className="border p-1">
-                                <Input
-                                  value={cell.content}
-                                  onChange={(e) =>
-                                    handleCellChange(
-                                      tableIndex,
-                                      rowIndex,
-                                      cellIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full"
-                                />
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ))}
-              </div>
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
+                onPaste={handlePaste}
+                required
+                className={`min-h-[200px] font-serif text-base leading-relaxed p-6 ${
+                  formData.language === 'arabic' ? 'font-arabic text-right' : ''
+                }`}
+                style={{
+                  direction: formData.language === 'arabic' ? 'rtl' : 'ltr',
+                  textAlign: textStyle.alignment,
+                }}
+              />
             )}
           </div>
 
