@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreateAgreementDialog } from "./CreateAgreementDialog";
 import { TemplatePreview } from "./templates/TemplatePreview";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import {
   Dialog,
   DialogContent,
@@ -61,13 +62,27 @@ export const AgreementList = () => {
 
   const handleAgreementClick = async (agreementId: string) => {
     try {
-      // Get the agreement template content using the template_id relationship
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .select(`
           *,
           agreement_templates!leases_template_id_fkey (
             content
+          ),
+          customer:customer_id (
+            full_name,
+            phone_number,
+            email,
+            address,
+            nationality
+          ),
+          vehicle:vehicle_id (
+            make,
+            model,
+            year,
+            color,
+            license_plate,
+            vin
           )
         `)
         .eq('id', agreementId)
@@ -80,7 +95,39 @@ export const AgreementList = () => {
         return;
       }
 
-      setSelectedTemplate(agreement.agreement_templates.content);
+      let templateContent = agreement.agreement_templates.content;
+
+      // Replace agreement variables
+      templateContent = templateContent
+        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement.start_date))
+        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement.end_date))
+        .replace(/{{agreement\.agreement_number}}/g, agreement.agreement_number || '')
+        .replace(/{{agreement\.rent_amount}}/g, `${agreement.rent_amount} QAR`)
+        .replace(/{{agreement\.daily_late_fee}}/g, `${agreement.daily_late_fee} QAR`)
+        .replace(/{{agreement\.agreement_duration}}/g, agreement.agreement_duration || '');
+
+      // Replace customer variables
+      if (agreement.customer) {
+        templateContent = templateContent
+          .replace(/{{customer\.full_name}}/g, agreement.customer.full_name || '')
+          .replace(/{{customer\.phone_number}}/g, agreement.customer.phone_number || '')
+          .replace(/{{customer\.email}}/g, agreement.customer.email || '')
+          .replace(/{{customer\.address}}/g, agreement.customer.address || '')
+          .replace(/{{customer\.nationality}}/g, agreement.customer.nationality || '');
+      }
+
+      // Replace vehicle variables
+      if (agreement.vehicle) {
+        templateContent = templateContent
+          .replace(/{{vehicle\.make}}/g, agreement.vehicle.make || '')
+          .replace(/{{vehicle\.model}}/g, agreement.vehicle.model || '')
+          .replace(/{{vehicle\.year}}/g, agreement.vehicle.year?.toString() || '')
+          .replace(/{{vehicle\.color}}/g, agreement.vehicle.color || '')
+          .replace(/{{vehicle\.license_plate}}/g, agreement.vehicle.license_plate || '')
+          .replace(/{{vehicle\.vin}}/g, agreement.vehicle.vin || '');
+      }
+
+      setSelectedTemplate(templateContent);
       setShowTemplatePreview(true);
     } catch (error) {
       console.error('Error fetching template:', error);
