@@ -38,15 +38,7 @@ import { TemplatePreview } from "./TemplatePreview";
 interface CreateTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedTemplate?: Template;
-}
-
-interface TextStyle {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  fontSize: number;
-  alignment: 'left' | 'center' | 'right' | 'justify';
+  selectedTemplate?: Template | null;
 }
 
 export const CreateTemplateDialog = ({
@@ -86,8 +78,121 @@ export const CreateTemplateDialog = ({
     }
   );
 
-  const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    
+    // Get clipboard content as HTML
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text');
+    
+    if (html) {
+      // Create a temporary element to parse HTML
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      
+      // Process tables
+      const tables: Table[] = Array.from(temp.querySelectorAll('table')).map(tableEl => {
+        const rows: TableRow[] = Array.from(tableEl.querySelectorAll('tr')).map(tr => ({
+          cells: Array.from(tr.querySelectorAll('td, th')).map(td => ({
+            content: td.textContent || '',
+            style: {
+              bold: window.getComputedStyle(td).fontWeight === 'bold',
+              italic: window.getComputedStyle(td).fontStyle === 'italic',
+              underline: window.getComputedStyle(td).textDecoration.includes('underline'),
+              fontSize: parseInt(window.getComputedStyle(td).fontSize) || 14,
+              alignment: (window.getComputedStyle(td).textAlign as TextStyle['alignment']) || 'left'
+            }
+          }))
+        }));
+        
+        return {
+          rows,
+          style: {
+            width: '100%',
+            borderCollapse: 'collapse'
+          }
+        };
+      });
+      
+      // Process text formatting
+      const processNode = (node: Node): string => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent || '';
+        }
+        
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          const style = window.getComputedStyle(element);
+          
+          let content = Array.from(node.childNodes).map(processNode).join('');
+          
+          if (style.fontWeight === 'bold') content = `<strong>${content}</strong>`;
+          if (style.fontStyle === 'italic') content = `<em>${content}</em>`;
+          if (style.textDecoration.includes('underline')) content = `<u>${content}</u>`;
+          
+          return content;
+        }
+        
+        return '';
+      };
+      
+      const formattedContent = processNode(temp);
+      
+      setFormData(prev => ({
+        ...prev,
+        content: formattedContent,
+        template_structure: {
+          ...prev.template_structure,
+          tables
+        }
+      }));
+    } else {
+      // Fallback to plain text
+      setFormData(prev => ({
+        ...prev,
+        content: text
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const templateData = {
+        ...formData,
+        template_structure: {
+          ...formData.template_structure,
+          textStyle
+        }
+      };
+
+      if (selectedTemplate) {
+        const { error } = await supabase
+          .from("agreement_templates")
+          .update(templateData)
+          .eq("id", selectedTemplate.id);
+
+        if (error) throw error;
+        toast.success("Template updated successfully");
+      } else {
+        const { error } = await supabase
+          .from("agreement_templates")
+          .insert([templateData]);
+
+        if (error) throw error;
+        toast.success("Template created successfully");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
+      onOpenChange(false);
+    } catch (error: any) {
+      toast.error("Failed to save template: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleAddTable = () => {
     const newTable: Table = {
@@ -164,73 +269,6 @@ export const CreateTemplateDialog = ({
         tables: (prev.template_structure?.tables || []).filter((_, i) => i !== tableIndex)
       }
     }));
-    setSelectedTable(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const templateData = {
-        ...formData,
-        template_structure: {
-          ...formData.template_structure,
-          textStyle
-        }
-      };
-
-      if (selectedTemplate) {
-        const { error } = await supabase
-          .from("agreement_templates")
-          .update(templateData)
-          .eq("id", selectedTemplate.id);
-
-        if (error) throw error;
-        toast.success("Template updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("agreement_templates")
-          .insert([templateData]);
-
-        if (error) throw error;
-        toast.success("Template created successfully");
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
-      onOpenChange(false);
-    } catch (error: any) {
-      toast.error("Failed to save template: " + error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const applyStyle = (style: keyof TextStyle, value: any) => {
-    setTextStyle(prev => ({ ...prev, [style]: value }));
-    // Apply style to selected text if any
-    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
-    if (textarea.selectionStart !== textarea.selectionEnd) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = formData.content?.substring(start, end) || '';
-      const newContent = 
-        (formData.content?.substring(0, start) || '') +
-        `<span style="${getStyleString(style, value)}">${selectedText}</span>` +
-        (formData.content?.substring(end) || '');
-      setFormData({ ...formData, content: newContent });
-    }
-  };
-
-  const getStyleString = (style: keyof TextStyle, value: any): string => {
-    switch (style) {
-      case 'bold': return 'font-weight: bold;';
-      case 'italic': return 'font-style: italic;';
-      case 'underline': return 'text-decoration: underline;';
-      case 'fontSize': return `font-size: ${value}px;`;
-      case 'alignment': return `text-align: ${value};`;
-      default: return '';
-    }
   };
 
   return (
@@ -290,7 +328,6 @@ export const CreateTemplateDialog = ({
             <div className="flex justify-between items-center mb-2">
               <Label htmlFor="content">Template Content</Label>
               <div className="flex gap-2">
-                {/* ... keep existing styling buttons */}
                 <div className="flex gap-1 border rounded-md p-1">
                   <Button
                     type="button"
@@ -398,6 +435,7 @@ export const CreateTemplateDialog = ({
                   onChange={(e) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
+                  onPaste={handlePaste}
                   required
                   className={`min-h-[200px] font-serif text-base leading-relaxed p-6 ${
                     formData.language === 'arabic' ? 'font-arabic text-right' : ''
