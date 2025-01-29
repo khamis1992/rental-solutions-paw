@@ -9,6 +9,14 @@ interface TemplatePreviewProps {
 }
 
 export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePreviewProps) => {
+  // Check if content contains Arabic text
+  const containsArabic = (text: string) => {
+    const arabicPattern = /[\u0600-\u06FF]/;
+    return arabicPattern.test(text);
+  };
+
+  const isArabic = containsArabic(content);
+
   return (
     <div className="space-y-4">
       <DialogHeader>
@@ -24,9 +32,27 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
         </Alert>
       )}
       
-      <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-        <div className="whitespace-pre-wrap font-mono text-sm">
-          {content}
+      <ScrollArea className="h-[400px] w-full rounded-md border p-6">
+        <div 
+          className={`whitespace-pre-wrap font-mono text-base leading-relaxed ${
+            isArabic ? 'text-right rtl' : 'text-left ltr'
+          }`}
+          style={{
+            direction: isArabic ? 'rtl' : 'ltr',
+            fontFamily: isArabic ? 'Noto Sans Arabic, sans-serif' : 'monospace'
+          }}
+        >
+          {/* Format the content with proper spacing */}
+          {content.split('\n').map((line, index) => (
+            <div 
+              key={index} 
+              className={`mb-2 ${
+                line.trim().startsWith('{{') ? 'text-primary font-semibold' : ''
+              }`}
+            >
+              {line}
+            </div>
+          ))}
         </div>
       </ScrollArea>
     </div>
