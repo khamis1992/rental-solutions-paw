@@ -57,6 +57,37 @@ export interface AgreementWithRelations extends Agreement {
   };
 }
 
+export interface TextStyle {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  fontSize: number;
+  alignment: 'left' | 'center' | 'right' | 'justify';
+}
+
+export interface TableCell {
+  content: string;
+  style?: TextStyle;
+}
+
+export interface TableRow {
+  cells: TableCell[];
+}
+
+export interface Table {
+  rows: TableRow[];
+  style?: {
+    width: string;
+    borderCollapse: 'collapse' | 'separate';
+    borderSpacing?: string;
+  };
+}
+
+export interface TemplateStructure {
+  textStyle?: TextStyle;
+  tables?: Table[];
+}
+
 export interface Template {
   id: string;
   name: string;
@@ -73,27 +104,7 @@ export interface Template {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  template_structure: Record<string, any>;
+  template_structure: TemplateStructure;
   template_sections: any[];
   variable_mappings: Record<string, any>;
-}
-
-export interface Payment {
-  id: string;
-  lease_id: string;
-  amount: number;
-  amount_paid: number;
-  balance: number;
-  payment_date: string | null;
-  transaction_id: string | null;
-  payment_method: string;
-  status: PaymentStatus;
-  description: string;
-  type: string;
-  late_fine_amount: number;
-  days_overdue: number;
-  is_recurring?: boolean;
-  security_deposit_id?: string;
-  created_at: string;
-  updated_at: string;
 }

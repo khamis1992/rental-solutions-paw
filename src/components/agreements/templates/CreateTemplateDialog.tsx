@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -26,10 +26,13 @@ import {
   Bold,
   Italic,
   Underline,
-  Save
+  Save,
+  Table as TableIcon,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
-import { Template } from "@/types/agreement.types";
+import { Template, TextStyle, Table, TableRow, TableCell } from "@/types/agreement.types";
 import { TemplatePreview } from "./TemplatePreview";
 
 interface CreateTemplateDialogProps {
@@ -69,10 +72,100 @@ export const CreateTemplateDialog = ({
       content: "",
       language: "english",
       agreement_type: "short_term",
-      template_structure: { alignment: 'left' },
+      template_structure: { 
+        textStyle: {
+          bold: false,
+          italic: false,
+          underline: false,
+          fontSize: 14,
+          alignment: 'left'
+        },
+        tables: []
+      },
       is_active: true,
     }
   );
+
+  const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+
+  const handleAddTable = () => {
+    const newTable: Table = {
+      rows: [
+        { cells: [{ content: "" }, { content: "" }] },
+        { cells: [{ content: "" }, { content: "" }] }
+      ],
+      style: {
+        width: "100%",
+        borderCollapse: "collapse"
+      }
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      template_structure: {
+        ...prev.template_structure,
+        tables: [...(prev.template_structure?.tables || []), newTable]
+      }
+    }));
+  };
+
+  const handleAddRow = (tableIndex: number) => {
+    const tables = formData.template_structure?.tables || [];
+    const table = tables[tableIndex];
+    if (!table) return;
+
+    const newRow: TableRow = {
+      cells: table.rows[0].cells.map(() => ({ content: "" }))
+    };
+
+    const updatedTables = [...tables];
+    updatedTables[tableIndex] = {
+      ...table,
+      rows: [...table.rows, newRow]
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      template_structure: {
+        ...prev.template_structure,
+        tables: updatedTables
+      }
+    }));
+  };
+
+  const handleCellChange = (
+    tableIndex: number,
+    rowIndex: number,
+    cellIndex: number,
+    content: string
+  ) => {
+    const tables = formData.template_structure?.tables || [];
+    const updatedTables = [...tables];
+    
+    if (!updatedTables[tableIndex]?.rows[rowIndex]?.cells[cellIndex]) return;
+    
+    updatedTables[tableIndex].rows[rowIndex].cells[cellIndex].content = content;
+
+    setFormData(prev => ({
+      ...prev,
+      template_structure: {
+        ...prev.template_structure,
+        tables: updatedTables
+      }
+    }));
+  };
+
+  const handleDeleteTable = (tableIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      template_structure: {
+        ...prev.template_structure,
+        tables: (prev.template_structure?.tables || []).filter((_, i) => i !== tableIndex)
+      }
+    }));
+    setSelectedTable(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,6 +290,7 @@ export const CreateTemplateDialog = ({
             <div className="flex justify-between items-center mb-2">
               <Label htmlFor="content">Template Content</Label>
               <div className="flex gap-2">
+                {/* ... keep existing styling buttons */}
                 <div className="flex gap-1 border rounded-md p-1">
                   <Button
                     type="button"
@@ -276,14 +370,15 @@ export const CreateTemplateDialog = ({
                     className="w-16 h-8"
                   />
                 </div>
-
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowPreview(!showPreview)}
+                  onClick={handleAddTable}
+                  className="flex items-center gap-1"
                 >
-                  {showPreview ? "Edit" : "Preview"}
+                  <TableIcon className="h-4 w-4" />
+                  Add Table
                 </Button>
               </div>
             </div>
@@ -292,24 +387,79 @@ export const CreateTemplateDialog = ({
               <TemplatePreview 
                 content={formData.content || ""} 
                 textStyle={textStyle}
+                tables={formData.template_structure?.tables}
                 missingVariables={[]}
               />
             ) : (
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                required
-                className={`min-h-[400px] font-serif text-base leading-relaxed p-6 ${
-                  formData.language === 'arabic' ? 'font-arabic text-right' : ''
-                }`}
-                style={{
-                  direction: formData.language === 'arabic' ? 'rtl' : 'ltr',
-                  textAlign: textStyle.alignment,
-                }}
-              />
+              <div className="space-y-4">
+                <Textarea
+                  id="content"
+                  value={formData.content}
+                  onChange={(e) =>
+                    setFormData({ ...formData, content: e.target.value })
+                  }
+                  required
+                  className={`min-h-[200px] font-serif text-base leading-relaxed p-6 ${
+                    formData.language === 'arabic' ? 'font-arabic text-right' : ''
+                  }`}
+                  style={{
+                    direction: formData.language === 'arabic' ? 'rtl' : 'ltr',
+                    textAlign: textStyle.alignment,
+                  }}
+                />
+
+                {formData.template_structure?.tables?.map((table, tableIndex) => (
+                  <div key={tableIndex} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium">Table {tableIndex + 1}</h4>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddRow(tableIndex)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Row
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteTable(tableIndex)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <table className="w-full border-collapse">
+                      <tbody>
+                        {table.rows.map((row, rowIndex) => (
+                          <tr key={rowIndex}>
+                            {row.cells.map((cell, cellIndex) => (
+                              <td key={cellIndex} className="border p-1">
+                                <Input
+                                  value={cell.content}
+                                  onChange={(e) =>
+                                    handleCellChange(
+                                      tableIndex,
+                                      rowIndex,
+                                      cellIndex,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full"
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

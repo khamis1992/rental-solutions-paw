@@ -3,19 +3,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-interface TextStyle {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  fontSize: number;
-  alignment: 'left' | 'center' | 'right' | 'justify';
-}
+import { TextStyle, Table } from "@/types/agreement.types";
 
 interface TemplatePreviewProps {
   content: string;
   missingVariables?: string[];
   textStyle?: TextStyle;
+  tables?: Table[];
 }
 
 export const TemplatePreview = ({ 
@@ -27,7 +21,8 @@ export const TemplatePreview = ({
     underline: false,
     fontSize: 14,
     alignment: 'left'
-  }
+  },
+  tables = []
 }: TemplatePreviewProps) => {
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
@@ -105,6 +100,38 @@ export const TemplatePreview = ({
               </div>
             );
           })}
+
+          {tables.map((table, tableIndex) => (
+            <table 
+              key={tableIndex}
+              className="w-full my-4 border-collapse"
+              style={table.style}
+            >
+              <tbody>
+                {table.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.cells.map((cell, cellIndex) => (
+                      <td 
+                        key={cellIndex}
+                        className="border border-gray-300 p-2"
+                        style={{
+                          ...(cell.style && {
+                            fontWeight: cell.style.bold ? 'bold' : 'normal',
+                            fontStyle: cell.style.italic ? 'italic' : 'normal',
+                            textDecoration: cell.style.underline ? 'underline' : 'none',
+                            fontSize: `${cell.style.fontSize}px`,
+                            textAlign: cell.style.alignment
+                          })
+                        }}
+                      >
+                        {cell.content}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ))}
         </div>
       </ScrollArea>
     </div>
