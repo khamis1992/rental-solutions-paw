@@ -1,19 +1,34 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+
+interface TextStyle {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  fontSize: number;
+  alignment: 'left' | 'center' | 'right' | 'justify';
+}
 
 interface TemplatePreviewProps {
   content: string;
   missingVariables?: string[];
+  textStyle?: TextStyle;
 }
 
-export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePreviewProps) => {
-  const [textAlignment, setTextAlignment] = useState<'left' | 'center' | 'right'>('left');
-  
+export const TemplatePreview = ({ 
+  content, 
+  missingVariables = [],
+  textStyle = {
+    bold: false,
+    italic: false,
+    underline: false,
+    fontSize: 14,
+    alignment: 'left'
+  }
+}: TemplatePreviewProps) => {
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
     return arabicPattern.test(text);
@@ -21,46 +36,12 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
 
   const isArabic = containsArabic(content);
 
-  useEffect(() => {
-    if (isArabic) {
-      setTextAlignment('right');
-    }
-  }, [isArabic]);
-
   return (
     <div className="space-y-6">
       <DialogHeader>
-        <div className="flex justify-between items-center">
-          <DialogTitle className="text-xl font-semibold">
-            {isArabic ? "معاينة النموذج" : "Template Preview"}
-          </DialogTitle>
-          <div className="flex gap-2">
-            <Button
-              variant={textAlignment === 'left' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTextAlignment('left')}
-              className="w-9 h-9 p-0"
-            >
-              <AlignLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={textAlignment === 'center' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTextAlignment('center')}
-              className="w-9 h-9 p-0"
-            >
-              <AlignCenter className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={textAlignment === 'right' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTextAlignment('right')}
-              className="w-9 h-9 p-0"
-            >
-              <AlignRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <DialogTitle className="text-xl font-semibold">
+          {isArabic ? "معاينة النموذج" : "Template Preview"}
+        </DialogTitle>
       </DialogHeader>
       
       {missingVariables.length > 0 && (
@@ -80,15 +61,20 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
           className={cn(
             "p-12 mx-auto max-w-[800px]",
             isArabic ? "font-arabic" : "font-serif",
-            "text-base leading-relaxed",
+            "leading-relaxed",
             {
-              'text-left': textAlignment === 'left',
-              'text-center': textAlignment === 'center',
-              'text-right': textAlignment === 'right'
+              'font-bold': textStyle.bold,
+              'italic': textStyle.italic,
+              'underline': textStyle.underline,
+              'text-left': textStyle.alignment === 'left',
+              'text-center': textStyle.alignment === 'center',
+              'text-right': textStyle.alignment === 'right',
+              'text-justify': textStyle.alignment === 'justify'
             }
           )}
           style={{
             direction: isArabic ? 'rtl' : 'ltr',
+            fontSize: `${textStyle.fontSize}px`
           }}
         >
           {content.split('\n').map((line, index) => {

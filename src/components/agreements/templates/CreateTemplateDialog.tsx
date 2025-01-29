@@ -18,14 +18,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight, 
+  AlignJustify,
+  Bold,
+  Italic,
+  Underline,
+  Save
+} from "lucide-react";
 import { toast } from "sonner";
 import { Template } from "@/types/agreement.types";
+import { TemplatePreview } from "./TemplatePreview";
 
 interface CreateTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedTemplate?: Template;
+}
+
+interface TextStyle {
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  fontSize: number;
+  alignment: 'left' | 'center' | 'right' | 'justify';
 }
 
 export const CreateTemplateDialog = ({
@@ -35,9 +53,15 @@ export const CreateTemplateDialog = ({
 }: CreateTemplateDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [textAlignment, setTextAlignment] = useState<'left' | 'center' | 'right'>(
-    selectedTemplate?.template_structure?.alignment || 'left'
-  );
+  const [showPreview, setShowPreview] = useState(false);
+  const [textStyle, setTextStyle] = useState<TextStyle>({
+    bold: false,
+    italic: false,
+    underline: false,
+    fontSize: 14,
+    alignment: 'left'
+  });
+
   const [formData, setFormData] = useState<Partial<Template>>(
     selectedTemplate || {
       name: "",
@@ -59,7 +83,7 @@ export const CreateTemplateDialog = ({
         ...formData,
         template_structure: {
           ...formData.template_structure,
-          alignment: textAlignment
+          textStyle
         }
       };
 
@@ -74,10 +98,7 @@ export const CreateTemplateDialog = ({
       } else {
         const { error } = await supabase
           .from("agreement_templates")
-          .insert({
-            ...templateData,
-            agreement_duration: "12 months", // Default duration
-          });
+          .insert([templateData]);
 
         if (error) throw error;
         toast.success("Template created successfully");
@@ -89,6 +110,33 @@ export const CreateTemplateDialog = ({
       toast.error("Failed to save template: " + error.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const applyStyle = (style: keyof TextStyle, value: any) => {
+    setTextStyle(prev => ({ ...prev, [style]: value }));
+    // Apply style to selected text if any
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+    if (textarea.selectionStart !== textarea.selectionEnd) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = formData.content?.substring(start, end) || '';
+      const newContent = 
+        (formData.content?.substring(0, start) || '') +
+        `<span style="${getStyleString(style, value)}">${selectedText}</span>` +
+        (formData.content?.substring(end) || '');
+      setFormData({ ...formData, content: newContent });
+    }
+  };
+
+  const getStyleString = (style: keyof TextStyle, value: any): string => {
+    switch (style) {
+      case 'bold': return 'font-weight: bold;';
+      case 'italic': return 'font-style: italic;';
+      case 'underline': return 'text-decoration: underline;';
+      case 'fontSize': return `font-size: ${value}px;`;
+      case 'alignment': return `text-align: ${value};`;
+      default: return '';
     }
   };
 
@@ -146,53 +194,123 @@ export const CreateTemplateDialog = ({
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-2">
               <Label htmlFor="content">Template Content</Label>
               <div className="flex gap-2">
+                <div className="flex gap-1 border rounded-md p-1">
+                  <Button
+                    type="button"
+                    variant={textStyle.alignment === 'left' ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('alignment', 'left')}
+                    className="w-8 h-8 p-0"
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={textStyle.alignment === 'center' ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('alignment', 'center')}
+                    className="w-8 h-8 p-0"
+                  >
+                    <AlignCenter className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={textStyle.alignment === 'right' ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('alignment', 'right')}
+                    className="w-8 h-8 p-0"
+                  >
+                    <AlignRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={textStyle.alignment === 'justify' ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('alignment', 'justify')}
+                    className="w-8 h-8 p-0"
+                  >
+                    <AlignJustify className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex gap-1 border rounded-md p-1">
+                  <Button
+                    type="button"
+                    variant={textStyle.bold ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('bold', !textStyle.bold)}
+                    className="w-8 h-8 p-0"
+                  >
+                    <Bold className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={textStyle.italic ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('italic', !textStyle.italic)}
+                    className="w-8 h-8 p-0"
+                  >
+                    <Italic className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={textStyle.underline ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => applyStyle('underline', !textStyle.underline)}
+                    className="w-8 h-8 p-0"
+                  >
+                    <Underline className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex gap-1 border rounded-md p-1">
+                  <Input
+                    type="number"
+                    min="8"
+                    max="24"
+                    value={textStyle.fontSize}
+                    onChange={(e) => applyStyle('fontSize', e.target.value)}
+                    className="w-16 h-8"
+                  />
+                </div>
+
                 <Button
                   type="button"
-                  variant={textAlignment === 'left' ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  onClick={() => setTextAlignment('left')}
-                  className="w-9 h-9 p-0"
+                  onClick={() => setShowPreview(!showPreview)}
                 >
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant={textAlignment === 'center' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTextAlignment('center')}
-                  className="w-9 h-9 p-0"
-                >
-                  <AlignCenter className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant={textAlignment === 'right' ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTextAlignment('right')}
-                  className="w-9 h-9 p-0"
-                >
-                  <AlignRight className="h-4 w-4" />
+                  {showPreview ? "Edit" : "Preview"}
                 </Button>
               </div>
             </div>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
-              }
-              required
-              className={`min-h-[400px] font-serif text-base leading-relaxed p-6 ${
-                formData.language === 'arabic' ? 'font-arabic text-right' : ''
-              }`}
-              style={{
-                direction: formData.language === 'arabic' ? 'rtl' : 'ltr',
-                textAlign: textAlignment,
-              }}
-            />
+
+            {showPreview ? (
+              <TemplatePreview 
+                content={formData.content || ""} 
+                textStyle={textStyle}
+                missingVariables={[]}
+              />
+            ) : (
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
+                required
+                className={`min-h-[400px] font-serif text-base leading-relaxed p-6 ${
+                  formData.language === 'arabic' ? 'font-arabic text-right' : ''
+                }`}
+                style={{
+                  direction: formData.language === 'arabic' ? 'rtl' : 'ltr',
+                  textAlign: textStyle.alignment,
+                }}
+              />
+            )}
           </div>
 
           <div className="flex justify-end gap-2">
@@ -200,11 +318,28 @@ export const CreateTemplateDialog = ({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : selectedTemplate ? "Update" : "Create"}
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+              className="relative"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="opacity-0">Save Template</span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Template
+                </>
+              )}
             </Button>
           </div>
         </form>
