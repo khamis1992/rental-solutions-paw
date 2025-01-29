@@ -4,7 +4,7 @@ import { AlertCircle, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface TemplatePreviewProps {
   content: string;
@@ -14,7 +14,6 @@ interface TemplatePreviewProps {
 export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePreviewProps) => {
   const [textAlignment, setTextAlignment] = useState<'left' | 'center' | 'right'>('left');
   
-  // Check if content contains Arabic text
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
     return arabicPattern.test(text);
@@ -22,12 +21,11 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
 
   const isArabic = containsArabic(content);
 
-  // Default to right alignment for Arabic text
-  useState(() => {
+  useEffect(() => {
     if (isArabic) {
       setTextAlignment('right');
     }
-  });
+  }, [isArabic]);
 
   return (
     <div className="space-y-6">
@@ -77,11 +75,11 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
         </Alert>
       )}
       
-      <ScrollArea className="h-[500px] w-full rounded-md border bg-white shadow-sm">
+      <ScrollArea className="h-[600px] w-full rounded-md border bg-white shadow-sm">
         <div 
           className={cn(
-            "p-8",
-            isArabic ? "font-arabic" : "",
+            "p-12 mx-auto max-w-[800px]",
+            isArabic ? "font-arabic" : "font-serif",
             "text-base leading-relaxed",
             {
               'text-left': textAlignment === 'left',
@@ -103,8 +101,8 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
               <div 
                 key={index} 
                 className={cn(
-                  "mb-4 transition-colors",
-                  line.trim().length === 0 && "h-4"
+                  "mb-6",
+                  line.trim().length === 0 && "h-6"
                 )}
               >
                 {parts.map((part, partIndex) => (
@@ -112,7 +110,7 @@ export const TemplatePreview = ({ content, missingVariables = [] }: TemplatePrev
                     key={partIndex}
                     className={cn(
                       part.startsWith('{{') && part.endsWith('}}') && 
-                      "text-primary font-semibold bg-primary/5 px-1 rounded"
+                      "text-primary font-semibold bg-primary/5 px-1.5 py-0.5 rounded"
                     )}
                   >
                     {part}
