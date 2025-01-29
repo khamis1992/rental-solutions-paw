@@ -74,7 +74,8 @@ export const AgreementList = () => {
             phone_number,
             email,
             address,
-            nationality
+            nationality,
+            driver_license
           ),
           vehicle:vehicle_id (
             make,
@@ -116,7 +117,8 @@ export const AgreementList = () => {
           .replace(/{{customer\.phone_number}}/g, agreement.customer.phone_number || '')
           .replace(/{{customer\.email}}/g, agreement.customer.email || '')
           .replace(/{{customer\.address}}/g, agreement.customer.address || '')
-          .replace(/{{customer\.nationality}}/g, agreement.customer.nationality || '');
+          .replace(/{{customer\.nationality}}/g, agreement.customer.nationality || '')
+          .replace(/{{customer\.driver_license}}/g, agreement.customer.driver_license || '');
       }
 
       // Replace vehicle variables
