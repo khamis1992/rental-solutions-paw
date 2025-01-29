@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Printer, FileText, Trash2 } from "lucide-react";
-import type { Agreement } from "../hooks/useAgreements";
+import type { Agreement } from "@/types/agreement.types";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -60,24 +60,6 @@ export const AgreementTableRow = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'expired':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-    }
-  };
-
-  // Calculate payment status based on remaining amount
-  const paymentStatus = agreement.remainingAmount > 0 ? 'pending' : 'completed';
-
   return (
     <TableRow className="hover:bg-muted/50">
       <TableCell>
@@ -105,13 +87,13 @@ export const AgreementTableRow = ({
       <TableCell>
         <Badge 
           variant="outline" 
-          className={`${getStatusColor(agreement.status)} capitalize`}
+          className={`capitalize`}
         >
           {agreement.status}
         </Badge>
       </TableCell>
       <TableCell>
-        <PaymentStatusBadge status={paymentStatus} />
+        <PaymentStatusBadge status={agreement.remaining_amount > 0 ? 'pending' : 'completed'} />
       </TableCell>
       <TableCell className="text-right space-x-1">
         <TooltipProvider>
