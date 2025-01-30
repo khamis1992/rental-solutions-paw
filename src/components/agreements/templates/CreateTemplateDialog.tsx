@@ -1,24 +1,25 @@
-import React, { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 import { toast } from "sonner";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import mammoth from 'mammoth';
 import { Save, Upload } from "lucide-react";
 import { Template } from "@/types/agreement.types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -73,10 +74,19 @@ export const CreateTemplateDialog = ({
     setIsSubmitting(true);
 
     try {
+      // Sanitize and prepare content for storage
+      const sanitizedContent = formData.content
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&');
+
       const { error } = await supabase
         .from("agreement_templates")
         .insert({
           ...formData,
+          content: sanitizedContent,
           is_active: true,
           template_structure: JSON.stringify(formData.template_structure)
         });
@@ -106,32 +116,26 @@ export const CreateTemplateDialog = ({
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
         transformDocument: (element) => {
-          // Force RTL for all paragraphs and tables
           if (element.type === 'paragraph' || element.type === 'table') {
             element.alignment = 'right';
-            element.attributes = { ...element.attributes, dir: 'rtl', class: 'mammoth-content' };
+            element.attributes = { 
+              ...element.attributes, 
+              dir: 'rtl', 
+              class: 'mammoth-content' 
+            };
           }
           return element;
-        },
-        options: {
-          preserveStyles: true,
-          styleMap: [
-            "p[style-name='Normal'] => p.mammoth-content",
-            "table => table.rtl-table",
-            "tr => tr.rtl-row",
-            "td => td.rtl-cell"
-          ]
         }
       });
       
       let processedHtml = result.value;
       
-      // Add RTL wrapper and enhance table styling
-      processedHtml = `<div class="mammoth-content" dir="rtl" style="text-align: right;">${processedHtml}</div>`;
+      // Ensure proper RTL wrapper and enhance table styling
+      processedHtml = `<div dir="rtl" style="text-align: right;">${processedHtml}</div>`;
       
       // Enhance table styling
       processedHtml = processedHtml
-        .replace(/<table/g, '<table class="rtl-table" style="width: 100%; direction: rtl;"')
+        .replace(/<table/g, '<table style="width: 100%; direction: rtl;"')
         .replace(/<td/g, '<td style="text-align: right; padding: 0.75rem;"');
 
       // Style template variables
