@@ -15,7 +15,7 @@ export interface Table {
   }[];
   style: {
     width: string;
-    borderCollapse: string;
+    borderCollapse: 'collapse' | 'separate';
     borderSpacing: string;
   };
 }
@@ -61,21 +61,6 @@ export type PaymentStatus =
   | 'cancelled'
   | 'refunded';
 
-export interface AgreementWithRelations extends Agreement {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
 export interface Agreement {
   id: string;
   agreement_number: string;
@@ -93,6 +78,26 @@ export interface Agreement {
   updated_at: string;
   rent_amount: number;
   remaining_amount: number;
+  payment_status: string;
+  last_payment_date: string | null;
+  next_payment_date: string | null;
+  payment_frequency: string;
+  daily_late_fee: number;
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+  };
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+}
+
+export interface AgreementWithRelations extends Agreement {
   customer?: {
     id: string;
     full_name: string | null;
