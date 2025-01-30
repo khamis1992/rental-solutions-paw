@@ -71,16 +71,17 @@ export const CreateTemplateDialog = ({
 
     try {
       const { error } = await supabase
-        .from("legal_document_templates")
+        .from("agreement_templates")
         .insert({
           ...formData,
-          is_active: true
+          is_active: true,
+          template_structure: JSON.stringify(formData.template_structure)
         });
 
       if (error) throw error;
 
       toast.success("Template created successfully");
-      queryClient.invalidateQueries({ queryKey: ["legal-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
       onOpenChange(false);
     } catch (error: any) {
       toast.error("Failed to create template: " + error.message);
