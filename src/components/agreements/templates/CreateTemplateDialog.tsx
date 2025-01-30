@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import mammoth from 'mammoth';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Template, TextStyle } from "@/types/agreement.types";
-import { Save } from "lucide-react";
+import { Save, Upload } from "lucide-react";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -43,6 +44,7 @@ export const CreateTemplateDialog = ({
     content: string;
     language: "english" | "arabic";
     agreement_type: "short_term" | "lease_to_own";
+    agreement_duration: string;
     template_structure: {
       textStyle: TextStyle;
       tables: any[];
@@ -53,6 +55,7 @@ export const CreateTemplateDialog = ({
     content: selectedTemplate?.content || "",
     language: selectedTemplate?.language as "english" | "arabic" || "english",
     agreement_type: selectedTemplate?.agreement_type || "short_term",
+    agreement_duration: selectedTemplate?.agreement_duration || "12 months",
     template_structure: {
       textStyle: {
         bold: false,
@@ -87,6 +90,31 @@ export const CreateTemplateDialog = ({
       toast.error("Failed to create template: " + error.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      toast.error("Please upload a .docx file");
+      return;
+    }
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      
+      setFormData(prev => ({
+        ...prev,
+        content: result.value
+      }));
+
+      toast.success("Document imported successfully");
+    } catch (error) {
+      console.error('Error converting document:', error);
+      toast.error("Failed to import document");
     }
   };
 
@@ -189,7 +217,38 @@ export const CreateTemplateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label>Content</Label>
+              <Label>Agreement Duration</Label>
+              <Input
+                type="text"
+                value={formData.agreement_duration}
+                onChange={(e) =>
+                  setFormData({ ...formData, agreement_duration: e.target.value })
+                }
+                placeholder="e.g., 12 months"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center mb-2">
+                <Label>Content</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept=".docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="docx-upload"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('docx-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Word Document
+                  </Button>
+                </div>
+              </div>
               <div className={formData.language === "arabic" ? "rtl" : "ltr"}>
                 <ReactQuill
                   theme="snow"
