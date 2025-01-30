@@ -1,29 +1,43 @@
-/* Add or update these styles */
+/* ... keep existing code */
+
+/* Enhanced RTL styling */
 .rtl-content {
-  direction: rtl;
-  text-align: right;
-  font-family: system-ui, -apple-system, sans-serif;
+  direction: rtl !important;
+  text-align: right !important;
+  font-family: 'Noto Sans Arabic', system-ui, -apple-system, sans-serif !important;
   line-height: 1.8;
+  unicode-bidi: bidi-override;
 }
 
 .rtl-editor-container {
-  direction: rtl;
+  direction: rtl !important;
 }
 
 .rtl-editor-container .ql-editor {
-  direction: rtl;
-  text-align: right;
-  font-family: system-ui, -apple-system, sans-serif;
+  direction: rtl !important;
+  text-align: right !important;
+  font-family: 'Noto Sans Arabic', system-ui, -apple-system, sans-serif !important;
+  min-height: 400px !important;
+}
+
+.rtl-editor-container .ql-editor p,
+.rtl-editor-container .ql-editor h1,
+.rtl-editor-container .ql-editor h2,
+.rtl-editor-container .ql-editor h3,
+.rtl-editor-container .ql-editor ul,
+.rtl-editor-container .ql-editor ol {
+  direction: rtl !important;
+  text-align: right !important;
 }
 
 .rtl-editor-container .ql-snow .ql-picker {
-  direction: rtl;
+  direction: rtl !important;
 }
 
 .rtl-table {
   width: 100%;
   border-collapse: collapse;
-  direction: rtl;
+  direction: rtl !important;
   margin: 1rem 0;
 }
 
@@ -31,16 +45,16 @@
 .rtl-table th {
   border: 1px solid #e5e7eb;
   padding: 0.75rem;
-  text-align: right;
+  text-align: right !important;
 }
 
 .rtl-paragraph {
-  direction: rtl;
-  text-align: right;
+  direction: rtl !important;
+  text-align: right !important;
 }
 
 .rtl-cell {
-  text-align: right;
+  text-align: right !important;
   padding: 0.75rem;
 }
 
@@ -52,36 +66,47 @@
   font-weight: 500;
   direction: ltr;
   display: inline-block;
-}
-
-/* Override Quill RTL specific styles */
-.ql-editor[dir="rtl"] ol,
-.ql-editor[dir="rtl"] ul {
-  padding-right: 1.5em;
-  padding-left: 0;
-}
-
-.ql-editor[dir="rtl"] li:not(.ql-direction-rtl)::before {
-  margin-left: 0.3em;
-  margin-right: -1.5em;
-  text-align: left;
+  unicode-bidi: embed;
 }
 
 /* Force RTL for Quill editor */
 .ql-editor {
   direction: rtl !important;
   text-align: right !important;
+  font-family: 'Noto Sans Arabic', system-ui, -apple-system, sans-serif !important;
 }
 
-.ql-editor p,
-.ql-editor h1,
-.ql-editor h2,
-.ql-editor h3,
+/* Override Quill RTL specific styles */
+.ql-editor[dir="rtl"] ol,
+.ql-editor[dir="rtl"] ul {
+  padding-right: 1.5em !important;
+  padding-left: 0 !important;
+}
+
+.ql-editor[dir="rtl"] li:not(.ql-direction-rtl)::before {
+  margin-left: 0.3em !important;
+  margin-right: -1.5em !important;
+  text-align: left !important;
+}
+
+/* Enhanced table styles for RTL */
 .ql-editor table {
   direction: rtl !important;
   text-align: right !important;
 }
 
 .ql-editor table td {
+  text-align: right !important;
+}
+
+/* Force RTL for uploaded content */
+.mammoth-content {
+  direction: rtl !important;
+  text-align: right !important;
+  font-family: 'Noto Sans Arabic', system-ui, -apple-system, sans-serif !important;
+}
+
+.mammoth-content * {
+  direction: rtl !important;
   text-align: right !important;
 }

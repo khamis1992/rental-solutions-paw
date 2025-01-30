@@ -1,9 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -108,14 +109,14 @@ export const CreateTemplateDialog = ({
           // Force RTL for all paragraphs and tables
           if (element.type === 'paragraph' || element.type === 'table') {
             element.alignment = 'right';
-            element.attributes = { ...element.attributes, dir: 'rtl' };
+            element.attributes = { ...element.attributes, dir: 'rtl', class: 'mammoth-content' };
           }
           return element;
         },
         options: {
           preserveStyles: true,
           styleMap: [
-            "p[style-name='Normal'] => p.rtl-paragraph",
+            "p[style-name='Normal'] => p.mammoth-content",
             "table => table.rtl-table",
             "tr => tr.rtl-row",
             "td => td.rtl-cell"
@@ -126,7 +127,7 @@ export const CreateTemplateDialog = ({
       let processedHtml = result.value;
       
       // Add RTL wrapper and enhance table styling
-      processedHtml = `<div class="rtl-content" dir="rtl" style="text-align: right;">${processedHtml}</div>`;
+      processedHtml = `<div class="mammoth-content" dir="rtl" style="text-align: right;">${processedHtml}</div>`;
       
       // Enhance table styling
       processedHtml = processedHtml
@@ -257,14 +258,14 @@ export const CreateTemplateDialog = ({
                   </Button>
                 </div>
               </div>
-              <div className="rtl-editor-container" style={{ direction: 'rtl' }}>
+              <div className="rtl-editor-container">
                 <ReactQuill
                   theme="snow"
                   value={formData.content}
                   onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                   modules={modules}
                   formats={formats}
-                  className="bg-white min-h-[400px]"
+                  className="bg-white"
                 />
               </div>
             </div>
