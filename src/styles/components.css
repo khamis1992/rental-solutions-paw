@@ -1,6 +1,36 @@
-/* Add these styles for better RTL and template variable handling */
-.rtl {
+/* Add or update these styles */
+.rtl-content {
   direction: rtl;
+  text-align: right;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.8;
+}
+
+.rtl-editor-container {
+  direction: rtl;
+}
+
+.rtl-editor-container .ql-editor {
+  direction: rtl;
+  text-align: right;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.rtl-editor-container .ql-snow .ql-picker {
+  direction: rtl;
+}
+
+.agreement-table {
+  width: 100%;
+  border-collapse: collapse;
+  direction: rtl;
+  margin: 1rem 0;
+}
+
+.agreement-table td,
+.agreement-table th {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
   text-align: right;
 }
 
@@ -10,46 +40,19 @@
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-weight: 500;
+  direction: ltr;
+  display: inline-block;
 }
 
-.agreement-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
-  direction: inherit;
-}
-
-.agreement-table td,
-.agreement-table th {
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem;
-  text-align: inherit;
-}
-
-/* Quill RTL support */
-.ql-editor[dir="rtl"] {
-  text-align: right;
-}
-
+/* Override Quill RTL specific styles */
 .ql-editor[dir="rtl"] ol,
 .ql-editor[dir="rtl"] ul {
   padding-right: 1.5em;
   padding-left: 0;
 }
 
-.ql-editor .rtl {
-  direction: rtl;
-  text-align: right;
-}
-
-.ql-editor table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
-}
-
-.ql-editor td,
-.ql-editor th {
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem;
+.ql-editor[dir="rtl"] li:not(.ql-direction-rtl)::before {
+  margin-left: 0.3em;
+  margin-right: -1.5em;
+  text-align: left;
 }

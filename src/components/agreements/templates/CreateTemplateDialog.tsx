@@ -103,52 +103,39 @@ export const CreateTemplateDialog = ({
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
-        preserveStyles: true,
         styleMap: [
-          "p[style-name='Heading 1'] => h1:fresh",
-          "p[style-name='Heading 2'] => h2:fresh",
-          "p[style-name='Heading 3'] => h3:fresh",
+          "p => p:fresh",
           "b => strong",
           "i => em",
           "u => u",
           "strike => s",
-          "p[dir='rtl'] => p.rtl:fresh",
           "table => table.agreement-table:fresh",
           "tr => tr:fresh",
-          "td => td:fresh",
-          "p[style-name='RTL'] => p.rtl:fresh",
-          "r[style-name='RTL'] => span.rtl:fresh"
-        ]
+          "td => td:fresh"
+        ],
+        ignoreEmptyParagraphs: false
       });
       
-      // Process the HTML to enhance RTL support and template variables
+      // Process the HTML to enhance RTL support
       let processedHtml = result.value;
 
-      // Add RTL class and dir attribute to paragraphs containing Arabic text
-      processedHtml = processedHtml.replace(
-        /(<(?:p|div|span)(?:[^>]*)>)((?:[^<]*[\u0600-\u06FF][^<]*))<\/(?:p|div|span)>/g,
-        (_, openTag, content) => {
-          const hasClass = openTag.includes('class="');
-          const newOpenTag = hasClass ? 
-            openTag.replace('class="', 'class="rtl ') :
-            openTag.replace('>', ' class="rtl" dir="rtl">');
-          return `${newOpenTag}${content}</p>`;
-        }
-      );
+      // Force RTL direction for all content since it's Arabic
+      processedHtml = `<div dir="rtl" class="rtl-content" style="text-align: right;">${processedHtml}</div>`;
+      
+      // Enhance table styling
+      processedHtml = processedHtml
+        .replace(/<table/g, '<table class="agreement-table" style="width: 100%; direction: rtl;"')
+        .replace(/<td/g, '<td style="text-align: right; padding: 0.75rem;"');
 
       // Style template variables
       processedHtml = processedHtml
         .replace(/{{/g, '<span class="template-variable">{{')
         .replace(/}}/g, '}}</span>');
-
-      // Enhance table styling
-      processedHtml = processedHtml
-        .replace(/<table/g, '<table class="agreement-table" style="width: 100%; direction: inherit;"')
-        .replace(/<td/g, '<td style="text-align: inherit; padding: 0.75rem;"');
       
       setFormData(prev => ({
         ...prev,
-        content: processedHtml
+        content: processedHtml,
+        language: 'arabic' // Set default language to Arabic
       }));
 
       toast.success("Document imported successfully");
@@ -283,10 +270,7 @@ export const CreateTemplateDialog = ({
                   </Button>
                 </div>
               </div>
-              <div 
-                className={formData.language === "arabic" ? "rtl" : "ltr"}
-                dir={formData.language === "arabic" ? "rtl" : "ltr"}
-              >
+              <div className="rtl-editor-container">
                 <ReactQuill
                   theme="snow"
                   value={formData.content}
@@ -294,6 +278,7 @@ export const CreateTemplateDialog = ({
                   modules={modules}
                   formats={formats}
                   className="bg-white min-h-[400px]"
+                  dir="rtl"
                 />
               </div>
             </div>
