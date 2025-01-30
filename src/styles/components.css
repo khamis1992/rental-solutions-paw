@@ -20,18 +20,28 @@
   direction: rtl;
 }
 
-.agreement-table {
+.rtl-table {
   width: 100%;
   border-collapse: collapse;
   direction: rtl;
   margin: 1rem 0;
 }
 
-.agreement-table td,
-.agreement-table th {
+.rtl-table td,
+.rtl-table th {
   border: 1px solid #e5e7eb;
   padding: 0.75rem;
   text-align: right;
+}
+
+.rtl-paragraph {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl-cell {
+  text-align: right;
+  padding: 0.75rem;
 }
 
 .template-variable {
@@ -55,4 +65,23 @@
   margin-left: 0.3em;
   margin-right: -1.5em;
   text-align: left;
+}
+
+/* Force RTL for Quill editor */
+.ql-editor {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.ql-editor p,
+.ql-editor h1,
+.ql-editor h2,
+.ql-editor h3,
+.ql-editor table {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.ql-editor table td {
+  text-align: right !important;
 }

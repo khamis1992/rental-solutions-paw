@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import mammoth from 'mammoth';
@@ -43,7 +44,7 @@ export const CreateTemplateDialog = ({
         italic: boolean;
         underline: boolean;
         fontSize: number;
-        alignment: 'left' | 'center' | 'right' | 'justify';
+        alignment: 'right';
       };
       tables: any[];
     };
@@ -51,7 +52,7 @@ export const CreateTemplateDialog = ({
     name: selectedTemplate?.name || "",
     description: selectedTemplate?.description || "",
     content: selectedTemplate?.content || "",
-    language: selectedTemplate?.language as "english" | "arabic" || "english",
+    language: "arabic",
     agreement_type: selectedTemplate?.agreement_type || "short_term",
     agreement_duration: selectedTemplate?.agreement_duration || "12 months",
     template_structure: {
@@ -60,7 +61,7 @@ export const CreateTemplateDialog = ({
         italic: false,
         underline: false,
         fontSize: 14,
-        alignment: 'left'
+        alignment: 'right'
       },
       tables: []
     }
@@ -103,28 +104,33 @@ export const CreateTemplateDialog = ({
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
-        styleMap: [
-          "p => p:fresh",
-          "b => strong",
-          "i => em",
-          "u => u",
-          "strike => s",
-          "table => table.agreement-table:fresh",
-          "tr => tr:fresh",
-          "td => td:fresh"
-        ],
-        ignoreEmptyParagraphs: false
+        transformDocument: (element) => {
+          // Force RTL for all paragraphs and tables
+          if (element.type === 'paragraph' || element.type === 'table') {
+            element.alignment = 'right';
+            element.attributes = { ...element.attributes, dir: 'rtl' };
+          }
+          return element;
+        },
+        options: {
+          preserveStyles: true,
+          styleMap: [
+            "p[style-name='Normal'] => p.rtl-paragraph",
+            "table => table.rtl-table",
+            "tr => tr.rtl-row",
+            "td => td.rtl-cell"
+          ]
+        }
       });
       
-      // Process the HTML to enhance RTL support
       let processedHtml = result.value;
-
-      // Force RTL direction for all content since it's Arabic
-      processedHtml = `<div dir="rtl" class="rtl-content" style="text-align: right;">${processedHtml}</div>`;
+      
+      // Add RTL wrapper and enhance table styling
+      processedHtml = `<div class="rtl-content" dir="rtl" style="text-align: right;">${processedHtml}</div>`;
       
       // Enhance table styling
       processedHtml = processedHtml
-        .replace(/<table/g, '<table class="agreement-table" style="width: 100%; direction: rtl;"')
+        .replace(/<table/g, '<table class="rtl-table" style="width: 100%; direction: rtl;"')
         .replace(/<td/g, '<td style="text-align: right; padding: 0.75rem;"');
 
       // Style template variables
@@ -135,7 +141,7 @@ export const CreateTemplateDialog = ({
       setFormData(prev => ({
         ...prev,
         content: processedHtml,
-        language: 'arabic' // Set default language to Arabic
+        language: 'arabic'
       }));
 
       toast.success("Document imported successfully");
@@ -150,8 +156,7 @@ export const CreateTemplateDialog = ({
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': [] }],
-      [{ 'direction': 'rtl' }],
+      [{ 'align': ['right', 'center', 'justify'] }],
       ['table'],
       ['clean']
     ],
@@ -161,7 +166,7 @@ export const CreateTemplateDialog = ({
     'header',
     'bold', 'italic', 'underline',
     'list', 'bullet',
-    'align', 'direction',
+    'align',
     'table'
   ];
 
@@ -220,24 +225,6 @@ export const CreateTemplateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label>Language</Label>
-              <Select
-                value={formData.language}
-                onValueChange={(value: "english" | "arabic") =>
-                  setFormData({ ...formData, language: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="arabic">Arabic</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label>Agreement Duration</Label>
               <Input
                 type="text"
@@ -270,7 +257,7 @@ export const CreateTemplateDialog = ({
                   </Button>
                 </div>
               </div>
-              <div className="rtl-editor-container">
+              <div className="rtl-editor-container" style={{ direction: 'rtl' }}>
                 <ReactQuill
                   theme="snow"
                   value={formData.content}
@@ -278,7 +265,6 @@ export const CreateTemplateDialog = ({
                   modules={modules}
                   formats={formats}
                   className="bg-white min-h-[400px]"
-                  dir="rtl"
                 />
               </div>
             </div>
