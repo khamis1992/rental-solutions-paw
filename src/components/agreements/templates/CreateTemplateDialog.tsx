@@ -1,29 +1,22 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import mammoth from 'mammoth';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Template, TextStyle } from "@/types/agreement.types";
+import { supabase } from "@/integrations/supabase/client";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import mammoth from 'mammoth';
 import { Save, Upload } from "lucide-react";
+import { Template } from "@/types/agreement.types";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -36,7 +29,6 @@ export const CreateTemplateDialog = ({
   onOpenChange,
   selectedTemplate,
 }: CreateTemplateDialogProps) => {
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<{
     name: string;
@@ -46,7 +38,13 @@ export const CreateTemplateDialog = ({
     agreement_type: "short_term" | "lease_to_own";
     agreement_duration: string;
     template_structure: {
-      textStyle: TextStyle;
+      textStyle: {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+        fontSize: number;
+        alignment: 'left' | 'center' | 'right' | 'justify';
+      };
       tables: any[];
     };
   }>({
@@ -84,7 +82,6 @@ export const CreateTemplateDialog = ({
       if (error) throw error;
 
       toast.success("Template created successfully");
-      queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
       onOpenChange(false);
     } catch (error: any) {
       toast.error("Failed to create template: " + error.message);
@@ -106,44 +103,48 @@ export const CreateTemplateDialog = ({
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
-        options: {
-          preserveStyles: true,
-          ignoreEmptyParagraphs: false,
-          styleMap: [
-            "p[style-name='Heading 1'] => h1:fresh",
-            "p[style-name='Heading 2'] => h2:fresh",
-            "p[style-name='Heading 3'] => h3:fresh",
-            "b => strong",
-            "i => em",
-            "u => u",
-            "strike => s",
-            "p[dir='rtl'] => p.rtl:fresh",
-            "table => table.agreement-table:fresh",
-            "tr => tr:fresh",
-            "td => td:fresh",
-            "p[style-name='RTL'] => p.rtl:fresh",
-            "r[style-name='RTL'] => span.rtl:fresh"
-          ],
-          transformDocument: (element) => {
-            // Add RTL class to elements with RTL content
-            if (element.children && element.children.some(child => /[\u0600-\u06FF]/.test(child.value || ''))) {
-              element.className = (element.className || '') + ' rtl';
-            }
-            return element;
-          }
-        }
+        preserveStyles: true,
+        styleMap: [
+          "p[style-name='Heading 1'] => h1:fresh",
+          "p[style-name='Heading 2'] => h2:fresh",
+          "p[style-name='Heading 3'] => h3:fresh",
+          "b => strong",
+          "i => em",
+          "u => u",
+          "strike => s",
+          "p[dir='rtl'] => p.rtl:fresh",
+          "table => table.agreement-table:fresh",
+          "tr => tr:fresh",
+          "td => td:fresh",
+          "p[style-name='RTL'] => p.rtl:fresh",
+          "r[style-name='RTL'] => span.rtl:fresh"
+        ]
       });
       
       // Process the HTML to enhance RTL support and template variables
-      const processedHtml = result.value
-        .replace(/<p>/g, '<p dir="auto">')
+      let processedHtml = result.value;
+
+      // Add RTL class and dir attribute to paragraphs containing Arabic text
+      processedHtml = processedHtml.replace(
+        /(<(?:p|div|span)(?:[^>]*)>)((?:[^<]*[\u0600-\u06FF][^<]*))<\/(?:p|div|span)>/g,
+        (_, openTag, content) => {
+          const hasClass = openTag.includes('class="');
+          const newOpenTag = hasClass ? 
+            openTag.replace('class="', 'class="rtl ') :
+            openTag.replace('>', ' class="rtl" dir="rtl">');
+          return `${newOpenTag}${content}</p>`;
+        }
+      );
+
+      // Style template variables
+      processedHtml = processedHtml
         .replace(/{{/g, '<span class="template-variable">{{')
-        .replace(/}}/g, '}}</span>')
-        .replace(/<table/g, '<table class="agreement-table"')
-        .replace(/<(p|div|span)>([^<]*[\u0600-\u06FF][^<]*)<\/(p|div|span)>/g, 
-          (match, tag1, content, tag2) => 
-            `<${tag1} class="rtl" dir="rtl">${content}</${tag2}>`
-        );
+        .replace(/}}/g, '}}</span>');
+
+      // Enhance table styling
+      processedHtml = processedHtml
+        .replace(/<table/g, '<table class="agreement-table" style="width: 100%; direction: inherit;"')
+        .replace(/<td/g, '<td style="text-align: inherit; padding: 0.75rem;"');
       
       setFormData(prev => ({
         ...prev,
