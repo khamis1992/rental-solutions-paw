@@ -108,6 +108,7 @@ export const CreateTemplateDialog = ({
         arrayBuffer,
         options: {
           preserveStyles: true,
+          ignoreEmptyParagraphs: false,
           styleMap: [
             "p[style-name='Heading 1'] => h1:fresh",
             "p[style-name='Heading 2'] => h2:fresh",
@@ -117,18 +118,32 @@ export const CreateTemplateDialog = ({
             "u => u",
             "strike => s",
             "p[dir='rtl'] => p.rtl:fresh",
-            "table => table.agreement-table",
-            "tr => tr",
-            "td => td"
-          ]
+            "table => table.agreement-table:fresh",
+            "tr => tr:fresh",
+            "td => td:fresh",
+            "p[style-name='RTL'] => p.rtl:fresh",
+            "r[style-name='RTL'] => span.rtl:fresh"
+          ],
+          transformDocument: (element) => {
+            // Add RTL class to elements with RTL content
+            if (element.children && element.children.some(child => /[\u0600-\u06FF]/.test(child.value || ''))) {
+              element.className = (element.className || '') + ' rtl';
+            }
+            return element;
+          }
         }
       });
       
-      // Process the HTML to enhance RTL support
+      // Process the HTML to enhance RTL support and template variables
       const processedHtml = result.value
         .replace(/<p>/g, '<p dir="auto">')
         .replace(/{{/g, '<span class="template-variable">{{')
-        .replace(/}}/g, '}}</span>');
+        .replace(/}}/g, '}}</span>')
+        .replace(/<table/g, '<table class="agreement-table"')
+        .replace(/<(p|div|span)>([^<]*[\u0600-\u06FF][^<]*)<\/(p|div|span)>/g, 
+          (match, tag1, content, tag2) => 
+            `<${tag1} class="rtl" dir="rtl">${content}</${tag2}>`
+        );
       
       setFormData(prev => ({
         ...prev,
@@ -161,13 +176,6 @@ export const CreateTemplateDialog = ({
     'align', 'direction',
     'table'
   ];
-
-  const handleContentChange = (content: string) => {
-    setFormData(prev => ({
-      ...prev,
-      content
-    }));
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

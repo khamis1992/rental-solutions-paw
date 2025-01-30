@@ -16,12 +16,14 @@
   width: 100%;
   border-collapse: collapse;
   margin: 1rem 0;
+  direction: inherit;
 }
 
 .agreement-table td,
 .agreement-table th {
   border: 1px solid #e5e7eb;
-  padding: 0.5rem;
+  padding: 0.75rem;
+  text-align: inherit;
 }
 
 /* Quill RTL support */
@@ -33,4 +35,21 @@
 .ql-editor[dir="rtl"] ul {
   padding-right: 1.5em;
   padding-left: 0;
+}
+
+.ql-editor .rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ql-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.ql-editor td,
+.ql-editor th {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem;
 }
