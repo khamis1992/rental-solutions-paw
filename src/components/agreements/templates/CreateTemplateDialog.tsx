@@ -104,11 +104,35 @@ export const CreateTemplateDialog = ({
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.convertToHtml({ arrayBuffer });
+      const result = await mammoth.convertToHtml({ 
+        arrayBuffer,
+        options: {
+          preserveStyles: true,
+          styleMap: [
+            "p[style-name='Heading 1'] => h1:fresh",
+            "p[style-name='Heading 2'] => h2:fresh",
+            "p[style-name='Heading 3'] => h3:fresh",
+            "b => strong",
+            "i => em",
+            "u => u",
+            "strike => s",
+            "p[dir='rtl'] => p.rtl:fresh",
+            "table => table.agreement-table",
+            "tr => tr",
+            "td => td"
+          ]
+        }
+      });
+      
+      // Process the HTML to enhance RTL support
+      const processedHtml = result.value
+        .replace(/<p>/g, '<p dir="auto">')
+        .replace(/{{/g, '<span class="template-variable">{{')
+        .replace(/}}/g, '}}</span>');
       
       setFormData(prev => ({
         ...prev,
-        content: result.value
+        content: processedHtml
       }));
 
       toast.success("Document imported successfully");
@@ -124,6 +148,7 @@ export const CreateTemplateDialog = ({
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       [{ 'align': [] }],
+      [{ 'direction': 'rtl' }],
       ['table'],
       ['clean']
     ],
@@ -133,7 +158,7 @@ export const CreateTemplateDialog = ({
     'header',
     'bold', 'italic', 'underline',
     'list', 'bullet',
-    'align',
+    'align', 'direction',
     'table'
   ];
 
@@ -249,11 +274,14 @@ export const CreateTemplateDialog = ({
                   </Button>
                 </div>
               </div>
-              <div className={formData.language === "arabic" ? "rtl" : "ltr"}>
+              <div 
+                className={formData.language === "arabic" ? "rtl" : "ltr"}
+                dir={formData.language === "arabic" ? "rtl" : "ltr"}
+              >
                 <ReactQuill
                   theme="snow"
                   value={formData.content}
-                  onChange={handleContentChange}
+                  onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                   modules={modules}
                   formats={formats}
                   className="bg-white min-h-[400px]"

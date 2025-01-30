@@ -1,42 +1,36 @@
-@layer components {
-  /* Text Alignment */
-  .text-content {
-    @apply max-w-[var(--text-block-width)] mx-auto;
-  }
+/* Add these styles for better RTL and template variable handling */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
 
-  /* Card Components */
-  .enterprise-card {
-    @apply bg-card text-card-foreground rounded-lg border p-6;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  }
+.template-variable {
+  color: #2563eb;
+  background-color: rgba(37, 99, 235, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
 
-  /* Table Components */
-  .table-container {
-    @apply w-full overflow-x-auto rounded-lg border bg-card;
-    min-width: 0;
-  }
+.agreement-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
 
-  /* Form Components */
-  .form-container {
-    @apply space-y-6 max-w-[var(--text-block-width)] mx-auto;
-  }
+.agreement-table td,
+.agreement-table th {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem;
+}
 
-  .input-group {
-    @apply space-y-2;
-  }
+/* Quill RTL support */
+.ql-editor[dir="rtl"] {
+  text-align: right;
+}
 
-  /* Modal/Dialog Components */
-  .dialog-content {
-    @apply max-w-[min(calc(100vw-2rem),500px)] mx-auto;
-  }
-
-  /* Hide scrollbar but keep functionality */
-  .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
-  }
+.ql-editor[dir="rtl"] ol,
+.ql-editor[dir="rtl"] ul {
+  padding-right: 1.5em;
+  padding-left: 0;
 }
