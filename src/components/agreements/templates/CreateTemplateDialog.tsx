@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -20,18 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Template, TextStyle, Table } from "@/types/agreement.types";
-import { 
-  AlignLeft, 
-  AlignCenter, 
-  AlignRight, 
-  AlignJustify,
-  Bold,
-  Italic,
-  Underline,
-  Table as TableIcon,
-  Save
-} from "lucide-react";
+import { Template, TextStyle } from "@/types/agreement.types";
+import { Save } from "lucide-react";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -54,7 +45,7 @@ export const CreateTemplateDialog = ({
     agreement_type: "short_term" | "lease_to_own";
     template_structure: {
       textStyle: TextStyle;
-      tables: Table[];
+      tables: any[];
     };
   }>({
     name: selectedTemplate?.name || "",
@@ -98,104 +89,29 @@ export const CreateTemplateDialog = ({
     }
   };
 
-  const handleTextStyle = (type: keyof TextStyle | "alignment", value?: string) => {
-    setFormData(prev => ({
-      ...prev,
-      template_structure: {
-        ...prev.template_structure,
-        textStyle: {
-          ...prev.template_structure.textStyle,
-          [type]: type === "alignment" ? value : !prev.template_structure.textStyle[type as keyof TextStyle],
-        }
-      }
-    }));
-
-    // Apply style to selected text
-    const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = formData.content.substring(start, end);
-      
-      if (selectedText) {
-        const prefix = formData.content.substring(0, start);
-        const suffix = formData.content.substring(end);
-        let styledText = selectedText;
-
-        if (type === "alignment") {
-          styledText = `<div style="text-align: ${value};">${selectedText}</div>`;
-        } else {
-          const style = type.toLowerCase();
-          styledText = `<span style="${style}: ${type === 'bold' ? 'bold' : type === 'italic' ? 'italic' : 'underline'};">${selectedText}</span>`;
-        }
-
-        setFormData(prev => ({
-          ...prev,
-          content: prefix + styledText + suffix
-        }));
-      }
-    }
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'align': [] }],
+      ['table'],
+      ['clean']
+    ],
   };
 
-  const handleInsertTable = () => {
-    const newTable: Table = {
-      rows: [
-        {
-          cells: [
-            { content: "Header 1", style: { ...formData.template_structure.textStyle } },
-            { content: "Header 2", style: { ...formData.template_structure.textStyle } }
-          ]
-        },
-        {
-          cells: [
-            { content: "Cell 1", style: { ...formData.template_structure.textStyle } },
-            { content: "Cell 2", style: { ...formData.template_structure.textStyle } }
-          ]
-        }
-      ],
-      style: {
-        width: "100%",
-        borderCollapse: "collapse",
-        borderSpacing: "0"
-      }
-    };
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline',
+    'list', 'bullet',
+    'align',
+    'table'
+  ];
 
-    const tableHtml = `
-<table style="width: 100%; border-collapse: collapse;">
-  <tr>
-    <th style="border: 1px solid #ddd; padding: 8px;">Header 1</th>
-    <th style="border: 1px solid #ddd; padding: 8px;">Header 2</th>
-  </tr>
-  <tr>
-    <td style="border: 1px solid #ddd; padding: 8px;">Cell 1</td>
-    <td style="border: 1px solid #ddd; padding: 8px;">Cell 2</td>
-  </tr>
-</table>
-`;
-
+  const handleContentChange = (content: string) => {
     setFormData(prev => ({
       ...prev,
-      template_structure: {
-        ...prev.template_structure,
-        tables: [...prev.template_structure.tables, newTable]
-      },
-      content: prev.content + tableHtml
-    }));
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    const text = e.clipboardData.getData('text/html') || e.clipboardData.getData('text');
-    
-    // Insert the text at the cursor position
-    const textarea = e.target as HTMLTextAreaElement;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const currentContent = formData.content;
-    
-    setFormData(prev => ({
-      ...prev,
-      content: currentContent.substring(0, start) + text + currentContent.substring(end)
+      content
     }));
   };
 
@@ -272,94 +188,17 @@ export const CreateTemplateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <Label>Content</Label>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("alignment", "left")}
-                    className={formData.template_structure.textStyle.alignment === 'left' ? 'bg-secondary' : ''}
-                  >
-                    <AlignLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("alignment", "center")}
-                    className={formData.template_structure.textStyle.alignment === 'center' ? 'bg-secondary' : ''}
-                  >
-                    <AlignCenter className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("alignment", "right")}
-                    className={formData.template_structure.textStyle.alignment === 'right' ? 'bg-secondary' : ''}
-                  >
-                    <AlignRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("alignment", "justify")}
-                    className={formData.template_structure.textStyle.alignment === 'justify' ? 'bg-secondary' : ''}
-                  >
-                    <AlignJustify className="h-4 w-4" />
-                  </Button>
-                  <div className="w-px h-6 bg-border mx-2" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("bold")}
-                    className={formData.template_structure.textStyle.bold ? 'bg-secondary' : ''}
-                  >
-                    <Bold className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("italic")}
-                    className={formData.template_structure.textStyle.italic ? 'bg-secondary' : ''}
-                  >
-                    <Italic className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleTextStyle("underline")}
-                    className={formData.template_structure.textStyle.underline ? 'bg-secondary' : ''}
-                  >
-                    <Underline className="h-4 w-4" />
-                  </Button>
-                  <div className="w-px h-6 bg-border mx-2" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleInsertTable}
-                  >
-                    <TableIcon className="h-4 w-4" />
-                  </Button>
-                </div>
+              <Label>Content</Label>
+              <div className={formData.language === "arabic" ? "rtl" : "ltr"}>
+                <ReactQuill
+                  theme="snow"
+                  value={formData.content}
+                  onChange={handleContentChange}
+                  modules={modules}
+                  formats={formats}
+                  className="bg-white min-h-[400px]"
+                />
               </div>
-              <Textarea
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                onPaste={handlePaste}
-                className="min-h-[400px] font-mono"
-                dir={formData.language === "arabic" ? "rtl" : "ltr"}
-                required
-              />
             </div>
 
             <div className="flex justify-end space-x-2">
