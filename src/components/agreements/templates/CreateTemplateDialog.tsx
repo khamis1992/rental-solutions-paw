@@ -45,15 +45,15 @@ export const CreateTemplateDialog = ({
         italic: boolean;
         underline: boolean;
         fontSize: number;
-        alignment: 'left' | 'center' | 'right' | 'justify';
+        alignment: 'right' | 'center' | 'left' | 'justify';
       };
       tables: any[];
     };
   }>({
     name: "",
     description: "",
-    content: "",
-    language: "english",
+    content: getDefaultArabicTemplate(),
+    language: "arabic",
     agreement_type: "short_term",
     agreement_duration: "12 months",
     template_structure: {
@@ -62,7 +62,7 @@ export const CreateTemplateDialog = ({
         italic: false,
         underline: false,
         fontSize: 14,
-        alignment: 'left'
+        alignment: 'right'
       },
       tables: []
     }
@@ -70,24 +70,9 @@ export const CreateTemplateDialog = ({
 
   useEffect(() => {
     if (selectedTemplate) {
-      console.log("Setting form data from selected template:", selectedTemplate);
       setFormData({
-        name: selectedTemplate.name || "",
-        description: selectedTemplate.description || "",
-        content: selectedTemplate.content || "",
-        language: selectedTemplate.language as "english" | "arabic" || "english",
-        agreement_type: selectedTemplate.agreement_type || "short_term",
-        agreement_duration: selectedTemplate.agreement_duration || "12 months",
-        template_structure: selectedTemplate.template_structure || {
-          textStyle: {
-            bold: false,
-            italic: false,
-            underline: false,
-            fontSize: 14,
-            alignment: 'left'
-          },
-          tables: []
-        }
+        ...selectedTemplate,
+        content: selectedTemplate.content || getDefaultArabicTemplate(),
       });
     }
   }, [selectedTemplate]);
@@ -211,7 +196,7 @@ export const CreateTemplateDialog = ({
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': [] }],
+      [{ 'align': ['right', 'center', 'left'] }],
       [{ 'direction': 'rtl' }],
       ['table'],
       ['clean']
@@ -228,18 +213,18 @@ export const CreateTemplateDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh]">
+      <DialogContent className="max-w-4xl h-[90vh]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>
-            {selectedTemplate ? "Edit Template" : "Create New Template"}
+          <DialogTitle className="text-right">
+            {selectedTemplate ? "تعديل النموذج" : "إنشاء نموذج جديد"}
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-full pr-4">
+        <ScrollArea className="h-full pl-4">
           <form onSubmit={handleSubmit} className="space-y-6 pb-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Template Name</Label>
+                <Label htmlFor="name" className="text-right block">اسم النموذج</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -247,11 +232,12 @@ export const CreateTemplateDialog = ({
                     setFormData({ ...formData, name: e.target.value })
                   }
                   required
+                  className="text-right"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="agreement_type">Agreement Type</Label>
+                <Label htmlFor="agreement_type" className="text-right block">نوع العقد</Label>
                 <Select
                   value={formData.agreement_type}
                   onValueChange={(value: "short_term" | "lease_to_own") =>
@@ -259,29 +245,30 @@ export const CreateTemplateDialog = ({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="اختر النوع" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="short_term">Short Term</SelectItem>
-                    <SelectItem value="lease_to_own">Lease to Own</SelectItem>
+                    <SelectItem value="short_term">إيجار قصير المدى</SelectItem>
+                    <SelectItem value="lease_to_own">إيجار منتهي بالتمليك</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="text-right block">الوصف</Label>
               <Input
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
+                className="text-right"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Language</Label>
+              <Label className="text-right block">اللغة</Label>
               <Select
                 value={formData.language}
                 onValueChange={(value: "english" | "arabic") =>
@@ -289,30 +276,30 @@ export const CreateTemplateDialog = ({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
+                  <SelectValue placeholder="اختر اللغة" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="arabic">العربية</SelectItem>
                   <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="arabic">Arabic</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Agreement Duration</Label>
+              <Label className="text-right block">مدة العقد</Label>
               <Input
                 type="text"
                 value={formData.agreement_duration}
                 onChange={(e) =>
                   setFormData({ ...formData, agreement_duration: e.target.value })
                 }
-                placeholder="e.g., 12 months"
+                placeholder="مثال: 12 شهر"
+                className="text-right"
               />
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between items-center mb-2">
-                <Label>Content</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="file"
@@ -326,15 +313,13 @@ export const CreateTemplateDialog = ({
                     variant="outline"
                     onClick={() => document.getElementById('docx-upload')?.click()}
                   >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import Word Document
+                    <Upload className="h-4 w-4 ml-2" />
+                    استيراد ملف Word
                   </Button>
                 </div>
+                <Label className="text-right">المحتوى</Label>
               </div>
-              <div 
-                className={formData.language === "arabic" ? "rtl" : "ltr"}
-                dir={formData.language === "arabic" ? "rtl" : "ltr"}
-              >
+              <div className="rtl">
                 <ReactQuill
                   theme="snow"
                   value={formData.content}
@@ -342,21 +327,22 @@ export const CreateTemplateDialog = ({
                   modules={modules}
                   formats={formats}
                   className="bg-white min-h-[400px]"
+                  dir="rtl"
                 />
               </div>
             </div>
 
             <div className="flex justify-end space-x-2">
+              <Button type="submit" disabled={isSubmitting}>
+                <Save className="h-4 w-4 ml-2" />
+                {isSubmitting ? "جاري الحفظ..." : selectedTemplate ? "تحديث النموذج" : "حفظ النموذج"}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Saving..." : selectedTemplate ? "Update Template" : "Save Template"}
+                إلغاء
               </Button>
             </div>
           </form>
@@ -365,3 +351,83 @@ export const CreateTemplateDialog = ({
     </Dialog>
   );
 };
+
+function getDefaultArabicTemplate() {
+  return `
+    <div dir="rtl" class="p-6">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold mb-2">عقد إيجار سيارة</h1>
+        <p>رقم العقد: {{agreement.agreement_number}}</p>
+        <p>التاريخ: {{agreement.agreement_date}}</p>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">أطراف العقد</h2>
+        <div class="mb-4">
+          <h3 class="font-bold">الطرف الأول (المؤجر):</h3>
+          <p>شركة تأجير السيارات</p>
+          <p>السجل التجاري:</p>
+          <p>العنوان:</p>
+        </div>
+        <div>
+          <h3 class="font-bold">الطرف الثاني (المستأجر):</h3>
+          <p>الاسم: {{customer.customer_name}}</p>
+          <p>رقم الهوية: {{customer.customer_nationality}}</p>
+          <p>رقم الجوال: {{customer.customer_phone}}</p>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">تفاصيل السيارة</h2>
+        <table class="w-full border-collapse border">
+          <tr>
+            <th class="border p-2">الماركة</th>
+            <td class="border p-2">{{vehicle.vehicle_make}}</td>
+            <th class="border p-2">الموديل</th>
+            <td class="border p-2">{{vehicle.vehicle_model}}</td>
+          </tr>
+          <tr>
+            <th class="border p-2">سنة الصنع</th>
+            <td class="border p-2">{{vehicle.vehicle_year}}</td>
+            <th class="border p-2">رقم اللوحة</th>
+            <td class="border p-2">{{vehicle.vehicle_license_plate}}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">الشروط المالية</h2>
+        <ul class="list-disc mr-6">
+          <li>قيمة الإيجار: {{payment.rent_amount}} ريال قطري</li>
+          <li>الدفعة المقدمة: {{payment.down_payment}} ريال قطري</li>
+          <li>مدة العقد: {{agreement.agreement_duration}}</li>
+          <li>غرامة التأخير اليومية: {{terms.daily_late_fee}} ريال قطري</li>
+        </ul>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">الشروط والأحكام العامة</h2>
+        <ol class="list-decimal mr-6">
+          <li>يلتزم المستأجر بدفع قيمة الإيجار في موعدها المحدد.</li>
+          <li>يلتزم المستأجر بالمحافظة على السيارة وصيانتها.</li>
+          <li>يمنع منعاً باتاً استخدام السيارة في أغراض غير قانونية.</li>
+          <li>في حالة التأخير عن سداد الإيجار تطبق غرامة تأخير يومية.</li>
+        </ol>
+      </div>
+
+      <div class="mt-12">
+        <h2 class="text-xl font-bold mb-6">التوقيعات</h2>
+        <div class="flex justify-between">
+          <div class="text-center">
+            <p class="font-bold mb-8">الطرف الأول (المؤجر)</p>
+            <div class="border-t border-black pt-2">التوقيع</div>
+          </div>
+          <div class="text-center">
+            <p class="font-bold mb-8">الطرف الثاني (المستأجر)</p>
+            <div class="border-t border-black pt-2">التوقيع</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
