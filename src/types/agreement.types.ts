@@ -95,6 +95,9 @@ export interface Agreement {
     full_name: string | null;
     phone_number: string | null;
     address: string | null;
+    nationality?: string | null;
+    driver_license?: string | null;
+    email?: string | null;
   };
   vehicle?: {
     id: string;
@@ -102,6 +105,8 @@ export interface Agreement {
     model: string;
     year: number;
     license_plate: string;
+    vin?: string;
+    color?: string;
   };
   created_at: string;
   updated_at: string;
@@ -109,6 +114,8 @@ export interface Agreement {
   last_payment_date: string | null;
   next_payment_date: string | null;
   payment_frequency: string | null;
+  down_payment?: number | null;
+  contractValue?: number;
 }
 
 export interface AgreementWithRelations extends Agreement {

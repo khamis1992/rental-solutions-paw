@@ -1,19 +1,20 @@
-export interface MaintenanceRecord {
+export type MaintenanceStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'accident';
+
+export interface Maintenance {
   id: string;
   vehicle_id: string;
   service_type: string;
-  description: string;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-  cost: number;
+  description?: string;
+  status: MaintenanceStatus;
+  cost?: number;
   scheduled_date: string;
   completed_date?: string;
   performed_by?: string;
   notes?: string;
+  category_id?: string;
   created_at: string;
   updated_at: string;
-  category_id?: string;
-  vehicles: {
-    id: string;
+  vehicles?: {
     make: string;
     model: string;
     year: number;
