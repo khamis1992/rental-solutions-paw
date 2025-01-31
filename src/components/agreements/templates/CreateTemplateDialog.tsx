@@ -1,27 +1,23 @@
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import mammoth from 'mammoth';
-import { Save, Upload, FileUp } from "lucide-react";
-import { Template, TextStyle } from "@/types/agreement.types";
-import { RichTextControls } from "./editor/RichTextControls";
-import { TableOfContents } from "./navigation/TableOfContents";
-import { VariablePalette } from "./variables/VariablePalette";
-import { defaultVariableGroups } from "./variables/variableGroups";
+import { Save, Upload } from "lucide-react";
+import { Template } from "@/types/agreement.types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -34,8 +30,8 @@ export const CreateTemplateDialog = ({
   onOpenChange,
   selectedTemplate,
 }: CreateTemplateDialogProps) => {
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -44,7 +40,13 @@ export const CreateTemplateDialog = ({
     agreement_type: "short_term" | "lease_to_own";
     agreement_duration: string;
     template_structure: {
-      textStyle: TextStyle;
+      textStyle: {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+        fontSize: number;
+        alignment: 'left' | 'center' | 'right' | 'justify';
+      };
       tables: any[];
     };
   }>({
@@ -99,7 +101,7 @@ export const CreateTemplateDialog = ({
       const templateData = {
         ...formData,
         is_active: true,
-        template_structure: JSON.stringify(formData.template_structure)
+        template_structure: formData.template_structure
       };
 
       let error;
@@ -124,13 +126,14 @@ export const CreateTemplateDialog = ({
         throw error;
       }
 
+      // Invalidate and refetch queries
       await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
       
       toast.success(selectedTemplate ? "Template updated successfully" : "Template created successfully");
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving template:", error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save template');
+      toast.error("Failed to save template: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -149,6 +152,7 @@ export const CreateTemplateDialog = ({
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
+        preserveStyles: true,
         styleMap: [
           "p[style-name='Heading 1'] => h1:fresh",
           "p[style-name='Heading 2'] => h2:fresh",
@@ -222,202 +226,141 @@ export const CreateTemplateDialog = ({
     'table'
   ];
 
-  const handleVariableSelect = (variable: string) => {
-    setFormData(prev => ({
-      ...prev,
-      content: prev.content + `{{${variable}}}`
-    }));
-  };
-
-  const handleStyleChange = (newStyle: TextStyle) => {
-    setFormData(prev => ({
-      ...prev,
-      template_structure: {
-        ...prev.template_structure,
-        textStyle: newStyle
-      }
-    }));
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[90vh] p-0 gap-0">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-          <DialogHeader className="p-6">
-            <DialogTitle className="text-2xl font-bold">
-              {selectedTemplate ? "Edit Template" : "Create New Template"}
-            </DialogTitle>
-          </DialogHeader>
-        </div>
+      <DialogContent className="max-w-4xl h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>
+            {selectedTemplate ? "Edit Template" : "Create New Template"}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <ScrollArea className="h-full pr-4">
+          <form onSubmit={handleSubmit} className="space-y-6 pb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Template Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
 
-        <div className="grid grid-cols-12 h-[calc(90vh-80px)]">
-          {/* Left Sidebar - Variables */}
-          <div className="col-span-2 border-r bg-muted/10">
-            <div className="p-4 sticky top-0">
-              <h3 className="font-semibold mb-4 text-sm">Template Variables</h3>
-              <VariablePalette
-                onVariableSelect={handleVariableSelect}
-                currentContent={formData.content}
-                availableVariables={defaultVariableGroups}
+              <div className="space-y-2">
+                <Label htmlFor="agreement_type">Agreement Type</Label>
+                <Select
+                  value={formData.agreement_type}
+                  onValueChange={(value: "short_term" | "lease_to_own") =>
+                    setFormData({ ...formData, agreement_type: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="short_term">Short Term</SelectItem>
+                    <SelectItem value="lease_to_own">Lease to Own</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
               />
             </div>
-          </div>
 
-          {/* Main Content Area */}
-          <div className="col-span-8 min-h-0">
-            <ScrollArea className="h-full">
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium">Template Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full"
-                      placeholder="Enter template name"
-                      required
-                    />
-                  </div>
+            <div className="space-y-2">
+              <Label>Language</Label>
+              <Select
+                value={formData.language}
+                onValueChange={(value: "english" | "arabic") =>
+                  setFormData({ ...formData, language: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="arabic">Arabic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="agreement_type" className="text-sm font-medium">Agreement Type</Label>
-                    <Select
-                      value={formData.agreement_type}
-                      onValueChange={(value: "short_term" | "lease_to_own") =>
-                        setFormData({ ...formData, agreement_type: value })
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="short_term">Short Term</SelectItem>
-                        <SelectItem value="lease_to_own">Lease to Own</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <Label>Agreement Duration</Label>
+              <Input
+                type="text"
+                value={formData.agreement_duration}
+                onChange={(e) =>
+                  setFormData({ ...formData, agreement_duration: e.target.value })
+                }
+                placeholder="e.g., 12 months"
+              />
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center mb-2">
+                <Label>Content</Label>
+                <div className="flex items-center gap-2">
                   <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full"
-                    placeholder="Enter template description"
+                    type="file"
+                    accept=".docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="docx-upload"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Language</Label>
-                  <Select
-                    value={formData.language}
-                    onValueChange={(value: "english" | "arabic") =>
-                      setFormData({ ...formData, language: value })
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="english">English</SelectItem>
-                      <SelectItem value="arabic">Arabic</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Agreement Duration</Label>
-                  <Input
-                    type="text"
-                    value={formData.agreement_duration}
-                    onChange={(e) => setFormData({ ...formData, agreement_duration: e.target.value })}
-                    className="w-full"
-                    placeholder="e.g., 12 months"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium">Content</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="file"
-                        accept=".docx"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        id="docx-upload"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById('docx-upload')?.click()}
-                        className="flex items-center gap-2"
-                      >
-                        <FileUp className="h-4 w-4" />
-                        Import Word Document
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="bg-card rounded-lg shadow-sm">
-                    <RichTextControls
-                      style={formData.template_structure.textStyle}
-                      onStyleChange={handleStyleChange}
-                      onInsertTable={() => {/* Add table insertion logic */}}
-                    />
-
-                    <div 
-                      className={`mt-4 ${formData.language === "arabic" ? "rtl" : "ltr"}`}
-                      dir={formData.language === "arabic" ? "rtl" : "ltr"}
-                    >
-                      <ReactQuill
-                        theme="snow"
-                        value={formData.content}
-                        onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                        modules={modules}
-                        formats={formats}
-                        className="bg-white rounded border min-h-[400px]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => onOpenChange(false)}
+                    onClick={() => document.getElementById('docx-upload')?.click()}
                   >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="flex items-center gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    {isSubmitting ? "Saving..." : selectedTemplate ? "Update Template" : "Save Template"}
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Word Document
                   </Button>
                 </div>
-              </form>
-            </ScrollArea>
-          </div>
-
-          {/* Right Sidebar - Document Structure */}
-          <div className="col-span-2 border-l bg-muted/10">
-            <div className="p-4 sticky top-0">
-              <h3 className="font-semibold mb-4 text-sm">Document Structure</h3>
-              <TableOfContents
-                sections={[]}  // Extract sections from content
-                onSectionClick={() => {}}
-                activeSection=""
-              />
+              </div>
+              <div 
+                className={formData.language === "arabic" ? "rtl" : "ltr"}
+                dir={formData.language === "arabic" ? "rtl" : "ltr"}
+              >
+                <ReactQuill
+                  theme="snow"
+                  value={formData.content}
+                  onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+                  modules={modules}
+                  formats={formats}
+                  className="bg-white min-h-[400px]"
+                />
+              </div>
             </div>
-          </div>
-        </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                <Save className="h-4 w-4 mr-2" />
+                {isSubmitting ? "Saving..." : selectedTemplate ? "Update Template" : "Save Template"}
+              </Button>
+            </div>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

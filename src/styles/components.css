@@ -1,25 +1,20 @@
-/* RTL Support */
-[dir="rtl"] {
+/* Add these styles for better RTL and template variable handling */
+.rtl {
+  direction: rtl;
   text-align: right;
 }
 
-[dir="rtl"] .template-variable {
-  direction: ltr;
-  unicode-bidi: embed;
-  text-align: left;
-}
-
-/* Template Variables */
 .template-variable {
   color: #2563eb;
   background-color: rgba(37, 99, 235, 0.1);
-  padding: 0.125rem 0.375rem;
+  padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-weight: 500;
   display: inline-block;
+  direction: ltr;
+  unicode-bidi: embed;
 }
 
-/* Agreement Tables */
 .agreement-table {
   width: 100%;
   border-collapse: collapse;
@@ -27,204 +22,37 @@
   direction: inherit;
 }
 
-.agreement-table th,
-.agreement-table td {
+.agreement-table td,
+.agreement-table th {
   border: 1px solid #e5e7eb;
   padding: 0.75rem;
   text-align: inherit;
 }
 
-/* Enhanced Table Styles */
-.table-wrapper {
-  overflow-x: auto;
-  margin: 1rem 0;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.table-wrapper table {
-  min-width: 100%;
-  background: white;
-}
-
-.table-wrapper th {
-  background: #f8fafc;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-}
-
-.table-wrapper td {
-  vertical-align: top;
-}
-
-.table-wrapper tbody tr:hover {
-  background: #f8fafc;
-}
-
-/* RTL Table Support */
-[dir="rtl"] .table-wrapper {
-  direction: rtl;
-}
-
-[dir="rtl"] .table-wrapper table {
-  direction: rtl;
-}
-
-[dir="rtl"] .table-wrapper th,
-[dir="rtl"] .table-wrapper td {
+/* Quill RTL support */
+.ql-editor[dir="rtl"] {
   text-align: right;
 }
 
-/* RTL Support for Form Controls */
-[dir="rtl"] .form-label {
-  text-align: right;
-}
-
-[dir="rtl"] .form-input,
-[dir="rtl"] .form-select,
-[dir="rtl"] .form-textarea {
-  text-align: right;
-}
-
-/* RTL Support for Dialog Components */
-[dir="rtl"] .dialog-header {
-  text-align: right;
-}
-
-[dir="rtl"] .dialog-content {
-  direction: rtl;
-}
-
-/* RTL Support for Buttons and Icons */
-[dir="rtl"] .button-icon {
-  margin-right: 0;
-  margin-left: 0.5rem;
-}
-
-/* RTL Support for Navigation */
-[dir="rtl"] .nav-item {
-  padding-right: 0;
-  padding-left: 1rem;
-}
-
-/* RTL Support for Lists */
-[dir="rtl"] .list-item {
-  padding-right: 0;
-  padding-left: 1rem;
-}
-
-/* RTL Support for Cards */
-[dir="rtl"] .card-header {
-  text-align: right;
-}
-
-[dir="rtl"] .card-content {
-  direction: rtl;
-}
-
-/* RTL Support for Alerts and Notifications */
-[dir="rtl"] .alert {
-  padding-right: 1rem;
-  padding-left: 0.5rem;
-  text-align: right;
-}
-
-[dir="rtl"] .alert-icon {
-  margin-right: 0;
-  margin-left: 0.5rem;
-}
-
-/* Quill RTL Support */
-[dir="rtl"] .ql-editor {
-  text-align: right;
-}
-
-[dir="rtl"] .ql-editor ol,
-[dir="rtl"] .ql-editor ul {
+.ql-editor[dir="rtl"] ol,
+.ql-editor[dir="rtl"] ul {
   padding-right: 1.5em;
   padding-left: 0;
 }
 
-[dir="rtl"] .ql-editor .rtl {
+.ql-editor .rtl {
   direction: rtl;
   text-align: right;
 }
 
-/* Template Editor Styles */
-.template-editor {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.ql-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
 }
 
-.template-editor .ql-editor {
-  min-height: 400px;
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.template-editor .ql-toolbar {
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
+.ql-editor td,
+.ql-editor th {
+  border: 1px solid #e5e7eb;
   padding: 0.75rem;
-}
-
-.template-editor .ql-container {
-  border-bottom-left-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
-}
-
-/* Variable Palette Enhancements */
-.variable-palette {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.variable-item {
-  transition: all 0.2s ease;
-  border-radius: 0.375rem;
-  padding: 0.5rem;
-  margin-bottom: 0.25rem;
-  cursor: pointer;
-}
-
-.variable-item:hover {
-  background-color: #f3f4f6;
-}
-
-.variable-item.used {
-  background-color: #e5e7eb;
-}
-
-/* Template Preview Enhancements */
-.template-preview {
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.template-preview.rtl {
-  direction: rtl;
-}
-
-/* Dialog Enhancements */
-.template-dialog {
-  background: #f8fafc;
-}
-
-.template-dialog-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-}
-
-.template-dialog-footer {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 1rem;
-  margin-top: 1rem;
 }
