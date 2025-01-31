@@ -1,125 +1,77 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Car, DollarSign, FileText, ArrowUpRight, TrendingUp } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { VehicleStatusChart } from "@/components/dashboard/VehicleStatusChart";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 
 export const DashboardStats = () => {
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [vehiclesResponse, rentalsResponse, paymentsResponse, lastMonthPaymentsResponse, newVehiclesResponse, pendingReturnsResponse] = await Promise.all([
-        // Get vehicles stats
-        supabase.from("vehicles")
-          .select('status', { count: 'exact' })
-          .eq('is_test_data', false),
+      const { data, error } = await supabase.rpc('get_dashboard_stats');
+      
+      if (error) {
+        console.error("Error fetching dashboard stats:", error);
+        throw error;
+      }
 
-        // Get active rentals
-        supabase.from("leases")
-          .select('status', { count: 'exact', head: true })
-          .eq("status", "active"),
-
-        // Calculate current month revenue
-        supabase.from("unified_payments")
-          .select('amount')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('status', 'completed'),
-
-        // Calculate last month revenue for comparison
-        supabase.from("unified_payments")
-          .select('amount')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString())
-          .lt('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('status', 'completed'),
-
-        // Get new vehicles added this month
-        supabase.from("vehicles")
-          .select('id', { count: 'exact' })
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-          .eq('is_test_data', false),
-
-        // Get pending returns (leases that are active and past their end date)
-        supabase.from("leases")
-          .select('id', { count: 'exact' })
-          .eq('status', 'active')
-          .lt('end_date', new Date().toISOString())
-      ]);
-
-      if (vehiclesResponse.error) throw vehiclesResponse.error;
-      if (rentalsResponse.error) throw rentalsResponse.error;
-      if (paymentsResponse.error) throw paymentsResponse.error;
-      if (lastMonthPaymentsResponse.error) throw lastMonthPaymentsResponse.error;
-      if (newVehiclesResponse.error) throw newVehiclesResponse.error;
-      if (pendingReturnsResponse.error) throw pendingReturnsResponse.error;
-
-      const monthlyRevenue = paymentsResponse.data?.reduce((sum, payment) => 
-        sum + (payment.amount || 0), 0) || 0;
-
-      const lastMonthRevenue = lastMonthPaymentsResponse.data?.reduce((sum, payment) => 
-        sum + (payment.amount || 0), 0) || 0;
-
-      // Calculate growth percentage
-      const growth = lastMonthRevenue > 0 
-        ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
-        : 0;
-
-      const totalVehicles = vehiclesResponse.count || 0;
-      const newVehicles = newVehiclesResponse.count || 0;
-      const pendingReturns = pendingReturnsResponse.count || 0;
-
+      // Provide default values if data is null/undefined
       return {
-        totalVehicles,
-        activeRentals: rentalsResponse.count || 0,
-        monthlyRevenue,
-        pendingReturns,
-        growth: {
-          vehicles: `+${newVehicles} this month`,
-          revenue: `${growth.toFixed(1)}% from last month`
-        }
+        total_vehicles: data?.total_vehicles ?? 0,
+        available_vehicles: data?.available_vehicles ?? 0,
+        rented_vehicles: data?.rented_vehicles ?? 0,
+        maintenance_vehicles: data?.maintenance_vehicles ?? 0,
+        total_customers: data?.total_customers ?? 0,
+        active_rentals: data?.active_rentals ?? 0,
+        monthly_revenue: data?.monthly_revenue ?? 0
       };
-    },
-    staleTime: 60000, // Cache for 1 minute
+    }
   });
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading stats...</div>;
+  }
 
   return (
     <div className="space-y-8">
       <div className="grid gap-6 md:grid-cols-3">
         <StatsCard
           title="Total Vehicles"
-          value={stats?.totalVehicles.toString() || "0"}
+          value={String(stats?.total_vehicles || 0)}
           icon={Car}
           className="bg-white"
           iconClassName="h-5 w-5 text-blue-500"
           description={
             <span className="flex items-center text-emerald-600 text-xs">
               <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.vehicles}
+              {`${stats?.available_vehicles || 0} available`}
             </span>
           }
         />
         <StatsCard
           title="Active Rentals"
-          value={stats?.activeRentals.toString() || "0"}
+          value={String(stats?.active_rentals || 0)}
           icon={FileText}
           className="bg-white"
           iconClassName="h-5 w-5 text-purple-500"
           description={
             <span className="text-amber-600 text-xs">
-              {stats?.pendingReturns} pending returns
+              {`${stats?.rented_vehicles || 0} rented vehicles`}
             </span>
           }
         />
         <StatsCard
           title="Monthly Revenue"
-          value={formatCurrency(stats?.monthlyRevenue || 0)}
+          value={formatCurrency(stats?.monthly_revenue || 0)}
           icon={DollarSign}
           className="bg-white"
           iconClassName="h-5 w-5 text-green-500"
           description={
             <span className="flex items-center text-emerald-600 text-xs">
-              <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.revenue}
+              <ArrowUpRight className="mr-1 h-4 w-4" />
+              {`${stats?.maintenance_vehicles || 0} in maintenance`}
             </span>
           }
         />
