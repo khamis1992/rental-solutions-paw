@@ -33,11 +33,27 @@ export const TemplatePreview = ({
 
   // Process template variables to preserve their styling while rendering HTML
   const processContent = (htmlContent: string) => {
-    // Replace template variables with styled spans
-    const processedContent = htmlContent.replace(
+    // First, ensure proper RTL/LTR handling
+    const dirAttribute = isArabic ? ' dir="rtl"' : ' dir="ltr"';
+    
+    // Process template variables with proper styling and direction
+    let processedContent = htmlContent.replace(
       /{{(.*?)}}/g,
-      '<span class="template-variable">{{$1}}</span>'
+      '<span class="template-variable" dir="ltr">{{$1}}</span>'
     );
+
+    // Wrap paragraphs with proper direction
+    processedContent = processedContent.replace(
+      /<p>/g,
+      `<p${dirAttribute}>`
+    );
+
+    // Ensure tables have proper RTL settings
+    processedContent = processedContent.replace(
+      /<table/g,
+      `<table${dirAttribute}`
+    );
+
     return processedContent;
   };
 
@@ -90,7 +106,10 @@ export const TemplatePreview = ({
           <table 
             key={tableIndex}
             className="w-full my-4 border-collapse"
-            style={table.style}
+            style={{
+              ...table.style,
+              direction: isArabic ? 'rtl' : 'ltr'
+            }}
           >
             <tbody>
               {table.rows.map((row, rowIndex) => (
@@ -108,6 +127,7 @@ export const TemplatePreview = ({
                           textAlign: cell.style.alignment
                         })
                       }}
+                      dir={isArabic ? "rtl" : "ltr"}
                     >
                       {cell.content}
                     </td>
