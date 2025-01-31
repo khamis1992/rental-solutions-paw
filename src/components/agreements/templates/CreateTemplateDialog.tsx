@@ -17,6 +17,7 @@ import 'react-quill/dist/quill.snow.css';
 import mammoth from 'mammoth';
 import { Save, Upload } from "lucide-react";
 import { Template } from "@/types/agreement.types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ export const CreateTemplateDialog = ({
   selectedTemplate,
 }: CreateTemplateDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -66,9 +68,9 @@ export const CreateTemplateDialog = ({
     }
   });
 
-  // Effect to set form data when selectedTemplate changes
   useEffect(() => {
     if (selectedTemplate) {
+      console.log("Setting form data from selected template:", selectedTemplate);
       setFormData({
         name: selectedTemplate.name || "",
         description: selectedTemplate.description || "",
@@ -93,33 +95,40 @@ export const CreateTemplateDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("Submitting form with data:", formData);
 
     try {
       const templateData = {
         ...formData,
         is_active: true,
-        template_structure: JSON.stringify(formData.template_structure)
+        template_structure: formData.template_structure
       };
 
       let error;
 
       if (selectedTemplate) {
-        // Update existing template
+        console.log("Updating template with ID:", selectedTemplate.id);
         const { error: updateError } = await supabase
           .from("agreement_templates")
           .update(templateData)
           .eq('id', selectedTemplate.id);
         error = updateError;
       } else {
-        // Create new template
+        console.log("Creating new template");
         const { error: insertError } = await supabase
           .from("agreement_templates")
           .insert(templateData);
         error = insertError;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving template:", error);
+        throw error;
+      }
 
+      // Invalidate and refetch queries
+      await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
+      
       toast.success(selectedTemplate ? "Template updated successfully" : "Template created successfully");
       onOpenChange(false);
     } catch (error: any) {
