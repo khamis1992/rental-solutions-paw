@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -48,12 +48,12 @@ export const CreateTemplateDialog = ({
       tables: any[];
     };
   }>({
-    name: selectedTemplate?.name || "",
-    description: selectedTemplate?.description || "",
-    content: selectedTemplate?.content || "",
-    language: selectedTemplate?.language as "english" | "arabic" || "english",
-    agreement_type: selectedTemplate?.agreement_type || "short_term",
-    agreement_duration: selectedTemplate?.agreement_duration || "12 months",
+    name: "",
+    description: "",
+    content: "",
+    language: "english",
+    agreement_type: "short_term",
+    agreement_duration: "12 months",
     template_structure: {
       textStyle: {
         bold: false,
@@ -66,25 +66,58 @@ export const CreateTemplateDialog = ({
     }
   });
 
+  // Effect to set form data when selectedTemplate changes
+  useEffect(() => {
+    if (selectedTemplate) {
+      setFormData({
+        name: selectedTemplate.name || "",
+        description: selectedTemplate.description || "",
+        content: selectedTemplate.content || "",
+        language: selectedTemplate.language as "english" | "arabic" || "english",
+        agreement_type: selectedTemplate.agreement_type || "short_term",
+        agreement_duration: selectedTemplate.agreement_duration || "12 months",
+        template_structure: selectedTemplate.template_structure || {
+          textStyle: {
+            bold: false,
+            italic: false,
+            underline: false,
+            fontSize: 14,
+            alignment: 'left'
+          },
+          tables: []
+        }
+      });
+    }
+  }, [selectedTemplate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from("agreement_templates")
-        .insert({
-          ...formData,
-          is_active: true,
-          template_structure: JSON.stringify(formData.template_structure)
-        });
+      const { error } = selectedTemplate 
+        ? await supabase
+            .from("agreement_templates")
+            .update({
+              ...formData,
+              is_active: true,
+              template_structure: JSON.stringify(formData.template_structure)
+            })
+            .eq('id', selectedTemplate.id)
+        : await supabase
+            .from("agreement_templates")
+            .insert({
+              ...formData,
+              is_active: true,
+              template_structure: JSON.stringify(formData.template_structure)
+            });
 
       if (error) throw error;
 
-      toast.success("Template created successfully");
+      toast.success(selectedTemplate ? "Template updated successfully" : "Template created successfully");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error("Failed to create template: " + error.message);
+      toast.error("Failed to save template: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -308,7 +341,7 @@ export const CreateTemplateDialog = ({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Saving..." : "Save Template"}
+                {isSubmitting ? "Saving..." : selectedTemplate ? "Update Template" : "Save Template"}
               </Button>
             </div>
           </form>
