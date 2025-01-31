@@ -99,49 +99,9 @@ export const CreateTemplateDialog = ({
 
     try {
       const templateData = {
-        name: formData.name,
-        description: formData.description,
-        content: formData.content,
-        language: formData.language,
-        agreement_type: formData.agreement_type,
-        agreement_duration: formData.agreement_duration,
-        template_structure: formData.template_structure,
+        ...formData,
         is_active: true,
-        variable_mappings: {
-          "terms": {
-            "end_date": "leases.end_date",
-            "start_date": "leases.start_date",
-            "final_price": "leases.total_amount",
-            "rent_amount": "leases.rent_amount",
-            "daily_late_fee": "leases.daily_late_fee",
-            "agreement_duration": "leases.agreement_duration"
-          },
-          "payment": {
-            "down_payment": "leases.down_payment",
-            "monthly_payment": "leases.monthly_payment",
-            "payment_due_day": "leases.rent_due_day"
-          },
-          "vehicle": {
-            "vehicle_vin": "vehicles.vin",
-            "vehicle_make": "vehicles.make",
-            "vehicle_year": "vehicles.year",
-            "vehicle_color": "vehicles.color",
-            "vehicle_model": "vehicles.model",
-            "vehicle_license_plate": "vehicles.license_plate"
-          },
-          "customer": {
-            "customer_name": "profiles.full_name",
-            "customer_email": "profiles.email",
-            "customer_phone": "profiles.phone_number",
-            "customer_address": "profiles.address",
-            "customer_nationality": "profiles.nationality"
-          },
-          "agreement": {
-            "agreement_date": "leases.created_at",
-            "agreement_type": "leases.agreement_type",
-            "agreement_number": "leases.agreement_number"
-          }
-        }
+        template_structure: formData.template_structure
       };
 
       let error;
