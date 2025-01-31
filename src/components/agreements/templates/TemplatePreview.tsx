@@ -1,9 +1,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { TextStyle, Table } from "@/types/agreement.types";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface TemplatePreviewProps {
   content: string;
@@ -24,9 +26,20 @@ export const TemplatePreview = ({
   },
   tables = []
 }: TemplatePreviewProps) => {
+  const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
+  const [showVariables, setShowVariables] = useState(true);
+
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
     return arabicPattern.test(text);
+  };
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => 
+      prev.includes(sectionId) 
+        ? prev.filter(id => id !== sectionId)
+        : [...prev, sectionId]
+    );
   };
 
   const processContent = (text: string) => {
@@ -34,15 +47,33 @@ export const TemplatePreview = ({
     const dirAttribute = isArabic ? 'rtl' : 'ltr';
 
     // Process template variables with enhanced styling
-    let processedContent = text.replace(
-      /{{(.*?)}}/g,
-      '<span class="template-variable bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-mono text-sm" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
-    );
+    let processedContent = text;
+    
+    if (showVariables) {
+      processedContent = processedContent.replace(
+        /{{(.*?)}}/g,
+        '<span class="template-variable bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-mono text-sm" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
+      );
+    }
 
-    // Add section styling
+    // Add section styling with collapsible functionality
     processedContent = processedContent.replace(
-      /<h1>/g,
-      '<h1 class="text-2xl font-bold mb-6 mt-8 text-gray-900 border-b pb-2">'
+      /<h1>(.*?)<\/h1>/g,
+      (match, content) => `
+        <div class="section-header">
+          <h1 class="text-2xl font-bold mb-6 mt-8 text-gray-900 border-b pb-2 flex items-center justify-between cursor-pointer" onclick="toggleSection('${content.replace(/\s+/g, '-')}')">
+            ${content}
+            <span class="section-toggle">
+              ${collapsedSections.includes(content.replace(/\s+/g, '-')) ? '▼' : '▲'}
+            </span>
+          </h1>
+          <div class="section-content ${collapsedSections.includes(content.replace(/\s+/g, '-')) ? 'hidden' : ''}">
+      `
+    );
+    
+    processedContent = processedContent.replace(
+      /<\/h1>/g,
+      '</h1></div></div>'
     );
     
     processedContent = processedContent.replace(
@@ -76,9 +107,29 @@ export const TemplatePreview = ({
   return (
     <div className="space-y-6">
       <DialogHeader>
-        <DialogTitle className="text-xl font-semibold">
-          {isArabic ? "معاينة النموذج" : "Template Preview"}
-        </DialogTitle>
+        <div className="flex items-center justify-between">
+          <DialogTitle className="text-xl font-semibold">
+            {isArabic ? "معاينة النموذج" : "Template Preview"}
+          </DialogTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowVariables(!showVariables)}
+            className="flex items-center gap-2"
+          >
+            {showVariables ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Hide Variables
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                Show Variables
+              </>
+            )}
+          </Button>
+        </div>
       </DialogHeader>
       
       {missingVariables.length > 0 && (
