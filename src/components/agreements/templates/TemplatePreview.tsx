@@ -20,7 +20,7 @@ export const TemplatePreview = ({
     italic: false,
     underline: false,
     fontSize: 14,
-    alignment: 'left'
+    alignment: 'right'
   },
   tables = []
 }: TemplatePreviewProps) => {
@@ -30,6 +30,16 @@ export const TemplatePreview = ({
   };
 
   const isArabic = containsArabic(content);
+
+  // Process template variables to preserve their styling while rendering HTML
+  const processContent = (htmlContent: string) => {
+    // Replace template variables with styled spans
+    const processedContent = htmlContent.replace(
+      /{{(.*?)}}/g,
+      '<span class="template-variable">{{$1}}</span>'
+    );
+    return processedContent;
+  };
 
   return (
     <div className="space-y-6">
@@ -71,68 +81,42 @@ export const TemplatePreview = ({
             direction: isArabic ? 'rtl' : 'ltr',
             fontSize: `${textStyle.fontSize}px`
           }}
-        >
-          {content.split('\n').map((line, index) => {
-            const isVariable = line.trim().match(/{{.*?}}/g);
-            const parts = isVariable ? 
-              line.split(/({{.*?}})/g) : 
-              [line];
+          dangerouslySetInnerHTML={{ 
+            __html: processContent(content)
+          }}
+        />
 
-            return (
-              <div 
-                key={index} 
-                className={cn(
-                  "mb-6",
-                  line.trim().length === 0 && "h-6"
-                )}
-              >
-                {parts.map((part, partIndex) => (
-                  <span
-                    key={partIndex}
-                    className={cn(
-                      part.startsWith('{{') && part.endsWith('}}') && 
-                      "text-primary font-semibold bg-primary/5 px-1.5 py-0.5 rounded"
-                    )}
-                  >
-                    {part}
-                  </span>
-                ))}
-              </div>
-            );
-          })}
-
-          {tables.map((table, tableIndex) => (
-            <table 
-              key={tableIndex}
-              className="w-full my-4 border-collapse"
-              style={table.style}
-            >
-              <tbody>
-                {table.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {row.cells.map((cell, cellIndex) => (
-                      <td 
-                        key={cellIndex}
-                        className="border border-gray-300 p-2"
-                        style={{
-                          ...(cell.style && {
-                            fontWeight: cell.style.bold ? 'bold' : 'normal',
-                            fontStyle: cell.style.italic ? 'italic' : 'normal',
-                            textDecoration: cell.style.underline ? 'underline' : 'none',
-                            fontSize: `${cell.style.fontSize}px`,
-                            textAlign: cell.style.alignment
-                          })
-                        }}
-                      >
-                        {cell.content}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ))}
-        </div>
+        {tables.map((table, tableIndex) => (
+          <table 
+            key={tableIndex}
+            className="w-full my-4 border-collapse"
+            style={table.style}
+          >
+            <tbody>
+              {table.rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.cells.map((cell, cellIndex) => (
+                    <td 
+                      key={cellIndex}
+                      className="border border-gray-300 p-2"
+                      style={{
+                        ...(cell.style && {
+                          fontWeight: cell.style.bold ? 'bold' : 'normal',
+                          fontStyle: cell.style.italic ? 'italic' : 'normal',
+                          textDecoration: cell.style.underline ? 'underline' : 'none',
+                          fontSize: `${cell.style.fontSize}px`,
+                          textAlign: cell.style.alignment
+                        })
+                      }}
+                    >
+                      {cell.content}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ))}
       </ScrollArea>
     </div>
   );
