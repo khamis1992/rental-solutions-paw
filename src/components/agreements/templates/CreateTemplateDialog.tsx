@@ -241,37 +241,39 @@ export const CreateTemplateDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
-            {selectedTemplate ? "Edit Template" : "Create New Template"}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="grid grid-cols-12 gap-4 h-full">
+      <DialogContent className="max-w-7xl h-[90vh] p-0 gap-0">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+          <DialogHeader className="p-6">
+            <DialogTitle className="text-2xl font-bold">
+              {selectedTemplate ? "Edit Template" : "Create New Template"}
+            </DialogTitle>
+          </DialogHeader>
+        </div>
+
+        <div className="grid grid-cols-12 h-[calc(90vh-80px)]">
           {/* Left Sidebar - Variables */}
-          <div className="col-span-2 border-r p-4 bg-background/95 rounded-lg shadow-sm">
-            <h3 className="font-semibold mb-4">Template Variables</h3>
-            <VariablePalette
-              onVariableSelect={handleVariableSelect}
-              currentContent={formData.content}
-              availableVariables={defaultVariableGroups}
-            />
+          <div className="col-span-2 border-r bg-muted/10">
+            <div className="p-4 sticky top-0">
+              <h3 className="font-semibold mb-4 text-sm">Template Variables</h3>
+              <VariablePalette
+                onVariableSelect={handleVariableSelect}
+                currentContent={formData.content}
+                availableVariables={defaultVariableGroups}
+              />
+            </div>
           </div>
 
           {/* Main Content Area */}
-          <div className="col-span-8">
-            <ScrollArea className="h-full pr-4">
-              <form onSubmit={handleSubmit} className="space-y-6 pb-6">
+          <div className="col-span-8 min-h-0">
+            <ScrollArea className="h-full">
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-medium">Template Name</Label>
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full"
                       placeholder="Enter template name"
                       required
@@ -302,9 +304,7 @@ export const CreateTemplateDialog = ({
                   <Input
                     id="description"
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full"
                     placeholder="Enter template description"
                   />
@@ -333,16 +333,14 @@ export const CreateTemplateDialog = ({
                   <Input
                     type="text"
                     value={formData.agreement_duration}
-                    onChange={(e) =>
-                      setFormData({ ...formData, agreement_duration: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, agreement_duration: e.target.value })}
                     className="w-full"
                     placeholder="e.g., 12 months"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center mb-2">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
                     <Label className="text-sm font-medium">Content</Label>
                     <div className="flex items-center gap-2">
                       <Input
@@ -364,7 +362,7 @@ export const CreateTemplateDialog = ({
                     </div>
                   </div>
 
-                  <div className="bg-background rounded-lg p-4 shadow-sm">
+                  <div className="bg-card rounded-lg shadow-sm">
                     <RichTextControls
                       style={formData.template_structure.textStyle}
                       onStyleChange={handleStyleChange}
@@ -381,13 +379,13 @@ export const CreateTemplateDialog = ({
                         onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                         modules={modules}
                         formats={formats}
-                        className="bg-white min-h-[400px] rounded border"
+                        className="bg-white rounded border min-h-[400px]"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
@@ -408,14 +406,16 @@ export const CreateTemplateDialog = ({
             </ScrollArea>
           </div>
 
-          {/* Right Sidebar - Table of Contents */}
-          <div className="col-span-2 border-l p-4 bg-background/95 rounded-lg shadow-sm">
-            <h3 className="font-semibold mb-4">Document Structure</h3>
-            <TableOfContents
-              sections={[]}  // Extract sections from content
-              onSectionClick={() => {}}
-              activeSection=""
-            />
+          {/* Right Sidebar - Document Structure */}
+          <div className="col-span-2 border-l bg-muted/10">
+            <div className="p-4 sticky top-0">
+              <h3 className="font-semibold mb-4 text-sm">Document Structure</h3>
+              <TableOfContents
+                sections={[]}  // Extract sections from content
+                onSectionClick={() => {}}
+                activeSection=""
+              />
+            </div>
           </div>
         </div>
       </DialogContent>
