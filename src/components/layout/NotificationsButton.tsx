@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CarFront, Calendar, AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 
 export const NotificationsButton = () => {
   const { data: alerts } = useQuery({
@@ -28,7 +28,8 @@ export const NotificationsButton = () => {
             ),
             customer:customer_id (
               full_name
-            )
+            ),
+            created_at
           `)
           .gt("end_date", new Date().toISOString())
           .eq("status", "active"),
@@ -37,6 +38,7 @@ export const NotificationsButton = () => {
           .from("payment_schedules")
           .select(`
             id,
+            created_at,
             lease:lease_id (
               customer:customer_id (
                 full_name
@@ -50,6 +52,7 @@ export const NotificationsButton = () => {
           .from("maintenance")
           .select(`
             id,
+            created_at,
             vehicle:vehicle_id (
               id, make, model, year, license_plate
             )
@@ -70,6 +73,18 @@ export const NotificationsButton = () => {
     (alerts?.overdueVehicles?.length || 0) + 
     (alerts?.overduePayments?.length || 0) + 
     (alerts?.maintenanceAlerts?.length || 0);
+
+  const formatTimeAgo = (dateStr: string) => {
+    try {
+      const date = parseISO(dateStr);
+      if (!isValid(date)) {
+        return "Invalid date";
+      }
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
 
   const AlertSection = ({ 
     title, 
@@ -124,7 +139,7 @@ export const NotificationsButton = () => {
                 `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model}`}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
+              {alert.created_at ? formatTimeAgo(alert.created_at) : "Date not available"}
             </p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
