@@ -3,7 +3,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ChevronDown, ChevronUp, Eye, EyeOff, List, Maximize, Minimize } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { TextStyle, Table } from "@/types/agreement.types";
+import { TextStyle, Table, TemplateLayout } from "@/types/agreement.types";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { VariablePalette } from "./variables/VariablePalette";
@@ -14,11 +14,12 @@ interface TemplatePreviewProps {
   missingVariables?: string[];
   textStyle?: TextStyle;
   tables?: Table[];
+  layout?: TemplateLayout;
   onContentChange?: (content: string) => void;
 }
 
-export const TemplatePreview = ({ 
-  content, 
+export const TemplatePreview = ({
+  content,
   missingVariables = [],
   textStyle = {
     bold: false,
@@ -28,6 +29,7 @@ export const TemplatePreview = ({
     alignment: 'left'
   },
   tables = [],
+  layout,
   onContentChange
 }: TemplatePreviewProps) => {
   const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
@@ -156,6 +158,91 @@ export const TemplatePreview = ({
   const isArabic = containsArabic(content);
   const processedContent = processContent(content);
 
+  const renderLayout = () => {
+    return (
+      <>
+        {layout?.watermark?.enabled && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+            style={{ opacity: layout.watermark.opacity }}
+          >
+            <div className="transform -rotate-45 text-gray-200 text-6xl font-bold">
+              {layout.watermark.text}
+            </div>
+          </div>
+        )}
+        
+        {layout?.letterhead?.enabled && (
+          <div 
+            className="w-full bg-gray-50 border-b"
+            style={{ height: `${layout.letterhead.height}px` }}
+          >
+            {layout.letterhead.content}
+          </div>
+        )}
+
+        {layout?.logo?.enabled && layout.logo.url && (
+          <div className={cn(
+            "py-4",
+            {
+              "text-left": layout.logo.position === "left",
+              "text-center": layout.logo.position === "center",
+              "text-right": layout.logo.position === "right"
+            }
+          )}>
+            <img 
+              src={layout.logo.url} 
+              alt="Company Logo"
+              style={{ 
+                height: `${layout.logo.size}px`,
+                display: 'inline-block'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Main content */}
+        <div 
+          ref={editorRef}
+          className={cn(
+            "p-12 mx-auto max-w-[800px]",
+            isArabic ? "font-arabic" : "font-serif",
+            "leading-relaxed text-gray-700",
+            {
+              'font-bold': textStyle.bold,
+              'italic': textStyle.italic,
+              'underline': textStyle.underline,
+              'text-left': !isArabic && textStyle.alignment === 'left',
+              'text-center': textStyle.alignment === 'center',
+              'text-right': isArabic || textStyle.alignment === 'right',
+              'text-justify': textStyle.alignment === 'justify'
+            }
+          )}
+          style={{
+            direction: isArabic ? 'rtl' : 'ltr',
+            fontSize: `${textStyle.fontSize}px`
+          }}
+          dangerouslySetInnerHTML={{ __html: processedContent }}
+          contentEditable={!!onContentChange}
+          onInput={(e) => onContentChange?.(e.currentTarget.innerHTML)}
+        />
+
+        {/* Page numbering */}
+        {layout?.pageNumbering?.enabled && (
+          <div className={cn(
+            "w-full text-center text-gray-500 text-sm py-4",
+            {
+              "mt-auto": layout.pageNumbering.position === "bottom",
+              "mb-auto": layout.pageNumbering.position === "top"
+            }
+          )}>
+            Page 1
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <div className={cn(
       "space-y-6 flex gap-4",
@@ -268,70 +355,9 @@ export const TemplatePreview = ({
           <ScrollArea className={cn(
             "rounded-md border bg-white shadow-sm",
             isFullscreen ? "h-[calc(100vh-8rem)]" : "h-[600px]",
-            "flex-1"
+            "flex-1 relative"
           )}>
-            <div 
-              ref={editorRef}
-              className={cn(
-                "p-12 mx-auto max-w-[800px]",
-                isArabic ? "font-arabic" : "font-serif",
-                "leading-relaxed text-gray-700",
-                {
-                  'font-bold': textStyle.bold,
-                  'italic': textStyle.italic,
-                  'underline': textStyle.underline,
-                  'text-left': !isArabic && textStyle.alignment === 'left',
-                  'text-center': textStyle.alignment === 'center',
-                  'text-right': isArabic || textStyle.alignment === 'right',
-                  'text-justify': textStyle.alignment === 'justify'
-                }
-              )}
-              style={{
-                direction: isArabic ? 'rtl' : 'ltr',
-                fontSize: `${textStyle.fontSize}px`
-              }}
-              dangerouslySetInnerHTML={{ __html: processedContent }}
-              contentEditable={!!onContentChange}
-              onInput={(e) => onContentChange?.(e.currentTarget.innerHTML)}
-            />
-
-          {tables.map((table, tableIndex) => (
-            <table 
-              key={tableIndex}
-              className="w-full my-6 border-collapse bg-white"
-              dir={isArabic ? "rtl" : "ltr"}
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                borderSpacing: '0',
-                direction: isArabic ? 'rtl' : 'ltr'
-              }}
-            >
-              <tbody>
-                {table.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
-                    {row.cells.map((cell, cellIndex) => (
-                      <td 
-                        key={cellIndex}
-                        className="border border-gray-200 p-3 text-sm"
-                        style={{
-                          ...(cell.style && {
-                            fontWeight: cell.style.bold ? 'bold' : 'normal',
-                            fontStyle: cell.style.italic ? 'italic' : 'normal',
-                            textDecoration: cell.style.underline ? 'underline' : 'none',
-                            fontSize: `${cell.style.fontSize}px`,
-                            textAlign: isArabic ? 'right' : cell.style.alignment
-                          })
-                        }}
-                      >
-                        {cell.content}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ))}
+            {renderLayout()}
           </ScrollArea>
         </div>
       </div>

@@ -20,6 +20,40 @@ export interface Table {
   };
 }
 
+export interface TemplateLayout {
+  letterhead?: {
+    enabled: boolean;
+    height: number;
+    content?: string;
+  };
+  logo?: {
+    enabled: boolean;
+    position: 'left' | 'center' | 'right';
+    size: number;
+    url?: string;
+  };
+  watermark?: {
+    enabled: boolean;
+    text: string;
+    opacity: number;
+  };
+  pageNumbering?: {
+    enabled: boolean;
+    position: 'top' | 'bottom';
+    format: 'numeric' | 'roman';
+  };
+  header?: {
+    enabled: boolean;
+    content: string;
+    height: number;
+  };
+  footer?: {
+    enabled: boolean;
+    content: string;
+    height: number;
+  };
+}
+
 export interface Template {
   id: string;
   name: string;
@@ -39,6 +73,7 @@ export interface Template {
   template_structure: {
     textStyle: TextStyle;
     tables: Table[];
+    layout: TemplateLayout;
   };
   template_sections: any[];
   variable_mappings: Record<string, any>;
