@@ -42,16 +42,6 @@ export interface TemplateLayout {
     position: 'top' | 'bottom';
     format: 'numeric' | 'roman';
   };
-  header?: {
-    enabled: boolean;
-    content: string;
-    height: number;
-  };
-  footer?: {
-    enabled: boolean;
-    content: string;
-    height: number;
-  };
 }
 
 export interface Template {
@@ -77,87 +67,4 @@ export interface Template {
   };
   template_sections: any[];
   variable_mappings: Record<string, any>;
-}
-
-export type AgreementType = 'short_term' | 'lease_to_own';
-
-export type LeaseStatus = 
-  | 'pending_payment'
-  | 'pending_deposit'
-  | 'active'
-  | 'closed'
-  | 'terminated'
-  | 'cancelled';
-
-export type PaymentStatus = 
-  | 'pending'
-  | 'completed'
-  | 'failed'
-  | 'cancelled'
-  | 'refunded';
-
-export interface AgreementWithRelations extends Agreement {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
-export interface Agreement {
-  id: string;
-  agreement_number: string;
-  agreement_type: AgreementType;
-  customer_id: string;
-  vehicle_id: string;
-  start_date: string | null;
-  end_date: string | null;
-  status: LeaseStatus;
-  total_amount: number;
-  initial_mileage: number;
-  return_mileage: number | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  rent_amount: number;
-  remaining_amount: number;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
-export interface Payment {
-  id: string;
-  lease_id: string;
-  amount: number;
-  amount_paid: number;
-  balance: number;
-  payment_date: string | null;
-  transaction_id: string | null;
-  payment_method: string;
-  status: PaymentStatus;
-  description: string;
-  type: string;
-  late_fine_amount: number;
-  days_overdue: number;
-  is_recurring?: boolean;
-  security_deposit_id?: string;
-  created_at: string;
-  updated_at: string;
 }
