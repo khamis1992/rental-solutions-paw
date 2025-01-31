@@ -1,14 +1,12 @@
+"use client";
+
 import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 
-export interface TooltipProps {
-  content?: string;
-  children: React.ReactNode;
-  className?: string;
-  side?: "top" | "right" | "bottom" | "left";
-  align?: "start" | "center" | "end";
-}
+const TooltipProvider = TooltipPrimitive.Provider;
+const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipContent = TooltipPrimitive.Content;
 
 const Tooltip = ({
   children,
@@ -16,7 +14,13 @@ const Tooltip = ({
   className,
   side = "top",
   align = "center",
-}: TooltipProps) => {
+}: {
+  children: React.ReactNode;
+  content?: React.ReactNode;
+  className?: string;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+}) => {
   return (
     <TooltipPrimitive.Provider>
       <TooltipPrimitive.Root>
@@ -38,4 +42,9 @@ const Tooltip = ({
   );
 };
 
-export { Tooltip };
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider
+};
