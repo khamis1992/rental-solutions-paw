@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { VariablePalette } from "./variables/VariablePalette";
 import { defaultVariableGroups } from "./variables/variableGroups";
+import { StyleControls } from "./styling/StyleControls";
 
 interface TemplatePreviewProps {
   content: string;
@@ -16,6 +17,7 @@ interface TemplatePreviewProps {
   tables?: Table[];
   layout?: TemplateLayout;
   onContentChange?: (content: string) => void;
+  onStyleChange?: (style: TextStyle) => void;
 }
 
 export const TemplatePreview = ({
@@ -30,7 +32,8 @@ export const TemplatePreview = ({
   },
   tables = [],
   layout,
-  onContentChange
+  onContentChange,
+  onStyleChange
 }: TemplatePreviewProps) => {
   const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
   const [showVariables, setShowVariables] = useState(true);
@@ -316,17 +319,24 @@ export const TemplatePreview = ({
           </div>
         </DialogHeader>
 
-      {missingVariables.length > 0 && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {isArabic ? 
-              "المتغيرات التالية مفقودة: " + missingVariables.join("، ") :
-              "The following variables are missing: " + missingVariables.join(", ")
-            }
-          </AlertDescription>
-        </Alert>
-      )}
+        {onStyleChange && (
+          <StyleControls
+            style={textStyle}
+            onStyleChange={onStyleChange}
+          />
+        )}
+
+        {missingVariables.length > 0 && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {isArabic ? 
+                "المتغيرات التالية مفقودة: " + missingVariables.join("، ") :
+                "The following variables are missing: " + missingVariables.join(", ")
+              }
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex gap-6 mt-4">
           {showToc && (
