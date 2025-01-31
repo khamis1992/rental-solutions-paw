@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { VariablePalette } from "./variables/VariablePalette";
 import { defaultVariableGroups } from "./variables/variableGroups";
 import { StyleControls } from "./styling/StyleControls";
+import { ExportButtons } from "./ExportButtons";
 
 interface TemplatePreviewProps {
   content: string;
@@ -270,33 +271,10 @@ export const TemplatePreview = ({
               {isArabic ? "معاينة النموذج" : "Template Preview"}
             </DialogTitle>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowToc(!showToc)}
-                className="flex items-center gap-2"
-              >
-                <List className="h-4 w-4" />
-                {showToc ? "Hide TOC" : "Show TOC"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowVariables(!showVariables)}
-                className="flex items-center gap-2"
-              >
-                {showVariables ? (
-                  <>
-                    <EyeOff className="h-4 w-4" />
-                    Hide Variables
-                  </>
-                ) : (
-                  <>
-                    <Eye className="h-4 w-4" />
-                    Show Variables
-                  </>
-                )}
-              </Button>
+              <ExportButtons 
+                content={processedContent}
+                filename={`template-${new Date().toISOString().split('T')[0]}`}
+              />
               <Button
                 variant="outline"
                 size="sm"
