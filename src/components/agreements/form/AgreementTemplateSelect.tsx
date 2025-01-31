@@ -20,6 +20,7 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
   const { data: templates, isLoading } = useQuery({
     queryKey: ["agreement-templates"],
     queryFn: async () => {
+      console.log("Fetching templates...");
       const { data, error } = await supabase
         .from("agreement_templates")
         .select("*")
@@ -35,19 +36,8 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
         return [];
       }
 
-      return (data || []).map(template => ({
-        ...template,
-        template_structure: {
-          textStyle: {
-            bold: false,
-            italic: false,
-            underline: false,
-            fontSize: 14,
-            alignment: 'left'
-          },
-          tables: []
-        }
-      })) as Template[];
+      console.log("Fetched templates:", data);
+      return data as Template[];
     },
   });
 
@@ -129,4 +119,4 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       </Select>
     </div>
   );
-}
+};

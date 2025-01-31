@@ -1,33 +1,47 @@
-import { VehicleLocationCell } from './VehicleLocationCell';
-import { VehicleInsuranceCell } from './VehicleInsuranceCell';
-import { Vehicle } from '@/types/vehicle';
+import { TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Vehicle } from "@/types/vehicle";
+import { VehicleStatusCell } from "./VehicleStatusCell";
+import { VehicleLocationCell } from "./VehicleLocationCell";
+import { VehicleInsuranceCell } from "./VehicleInsuranceCell";
+import { Link } from "react-router-dom";
 
-export interface VehicleTableContentProps {
+interface VehicleTableContentProps {
   vehicles: Vehicle[];
-  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
-export const VehicleTableContent = ({ vehicles, onSelectionChange }: VehicleTableContentProps) => {
+export const VehicleTableContent = ({ vehicles }: VehicleTableContentProps) => {
   return (
-    <div>
+    <TableBody>
       {vehicles.map((vehicle) => (
-        <div key={vehicle.id}>
-          <VehicleLocationCell 
-            vehicleId={vehicle.id}
-            location={vehicle.location || ''}
-            isEditing={false}
-            onEditStart={() => {}}
-            onEditEnd={() => {}}
-          />
-          <VehicleInsuranceCell 
-            vehicleId={vehicle.id}
-            insuranceProvider={vehicle.insurance_company || ''}
-            isEditing={false}
-            onEditStart={() => {}}
-            onEditEnd={() => {}}
-          />
-        </div>
+        <TableRow key={vehicle.id}>
+          <TableCell>
+            <Link 
+              to={`/vehicles/${vehicle.id}`}
+              className="text-primary hover:underline"
+            >
+              {vehicle.license_plate}
+            </Link>
+          </TableCell>
+          <TableCell>{vehicle.make}</TableCell>
+          <TableCell>{vehicle.model}</TableCell>
+          <TableCell>{vehicle.year}</TableCell>
+          <TableCell>{vehicle.mileage}</TableCell>
+          <TableCell>
+            <VehicleStatusCell 
+              status={vehicle.status} 
+              vehicleId={vehicle.id}
+            />
+          </TableCell>
+          <TableCell>
+            <VehicleLocationCell location={vehicle.location} />
+          </TableCell>
+          <TableCell>
+            <VehicleInsuranceCell 
+              insuranceCompany={vehicle.insurance_company} 
+            />
+          </TableCell>
+        </TableRow>
       ))}
-    </div>
+    </TableBody>
   );
 };

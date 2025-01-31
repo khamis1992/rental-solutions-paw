@@ -1,25 +1,22 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import mammoth from 'mammoth';
 import { Save, Upload } from "lucide-react";
 import { Template } from "@/types/agreement.types";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -46,7 +43,7 @@ export const CreateTemplateDialog = ({
         italic: boolean;
         underline: boolean;
         fontSize: number;
-        alignment: 'right';
+        alignment: 'left' | 'center' | 'right' | 'justify';
       };
       tables: any[];
     };
@@ -54,7 +51,7 @@ export const CreateTemplateDialog = ({
     name: selectedTemplate?.name || "",
     description: selectedTemplate?.description || "",
     content: selectedTemplate?.content || "",
-    language: "arabic",
+    language: selectedTemplate?.language as "english" | "arabic" || "english",
     agreement_type: selectedTemplate?.agreement_type || "short_term",
     agreement_duration: selectedTemplate?.agreement_duration || "12 months",
     template_structure: {
@@ -63,7 +60,7 @@ export const CreateTemplateDialog = ({
         italic: false,
         underline: false,
         fontSize: 14,
-        alignment: 'right'
+        alignment: 'left'
       },
       tables: []
     }
@@ -74,19 +71,10 @@ export const CreateTemplateDialog = ({
     setIsSubmitting(true);
 
     try {
-      // Sanitize and prepare content for storage
-      const sanitizedContent = formData.content
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&amp;/g, '&');
-
       const { error } = await supabase
         .from("agreement_templates")
         .insert({
           ...formData,
-          content: sanitizedContent,
           is_active: true,
           template_structure: JSON.stringify(formData.template_structure)
         });
@@ -115,38 +103,52 @@ export const CreateTemplateDialog = ({
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
-        transformDocument: (element) => {
-          if (element.type === 'paragraph' || element.type === 'table') {
-            element.alignment = 'right';
-            element.attributes = { 
-              ...element.attributes, 
-              dir: 'rtl', 
-              class: 'mammoth-content' 
-            };
-          }
-          return element;
-        }
+        preserveStyles: true,
+        styleMap: [
+          "p[style-name='Heading 1'] => h1:fresh",
+          "p[style-name='Heading 2'] => h2:fresh",
+          "p[style-name='Heading 3'] => h3:fresh",
+          "b => strong",
+          "i => em",
+          "u => u",
+          "strike => s",
+          "p[dir='rtl'] => p.rtl:fresh",
+          "table => table.agreement-table:fresh",
+          "tr => tr:fresh",
+          "td => td:fresh",
+          "p[style-name='RTL'] => p.rtl:fresh",
+          "r[style-name='RTL'] => span.rtl:fresh"
+        ]
       });
       
+      // Process the HTML to enhance RTL support and template variables
       let processedHtml = result.value;
-      
-      // Ensure proper RTL wrapper and enhance table styling
-      processedHtml = `<div dir="rtl" style="text-align: right;">${processedHtml}</div>`;
-      
-      // Enhance table styling
-      processedHtml = processedHtml
-        .replace(/<table/g, '<table style="width: 100%; direction: rtl;"')
-        .replace(/<td/g, '<td style="text-align: right; padding: 0.75rem;"');
+
+      // Add RTL class and dir attribute to paragraphs containing Arabic text
+      processedHtml = processedHtml.replace(
+        /(<(?:p|div|span)(?:[^>]*)>)((?:[^<]*[\u0600-\u06FF][^<]*))<\/(?:p|div|span)>/g,
+        (_, openTag, content) => {
+          const hasClass = openTag.includes('class="');
+          const newOpenTag = hasClass ? 
+            openTag.replace('class="', 'class="rtl ') :
+            openTag.replace('>', ' class="rtl" dir="rtl">');
+          return `${newOpenTag}${content}</p>`;
+        }
+      );
 
       // Style template variables
       processedHtml = processedHtml
         .replace(/{{/g, '<span class="template-variable">{{')
         .replace(/}}/g, '}}</span>');
+
+      // Enhance table styling
+      processedHtml = processedHtml
+        .replace(/<table/g, '<table class="agreement-table" style="width: 100%; direction: inherit;"')
+        .replace(/<td/g, '<td style="text-align: inherit; padding: 0.75rem;"');
       
       setFormData(prev => ({
         ...prev,
-        content: processedHtml,
-        language: 'arabic'
+        content: processedHtml
       }));
 
       toast.success("Document imported successfully");
@@ -161,7 +163,8 @@ export const CreateTemplateDialog = ({
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': ['right', 'center', 'justify'] }],
+      [{ 'align': [] }],
+      [{ 'direction': 'rtl' }],
       ['table'],
       ['clean']
     ],
@@ -171,7 +174,7 @@ export const CreateTemplateDialog = ({
     'header',
     'bold', 'italic', 'underline',
     'list', 'bullet',
-    'align',
+    'align', 'direction',
     'table'
   ];
 
@@ -230,6 +233,24 @@ export const CreateTemplateDialog = ({
             </div>
 
             <div className="space-y-2">
+              <Label>Language</Label>
+              <Select
+                value={formData.language}
+                onValueChange={(value: "english" | "arabic") =>
+                  setFormData({ ...formData, language: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="english">English</SelectItem>
+                  <SelectItem value="arabic">Arabic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label>Agreement Duration</Label>
               <Input
                 type="text"
@@ -262,14 +283,17 @@ export const CreateTemplateDialog = ({
                   </Button>
                 </div>
               </div>
-              <div className="rtl-editor-container">
+              <div 
+                className={formData.language === "arabic" ? "rtl" : "ltr"}
+                dir={formData.language === "arabic" ? "rtl" : "ltr"}
+              >
                 <ReactQuill
                   theme="snow"
                   value={formData.content}
                   onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                   modules={modules}
                   formats={formats}
-                  className="bg-white"
+                  className="bg-white min-h-[400px]"
                 />
               </div>
             </div>
