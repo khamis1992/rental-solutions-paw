@@ -2,157 +2,178 @@ import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-
-type Notification = {
-  id: string;
-  message: string;
-  created_at: string;
-  type: 'overdue' | 'maintenance' | 'payment';
-};
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CarFront, Calendar, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const NotificationsButton = () => {
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications'],
+  const { data: alerts } = useQuery({
+    queryKey: ["notifications-alerts"],
     queryFn: async () => {
-      try {
-        const now = new Date().toISOString();
-        
-        // Fetch overdue vehicles with error handling
-        const { data: overdueVehicles, error: overdueError } = await supabase
-          .from('leases')
+      const [overdueVehicles, overduePayments, maintenanceAlerts] = await Promise.all([
+        supabase
+          .from("leases")
           .select(`
             id,
-            end_date,
-            vehicles(
-              make,
-              model,
-              year
+            vehicle:vehicle_id (
+              id, make, model, year, license_plate
+            ),
+            customer:customer_id (
+              full_name
             )
           `)
-          .lt('end_date', now)
-          .eq('status', 'active')
-          .limit(3);
+          .gt("end_date", new Date().toISOString())
+          .eq("status", "active"),
 
-        if (overdueError) {
-          console.error("Error fetching overdue vehicles:", overdueError);
-          toast.error("Failed to fetch overdue vehicles");
-          return [];
-        }
-
-        // Fetch maintenance alerts
-        const { data: maintenanceAlerts, error: maintenanceError } = await supabase
-          .from('maintenance')
+        supabase
+          .from("payment_schedules")
           .select(`
             id,
-            scheduled_date,
-            vehicles(
-              make,
-              model,
-              year
-            ),
-            service_type
-          `)
-          .eq('status', 'scheduled')
-          .lte('scheduled_date', now)
-          .limit(3);
-
-        if (maintenanceError) {
-          console.error("Error fetching maintenance alerts:", maintenanceError);
-          toast.error("Failed to fetch maintenance alerts");
-          return [];
-        }
-
-        // Fetch overdue payments
-        const { data: overduePayments, error: paymentsError } = await supabase
-          .from('payment_schedules')
-          .select(`
-            id,
-            due_date,
-            amount,
-            leases(
-              vehicles(
-                make,
-                model,
-                year
+            lease:lease_id (
+              customer:customer_id (
+                full_name
               )
             )
           `)
-          .lt('due_date', now)
-          .eq('status', 'pending')
-          .limit(3);
+          .lt("due_date", new Date().toISOString())
+          .eq("status", "pending"),
 
-        if (paymentsError) {
-          console.error("Error fetching overdue payments:", paymentsError);
-          toast.error("Failed to fetch overdue payments");
-          return [];
-        }
+        supabase
+          .from("maintenance")
+          .select(`
+            id,
+            vehicle:vehicle_id (
+              id, make, model, year, license_plate
+            )
+          `)
+          .eq("status", "scheduled")
+          .lt("scheduled_date", new Date().toISOString()),
+      ]);
 
-        const formattedNotifications: Notification[] = [
-          ...(overdueVehicles?.filter(vehicle => vehicle.vehicles).map(vehicle => ({
-            id: `overdue-${vehicle.id}`,
-            message: `${vehicle.vehicles.year} ${vehicle.vehicles.make} ${vehicle.vehicles.model} is overdue for return`,
-            created_at: vehicle.end_date,
-            type: 'overdue' as const
-          })) || []),
-          ...(maintenanceAlerts?.filter(alert => alert.vehicles).map(alert => ({
-            id: `maintenance-${alert.id}`,
-            message: `Maintenance due for ${alert.vehicles.year} ${alert.vehicles.make} ${alert.vehicles.model}: ${alert.service_type}`,
-            created_at: alert.scheduled_date,
-            type: 'maintenance' as const
-          })) || []),
-          ...(overduePayments?.filter(payment => payment.leases?.vehicles).map(payment => ({
-            id: `payment-${payment.id}`,
-            message: `Payment of ${payment.amount} overdue for ${payment.leases.vehicles.year} ${payment.leases.vehicles.make} ${payment.leases.vehicles.model}`,
-            created_at: payment.due_date,
-            type: 'payment' as const
-          })) || [])
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-        return formattedNotifications;
-      } catch (err) {
-        console.error("Error in notifications query:", err);
-        toast.error("Failed to fetch notifications");
-        return [];
-      }
+      return {
+        overdueVehicles: overdueVehicles.data || [],
+        overduePayments: overduePayments.data || [],
+        maintenanceAlerts: maintenanceAlerts.data || [],
+      };
     },
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
+
+  const totalAlerts = 
+    (alerts?.overdueVehicles?.length || 0) + 
+    (alerts?.overduePayments?.length || 0) + 
+    (alerts?.maintenanceAlerts?.length || 0);
+
+  const AlertSection = ({ 
+    title, 
+    count, 
+    alerts, 
+    icon: Icon, 
+    bgColor 
+  }: { 
+    title: string;
+    count: number;
+    alerts: any[];
+    icon: any;
+    bgColor: string;
+  }) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+        {count > 1 && (
+          <Badge variant="secondary" className="text-xs">
+            +{count - 1} more
+          </Badge>
+        )}
+      </div>
+      {alerts.slice(0, 1).map((alert) => (
+        <div
+          key={alert.id}
+          className={cn(
+            "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
+            bgColor
+          )}
+        >
+          <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", bgColor)}>
+            <Icon className="h-4 w-4" />
+          </div>
+          <div>
+            <h4 className="text-sm font-medium mb-0.5">
+              {title === "Vehicle Returns" && "Overdue Vehicle"}
+              {title === "Payment Alerts" && "Overdue Payment"}
+              {title === "Maintenance Alerts" && "Maintenance Due"}
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              {title === "Vehicle Returns" && alert.vehicle && alert.customer && 
+                `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model} - ${alert.customer.full_name}`}
+              {title === "Payment Alerts" && alert.lease?.customer && 
+                alert.lease.customer.full_name}
+              {title === "Maintenance Alerts" && alert.vehicle && 
+                `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model}`}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
-          {notifications.length > 0 && (
+          {totalAlerts > 0 && (
             <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
-              {notifications.length}
+              {totalAlerts}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[380px]">
-        {notifications.length === 0 ? (
-          <DropdownMenuItem className="text-muted-foreground">
-            No new notifications
-          </DropdownMenuItem>
-        ) : (
-          notifications.map((notification) => (
-            <DropdownMenuItem key={notification.id} className="flex flex-col items-start py-3">
-              <span className="text-sm font-medium">{notification.message}</span>
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-              </span>
-            </DropdownMenuItem>
-          ))
-        )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-6">
+                {alerts?.overdueVehicles && alerts.overdueVehicles.length > 0 && (
+                  <AlertSection
+                    title="Vehicle Returns"
+                    count={alerts.overdueVehicles.length}
+                    alerts={alerts.overdueVehicles}
+                    icon={CarFront}
+                    bgColor="border-red-200 bg-red-50 hover:bg-red-100"
+                  />
+                )}
+                {alerts?.overduePayments && alerts.overduePayments.length > 0 && (
+                  <AlertSection
+                    title="Payment Alerts"
+                    count={alerts.overduePayments.length}
+                    alerts={alerts.overduePayments}
+                    icon={AlertCircle}
+                    bgColor="border-yellow-200 bg-yellow-50 hover:bg-yellow-100"
+                  />
+                )}
+                {alerts?.maintenanceAlerts && alerts.maintenanceAlerts.length > 0 && (
+                  <AlertSection
+                    title="Maintenance Alerts"
+                    count={alerts.maintenanceAlerts.length}
+                    alerts={alerts.maintenanceAlerts}
+                    icon={Calendar}
+                    bgColor="border-blue-200 bg-blue-50 hover:bg-blue-100"
+                  />
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </DropdownMenuContent>
     </DropdownMenu>
   );
