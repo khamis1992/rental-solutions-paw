@@ -8,7 +8,13 @@ interface RichTextControlsProps {
   onInsertTable: () => void;
 }
 
-export const RichTextControls = ({ style, onStyleChange, onInsertTable }: RichTextControlsProps) => {
+export const RichTextControls = ({ style = {
+  bold: false,
+  italic: false,
+  underline: false,
+  fontSize: 14,
+  alignment: 'left'
+}, onStyleChange, onInsertTable }: RichTextControlsProps) => {
   const toggleStyle = (property: keyof TextStyle) => {
     if (property === 'bold' || property === 'italic' || property === 'underline') {
       onStyleChange({ ...style, [property]: !style[property] });

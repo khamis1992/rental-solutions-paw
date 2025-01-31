@@ -19,7 +19,7 @@ export interface Table {
   }[];
   style: {
     width: string;
-    borderCollapse: string;
+    borderCollapse: 'collapse' | 'separate';
     borderSpacing: string;
   };
 }
