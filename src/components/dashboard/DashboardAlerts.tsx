@@ -8,7 +8,7 @@ import { AlertDetailsDialog } from "./AlertDetailsDialog";
 import { AlertDetails } from "./types/alert-types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertTriangle, Clock, Bell } from "lucide-react";
 
 export function DashboardAlerts() {
   const [selectedAlert, setSelectedAlert] = useState<AlertDetails | null>(null);
@@ -89,33 +89,47 @@ export function DashboardAlerts() {
     return null;
   }
 
-  const renderAlertGroup = (title: string, alerts: AlertDetails[], count: number, groupType: string) => {
+  const renderAlertGroup = (
+    title: string, 
+    alerts: AlertDetails[], 
+    count: number, 
+    groupType: string,
+    icon: React.ReactNode,
+    badgeVariant: "destructive" | "warning" | "default" = "default"
+  ) => {
     if (!alerts.length) return null;
     
     const isExpanded = expandedGroups.includes(groupType);
     const displayAlerts = isExpanded ? alerts : [alerts[0]];
     
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+          <div className="flex items-center gap-2">
+            {icon}
+            <h3 className="text-sm font-medium">{title}</h3>
+          </div>
           {count > 1 && (
             <div className="flex items-center gap-2">
               <Badge 
-                variant="secondary" 
-                className="text-xs cursor-pointer hover:bg-secondary/80"
+                variant={badgeVariant}
+                className="text-xs cursor-pointer hover:opacity-80"
+                onClick={() => toggleGroupExpansion(groupType)}
+              >
+                {count} Alerts
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
                 onClick={() => toggleGroupExpansion(groupType)}
               >
                 {isExpanded ? (
-                  <span className="flex items-center gap-1">
-                    Show less <ChevronUp className="h-3 w-3" />
-                  </span>
+                  <ChevronUp className="h-4 w-4" />
                 ) : (
-                  <span className="flex items-center gap-1">
-                    +{count - 1} more <ChevronDown className="h-3 w-3" />
-                  </span>
+                  <ChevronDown className="h-4 w-4" />
                 )}
-              </Badge>
+              </Button>
             </div>
           )}
         </div>
@@ -127,6 +141,16 @@ export function DashboardAlerts() {
               onClick={() => handleAlertClick(alert)}
             />
           ))}
+          {!isExpanded && count > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground hover:text-primary"
+              onClick={() => toggleGroupExpansion(groupType)}
+            >
+              Show {count - 1} more alerts
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -136,10 +160,13 @@ export function DashboardAlerts() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Alerts & Notifications
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[300px] pr-4">
+          <ScrollArea className="h-[400px] pr-4">
             <div className="space-y-4">
               {renderAlertGroup(
                 "Vehicle Returns", 
@@ -151,7 +178,9 @@ export function DashboardAlerts() {
                   id: vehicle.id
                 })) || [],
                 alerts.overdueVehicles?.length || 0,
-                'vehicles'
+                'vehicles',
+                <AlertTriangle className="h-4 w-4 text-destructive" />,
+                "destructive"
               )}
 
               {renderAlertGroup(
@@ -163,7 +192,9 @@ export function DashboardAlerts() {
                   id: payment.id
                 })) || [],
                 alerts.overduePayments?.length || 0,
-                'payments'
+                'payments',
+                <Clock className="h-4 w-4 text-warning" />,
+                "warning"
               )}
 
               {renderAlertGroup(
@@ -175,7 +206,8 @@ export function DashboardAlerts() {
                   id: maintenance.id
                 })) || [],
                 alerts.maintenanceAlerts?.length || 0,
-                'maintenance'
+                'maintenance',
+                <Bell className="h-4 w-4 text-primary" />
               )}
             </div>
           </ScrollArea>

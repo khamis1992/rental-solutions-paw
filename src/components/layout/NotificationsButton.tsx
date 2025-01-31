@@ -10,8 +10,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CarFront, Calendar, AlertCircle } from "lucide-react";
+import { CarFront, Calendar, AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format, formatDistanceToNow } from "date-fns";
 
 export const NotificationsButton = () => {
   const { data: alerts } = useQuery({
@@ -75,20 +76,27 @@ export const NotificationsButton = () => {
     count, 
     alerts, 
     icon: Icon, 
-    bgColor 
+    bgColor,
+    textColor = "text-foreground",
+    badgeVariant = "default"
   }: { 
     title: string;
     count: number;
     alerts: any[];
     icon: any;
     bgColor: string;
+    textColor?: string;
+    badgeVariant?: "default" | "destructive" | "warning";
   }) => (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-        {count > 1 && (
-          <Badge variant="secondary" className="text-xs">
-            +{count - 1} more
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${textColor}`} />
+          <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+        </div>
+        {count > 0 && (
+          <Badge variant={badgeVariant} className="text-xs">
+            {count} {count === 1 ? 'Alert' : 'Alerts'}
           </Badge>
         )}
       </div>
@@ -96,20 +104,18 @@ export const NotificationsButton = () => {
         <div
           key={alert.id}
           className={cn(
-            "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer",
-            bgColor
+            "flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer group",
+            bgColor,
+            "hover:bg-accent/10"
           )}
         >
-          <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", bgColor)}>
-            <Icon className="h-4 w-4" />
-          </div>
-          <div>
+          <div className="flex-1">
             <h4 className="text-sm font-medium mb-0.5">
               {title === "Vehicle Returns" && "Overdue Vehicle"}
               {title === "Payment Alerts" && "Overdue Payment"}
               {title === "Maintenance Alerts" && "Maintenance Due"}
             </h4>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground line-clamp-2">
               {title === "Vehicle Returns" && alert.vehicle && alert.customer && 
                 `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model} - ${alert.customer.full_name}`}
               {title === "Payment Alerts" && alert.lease?.customer && 
@@ -117,9 +123,18 @@ export const NotificationsButton = () => {
               {title === "Maintenance Alerts" && alert.vehicle && 
                 `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model}`}
             </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
+            </p>
           </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
       ))}
+      {count > 1 && (
+        <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-primary">
+          View all {count} alerts
+        </Button>
+      )}
     </div>
   );
 
@@ -129,48 +144,51 @@ export const NotificationsButton = () => {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
           {totalAlerts > 0 && (
-            <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+            <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center animate-in zoom-in">
               {totalAlerts}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[380px]">
-        <Card>
-          <CardHeader>
+        <Card className="border-0 shadow-none">
+          <CardHeader className="pb-3">
             <CardTitle className="text-lg font-medium">Alerts & Notifications</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="grid gap-6">
             <ScrollArea className="h-[400px] pr-4">
-              <div className="space-y-6">
-                {alerts?.overdueVehicles && alerts.overdueVehicles.length > 0 && (
-                  <AlertSection
-                    title="Vehicle Returns"
-                    count={alerts.overdueVehicles.length}
-                    alerts={alerts.overdueVehicles}
-                    icon={CarFront}
-                    bgColor="border-red-200 bg-red-50 hover:bg-red-100"
-                  />
-                )}
-                {alerts?.overduePayments && alerts.overduePayments.length > 0 && (
-                  <AlertSection
-                    title="Payment Alerts"
-                    count={alerts.overduePayments.length}
-                    alerts={alerts.overduePayments}
-                    icon={AlertCircle}
-                    bgColor="border-yellow-200 bg-yellow-50 hover:bg-yellow-100"
-                  />
-                )}
-                {alerts?.maintenanceAlerts && alerts.maintenanceAlerts.length > 0 && (
-                  <AlertSection
-                    title="Maintenance Alerts"
-                    count={alerts.maintenanceAlerts.length}
-                    alerts={alerts.maintenanceAlerts}
-                    icon={Calendar}
-                    bgColor="border-blue-200 bg-blue-50 hover:bg-blue-100"
-                  />
-                )}
-              </div>
+              {alerts?.overdueVehicles && alerts.overdueVehicles.length > 0 && (
+                <AlertSection
+                  title="Vehicle Returns"
+                  count={alerts.overdueVehicles.length}
+                  alerts={alerts.overdueVehicles}
+                  icon={CarFront}
+                  bgColor="border-red-200 bg-red-50"
+                  textColor="text-red-500"
+                  badgeVariant="destructive"
+                />
+              )}
+              {alerts?.overduePayments && alerts.overduePayments.length > 0 && (
+                <AlertSection
+                  title="Payment Alerts"
+                  count={alerts.overduePayments.length}
+                  alerts={alerts.overduePayments}
+                  icon={AlertCircle}
+                  bgColor="border-yellow-200 bg-yellow-50"
+                  textColor="text-yellow-500"
+                  badgeVariant="warning"
+                />
+              )}
+              {alerts?.maintenanceAlerts && alerts.maintenanceAlerts.length > 0 && (
+                <AlertSection
+                  title="Maintenance Alerts"
+                  count={alerts.maintenanceAlerts.length}
+                  alerts={alerts.maintenanceAlerts}
+                  icon={Calendar}
+                  bgColor="border-blue-200 bg-blue-50"
+                  textColor="text-blue-500"
+                />
+              )}
             </ScrollArea>
           </CardContent>
         </Card>
