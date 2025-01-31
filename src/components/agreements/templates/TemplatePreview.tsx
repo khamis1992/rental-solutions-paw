@@ -33,16 +33,38 @@ export const TemplatePreview = ({
     const isArabic = containsArabic(text);
     const dirAttribute = isArabic ? 'rtl' : 'ltr';
 
-    // Process template variables while preserving direction
+    // Process template variables with enhanced styling
     let processedContent = text.replace(
       /{{(.*?)}}/g,
-      '<span class="template-variable" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
+      '<span class="template-variable bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-mono text-sm" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
     );
 
-    // Ensure paragraphs have proper direction and text alignment
+    // Add section styling
+    processedContent = processedContent.replace(
+      /<h1>/g,
+      '<h1 class="text-2xl font-bold mb-6 mt-8 text-gray-900 border-b pb-2">'
+    );
+    
+    processedContent = processedContent.replace(
+      /<h2>/g,
+      '<h2 class="text-xl font-semibold mb-4 mt-6 text-gray-800">'
+    );
+
+    // Style paragraphs with proper spacing and line height
     processedContent = processedContent.replace(
       /<p>/g,
-      `<p dir="${dirAttribute}" style="text-align: ${isArabic ? 'right' : 'left'}">`
+      `<p dir="${dirAttribute}" class="mb-4 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'}">`
+    );
+
+    // Style lists
+    processedContent = processedContent.replace(
+      /<ul>/g,
+      '<ul class="list-disc list-inside mb-4 space-y-2">'
+    );
+
+    processedContent = processedContent.replace(
+      /<ol>/g,
+      '<ol class="list-decimal list-inside mb-4 space-y-2">'
     );
 
     return processedContent;
@@ -76,7 +98,7 @@ export const TemplatePreview = ({
           className={cn(
             "p-12 mx-auto max-w-[800px]",
             isArabic ? "font-arabic" : "font-serif",
-            "leading-relaxed",
+            "leading-relaxed text-gray-700",
             {
               'font-bold': textStyle.bold,
               'italic': textStyle.italic,
@@ -97,7 +119,7 @@ export const TemplatePreview = ({
         {tables.map((table, tableIndex) => (
           <table 
             key={tableIndex}
-            className="w-full my-4 border-collapse"
+            className="w-full my-6 border-collapse bg-white"
             dir={isArabic ? "rtl" : "ltr"}
             style={{
               width: '100%',
@@ -108,11 +130,11 @@ export const TemplatePreview = ({
           >
             <tbody>
               {table.rows.map((row, rowIndex) => (
-                <tr key={rowIndex}>
+                <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
                   {row.cells.map((cell, cellIndex) => (
                     <td 
                       key={cellIndex}
-                      className="border border-gray-300 p-2"
+                      className="border border-gray-200 p-3 text-sm"
                       style={{
                         ...(cell.style && {
                           fontWeight: cell.style.bold ? 'bold' : 'normal',
