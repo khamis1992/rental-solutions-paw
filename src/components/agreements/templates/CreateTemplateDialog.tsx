@@ -71,8 +71,22 @@ export const CreateTemplateDialog = ({
   useEffect(() => {
     if (selectedTemplate) {
       setFormData({
-        ...selectedTemplate,
+        name: selectedTemplate.name,
+        description: selectedTemplate.description || "",
         content: selectedTemplate.content || getDefaultArabicTemplate(),
+        language: selectedTemplate.language as "english" | "arabic",
+        agreement_type: selectedTemplate.agreement_type,
+        agreement_duration: selectedTemplate.agreement_duration,
+        template_structure: selectedTemplate.template_structure || {
+          textStyle: {
+            bold: false,
+            italic: false,
+            underline: false,
+            fontSize: 14,
+            alignment: 'right'
+          },
+          tables: []
+        }
       });
     }
   }, [selectedTemplate]);
@@ -111,8 +125,12 @@ export const CreateTemplateDialog = ({
         throw error;
       }
 
-      // Invalidate and refetch queries
-      await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
+      // Invalidate and refetch ALL related queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["agreement-templates"] }),
+        queryClient.invalidateQueries({ queryKey: ["agreements"] }),
+        queryClient.invalidateQueries({ queryKey: ["agreement-details"] })
+      ]);
       
       toast.success(selectedTemplate ? "Template updated successfully" : "Template created successfully");
       onOpenChange(false);
