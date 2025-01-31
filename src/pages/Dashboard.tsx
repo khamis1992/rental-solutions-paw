@@ -1,65 +1,53 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
-import { DashboardStats as DashboardStatsType } from "@/types/dashboard.types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const Dashboard = () => {
-  const { data: stats } = useQuery({
+interface DashboardStatsData {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
+
+export default function Dashboard() {
+  const { data: statsData, isLoading } = useQuery<DashboardStatsData>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_dashboard_stats");
-      
+      const { data, error } = await supabase.rpc('get_dashboard_stats');
       if (error) throw error;
-      
-      const typedData = data as DashboardStatsType;
-      
-      return {
-        totalVehicles: typedData.total_vehicles,
-        availableVehicles: typedData.available_vehicles,
-        rentedVehicles: typedData.rented_vehicles,
-        maintenanceVehicles: typedData.maintenance_vehicles,
-        totalCustomers: typedData.total_customers,
-        activeRentals: typedData.active_rentals,
-        monthlyRevenue: typedData.monthly_revenue
-      };
-    },
-    staleTime: 30000,
+      return data as DashboardStatsData;
+    }
   });
 
+  if (isLoading) {
+    return <Skeleton className="h-[200px] w-full" />;
+  }
+
+  const stats = {
+    totalVehicles: statsData?.total_vehicles || 0,
+    availableVehicles: statsData?.available_vehicles || 0,
+    rentedVehicles: statsData?.rented_vehicles || 0,
+    maintenanceVehicles: statsData?.maintenance_vehicles || 0,
+    totalCustomers: statsData?.total_customers || 0,
+    activeRentals: statsData?.active_rentals || 0,
+    monthlyRevenue: statsData?.monthly_revenue || 0
+  };
+
   return (
-    <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-      <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
-        <div>
-          <WelcomeHeader />
+    <div className="space-y-6 p-6">
+      <DashboardStats {...stats} />
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="col-span-1">
+          <DashboardAlerts />
         </div>
-      </div>
-
-      <div className="grid gap-8">
-        <DashboardStats stats={stats || {
-          totalVehicles: 0,
-          availableVehicles: 0,
-          rentedVehicles: 0,
-          maintenanceVehicles: 0,
-          totalCustomers: 0,
-          activeRentals: 0,
-          monthlyRevenue: 0
-        }} />
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2">
-        <div className="col-span-2">
-          <PredictiveAnalytics />
-        </div>
-        <div className="col-span-2">
-          <RecentActivity />
-        </div>
+        {/* Add other dashboard components here */}
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

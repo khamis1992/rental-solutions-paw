@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useState } from "react";
-import { Car, Bell, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Car, Bell, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface AlertGroup {
@@ -19,55 +19,99 @@ interface AlertGroup {
 export function DashboardAlerts() {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
-  const { data: alerts } = useQuery({
+  const { data: alerts = [], isLoading } = useQuery({
     queryKey: ["dashboard-alerts"],
     queryFn: async () => {
-      const [overdueVehicles, overduePayments, maintenanceAlerts] = await Promise.all([
+      const [vehicleAlerts, paymentAlerts, maintenanceAlerts] = await Promise.all([
+        // Fetch vehicle alerts
         supabase
-          .from("leases")
+          .from('leases')
           .select(`
             id,
+            agreement_number,
+            end_date,
             vehicle:vehicle_id (
-              id, make, model, year, license_plate
+              make, model, year
             ),
             customer:customer_id (
               full_name
             )
           `)
-          .gt("end_date", new Date().toISOString())
-          .eq("status", "active"),
+          .eq('status', 'active')
+          .lte('end_date', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()),
 
+        // Fetch payment alerts
         supabase
-          .from("payment_schedules")
+          .from('unified_payments')
           .select(`
             id,
+            amount,
+            due_date,
             lease:lease_id (
+              agreement_number,
               customer:customer_id (
                 full_name
               )
             )
           `)
-          .lt("due_date", new Date().toISOString())
-          .eq("status", "pending"),
+          .eq('status', 'pending')
+          .lte('due_date', new Date().toISOString()),
 
+        // Fetch maintenance alerts
         supabase
-          .from("maintenance")
+          .from('maintenance')
           .select(`
             id,
+            service_type,
+            scheduled_date,
             vehicle:vehicle_id (
-              id, make, model, year
+              make, model, year
             )
           `)
-          .eq("status", "scheduled")
-          .lt("scheduled_date", new Date().toISOString()),
+          .eq('status', 'scheduled')
+          .lte('scheduled_date', new Date().toISOString())
       ]);
 
-      return {
-        vehicles: overdueVehicles.data || [],
-        payments: overduePayments.data || [],
-        maintenance: maintenanceAlerts.data || [],
-      };
-    },
+      const alerts: AlertGroup[] = [];
+
+      // Process vehicle alerts
+      vehicleAlerts.data?.forEach(alert => {
+        alerts.push({
+          id: alert.id,
+          icon: <Car className="h-4 w-4 text-red-500" />,
+          title: `Vehicle Return Due`,
+          description: `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model} - ${alert.customer.full_name}`,
+          type: 'vehicle',
+          severity: 'high'
+        });
+      });
+
+      // Process payment alerts
+      paymentAlerts.data?.forEach(alert => {
+        alerts.push({
+          id: alert.id,
+          icon: <Bell className="h-4 w-4 text-yellow-500" />,
+          title: `Payment Overdue`,
+          description: `Agreement ${alert.lease.agreement_number} - ${alert.lease.customer.full_name}`,
+          type: 'payment',
+          severity: 'medium'
+        });
+      });
+
+      // Process maintenance alerts
+      maintenanceAlerts.data?.forEach(alert => {
+        alerts.push({
+          id: alert.id,
+          icon: <Calendar className="h-4 w-4 text-blue-500" />,
+          title: `Maintenance Due`,
+          description: `${alert.vehicle.year} ${alert.vehicle.make} ${alert.vehicle.model} - ${alert.service_type}`,
+          type: 'maintenance',
+          severity: 'low'
+        });
+      });
+
+      return alerts;
+    }
   });
 
   const toggleSection = (section: string) => {
@@ -92,17 +136,19 @@ export function DashboardAlerts() {
   const renderAlertSection = (
     title: string,
     alerts: AlertGroup[],
-    type: 'vehicle' | 'payment' | 'maintenance',
-    count: number
+    type: 'vehicle' | 'payment' | 'maintenance'
   ) => {
+    const filteredAlerts = alerts.filter(alert => alert.type === type);
+    if (!filteredAlerts.length) return null;
+
     const isExpanded = expandedSections.includes(type);
-    const displayAlerts = isExpanded ? alerts : alerts.slice(0, 1);
+    const displayAlerts = isExpanded ? filteredAlerts : filteredAlerts.slice(0, 1);
 
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-medium text-muted-foreground">{title}</h3>
-          {alerts.length > 1 && (
+          {filteredAlerts.length > 1 && (
             <Badge
               variant="secondary"
               className="cursor-pointer hover:bg-secondary/80"
@@ -114,7 +160,7 @@ export function DashboardAlerts() {
                 </span>
               ) : (
                 <span className="flex items-center gap-1">
-                  +{count - 1} more <ChevronDown className="h-3 w-3" />
+                  +{filteredAlerts.length - 1} more <ChevronDown className="h-3 w-3" />
                 </span>
               )}
             </Badge>
@@ -144,40 +190,6 @@ export function DashboardAlerts() {
     );
   };
 
-  const vehicleAlerts: AlertGroup[] = (alerts?.vehicles || []).map(v => ({
-    id: v.id,
-    icon: <Car className="h-4 w-4 text-red-500" />,
-    title: "Overdue Vehicle",
-    description: `${v.vehicle.year} ${v.vehicle.make} ${v.vehicle.model} - ${v.customer.full_name}`,
-    type: 'vehicle',
-    severity: 'high'
-  }));
-
-  const paymentAlerts: AlertGroup[] = (alerts?.payments || []).map(p => ({
-    id: p.id,
-    icon: <Bell className="h-4 w-4 text-yellow-500" />,
-    title: "Overdue Payment",
-    description: p.lease.customer.full_name,
-    type: 'payment',
-    severity: 'medium'
-  }));
-
-  const maintenanceAlerts: AlertGroup[] = (alerts?.maintenance || []).map(m => ({
-    id: m.id,
-    icon: <Calendar className="h-4 w-4 text-blue-500" />,
-    title: "Maintenance Due",
-    description: `${m.vehicle.year} ${m.vehicle.make} ${m.vehicle.model}`,
-    type: 'maintenance',
-    severity: 'low'
-  }));
-
-  if (!alerts || 
-      (!alerts.vehicles.length && 
-       !alerts.payments.length && 
-       !alerts.maintenance.length)) {
-    return null;
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -186,26 +198,9 @@ export function DashboardAlerts() {
       <CardContent>
         <ScrollArea className="h-[300px] pr-4">
           <div className="space-y-6">
-            {vehicleAlerts.length > 0 && renderAlertSection(
-              "Vehicle Returns",
-              vehicleAlerts,
-              'vehicle',
-              vehicleAlerts.length
-            )}
-            
-            {paymentAlerts.length > 0 && renderAlertSection(
-              "Payment Alerts",
-              paymentAlerts,
-              'payment',
-              paymentAlerts.length
-            )}
-            
-            {maintenanceAlerts.length > 0 && renderAlertSection(
-              "Maintenance Alerts",
-              maintenanceAlerts,
-              'maintenance',
-              maintenanceAlerts.length
-            )}
+            {renderAlertSection("Vehicle Returns", alerts, 'vehicle')}
+            {renderAlertSection("Payment Alerts", alerts, 'payment')}
+            {renderAlertSection("Maintenance Alerts", alerts, 'maintenance')}
           </div>
         </ScrollArea>
       </CardContent>
