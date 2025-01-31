@@ -1,9 +1,15 @@
-/* Add these styles for better RTL and template variable handling */
-.rtl {
-  direction: rtl;
+/* RTL Support */
+[dir="rtl"] {
   text-align: right;
 }
 
+[dir="rtl"] .template-variable {
+  direction: ltr;
+  unicode-bidi: embed;
+  text-align: left;
+}
+
+/* Template Variables */
 .template-variable {
   color: #2563eb;
   background-color: rgba(37, 99, 235, 0.1);
@@ -11,10 +17,9 @@
   border-radius: 0.25rem;
   font-weight: 500;
   display: inline-block;
-  direction: ltr;
-  unicode-bidi: embed;
 }
 
+/* Agreement Tables */
 .agreement-table {
   width: 100%;
   border-collapse: collapse;
@@ -29,30 +34,87 @@
   text-align: inherit;
 }
 
-/* Quill RTL support */
-.ql-editor[dir="rtl"] {
+/* RTL Support for Quill Editor */
+[dir="rtl"] .ql-editor {
   text-align: right;
 }
 
-.ql-editor[dir="rtl"] ol,
-.ql-editor[dir="rtl"] ul {
+[dir="rtl"] .ql-editor ol,
+[dir="rtl"] .ql-editor ul {
   padding-right: 1.5em;
   padding-left: 0;
 }
 
-.ql-editor .rtl {
+[dir="rtl"] .ql-editor .rtl {
   direction: rtl;
   text-align: right;
 }
 
-.ql-editor table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
+/* Enhanced RTL Table Support */
+[dir="rtl"] .agreement-table {
+  direction: rtl;
 }
 
-.ql-editor td,
-.ql-editor th {
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem;
+[dir="rtl"] .agreement-table th,
+[dir="rtl"] .agreement-table td {
+  text-align: right;
+}
+
+/* RTL Support for Form Controls */
+[dir="rtl"] .form-label {
+  text-align: right;
+}
+
+[dir="rtl"] .form-input,
+[dir="rtl"] .form-select,
+[dir="rtl"] .form-textarea {
+  text-align: right;
+}
+
+/* RTL Support for Dialog Components */
+[dir="rtl"] .dialog-header {
+  text-align: right;
+}
+
+[dir="rtl"] .dialog-content {
+  direction: rtl;
+}
+
+/* RTL Support for Buttons and Icons */
+[dir="rtl"] .button-icon {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+/* RTL Support for Navigation */
+[dir="rtl"] .nav-item {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* RTL Support for Lists */
+[dir="rtl"] .list-item {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* RTL Support for Cards */
+[dir="rtl"] .card-header {
+  text-align: right;
+}
+
+[dir="rtl"] .card-content {
+  direction: rtl;
+}
+
+/* RTL Support for Alerts and Notifications */
+[dir="rtl"] .alert {
+  padding-right: 1rem;
+  padding-left: 0.5rem;
+  text-align: right;
+}
+
+[dir="rtl"] .alert-icon {
+  margin-right: 0;
+  margin-left: 0.5rem;
 }
