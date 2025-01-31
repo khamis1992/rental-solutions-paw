@@ -95,28 +95,35 @@ export const CreateTemplateDialog = ({
     setIsSubmitting(true);
 
     try {
-      const { error } = selectedTemplate 
-        ? await supabase
-            .from("agreement_templates")
-            .update({
-              ...formData,
-              is_active: true,
-              template_structure: JSON.stringify(formData.template_structure)
-            })
-            .eq('id', selectedTemplate.id)
-        : await supabase
-            .from("agreement_templates")
-            .insert({
-              ...formData,
-              is_active: true,
-              template_structure: JSON.stringify(formData.template_structure)
-            });
+      const templateData = {
+        ...formData,
+        is_active: true,
+        template_structure: JSON.stringify(formData.template_structure)
+      };
+
+      let error;
+
+      if (selectedTemplate) {
+        // Update existing template
+        const { error: updateError } = await supabase
+          .from("agreement_templates")
+          .update(templateData)
+          .eq('id', selectedTemplate.id);
+        error = updateError;
+      } else {
+        // Create new template
+        const { error: insertError } = await supabase
+          .from("agreement_templates")
+          .insert(templateData);
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast.success(selectedTemplate ? "Template updated successfully" : "Template created successfully");
       onOpenChange(false);
     } catch (error: any) {
+      console.error("Error saving template:", error);
       toast.error("Failed to save template: " + error.message);
     } finally {
       setIsSubmitting(false);
@@ -154,7 +161,6 @@ export const CreateTemplateDialog = ({
         ]
       });
       
-      // Process the HTML to enhance RTL support and template variables
       let processedHtml = result.value;
 
       // Add RTL class and dir attribute to paragraphs containing Arabic text
