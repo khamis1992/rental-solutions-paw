@@ -10,6 +10,9 @@
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-weight: 500;
+  display: inline-block;
+  direction: ltr;
+  unicode-bidi: embed;
 }
 
 .agreement-table {

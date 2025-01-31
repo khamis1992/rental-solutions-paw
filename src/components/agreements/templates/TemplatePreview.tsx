@@ -36,13 +36,13 @@ export const TemplatePreview = ({
     // Process template variables while preserving direction
     let processedContent = text.replace(
       /{{(.*?)}}/g,
-      '<span class="template-variable" dir="ltr">{{$1}}</span>'
+      '<span class="template-variable" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
     );
 
-    // Ensure paragraphs have proper direction
+    // Ensure paragraphs have proper direction and text alignment
     processedContent = processedContent.replace(
       /<p>/g,
-      `<p dir="${dirAttribute}">`
+      `<p dir="${dirAttribute}" style="text-align: ${isArabic ? 'right' : 'left'}">`
     );
 
     return processedContent;
@@ -81,9 +81,9 @@ export const TemplatePreview = ({
               'font-bold': textStyle.bold,
               'italic': textStyle.italic,
               'underline': textStyle.underline,
-              'text-left': textStyle.alignment === 'left',
+              'text-left': !isArabic && textStyle.alignment === 'left',
               'text-center': textStyle.alignment === 'center',
-              'text-right': textStyle.alignment === 'right',
+              'text-right': isArabic || textStyle.alignment === 'right',
               'text-justify': textStyle.alignment === 'justify'
             }
           )}
@@ -99,7 +99,12 @@ export const TemplatePreview = ({
             key={tableIndex}
             className="w-full my-4 border-collapse"
             dir={isArabic ? "rtl" : "ltr"}
-            style={table.style}
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              borderSpacing: '0',
+              direction: isArabic ? 'rtl' : 'ltr'
+            }}
           >
             <tbody>
               {table.rows.map((row, rowIndex) => (
@@ -114,7 +119,7 @@ export const TemplatePreview = ({
                           fontStyle: cell.style.italic ? 'italic' : 'normal',
                           textDecoration: cell.style.underline ? 'underline' : 'none',
                           fontSize: `${cell.style.fontSize}px`,
-                          textAlign: cell.style.alignment
+                          textAlign: isArabic ? 'right' : cell.style.alignment
                         })
                       }}
                     >
