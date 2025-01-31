@@ -54,14 +54,38 @@ export function CreateJobDialog() {
     },
   });
 
+  // Add a function to check for existing job cards
+  const checkExistingJobCard = async (vehicleId: string) => {
+    const { data, error } = await supabase
+      .from("maintenance")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .not("status", "in", ["completed", "cancelled"]);
+
+    if (error) {
+      console.error("Error checking existing job cards:", error);
+      return true; // Return true to prevent creation if there's an error
+    }
+
+    return data && data.length > 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Check for existing job card
+      const hasExistingJobCard = await checkExistingJobCard(formData.vehicle_id);
+      
+      if (hasExistingJobCard) {
+        toast.error("A job card already exists for this vehicle. Please complete or cancel the existing job card first.");
+        setLoading(false);
+        return;
+      }
+
       console.log("Creating maintenance record for vehicle:", formData.vehicle_id);
       
-      // Create maintenance record first
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
         .insert([{
@@ -80,7 +104,6 @@ export function CreateJobDialog() {
 
       console.log("Maintenance record created successfully:", maintenanceData);
 
-      // Invalidate relevant queries to trigger UI updates
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["maintenance"] }),
         queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
@@ -89,7 +112,6 @@ export function CreateJobDialog() {
 
       toast.success("Job card created successfully");
       
-      // Store the maintenance ID and show inspection dialog
       setMaintenanceId(maintenanceData.id);
       setShowInspection(true);
       
