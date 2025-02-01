@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
@@ -15,14 +15,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
-
-export interface AgreementTableRowProps {
-  agreement: Agreement;
-  onAgreementClick: (id: string) => void;
-  onNameClick: (id: string) => void;
-  onDeleted?: () => void;
-  onDeleteClick: () => void;
-}
 
 export const AgreementTableRow = ({
   agreement,
@@ -118,12 +110,20 @@ export const AgreementTableRow = ({
         <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
           <head>
             <meta charset="UTF-8">
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
             <style>
               @page {
                 size: A4;
-                margin: 20mm;
+                margin: 25mm;
                 marks: crop cross;
+                @top-center {
+                  content: element(header);
+                }
+                @bottom-center {
+                  content: counter(page);
+                }
               }
+              
               @media print {
                 body {
                   -webkit-print-color-adjust: exact;
@@ -136,63 +136,134 @@ export const AgreementTableRow = ({
                   page-break-inside: avoid;
                 }
               }
+              
               body {
-                font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
+                font-family: ${isRTL ? '"Noto Sans Arabic", Arial' : 'Arial'}, sans-serif;
                 direction: ${isRTL ? 'rtl' : 'ltr'};
                 text-align: ${isRTL ? 'right' : 'left'};
-                line-height: 1.5;
+                line-height: 1.8;
                 margin: 0;
-                padding: 20mm;
-                width: 170mm;
-                min-height: 257mm;
+                padding: 25mm;
+                width: 210mm;
+                min-height: 297mm;
                 background: white;
                 color: #000;
+                font-size: 14px;
               }
+
+              .header {
+                text-align: center;
+                padding: 20px 0;
+                border-bottom: 2px solid #000;
+                margin-bottom: 30px;
+              }
+
+              .agreement-number {
+                font-size: 16px;
+                color: #333;
+                margin: 15px 0;
+                text-align: center;
+              }
+
+              .agreement-title {
+                font-size: 24px;
+                font-weight: bold;
+                margin: 20px 0;
+                text-align: center;
+              }
+
+              h1, h2, h3 {
+                margin-top: 1.5em;
+                margin-bottom: 0.8em;
+                page-break-after: avoid;
+                color: #222;
+              }
+
+              h1 { font-size: 20px; }
+              h2 { font-size: 18px; }
+              h3 { font-size: 16px; }
+
+              p {
+                margin: 0.8em 0;
+                line-height: 1.8;
+              }
+
               table {
                 width: 100%;
                 border-collapse: collapse;
-                margin: 1em 0;
+                margin: 1.5em 0;
                 page-break-inside: avoid;
               }
+
               td, th {
                 border: 1px solid #000;
-                padding: 8px;
+                padding: 12px;
                 text-align: ${isRTL ? 'right' : 'left'};
               }
-              h1, h2, h3 {
-                page-break-after: avoid;
+
+              th {
+                background-color: #f5f5f5;
+                font-weight: bold;
               }
-              .header {
-                text-align: center;
-                margin-bottom: 2em;
-                border-bottom: 2px solid #000;
-                padding-bottom: 1em;
-              }
+
               .footer {
                 position: fixed;
-                bottom: 20mm;
-                width: calc(100% - 40mm);
+                bottom: 25mm;
+                width: calc(100% - 50mm);
                 text-align: center;
                 border-top: 1px solid #000;
-                padding-top: 1em;
+                padding-top: 10px;
+                font-size: 12px;
               }
+
               .signature-section {
-                margin-top: 3em;
+                margin-top: 50px;
                 page-break-inside: avoid;
+                display: flex;
+                justify-content: space-between;
               }
+
+              .signature-box {
+                border-top: 1px solid #000;
+                width: 200px;
+                text-align: center;
+                padding-top: 10px;
+              }
+
+              .watermark {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                font-size: 60px;
+                color: rgba(0, 0, 0, 0.1);
+                z-index: -1;
+              }
+
               .page-number:after {
                 content: counter(page);
               }
-              @page {
-                @bottom-center {
-                  content: counter(page);
-                }
+
+              ul, ol {
+                margin: 1em 0;
+                padding-${isRTL ? 'right' : 'left'}: 2em;
+              }
+
+              li {
+                margin: 0.5em 0;
               }
             </style>
           </head>
           <body>
+            <div class="watermark">COPY</div>
+            <div class="header">
+              <img src="/company-logo.png" alt="Company Logo" style="max-height: 80px; margin-bottom: 15px;">
+              <div class="agreement-number">Agreement #${agreement_data.agreement_number}</div>
+              <div class="agreement-title">${isRTL ? 'عقد ايجار مركبة' : 'Vehicle Rental Agreement'}</div>
+            </div>
             ${templateContent}
             <div class="footer">
+              <div>Company Name | Address | Phone | Email</div>
               <div class="page-number">Page </div>
             </div>
           </body>
