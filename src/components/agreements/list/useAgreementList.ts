@@ -14,6 +14,29 @@ export const useAgreementList = () => {
     queryKey: ["agreements", searchQuery, statusFilter, sortOrder],
     queryFn: async () => {
       try {
+        // First, get matching customer IDs if searching
+        let matchingCustomerIds: string[] = [];
+        let matchingVehicleIds: string[] = [];
+
+        if (searchQuery) {
+          // Get matching customer IDs
+          const { data: customerData } = await supabase
+            .from('profiles')
+            .select('id')
+            .ilike('full_name', `%${searchQuery}%`);
+          
+          matchingCustomerIds = customerData?.map(c => c.id) || [];
+
+          // Get matching vehicle IDs
+          const { data: vehicleData } = await supabase
+            .from('vehicles')
+            .select('id')
+            .or(`license_plate.ilike.%${searchQuery}%,make.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%`);
+          
+          matchingVehicleIds = vehicleData?.map(v => v.id) || [];
+        }
+
+        // Build the main query
         let query = supabase
           .from('leases')
           .select(`
@@ -36,12 +59,12 @@ export const useAgreementList = () => {
             )
           `);
 
-        // Apply search filter if query exists
+        // Apply filters
         if (searchQuery) {
           query = query.or(
             `agreement_number.ilike.%${searchQuery}%,` +
-            `customer_id.eq.(select id from profiles where full_name ilike '%${searchQuery}%'),` +
-            `vehicle_id.eq.(select id from vehicles where license_plate ilike '%${searchQuery}%' or make ilike '%${searchQuery}%' or model ilike '%${searchQuery}%')`
+            `customer_id.in.(${matchingCustomerIds.length ? matchingCustomerIds.join(',') : 'null'}),` +
+            `vehicle_id.in.(${matchingVehicleIds.length ? matchingVehicleIds.join(',') : 'null'})`
           );
         }
 
@@ -90,7 +113,7 @@ export const useAgreementList = () => {
           updated_at: agreement.updated_at,
           rent_amount: agreement.rent_amount || 0,
           daily_late_fee: agreement.daily_late_fee || 0,
-          remaining_amount: agreement.remaining_amounts?.remaining_amount || 0,
+          remaining_amount: agreement.remaining_amounts?.[0]?.remaining_amount || 0,
           customer: agreement.customer || null,
           vehicle: agreement.vehicle || null,
           template_id: agreement.template_id,
@@ -206,6 +229,7 @@ export const useAgreementList = () => {
       } else {
         toast.error("Unable to open print window");
       }
+
     } catch (error) {
       console.error('Error printing contract:', error);
       toast.error("Failed to print contract");
