@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Printer, FileText, Trash2, Download } from "lucide-react";
+import { Eye, FileText, Trash2, Download } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +28,6 @@ export interface AgreementTableRowProps {
 export const AgreementTableRow = ({
   agreement,
   onViewContract,
-  onPrintContract,
   onAgreementClick,
   onNameClick,
   onDeleteClick,
@@ -460,21 +459,6 @@ export const AgreementTableRow = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>View Contract</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onPrintContract(agreement.id)}
-              >
-                <Printer className="h-4 w-4 text-blue-600 hover:text-blue-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Print Contract</p>
             </TooltipContent>
           </Tooltip>
 
