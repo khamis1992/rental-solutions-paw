@@ -1,10 +1,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Printer } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { TextStyle, Table } from "@/types/agreement.types";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface TemplatePreviewProps {
   content: string;
@@ -32,6 +33,83 @@ export const TemplatePreview = ({
     return arabicPattern.test(text);
   };
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Print Agreement Template</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+            }
+            .a4-page {
+              width: 210mm;
+              min-height: 297mm;
+              padding: 20mm;
+              margin: 0 auto;
+              box-sizing: border-box;
+              position: relative;
+            }
+            .page-number {
+              position: absolute;
+              bottom: 10mm;
+              width: 100%;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+            }
+            .template-variable {
+              background-color: #f3e8ff;
+              color: #6b21a8;
+              padding: 2px 6px;
+              border-radius: 4px;
+              border: 1px solid #e9d5ff;
+              font-family: monospace;
+              font-size: 0.875em;
+            }
+            .agreement-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 1em 0;
+            }
+            .agreement-table td, .agreement-table th {
+              border: 1px solid #ddd;
+              padding: 8px;
+            }
+            @media print {
+              body { margin: 0; }
+              .a4-page { box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="a4-page">
+            ${processContent(content)}
+            <div class="page-number">Page 1 of ${pageCount}</div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   const processContent = (text: string) => {
     const isArabic = containsArabic(text);
     const dirAttribute = isArabic ? 'rtl' : 'ltr';
@@ -47,7 +125,7 @@ export const TemplatePreview = ({
     // Process template variables
     processedContent = processedContent.replace(
       /{{(.*?)}}/g,
-      '<span class="template-variable bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-mono text-sm" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
+      '<span class="template-variable">{{$1}}</span>'
     );
 
     // Process section headers
@@ -98,9 +176,20 @@ export const TemplatePreview = ({
   return (
     <div className="space-y-4">
       <DialogHeader>
-        <DialogTitle className="text-xl font-semibold">
-          {isArabic ? "معاينة النموذج" : "Template Preview"}
-        </DialogTitle>
+        <div className="flex justify-between items-center">
+          <DialogTitle className="text-xl font-semibold">
+            {isArabic ? "معاينة النموذج" : "Template Preview"}
+          </DialogTitle>
+          <Button 
+            onClick={handlePrint}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            {isArabic ? "طباعة" : "Print"}
+          </Button>
+        </div>
       </DialogHeader>
       
       {missingVariables.length > 0 && (
