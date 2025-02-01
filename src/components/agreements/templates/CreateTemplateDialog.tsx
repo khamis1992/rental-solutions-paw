@@ -351,8 +351,7 @@ export const CreateTemplateDialog = ({
                   onChange={(content) => setFormData(prev => ({ ...prev, content }))}
                   modules={modules}
                   formats={formats}
-                  className="bg-white min-h-[400px]"
-                  dir="rtl"
+                  className="bg-white min-h-[400px] rtl-editor" // Added rtl-editor class
                 />
               </div>
             </div>
@@ -375,7 +374,7 @@ export const CreateTemplateDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
 
 function getDefaultArabicTemplate() {
   return `
