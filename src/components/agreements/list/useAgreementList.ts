@@ -2,12 +2,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import type { Agreement } from "@/types/agreement.types";
+import type { Agreement, LeaseStatus } from "@/types/agreement.types";
 
 export const useAgreementList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<LeaseStatus | "all">("all");
   const [sortOrder, setSortOrder] = useState("newest");
 
   const { data: agreements = [], isLoading, error, refetch } = useQuery({
@@ -29,15 +29,16 @@ export const useAgreementList = () => {
             model,
             year,
             license_plate
+          ),
+          remainingAmount:remaining_amounts!inner(
+            remaining_amount
           )
         `);
 
-      // Apply search filter
+      // Apply search filter if query exists
       if (searchQuery) {
         query = query.or(
-          `agreement_number.ilike.%${searchQuery}%,` +
-          `customer.full_name.ilike.%${searchQuery}%,` +
-          `vehicle.license_plate.ilike.%${searchQuery}%`
+          `agreement_number.ilike.%${searchQuery}%,customer:customer_id(full_name).ilike.%${searchQuery}%,vehicle:vehicle_id(license_plate).ilike.%${searchQuery}%`
         );
       }
 
@@ -73,7 +74,9 @@ export const useAgreementList = () => {
         ...agreement,
         customer: agreement.customer || null,
         vehicle: agreement.vehicle || null,
-        remainingAmount: agreement.remaining_amount || 0
+        remaining_amount: agreement.remainingAmount?.[0]?.remaining_amount || 0,
+        rent_amount: agreement.rent_amount || 0,
+        daily_late_fee: agreement.daily_late_fee || 0
       })) as Agreement[];
 
       return transformedData;
@@ -88,7 +91,7 @@ export const useAgreementList = () => {
         .from('leases')
         .select('*')
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -115,7 +118,7 @@ export const useAgreementList = () => {
           profiles (full_name, address)
         `)
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

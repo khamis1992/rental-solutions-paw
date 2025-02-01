@@ -83,21 +83,7 @@ export interface Agreement {
   last_payment_date: string | null;
   next_payment_date: string | null;
   payment_frequency: string;
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    license_plate: string;
-  };
-}
-
-export interface AgreementWithRelations extends Agreement {
+  template_id?: string;
   customer?: {
     id: string;
     full_name: string | null;
