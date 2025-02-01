@@ -113,79 +113,32 @@ const handleDownloadTemplate = async () => {
         .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
     }
 
-    // Create Word document content with proper XML structure
+    // Create Word document with simplified and correct XML structure
     const docContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <?mso-application progid="Word.Document"?>
-<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml"
-                xmlns:v="urn:schemas-microsoft-com:vml"
-                xmlns:w10="urn:schemas-microsoft-com:office:word"
-                xmlns:sl="http://schemas.microsoft.com/schemaLibrary/2003/core">
+<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml">
   <w:body>
-    <w:sectPr>
-      <w:pgSz w:w="11906" w:h="16838"/>
-      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
-    </w:sectPr>
-    <html xmlns:o="urn:schemas-microsoft-com:office:office"
-          xmlns:w="urn:schemas-microsoft-com:office:word"
-          xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8">
-        <xml>
-          <w:WordDocument>
-            <w:View>Print</w:View>
-            <w:Zoom>100</w:Zoom>
-            <w:DoNotOptimizeForBrowser/>
-          </w:WordDocument>
-        </xml>
-        <style>
-          @page WordSection1 {
-            size: 21cm 29.7cm;
-            margin: 2cm;
-            mso-page-orientation: portrait;
-          }
-          div.WordSection1 {
-            page: WordSection1;
-          }
-          body {
-            font-family: ${isRTL ? 'Arial, "Noto Sans Arabic"' : 'Arial'}, sans-serif;
+    <w:p>
+      <w:r>
+        <w:t>
+          <div style="
+            font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
             direction: ${isRTL ? 'rtl' : 'ltr'};
             text-align: ${isRTL ? 'right' : 'left'};
             line-height: 1.5;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1em 0;
-          }
-          td, th {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: ${isRTL ? 'right' : 'left'};
-          }
-          .template-variable {
-            color: #6b21a8;
-            background-color: #f3e8ff;
-            padding: 2px 6px;
-            border-radius: 4px;
-          }
-          img {
-            max-width: 100%;
-            height: auto;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="WordSection1">
-          ${templateContent}
-        </div>
-      </body>
-    </html>
+            padding: 20mm;
+          ">
+            ${templateContent}
+          </div>
+        </w:t>
+      </w:r>
+    </w:p>
   </w:body>
 </w:wordDocument>`;
 
-    // Create blob with proper Word MIME type and BOM marker
+    // Create blob with proper Word MIME type
     const blob = new Blob(['\ufeff', docContent], { 
-      type: 'application/vnd.ms-word' 
+      type: 'application/msword' 
     });
     
     // Create download link
@@ -530,4 +483,3 @@ const handleDownloadTemplate = async () => {
     </TableRow>
   );
 };
-
