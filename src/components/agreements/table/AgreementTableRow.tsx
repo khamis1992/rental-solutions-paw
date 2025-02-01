@@ -35,6 +35,21 @@ export const AgreementTableRow = ({
   const [downloading, setDownloading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'pending_payment':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+      case 'terminated':
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
   const handleDownloadTemplate = async () => {
     try {
       setDownloading(true);
@@ -319,7 +334,7 @@ export const AgreementTableRow = ({
   };
 
   return (
-    <TableRow className="hover:bg-muted/50">
+    <TableRow className="hover:bg-muted/50 transition-colors">
       <TableCell>
         <button
           onClick={() => onNameClick(agreement.id)}
@@ -336,16 +351,20 @@ export const AgreementTableRow = ({
           {agreement.vehicle?.license_plate}
         </button>
       </TableCell>
-      <TableCell>{`${agreement.vehicle?.make} ${agreement.vehicle?.model}`}</TableCell>
+      <TableCell className="font-medium">
+        {`${agreement.vehicle?.make} ${agreement.vehicle?.model}`}
+      </TableCell>
       <TableCell>
-        <span className="font-medium">{agreement.customer?.full_name}</span>
+        <span className="font-medium truncate max-w-[200px] block">
+          {agreement.customer?.full_name}
+        </span>
       </TableCell>
       <TableCell>{formatDateToDisplay(agreement.start_date)}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
       <TableCell>
         <Badge 
           variant="outline" 
-          className="capitalize"
+          className={`capitalize ${getStatusColor(agreement.status)}`}
         >
           {agreement.status}
         </Badge>
@@ -359,6 +378,7 @@ export const AgreementTableRow = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => onAgreementClick(agreement.id)}
+                className="hover:bg-primary/10"
               >
                 <FileText className="h-4 w-4 text-primary hover:text-primary/80" />
               </Button>
@@ -375,6 +395,7 @@ export const AgreementTableRow = ({
                 size="sm"
                 onClick={handleDownloadTemplate}
                 disabled={downloading}
+                className="hover:bg-green-100"
               >
                 <Printer className="h-4 w-4 text-green-600 hover:text-green-500" />
               </Button>
@@ -390,6 +411,7 @@ export const AgreementTableRow = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
+                className="hover:bg-red-100"
               >
                 <Trash2 className="h-4 w-4 text-red-600 hover:text-red-500" />
               </Button>

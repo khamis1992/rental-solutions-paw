@@ -31,7 +31,7 @@ export const AgreementListContent = ({
 }: AgreementListContentProps) => {
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-lg border bg-white shadow-sm">
         <Table>
           <AgreementTableHeader />
           <TableBody>
@@ -51,7 +51,7 @@ export const AgreementListContent = ({
         </Table>
       </div>
 
-      <div className="flex justify-center mt-4">
+      <div className="flex justify-center mt-6">
         <VehicleTablePagination
           currentPage={currentPage}
           totalPages={totalPages}
