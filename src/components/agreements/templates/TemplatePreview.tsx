@@ -48,72 +48,15 @@ export const TemplatePreview = ({
             @page {
               size: A4;
               margin: 20mm;
+              bleed: 3mm;
               marks: crop cross;
             }
-            @media print {
-              html, body {
-                margin: 0;
-                padding: 0;
-                width: 210mm;
-                height: 297mm;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              .a4-page {
-                width: 210mm;
-                min-height: 297mm;
-                padding: 20mm;
-                margin: 0;
-                page-break-after: always;
-                background: white;
-                box-shadow: none;
-                transform: none !important;
-                box-sizing: border-box;
-              }
-              .template-variable {
-                background-color: #f3e8ff !important;
-                color: #6b21a8 !important;
-                border: 1px solid #e9d5ff !important;
-                padding: 2px 6px !important;
-                border-radius: 4px !important;
-                font-family: monospace !important;
-                font-size: 0.875em !important;
-              }
-              table {
-                page-break-inside: avoid;
-                width: 100% !important;
-                border-collapse: collapse !important;
-              }
-              thead {
-                display: table-header-group;
-              }
-              tr {
-                page-break-inside: avoid;
-              }
-              td, th {
-                padding: 8px !important;
-                border: 1px solid #ddd !important;
-              }
-              img {
-                max-width: 100%;
-                page-break-inside: avoid;
-              }
-              h1, h2, h3 {
-                page-break-after: avoid;
-              }
-              ul, ol {
-                page-break-inside: avoid;
-              }
-              .page-number {
-                position: fixed;
-                bottom: 10mm;
-                width: 100%;
-                text-align: center;
-                font-size: 12px;
-                color: #666;
-              }
-            }
+            
             body {
+              margin: 0;
+              padding: 0;
+              width: 210mm;
+              min-height: 297mm;
               font-family: ${isRTL ? '"Noto Sans Arabic", Arial' : 'Arial'}, sans-serif;
               line-height: 1.5;
               direction: ${isRTL ? 'rtl' : 'ltr'};
@@ -122,15 +65,19 @@ export const TemplatePreview = ({
               ${textStyle.italic ? 'font-style: italic;' : ''}
               ${textStyle.underline ? 'text-decoration: underline;' : ''}
               text-align: ${textStyle.alignment};
-            }
-            .a4-page {
               background: white;
-              box-shadow: 0 0 0.5mm 0.5mm rgba(0,0,0,0.15);
+            }
+
+            .page-content {
+              box-sizing: border-box;
+              width: 210mm;
+              min-height: 297mm;
+              padding: 20mm;
+              margin: 0 auto;
+              background: white;
               position: relative;
             }
-            .page-content {
-              height: 100%;
-            }
+
             .template-variable {
               background-color: #f3e8ff;
               color: #6b21a8;
@@ -140,24 +87,60 @@ export const TemplatePreview = ({
               font-family: monospace;
               font-size: 0.875em;
             }
-            .agreement-table {
-              width: 100%;
-              border-collapse: collapse;
+
+            table {
+              width: 100% !important;
+              border-collapse: collapse !important;
+              page-break-inside: avoid;
               margin: 1em 0;
             }
-            .agreement-table td, 
-            .agreement-table th {
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: ${isRTL ? 'right' : 'left'};
+
+            td, th {
+              border: 1px solid #ddd !important;
+              padding: 8px !important;
+              text-align: ${isRTL ? 'right' : 'left'} !important;
+            }
+
+            img {
+              max-width: 100%;
+              height: auto;
+              page-break-inside: avoid;
+            }
+
+            h1, h2, h3 { page-break-after: avoid; }
+            
+            ul, ol { page-break-inside: avoid; }
+
+            .page-number {
+              position: fixed;
+              bottom: 10mm;
+              width: 100%;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+            }
+
+            @media print {
+              html, body {
+                width: 210mm;
+                height: 297mm;
+              }
+              .page-content {
+                margin: 0;
+                border: initial;
+                border-radius: initial;
+                width: initial;
+                min-height: initial;
+                box-shadow: initial;
+                background: initial;
+                page-break-after: always;
+              }
             }
           </style>
         </head>
         <body>
-          <div class="a4-page">
-            <div class="page-content">
-              ${processContent(content)}
-            </div>
+          <div class="page-content">
+            ${processContent(content)}
             <div class="page-number">Page 1 of ${pageCount}</div>
           </div>
         </body>
@@ -194,10 +177,9 @@ export const TemplatePreview = ({
     // Process section headers
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
-      '<h1 class="text-2xl font-bold text-gray-900 border-b pb-2 mb-4">$1</h1>'
+      '<h1 class="text-2xl font-bold text-gray-900 mb-4">$1</h1>'
     );
     
-    // Reduce spacing for h2 headers
     processedContent = processedContent.replace(
       /<h2>/g,
       '<h2 class="text-xl font-semibold mb-3 text-gray-800">'
@@ -267,8 +249,8 @@ export const TemplatePreview = ({
         </Alert>
       )}
       
-      <ScrollArea className="h-[calc(80vh-120px)] w-full rounded-md border bg-white shadow-sm">
-        <div className="a4-preview-container">
+      <ScrollArea className="h-[calc(80vh-120px)] w-full rounded-md border">
+        <div className="preview-container mx-auto bg-white">
           <div 
             className={cn(
               "a4-page",
@@ -290,53 +272,16 @@ export const TemplatePreview = ({
               width: '210mm',
               minHeight: '297mm',
               padding: '20mm',
-              margin: '0 auto'
+              margin: '0 auto',
+              boxSizing: 'border-box',
+              backgroundColor: 'white',
+              boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+              position: 'relative'
             }}
             ref={calculatePageCount}
             dangerouslySetInnerHTML={{ __html: processedContent }}
           />
-          <div className="page-number">
-            Page 1 of {pageCount}
-          </div>
         </div>
-
-        {tables.map((table, tableIndex) => (
-          <table 
-            key={tableIndex}
-            className="w-full my-4 border-collapse bg-white"
-            dir={isArabic ? "rtl" : "ltr"}
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              borderSpacing: '0',
-              direction: isArabic ? 'rtl' : 'ltr'
-            }}
-          >
-            <tbody>
-              {table.rows.map((row, rowIndex) => (
-                <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
-                  {row.cells.map((cell, cellIndex) => (
-                    <td 
-                      key={cellIndex}
-                      className="border border-gray-200 p-2 text-sm"
-                      style={{
-                        ...(cell.style && {
-                          fontWeight: cell.style.bold ? 'bold' : 'normal',
-                          fontStyle: cell.style.italic ? 'italic' : 'normal',
-                          textDecoration: cell.style.underline ? 'underline' : 'none',
-                          fontSize: `${cell.style.fontSize}px`,
-                          textAlign: isArabic ? 'right' : cell.style.alignment
-                        })
-                      }}
-                    >
-                      {cell.content}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ))}
       </ScrollArea>
     </div>
   );

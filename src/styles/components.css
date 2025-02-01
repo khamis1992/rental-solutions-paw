@@ -1,8 +1,7 @@
 /* ... keep existing code */
 
 /* A4 Preview Styles */
-.a4-preview-container {
-  position: relative;
+.preview-container {
   width: 210mm;
   margin: 0 auto;
   background: white;
@@ -14,39 +13,29 @@
   padding: 20mm;
   margin: 0 auto;
   background: white;
-  box-shadow: 0 0 0.5px 0.5px #000;
   border: 1px solid #ddd;
   position: relative;
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
 
-.template-variable {
-  background-color: #f3e8ff;
-  color: #6b21a8;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #e9d5ff;
-  font-family: monospace;
-  font-size: 0.875em;
-}
-
-.agreement-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-}
-
-.agreement-table td, 
-.agreement-table th {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
 @media print {
-  .a4-preview-container {
+  @page {
+    size: A4;
+    margin: 20mm;
+    bleed: 3mm;
+    marks: crop cross;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
     width: 210mm;
     height: 297mm;
+  }
+
+  .preview-container {
+    width: 210mm;
     margin: 0;
     padding: 0;
   }
@@ -65,5 +54,12 @@
   img {
     max-width: 100%;
     height: auto;
+    page-break-inside: avoid;
   }
+
+  table { page-break-inside: avoid; }
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  h1, h2, h3 { page-break-after: avoid; }
+  ul, ol { page-break-inside: avoid; }
 }
