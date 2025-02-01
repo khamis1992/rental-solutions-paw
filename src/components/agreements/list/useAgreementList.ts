@@ -30,7 +30,7 @@ export const useAgreementList = () => {
             year,
             license_plate
           ),
-          remainingAmount:remaining_amounts!inner(
+          remaining_amounts (
             remaining_amount
           )
         `);
@@ -38,7 +38,9 @@ export const useAgreementList = () => {
       // Apply search filter if query exists
       if (searchQuery) {
         query = query.or(
-          `agreement_number.ilike.%${searchQuery}%,customer:customer_id(full_name).ilike.%${searchQuery}%,vehicle:vehicle_id(license_plate).ilike.%${searchQuery}%`
+          `agreement_number.ilike.%${searchQuery}%`,
+          `customer_id.eq.(select id from profiles where full_name ilike '%${searchQuery}%')`,
+          `vehicle_id.eq.(select id from vehicles where license_plate ilike '%${searchQuery}%')`
         );
       }
 
@@ -74,7 +76,7 @@ export const useAgreementList = () => {
         ...agreement,
         customer: agreement.customer || null,
         vehicle: agreement.vehicle || null,
-        remaining_amount: agreement.remainingAmount?.[0]?.remaining_amount || 0,
+        remaining_amount: agreement.remaining_amounts?.[0]?.remaining_amount || 0,
         rent_amount: agreement.rent_amount || 0,
         daily_late_fee: agreement.daily_late_fee || 0
       })) as Agreement[];
@@ -147,12 +149,12 @@ export const useAgreementList = () => {
               </div>
               <div class="section">
                 <h2>Vehicle Details</h2>
-                <p>${agreement.vehicles.year} ${agreement.vehicles.make} ${agreement.vehicles.model}</p>
+                <p>${agreement.vehicles?.year} ${agreement.vehicles?.make} ${agreement.vehicles?.model}</p>
               </div>
               <div class="section">
                 <h2>Customer Details</h2>
-                <p>${agreement.profiles.full_name}</p>
-                <p>${agreement.profiles.address}</p>
+                <p>${agreement.profiles?.full_name}</p>
+                <p>${agreement.profiles?.address}</p>
               </div>
               <div class="section">
                 <h2>Agreement Terms</h2>

@@ -27,12 +27,12 @@ export interface Template {
   content: string;
   language: string;
   agreement_type: AgreementType;
-  rent_amount?: number;
-  final_price?: number;
+  rent_amount: number;
+  final_price: number;
   agreement_duration: string;
-  daily_late_fee?: number;
-  damage_penalty_rate?: number;
-  late_return_fee?: number;
+  daily_late_fee: number;
+  damage_penalty_rate: number;
+  late_return_fee: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -88,6 +88,7 @@ export interface Agreement {
     id: string;
     full_name: string | null;
     phone_number: string | null;
+    email?: string | null;
   };
   vehicle?: {
     id: string;
