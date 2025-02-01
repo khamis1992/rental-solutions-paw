@@ -3,8 +3,9 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Printer, Eye } from "lucide-react";
+import { Printer, Eye, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AgreementEditorProps {
   initialContent: string;
@@ -97,6 +98,17 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
     printWindow.print();
   };
 
+  const handleSave = () => {
+    // Remove extra spaces while preserving HTML formatting
+    const cleanContent = content
+      .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
+      .replace(/>\s+</g, '><')  // Remove spaces between HTML tags
+      .trim();
+    
+    setContent(cleanContent);
+    toast.success("تم حفظ المستند وإزالة المسافات الزائدة");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2 mb-4">
@@ -104,11 +116,15 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
           variant={isPreviewMode ? "outline" : "default"}
           onClick={() => setIsPreviewMode(!isPreviewMode)}
         >
-          <Eye className="h-4 w-4 mr-2" />
+          <Eye className="h-4 w-4 ml-2" />
           {isPreviewMode ? "تحرير" : "معاينة"}
         </Button>
+        <Button onClick={handleSave}>
+          <Save className="h-4 w-4 ml-2" />
+          حفظ
+        </Button>
         <Button onClick={handlePrint}>
-          <Printer className="h-4 w-4 mr-2" />
+          <Printer className="h-4 w-4 ml-2" />
           طباعة
         </Button>
       </div>
