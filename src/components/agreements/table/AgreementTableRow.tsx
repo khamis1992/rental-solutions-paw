@@ -35,89 +35,108 @@ export const AgreementTableRow = ({
 }: AgreementTableRowProps) => {
   const [downloading, setDownloading] = useState(false);
 
-  const handleDownloadTemplate = async () => {
-    try {
-      setDownloading(true);
-      const { data: agreement_data, error: agreementError } = await supabase
-        .from('leases')
-        .select(`
-          *,
-          agreement_templates!leases_template_id_fkey (
-            content,
-            language
-          ),
-          customer:customer_id (
-            full_name,
-            phone_number,
-            email,
-            address,
-            nationality,
-            driver_license
-          ),
-          vehicle:vehicle_id (
-            make,
-            model,
-            year,
-            color,
-            license_plate,
-            vin
-          )
-        `)
-        .eq('id', agreement.id)
-        .maybeSingle();
+const handleDownloadTemplate = async () => {
+  try {
+    setDownloading(true);
+    const { data: agreement_data, error: agreementError } = await supabase
+      .from('leases')
+      .select(`
+        *,
+        agreement_templates!leases_template_id_fkey (
+          content,
+          language
+        ),
+        customer:customer_id (
+          full_name,
+          phone_number,
+          email,
+          address,
+          nationality,
+          driver_license
+        ),
+        vehicle:vehicle_id (
+          make,
+          model,
+          year,
+          color,
+          license_plate,
+          vin
+        )
+      `)
+      .eq('id', agreement.id)
+      .maybeSingle();
 
-      if (agreementError) throw agreementError;
+    if (agreementError) throw agreementError;
 
-      if (!agreement_data?.agreement_templates?.content) {
-        toast.error('No template found for this agreement');
-        return;
-      }
+    if (!agreement_data?.agreement_templates?.content) {
+      toast.error('No template found for this agreement');
+      return;
+    }
 
-      let templateContent = agreement_data.agreement_templates.content;
-      const isRTL = agreement_data.agreement_templates.language === 'arabic';
+    let templateContent = agreement_data.agreement_templates.content;
+    const isRTL = agreement_data.agreement_templates.language === 'arabic';
 
-      // Replace variables
+    // Replace variables
+    templateContent = templateContent
+      .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement_data.start_date))
+      .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement_data.end_date))
+      .replace(/{{agreement\.agreement_number}}/g, agreement_data.agreement_number || '')
+      .replace(/{{agreement\.rent_amount}}/g, `${agreement_data.rent_amount} QAR`)
+      .replace(/{{agreement\.daily_late_fee}}/g, `${agreement_data.daily_late_fee} QAR`)
+      .replace(/{{agreement\.agreement_duration}}/g, agreement_data.agreement_duration || '')
+      .replace(/{{agreement\.total_amount}}/g, `${agreement_data.total_amount} QAR`)
+      .replace(/{{agreement\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR')
+      .replace(/{{payment\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR');
+
+    // Replace customer variables
+    if (agreement_data.customer) {
       templateContent = templateContent
-        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement_data.start_date))
-        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement_data.end_date))
-        .replace(/{{agreement\.agreement_number}}/g, agreement_data.agreement_number || '')
-        .replace(/{{agreement\.rent_amount}}/g, `${agreement_data.rent_amount} QAR`)
-        .replace(/{{agreement\.daily_late_fee}}/g, `${agreement_data.daily_late_fee} QAR`)
-        .replace(/{{agreement\.agreement_duration}}/g, agreement_data.agreement_duration || '')
-        .replace(/{{agreement\.total_amount}}/g, `${agreement_data.total_amount} QAR`)
-        .replace(/{{agreement\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR')
-        .replace(/{{payment\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR');
+        .replace(/{{customer\.name}}/g, agreement_data.customer.full_name || '')
+        .replace(/{{customer\.full_name}}/g, agreement_data.customer.full_name || '')
+        .replace(/{{customer\.phone_number}}/g, agreement_data.customer.phone_number || '')
+        .replace(/{{customer\.email}}/g, agreement_data.customer.email || '')
+        .replace(/{{customer\.address}}/g, agreement_data.customer.address || '')
+        .replace(/{{customer\.nationality}}/g, agreement_data.customer.nationality || '')
+        .replace(/{{customer\.driver_license}}/g, agreement_data.customer.driver_license || '');
+    }
 
-      // Replace customer variables
-      if (agreement_data.customer) {
-        templateContent = templateContent
-          .replace(/{{customer\.name}}/g, agreement_data.customer.full_name || '')
-          .replace(/{{customer\.full_name}}/g, agreement_data.customer.full_name || '')
-          .replace(/{{customer\.phone_number}}/g, agreement_data.customer.phone_number || '')
-          .replace(/{{customer\.email}}/g, agreement_data.customer.email || '')
-          .replace(/{{customer\.address}}/g, agreement_data.customer.address || '')
-          .replace(/{{customer\.nationality}}/g, agreement_data.customer.nationality || '')
-          .replace(/{{customer\.driver_license}}/g, agreement_data.customer.driver_license || '');
-      }
+    // Replace vehicle variables
+    if (agreement_data.vehicle) {
+      const vehicleName = `${agreement_data.vehicle.make} ${agreement_data.vehicle.model}`;
+      templateContent = templateContent
+        .replace(/{{vehicle\.name}}/g, vehicleName)
+        .replace(/{{vehicle\.make}}/g, agreement_data.vehicle.make || '')
+        .replace(/{{vehicle\.model}}/g, agreement_data.vehicle.model || '')
+        .replace(/{{vehicle\.year}}/g, agreement_data.vehicle.year?.toString() || '')
+        .replace(/{{vehicle\.color}}/g, agreement_data.vehicle.color || '')
+        .replace(/{{vehicle\.license_plate}}/g, agreement_data.vehicle.license_plate || '')
+        .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
+    }
 
-      // Replace vehicle variables
-      if (agreement_data.vehicle) {
-        const vehicleName = `${agreement_data.vehicle.make} ${agreement_data.vehicle.model}`;
-        templateContent = templateContent
-          .replace(/{{vehicle\.name}}/g, vehicleName)
-          .replace(/{{vehicle\.make}}/g, agreement_data.vehicle.make || '')
-          .replace(/{{vehicle\.model}}/g, agreement_data.vehicle.model || '')
-          .replace(/{{vehicle\.year}}/g, agreement_data.vehicle.year?.toString() || '')
-          .replace(/{{vehicle\.color}}/g, agreement_data.vehicle.color || '')
-          .replace(/{{vehicle\.license_plate}}/g, agreement_data.vehicle.license_plate || '')
-          .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
-      }
-
-      // Create document content with proper HTML structure and Word-compatible styling
-      const docContent = `
-        <html xmlns:w="urn:schemas-microsoft-com:office:word">
-        <head>
+    // Create Word document content with proper XML structure
+    const docContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?mso-application progid="Word.Document"?>
+<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml"
+                xmlns:v="urn:schemas-microsoft-com:vml"
+                xmlns:w10="urn:schemas-microsoft-com:office:word"
+                xmlns:sl="http://schemas.microsoft.com/schemaLibrary/2003/core">
+  <w:body>
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
+    </w:sectPr>
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:w="urn:schemas-microsoft-com:office:word"
+          xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
         <meta charset="utf-8">
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
         <style>
           @page WordSection1 {
             size: 21cm 29.7cm;
@@ -128,7 +147,7 @@ export const AgreementTableRow = ({
             page: WordSection1;
           }
           body {
-            font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
+            font-family: ${isRTL ? 'Arial, "Noto Sans Arabic"' : 'Arial'}, sans-serif;
             direction: ${isRTL ? 'rtl' : 'ltr'};
             text-align: ${isRTL ? 'right' : 'left'};
             line-height: 1.5;
@@ -149,43 +168,48 @@ export const AgreementTableRow = ({
             padding: 2px 6px;
             border-radius: 4px;
           }
+          img {
+            max-width: 100%;
+            height: auto;
+          }
         </style>
-        </head>
-        <body>
-          <div class="WordSection1">
-            ${templateContent}
-          </div>
-        </body>
-        </html>
-      `;
+      </head>
+      <body>
+        <div class="WordSection1">
+          ${templateContent}
+        </div>
+      </body>
+    </html>
+  </w:body>
+</w:wordDocument>`;
 
-      // Create blob with Word-compatible MIME type
-      const blob = new Blob(['\ufeff', docContent], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${agreement.agreement_number || 'agreement'}.docx`;
-      
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+    // Create blob with proper Word MIME type and BOM marker
+    const blob = new Blob(['\ufeff', docContent], { 
+      type: 'application/vnd.ms-word' 
+    });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${agreement.agreement_number || 'agreement'}.doc`;
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-      toast.success('Template downloaded successfully');
-    } catch (error) {
-      console.error('Error downloading template:', error);
-      toast.error('Failed to download template');
-    } finally {
-      setDownloading(false);
-    }
-  };
+    toast.success('Template downloaded successfully');
+  } catch (error) {
+    console.error('Error downloading template:', error);
+    toast.error('Failed to download template');
+  } finally {
+    setDownloading(false);
+  }
+};
 
   const handleViewContract = async () => {
     try {
@@ -506,3 +530,4 @@ export const AgreementTableRow = ({
     </TableRow>
   );
 };
+
