@@ -60,7 +60,7 @@ export function CreateJobDialog() {
       .from("maintenance")
       .select("*")
       .eq("vehicle_id", vehicleId)
-      .not("status", "in", ["completed", "cancelled"]);
+      .not("status", "in", ("completed", "cancelled"));
 
     if (error) {
       console.error("Error checking existing job cards:", error);
