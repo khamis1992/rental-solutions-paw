@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CreateAgreementDialog } from "./CreateAgreementDialog";
 import { TemplatePreview } from "./templates/TemplatePreview";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import {
   Dialog,
   DialogContent,

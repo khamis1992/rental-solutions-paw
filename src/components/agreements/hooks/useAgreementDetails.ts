@@ -14,7 +14,7 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             id,
             full_name,
             phone_number,
-            address
+            email
           ),
           vehicle:vehicle_id (
             id,
@@ -22,13 +22,27 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             model,
             year,
             license_plate
+          ),
+          remaining_amount:remaining_amounts!remaining_amounts_lease_id_fkey (
+            remaining_amount
           )
         `)
         .eq('id', agreementId)
         .single();
 
       if (error) throw error;
-      return data as Agreement;
+
+      // Transform the data to match the Agreement type
+      const transformedData: Agreement = {
+        ...data,
+        remaining_amount: data.remaining_amount?.remaining_amount || 0,
+        rent_amount: data.rent_amount || 0,
+        daily_late_fee: data.daily_late_fee || 0,
+        customer: data.customer,
+        vehicle: data.vehicle
+      };
+
+      return transformedData;
     },
     enabled: enabled && !!agreementId,
   });
