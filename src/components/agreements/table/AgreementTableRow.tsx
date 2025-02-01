@@ -1,39 +1,39 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Trash2 } from "lucide-react";
-import type { Agreement } from "@/types/agreement.types";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
 import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
+import { Agreement } from "@/types/agreement.types";
 
 interface AgreementTableRowProps {
   agreement: Agreement;
   onViewContract: (id: string) => void;
   onPrintContract: (id: string) => void;
   onAgreementClick: (id: string) => void;
-  onNameClick: (id: string) => void;
   onDeleted: () => void;
-  onDeleteClick: () => void;
 }
 
 export const AgreementTableRow = ({
   agreement,
   onAgreementClick,
-  onNameClick,
   onDeleted,
-  onDeleteClick,
 }: AgreementTableRowProps) => {
+  const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleAgreementNumberClick = () => {
+    navigate(`/agreements/${agreement.id}/details`);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -337,7 +337,7 @@ export const AgreementTableRow = ({
     <TableRow className="hover:bg-muted/50 transition-colors">
       <TableCell>
         <button
-          onClick={() => onNameClick(agreement.id)}
+          onClick={handleAgreementNumberClick}
           className="text-primary hover:underline font-medium"
         >
           {agreement.agreement_number}
@@ -345,7 +345,7 @@ export const AgreementTableRow = ({
       </TableCell>
       <TableCell>
         <button
-          onClick={() => onNameClick(agreement.id)}
+          onClick={handleAgreementNumberClick}
           className="text-primary hover:underline"
         >
           {agreement.vehicle?.license_plate}
