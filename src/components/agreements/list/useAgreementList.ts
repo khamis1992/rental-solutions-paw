@@ -13,78 +13,91 @@ export const useAgreementList = () => {
   const { data: agreements = [], isLoading, error, refetch } = useQuery({
     queryKey: ["agreements", searchQuery, statusFilter, sortOrder],
     queryFn: async () => {
-      let query = supabase
-        .from('leases')
-        .select(`
-          *,
-          customer:customer_id (
-            id,
-            full_name,
-            phone_number,
-            email
-          ),
-          vehicle:vehicle_id (
-            id,
-            make,
-            model,
-            year,
-            license_plate
-          ),
-          remaining_amounts (
-            remaining_amount
-          )
-        `);
+      try {
+        let query = supabase
+          .from('leases')
+          .select(`
+            *,
+            customer:customer_id (
+              id,
+              full_name,
+              phone_number,
+              email
+            ),
+            vehicle:vehicle_id (
+              id,
+              make,
+              model,
+              year,
+              license_plate
+            ),
+            remaining_amounts (
+              remaining_amount
+            )
+          `);
 
-      // Apply search filter if query exists
-      if (searchQuery) {
-        query = query.or(
-          `agreement_number.ilike.%${searchQuery}%`,
-          `customer_id.eq.(select id from profiles where full_name ilike '%${searchQuery}%')`,
-          `vehicle_id.eq.(select id from vehicles where license_plate ilike '%${searchQuery}%')`
-        );
+        // Apply search filter if query exists
+        if (searchQuery) {
+          query = query.or(`
+            agreement_number.ilike.%${searchQuery}%,
+            customer_id.eq.(
+              select id from profiles 
+              where full_name ilike '%${searchQuery}%'
+            ),
+            vehicle_id.eq.(
+              select id from vehicles 
+              where license_plate ilike '%${searchQuery}%' 
+              or make ilike '%${searchQuery}%' 
+              or model ilike '%${searchQuery}%'
+            )
+          `);
+        }
+
+        // Apply status filter
+        if (statusFilter !== "all") {
+          query = query.eq("status", statusFilter);
+        }
+
+        // Apply sorting
+        switch (sortOrder) {
+          case "oldest":
+            query = query.order("created_at", { ascending: true });
+            break;
+          case "amount-high":
+            query = query.order("total_amount", { ascending: false });
+            break;
+          case "amount-low":
+            query = query.order("total_amount", { ascending: true });
+            break;
+          default: // newest
+            query = query.order("created_at", { ascending: false });
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching agreements:", error);
+          throw error;
+        }
+
+        // Transform the data to match the Agreement type
+        const transformedData = data?.map(agreement => ({
+          ...agreement,
+          customer: agreement.customer || null,
+          vehicle: agreement.vehicle || null,
+          remaining_amount: agreement.remaining_amounts?.[0]?.remaining_amount || 0,
+          rent_amount: agreement.rent_amount || 0,
+          daily_late_fee: agreement.daily_late_fee || 0
+        })) as Agreement[];
+
+        return transformedData;
+      } catch (err) {
+        console.error("Error in agreements query:", err);
+        throw err;
       }
-
-      // Apply status filter
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      // Apply sorting
-      switch (sortOrder) {
-        case "oldest":
-          query = query.order("created_at", { ascending: true });
-          break;
-        case "amount-high":
-          query = query.order("total_amount", { ascending: false });
-          break;
-        case "amount-low":
-          query = query.order("total_amount", { ascending: true });
-          break;
-        default: // newest
-          query = query.order("created_at", { ascending: false });
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching agreements:", error);
-        throw error;
-      }
-
-      // Transform the data to match the Agreement type
-      const transformedData = data?.map(agreement => ({
-        ...agreement,
-        customer: agreement.customer || null,
-        vehicle: agreement.vehicle || null,
-        remaining_amount: agreement.remaining_amounts?.[0]?.remaining_amount || 0,
-        rent_amount: agreement.rent_amount || 0,
-        daily_late_fee: agreement.daily_late_fee || 0
-      })) as Agreement[];
-
-      return transformedData;
     },
     refetchOnWindowFocus: true,
-    staleTime: 1000, // Consider data stale after 1 second
+    staleTime: 1000,
   });
 
   const handleViewContract = async (agreementId: string) => {
