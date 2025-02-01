@@ -31,23 +31,7 @@ export const DeleteAgreementDialog = ({
     try {
       setIsDeleting(true);
 
-      // 1. Delete payment audit logs first
-      const { error: auditLogsError } = await supabase
-        .from('payment_audit_logs')
-        .delete()
-        .eq('payment_id', agreementId);
-
-      if (auditLogsError) throw auditLogsError;
-
-      // 2. Delete payment history view entries
-      const { error: paymentHistoryError } = await supabase
-        .from('payment_history_view')
-        .delete()
-        .eq('lease_id', agreementId);
-
-      if (paymentHistoryError) throw paymentHistoryError;
-
-      // 3. Delete unified payments
+      // Delete unified payments first
       const { error: paymentsError } = await supabase
         .from('unified_payments')
         .delete()
@@ -55,7 +39,7 @@ export const DeleteAgreementDialog = ({
 
       if (paymentsError) throw paymentsError;
 
-      // 4. Delete payment schedules
+      // Delete payment schedules
       const { error: schedulesError } = await supabase
         .from('payment_schedules')
         .delete()
@@ -63,7 +47,7 @@ export const DeleteAgreementDialog = ({
 
       if (schedulesError) throw schedulesError;
 
-      // 5. Delete damages
+      // Delete damages
       const { error: damagesError } = await supabase
         .from('damages')
         .delete()
@@ -71,7 +55,7 @@ export const DeleteAgreementDialog = ({
 
       if (damagesError) throw damagesError;
 
-      // 6. Delete traffic fines
+      // Delete traffic fines
       const { error: trafficFinesError } = await supabase
         .from('traffic_fines')
         .delete()
@@ -79,7 +63,7 @@ export const DeleteAgreementDialog = ({
 
       if (trafficFinesError) throw trafficFinesError;
 
-      // 7. Delete agreement documents
+      // Delete agreement documents
       const { error: agreementDocsError } = await supabase
         .from('agreement_documents')
         .delete()
@@ -87,7 +71,7 @@ export const DeleteAgreementDialog = ({
 
       if (agreementDocsError) throw agreementDocsError;
 
-      // 8. Delete penalties
+      // Delete penalties
       const { error: penaltiesError } = await supabase
         .from('penalties')
         .delete()
@@ -95,7 +79,7 @@ export const DeleteAgreementDialog = ({
 
       if (penaltiesError) throw penaltiesError;
 
-      // 9. Delete security deposits
+      // Delete security deposits
       const { error: depositsError } = await supabase
         .from('security_deposits')
         .delete()
@@ -103,7 +87,15 @@ export const DeleteAgreementDialog = ({
 
       if (depositsError) throw depositsError;
 
-      // 10. Finally delete the agreement
+      // Delete remaining amounts
+      const { error: remainingAmountsError } = await supabase
+        .from('remaining_amounts')
+        .delete()
+        .eq('lease_id', agreementId);
+
+      if (remainingAmountsError) throw remainingAmountsError;
+
+      // Finally delete the agreement
       const { error: agreementError } = await supabase
         .from('leases')
         .delete()
