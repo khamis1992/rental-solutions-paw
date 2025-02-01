@@ -20,35 +20,24 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
   const { data: templates, isLoading } = useQuery({
     queryKey: ["agreement-templates"],
     queryFn: async () => {
+      console.log("Fetching templates...");
       const { data, error } = await supabase
         .from("agreement_templates")
         .select("*")
         .eq("is_active", true);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching templates:", error);
+        throw error;
+      }
 
       if (!data || data.length === 0) {
+        console.log("No templates found in database");
         return [];
       }
 
-      // Transform the data to match the Template type
-      const transformedTemplates: Template[] = data.map(template => ({
-        ...template,
-        template_structure: {
-          textStyle: {
-            bold: false,
-            italic: false,
-            underline: false,
-            fontSize: 14,
-            alignment: 'left'
-          },
-          tables: []
-        },
-        template_sections: template.template_sections || [],
-        variable_mappings: template.variable_mappings || {}
-      }));
-
-      return transformedTemplates;
+      console.log("Fetched templates:", data);
+      return data as Template[];
     },
   });
 

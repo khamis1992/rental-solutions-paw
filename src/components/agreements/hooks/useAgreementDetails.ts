@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Agreement } from "@/types/agreement.types";
+import { toast } from "sonner";
 
 export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
-  const { data: agreement, isLoading } = useQuery({
+  const { data: agreement, isLoading, error, refetch } = useQuery({
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: agreement, error } = await supabase
         .from('leases')
         .select(`
           *,
@@ -14,7 +14,7 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             id,
             full_name,
             phone_number,
-            email
+            address
           ),
           vehicle:vehicle_id (
             id,
@@ -23,32 +23,39 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             year,
             license_plate
           ),
-          remaining_amount:remaining_amounts!remaining_amounts_lease_id_fkey (
+          remainingAmount:remaining_amounts!remaining_amounts_lease_id_fkey (
+            rent_amount,
+            final_price,
             remaining_amount
+          ),
+          unified_payments (
+            id,
+            amount,
+            amount_paid,
+            payment_date,
+            payment_method,
+            status,
+            late_fine_amount
           )
         `)
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching agreement:', error);
+        toast.error('Failed to fetch agreement details');
+        throw error;
+      }
 
-      // Transform the data to match the Agreement type
-      const transformedData: Agreement = {
-        ...data,
-        remaining_amount: data.remaining_amount?.remaining_amount || 0,
-        rent_amount: data.rent_amount || 0,
-        daily_late_fee: data.daily_late_fee || 0,
-        customer: data.customer,
-        vehicle: data.vehicle
-      };
-
-      return transformedData;
+      return agreement;
     },
     enabled: enabled && !!agreementId,
   });
 
   return {
     agreement,
-    isLoading
+    isLoading,
+    error,
+    refetch
   };
 };

@@ -1,39 +1,39 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText, Printer, Trash2 } from "lucide-react";
+import type { Agreement } from "@/types/agreement.types";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
-import { Agreement } from "@/types/agreement.types";
 
 interface AgreementTableRowProps {
   agreement: Agreement;
   onViewContract: (id: string) => void;
   onPrintContract: (id: string) => void;
   onAgreementClick: (id: string) => void;
+  onNameClick: (id: string) => void;
   onDeleted: () => void;
+  onDeleteClick: () => void;
 }
 
 export const AgreementTableRow = ({
   agreement,
   onAgreementClick,
+  onNameClick,
   onDeleted,
+  onDeleteClick,
 }: AgreementTableRowProps) => {
-  const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const handleAgreementNumberClick = () => {
-    navigate(`/agreements/${agreement.id}/details`);
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -337,7 +337,7 @@ export const AgreementTableRow = ({
     <TableRow className="hover:bg-muted/50 transition-colors">
       <TableCell>
         <button
-          onClick={handleAgreementNumberClick}
+          onClick={() => onNameClick(agreement.id)}
           className="text-primary hover:underline font-medium"
         >
           {agreement.agreement_number}
@@ -345,7 +345,7 @@ export const AgreementTableRow = ({
       </TableCell>
       <TableCell>
         <button
-          onClick={handleAgreementNumberClick}
+          onClick={() => onNameClick(agreement.id)}
           className="text-primary hover:underline"
         >
           {agreement.vehicle?.license_plate}
@@ -385,6 +385,23 @@ export const AgreementTableRow = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>View Agreement Template</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadTemplate}
+                disabled={downloading}
+                className="hover:bg-green-100"
+              >
+                <Printer className="h-4 w-4 text-green-600 hover:text-green-500" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Print Agreement</p>
             </TooltipContent>
           </Tooltip>
 

@@ -56,20 +56,17 @@ export function CreateJobDialog() {
 
   // Add a function to check for existing job cards
   const checkExistingJobCard = async (vehicleId: string) => {
-    console.log("Checking existing job cards for vehicle:", vehicleId);
-    
     const { data, error } = await supabase
       .from("maintenance")
       .select("*")
       .eq("vehicle_id", vehicleId)
-      .in("status", ['scheduled', 'in_progress']);
+      .not("status", "in", ["completed", "cancelled"]);
 
     if (error) {
       console.error("Error checking existing job cards:", error);
       return true; // Return true to prevent creation if there's an error
     }
 
-    console.log("Existing job cards found:", data);
     return data && data.length > 0;
   };
 
