@@ -52,6 +52,10 @@ export const AgreementTableRow = ({
     }
   };
 
+  const handleAgreementNumberClick = () => {
+    navigate(`/agreements/${agreement.id}/details`);
+  };
+
   const handleDownloadTemplate = async () => {
     try {
       const { data: agreement_data, error: agreementError } = await supabase
@@ -332,10 +336,6 @@ export const AgreementTableRow = ({
     } finally {
       setDownloading(false);
     }
-  };
-
-  const handleAgreementNumberClick = () => {
-    navigate(`/agreements/${agreement.id}/details`);
   };
 
   return (
