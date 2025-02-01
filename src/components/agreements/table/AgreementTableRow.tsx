@@ -306,22 +306,23 @@ export const AgreementTableRow = ({
               @page {
                 size: A4;
                 margin: 20mm;
+                marks: crop cross;
               }
               body {
                 font-family: ${isRTL ? 'Noto Sans Arabic' : 'Arial'}, sans-serif;
                 margin: 0;
-                padding: 0;
+                padding: 20mm;
                 direction: ${isRTL ? 'rtl' : 'ltr'};
                 text-align: ${isRTL ? 'right' : 'left'};
               }
               .a4-page {
-                width: 210mm;
-                min-height: 297mm;
+                width: 170mm;
+                min-height: 257mm;
                 padding: 20mm;
                 margin: 0 auto;
                 box-sizing: border-box;
                 position: relative;
-                border: 1px solid #ddd;
+                border: 1px solid #000;
                 background: white;
               }
               .template-variable {
@@ -333,17 +334,6 @@ export const AgreementTableRow = ({
                 font-family: monospace;
                 font-size: 0.875em;
               }
-              .agreement-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 1em 0;
-                direction: ${isRTL ? 'rtl' : 'ltr'};
-              }
-              .agreement-table td, .agreement-table th {
-                border: 1px solid #ddd;
-                padding: 8px;
-                text-align: ${isRTL ? 'right' : 'left'};
-              }
               .page-number {
                 position: absolute;
                 bottom: 10mm;
@@ -351,6 +341,18 @@ export const AgreementTableRow = ({
                 text-align: center;
                 font-size: 12px;
                 color: #666;
+              }
+              @media print {
+                body {
+                  margin: 0;
+                  padding: 0;
+                }
+                .a4-page {
+                  margin: 0;
+                  border: 1px solid #000;
+                  box-shadow: none;
+                  page-break-after: always;
+                }
               }
             </style>
           </head>
