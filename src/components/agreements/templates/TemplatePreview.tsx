@@ -223,16 +223,16 @@ export const TemplatePreview = ({
       <DialogHeader>
         <div className="flex justify-between items-center">
           <DialogTitle className="text-xl font-semibold">
-            {isArabic ? "معاينة النموذج" : "Template Preview"}
+            {containsArabic(content) ? "معاينة النموذج" : "Template Preview"}
           </DialogTitle>
           <Button 
             onClick={handlePrint}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 sticky top-0"
+            className="flex items-center gap-2"
           >
             <Printer className="h-4 w-4" />
-            {isArabic ? "طباعة" : "Print"}
+            {containsArabic(content) ? "طباعة" : "Print"}
           </Button>
         </div>
       </DialogHeader>
@@ -241,7 +241,7 @@ export const TemplatePreview = ({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {isArabic ? 
+            {containsArabic(content) ? 
               "المتغيرات التالية مفقودة: " + missingVariables.join("، ") :
               "The following variables are missing: " + missingVariables.join(", ")
             }
@@ -279,7 +279,7 @@ export const TemplatePreview = ({
               position: 'relative'
             }}
             ref={calculatePageCount}
-            dangerouslySetInnerHTML={{ __html: processedContent }}
+            dangerouslySetInnerHTML={{ __html: processContent(content) }}
           />
         </div>
       </ScrollArea>
