@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
@@ -33,36 +33,11 @@ export const AgreementTableRow = ({
   onNameClick,
   onDeleteClick,
 }: AgreementTableRowProps) => {
-  const handleViewContract = async () => {
-    try {
-      const { data: documents, error } = await supabase
-        .from('agreement_documents')
-        .select('document_url')
-        .eq('lease_id', agreement.id)
-        .eq('document_type', 'contract')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
-
-      if (!documents || documents.length === 0) {
-        toast.error('No contract document found');
-        return;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('agreement_documents')
-        .getPublicUrl(documents[0].document_url);
-
-      window.open(publicUrl, '_blank');
-    } catch (error) {
-      console.error('Error viewing contract:', error);
-      toast.error('Failed to view contract');
-    }
-  };
+  const [downloading, setDownloading] = useState(false);
 
   const handleDownloadTemplate = async () => {
     try {
+      setDownloading(true);
       const { data: agreement_data, error: agreementError } = await supabase
         .from('leases')
         .select(`
@@ -138,8 +113,46 @@ export const AgreementTableRow = ({
           .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
       }
 
-      // Create blob and download
-      const blob = new Blob([templateContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      // Create document content with proper HTML structure
+      const docContent = `
+        <!DOCTYPE html>
+        <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body {
+                font-family: ${isRTL ? 'Noto Sans Arabic' : 'Arial'}, sans-serif;
+                direction: ${isRTL ? 'rtl' : 'ltr'};
+                text-align: ${isRTL ? 'right' : 'left'};
+                padding: 20mm;
+                line-height: 1.5;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1em 0;
+              }
+              td, th {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: ${isRTL ? 'right' : 'left'};
+              }
+              .template-variable {
+                color: #6b21a8;
+                background-color: #f3e8ff;
+                padding: 2px 6px;
+                border-radius: 4px;
+              }
+            </style>
+          </head>
+          <body>
+            ${templateContent}
+          </body>
+        </html>
+      `;
+
+      // Create blob and trigger download
+      const blob = new Blob([docContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -153,6 +166,36 @@ export const AgreementTableRow = ({
     } catch (error) {
       console.error('Error downloading template:', error);
       toast.error('Failed to download template');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleViewContract = async () => {
+    try {
+      const { data: documents, error } = await supabase
+        .from('agreement_documents')
+        .select('document_url')
+        .eq('lease_id', agreement.id)
+        .eq('document_type', 'contract')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!documents || documents.length === 0) {
+        toast.error('No contract document found');
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('agreement_documents')
+        .getPublicUrl(documents[0].document_url);
+
+      window.open(publicUrl, '_blank');
+    } catch (error) {
+      console.error('Error viewing contract:', error);
+      toast.error('Failed to view contract');
     }
   };
 
@@ -387,6 +430,7 @@ export const AgreementTableRow = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleDownloadTemplate}
+                disabled={downloading}
               >
                 <Download className="h-4 w-4 text-green-600 hover:text-green-500" />
               </Button>
@@ -401,7 +445,7 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleViewContract()}
+                onClick={() => onViewContract(agreement.id)}
               >
                 <FileText className="h-4 w-4 text-violet-600 hover:text-violet-500" />
               </Button>
@@ -416,7 +460,7 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handlePrintContract()}
+                onClick={() => onPrintContract(agreement.id)}
               >
                 <Printer className="h-4 w-4 text-blue-600 hover:text-blue-500" />
               </Button>
