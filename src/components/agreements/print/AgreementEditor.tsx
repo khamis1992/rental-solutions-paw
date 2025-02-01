@@ -43,7 +43,7 @@ export const AgreementEditor = ({ initialContent, onSave }: AgreementEditorProps
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(`
-        <html>
+        <html dir="rtl">
           <head>
             <title>Print Agreement</title>
             <style>
@@ -56,10 +56,19 @@ export const AgreementEditor = ({ initialContent, onSave }: AgreementEditorProps
                 line-height: 1.6;
                 margin: 0;
                 padding: 20px;
+                direction: rtl;
+                text-align: right;
               }
               .content {
                 max-width: 210mm;
                 margin: 0 auto;
+              }
+              table {
+                direction: rtl;
+                text-align: right;
+              }
+              th, td {
+                text-align: right;
               }
             </style>
           </head>
@@ -106,6 +115,7 @@ export const AgreementEditor = ({ initialContent, onSave }: AgreementEditorProps
           modules={modules}
           formats={formats}
           className="bg-white min-h-[500px]"
+          dir="rtl"
         />
       </Card>
 
@@ -113,6 +123,7 @@ export const AgreementEditor = ({ initialContent, onSave }: AgreementEditorProps
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <div 
             className="prose max-w-none dark:prose-invert"
+            dir="rtl"
             dangerouslySetInnerHTML={{ __html: content }}
           />
         </DialogContent>
