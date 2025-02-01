@@ -100,7 +100,10 @@ export const CreateTemplateDialog = ({
       const templateData = {
         ...formData,
         is_active: true,
-        template_structure: formData.template_structure
+        template_structure: {
+          textStyle: formData.template_structure.textStyle,
+          tables: formData.template_structure.tables
+        }
       };
 
       let error;
@@ -125,12 +128,7 @@ export const CreateTemplateDialog = ({
         throw error;
       }
 
-      // Invalidate and refetch ALL related queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["agreement-templates"] }),
-        queryClient.invalidateQueries({ queryKey: ["agreements"] }),
-        queryClient.invalidateQueries({ queryKey: ["agreement-details"] })
-      ]);
+      await queryClient.invalidateQueries({ queryKey: ["agreement-templates"] });
       
       toast.success(selectedTemplate ? "Template updated successfully" : "Template created successfully");
       onOpenChange(false);
