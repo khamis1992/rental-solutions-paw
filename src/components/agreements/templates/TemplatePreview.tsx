@@ -63,38 +63,23 @@ export const TemplatePreview = ({
                 width: initial;
                 min-height: initial;
                 box-shadow: initial;
-                background: initial;
                 page-break-after: always;
-              }
-              /* Ensure proper page breaks */
-              h1, h2, h3 { 
-                page-break-after: avoid;
-                page-break-inside: avoid;
-              }
-              table { 
-                page-break-inside: avoid;
-              }
-              tr { 
-                page-break-inside: avoid;
-                page-break-after: auto;
-              }
-              thead {
-                display: table-header-group;
-              }
-              tfoot {
-                display: table-footer-group;
-              }
-              img {
-                max-width: 100%;
-                page-break-inside: avoid;
-              }
-              ul, ol {
-                page-break-inside: avoid;
+                background: initial;
               }
               .template-variable {
                 background-color: #f3e8ff !important;
                 color: #6b21a8 !important;
                 border: 1px solid #e9d5ff !important;
+              }
+              table {
+                page-break-inside: avoid;
+              }
+              thead {
+                display: table-header-group;
+              }
+              img {
+                max-width: 100%;
+                page-break-inside: avoid;
               }
               .page-number {
                 position: fixed;
@@ -173,38 +158,45 @@ export const TemplatePreview = ({
 
     let processedContent = text;
     
+    // Center all bold text
+    processedContent = processedContent.replace(
+      /<strong>(.*?)<\/strong>/g,
+      '<strong class="block text-center">$1</strong>'
+    );
+
     // Process template variables
     processedContent = processedContent.replace(
       /{{(.*?)}}/g,
       '<span class="template-variable">{{$1}}</span>'
     );
 
-    // Process section headers with page break control
+    // Process section headers
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
-      '<h1 class="text-2xl font-bold text-gray-900 border-b pb-2 mb-4" style="page-break-after: avoid;">$1</h1>'
+      '<h1 class="text-2xl font-bold text-gray-900 border-b pb-2 mb-4">$1</h1>'
     );
     
+    // Reduce spacing for h2 headers
     processedContent = processedContent.replace(
       /<h2>/g,
-      '<h2 class="text-xl font-semibold mb-3 text-gray-800" style="page-break-after: avoid;">'
+      '<h2 class="text-xl font-semibold mb-3 text-gray-800">'
     );
 
-    // Optimize paragraph spacing and page breaks
+    // Optimize paragraph spacing
     processedContent = processedContent.replace(
       /<p>/g,
-      `<p dir="${dirAttribute}" class="mb-3 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'};">`
+      `<p dir="${dirAttribute}" class="mb-3 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'}">`
     );
 
-    // Optimize list spacing with page break control
+    // Optimize list spacing
     processedContent = processedContent.replace(
       /<ul>/g,
-      '<ul class="list-disc list-inside mb-3 space-y-1" style="page-break-inside: avoid;">'
+      '<ul class="list-disc list-inside mb-3 space-y-1">'
     );
 
     processedContent = processedContent.replace(
       /<ol>/g,
-      '<ol class="list-decimal list-inside mb-3 space-y-1" style="page-break-inside: avoid;">'
+      '<ol class="list-decimal list-inside mb-3 space-y-1">'
     );
 
     return processedContent;
@@ -280,14 +272,17 @@ export const TemplatePreview = ({
             ref={calculatePageCount}
             dangerouslySetInnerHTML={{ __html: processedContent }}
           />
+          <div className="page-number">
+            Page 1 of {pageCount}
+          </div>
         </div>
 
         {tables.map((table, tableIndex) => (
           <table 
             key={tableIndex}
             className="w-full my-4 border-collapse bg-white"
+            dir={isArabic ? "rtl" : "ltr"}
             style={{
-              pageBreakInside: 'avoid',
               width: '100%',
               borderCollapse: 'collapse',
               borderSpacing: '0',
