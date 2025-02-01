@@ -154,8 +154,13 @@ export const AgreementTableRow = ({
               .header {
                 text-align: center;
                 padding: 20px 0;
-                border-bottom: 2px solid #000;
+                border-bottom: 2px solid #DAA520;
                 margin-bottom: 30px;
+              }
+
+              .logo {
+                max-width: 300px;
+                margin-bottom: 15px;
               }
 
               .agreement-number {
@@ -163,6 +168,7 @@ export const AgreementTableRow = ({
                 color: #333;
                 margin: 15px 0;
                 text-align: center;
+                font-weight: 500;
               }
 
               .agreement-title {
@@ -170,6 +176,7 @@ export const AgreementTableRow = ({
                 font-weight: bold;
                 margin: 20px 0;
                 text-align: center;
+                color: #222;
               }
 
               h1, h2, h3 {
@@ -211,7 +218,7 @@ export const AgreementTableRow = ({
                 bottom: 25mm;
                 width: calc(100% - 50mm);
                 text-align: center;
-                border-top: 1px solid #000;
+                border-top: 1px solid #DAA520;
                 padding-top: 10px;
                 font-size: 12px;
               }
@@ -236,7 +243,7 @@ export const AgreementTableRow = ({
                 left: 50%;
                 transform: translate(-50%, -50%) rotate(-45deg);
                 font-size: 60px;
-                color: rgba(0, 0, 0, 0.1);
+                color: rgba(218, 165, 32, 0.1);
                 z-index: -1;
               }
 
@@ -252,18 +259,22 @@ export const AgreementTableRow = ({
               li {
                 margin: 0.5em 0;
               }
+
+              .gold-border {
+                border-color: #DAA520;
+              }
             </style>
           </head>
           <body>
             <div class="watermark">COPY</div>
             <div class="header">
-              <img src="/company-logo.png" alt="Company Logo" style="max-height: 80px; margin-bottom: 15px;">
+              <img src="/lovable-uploads/0fb89e4f-aba4-4419-8efa-9fc214ac2f83.png" alt="Alaraf Car Rental" class="logo">
               <div class="agreement-number">Agreement #${agreement_data.agreement_number}</div>
               <div class="agreement-title">${isRTL ? 'عقد ايجار مركبة' : 'Vehicle Rental Agreement'}</div>
             </div>
             ${templateContent}
             <div class="footer">
-              <div>Company Name | Address | Phone | Email</div>
+              <div>Alaraf Car Rental | P.O. Box 123, Doha, Qatar | +974 1234 5678 | info@alarafcarrental.com</div>
               <div class="page-number">Page </div>
             </div>
           </body>
