@@ -48,37 +48,60 @@ export const TemplatePreview = ({
             @page {
               size: A4;
               margin: 20mm;
+              marks: crop cross;
             }
             @media print {
-              body {
+              html, body {
                 margin: 0;
                 padding: 0;
+                width: 210mm;
+                height: 297mm;
+              }
+              body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
               }
               .a4-page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 20mm;
                 margin: 0;
-                border: initial;
-                border-radius: initial;
-                width: initial;
-                min-height: initial;
-                box-shadow: initial;
                 page-break-after: always;
-                background: initial;
+                background: white;
+                box-sizing: border-box;
               }
               .template-variable {
                 background-color: #f3e8ff !important;
                 color: #6b21a8 !important;
                 border: 1px solid #e9d5ff !important;
+                padding: 2px 6px !important;
+                border-radius: 4px !important;
+                font-family: monospace !important;
+                font-size: 0.875em !important;
               }
               table {
                 page-break-inside: avoid;
+                width: 100% !important;
+                border-collapse: collapse !important;
               }
               thead {
                 display: table-header-group;
               }
+              tr {
+                page-break-inside: avoid;
+              }
+              td, th {
+                padding: 8px !important;
+                border: 1px solid #ddd !important;
+              }
               img {
                 max-width: 100%;
+                page-break-inside: avoid;
+              }
+              h1, h2, h3 {
+                page-break-after: avoid;
+              }
+              ul, ol {
                 page-break-inside: avoid;
               }
               .page-number {
@@ -91,21 +114,19 @@ export const TemplatePreview = ({
               }
             }
             body {
-              margin: 0;
-              padding: 0;
               font-family: ${isRTL ? '"Noto Sans Arabic", Arial' : 'Arial'}, sans-serif;
               line-height: 1.5;
               direction: ${isRTL ? 'rtl' : 'ltr'};
+              font-size: ${textStyle.fontSize}px;
+              ${textStyle.bold ? 'font-weight: bold;' : ''}
+              ${textStyle.italic ? 'font-style: italic;' : ''}
+              ${textStyle.underline ? 'text-decoration: underline;' : ''}
+              text-align: ${textStyle.alignment};
             }
             .a4-page {
-              width: 210mm;
-              min-height: 297mm;
-              padding: 20mm;
-              margin: 0 auto;
               background: white;
               box-shadow: 0 0 0.5mm 0.5mm rgba(0,0,0,0.15);
               position: relative;
-              border: 1px solid #ddd;
             }
             .page-content {
               height: 100%;
@@ -267,7 +288,11 @@ export const TemplatePreview = ({
               direction: isArabic ? 'rtl' : 'ltr',
               fontSize: `${textStyle.fontSize}px`,
               transform: 'scale(0.8)',
-              transformOrigin: 'top center'
+              transformOrigin: 'top center',
+              width: '210mm',
+              minHeight: '297mm',
+              padding: '20mm',
+              margin: '0 auto'
             }}
             ref={calculatePageCount}
             dangerouslySetInnerHTML={{ __html: processedContent }}
