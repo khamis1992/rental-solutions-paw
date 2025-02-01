@@ -21,7 +21,7 @@ export const TemplatePreview = ({
     italic: false,
     underline: false,
     fontSize: 14,
-    alignment: 'left'
+    alignment: 'right'
   },
   tables = []
 }: TemplatePreviewProps) => {
@@ -41,41 +41,57 @@ export const TemplatePreview = ({
     // Center all bold text
     processedContent = processedContent.replace(
       /<strong>(.*?)<\/strong>/g,
-      '<strong class="block text-center">$1</strong>'
+      '<strong class="block text-center mb-4">$1</strong>'
     );
 
     // Process template variables
     processedContent = processedContent.replace(
       /{{(.*?)}}/g,
-      '<span class="template-variable">{{$1}}</span>'
+      '<span class="template-variable bg-gray-50 px-1 rounded">{{$1}}</span>'
     );
 
     // Process section headers
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
-      '<h1 class="text-2xl font-bold text-gray-900 mb-4">$1</h1>'
+      '<h1 class="text-2xl font-bold text-gray-900 mb-6 page-break-after-avoid">$1</h1>'
     );
     
     processedContent = processedContent.replace(
       /<h2>/g,
-      '<h2 class="text-xl font-semibold mb-3 text-gray-800">'
+      '<h2 class="text-xl font-semibold mb-4 text-gray-800 page-break-after-avoid">'
     );
 
     // Optimize paragraph spacing
     processedContent = processedContent.replace(
       /<p>/g,
-      `<p dir="${dirAttribute}" class="mb-3 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'}">`
+      `<p dir="${dirAttribute}" class="mb-4 leading-relaxed text-justify" style="text-align: ${isArabic ? 'right' : 'left'}">`
     );
 
     // Optimize list spacing
     processedContent = processedContent.replace(
       /<ul>/g,
-      '<ul class="list-disc list-inside mb-3 space-y-1">'
+      '<ul class="list-disc list-inside mb-4 space-y-2">'
     );
 
     processedContent = processedContent.replace(
       /<ol>/g,
-      '<ol class="list-decimal list-inside mb-3 space-y-1">'
+      '<ol class="list-decimal list-inside mb-4 space-y-2">'
+    );
+
+    // Enhance table styling
+    processedContent = processedContent.replace(
+      /<table/g,
+      '<table class="w-full border-collapse mb-6 page-break-inside-avoid"'
+    );
+
+    processedContent = processedContent.replace(
+      /<th/g,
+      '<th class="border border-gray-300 bg-gray-50 p-3 text-right"'
+    );
+
+    processedContent = processedContent.replace(
+      /<td/g,
+      '<td class="border border-gray-300 p-3 text-right"'
     );
 
     return processedContent;
@@ -83,7 +99,6 @@ export const TemplatePreview = ({
 
   const isArabic = containsArabic(content);
 
-  // Calculate page count based on content height
   const calculatePageCount = (containerRef: HTMLDivElement | null) => {
     if (containerRef) {
       const contentHeight = containerRef.scrollHeight;
@@ -137,7 +152,7 @@ export const TemplatePreview = ({
               fontSize: `${textStyle.fontSize}px`,
               width: '210mm',
               minHeight: '297mm',
-              padding: '20mm',
+              padding: '25mm 25mm 30mm 25mm', // Increased bottom padding for footer
               margin: '0 auto',
               boxSizing: 'border-box',
               backgroundColor: 'white',
