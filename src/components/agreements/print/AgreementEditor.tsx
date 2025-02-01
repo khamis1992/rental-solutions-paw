@@ -14,14 +14,6 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
   const [content, setContent] = useState(initialContent);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
-  // Check if content contains Arabic text
-  const containsArabic = (text: string) => {
-    const arabicPattern = /[\u0600-\u06FF]/;
-    return arabicPattern.test(text);
-  };
-
-  const isRTL = containsArabic(content);
-
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -51,7 +43,7 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
     if (!printWindow) return;
 
     printWindow.document.write(`
-      <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
+      <html dir="rtl" lang="ar">
         <head>
           <title>Print Agreement</title>
           <style>
@@ -64,12 +56,12 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
               src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;700&display=swap');
             }
             body {
-              font-family: ${isRTL ? "'Noto Sans Arabic', sans-serif" : "Arial, sans-serif"};
+              font-family: 'Noto Sans Arabic', sans-serif;
               line-height: 1.6;
               margin: 0;
               padding: 20px;
-              direction: ${isRTL ? 'rtl' : 'ltr'};
-              text-align: ${isRTL ? 'right' : 'left'};
+              direction: rtl;
+              text-align: right;
             }
             .content {
               max-width: 210mm;
@@ -83,7 +75,7 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
             th, td {
               border: 1px solid #000;
               padding: 8px;
-              text-align: ${isRTL ? 'right' : 'left'};
+              text-align: right;
             }
             @media print {
               .content {
@@ -124,17 +116,14 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
       {isPreviewMode ? (
         <Card className="p-6">
           <div
-            className={cn(
-              "prose max-w-none",
-              isRTL && "text-right dir-rtl"
-            )}
-            dir={isRTL ? "rtl" : "ltr"}
+            className="prose max-w-none text-right"
+            dir="rtl"
             dangerouslySetInnerHTML={{ __html: content }}
           />
         </Card>
       ) : (
         <Card className={cn("p-0 overflow-hidden", "min-h-[500px]")}>
-          <div className={isRTL ? "rtl-editor" : ""}>
+          <div className="rtl-editor">
             <ReactQuill
               theme="snow"
               value={content}
@@ -142,7 +131,6 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
               modules={modules}
               formats={formats}
               className="h-[450px]"
-              dir={isRTL ? "rtl" : "ltr"}
             />
           </div>
         </Card>

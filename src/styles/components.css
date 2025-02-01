@@ -29,3 +29,28 @@
     text-align: right;
   }
 }
+
+/* Override ReactQuill default alignment */
+.ql-editor {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.ql-snow .ql-picker.ql-header {
+  direction: rtl !important;
+}
+
+/* Force RTL for all editor content */
+.ql-container {
+  direction: rtl !important;
+}
+
+/* Adjust toolbar buttons for RTL */
+.ql-snow .ql-toolbar button {
+  float: right;
+}
+
+.ql-snow .ql-formats {
+  margin-right: 0;
+  margin-left: 15px;
+}
