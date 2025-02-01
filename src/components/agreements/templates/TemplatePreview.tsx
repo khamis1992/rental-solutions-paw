@@ -56,8 +56,6 @@ export const TemplatePreview = ({
                 padding: 0;
                 width: 210mm;
                 height: 297mm;
-              }
-              body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
               }
@@ -68,6 +66,8 @@ export const TemplatePreview = ({
                 margin: 0;
                 page-break-after: always;
                 background: white;
+                box-shadow: none;
+                transform: none !important;
                 box-sizing: border-box;
               }
               .template-variable {
@@ -287,8 +287,6 @@ export const TemplatePreview = ({
             style={{
               direction: isArabic ? 'rtl' : 'ltr',
               fontSize: `${textStyle.fontSize}px`,
-              transform: 'scale(0.8)',
-              transformOrigin: 'top center',
               width: '210mm',
               minHeight: '297mm',
               padding: '20mm',
