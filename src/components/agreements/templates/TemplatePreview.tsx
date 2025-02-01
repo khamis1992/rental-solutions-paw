@@ -48,21 +48,10 @@ export const TemplatePreview = ({
 
     let processedContent = text;
     
-    // Remove bold from specific name
-    processedContent = processedContent.replace(
-      /خميس هاشم الجبر/g,
-      '<span class="font-normal">خميس هاشم الجبر</span>'
-    );
-    
-    // Center all other bold text
+    // Center all bold text
     processedContent = processedContent.replace(
       /<strong>(.*?)<\/strong>/g,
-      (match, content) => {
-        if (content !== 'خميس هاشم الجبر') {
-          return '<strong class="block text-center">$1</strong>';
-        }
-        return match;
-      }
+      '<strong class="block text-center">$1</strong>'
     );
 
     // Process template variables
@@ -73,7 +62,7 @@ export const TemplatePreview = ({
       );
     }
 
-    // Process section headers
+    // Process section headers with reduced margins
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
       (match, content) => `
