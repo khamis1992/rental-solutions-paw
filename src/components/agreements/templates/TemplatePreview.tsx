@@ -202,7 +202,7 @@ export const TemplatePreview = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[80vh]">
       <DialogHeader>
         <div className="flex justify-between items-center">
           <DialogTitle className="text-xl font-semibold">
@@ -212,7 +212,7 @@ export const TemplatePreview = ({
             onClick={handlePrint}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 sticky top-0"
           >
             <Printer className="h-4 w-4" />
             {isArabic ? "طباعة" : "Print"}
@@ -232,7 +232,7 @@ export const TemplatePreview = ({
         </Alert>
       )}
       
-      <ScrollArea className="h-[600px] w-full rounded-md border bg-white shadow-sm">
+      <ScrollArea className="h-[calc(80vh-120px)] w-full rounded-md border bg-white shadow-sm">
         <div className="a4-preview-container">
           <div 
             className={cn(
@@ -251,7 +251,9 @@ export const TemplatePreview = ({
             )}
             style={{
               direction: isArabic ? 'rtl' : 'ltr',
-              fontSize: `${textStyle.fontSize}px`
+              fontSize: `${textStyle.fontSize}px`,
+              transform: 'scale(0.8)',
+              transformOrigin: 'top center'
             }}
             ref={calculatePageCount}
             dangerouslySetInnerHTML={{ __html: processedContent }}
