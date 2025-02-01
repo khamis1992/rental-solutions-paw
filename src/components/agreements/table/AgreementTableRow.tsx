@@ -35,134 +35,158 @@ export const AgreementTableRow = ({
 }: AgreementTableRowProps) => {
   const [downloading, setDownloading] = useState(false);
 
-const handleDownloadTemplate = async () => {
-  try {
-    setDownloading(true);
-    const { data: agreement_data, error: agreementError } = await supabase
-      .from('leases')
-      .select(`
-        *,
-        agreement_templates!leases_template_id_fkey (
-          content,
-          language
-        ),
-        customer:customer_id (
-          full_name,
-          phone_number,
-          email,
-          address,
-          nationality,
-          driver_license
-        ),
-        vehicle:vehicle_id (
-          make,
-          model,
-          year,
-          color,
-          license_plate,
-          vin
-        )
-      `)
-      .eq('id', agreement.id)
-      .maybeSingle();
+  const handleDownloadTemplate = async () => {
+    try {
+      setDownloading(true);
+      const { data: agreement_data, error: agreementError } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          agreement_templates!leases_template_id_fkey (
+            content,
+            language
+          ),
+          customer:customer_id (
+            full_name,
+            phone_number,
+            email,
+            address,
+            nationality,
+            driver_license
+          ),
+          vehicle:vehicle_id (
+            make,
+            model,
+            year,
+            color,
+            license_plate,
+            vin
+          )
+        `)
+        .eq('id', agreement.id)
+        .maybeSingle();
 
-    if (agreementError) throw agreementError;
+      if (agreementError) throw agreementError;
 
-    if (!agreement_data?.agreement_templates?.content) {
-      toast.error('No template found for this agreement');
-      return;
-    }
+      if (!agreement_data?.agreement_templates?.content) {
+        toast.error('No template found for this agreement');
+        return;
+      }
 
-    let templateContent = agreement_data.agreement_templates.content;
-    const isRTL = agreement_data.agreement_templates.language === 'arabic';
+      let templateContent = agreement_data.agreement_templates.content;
+      const isRTL = agreement_data.agreement_templates.language === 'arabic';
 
-    // Replace variables
-    templateContent = templateContent
-      .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement_data.start_date))
-      .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement_data.end_date))
-      .replace(/{{agreement\.agreement_number}}/g, agreement_data.agreement_number || '')
-      .replace(/{{agreement\.rent_amount}}/g, `${agreement_data.rent_amount} QAR`)
-      .replace(/{{agreement\.daily_late_fee}}/g, `${agreement_data.daily_late_fee} QAR`)
-      .replace(/{{agreement\.agreement_duration}}/g, agreement_data.agreement_duration || '')
-      .replace(/{{agreement\.total_amount}}/g, `${agreement_data.total_amount} QAR`)
-      .replace(/{{agreement\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR')
-      .replace(/{{payment\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR');
-
-    // Replace customer variables
-    if (agreement_data.customer) {
+      // Replace variables
       templateContent = templateContent
-        .replace(/{{customer\.name}}/g, agreement_data.customer.full_name || '')
-        .replace(/{{customer\.full_name}}/g, agreement_data.customer.full_name || '')
-        .replace(/{{customer\.phone_number}}/g, agreement_data.customer.phone_number || '')
-        .replace(/{{customer\.email}}/g, agreement_data.customer.email || '')
-        .replace(/{{customer\.address}}/g, agreement_data.customer.address || '')
-        .replace(/{{customer\.nationality}}/g, agreement_data.customer.nationality || '')
-        .replace(/{{customer\.driver_license}}/g, agreement_data.customer.driver_license || '');
-    }
+        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement_data.start_date))
+        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement_data.end_date))
+        .replace(/{{agreement\.agreement_number}}/g, agreement_data.agreement_number || '')
+        .replace(/{{agreement\.rent_amount}}/g, `${agreement_data.rent_amount} QAR`)
+        .replace(/{{agreement\.daily_late_fee}}/g, `${agreement_data.daily_late_fee} QAR`)
+        .replace(/{{agreement\.agreement_duration}}/g, agreement_data.agreement_duration || '')
+        .replace(/{{agreement\.total_amount}}/g, `${agreement_data.total_amount} QAR`)
+        .replace(/{{agreement\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR')
+        .replace(/{{payment\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR');
 
-    // Replace vehicle variables
-    if (agreement_data.vehicle) {
-      const vehicleName = `${agreement_data.vehicle.make} ${agreement_data.vehicle.model}`;
-      templateContent = templateContent
-        .replace(/{{vehicle\.name}}/g, vehicleName)
-        .replace(/{{vehicle\.make}}/g, agreement_data.vehicle.make || '')
-        .replace(/{{vehicle\.model}}/g, agreement_data.vehicle.model || '')
-        .replace(/{{vehicle\.year}}/g, agreement_data.vehicle.year?.toString() || '')
-        .replace(/{{vehicle\.color}}/g, agreement_data.vehicle.color || '')
-        .replace(/{{vehicle\.license_plate}}/g, agreement_data.vehicle.license_plate || '')
-        .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
-    }
+      // Replace customer variables
+      if (agreement_data.customer) {
+        templateContent = templateContent
+          .replace(/{{customer\.name}}/g, agreement_data.customer.full_name || '')
+          .replace(/{{customer\.full_name}}/g, agreement_data.customer.full_name || '')
+          .replace(/{{customer\.phone_number}}/g, agreement_data.customer.phone_number || '')
+          .replace(/{{customer\.email}}/g, agreement_data.customer.email || '')
+          .replace(/{{customer\.address}}/g, agreement_data.customer.address || '')
+          .replace(/{{customer\.nationality}}/g, agreement_data.customer.nationality || '')
+          .replace(/{{customer\.driver_license}}/g, agreement_data.customer.driver_license || '');
+      }
 
-    // Create Word document with simplified and correct XML structure
-    const docContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<?mso-application progid="Word.Document"?>
-<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml">
-  <w:body>
-    <w:p>
-      <w:r>
-        <w:t>
-          <div style="
-            font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
-            direction: ${isRTL ? 'rtl' : 'ltr'};
-            text-align: ${isRTL ? 'right' : 'left'};
-            line-height: 1.5;
-            padding: 20mm;
-          ">
+      // Replace vehicle variables
+      if (agreement_data.vehicle) {
+        const vehicleName = `${agreement_data.vehicle.make} ${agreement_data.vehicle.model}`;
+        templateContent = templateContent
+          .replace(/{{vehicle\.name}}/g, vehicleName)
+          .replace(/{{vehicle\.make}}/g, agreement_data.vehicle.make || '')
+          .replace(/{{vehicle\.model}}/g, agreement_data.vehicle.model || '')
+          .replace(/{{vehicle\.year}}/g, agreement_data.vehicle.year?.toString() || '')
+          .replace(/{{vehicle\.color}}/g, agreement_data.vehicle.color || '')
+          .replace(/{{vehicle\.license_plate}}/g, agreement_data.vehicle.license_plate || '')
+          .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
+      }
+
+      // Create HTML content for PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              @page {
+                size: A4;
+                margin: 20mm;
+                marks: crop cross;
+              }
+              body {
+                font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
+                direction: ${isRTL ? 'rtl' : 'ltr'};
+                text-align: ${isRTL ? 'right' : 'left'};
+                line-height: 1.5;
+                margin: 0;
+                padding: 20mm;
+                width: 170mm;
+                min-height: 257mm;
+                background: white;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1em 0;
+              }
+              td, th {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: ${isRTL ? 'right' : 'left'};
+              }
+              .template-variable {
+                background-color: #f3e8ff;
+                color: #6b21a8;
+                padding: 2px 6px;
+                border-radius: 4px;
+                border: 1px solid #e9d5ff;
+                font-family: monospace;
+                font-size: 0.875em;
+              }
+            </style>
+          </head>
+          <body>
             ${templateContent}
-          </div>
-        </w:t>
-      </w:r>
-    </w:p>
-  </w:body>
-</w:wordDocument>`;
+          </body>
+        </html>
+      `;
 
-    // Create blob with proper Word MIME type
-    const blob = new Blob(['\ufeff', docContent], { 
-      type: 'application/msword' 
-    });
-    
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${agreement.agreement_number || 'agreement'}.doc`;
-    
-    // Trigger download
-    document.body.appendChild(link);
-    link.click();
-    
-    // Cleanup
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+      // Convert HTML to PDF using browser's print to PDF
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Pop-up blocked. Please allow pop-ups and try again.');
+        return;
+      }
 
-    toast.success('Template downloaded successfully');
-  } catch (error) {
-    console.error('Error downloading template:', error);
-    toast.error('Failed to download template');
-  } finally {
-    setDownloading(false);
-  }
-};
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+
+      // Wait for content to load
+      printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+      };
+
+      toast.success('Template downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      toast.error('Failed to download template');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleViewContract = async () => {
     try {
@@ -328,17 +352,6 @@ const handleDownloadTemplate = async () => {
                 font-size: 12px;
                 color: #666;
               }
-              @media print {
-                body { margin: 0; }
-                .a4-page { 
-                  border: none;
-                  box-shadow: none;
-                }
-                .template-variable {
-                  -webkit-print-color-adjust: exact;
-                  print-color-adjust: exact;
-                }
-              }
             </style>
           </head>
           <body>
@@ -429,7 +442,7 @@ const handleDownloadTemplate = async () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Download Template</p>
+              <p>Download Template as PDF</p>
             </TooltipContent>
           </Tooltip>
 
