@@ -78,6 +78,11 @@ export interface Agreement {
   updated_at: string;
   rent_amount: number;
   remaining_amount: number;
+  daily_late_fee: number;
+  payment_status: string;
+  last_payment_date: string | null;
+  next_payment_date: string | null;
+  payment_frequency: string;
   customer?: {
     id: string;
     full_name: string | null;
