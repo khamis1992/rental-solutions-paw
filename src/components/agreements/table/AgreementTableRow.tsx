@@ -67,7 +67,8 @@ export const AgreementTableRow = ({
         .select(`
           *,
           agreement_templates!leases_template_id_fkey (
-            content
+            content,
+            language
           ),
           customer:customer_id (
             full_name,
@@ -97,6 +98,7 @@ export const AgreementTableRow = ({
       }
 
       let templateContent = agreement_data.agreement_templates.content;
+      const isRTL = agreement_data.agreement_templates.language === 'arabic';
 
       // Replace agreement variables
       templateContent = templateContent
@@ -141,7 +143,7 @@ export const AgreementTableRow = ({
 
       const printContent = `
         <!DOCTYPE html>
-        <html>
+        <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
           <head>
             <title>Print Agreement</title>
             <style>
@@ -150,9 +152,11 @@ export const AgreementTableRow = ({
                 margin: 20mm;
               }
               body {
-                font-family: Arial, sans-serif;
+                font-family: ${isRTL ? 'Noto Sans Arabic' : 'Arial'}, sans-serif;
                 margin: 0;
                 padding: 0;
+                direction: ${isRTL ? 'rtl' : 'ltr'};
+                text-align: ${isRTL ? 'right' : 'left'};
               }
               .a4-page {
                 width: 210mm;
@@ -177,10 +181,12 @@ export const AgreementTableRow = ({
                 width: 100%;
                 border-collapse: collapse;
                 margin: 1em 0;
+                direction: ${isRTL ? 'rtl' : 'ltr'};
               }
               .agreement-table td, .agreement-table th {
                 border: 1px solid #ddd;
                 padding: 8px;
+                text-align: ${isRTL ? 'right' : 'left'};
               }
               .page-number {
                 position: absolute;
@@ -204,7 +210,7 @@ export const AgreementTableRow = ({
             </style>
           </head>
           <body>
-            <div class="a4-page" dir="${templateContent.includes('class="rtl"') ? 'rtl' : 'ltr'}">
+            <div class="a4-page">
               ${templateContent}
               <div class="page-number">Page 1</div>
             </div>
