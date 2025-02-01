@@ -60,6 +60,146 @@ export const AgreementTableRow = ({
     }
   };
 
+  const handlePrintContract = async () => {
+    try {
+      const { data: agreement_data, error: agreementError } = await supabase
+        .from('leases')
+        .select(`
+          *,
+          agreement_templates!leases_template_id_fkey (
+            content
+          ),
+          customer:customer_id (
+            full_name,
+            phone_number,
+            email,
+            address,
+            nationality,
+            driver_license
+          ),
+          vehicle:vehicle_id (
+            make,
+            model,
+            year,
+            color,
+            license_plate,
+            vin
+          )
+        `)
+        .eq('id', agreement.id)
+        .maybeSingle();
+
+      if (agreementError) throw agreementError;
+
+      if (!agreement_data?.agreement_templates?.content) {
+        toast.error('No template found for this agreement');
+        return;
+      }
+
+      let templateContent = agreement_data.agreement_templates.content;
+
+      // Replace agreement variables
+      templateContent = templateContent
+        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement_data.start_date))
+        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement_data.end_date))
+        .replace(/{{agreement\.agreement_number}}/g, agreement_data.agreement_number || '')
+        .replace(/{{agreement\.rent_amount}}/g, `${agreement_data.rent_amount} QAR`)
+        .replace(/{{agreement\.daily_late_fee}}/g, `${agreement_data.daily_late_fee} QAR`)
+        .replace(/{{agreement\.agreement_duration}}/g, agreement_data.agreement_duration || '')
+        .replace(/{{agreement\.total_amount}}/g, `${agreement_data.total_amount} QAR`)
+        .replace(/{{agreement\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR')
+        .replace(/{{payment\.down_payment}}/g, agreement_data.down_payment ? `${agreement_data.down_payment} QAR` : '0 QAR');
+
+      // Replace customer variables
+      if (agreement_data.customer) {
+        templateContent = templateContent
+          .replace(/{{customer\.name}}/g, agreement_data.customer.full_name || '')
+          .replace(/{{customer\.full_name}}/g, agreement_data.customer.full_name || '')
+          .replace(/{{customer\.phone_number}}/g, agreement_data.customer.phone_number || '')
+          .replace(/{{customer\.email}}/g, agreement_data.customer.email || '')
+          .replace(/{{customer\.address}}/g, agreement_data.customer.address || '')
+          .replace(/{{customer\.nationality}}/g, agreement_data.customer.nationality || '')
+          .replace(/{{customer\.driver_license}}/g, agreement_data.customer.driver_license || '');
+      }
+
+      // Replace vehicle variables
+      if (agreement_data.vehicle) {
+        const vehicleName = `${agreement_data.vehicle.make} ${agreement_data.vehicle.model}`;
+        templateContent = templateContent
+          .replace(/{{vehicle\.name}}/g, vehicleName)
+          .replace(/{{vehicle\.make}}/g, agreement_data.vehicle.make || '')
+          .replace(/{{vehicle\.model}}/g, agreement_data.vehicle.model || '')
+          .replace(/{{vehicle\.year}}/g, agreement_data.vehicle.year?.toString() || '')
+          .replace(/{{vehicle\.color}}/g, agreement_data.vehicle.color || '')
+          .replace(/{{vehicle\.license_plate}}/g, agreement_data.vehicle.license_plate || '')
+          .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
+      }
+
+      // Open print window
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Agreement</title>
+            <style>
+              @page {
+                size: A4;
+                margin: 20mm;
+              }
+              body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+              }
+              .a4-page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 20mm;
+                margin: 0 auto;
+                box-sizing: border-box;
+                position: relative;
+                border: 1px solid #ddd;
+              }
+              .page-number {
+                position: absolute;
+                bottom: 10mm;
+                width: 100%;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+              }
+              @media print {
+                body { margin: 0; }
+                .a4-page { border: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="a4-page">
+              ${templateContent}
+              <div class="page-number">Page 1</div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+
+    } catch (error) {
+      console.error('Error printing contract:', error);
+      toast.error('Failed to print contract');
+    }
+  };
+
   return (
     <TableRow className="hover:bg-muted/50">
       <TableCell>
@@ -132,7 +272,7 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onPrintContract(agreement.id)}
+                onClick={() => handlePrintContract()}
               >
                 <Printer className="h-4 w-4 text-blue-600 hover:text-blue-500" />
               </Button>
