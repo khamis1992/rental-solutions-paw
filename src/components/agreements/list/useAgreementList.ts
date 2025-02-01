@@ -31,29 +31,21 @@ export const useAgreementList = () => {
               year,
               license_plate
             ),
-            remaining_amounts (
+            remaining_amounts!inner (
               remaining_amount
             )
           `);
 
         // Apply search filter if query exists
         if (searchQuery) {
-          query = query.or(`
-            agreement_number.ilike.%${searchQuery}%,
-            customer_id.eq.(
-              select id from profiles 
-              where full_name ilike '%${searchQuery}%'
-            ),
-            vehicle_id.eq.(
-              select id from vehicles 
-              where license_plate ilike '%${searchQuery}%' 
-              or make ilike '%${searchQuery}%' 
-              or model ilike '%${searchQuery}%'
-            )
-          `);
+          query = query.or(
+            `agreement_number.ilike.%${searchQuery}%,` +
+            `customer_id.eq.(select id from profiles where full_name ilike '%${searchQuery}%'),` +
+            `vehicle_id.eq.(select id from vehicles where license_plate ilike '%${searchQuery}%' or make ilike '%${searchQuery}%' or model ilike '%${searchQuery}%')`
+          );
         }
 
-        // Apply status filter
+        // Apply status filter if not "all"
         if (statusFilter !== "all") {
           query = query.eq("status", statusFilter);
         }
@@ -81,14 +73,32 @@ export const useAgreementList = () => {
         }
 
         // Transform the data to match the Agreement type
-        const transformedData = data?.map(agreement => ({
-          ...agreement,
+        const transformedData: Agreement[] = data?.map(agreement => ({
+          id: agreement.id,
+          agreement_number: agreement.agreement_number || '',
+          agreement_type: agreement.agreement_type,
+          customer_id: agreement.customer_id,
+          vehicle_id: agreement.vehicle_id,
+          start_date: agreement.start_date,
+          end_date: agreement.end_date,
+          status: agreement.status,
+          total_amount: agreement.total_amount,
+          initial_mileage: agreement.initial_mileage,
+          return_mileage: agreement.return_mileage,
+          notes: agreement.notes,
+          created_at: agreement.created_at,
+          updated_at: agreement.updated_at,
+          rent_amount: agreement.rent_amount || 0,
+          daily_late_fee: agreement.daily_late_fee || 0,
+          remaining_amount: agreement.remaining_amounts?.remaining_amount || 0,
           customer: agreement.customer || null,
           vehicle: agreement.vehicle || null,
-          remaining_amount: agreement.remaining_amounts?.[0]?.remaining_amount || 0,
-          rent_amount: agreement.rent_amount || 0,
-          daily_late_fee: agreement.daily_late_fee || 0
-        })) as Agreement[];
+          template_id: agreement.template_id,
+          payment_status: agreement.payment_status,
+          last_payment_date: agreement.last_payment_date,
+          next_payment_date: agreement.next_payment_date,
+          payment_frequency: agreement.payment_frequency
+        })) || [];
 
         return transformedData;
       } catch (err) {
