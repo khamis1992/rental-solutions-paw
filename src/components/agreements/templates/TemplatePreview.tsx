@@ -53,6 +53,8 @@ export const TemplatePreview = ({
               body {
                 margin: 0;
                 padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
               }
               .a4-page {
                 margin: 0;
@@ -62,6 +64,30 @@ export const TemplatePreview = ({
                 min-height: initial;
                 box-shadow: initial;
                 page-break-after: always;
+                background: initial;
+              }
+              .template-variable {
+                background-color: #f3e8ff !important;
+                color: #6b21a8 !important;
+                border: 1px solid #e9d5ff !important;
+              }
+              table {
+                page-break-inside: avoid;
+              }
+              thead {
+                display: table-header-group;
+              }
+              img {
+                max-width: 100%;
+                page-break-inside: avoid;
+              }
+              .page-number {
+                position: fixed;
+                bottom: 10mm;
+                width: 100%;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
               }
             }
             body {
@@ -103,18 +129,6 @@ export const TemplatePreview = ({
               border: 1px solid #ddd;
               padding: 8px;
               text-align: ${isRTL ? 'right' : 'left'};
-            }
-            img {
-              max-width: 100%;
-              height: auto;
-            }
-            .page-number {
-              position: absolute;
-              bottom: 10mm;
-              width: 100%;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
             }
           </style>
         </head>
