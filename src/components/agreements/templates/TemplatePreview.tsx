@@ -48,6 +48,13 @@ export const TemplatePreview = ({
 
     let processedContent = text;
     
+    // Center all bold text
+    processedContent = processedContent.replace(
+      /<strong>(.*?)<\/strong>/g,
+      '<strong class="block text-center">$1</strong>'
+    );
+
+    // Process template variables
     if (showVariables) {
       processedContent = processedContent.replace(
         /{{(.*?)}}/g,
@@ -55,11 +62,12 @@ export const TemplatePreview = ({
       );
     }
 
+    // Process section headers with reduced margins
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
       (match, content) => `
-        <div class="section-header">
-          <h1 class="text-2xl font-bold mb-6 mt-8 text-gray-900 border-b pb-2 flex items-center justify-between cursor-pointer" onclick="toggleSection('${content.replace(/\s+/g, '-')}')">
+        <div class="section-header mb-4">
+          <h1 class="text-2xl font-bold text-gray-900 border-b pb-2 flex items-center justify-between cursor-pointer" onclick="toggleSection('${content.replace(/\s+/g, '-')}')">
             ${content}
             <span class="section-toggle">
               ${collapsedSections.includes(content.replace(/\s+/g, '-')) ? '▼' : '▲'}
@@ -74,24 +82,27 @@ export const TemplatePreview = ({
       '</h1></div></div>'
     );
     
+    // Reduce spacing for h2 headers
     processedContent = processedContent.replace(
       /<h2>/g,
-      '<h2 class="text-xl font-semibold mb-4 mt-6 text-gray-800">'
+      '<h2 class="text-xl font-semibold mb-3 text-gray-800">'
     );
 
+    // Optimize paragraph spacing
     processedContent = processedContent.replace(
       /<p>/g,
-      `<p dir="${dirAttribute}" class="mb-4 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'}">`
+      `<p dir="${dirAttribute}" class="mb-3 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'}">`
     );
 
+    // Optimize list spacing
     processedContent = processedContent.replace(
       /<ul>/g,
-      '<ul class="list-disc list-inside mb-4 space-y-2">'
+      '<ul class="list-disc list-inside mb-3 space-y-1">'
     );
 
     processedContent = processedContent.replace(
       /<ol>/g,
-      '<ol class="list-decimal list-inside mb-4 space-y-2">'
+      '<ol class="list-decimal list-inside mb-3 space-y-1">'
     );
 
     return processedContent;
@@ -101,7 +112,7 @@ export const TemplatePreview = ({
   const processedContent = processContent(content);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <DialogHeader>
         <div className="flex items-center justify-between">
           <DialogTitle className="text-xl font-semibold">
@@ -141,10 +152,10 @@ export const TemplatePreview = ({
       )}
       
       <ScrollArea className="h-[600px] w-full rounded-md border bg-white shadow-sm">
-        <div className="a4-preview-container">
+        <div className="template-preview-container">
           <div 
             className={cn(
-              "a4-page",
+              "template-content px-6 py-4",
               isArabic ? "font-arabic" : "font-serif",
               "leading-relaxed text-gray-700",
               {
@@ -163,46 +174,45 @@ export const TemplatePreview = ({
             }}
             dangerouslySetInnerHTML={{ __html: processedContent }}
           />
-          <div className="page-number">1</div>
-        </div>
 
-        {tables.map((table, tableIndex) => (
-          <table 
-            key={tableIndex}
-            className="w-full my-6 border-collapse bg-white"
-            dir={isArabic ? "rtl" : "ltr"}
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              borderSpacing: '0',
-              direction: isArabic ? 'rtl' : 'ltr'
-            }}
-          >
-            <tbody>
-              {table.rows.map((row, rowIndex) => (
-                <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
-                  {row.cells.map((cell, cellIndex) => (
-                    <td 
-                      key={cellIndex}
-                      className="border border-gray-200 p-3 text-sm"
-                      style={{
-                        ...(cell.style && {
-                          fontWeight: cell.style.bold ? 'bold' : 'normal',
-                          fontStyle: cell.style.italic ? 'italic' : 'normal',
-                          textDecoration: cell.style.underline ? 'underline' : 'none',
-                          fontSize: `${cell.style.fontSize}px`,
-                          textAlign: isArabic ? 'right' : cell.style.alignment
-                        })
-                      }}
-                    >
-                      {cell.content}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ))}
+          {tables.map((table, tableIndex) => (
+            <table 
+              key={tableIndex}
+              className="w-full my-4 border-collapse bg-white"
+              dir={isArabic ? "rtl" : "ltr"}
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                borderSpacing: '0',
+                direction: isArabic ? 'rtl' : 'ltr'
+              }}
+            >
+              <tbody>
+                {table.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
+                    {row.cells.map((cell, cellIndex) => (
+                      <td 
+                        key={cellIndex}
+                        className="border border-gray-200 p-2 text-sm"
+                        style={{
+                          ...(cell.style && {
+                            fontWeight: cell.style.bold ? 'bold' : 'normal',
+                            fontStyle: cell.style.italic ? 'italic' : 'normal',
+                            textDecoration: cell.style.underline ? 'underline' : 'none',
+                            fontSize: `${cell.style.fontSize}px`,
+                            textAlign: isArabic ? 'right' : cell.style.alignment
+                          })
+                        }}
+                      >
+                        {cell.content}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ))}
+        </div>
       </ScrollArea>
     </div>
   );
