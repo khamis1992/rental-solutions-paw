@@ -1,58 +1,50 @@
-/* Add these styles for better RTL and template variable handling */
-.rtl {
-  direction: rtl;
-  text-align: right;
+/* ... keep existing code */
+
+/* A4 Preview Styles */
+.a4-preview-container {
+  position: relative;
+  width: 210mm;
+  margin: 0 auto;
+  background: white;
 }
 
-.template-variable {
-  color: #2563eb;
-  background-color: rgba(37, 99, 235, 0.1);
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
-  display: inline-block;
-  direction: ltr;
-  unicode-bidi: embed;
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 0 0.5px 0.5px #000;
+  position: relative;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
-.agreement-table {
+.page-number {
+  position: absolute;
+  bottom: 10mm;
   width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
-  direction: inherit;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
 }
 
-.agreement-table td,
-.agreement-table th {
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem;
-  text-align: inherit;
-}
+@media print {
+  .a4-preview-container {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+  }
 
-/* Quill RTL support */
-.ql-editor[dir="rtl"] {
-  text-align: right;
-}
-
-.ql-editor[dir="rtl"] ol,
-.ql-editor[dir="rtl"] ul {
-  padding-right: 1.5em;
-  padding-left: 0;
-}
-
-.ql-editor .rtl {
-  direction: rtl;
-  text-align: right;
-}
-
-.ql-editor table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
-}
-
-.ql-editor td,
-.ql-editor th {
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem;
+  .a4-page {
+    margin: 0;
+    border: initial;
+    border-radius: initial;
+    width: initial;
+    min-height: initial;
+    box-shadow: initial;
+    background: initial;
+    page-break-after: always;
+  }
 }

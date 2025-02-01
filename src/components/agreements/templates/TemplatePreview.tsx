@@ -46,7 +46,6 @@ export const TemplatePreview = ({
     const isArabic = containsArabic(text);
     const dirAttribute = isArabic ? 'rtl' : 'ltr';
 
-    // Process template variables with enhanced styling
     let processedContent = text;
     
     if (showVariables) {
@@ -56,7 +55,6 @@ export const TemplatePreview = ({
       );
     }
 
-    // Add section styling with collapsible functionality
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
       (match, content) => `
@@ -81,13 +79,11 @@ export const TemplatePreview = ({
       '<h2 class="text-xl font-semibold mb-4 mt-6 text-gray-800">'
     );
 
-    // Style paragraphs with proper spacing and line height
     processedContent = processedContent.replace(
       /<p>/g,
       `<p dir="${dirAttribute}" class="mb-4 leading-relaxed" style="text-align: ${isArabic ? 'right' : 'left'}">`
     );
 
-    // Style lists
     processedContent = processedContent.replace(
       /<ul>/g,
       '<ul class="list-disc list-inside mb-4 space-y-2">'
@@ -145,27 +141,30 @@ export const TemplatePreview = ({
       )}
       
       <ScrollArea className="h-[600px] w-full rounded-md border bg-white shadow-sm">
-        <div 
-          className={cn(
-            "p-12 mx-auto max-w-[800px]",
-            isArabic ? "font-arabic" : "font-serif",
-            "leading-relaxed text-gray-700",
-            {
-              'font-bold': textStyle.bold,
-              'italic': textStyle.italic,
-              'underline': textStyle.underline,
-              'text-left': !isArabic && textStyle.alignment === 'left',
-              'text-center': textStyle.alignment === 'center',
-              'text-right': isArabic || textStyle.alignment === 'right',
-              'text-justify': textStyle.alignment === 'justify'
-            }
-          )}
-          style={{
-            direction: isArabic ? 'rtl' : 'ltr',
-            fontSize: `${textStyle.fontSize}px`
-          }}
-          dangerouslySetInnerHTML={{ __html: processedContent }}
-        />
+        <div className="a4-preview-container">
+          <div 
+            className={cn(
+              "a4-page",
+              isArabic ? "font-arabic" : "font-serif",
+              "leading-relaxed text-gray-700",
+              {
+                'font-bold': textStyle.bold,
+                'italic': textStyle.italic,
+                'underline': textStyle.underline,
+                'text-left': !isArabic && textStyle.alignment === 'left',
+                'text-center': textStyle.alignment === 'center',
+                'text-right': isArabic || textStyle.alignment === 'right',
+                'text-justify': textStyle.alignment === 'justify'
+              }
+            )}
+            style={{
+              direction: isArabic ? 'rtl' : 'ltr',
+              fontSize: `${textStyle.fontSize}px`
+            }}
+            dangerouslySetInnerHTML={{ __html: processedContent }}
+          />
+          <div className="page-number">1</div>
+        </div>
 
         {tables.map((table, tableIndex) => (
           <table 
