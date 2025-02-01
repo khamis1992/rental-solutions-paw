@@ -83,6 +83,7 @@ export const MaintenanceList = () => {
   const { data: records = [], isLoading, error } = useQuery({
     queryKey: ["maintenance-and-accidents"],
     queryFn: async () => {
+      // First get maintenance records
       const { data: maintenanceRecords, error: maintenanceError } = await supabase
         .from("maintenance")
         .select(`
@@ -94,10 +95,12 @@ export const MaintenanceList = () => {
             license_plate
           )
         `)
+        .not('status', 'in', '("completed","cancelled")')
         .order('scheduled_date', { ascending: false });
 
       if (maintenanceError) throw maintenanceError;
 
+      // Then get accident vehicles
       const { data: accidentVehicles, error: vehiclesError } = await supabase
         .from("vehicles")
         .select(`
@@ -111,11 +114,12 @@ export const MaintenanceList = () => {
 
       if (vehiclesError) throw vehiclesError;
 
+      // Create maintenance records for accident vehicles
       const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',
-        status: 'urgent',
+        status: 'scheduled',
         scheduled_date: new Date().toISOString(),
         cost: null,
         description: 'Vehicle reported in accident status',
