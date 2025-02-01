@@ -1,11 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { TextStyle, Table } from "@/types/agreement.types";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 interface TemplatePreviewProps {
   content: string;
@@ -26,20 +25,11 @@ export const TemplatePreview = ({
   },
   tables = []
 }: TemplatePreviewProps) => {
-  const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
-  const [showVariables, setShowVariables] = useState(true);
+  const [pageCount, setPageCount] = useState(1);
 
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
     return arabicPattern.test(text);
-  };
-
-  const toggleSection = (sectionId: string) => {
-    setCollapsedSections(prev => 
-      prev.includes(sectionId) 
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
-    );
   };
 
   const processContent = (text: string) => {
@@ -55,31 +45,15 @@ export const TemplatePreview = ({
     );
 
     // Process template variables
-    if (showVariables) {
-      processedContent = processedContent.replace(
-        /{{(.*?)}}/g,
-        '<span class="template-variable bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-mono text-sm" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
-      );
-    }
+    processedContent = processedContent.replace(
+      /{{(.*?)}}/g,
+      '<span class="template-variable bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-mono text-sm" style="direction: ltr; unicode-bidi: embed;">{{$1}}</span>'
+    );
 
-    // Process section headers with reduced margins
+    // Process section headers
     processedContent = processedContent.replace(
       /<h1>(.*?)<\/h1>/g,
-      (match, content) => `
-        <div class="section-header mb-4">
-          <h1 class="text-2xl font-bold text-gray-900 border-b pb-2 flex items-center justify-between cursor-pointer" onclick="toggleSection('${content.replace(/\s+/g, '-')}')">
-            ${content}
-            <span class="section-toggle">
-              ${collapsedSections.includes(content.replace(/\s+/g, '-')) ? '▼' : '▲'}
-            </span>
-          </h1>
-          <div class="section-content ${collapsedSections.includes(content.replace(/\s+/g, '-')) ? 'hidden' : ''}">
-      `
-    );
-    
-    processedContent = processedContent.replace(
-      /<\/h1>/g,
-      '</h1></div></div>'
+      '<h1 class="text-2xl font-bold text-gray-900 border-b pb-2 mb-4">$1</h1>'
     );
     
     // Reduce spacing for h2 headers
@@ -111,32 +85,22 @@ export const TemplatePreview = ({
   const isArabic = containsArabic(content);
   const processedContent = processContent(content);
 
+  // Calculate page count based on content height
+  const calculatePageCount = (containerRef: HTMLDivElement | null) => {
+    if (containerRef) {
+      const contentHeight = containerRef.scrollHeight;
+      const pageHeight = 297; // A4 height in mm
+      const calculatedPages = Math.ceil(contentHeight / pageHeight);
+      setPageCount(calculatedPages);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <DialogHeader>
-        <div className="flex items-center justify-between">
-          <DialogTitle className="text-xl font-semibold">
-            {isArabic ? "معاينة النموذج" : "Template Preview"}
-          </DialogTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowVariables(!showVariables)}
-            className="flex items-center gap-2"
-          >
-            {showVariables ? (
-              <>
-                <EyeOff className="h-4 w-4" />
-                Hide Variables
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4" />
-                Show Variables
-              </>
-            )}
-          </Button>
-        </div>
+        <DialogTitle className="text-xl font-semibold">
+          {isArabic ? "معاينة النموذج" : "Template Preview"}
+        </DialogTitle>
       </DialogHeader>
       
       {missingVariables.length > 0 && (
@@ -152,10 +116,10 @@ export const TemplatePreview = ({
       )}
       
       <ScrollArea className="h-[600px] w-full rounded-md border bg-white shadow-sm">
-        <div className="template-preview-container">
+        <div className="a4-preview-container">
           <div 
             className={cn(
-              "template-content px-6 py-4",
+              "a4-page",
               isArabic ? "font-arabic" : "font-serif",
               "leading-relaxed text-gray-700",
               {
@@ -172,47 +136,51 @@ export const TemplatePreview = ({
               direction: isArabic ? 'rtl' : 'ltr',
               fontSize: `${textStyle.fontSize}px`
             }}
+            ref={calculatePageCount}
             dangerouslySetInnerHTML={{ __html: processedContent }}
           />
-
-          {tables.map((table, tableIndex) => (
-            <table 
-              key={tableIndex}
-              className="w-full my-4 border-collapse bg-white"
-              dir={isArabic ? "rtl" : "ltr"}
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                borderSpacing: '0',
-                direction: isArabic ? 'rtl' : 'ltr'
-              }}
-            >
-              <tbody>
-                {table.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
-                    {row.cells.map((cell, cellIndex) => (
-                      <td 
-                        key={cellIndex}
-                        className="border border-gray-200 p-2 text-sm"
-                        style={{
-                          ...(cell.style && {
-                            fontWeight: cell.style.bold ? 'bold' : 'normal',
-                            fontStyle: cell.style.italic ? 'italic' : 'normal',
-                            textDecoration: cell.style.underline ? 'underline' : 'none',
-                            fontSize: `${cell.style.fontSize}px`,
-                            textAlign: isArabic ? 'right' : cell.style.alignment
-                          })
-                        }}
-                      >
-                        {cell.content}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ))}
+          <div className="page-number">
+            Page 1 of {pageCount}
+          </div>
         </div>
+
+        {tables.map((table, tableIndex) => (
+          <table 
+            key={tableIndex}
+            className="w-full my-4 border-collapse bg-white"
+            dir={isArabic ? "rtl" : "ltr"}
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              borderSpacing: '0',
+              direction: isArabic ? 'rtl' : 'ltr'
+            }}
+          >
+            <tbody>
+              {table.rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-gray-50' : ''}>
+                  {row.cells.map((cell, cellIndex) => (
+                    <td 
+                      key={cellIndex}
+                      className="border border-gray-200 p-2 text-sm"
+                      style={{
+                        ...(cell.style && {
+                          fontWeight: cell.style.bold ? 'bold' : 'normal',
+                          fontStyle: cell.style.italic ? 'italic' : 'normal',
+                          textDecoration: cell.style.underline ? 'underline' : 'none',
+                          fontSize: `${cell.style.fontSize}px`,
+                          textAlign: isArabic ? 'right' : cell.style.alignment
+                        })
+                      }}
+                    >
+                      {cell.content}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ))}
       </ScrollArea>
     </div>
   );
