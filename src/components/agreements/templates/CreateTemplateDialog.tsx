@@ -153,22 +153,24 @@ export const CreateTemplateDialog = ({
       const arrayBuffer = await file.arrayBuffer();
       const result = await mammoth.convertToHtml({ 
         arrayBuffer,
-        preserveStyles: true,
-        styleMap: [
-          "p[style-name='Heading 1'] => h1:fresh",
-          "p[style-name='Heading 2'] => h2:fresh",
-          "p[style-name='Heading 3'] => h3:fresh",
-          "b => strong",
-          "i => em",
-          "u => u",
-          "strike => s",
-          "p[dir='rtl'] => p.rtl:fresh",
-          "table => table.agreement-table:fresh",
-          "tr => tr:fresh",
-          "td => td:fresh",
-          "p[style-name='RTL'] => p.rtl:fresh",
-          "r[style-name='RTL'] => span.rtl:fresh"
-        ]
+        options: {
+          preserveImages: true,
+          styleMap: [
+            "p[style-name='Heading 1'] => h1:fresh",
+            "p[style-name='Heading 2'] => h2:fresh",
+            "p[style-name='Heading 3'] => h3:fresh",
+            "b => strong",
+            "i => em",
+            "u => u",
+            "strike => s",
+            "p[dir='rtl'] => p.rtl:fresh",
+            "table => table.agreement-table:fresh",
+            "tr => tr:fresh",
+            "td => td:fresh",
+            "p[style-name='RTL'] => p.rtl:fresh",
+            "r[style-name='RTL'] => span.rtl:fresh"
+          ]
+        }
       });
       
       let processedHtml = result.value;
@@ -194,6 +196,13 @@ export const CreateTemplateDialog = ({
       processedHtml = processedHtml
         .replace(/<table/g, '<table class="agreement-table" style="width: 100%; direction: inherit;"')
         .replace(/<td/g, '<td style="text-align: inherit; padding: 0.75rem;"');
+
+      // Wrap content in A4 container
+      processedHtml = `
+        <div class="a4-page">
+          ${processedHtml}
+        </div>
+      `;
       
       setFormData(prev => ({
         ...prev,
@@ -214,7 +223,7 @@ export const CreateTemplateDialog = ({
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
       [{ 'align': ['right', 'center', 'left'] }],
       [{ 'direction': 'rtl' }],
-      ['table'],
+      ['table', 'image'],
       ['clean']
     ],
   };
