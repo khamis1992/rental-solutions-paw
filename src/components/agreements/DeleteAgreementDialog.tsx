@@ -37,7 +37,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (remainingAmountsError) throw remainingAmountsError;
+      if (remainingAmountsError) {
+        console.error('Error deleting remaining amounts:', remainingAmountsError);
+        throw remainingAmountsError;
+      }
 
       // Delete unified payments
       const { error: paymentsError } = await supabase
@@ -45,7 +48,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (paymentsError) throw paymentsError;
+      if (paymentsError) {
+        console.error('Error deleting payments:', paymentsError);
+        throw paymentsError;
+      }
 
       // Delete payment schedules
       const { error: schedulesError } = await supabase
@@ -53,7 +59,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (schedulesError) throw schedulesError;
+      if (schedulesError) {
+        console.error('Error deleting schedules:', schedulesError);
+        throw schedulesError;
+      }
 
       // Delete damages
       const { error: damagesError } = await supabase
@@ -61,7 +70,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (damagesError) throw damagesError;
+      if (damagesError) {
+        console.error('Error deleting damages:', damagesError);
+        throw damagesError;
+      }
 
       // Delete traffic fines
       const { error: trafficFinesError } = await supabase
@@ -69,7 +81,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (trafficFinesError) throw trafficFinesError;
+      if (trafficFinesError) {
+        console.error('Error deleting traffic fines:', trafficFinesError);
+        throw trafficFinesError;
+      }
 
       // Delete agreement documents
       const { error: agreementDocsError } = await supabase
@@ -77,7 +92,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (agreementDocsError) throw agreementDocsError;
+      if (agreementDocsError) {
+        console.error('Error deleting agreement documents:', agreementDocsError);
+        throw agreementDocsError;
+      }
 
       // Delete penalties
       const { error: penaltiesError } = await supabase
@@ -85,7 +103,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (penaltiesError) throw penaltiesError;
+      if (penaltiesError) {
+        console.error('Error deleting penalties:', penaltiesError);
+        throw penaltiesError;
+      }
 
       // Delete security deposits
       const { error: depositsError } = await supabase
@@ -93,7 +114,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('lease_id', agreementId);
 
-      if (depositsError) throw depositsError;
+      if (depositsError) {
+        console.error('Error deleting deposits:', depositsError);
+        throw depositsError;
+      }
 
       // Finally delete the agreement
       const { error: agreementError } = await supabase
@@ -101,7 +125,10 @@ export const DeleteAgreementDialog = ({
         .delete()
         .eq('id', agreementId);
 
-      if (agreementError) throw agreementError;
+      if (agreementError) {
+        console.error('Error deleting agreement:', agreementError);
+        throw agreementError;
+      }
 
       toast.success("Agreement deleted successfully");
       onDeleted?.();
