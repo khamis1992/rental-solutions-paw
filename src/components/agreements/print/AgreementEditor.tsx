@@ -8,7 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface AgreementEditorProps {
   initialContent: string;
-  onSave?: (content: string) => void;
+  onSave?: () => void;
 }
 
 export const AgreementEditor = ({ initialContent, onSave }: AgreementEditorProps) => {
@@ -73,6 +73,9 @@ export const AgreementEditor = ({ initialContent, onSave }: AgreementEditorProps
       printWindow.document.close();
       printWindow.focus();
       printWindow.print();
+      if (onSave) {
+        onSave();
+      }
     }
   };
 

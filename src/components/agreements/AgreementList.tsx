@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { CreateAgreementDialog } from "./CreateAgreementDialog";
 import { TemplatePreview } from "./templates/TemplatePreview";
 import { formatDateToDisplay } from "@/lib/dateUtils";
+import { AgreementEditor } from "./print/AgreementEditor";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,8 @@ export const AgreementList = () => {
   const [agreementToDelete, setAgreementToDelete] = useState<string | null>(null);
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [showEditor, setShowEditor] = useState(false);
+  const [contentToEdit, setContentToEdit] = useState<string>("");
 
   const {
     currentPage,
@@ -135,8 +138,8 @@ export const AgreementList = () => {
           .replace(/{{vehicle\.vin}}/g, agreement.vehicle.vin || '');
       }
 
-      setSelectedTemplate(templateContent);
-      setShowTemplatePreview(true);
+      setContentToEdit(templateContent);
+      setShowEditor(true);
     } catch (error) {
       console.error('Error fetching template:', error);
       toast.error('Failed to load agreement template');
@@ -184,7 +187,7 @@ export const AgreementList = () => {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
         onViewContract={handleViewContractClick}
-        onPrintContract={handlePrintContract}
+        onPrintContract={handleAgreementClick}
         onAgreementClick={handleAgreementClick}
         onNameClick={setSelectedDetailsId}
         onDeleteClick={setAgreementToDelete}
@@ -227,6 +230,15 @@ export const AgreementList = () => {
           <TemplatePreview 
             content={selectedTemplate}
             missingVariables={[]}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditor} onOpenChange={setShowEditor}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <AgreementEditor 
+            initialContent={contentToEdit}
+            onSave={() => setShowEditor(false)}
           />
         </DialogContent>
       </Dialog>
