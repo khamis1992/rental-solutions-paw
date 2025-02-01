@@ -162,6 +162,25 @@ export const AgreementTableRow = ({
                 box-sizing: border-box;
                 position: relative;
                 border: 1px solid #ddd;
+                background: white;
+              }
+              .template-variable {
+                background-color: #f3e8ff;
+                color: #6b21a8;
+                padding: 2px 6px;
+                border-radius: 4px;
+                border: 1px solid #e9d5ff;
+                font-family: monospace;
+                font-size: 0.875em;
+              }
+              .agreement-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1em 0;
+              }
+              .agreement-table td, .agreement-table th {
+                border: 1px solid #ddd;
+                padding: 8px;
               }
               .page-number {
                 position: absolute;
@@ -173,12 +192,19 @@ export const AgreementTableRow = ({
               }
               @media print {
                 body { margin: 0; }
-                .a4-page { border: none; }
+                .a4-page { 
+                  border: none;
+                  box-shadow: none;
+                }
+                .template-variable {
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
               }
             </style>
           </head>
           <body>
-            <div class="a4-page">
+            <div class="a4-page" dir="${templateContent.includes('class="rtl"') ? 'rtl' : 'ltr'}">
               ${templateContent}
               <div class="page-number">Page 1</div>
             </div>
