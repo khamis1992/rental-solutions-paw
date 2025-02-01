@@ -1,11 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Printer } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { TextStyle, Table } from "@/types/agreement.types";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 interface TemplatePreviewProps {
   content: string;
@@ -31,129 +30,6 @@ export const TemplatePreview = ({
   const containsArabic = (text: string) => {
     const arabicPattern = /[\u0600-\u06FF]/;
     return arabicPattern.test(text);
-  };
-
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const isRTL = containsArabic(content);
-    const printContent = `
-      <!DOCTYPE html>
-      <html dir="${isRTL ? 'rtl' : 'ltr'}">
-        <head>
-          <title>Print Agreement Template</title>
-          <meta charset="UTF-8">
-          <style>
-            @page {
-              size: A4;
-              margin: 20mm;
-              bleed: 3mm;
-              marks: crop cross;
-            }
-            
-            body {
-              margin: 0;
-              padding: 0;
-              width: 210mm;
-              min-height: 297mm;
-              font-family: ${isRTL ? '"Noto Sans Arabic", Arial' : 'Arial'}, sans-serif;
-              line-height: 1.5;
-              direction: ${isRTL ? 'rtl' : 'ltr'};
-              font-size: ${textStyle.fontSize}px;
-              ${textStyle.bold ? 'font-weight: bold;' : ''}
-              ${textStyle.italic ? 'font-style: italic;' : ''}
-              ${textStyle.underline ? 'text-decoration: underline;' : ''}
-              text-align: ${textStyle.alignment};
-              background: white;
-            }
-
-            .page-content {
-              box-sizing: border-box;
-              width: 210mm;
-              min-height: 297mm;
-              padding: 20mm;
-              margin: 0 auto;
-              background: white;
-              position: relative;
-            }
-
-            .template-variable {
-              background-color: #f3e8ff;
-              color: #6b21a8;
-              padding: 2px 6px;
-              border-radius: 4px;
-              border: 1px solid #e9d5ff;
-              font-family: monospace;
-              font-size: 0.875em;
-            }
-
-            table {
-              width: 100% !important;
-              border-collapse: collapse !important;
-              page-break-inside: avoid;
-              margin: 1em 0;
-            }
-
-            td, th {
-              border: 1px solid #ddd !important;
-              padding: 8px !important;
-              text-align: ${isRTL ? 'right' : 'left'} !important;
-            }
-
-            img {
-              max-width: 100%;
-              height: auto;
-              page-break-inside: avoid;
-            }
-
-            h1, h2, h3 { page-break-after: avoid; }
-            
-            ul, ol { page-break-inside: avoid; }
-
-            .page-number {
-              position: fixed;
-              bottom: 10mm;
-              width: 100%;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
-            }
-
-            @media print {
-              html, body {
-                width: 210mm;
-                height: 297mm;
-              }
-              .page-content {
-                margin: 0;
-                border: initial;
-                border-radius: initial;
-                width: initial;
-                min-height: initial;
-                box-shadow: initial;
-                background: initial;
-                page-break-after: always;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="page-content">
-            ${processContent(content)}
-            <div class="page-number">Page 1 of ${pageCount}</div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
   };
 
   const processContent = (text: string) => {
@@ -206,7 +82,6 @@ export const TemplatePreview = ({
   };
 
   const isArabic = containsArabic(content);
-  const processedContent = processContent(content);
 
   // Calculate page count based on content height
   const calculatePageCount = (containerRef: HTMLDivElement | null) => {
@@ -225,15 +100,6 @@ export const TemplatePreview = ({
           <DialogTitle className="text-xl font-semibold">
             {containsArabic(content) ? "معاينة النموذج" : "Template Preview"}
           </DialogTitle>
-          <Button 
-            onClick={handlePrint}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Printer className="h-4 w-4" />
-            {containsArabic(content) ? "طباعة" : "Print"}
-          </Button>
         </div>
       </DialogHeader>
       
