@@ -85,15 +85,6 @@ export default function App() {
             />
 
             <Route
-              path="/agreements/:id/details"
-              element={
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <LazyComponents.AgreementDetails />
-                </Suspense>
-              }
-            />
-
-            <Route
               path="/vehicles"
               element={
                 <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
