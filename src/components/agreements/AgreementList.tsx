@@ -18,10 +18,7 @@ import { toast } from "sonner";
 import { CreateAgreementDialog } from "./CreateAgreementDialog";
 import { TemplatePreview } from "./templates/TemplatePreview";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 export const AgreementList = () => {
   const navigate = useNavigate();
@@ -38,8 +35,6 @@ export const AgreementList = () => {
   const {
     currentPage,
     setCurrentPage,
-    searchQuery,
-    setSearchQuery,
     statusFilter,
     setStatusFilter,
     sortOrder,
@@ -159,7 +154,6 @@ export const AgreementList = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <AgreementFilters
-          onSearchChange={setSearchQuery}
           onStatusChange={setStatusFilter}
           onSortChange={setSortOrder}
         />
