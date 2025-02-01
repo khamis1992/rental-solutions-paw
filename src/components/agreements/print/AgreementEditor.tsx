@@ -14,6 +14,14 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
   const [content, setContent] = useState(initialContent);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
+  // Check if content contains Arabic text
+  const containsArabic = (text: string) => {
+    const arabicPattern = /[\u0600-\u06FF]/;
+    return arabicPattern.test(text);
+  };
+
+  const isRTL = containsArabic(content);
+
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -43,7 +51,7 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
     if (!printWindow) return;
 
     printWindow.document.write(`
-      <html>
+      <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
         <head>
           <title>Print Agreement</title>
           <style>
@@ -51,15 +59,31 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
               size: A4;
               margin: 2cm;
             }
+            @font-face {
+              font-family: 'Noto Sans Arabic';
+              src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;700&display=swap');
+            }
             body {
-              font-family: Arial, sans-serif;
+              font-family: ${isRTL ? "'Noto Sans Arabic', sans-serif" : "Arial, sans-serif"};
               line-height: 1.6;
               margin: 0;
               padding: 20px;
+              direction: ${isRTL ? 'rtl' : 'ltr'};
+              text-align: ${isRTL ? 'right' : 'left'};
             }
             .content {
               max-width: 210mm;
               margin: 0 auto;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 1em 0;
+            }
+            th, td {
+              border: 1px solid #000;
+              padding: 8px;
+              text-align: ${isRTL ? 'right' : 'left'};
             }
             @media print {
               .content {
@@ -89,31 +113,38 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
           onClick={() => setIsPreviewMode(!isPreviewMode)}
         >
           <Eye className="h-4 w-4 mr-2" />
-          {isPreviewMode ? "Edit" : "Preview"}
+          {isPreviewMode ? "تحرير" : "معاينة"}
         </Button>
         <Button onClick={handlePrint}>
           <Printer className="h-4 w-4 mr-2" />
-          Print
+          طباعة
         </Button>
       </div>
 
       {isPreviewMode ? (
         <Card className="p-6">
           <div
-            className="prose max-w-none"
+            className={cn(
+              "prose max-w-none",
+              isRTL && "text-right dir-rtl"
+            )}
+            dir={isRTL ? "rtl" : "ltr"}
             dangerouslySetInnerHTML={{ __html: content }}
           />
         </Card>
       ) : (
         <Card className={cn("p-0 overflow-hidden", "min-h-[500px]")}>
-          <ReactQuill
-            theme="snow"
-            value={content}
-            onChange={setContent}
-            modules={modules}
-            formats={formats}
-            className="h-[450px]"
-          />
+          <div className={isRTL ? "rtl-editor" : ""}>
+            <ReactQuill
+              theme="snow"
+              value={content}
+              onChange={setContent}
+              modules={modules}
+              formats={formats}
+              className="h-[450px]"
+              dir={isRTL ? "rtl" : "ltr"}
+            />
+          </div>
         </Card>
       )}
     </div>

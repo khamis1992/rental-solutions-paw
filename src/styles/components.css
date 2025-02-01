@@ -12,3 +12,20 @@
 .rtl-editor .ql-snow .ql-picker {
   direction: rtl;
 }
+
+/* Additional RTL styles */
+.dir-rtl {
+  direction: rtl;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Print styles for RTL */
+@media print {
+  .rtl-content {
+    direction: rtl;
+    text-align: right;
+  }
+}
