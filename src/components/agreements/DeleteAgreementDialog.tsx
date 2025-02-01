@@ -31,7 +31,15 @@ export const DeleteAgreementDialog = ({
     try {
       setIsDeleting(true);
 
-      // Delete unified payments first
+      // Delete remaining amounts first
+      const { error: remainingAmountsError } = await supabase
+        .from('remaining_amounts')
+        .delete()
+        .eq('lease_id', agreementId);
+
+      if (remainingAmountsError) throw remainingAmountsError;
+
+      // Delete unified payments
       const { error: paymentsError } = await supabase
         .from('unified_payments')
         .delete()
@@ -86,14 +94,6 @@ export const DeleteAgreementDialog = ({
         .eq('lease_id', agreementId);
 
       if (depositsError) throw depositsError;
-
-      // Delete remaining amounts
-      const { error: remainingAmountsError } = await supabase
-        .from('remaining_amounts')
-        .delete()
-        .eq('lease_id', agreementId);
-
-      if (remainingAmountsError) throw remainingAmountsError;
 
       // Finally delete the agreement
       const { error: agreementError } = await supabase
