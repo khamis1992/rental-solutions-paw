@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Printer, Eye, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AgreementEditorProps {
   initialContent: string;
@@ -131,11 +132,13 @@ export const AgreementEditor = ({ initialContent }: AgreementEditorProps) => {
 
       {isPreviewMode ? (
         <Card className="p-6">
-          <div
-            className="prose max-w-none text-right"
-            dir="rtl"
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
+          <ScrollArea className="h-[500px]">
+            <div
+              className="prose max-w-none text-right"
+              dir="rtl"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          </ScrollArea>
         </Card>
       ) : (
         <Card className={cn("p-0 overflow-hidden", "min-h-[500px]")}>
