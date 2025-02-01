@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
+import { useNavigate } from "react-router-dom";
 
 interface AgreementTableRowProps {
   agreement: Agreement;
@@ -34,6 +35,7 @@ export const AgreementTableRow = ({
 }: AgreementTableRowProps) => {
   const [downloading, setDownloading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -52,7 +54,6 @@ export const AgreementTableRow = ({
 
   const handleDownloadTemplate = async () => {
     try {
-      setDownloading(true);
       const { data: agreement_data, error: agreementError } = await supabase
         .from('leases')
         .select(`
@@ -333,11 +334,15 @@ export const AgreementTableRow = ({
     }
   };
 
+  const handleAgreementNumberClick = () => {
+    navigate(`/agreements/${agreement.id}/details`);
+  };
+
   return (
     <TableRow className="hover:bg-muted/50 transition-colors">
       <TableCell>
         <button
-          onClick={() => onNameClick(agreement.id)}
+          onClick={handleAgreementNumberClick}
           className="text-primary hover:underline font-medium"
         >
           {agreement.agreement_number}
