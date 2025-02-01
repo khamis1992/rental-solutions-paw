@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
 
 export interface AgreementTableRowProps {
   agreement: Agreement;
@@ -27,9 +28,11 @@ export const AgreementTableRow = ({
   agreement,
   onAgreementClick,
   onNameClick,
+  onDeleted,
   onDeleteClick,
 }: AgreementTableRowProps) => {
   const [downloading, setDownloading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDownloadTemplate = async () => {
     try {
@@ -249,7 +252,7 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onDeleteClick}
+                onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="h-4 w-4 text-red-600 hover:text-red-500" />
               </Button>
@@ -259,6 +262,13 @@ export const AgreementTableRow = ({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        <DeleteAgreementDialog
+          agreementId={agreement.id}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onDeleted={onDeleted}
+        />
       </TableCell>
     </TableRow>
   );
