@@ -39,6 +39,8 @@ export const AgreementList = () => {
     setStatusFilter,
     sortOrder,
     setSortOrder,
+    searchQuery,
+    setSearchQuery,
     agreements,
     totalPages,
     isLoading,
@@ -156,6 +158,8 @@ export const AgreementList = () => {
         <AgreementFilters
           onStatusChange={setStatusFilter}
           onSortChange={setSortOrder}
+          onSearch={setSearchQuery}
+          searchValue={searchQuery}
         />
         <div className="flex flex-wrap items-center gap-3">
           <AgreementPDFImport />

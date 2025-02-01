@@ -8,9 +8,10 @@ export const useAgreementList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<LeaseStatus | "all">("all");
   const [sortOrder, setSortOrder] = useState("newest");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: agreements = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["agreements", statusFilter, sortOrder],
+    queryKey: ["agreements", statusFilter, sortOrder, searchQuery],
     queryFn: async () => {
       try {
         let query = supabase
@@ -35,10 +36,23 @@ export const useAgreementList = () => {
             )
           `);
 
+        // Apply status filter
         if (statusFilter !== "all") {
           query = query.eq("status", statusFilter);
         }
 
+        // Apply search filter if search query exists
+        if (searchQuery) {
+          query = query.or(
+            `agreement_number.ilike.%${searchQuery}%,` +
+            `customer.full_name.ilike.%${searchQuery}%,` +
+            `vehicle.license_plate.ilike.%${searchQuery}%,` +
+            `vehicle.make.ilike.%${searchQuery}%,` +
+            `vehicle.model.ilike.%${searchQuery}%`
+          );
+        }
+
+        // Apply sorting
         if (sortOrder === "oldest") {
           query = query.order("created_at", { ascending: true });
         } else {
@@ -169,6 +183,8 @@ export const useAgreementList = () => {
     setStatusFilter,
     sortOrder,
     setSortOrder,
+    searchQuery,
+    setSearchQuery,
     agreements,
     totalPages,
     isLoading,
