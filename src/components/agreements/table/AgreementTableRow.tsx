@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Trash2 } from "lucide-react";
+import { FileText, Printer, Trash2 } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -239,11 +239,11 @@ export const AgreementTableRow = ({
                 onClick={handleDownloadTemplate}
                 disabled={downloading}
               >
-                <Download className="h-4 w-4 text-green-600 hover:text-green-500" />
+                <Printer className="h-4 w-4 text-green-600 hover:text-green-500" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Download Template as PDF</p>
+              <p>Print Agreement</p>
             </TooltipContent>
           </Tooltip>
 
