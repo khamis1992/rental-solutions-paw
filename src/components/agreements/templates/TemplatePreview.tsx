@@ -37,36 +37,52 @@ export const TemplatePreview = ({
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const isRTL = containsArabic(content);
     const printContent = `
       <!DOCTYPE html>
-      <html>
+      <html dir="${isRTL ? 'rtl' : 'ltr'}">
         <head>
           <title>Print Agreement Template</title>
+          <meta charset="UTF-8">
           <style>
             @page {
               size: A4;
               margin: 20mm;
             }
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+              }
+              .a4-page {
+                margin: 0;
+                border: initial;
+                border-radius: initial;
+                width: initial;
+                min-height: initial;
+                box-shadow: initial;
+                page-break-after: always;
+              }
+            }
             body {
-              font-family: Arial, sans-serif;
               margin: 0;
               padding: 0;
+              font-family: ${isRTL ? '"Noto Sans Arabic", Arial' : 'Arial'}, sans-serif;
+              line-height: 1.5;
+              direction: ${isRTL ? 'rtl' : 'ltr'};
             }
             .a4-page {
               width: 210mm;
               min-height: 297mm;
               padding: 20mm;
               margin: 0 auto;
-              box-sizing: border-box;
+              background: white;
+              box-shadow: 0 0 0.5mm 0.5mm rgba(0,0,0,0.15);
               position: relative;
+              border: 1px solid #ddd;
             }
-            .page-number {
-              position: absolute;
-              bottom: 10mm;
-              width: 100%;
-              text-align: center;
-              font-size: 12px;
-              color: #666;
+            .page-content {
+              height: 100%;
             }
             .template-variable {
               background-color: #f3e8ff;
@@ -82,19 +98,31 @@ export const TemplatePreview = ({
               border-collapse: collapse;
               margin: 1em 0;
             }
-            .agreement-table td, .agreement-table th {
+            .agreement-table td, 
+            .agreement-table th {
               border: 1px solid #ddd;
               padding: 8px;
+              text-align: ${isRTL ? 'right' : 'left'};
             }
-            @media print {
-              body { margin: 0; }
-              .a4-page { box-shadow: none; }
+            img {
+              max-width: 100%;
+              height: auto;
+            }
+            .page-number {
+              position: absolute;
+              bottom: 10mm;
+              width: 100%;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
             }
           </style>
         </head>
         <body>
           <div class="a4-page">
-            ${processContent(content)}
+            <div class="page-content">
+              ${processContent(content)}
+            </div>
             <div class="page-number">Page 1 of ${pageCount}</div>
           </div>
         </body>
