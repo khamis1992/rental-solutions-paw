@@ -23,19 +23,23 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             year,
             license_plate
           ),
-          remaining_amount:remaining_amounts!remaining_amounts_lease_id_fkey (
+          remaining_amounts!remaining_amounts_lease_id_fkey (
             remaining_amount
           )
         `)
         .eq('id', agreementId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        throw new Error('Agreement not found');
+      }
 
       // Transform the data to match the Agreement type
       const transformedData: Agreement = {
         ...data,
-        remaining_amount: data.remaining_amount?.remaining_amount || 0,
+        remaining_amount: data.remaining_amounts?.remaining_amount || 0,
         rent_amount: data.rent_amount || 0,
         daily_late_fee: data.daily_late_fee || 0,
         customer: data.customer,
