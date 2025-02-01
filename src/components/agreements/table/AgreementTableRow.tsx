@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Trash2 } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +17,6 @@ import { Button } from "@/components/ui/button";
 
 export interface AgreementTableRowProps {
   agreement: Agreement;
-  onViewContract: (id: string) => void;
-  onPrintContract: (id: string) => void;
   onAgreementClick: (id: string) => void;
   onNameClick: (id: string) => void;
   onDeleted?: () => void;
@@ -144,15 +142,6 @@ export const AgreementTableRow = ({
                 padding: 8px;
                 text-align: ${isRTL ? 'right' : 'left'};
               }
-              .template-variable {
-                background-color: #f3e8ff;
-                color: #6b21a8;
-                padding: 2px 6px;
-                border-radius: 4px;
-                border: 1px solid #e9d5ff;
-                font-family: monospace;
-                font-size: 0.875em;
-              }
             </style>
           </head>
           <body>
@@ -252,6 +241,21 @@ export const AgreementTableRow = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>Download Template as PDF</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDeleteClick}
+              >
+                <Trash2 className="h-4 w-4 text-red-600 hover:text-red-500" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete Agreement</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
