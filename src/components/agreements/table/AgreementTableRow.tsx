@@ -112,7 +112,7 @@ export const AgreementTableRow = ({
           .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
       }
 
-      // Create HTML content for PDF
+      // Create HTML content for PDF with improved print styling
       const htmlContent = `
         <!DOCTYPE html>
         <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
@@ -124,6 +124,18 @@ export const AgreementTableRow = ({
                 margin: 20mm;
                 marks: crop cross;
               }
+              @media print {
+                body {
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+                .page-break {
+                  page-break-before: always;
+                }
+                .no-break {
+                  page-break-inside: avoid;
+                }
+              }
               body {
                 font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
                 direction: ${isRTL ? 'rtl' : 'ltr'};
@@ -134,21 +146,55 @@ export const AgreementTableRow = ({
                 width: 170mm;
                 min-height: 257mm;
                 background: white;
+                color: #000;
               }
               table {
                 width: 100%;
                 border-collapse: collapse;
                 margin: 1em 0;
+                page-break-inside: avoid;
               }
               td, th {
-                border: 1px solid #ddd;
+                border: 1px solid #000;
                 padding: 8px;
                 text-align: ${isRTL ? 'right' : 'left'};
+              }
+              h1, h2, h3 {
+                page-break-after: avoid;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 2em;
+                border-bottom: 2px solid #000;
+                padding-bottom: 1em;
+              }
+              .footer {
+                position: fixed;
+                bottom: 20mm;
+                width: calc(100% - 40mm);
+                text-align: center;
+                border-top: 1px solid #000;
+                padding-top: 1em;
+              }
+              .signature-section {
+                margin-top: 3em;
+                page-break-inside: avoid;
+              }
+              .page-number:after {
+                content: counter(page);
+              }
+              @page {
+                @bottom-center {
+                  content: counter(page);
+                }
               }
             </style>
           </head>
           <body>
             ${templateContent}
+            <div class="footer">
+              <div class="page-number">Page </div>
+            </div>
           </body>
         </html>
       `;
@@ -169,10 +215,10 @@ export const AgreementTableRow = ({
         printWindow.close();
       };
 
-      toast.success('Template downloaded successfully');
+      toast.success('Agreement ready for printing');
     } catch (error) {
-      console.error('Error downloading template:', error);
-      toast.error('Failed to download template');
+      console.error('Error preparing agreement for print:', error);
+      toast.error('Failed to prepare agreement for printing');
     } finally {
       setDownloading(false);
     }
