@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AgreementEditor } from "../print/AgreementEditor";
 
 interface AgreementTableRowProps {
   agreement: Agreement;
@@ -34,6 +36,8 @@ export const AgreementTableRow = ({
 }: AgreementTableRowProps) => {
   const [downloading, setDownloading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [templateContent, setTemplateContent] = useState("");
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -47,6 +51,41 @@ export const AgreementTableRow = ({
         return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+
+  const handleViewTemplate = async () => {
+    try {
+      const { data: templateData, error } = await supabase
+        .from("agreement_templates")
+        .select("content")
+        .eq("id", agreement.template_id)
+        .single();
+
+      if (error) throw error;
+
+      if (!templateData?.content) {
+        toast.error("No template content found");
+        return;
+      }
+
+      // Replace template variables with actual values
+      let content = templateData.content
+        .replace(/{{customer\.customer_name}}/g, agreement.customer?.full_name || "")
+        .replace(/{{customer\.phone_number}}/g, agreement.customer?.phone_number || "")
+        .replace(/{{vehicle\.make}}/g, agreement.vehicle?.make || "")
+        .replace(/{{vehicle\.model}}/g, agreement.vehicle?.model || "")
+        .replace(/{{vehicle\.year}}/g, agreement.vehicle?.year?.toString() || "")
+        .replace(/{{vehicle\.license_plate}}/g, agreement.vehicle?.license_plate || "")
+        .replace(/{{agreement\.agreement_number}}/g, agreement.agreement_number || "")
+        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement.start_date))
+        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement.end_date));
+
+      setTemplateContent(content);
+      setShowTemplateDialog(true);
+    } catch (error) {
+      console.error("Error fetching template:", error);
+      toast.error("Failed to load template");
     }
   };
 
@@ -377,7 +416,7 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onAgreementClick(agreement.id)}
+                onClick={handleViewTemplate}
                 className="hover:bg-primary/10"
               >
                 <FileText className="h-4 w-4 text-primary hover:text-primary/80" />
@@ -428,6 +467,12 @@ export const AgreementTableRow = ({
           onOpenChange={setShowDeleteDialog}
           onDeleted={onDeleted}
         />
+
+        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+          <DialogContent className="max-w-4xl">
+            <AgreementEditor initialContent={templateContent} />
+          </DialogContent>
+        </Dialog>
       </TableCell>
     </TableRow>
   );
