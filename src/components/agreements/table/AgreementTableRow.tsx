@@ -113,52 +113,68 @@ export const AgreementTableRow = ({
           .replace(/{{vehicle\.vin}}/g, agreement_data.vehicle.vin || '');
       }
 
-      // Create document content with proper HTML structure
+      // Create document content with proper HTML structure and Word-compatible styling
       const docContent = `
-        <!DOCTYPE html>
-        <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
-          <head>
-            <meta charset="UTF-8">
-            <style>
-              body {
-                font-family: ${isRTL ? 'Noto Sans Arabic' : 'Arial'}, sans-serif;
-                direction: ${isRTL ? 'rtl' : 'ltr'};
-                text-align: ${isRTL ? 'right' : 'left'};
-                padding: 20mm;
-                line-height: 1.5;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin: 1em 0;
-              }
-              td, th {
-                border: 1px solid #000;
-                padding: 8px;
-                text-align: ${isRTL ? 'right' : 'left'};
-              }
-              .template-variable {
-                color: #6b21a8;
-                background-color: #f3e8ff;
-                padding: 2px 6px;
-                border-radius: 4px;
-              }
-            </style>
-          </head>
-          <body>
+        <html xmlns:w="urn:schemas-microsoft-com:office:word">
+        <head>
+        <meta charset="utf-8">
+        <style>
+          @page WordSection1 {
+            size: 21cm 29.7cm;
+            margin: 2cm;
+            mso-page-orientation: portrait;
+          }
+          div.WordSection1 {
+            page: WordSection1;
+          }
+          body {
+            font-family: ${isRTL ? 'Arial, Noto Sans Arabic' : 'Arial'}, sans-serif;
+            direction: ${isRTL ? 'rtl' : 'ltr'};
+            text-align: ${isRTL ? 'right' : 'left'};
+            line-height: 1.5;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+          }
+          td, th {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: ${isRTL ? 'right' : 'left'};
+          }
+          .template-variable {
+            color: #6b21a8;
+            background-color: #f3e8ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+          }
+        </style>
+        </head>
+        <body>
+          <div class="WordSection1">
             ${templateContent}
-          </body>
+          </div>
+        </body>
         </html>
       `;
 
-      // Create blob and trigger download
-      const blob = new Blob([docContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      // Create blob with Word-compatible MIME type
+      const blob = new Blob(['\ufeff', docContent], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+      
+      // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `${agreement.agreement_number || 'agreement'}.docx`;
+      
+      // Trigger download
       document.body.appendChild(link);
       link.click();
+      
+      // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
