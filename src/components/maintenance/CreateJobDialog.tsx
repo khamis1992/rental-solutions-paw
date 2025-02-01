@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
@@ -128,14 +129,16 @@ export function CreateJobDialog() {
         <DialogHeader>
           <DialogTitle>Create New Job Card</DialogTitle>
         </DialogHeader>
-        <JobCardForm
-          formData={formData}
-          vehicles={vehicles}
-          categories={categories}
-          onFormDataChange={setFormData}
-          onSubmit={handleSubmit}
-          loading={loading}
-        />
+        <ScrollArea className="h-[500px] px-1">
+          <JobCardForm
+            formData={formData}
+            vehicles={vehicles}
+            categories={categories}
+            onFormDataChange={setFormData}
+            onSubmit={handleSubmit}
+            loading={loading}
+          />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
