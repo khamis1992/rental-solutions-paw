@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Agreement } from "@/types/agreement.types";
 
 export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
-  const { data: agreement, isLoading, error, refetch } = useQuery({
+  const { data: agreement, isLoading } = useQuery({
     queryKey: ['agreement-details', agreementId],
     queryFn: async () => {
-      const { data: agreement, error } = await supabase
+      const { data, error } = await supabase
         .from('leases')
         .select(`
           *,
@@ -22,40 +22,19 @@ export const useAgreementDetails = (agreementId: string, enabled: boolean) => {
             model,
             year,
             license_plate
-          ),
-          remainingAmount:remaining_amounts!remaining_amounts_lease_id_fkey (
-            rent_amount,
-            final_price,
-            remaining_amount
-          ),
-          unified_payments (
-            id,
-            amount,
-            amount_paid,
-            payment_date,
-            payment_method,
-            status,
-            late_fine_amount
           )
         `)
         .eq('id', agreementId)
-        .maybeSingle();
+        .single();
 
-      if (error) {
-        console.error('Error fetching agreement:', error);
-        toast.error('Failed to fetch agreement details');
-        throw error;
-      }
-
-      return agreement;
+      if (error) throw error;
+      return data as Agreement;
     },
     enabled: enabled && !!agreementId,
   });
 
   return {
     agreement,
-    isLoading,
-    error,
-    refetch
+    isLoading
   };
 };
