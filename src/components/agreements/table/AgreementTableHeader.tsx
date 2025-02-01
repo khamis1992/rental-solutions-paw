@@ -11,7 +11,6 @@ export const AgreementTableHeader = () => {
         <TableHead className="w-[120px]">Start Date</TableHead>
         <TableHead className="w-[120px]">End Date</TableHead>
         <TableHead className="w-[120px]">Status</TableHead>
-        <TableHead className="w-[120px]">Payment Status</TableHead>
         <TableHead className="text-right w-[150px]">Actions</TableHead>
       </TableRow>
     </TableHeader>

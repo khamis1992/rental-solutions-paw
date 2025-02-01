@@ -4,7 +4,6 @@ import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Printer, Trash2 } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -15,6 +14,16 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
+
+interface AgreementTableRowProps {
+  agreement: Agreement;
+  onViewContract: (id: string) => void;
+  onPrintContract: (id: string) => void;
+  onAgreementClick: (id: string) => void;
+  onNameClick: (id: string) => void;
+  onDeleted: () => void;
+  onDeleteClick: () => void;
+}
 
 export const AgreementTableRow = ({
   agreement,
@@ -215,12 +224,15 @@ export const AgreementTableRow = ({
 
               .footer {
                 position: fixed;
-                bottom: 25mm;
-                width: calc(100% - 50mm);
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
                 text-align: center;
                 border-top: 1px solid #DAA520;
-                padding-top: 10px;
+                padding: 15px 25mm;
                 font-size: 12px;
+                background: white;
               }
 
               .signature-section {
@@ -337,9 +349,6 @@ export const AgreementTableRow = ({
         >
           {agreement.status}
         </Badge>
-      </TableCell>
-      <TableCell>
-        <PaymentStatusBadge status={agreement.remaining_amount > 0 ? 'pending' : 'completed'} />
       </TableCell>
       
       <TableCell className="text-right space-x-1">
