@@ -43,31 +43,35 @@ export const useAgreementList = () => {
 
         // Apply search filter if search query exists
         if (searchQuery) {
-          // Sanitize and encode the search query
-          const sanitizedQuery = searchQuery
-            .replace(/[%_\\]/g, '\\$&') // Escape special characters
-            .trim();
-
+          // Log original query for debugging
           console.log('Original search query:', searchQuery);
-          console.log('Sanitized search query:', sanitizedQuery);
 
-          // Build individual search conditions
-          const searchConditions = [
-            `agreement_number.ilike.%${sanitizedQuery}%`,
-            `customer.full_name.ilike.%${sanitizedQuery}%`,
-            `vehicle.license_plate.ilike.%${sanitizedQuery}%`
-          ].join(',');
+          // Encode the search query for URL safety
+          const encodedQuery = encodeURIComponent(searchQuery.trim());
+          console.log('Encoded search query:', encodedQuery);
 
-          // Apply OR conditions
-          query = query.or(searchConditions);
+          // Create separate filter conditions
+          query = query.or(
+            `agreement_number.ilike.%${encodedQuery}%,` +
+            `customer.full_name.ilike.%${encodedQuery}%,` +
+            `vehicle.license_plate.ilike.%${encodedQuery}%`
+          );
 
-          // Debug the constructed query
-          const { data: debugData, error: debugError } = await supabase
+          // Debug log the constructed query
+          const debugQuery = supabase
             .from('leases')
             .select('id')
-            .or(searchConditions);
+            .or(
+              `agreement_number.ilike.%${encodedQuery}%,` +
+              `customer.full_name.ilike.%${encodedQuery}%,` +
+              `vehicle.license_plate.ilike.%${encodedQuery}%`
+            );
 
-          console.log('Debug query error:', debugError);
+          const { error: debugError } = await debugQuery;
+          if (debugError) {
+            console.error('Debug query error:', debugError);
+            throw new Error(`Search query error: ${debugError.message}`);
+          }
         }
 
         // Apply sorting
