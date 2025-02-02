@@ -8,9 +8,10 @@ import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, Car, Calendar, Clock, Wrench } from "lucide-react";
+import { AlertTriangle, Car, Calendar, Clock, Wrench, Edit2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
+import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
 import type { Maintenance } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
@@ -156,11 +157,11 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="p-4 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="p-6 space-y-4">
             <div className="animate-pulse space-y-3">
-              <Skeleton className="h-4 w-[70%]" />
+              <Skeleton className="h-6 w-[70%]" />
               <Skeleton className="h-4 w-[100%]" />
               <Skeleton className="h-4 w-[60%]" />
             </div>
@@ -195,16 +196,16 @@ export const MaintenanceList = () => {
         <CreateJobDialog />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {currentRecords.map((record) => (
           <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
-            <div className="p-4 space-y-4">
+            <div className="p-6 space-y-6">
               {/* Vehicle Info */}
               <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Car className="h-5 w-5 text-primary" />
+                <div className="flex items-center space-x-4">
+                  <Car className="h-6 w-6 text-primary" />
                   <div>
-                    <p className="font-medium">
+                    <p className="text-lg font-medium">
                       {record.vehicles 
                         ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
                         : "Vehicle details unavailable"}
@@ -214,33 +215,44 @@ export const MaintenanceList = () => {
                     </p>
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium
-                  ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
-                  ${record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
-                  ${record.status === 'urgent' ? 'bg-red-100 text-red-800' : ''}
-                  ${record.status === 'accident' ? 'bg-red-100 text-red-800' : ''}
-                  ${record.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' : ''}
-                `}>
-                  {record.status}
+                <div className="flex items-center space-x-2">
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium
+                    ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                    ${record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
+                    ${record.status === 'urgent' ? 'bg-red-100 text-red-800' : ''}
+                    ${record.status === 'accident' ? 'bg-red-100 text-red-800' : ''}
+                    ${record.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' : ''}
+                  `}>
+                    {record.status}
+                  </div>
+                  <EditMaintenanceDialog record={record} />
                 </div>
               </div>
 
               {/* Service Info */}
-              <div className="space-y-2">
-                <p className="font-medium">{record.service_type}</p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Wrench className="h-5 w-5 text-gray-500" />
+                  <p className="text-lg font-medium">{record.service_type}</p>
+                </div>
                 {record.description && (
-                  <p className="text-sm text-muted-foreground">{record.description}</p>
+                  <p className="text-base text-gray-600 leading-relaxed">{record.description}</p>
                 )}
               </div>
 
               {/* Date & Cost */}
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{new Date(record.scheduled_date).toLocaleDateString()}</span>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center space-x-2 text-sm">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <span className="text-gray-600">
+                    {new Date(record.scheduled_date).toLocaleDateString()}
+                  </span>
                 </div>
                 {record.cost && (
-                  <span className="font-medium">{record.cost} QAR</span>
+                  <div className="flex items-center space-x-1">
+                    <span className="font-medium text-primary">{record.cost}</span>
+                    <span className="text-sm text-gray-500">QAR</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -248,7 +260,7 @@ export const MaintenanceList = () => {
         ))}
       </div>
 
-      <div className="flex justify-center mt-4">
+      <div className="flex justify-center mt-6">
         <VehicleTablePagination
           currentPage={currentPage}
           totalPages={totalPages}
