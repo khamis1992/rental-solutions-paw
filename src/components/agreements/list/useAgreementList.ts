@@ -43,11 +43,19 @@ export const useAgreementList = () => {
 
         // Apply search filter if search query exists
         if (searchQuery) {
-          // Sanitize the search query to prevent SQL injection
+          // Sanitize the search query and escape special characters
           const sanitizedQuery = searchQuery.replace(/[%_]/g, '\\$&');
-          const searchPattern = `%${sanitizedQuery}%`;
+          
+          // Log the sanitized query for debugging
+          console.log('Sanitized search query:', sanitizedQuery);
 
-          query = query.or(`agreement_number.ilike.${searchPattern},customer.full_name.ilike.${searchPattern},vehicle.license_plate.ilike.${searchPattern}`);
+          // Build the search conditions separately
+          query = query.or(`agreement_number.ilike.%${sanitizedQuery}%,customer.full_name.ilike.%${sanitizedQuery}%,vehicle.license_plate.ilike.%${sanitizedQuery}%`);
+          
+          // Log the final query URL for debugging
+          const { data: debugData, error: debugError } = await query;
+          console.log('Query URL:', query.url);
+          console.log('Query error if any:', debugError);
         }
 
         // Apply sorting
