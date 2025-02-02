@@ -14,6 +14,8 @@ export const useAgreementList = () => {
     queryKey: ["agreements", statusFilter, sortOrder, searchQuery],
     queryFn: async () => {
       try {
+        console.log('Starting agreement search with query:', searchQuery);
+        
         let query = supabase
           .from('leases')
           .select(`
@@ -42,18 +44,12 @@ export const useAgreementList = () => {
         }
 
         // Apply search filter if search query exists
-        if (searchQuery) {
-          console.log('Processing search query:', searchQuery);
-          const cleanedQuery = searchQuery.trim();
-          
-          if (cleanedQuery) {
-            // Use separate or conditions with proper filter builder methods
-            query = query.or(
-              `or(agreement_number.ilike.%${cleanedQuery}%,customer.full_name.ilike.%${cleanedQuery}%,vehicle.license_plate.ilike.%${cleanedQuery}%)`
-            );
-            
-            console.log('Applied search filter');
-          }
+        if (searchQuery.trim()) {
+          query = query.or(
+            `agreement_number.ilike.%${searchQuery.trim()}%,` +
+            `customer.full_name.ilike.%${searchQuery.trim()}%,` +
+            `vehicle.license_plate.ilike.%${searchQuery.trim()}%`
+          );
         }
 
         // Apply sorting
@@ -63,6 +59,7 @@ export const useAgreementList = () => {
           query = query.order("created_at", { ascending: false });
         }
 
+        console.log('Executing query...');
         const { data: agreements, error } = await query;
 
         if (error) {
@@ -75,6 +72,7 @@ export const useAgreementList = () => {
           return [];
         }
 
+        console.log(`Found ${agreements.length} agreements`);
         return agreements;
       } catch (err) {
         console.error("Error in useAgreementList:", err);
