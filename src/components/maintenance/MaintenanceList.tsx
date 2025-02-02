@@ -27,6 +27,23 @@ interface MaintenanceRecord extends Maintenance {
   vehicles?: Vehicle;
 }
 
+const getStatusStyles = (status: string) => {
+  switch (status) {
+    case 'scheduled':
+      return 'bg-blue-50 text-blue-800 border-blue-100';
+    case 'in_progress':
+      return 'bg-yellow-50 text-yellow-800 border-yellow-100';
+    case 'completed':
+      return 'bg-green-50 text-green-800 border-green-100';
+    case 'accident':
+      return 'bg-red-50 text-red-800 border-red-100';
+    case 'cancelled':
+      return 'bg-gray-50 text-gray-800 border-gray-100';
+    default:
+      return 'bg-gray-50 text-gray-800 border-gray-100';
+  }
+};
+
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
@@ -198,31 +215,32 @@ export const MaintenanceList = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {currentRecords.map((record) => (
-          <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+          <Card 
+            key={record.id} 
+            className={`overflow-hidden hover:shadow-lg transition-shadow duration-200 border-l-4 ${getStatusStyles(record.status)}`}
+          >
             <div className="p-6 space-y-6">
               {/* Vehicle Info */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-4">
-                  <Car className="h-6 w-6 text-primary" />
+                  <Car className={`h-6 w-6 ${
+                    record.status === 'accident' ? 'text-red-500' :
+                    record.status === 'in_progress' ? 'text-yellow-500' :
+                    'text-primary'
+                  }`} />
                   <div>
-                    <p className="text-lg font-medium">
+                    <p className="text-lg font-medium text-gray-900">
                       {record.vehicles 
                         ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
                         : "Vehicle details unavailable"}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       {record.vehicles?.license_plate || "N/A"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium
-                    ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
-                    ${record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
-                    ${record.status === 'urgent' ? 'bg-red-100 text-red-800' : ''}
-                    ${record.status === 'accident' ? 'bg-red-100 text-red-800' : ''}
-                    ${record.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' : ''}
-                  `}>
+                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyles(record.status)}`}>
                     {record.status}
                   </div>
                   <EditMaintenanceDialog record={record} />
@@ -230,10 +248,10 @@ export const MaintenanceList = () => {
               </div>
 
               {/* Service Info */}
-              <div className="space-y-4">
+              <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <Wrench className="h-5 w-5 text-gray-500" />
-                  <p className="text-lg font-medium">{record.service_type}</p>
+                  <p className="text-lg font-medium text-gray-900">{record.service_type}</p>
                 </div>
                 {record.description && (
                   <p className="text-base text-gray-600 leading-relaxed">{record.description}</p>
@@ -249,7 +267,7 @@ export const MaintenanceList = () => {
                   </span>
                 </div>
                 {record.cost && (
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 bg-gray-50 px-3 py-1 rounded-full">
                     <span className="font-medium text-primary">{record.cost}</span>
                     <span className="text-sm text-gray-500">QAR</span>
                   </div>
