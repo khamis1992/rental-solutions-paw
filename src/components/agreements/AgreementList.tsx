@@ -141,15 +141,75 @@ export const AgreementList = () => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-4">Loading agreements...</div>;
+    return (
+      <div className="space-y-6">
+        <AgreementFilters
+          onStatusChange={setStatusFilter}
+          onSortChange={setSortOrder}
+          onSearch={setSearchQuery}
+          searchValue={searchQuery}
+        />
+        <div className="text-center py-4">Loading agreements...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-center py-4 text-red-500">Error loading agreements: {error.message}</div>;
+    return (
+      <div className="space-y-6">
+        <AgreementFilters
+          onStatusChange={setStatusFilter}
+          onSortChange={setSortOrder}
+          onSearch={setSearchQuery}
+          searchValue={searchQuery}
+        />
+        <div className="text-center py-4 text-red-500">Error loading agreements: {error.message}</div>
+      </div>
+    );
   }
 
   if (!agreements || agreements.length === 0) {
-    return <div className="text-center py-4">No agreements found. Try importing some agreements first.</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <AgreementFilters
+            onStatusChange={setStatusFilter}
+            onSortChange={setSortOrder}
+            onSearch={setSearchQuery}
+            searchValue={searchQuery}
+          />
+          <div className="flex flex-wrap items-center gap-3">
+            <AgreementPDFImport />
+            <CreateAgreementDialog>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Create Agreement
+              </Button>
+            </CreateAgreementDialog>
+          </div>
+        </div>
+        <div className="text-center py-4">
+          {searchQuery ? (
+            <div className="space-y-2">
+              <p>No agreements found matching your search.</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setSearchQuery("")}
+              >
+                Clear Search
+              </Button>
+            </div>
+          ) : (
+            "No agreements found. Try importing some agreements first."
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
