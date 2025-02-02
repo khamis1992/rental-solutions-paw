@@ -10,7 +10,7 @@ interface MaintenanceRecord {
   vehicle_id: string;
   service_type: string;
   description?: string;
-  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "accident";
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
   cost?: number;
   scheduled_date: string;
   completed_date?: string;
@@ -29,7 +29,7 @@ interface MaintenanceTableRowProps {
 }
 
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
-  const isAccident = record.status === 'accident';
+  const isAccident = record.id.startsWith('accident-');
 
   return (
     <TableRow>
