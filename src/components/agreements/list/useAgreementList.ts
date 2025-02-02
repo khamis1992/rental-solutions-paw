@@ -43,8 +43,14 @@ export const useAgreementList = () => {
 
         // Apply search filter if search query exists
         if (searchQuery) {
+          // Sanitize the search query to prevent SQL injection
+          const sanitizedQuery = searchQuery.replace(/[%_]/g, '\\$&');
+          const searchPattern = `%${sanitizedQuery}%`;
+
           query = query.or(
-            `agreement_number.ilike.%${searchQuery}%,customer:customer_id(full_name).ilike.%${searchQuery}%,vehicle:vehicle_id(license_plate).ilike.%${searchQuery}%`
+            `agreement_number.ilike.${searchPattern},` +
+            `customer.full_name.ilike.${searchPattern},` +
+            `vehicle.license_plate.ilike.${searchPattern}`
           );
         }
 
@@ -57,14 +63,27 @@ export const useAgreementList = () => {
 
         const { data: agreements, error } = await query;
 
-        if (error) throw error;
+        if (error) {
+          console.error("Database query error:", error);
+          throw new Error(`Failed to fetch agreements: ${error.message}`);
+        }
+
+        if (!agreements) {
+          console.warn("No agreements found");
+          return [];
+        }
 
         return agreements;
       } catch (err) {
-        console.error("Error fetching agreements:", err);
-        throw err;
+        console.error("Error in useAgreementList:", err);
+        throw new Error(err instanceof Error ? err.message : "Failed to fetch agreements");
       }
     },
+    meta: {
+      onError: (error: Error) => {
+        toast.error(`Error loading agreements: ${error.message}`);
+      }
+    }
   });
 
   const handleViewContract = async (agreementId: string) => {
