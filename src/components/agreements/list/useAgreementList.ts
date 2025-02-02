@@ -46,31 +46,23 @@ export const useAgreementList = () => {
           // Log original query for debugging
           console.log('Original search query:', searchQuery);
 
-          // Encode the search query for URL safety
-          const encodedQuery = encodeURIComponent(searchQuery.trim());
-          console.log('Encoded search query:', encodedQuery);
-
-          // Create separate filter conditions
-          query = query.or(
-            `agreement_number.ilike.%${encodedQuery}%,` +
-            `customer.full_name.ilike.%${encodedQuery}%,` +
-            `vehicle.license_plate.ilike.%${encodedQuery}%`
-          );
-
-          // Debug log the constructed query
-          const debugQuery = supabase
-            .from('leases')
-            .select('id')
-            .or(
-              `agreement_number.ilike.%${encodedQuery}%,` +
-              `customer.full_name.ilike.%${encodedQuery}%,` +
-              `vehicle.license_plate.ilike.%${encodedQuery}%`
+          // Clean and prepare the search term
+          const cleanedQuery = searchQuery.trim();
+          
+          // Create properly formatted search conditions
+          if (cleanedQuery) {
+            query = query.or(
+              `agreement_number.ilike.%${cleanedQuery}%,` + 
+              `customer.full_name.ilike.%${cleanedQuery}%,` +
+              `vehicle.license_plate.ilike.%${cleanedQuery}%`
             );
 
-          const { error: debugError } = await debugQuery;
-          if (debugError) {
-            console.error('Debug query error:', debugError);
-            throw new Error(`Search query error: ${debugError.message}`);
+            // Debug log the constructed query
+            console.log('Constructed search conditions:', 
+              `agreement_number.ilike.%${cleanedQuery}%,` +
+              `customer.full_name.ilike.%${cleanedQuery}%,` +
+              `vehicle.license_plate.ilike.%${cleanedQuery}%`
+            );
           }
         }
 
