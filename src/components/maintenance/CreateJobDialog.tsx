@@ -53,19 +53,24 @@ export function CreateJobDialog() {
 
   const checkExistingJobCard = async (vehicleId: string) => {
     console.log("Checking existing job cards for vehicle:", vehicleId);
-    const { data, error } = await supabase
-      .from("maintenance")
-      .select("*")
-      .eq("vehicle_id", vehicleId)
-      .not("status", "in", ["completed", "cancelled"]);
+    try {
+      const { data, error } = await supabase
+        .from("maintenance")
+        .select("*")
+        .eq("vehicle_id", vehicleId)
+        .in("status", ["scheduled", "in_progress"]);
 
-    if (error) {
+      if (error) {
+        console.error("Error checking existing job cards:", error);
+        throw error;
+      }
+
+      console.log("Existing job cards:", data);
+      return data.length > 0;
+    } catch (error) {
       console.error("Error checking existing job cards:", error);
       throw error;
     }
-
-    console.log("Existing job cards:", data);
-    return data.length > 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
