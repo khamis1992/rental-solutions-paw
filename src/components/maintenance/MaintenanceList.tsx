@@ -177,16 +177,13 @@ export const MaintenanceList = () => {
         <div className="flex justify-end">
           <CreateJobDialog />
         </div>
-        <Card className="p-8 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <div className="flex flex-col items-center justify-center text-center space-y-4">
-            <div className="p-4 rounded-full bg-orange-100 border-2 border-orange-200">
-              <Wrench className="h-12 w-12 text-primary" />
-            </div>
-            <p className="text-xl font-semibold text-gray-800">No maintenance records found</p>
-            <p className="text-sm text-gray-600 max-w-md">
-              Create a new maintenance job to start tracking vehicle maintenance and repairs
+        <Card className="p-6">
+          <div className="flex flex-col items-center justify-center text-center space-y-3">
+            <Wrench className="h-12 w-12 text-muted-foreground" />
+            <p className="text-lg font-medium">No maintenance records found</p>
+            <p className="text-sm text-muted-foreground">
+              Create a new maintenance job to get started
             </p>
-            <CreateJobDialog />
           </div>
         </Card>
       </div>
@@ -233,9 +230,9 @@ export const MaintenanceList = () => {
               </div>
 
               {/* Service Info */}
-              <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Wrench className="h-5 w-5 text-primary" />
+                  <Wrench className="h-5 w-5 text-gray-500" />
                   <p className="text-lg font-medium">{record.service_type}</p>
                 </div>
                 {record.description && (
@@ -252,7 +249,7 @@ export const MaintenanceList = () => {
                   </span>
                 </div>
                 {record.cost && (
-                  <div className="px-3 py-1 bg-gray-100 rounded-full flex items-center space-x-1">
+                  <div className="flex items-center space-x-1">
                     <span className="font-medium text-primary">{record.cost}</span>
                     <span className="text-sm text-gray-500">QAR</span>
                   </div>
