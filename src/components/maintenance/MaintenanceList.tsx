@@ -65,10 +65,10 @@ export const MaintenanceList = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'vehicles',
-          filter: 'status=eq.maintenance'
+          filter: 'status=in.(maintenance,accident)'
         },
         async (payload) => {
-          console.log('Vehicle status changed to maintenance:', payload);
+          console.log('Vehicle status changed:', payload);
           await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
         }
       )

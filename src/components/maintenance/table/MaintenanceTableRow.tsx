@@ -3,6 +3,7 @@ import { MaintenanceStatusSelect } from "./MaintenanceStatusSelect";
 import { DeleteMaintenanceDialog } from "./DeleteMaintenanceDialog";
 import { EditMaintenanceDialog } from "../EditMaintenanceDialog";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface MaintenanceRecord {
   id: string;
@@ -28,6 +29,8 @@ interface MaintenanceTableRowProps {
 }
 
 export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
+  const isAccident = record.id.startsWith('accident-');
+
   return (
     <TableRow>
       <TableCell>
@@ -38,7 +41,16 @@ export const MaintenanceTableRow = ({ record }: MaintenanceTableRowProps) => {
           ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
           : "Vehicle details unavailable"}
       </TableCell>
-      <TableCell>{record.service_type}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {record.service_type}
+          {isAccident && (
+            <Badge variant="destructive" className="text-xs">
+              Accident
+            </Badge>
+          )}
+        </div>
+      </TableCell>
       <TableCell>
         <MaintenanceStatusSelect 
           id={record.id}
