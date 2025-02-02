@@ -8,7 +8,7 @@ import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
 import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
 import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Car, Calendar, Clock, Wrench } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
 import type { Maintenance } from "@/types/maintenance";
@@ -156,22 +156,17 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <Card className="rounded-md border">
-        <Table>
-          <MaintenanceTableHeader />
-          <TableBody>
-            {[...Array(5)].map((_, i) => (
-              <tr key={i} className="animate-pulse">
-                <td className="p-4"><Skeleton className="h-4 w-[120px]" /></td>
-                <td className="p-4"><Skeleton className="h-4 w-[200px]" /></td>
-                <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
-                <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
-                <td className="p-4"><Skeleton className="h-4 w-[150px]" /></td>
-              </tr>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="p-4 space-y-4">
+            <div className="animate-pulse space-y-3">
+              <Skeleton className="h-4 w-[70%]" />
+              <Skeleton className="h-4 w-[100%]" />
+              <Skeleton className="h-4 w-[60%]" />
+            </div>
+          </Card>
+        ))}
+      </div>
     );
   }
 
@@ -181,28 +176,77 @@ export const MaintenanceList = () => {
         <div className="flex justify-end">
           <CreateJobDialog />
         </div>
-        <Card className="p-6 text-center">
-          <p className="text-muted-foreground">No maintenance records found.</p>
+        <Card className="p-6">
+          <div className="flex flex-col items-center justify-center text-center space-y-3">
+            <Wrench className="h-12 w-12 text-muted-foreground" />
+            <p className="text-lg font-medium">No maintenance records found</p>
+            <p className="text-sm text-muted-foreground">
+              Create a new maintenance job to get started
+            </p>
+          </div>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-end">
         <CreateJobDialog />
       </div>
-      <Card className="rounded-md border">
-        <Table>
-          <MaintenanceTableHeader />
-          <TableBody>
-            {currentRecords.map((record) => (
-              <MaintenanceTableRow key={record.id} record={record} />
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {currentRecords.map((record) => (
+          <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+            <div className="p-4 space-y-4">
+              {/* Vehicle Info */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <Car className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">
+                      {record.vehicles 
+                        ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
+                        : "Vehicle details unavailable"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {record.vehicles?.license_plate || "N/A"}
+                    </p>
+                  </div>
+                </div>
+                <div className={`px-2 py-1 rounded-full text-xs font-medium
+                  ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                  ${record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
+                  ${record.status === 'urgent' ? 'bg-red-100 text-red-800' : ''}
+                  ${record.status === 'accident' ? 'bg-red-100 text-red-800' : ''}
+                  ${record.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' : ''}
+                `}>
+                  {record.status}
+                </div>
+              </div>
+
+              {/* Service Info */}
+              <div className="space-y-2">
+                <p className="font-medium">{record.service_type}</p>
+                {record.description && (
+                  <p className="text-sm text-muted-foreground">{record.description}</p>
+                )}
+              </div>
+
+              {/* Date & Cost */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>{new Date(record.scheduled_date).toLocaleDateString()}</span>
+                </div>
+                {record.cost && (
+                  <span className="font-medium">{record.cost} QAR</span>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
 
       <div className="flex justify-center mt-4">
         <VehicleTablePagination
