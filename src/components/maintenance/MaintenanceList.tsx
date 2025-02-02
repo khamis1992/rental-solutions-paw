@@ -12,6 +12,7 @@ import { AlertTriangle, Car, Calendar, Clock, Wrench, Edit2 } from "lucide-react
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
 import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Maintenance } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
@@ -84,7 +85,6 @@ export const MaintenanceList = () => {
   const { data: records = [], isLoading, error } = useQuery({
     queryKey: ["maintenance-and-accidents"],
     queryFn: async () => {
-      // First get maintenance records
       const { data: maintenanceRecords, error: maintenanceError } = await supabase
         .from("maintenance")
         .select(`
@@ -101,7 +101,6 @@ export const MaintenanceList = () => {
 
       if (maintenanceError) throw maintenanceError;
 
-      // Then get accident vehicles
       const { data: accidentVehicles, error: vehiclesError } = await supabase
         .from("vehicles")
         .select(`
@@ -115,7 +114,6 @@ export const MaintenanceList = () => {
 
       if (vehiclesError) throw vehiclesError;
 
-      // Create maintenance records for accident vehicles
       const accidentRecords: MaintenanceRecord[] = accidentVehicles.map(vehicle => ({
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
@@ -138,6 +136,23 @@ export const MaintenanceList = () => {
       );
     },
   });
+
+  const handleStatusChange = async (recordId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('maintenance')
+        .update({ status: newStatus })
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
+      toast.success('Status updated successfully');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+    }
+  };
 
   const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -219,15 +234,26 @@ export const MaintenanceList = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium
-                    ${record.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
-                    ${record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : ''}
-                    ${record.status === 'urgent' ? 'bg-red-100 text-red-800' : ''}
-                    ${record.status === 'accident' ? 'bg-red-100 text-red-800' : ''}
-                    ${record.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' : ''}
-                  `}>
-                    {record.status}
-                  </div>
+                  <Select
+                    value={record.status}
+                    onValueChange={(value) => handleStatusChange(record.id, value)}
+                  >
+                    <SelectTrigger className={`w-[130px] ${
+                      record.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                      record.status === 'urgent' ? 'bg-red-100 text-red-800' :
+                      record.status === 'accident' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <EditMaintenanceDialog record={record} />
                 </div>
               </div>
