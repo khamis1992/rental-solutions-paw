@@ -8,6 +8,6 @@ export interface DashboardStats {
   monthly_revenue: number;
 }
 
-export interface DashboardStatsResponse {
+export interface DashboardStatsProps {
   stats: DashboardStats;
 }
