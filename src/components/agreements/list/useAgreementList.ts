@@ -47,11 +47,7 @@ export const useAgreementList = () => {
           const sanitizedQuery = searchQuery.replace(/[%_]/g, '\\$&');
           const searchPattern = `%${sanitizedQuery}%`;
 
-          query = query.or(
-            `agreement_number.ilike.${searchPattern},` +
-            `customer.full_name.ilike.${searchPattern},` +
-            `vehicle.license_plate.ilike.${searchPattern}`
-          );
+          query = query.or(`agreement_number.ilike.${searchPattern},customer.full_name.ilike.${searchPattern},vehicle.license_plate.ilike.${searchPattern}`);
         }
 
         // Apply sorting
