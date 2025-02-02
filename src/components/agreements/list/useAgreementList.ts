@@ -43,19 +43,31 @@ export const useAgreementList = () => {
 
         // Apply search filter if search query exists
         if (searchQuery) {
-          // Sanitize the search query and escape special characters
-          const sanitizedQuery = searchQuery.replace(/[%_]/g, '\\$&');
-          
-          // Log the sanitized query for debugging
+          // Sanitize and encode the search query
+          const sanitizedQuery = searchQuery
+            .replace(/[%_\\]/g, '\\$&') // Escape special characters
+            .trim();
+
+          console.log('Original search query:', searchQuery);
           console.log('Sanitized search query:', sanitizedQuery);
 
-          // Build the search conditions separately
-          query = query.or(`agreement_number.ilike.%${sanitizedQuery}%,customer.full_name.ilike.%${sanitizedQuery}%,vehicle.license_plate.ilike.%${sanitizedQuery}%`);
-          
-          // Log the final query URL for debugging
-          const { data: debugData, error: debugError } = await query;
-          console.log('Query URL:', query.url);
-          console.log('Query error if any:', debugError);
+          // Build individual search conditions
+          const searchConditions = [
+            `agreement_number.ilike.%${sanitizedQuery}%`,
+            `customer.full_name.ilike.%${sanitizedQuery}%`,
+            `vehicle.license_plate.ilike.%${sanitizedQuery}%`
+          ].join(',');
+
+          // Apply OR conditions
+          query = query.or(searchConditions);
+
+          // Debug the constructed query
+          const { data: debugData, error: debugError } = await supabase
+            .from('leases')
+            .select('id')
+            .or(searchConditions);
+
+          console.log('Debug query error:', debugError);
         }
 
         // Apply sorting
@@ -80,7 +92,7 @@ export const useAgreementList = () => {
         return agreements;
       } catch (err) {
         console.error("Error in useAgreementList:", err);
-        throw new Error(err instanceof Error ? err.message : "Failed to fetch agreements");
+        throw err;
       }
     },
     meta: {
