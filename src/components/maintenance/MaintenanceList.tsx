@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
 import { MaintenanceFilters } from "./MaintenanceFilters";
 import { Button } from "@/components/ui/button";
 import { Plus, Wrench } from "lucide-react";
 import { CreateJobDialog } from "./CreateJobDialog";
 import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { JobCard } from "./JobCard";
 
 export const MaintenanceList = () => {
-  const queryClient = useQueryClient();
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [filters, setFilters] = useState({
@@ -29,6 +30,7 @@ export const MaintenanceList = () => {
           vehicle:vehicle_id (
             make,
             model,
+            year,
             license_plate
           ),
           category:category_id (
@@ -48,7 +50,7 @@ export const MaintenanceList = () => {
         throw error;
       }
 
-      return data;
+      return data || [];
     },
   });
 
@@ -58,7 +60,7 @@ export const MaintenanceList = () => {
         <div className="flex justify-between items-center">
           <MaintenanceFilters
             filters={filters}
-            setFilters={setFilters}
+            onFiltersChange={setFilters}
           />
           <CreateJobDialog />
         </div>
@@ -72,7 +74,7 @@ export const MaintenanceList = () => {
       <div className="flex justify-between items-center">
         <MaintenanceFilters
           filters={filters}
-          setFilters={setFilters}
+          onFiltersChange={setFilters}
         />
         <CreateJobDialog />
       </div>
@@ -98,52 +100,24 @@ export const MaintenanceList = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {records.map((record) => (
-            <Card
+            <JobCard
               key={record.id}
-              className="p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    {record.vehicle?.make} {record.vehicle?.model}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {record.vehicle?.license_plate}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedRecord(record);
-                    setShowEditDialog(true);
-                  }}
-                >
-                  Edit
-                </Button>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Wrench className="h-5 w-5 text-primary" />
-                  <p className="text-lg font-medium">{record.service_type}</p>
-                </div>
-                {record.description && (
-                  <p className="text-gray-600">{record.description}</p>
-                )}
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">
-                    Scheduled:{" "}
-                    {new Date(record.scheduled_date).toLocaleDateString()}
-                  </span>
-                </div>
-                {record.cost && (
-                  <div className="px-3 py-1 bg-gray-100 rounded-full flex items-center space-x-1">
-                    <span className="font-medium text-primary">{record.cost}</span>
-                    <span className="text-sm text-gray-500">QAR</span>
-                  </div>
-                )}
-              </div>
-            </Card>
+              id={record.id}
+              vehicleId={record.vehicle_id}
+              vehicleInfo={record.vehicle}
+              serviceType={record.service_type}
+              category={record.category?.name || "routine"}
+              priority={record.priority || "medium"}
+              status={record.status}
+              scheduledDate={record.scheduled_date}
+              description={record.description}
+              assignedTo={record.performed_by}
+              estimatedHours={record.estimated_hours}
+              laborRate={record.labor_rate}
+              vehicleCondition={record.vehicle_condition}
+              diagnosedIssues={record.diagnosed_issues}
+              technicianNotes={record.notes}
+            />
           ))}
         </div>
       )}
@@ -151,10 +125,9 @@ export const MaintenanceList = () => {
       {selectedRecord && (
         <EditMaintenanceDialog
           record={selectedRecord}
-          isOpen={showEditDialog} 
-          onClose={() => setShowEditDialog(false)}
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
           onSave={() => {
-            queryClient.invalidateQueries(["maintenance"]);
             setShowEditDialog(false);
           }}
         />
