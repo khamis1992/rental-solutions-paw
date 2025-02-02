@@ -43,20 +43,7 @@ export const useAgreementList = () => {
           query = query.eq("status", statusFilter);
         }
 
-        // Apply search filter if search query exists
-        const trimmedSearch = searchQuery.trim();
-        if (trimmedSearch) {
-          query = query.or(`agreement_number.ilike.%${trimmedSearch}%`);
-        }
-
-        // Apply sorting
-        if (sortOrder === "oldest") {
-          query = query.order("created_at", { ascending: true });
-        } else {
-          query = query.order("created_at", { ascending: false });
-        }
-
-        console.log('Executing query...');
+        // Get all agreements first
         const { data: agreements, error } = await query;
 
         if (error) {
@@ -69,20 +56,30 @@ export const useAgreementList = () => {
           return [];
         }
 
-        // Filter results client-side for customer name and license plate
+        // Filter results based on search query
+        const trimmedSearch = searchQuery.trim().toLowerCase();
         const filteredAgreements = agreements.filter(agreement => {
+          if (!trimmedSearch) return true;
+
           const customerName = agreement.customer?.full_name?.toLowerCase() || '';
           const licensePlate = agreement.vehicle?.license_plate?.toLowerCase() || '';
-          const searchLower = trimmedSearch.toLowerCase();
+          const agreementNumber = agreement.agreement_number?.toLowerCase() || '';
           
-          return !trimmedSearch || 
-                 agreement.agreement_number?.toLowerCase().includes(searchLower) ||
-                 customerName.includes(searchLower) ||
-                 licensePlate.includes(searchLower);
+          return customerName.includes(trimmedSearch) ||
+                 licensePlate.includes(trimmedSearch) ||
+                 agreementNumber.includes(trimmedSearch);
         });
 
-        console.log(`Found ${filteredAgreements.length} agreements`);
-        return filteredAgreements;
+        // Apply sorting
+        const sortedAgreements = [...filteredAgreements].sort((a, b) => {
+          if (sortOrder === "oldest") {
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          }
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+
+        console.log(`Found ${sortedAgreements.length} agreements`);
+        return sortedAgreements;
       } catch (err) {
         console.error("Error in useAgreementList:", err);
         throw err;
