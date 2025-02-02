@@ -44,11 +44,9 @@ export const useAgreementList = () => {
         // Apply search filter if search query exists
         if (searchQuery) {
           query = query.or(
-            `agreement_number.ilike.%${searchQuery}%`,
-            `customer:customer_id(full_name).ilike.%${searchQuery}%`,
-            `vehicle:vehicle_id(license_plate).ilike.%${searchQuery}%`,
-            `vehicle:vehicle_id(make).ilike.%${searchQuery}%`,
-            `vehicle:vehicle_id(model).ilike.%${searchQuery}%`
+            `agreement_number.ilike.%${searchQuery}%,` +
+            `customer.full_name.ilike.%${searchQuery}%,` +
+            `vehicle.license_plate.ilike.%${searchQuery}%`
           );
         }
 
