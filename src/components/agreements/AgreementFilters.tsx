@@ -2,9 +2,10 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useState, useCallback } from "react";
 import { debounce } from "lodash";
+import { LeaseStatus } from "@/types/agreement.types";
 
 interface AgreementFiltersProps {
-  onStatusChange: (value: string) => void;
+  onStatusChange: (value: LeaseStatus | "all") => void;
   onSortChange: (value: string) => void;
   onSearch: (value: string) => void;
   searchValue: string;
