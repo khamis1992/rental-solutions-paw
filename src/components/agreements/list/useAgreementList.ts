@@ -43,26 +43,16 @@ export const useAgreementList = () => {
 
         // Apply search filter if search query exists
         if (searchQuery) {
-          // Log original query for debugging
-          console.log('Original search query:', searchQuery);
-
-          // Clean and prepare the search term
+          console.log('Processing search query:', searchQuery);
           const cleanedQuery = searchQuery.trim();
           
-          // Create properly formatted search conditions
           if (cleanedQuery) {
+            // Use separate or conditions with proper filter builder methods
             query = query.or(
-              `agreement_number.ilike.%${cleanedQuery}%,` + 
-              `customer.full_name.ilike.%${cleanedQuery}%,` +
-              `vehicle.license_plate.ilike.%${cleanedQuery}%`
+              `or(agreement_number.ilike.%${cleanedQuery}%,customer.full_name.ilike.%${cleanedQuery}%,vehicle.license_plate.ilike.%${cleanedQuery}%)`
             );
-
-            // Debug log the constructed query
-            console.log('Constructed search conditions:', 
-              `agreement_number.ilike.%${cleanedQuery}%,` +
-              `customer.full_name.ilike.%${cleanedQuery}%,` +
-              `vehicle.license_plate.ilike.%${cleanedQuery}%`
-            );
+            
+            console.log('Applied search filter');
           }
         }
 
