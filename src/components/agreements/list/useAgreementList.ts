@@ -46,7 +46,7 @@ export const useAgreementList = () => {
         // Apply search filter if search query exists
         const trimmedSearch = searchQuery.trim();
         if (trimmedSearch) {
-          query = query.or(`agreement_number.ilike.%${trimmedSearch}%,customer_id.eq.${trimmedSearch},vehicle_id.eq.${trimmedSearch}`);
+          query = query.or(`agreement_number.ilike.%${trimmedSearch}%`);
         }
 
         // Apply sorting
@@ -69,8 +69,20 @@ export const useAgreementList = () => {
           return [];
         }
 
-        console.log(`Found ${agreements.length} agreements`);
-        return agreements;
+        // Filter results client-side for customer name and license plate
+        const filteredAgreements = agreements.filter(agreement => {
+          const customerName = agreement.customer?.full_name?.toLowerCase() || '';
+          const licensePlate = agreement.vehicle?.license_plate?.toLowerCase() || '';
+          const searchLower = trimmedSearch.toLowerCase();
+          
+          return !trimmedSearch || 
+                 agreement.agreement_number?.toLowerCase().includes(searchLower) ||
+                 customerName.includes(searchLower) ||
+                 licensePlate.includes(searchLower);
+        });
+
+        console.log(`Found ${filteredAgreements.length} agreements`);
+        return filteredAgreements;
       } catch (err) {
         console.error("Error in useAgreementList:", err);
         throw err;
