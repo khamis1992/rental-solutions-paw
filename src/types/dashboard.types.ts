@@ -7,15 +7,3 @@ export interface DashboardStats {
   active_rentals: number;
   monthly_revenue: number;
 }
-
-export interface DashboardStatsProps {
-  stats: {
-    totalVehicles: number;
-    availableVehicles: number;
-    rentedVehicles: number;
-    maintenanceVehicles: number;
-    totalCustomers: number;
-    activeRentals: number;
-    monthlyRevenue: number;
-  };
-}
