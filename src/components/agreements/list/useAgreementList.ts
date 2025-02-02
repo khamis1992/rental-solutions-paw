@@ -46,11 +46,7 @@ export const useAgreementList = () => {
         // Apply search filter if search query exists
         const trimmedSearch = searchQuery.trim();
         if (trimmedSearch) {
-          query = query.or(
-            `agreement_number.ilike.%${trimmedSearch}%,` +
-            `customer(full_name).ilike.%${trimmedSearch}%,` +
-            `vehicle(license_plate).ilike.%${trimmedSearch}%`
-          );
+          query = query.or(`agreement_number.ilike.%${trimmedSearch}%,customer_id.eq.${trimmedSearch},vehicle_id.eq.${trimmedSearch}`);
         }
 
         // Apply sorting
