@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Printer, Trash2 } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -424,23 +424,6 @@ export const AgreementTableRow = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>View Agreement Template</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDownloadTemplate}
-                disabled={downloading}
-                className="hover:bg-green-100"
-              >
-                <Printer className="h-4 w-4 text-green-600 hover:text-green-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Print Agreement</p>
             </TooltipContent>
           </Tooltip>
 
