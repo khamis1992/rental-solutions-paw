@@ -1,3 +1,9 @@
+import { Database } from "@/integrations/supabase/types";
+
+export type LeaseStatus = Database['public']['Enums']['lease_status'];
+export type AgreementType = Database['public']['Enums']['agreement_type'];
+export type PaymentStatus = Database['public']['Enums']['payment_status'];
+
 export interface TextStyle {
   bold: boolean;
   italic: boolean;
@@ -44,23 +50,6 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
-export type AgreementType = 'short_term' | 'lease_to_own';
-
-export type LeaseStatus = 
-  | 'pending_payment'
-  | 'pending_deposit'
-  | 'active'
-  | 'closed'
-  | 'terminated'
-  | 'cancelled';
-
-export type PaymentStatus = 
-  | 'pending'
-  | 'completed'
-  | 'failed'
-  | 'cancelled'
-  | 'refunded';
-
 export interface Agreement {
   id: string;
   agreement_number: string;
@@ -96,14 +85,6 @@ export interface Agreement {
     model: string;
     year: number;
     license_plate: string;
-  };
-}
-
-export interface AgreementWithRelations extends Agreement {
-  customer: NonNullable<Agreement['customer']>;
-  vehicle: NonNullable<Agreement['vehicle']>;
-  remainingAmount?: {
-    remaining_amount: number;
   };
 }
 
