@@ -38,17 +38,18 @@ export const useAgreementList = () => {
             )
           `);
 
-        // Apply status filter
+        // Apply status filter if not "all"
         if (statusFilter !== "all") {
           query = query.eq("status", statusFilter);
         }
 
         // Apply search filter if search query exists
-        if (searchQuery.trim()) {
+        const trimmedSearch = searchQuery.trim();
+        if (trimmedSearch) {
           query = query.or(
-            `agreement_number.ilike.%${searchQuery.trim()}%,` +
-            `customer.full_name.ilike.%${searchQuery.trim()}%,` +
-            `vehicle.license_plate.ilike.%${searchQuery.trim()}%`
+            `agreement_number.ilike.%${trimmedSearch}%,` +
+            `customer(full_name).ilike.%${trimmedSearch}%,` +
+            `vehicle(license_plate).ilike.%${trimmedSearch}%`
           );
         }
 
@@ -68,7 +69,7 @@ export const useAgreementList = () => {
         }
 
         if (!agreements) {
-          console.warn("No agreements found");
+          console.log("No agreements found in database");
           return [];
         }
 
