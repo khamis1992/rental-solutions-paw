@@ -99,6 +99,14 @@ export interface Agreement {
   };
 }
 
+export interface AgreementWithRelations extends Agreement {
+  customer: NonNullable<Agreement['customer']>;
+  vehicle: NonNullable<Agreement['vehicle']>;
+  remainingAmount?: {
+    remaining_amount: number;
+  };
+}
+
 export interface Payment {
   id: string;
   lease_id: string;

@@ -31,7 +31,7 @@ export const useAgreementList = () => {
               year,
               license_plate
             ),
-            remaining_amounts (
+            remaining_amounts!remaining_amounts_lease_id_fkey (
               remaining_amount
             )
           `);
@@ -45,8 +45,8 @@ export const useAgreementList = () => {
         if (searchQuery) {
           query = query
             .or(`agreement_number.ilike.%${searchQuery}%`)
-            .or(`customer.full_name.ilike.%${searchQuery}%`)
-            .or(`vehicle.license_plate.ilike.%${searchQuery}%`);
+            .or(`customer_id.full_name.ilike.%${searchQuery}%`)
+            .or(`vehicle_id.license_plate.ilike.%${searchQuery}%`);
         }
 
         // Apply sorting
