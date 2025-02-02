@@ -26,7 +26,7 @@ export function MaintenanceList() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Maintenance Jobs</h2>
-        <CreateJobDialog>
+        <CreateJobDialog vehicleId="your-vehicle-id">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Create Job Card
