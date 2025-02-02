@@ -1,161 +1,143 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useAgreementForm } from "./hooks/useAgreementForm";
-import { LeaseToOwnFields } from "./form/LeaseToOwnFields";
-import { LateFeesPenaltiesFields } from "./form/LateFeesPenaltiesFields";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import { JobCardForm } from "./job-card/JobCardForm";
 import { useState } from "react";
-import { AgreementBasicInfo } from "./form/AgreementBasicInfo";
-import { CustomerInformation } from "./form/CustomerInformation";
-import { VehicleAgreementDetails } from "./form/VehicleAgreementDetails";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { AgreementTemplateSelect } from "./form/AgreementTemplateSelect";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-export interface CreateAgreementDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  children?: React.ReactNode;
-}
+export function CreateJobDialog() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, children }: CreateAgreementDialogProps) {
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ["available-vehicles"],
+    queryFn: async () => {
+      console.log("Fetching available vehicles...");
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("id, make, model, license_plate")
+        .eq("status", "available");
+
+      if (error) throw error;
+      console.log("Available vehicles:", data);
+      return data;
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["maintenance-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance_categories")
+        .select("*")
+        .eq("is_active", true);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const [formData, setFormData] = useState({
+    vehicle_id: "",
+    category_id: "",
+    service_type: "",
+    description: "",
+    scheduled_date: "",
+    cost: "",
+  });
 
   const checkExistingJobCard = async (vehicleId: string) => {
     console.log("Checking existing job cards for vehicle:", vehicleId);
-    try {
-      const { data: existingMaintenance } = await supabase
-        .from('maintenance')
-        .select('*')
-        .eq('vehicle_id', vehicleId)
-        .not('status', 'in', '("completed","cancelled")')
-        .single();
+    const { data, error } = await supabase
+      .from("maintenance")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .not('status', 'in', ['completed', 'cancelled']);
 
-      return existingMaintenance;
-    } catch (error) {
+    if (error) {
       console.error("Error checking existing job cards:", error);
       throw error;
     }
+
+    console.log("Existing job cards:", data);
+    return data.length > 0;
   };
 
-  // Use controlled open state if provided
-  const isOpen = controlledOpen !== undefined ? controlledOpen : open;
-  const handleOpenChange = onOpenChange || setOpen;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const handleFormSubmit = async (data: any) => {
     try {
-      console.log("Form submission started with data:", data);
-      setIsSubmitting(true);
-      await onSubmit(data);
-    } catch (error) {
-      console.error("Error creating agreement:", error);
-      toast.error("Failed to create agreement. Please try again.");
+      const hasExistingJobCard = await checkExistingJobCard(formData.vehicle_id);
+      if (hasExistingJobCard) {
+        toast.error(
+          "A job card already exists for this vehicle. Please complete or cancel the existing job card first."
+        );
+        return;
+      }
+
+      const { data: maintenance, error: maintenanceError } = await supabase
+        .from("maintenance")
+        .insert([
+          {
+            vehicle_id: formData.vehicle_id,
+            category_id: formData.category_id,
+            service_type: formData.service_type,
+            description: formData.description,
+            scheduled_date: formData.scheduled_date,
+            cost: formData.cost ? parseFloat(formData.cost) : null,
+            status: "scheduled",
+          },
+        ])
+        .select()
+        .single();
+
+      if (maintenanceError) throw maintenanceError;
+
+      const { error: vehicleError } = await supabase
+        .from("vehicles")
+        .update({ status: "maintenance" })
+        .eq("id", formData.vehicle_id);
+
+      if (vehicleError) throw vehicleError;
+
+      toast.success("Job card created successfully");
+      setOpen(false);
+      navigate(`/maintenance/${maintenance.id}/inspection`);
+    } catch (error: any) {
+      console.error("Error creating job card:", error);
+      toast.error(error.message);
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children}
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Job Card
+        </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Agreement</DialogTitle>
-          <DialogDescription>
-            Create a new lease-to-own or short-term rental agreement.
-          </DialogDescription>
+          <DialogTitle>Create New Job Card</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[80vh] pr-4">
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-            <AgreementTemplateSelect setValue={setValue} />
-            
-            <Separator className="my-6" />
-            
-            <AgreementBasicInfo register={register} errors={errors} watch={watch} />
-            
-            <Separator className="my-6" />
-            
-            <CustomerInformation 
-              register={register} 
-              errors={errors}
-              selectedCustomerId={selectedCustomerId}
-              onCustomerSelect={setSelectedCustomerId}
-              setValue={setValue}
-            />
-            
-            <Separator className="my-6" />
-
-            <VehicleAgreementDetails 
-              register={register}
-              errors={errors}
-              watch={watch}
-              setValue={setValue}
-            />
-
-            <Separator className="my-6" />
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Late Fees & Penalties</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <LateFeesPenaltiesFields register={register} />
-              </div>
-            </div>
-
-            <Separator className="my-6" />
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea 
-                id="notes"
-                placeholder="Additional notes about the agreement..."
-                className="min-h-[100px]"
-                {...register("notes")} 
-              />
-            </div>
-
-            <DialogFooter className="sticky bottom-0 bg-background pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                disabled={isSubmitting}
-                className="relative"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="opacity-0">Create Agreement</span>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  </>
-                ) : (
-                  "Create Agreement"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
+        <ScrollArea className="h-[500px] px-1">
+          <JobCardForm
+            formData={formData}
+            vehicles={vehicles}
+            categories={categories}
+            onFormDataChange={setFormData}
+            onSubmit={handleSubmit}
+            loading={loading}
+          />
         </ScrollArea>
       </DialogContent>
     </Dialog>
