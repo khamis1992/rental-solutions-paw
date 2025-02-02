@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-import { JobCardForm } from "./job-card/JobCardForm";
 import { useState } from "react";
+import { JobCardForm } from "./job-card/JobCardForm";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,7 +57,7 @@ export function CreateJobDialog() {
       .from("maintenance")
       .select("*")
       .eq("vehicle_id", vehicleId)
-      .not('status', 'in', ['completed', 'cancelled']);
+      .not("status", "in", ["completed", "cancelled"]);
 
     if (error) {
       console.error("Error checking existing job cards:", error);
