@@ -1,11 +1,51 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { type CarInstallmentPayment, type CarInstallmentPaymentsProps } from "@/types/finance/car-installment.types";
+import { type CarInstallmentPayment } from "@/types/finance/car-installment.types";
 
-export const CarInstallmentPayments = ({ contractId, payments }: CarInstallmentPaymentsProps) => {
+interface CarInstallmentPaymentsProps {
+  contractId: string;
+}
+
+export const CarInstallmentPayments = ({ contractId }: CarInstallmentPaymentsProps) => {
+  const { data: payments = [], isLoading } = useQuery({
+    queryKey: ["car-installment-payments", contractId],
+    queryFn: async () => {
+      if (!contractId) return [];
+      
+      const { data, error } = await supabase
+        .from("car_installment_payments")
+        .select("*")
+        .eq("contract_id", contractId)
+        .order("payment_date", { ascending: true });
+
+      if (error) {
+        console.error('Error fetching payments:', error);
+        throw error;
+      }
+
+      return data as CarInstallmentPayment[];
+    },
+    enabled: !!contractId
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Installments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">Loading...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!payments?.length) {
     return (
       <Card>

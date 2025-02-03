@@ -49,28 +49,6 @@ export const CarInstallmentDetails = () => {
     enabled: !!id && isValidUUID(id)
   });
 
-  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
-    queryKey: ["car-installment-payments", id],
-    queryFn: async () => {
-      if (!id || !isValidUUID(id)) return [];
-      
-      const { data, error } = await supabase
-        .from("car_installment_payments")
-        .select("*")
-        .eq("contract_id", id)
-        .order("payment_date", { ascending: true });
-
-      if (error) {
-        console.error('Error fetching payments:', error);
-        toast.error(error.message);
-        throw error;
-      }
-
-      return data as CarInstallmentPayment[];
-    },
-    enabled: !!id && isValidUUID(id)
-  });
-
   useEffect(() => {
     if (contract) {
       setSelectedContract(contract);
@@ -81,7 +59,7 @@ export const CarInstallmentDetails = () => {
     return <div className="p-4">Invalid contract ID</div>;
   }
 
-  if (isLoadingContract || isLoadingPayments) {
+  if (isLoadingContract) {
     return <div className="p-4">Loading...</div>;
   }
 
