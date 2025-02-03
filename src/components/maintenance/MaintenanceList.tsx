@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import { Wrench, Clock, AlertTriangle, Edit2, Trash2 } from "lucide-react";
+import { Wrench, Clock, AlertTriangle, Edit2, Trash2, Car, Calendar } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,8 @@ import { CreateJobDialog } from "./CreateJobDialog";
 import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { VehicleTablePagination } from "@/components/vehicles/table/VehicleTablePagination";
 import type { Maintenance } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
