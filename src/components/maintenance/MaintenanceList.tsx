@@ -1,86 +1,31 @@
-import { Table, TableBody } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { formatDateToDisplay } from "@/lib/dateUtils";
+import { Wrench, Clock, AlertTriangle, Edit2, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
-import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
-import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, Car, Calendar, Clock, Wrench, Edit2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
 import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import type { Maintenance } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
 
-interface Vehicle {
-  make: string;
-  model: string;
-  year: number;
-  license_plate: string;
-}
-
 interface MaintenanceRecord extends Maintenance {
-  vehicles?: Vehicle;
+  vehicles?: {
+    make: string;
+    model: string;
+    license_plate: string;
+  };
 }
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    // Subscribe to both maintenance and vehicle status changes
-    const maintenanceChannel = supabase
-      .channel('maintenance-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'maintenance'
-        },
-        async (payload) => {
-          console.log('Maintenance update received:', payload);
-          await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
-          
-          const eventType = payload.eventType;
-          const message = eventType === 'INSERT' 
-            ? 'New maintenance record created'
-            : eventType === 'UPDATE'
-            ? 'Maintenance record updated'
-            : 'Maintenance record deleted';
-          
-          toast.info(message);
-        }
-      )
-      .subscribe();
-
-    const vehicleChannel = supabase
-      .channel('vehicle-status-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'vehicles',
-          filter: 'status=in.(maintenance,accident)'
-        },
-        async (payload) => {
-          console.log('Vehicle status changed:', payload);
-          await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(maintenanceChannel);
-      supabase.removeChannel(vehicleChannel);
-    };
-  }, [queryClient]);
 
   const { data: records = [], isLoading, error } = useQuery({
     queryKey: ["maintenance-and-accidents"],
@@ -92,7 +37,6 @@ export const MaintenanceList = () => {
           vehicles (
             make,
             model,
-            year,
             license_plate
           )
         `)
@@ -107,7 +51,6 @@ export const MaintenanceList = () => {
           id,
           make,
           model,
-          year,
           license_plate
         `)
         .eq('status', 'accident');
@@ -137,7 +80,7 @@ export const MaintenanceList = () => {
     },
   });
 
-  const handleStatusChange = async (recordId: string, newStatus: string) => {
+  const handleStatusChange = async (recordId: string, newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
     try {
       const { error } = await supabase
         .from('maintenance')
@@ -151,6 +94,23 @@ export const MaintenanceList = () => {
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
+    }
+  };
+
+  const handleDelete = async (recordId: string) => {
+    try {
+      const { error } = await supabase
+        .from('maintenance')
+        .delete()
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
+      toast.success('Job card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting job card:', error);
+      toast.error('Failed to delete job card');
     }
   };
 
@@ -218,14 +178,13 @@ export const MaintenanceList = () => {
         {currentRecords.map((record) => (
           <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
             <div className="p-6 space-y-6">
-              {/* Vehicle Info */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-4">
                   <Car className="h-6 w-6 text-primary" />
                   <div>
                     <p className="text-lg font-medium">
                       {record.vehicles 
-                        ? `${record.vehicles.year} ${record.vehicles.make} ${record.vehicles.model}`
+                        ? `${record.vehicles.make} ${record.vehicles.model}`
                         : "Vehicle details unavailable"}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -236,13 +195,13 @@ export const MaintenanceList = () => {
                 <div className="flex items-center space-x-2">
                   <Select
                     value={record.status}
-                    onValueChange={(value) => handleStatusChange(record.id, value)}
+                    onValueChange={(value: "scheduled" | "in_progress" | "completed" | "cancelled") => 
+                      handleStatusChange(record.id, value)
+                    }
                   >
                     <SelectTrigger className={`w-[130px] ${
                       record.status === 'completed' ? 'bg-green-100 text-green-800' :
                       record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                      record.status === 'urgent' ? 'bg-red-100 text-red-800' :
-                      record.status === 'accident' ? 'bg-red-100 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
                       <SelectValue />
@@ -255,10 +214,16 @@ export const MaintenanceList = () => {
                     </SelectContent>
                   </Select>
                   <EditMaintenanceDialog record={record} />
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDelete(record.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               </div>
 
-              {/* Service Info */}
               <div className="p-4 bg-gray-50 rounded-lg space-y-4">
                 <div className="flex items-center space-x-2">
                   <Wrench className="h-5 w-5 text-primary" />
@@ -269,12 +234,11 @@ export const MaintenanceList = () => {
                 )}
               </div>
 
-              {/* Date & Cost */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div className="flex items-center space-x-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">
-                    {new Date(record.scheduled_date).toLocaleDateString()}
+                    {formatDateToDisplay(new Date(record.scheduled_date))}
                   </span>
                 </div>
                 {record.cost && (
