@@ -216,7 +216,6 @@ export const MaintenanceList = () => {
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
-                  {/* Always show edit button regardless of record type */}
                   <EditMaintenanceDialog record={record} />
                   <Button 
                     variant="ghost" 
