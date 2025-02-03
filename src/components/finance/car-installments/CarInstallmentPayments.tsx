@@ -6,45 +6,26 @@ import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type CarInstallmentPayment } from "@/types/finance/car-installment.types";
 
-interface CarInstallmentPayment {
-  id: string;
-  cheque_number: string;
-  amount: number;
-  payment_date: string;
-  drawee_bank: string;
-  paid_amount: number;
-  remaining_amount: number;
-  status: string;
+interface CarInstallmentPaymentsProps {
+  contractId: string;
+  payments: CarInstallmentPayment[];
 }
 
-export const CarInstallmentPayments = ({ contractId }: { contractId: string }) => {
-  const { data: payments, isLoading } = useQuery({
-    queryKey: ["car-installment-payments", contractId],
-    queryFn: async () => {
-      console.log("Fetching payments for contract:", contractId);
-      const { data, error } = await supabase
-        .from("car_installment_payments")
-        .select("*")
-        .eq("contract_id", contractId)
-        .order("payment_date", { ascending: true });
-
-      if (error) {
-        console.error("Error fetching payments:", error);
-        throw error;
-      }
-      console.log("Fetched payments:", data);
-      return data as CarInstallmentPayment[];
-    },
-    // Add refetch interval to periodically check for new payments
-    refetchInterval: 5000,
-  });
-
-  if (isLoading) {
+export const CarInstallmentPayments = ({ contractId, payments }: CarInstallmentPaymentsProps) => {
+  if (!payments?.length) {
     return (
-      <div className="flex justify-center items-center h-48">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Installments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-muted-foreground">
+            No payments found
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -68,7 +49,7 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payments?.map((payment) => (
+              {payments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell>{payment.cheque_number}</TableCell>
                   <TableCell>{format(new Date(payment.payment_date), "PP")}</TableCell>
@@ -99,13 +80,6 @@ export const CarInstallmentPayments = ({ contractId }: { contractId: string }) =
                   </TableCell>
                 </TableRow>
               ))}
-              {!payments?.length && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No payments found
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </div>

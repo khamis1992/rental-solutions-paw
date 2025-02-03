@@ -21,7 +21,7 @@ export const CarInstallmentDetails = () => {
         .from("car_installment_contracts")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data as CarInstallmentContract;
@@ -104,9 +104,18 @@ export const CarInstallmentDetails = () => {
         </CardContent>
       </Card>
 
-      <CarInstallmentPayments contractId={selectedContract.id} payments={payments || []} />
-      <CarInstallmentAnalytics contract={selectedContract} payments={payments || []} />
-      <PaymentMonitoring contract={selectedContract} payments={payments || []} />
+      <CarInstallmentPayments 
+        contractId={selectedContract.id} 
+        payments={payments || []} 
+      />
+      <CarInstallmentAnalytics 
+        contract={selectedContract} 
+        payments={payments || []} 
+      />
+      <PaymentMonitoring 
+        contract={selectedContract} 
+        payments={payments || []} 
+      />
     </div>
   );
 };
