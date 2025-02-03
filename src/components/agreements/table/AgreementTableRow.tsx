@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, Info } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,23 +34,22 @@ export const AgreementTableRow = ({
   onDeleted,
   onDeleteClick,
 }: AgreementTableRowProps) => {
-  const [downloading, setDownloading] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
-  const [templateContent, setTemplateContent] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = React.useState(false);
+  const [templateContent, setTemplateContent] = React.useState("");
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
+        return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-400';
       case 'pending_payment':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-400';
       case 'terminated':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
+        return 'bg-red-100 text-red-800 hover:bg-red-200 border-red-400';
       case 'completed':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-400';
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-400';
     }
   };
 
@@ -69,7 +68,6 @@ export const AgreementTableRow = ({
         return;
       }
 
-      // Replace template variables with actual values
       let content = templateData.content
         .replace(/{{customer\.customer_name}}/g, agreement.customer?.full_name || "")
         .replace(/{{customer\.phone_number}}/g, agreement.customer?.phone_number || "")
@@ -120,7 +118,7 @@ export const AgreementTableRow = ({
       <TableCell>
         <Badge 
           variant="outline" 
-          className={`capitalize ${getStatusColor(agreement.status)}`}
+          className={`capitalize ${getStatusColor(agreement.status)} border px-3 py-1`}
         >
           {agreement.status}
         </Badge>
@@ -141,6 +139,22 @@ export const AgreementTableRow = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>View Agreement Template</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onNameClick(agreement.id)}
+                className="hover:bg-blue-100"
+              >
+                <Info className="h-4 w-4 text-blue-600 hover:text-blue-500" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View Agreement Details</p>
             </TooltipContent>
           </Tooltip>
 
