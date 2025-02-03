@@ -1,17 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type CarInstallmentPayment } from "@/types/finance/car-installment.types";
-
-interface CarInstallmentPaymentsProps {
-  contractId: string;
-  payments: CarInstallmentPayment[];
-}
+import { type CarInstallmentPayment, type CarInstallmentPaymentsProps } from "@/types/finance/car-installment.types";
 
 export const CarInstallmentPayments = ({ contractId, payments }: CarInstallmentPaymentsProps) => {
   if (!payments?.length) {
