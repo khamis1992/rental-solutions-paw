@@ -182,20 +182,7 @@ export const MaintenanceList = () => {
           <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
             <div className="p-6 space-y-6">
               <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4">
-                  <Car className="h-6 w-6 text-primary" />
-                  <div>
-                    <p className="text-lg font-medium">
-                      {record.vehicles 
-                        ? `${record.vehicles.make} ${record.vehicles.model}`
-                        : "Vehicle details unavailable"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {record.vehicles?.license_plate || "N/A"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col space-y-4">
                   <Select
                     value={record.status}
                     onValueChange={(value: "scheduled" | "in_progress" | "completed" | "cancelled") => 
@@ -216,6 +203,21 @@ export const MaintenanceList = () => {
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
+                  <div className="flex items-center space-x-2">
+                    <Car className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-lg font-medium">
+                        {record.vehicles 
+                          ? `${record.vehicles.make} ${record.vehicles.model}`
+                          : "Vehicle details unavailable"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {record.vehicles?.license_plate || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
                   <EditMaintenanceDialog record={record} />
                   <Button 
                     variant="ghost" 
