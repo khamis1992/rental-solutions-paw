@@ -16,7 +16,7 @@ export interface Payment {
   updated_at: string;
   description: string | null;
   is_recurring: boolean;
-  recurring_interval: string | null | unknown;
+  recurring_interval: string | null;
   next_payment_date: string | null;
   type: string;
   late_fine_amount: number;

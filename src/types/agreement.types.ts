@@ -86,7 +86,23 @@ export interface Agreement {
     year: number;
     license_plate: string;
   };
-  remaining_amounts?: {
+  remainingAmount?: {
     remaining_amount: number;
-  }[];
+  };
+}
+
+export interface AgreementWithRelations extends Agreement {
+  customer: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    email: string | null;
+  };
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
 }
