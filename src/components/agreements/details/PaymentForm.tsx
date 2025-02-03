@@ -64,26 +64,30 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   }, [rentAmount, lateFee]);
 
   const onSubmit = async (data: any) => {
-    if (isSubmitting) return; // Prevent duplicate submissions
+    if (isSubmitting) return;
     
     setIsSubmitting(true);
     try {
       const paymentAmount = Number(data.amount);
       const balance = dueAmount - paymentAmount;
 
-      const { error } = await supabase.from("unified_payments").insert({
-        lease_id: agreementId,
-        amount: dueAmount,
-        amount_paid: paymentAmount,
-        balance: balance,
-        payment_method: data.paymentMethod,
-        description: data.description,
-        payment_date: new Date().toISOString(),
-        status: 'completed',
-        type: 'Income',
-        late_fine_amount: lateFee,
-        days_overdue: Math.floor(lateFee / 120)
-      });
+      const { error } = await supabase
+        .from("unified_payments")
+        .insert({
+          lease_id: agreementId,
+          amount: dueAmount,
+          amount_paid: paymentAmount,
+          balance: balance,
+          payment_method: data.paymentMethod,
+          description: data.description,
+          payment_date: new Date().toISOString(),
+          status: 'completed',
+          type: 'Income',
+          late_fine_amount: lateFee,
+          days_overdue: Math.floor(lateFee / 120)
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -91,8 +95,10 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       reset();
       
       // Invalidate relevant queries
-      await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
-      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['unified-payments', agreementId] }),
+        queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] })
+      ]);
       
     } catch (error) {
       console.error("Error adding payment:", error);
