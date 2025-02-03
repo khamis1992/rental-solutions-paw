@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/utils";
+import { usePaymentOperations } from "../hooks/usePaymentOperations";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -25,8 +26,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [lateFee, setLateFee] = useState(0);
   const [rentAmount, setRentAmount] = useState(0);
   const [dueAmount, setDueAmount] = useState(0);
-  const queryClient = useQueryClient();
   const { register, handleSubmit, reset, setValue } = useForm();
+  const { addPayment } = usePaymentOperations();
 
   // Fetch rent amount and calculate late fee
   useEffect(() => {
@@ -69,40 +70,20 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     setIsSubmitting(true);
     try {
       const paymentAmount = Number(data.amount);
-      const balance = dueAmount - paymentAmount;
+      
+      await addPayment({
+        lease_id: agreementId,
+        amount: dueAmount,
+        amount_paid: paymentAmount,
+        payment_date: new Date().toISOString(),
+        payment_method: data.paymentMethod,
+        description: data.description,
+        type: 'Income'
+      });
 
-      const { error } = await supabase
-        .from("unified_payments")
-        .insert({
-          lease_id: agreementId,
-          amount: dueAmount,
-          amount_paid: paymentAmount,
-          balance: balance,
-          payment_method: data.paymentMethod,
-          description: data.description,
-          payment_date: new Date().toISOString(),
-          status: 'completed',
-          type: 'Income',
-          late_fine_amount: lateFee,
-          days_overdue: Math.floor(lateFee / 120)
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast.success("Payment added successfully");
       reset();
-      
-      // Invalidate relevant queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['unified-payments', agreementId] }),
-        queryClient.invalidateQueries({ queryKey: ['payment-history', agreementId] })
-      ]);
-      
     } catch (error) {
       console.error("Error adding payment:", error);
-      toast.error("Failed to add payment");
     } finally {
       setIsSubmitting(false);
     }
