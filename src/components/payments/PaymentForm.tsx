@@ -25,30 +25,42 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const { register, handleSubmit, reset, setValue } = useForm();
 
   const onSubmit = async (data: any) => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("unified_payments").insert({
-        lease_id: agreementId,
-        amount: parseFloat(data.amount),
-        amount_paid: parseFloat(data.amount),
-        balance: 0,
-        payment_method: data.paymentMethod,
-        description: data.description,
-        payment_date: new Date().toISOString(),
-        status: 'completed',
-        type: 'Income',
-        reconciliation_status: 'pending'
-      });
+      // Single database operation
+      const { error } = await supabase
+        .from("unified_payments")
+        .insert({
+          lease_id: agreementId,
+          amount: parseFloat(data.amount),
+          amount_paid: parseFloat(data.amount),
+          balance: 0,
+          payment_method: data.paymentMethod,
+          description: data.description,
+          payment_date: new Date().toISOString(),
+          status: 'completed',
+          type: 'Income',
+          reconciliation_status: 'pending'
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
       toast.success("Payment added successfully");
       reset();
       
-      // Invalidate relevant queries to refresh the data
-      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
-      await queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
-      await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
+      // Batch invalidate all related queries at once
+      await Promise.all([
+        queryClient.invalidateQueries({ 
+          queryKey: ['payment-history', agreementId] 
+        }),
+        queryClient.invalidateQueries({ 
+          queryKey: ['unified-payments', agreementId] 
+        })
+      ]);
       
     } catch (error) {
       console.error("Error adding payment:", error);
