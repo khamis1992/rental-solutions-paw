@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [rentAmount, setRentAmount] = useState(0);
   const [dueAmount, setDueAmount] = useState(0);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue, watch } = useForm();
+  const { register, handleSubmit, reset, setValue } = useForm();
 
   // Fetch rent amount and calculate late fee
   useEffect(() => {
@@ -64,6 +64,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   }, [rentAmount, lateFee]);
 
   const onSubmit = async (data: any) => {
+    if (isSubmitting) return; // Prevent duplicate submissions
+    
     setIsSubmitting(true);
     try {
       const paymentAmount = Number(data.amount);
@@ -88,6 +90,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       toast.success("Payment added successfully");
       reset();
       
+      // Invalidate relevant queries
       await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       
