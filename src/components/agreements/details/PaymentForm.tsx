@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/utils";
-import { usePaymentOperations } from "../hooks/usePaymentOperations";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -26,8 +25,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [lateFee, setLateFee] = useState(0);
   const [rentAmount, setRentAmount] = useState(0);
   const [dueAmount, setDueAmount] = useState(0);
-  const { register, handleSubmit, reset, setValue } = useForm();
-  const { addPayment } = usePaymentOperations();
+  const queryClient = useQueryClient();
+  const { register, handleSubmit, reset, setValue, watch } = useForm();
 
   // Fetch rent amount and calculate late fee
   useEffect(() => {
@@ -65,25 +64,36 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   }, [rentAmount, lateFee]);
 
   const onSubmit = async (data: any) => {
-    if (isSubmitting) return;
-    
     setIsSubmitting(true);
     try {
       const paymentAmount = Number(data.amount);
-      
-      await addPayment({
+      const balance = dueAmount - paymentAmount;
+
+      const { error } = await supabase.from("unified_payments").insert({
         lease_id: agreementId,
         amount: dueAmount,
         amount_paid: paymentAmount,
-        payment_date: new Date().toISOString(),
+        balance: balance,
         payment_method: data.paymentMethod,
         description: data.description,
-        type: 'Income'
+        payment_date: new Date().toISOString(),
+        status: 'completed',
+        type: 'Income',
+        late_fine_amount: lateFee,
+        days_overdue: Math.floor(lateFee / 120)
       });
 
+      if (error) throw error;
+
+      toast.success("Payment added successfully");
       reset();
+      
+      await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+      
     } catch (error) {
       console.error("Error adding payment:", error);
+      toast.error("Failed to add payment");
     } finally {
       setIsSubmitting(false);
     }

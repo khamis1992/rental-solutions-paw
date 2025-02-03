@@ -43,10 +43,8 @@ export function PaymentHistoryDialog({
   const [isHistoricalDeleteDialogOpen, setIsHistoricalDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const queryKey = ["payment-history", agreementId];
-
   const { data: payments, isLoading, error } = useQuery({
-    queryKey,
+    queryKey: ["payment-history", agreementId],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
@@ -69,7 +67,6 @@ export function PaymentHistoryDialog({
   useEffect(() => {
     if (!agreementId || !open) return;
 
-    // Single channel for all payment-related changes
     const channel = supabase
       .channel('payment-history-changes')
       .on(
@@ -83,11 +80,9 @@ export function PaymentHistoryDialog({
         async (payload) => {
           console.log('Real-time update received for payment:', payload);
           
-          // Batch invalidate related queries
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey }),
-            queryClient.invalidateQueries({ queryKey: ['unified-payments', agreementId] })
-          ]);
+          await queryClient.invalidateQueries({ 
+            queryKey: ['payment-history', agreementId] 
+          });
           
           const eventMessages = {
             INSERT: 'New payment recorded',
@@ -108,17 +103,12 @@ export function PaymentHistoryDialog({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [agreementId, open, queryClient, queryKey]);
+  }, [agreementId, open, queryClient]);
 
   const handleReconcileAll = async () => {
     try {
       await reconcilePayments(agreementId);
       toast.success("All payments have been reconciled");
-      // Invalidate queries after reconciliation
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey }),
-        queryClient.invalidateQueries({ queryKey: ['unified-payments', agreementId] })
-      ]);
     } catch (error) {
       console.error("Error reconciling payments:", error);
       toast.error("Failed to reconcile payments");
