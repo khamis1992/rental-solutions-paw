@@ -17,7 +17,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaymentData } from "../hooks/usePaymentData";
 
 interface PaymentHistoryProps {
   agreementId: string;
@@ -26,34 +26,7 @@ interface PaymentHistoryProps {
 export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-
-  const { data: payments, isLoading } = useQuery({
-    queryKey: ['payment-history', agreementId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payment_history_view')
-        .select(`
-          id,
-          amount,
-          amount_paid,
-          balance,
-          actual_payment_date,
-          original_due_date,
-          late_fine_amount,
-          days_overdue,
-          status,
-          payment_method,
-          description,
-          type
-        `)
-        .eq('lease_id', agreementId)
-        .order('actual_payment_date', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { payments, isLoading } = usePaymentData(agreementId);
 
   // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
@@ -84,7 +57,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       if (error) throw error;
 
       toast.success("Payment deleted successfully");
-      await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
     } catch (error) {
       console.error("Error deleting payment:", error);
       toast.error("Failed to delete payment");
