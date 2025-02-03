@@ -13,11 +13,17 @@ export const CarInstallmentDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedContract, setSelectedContract] = useState<CarInstallmentContract | null>(null);
 
+  // Validate UUID format
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
   const { data: contract, isLoading: isLoadingContract } = useQuery({
     queryKey: ["car-installment-contract", id],
     queryFn: async () => {
-      if (!id) {
-        toast.error("No contract ID provided");
+      if (!id || !isValidUUID(id)) {
+        toast.error("Invalid contract ID");
         return null;
       }
       
@@ -40,13 +46,13 @@ export const CarInstallmentDetails = () => {
 
       return data as CarInstallmentContract;
     },
-    enabled: !!id
+    enabled: !!id && isValidUUID(id)
   });
 
   const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
     queryKey: ["car-installment-payments", id],
     queryFn: async () => {
-      if (!id) return [];
+      if (!id || !isValidUUID(id)) return [];
       
       const { data, error } = await supabase
         .from("car_installment_payments")
@@ -62,7 +68,7 @@ export const CarInstallmentDetails = () => {
 
       return data as CarInstallmentPayment[];
     },
-    enabled: !!id
+    enabled: !!id && isValidUUID(id)
   });
 
   useEffect(() => {
@@ -71,12 +77,16 @@ export const CarInstallmentDetails = () => {
     }
   }, [contract]);
 
+  if (!id || !isValidUUID(id)) {
+    return <div className="p-4">Invalid contract ID</div>;
+  }
+
   if (isLoadingContract || isLoadingPayments) {
-    return <div>Loading...</div>;
+    return <div className="p-4">Loading...</div>;
   }
 
   if (!selectedContract) {
-    return <div>Contract not found</div>;
+    return <div className="p-4">Contract not found</div>;
   }
 
   return (
@@ -125,15 +135,12 @@ export const CarInstallmentDetails = () => {
 
       <CarInstallmentPayments 
         contractId={selectedContract.id} 
-        payments={payments} 
       />
       <CarInstallmentAnalytics 
-        contract={selectedContract} 
-        payments={payments} 
+        contractId={selectedContract.id} 
       />
       <PaymentMonitoring 
-        contract={selectedContract} 
-        payments={payments} 
+        contractId={selectedContract.id} 
       />
     </div>
   );
