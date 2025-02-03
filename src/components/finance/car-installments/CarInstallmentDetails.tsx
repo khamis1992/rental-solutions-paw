@@ -7,6 +7,7 @@ import { CarInstallmentPayments } from "./CarInstallmentPayments";
 import { CarInstallmentAnalytics } from "./CarInstallmentAnalytics";
 import { PaymentMonitoring } from "./PaymentMonitoring";
 import { type CarInstallmentContract, type CarInstallmentPayment } from "@/types/finance/car-installment.types";
+import { toast } from "sonner";
 
 export const CarInstallmentDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +16,10 @@ export const CarInstallmentDetails = () => {
   const { data: contract, isLoading: isLoadingContract } = useQuery({
     queryKey: ["car-installment-contract", id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id) {
+        toast.error("No contract ID provided");
+        return null;
+      }
       
       const { data, error } = await supabase
         .from("car_installment_contracts")
@@ -23,13 +27,23 @@ export const CarInstallmentDetails = () => {
         .eq("id", id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching contract:', error);
+        toast.error(error.message);
+        throw error;
+      }
+      
+      if (!data) {
+        toast.error("Contract not found");
+        return null;
+      }
+
       return data as CarInstallmentContract;
     },
     enabled: !!id
   });
 
-  const { data: payments, isLoading: isLoadingPayments } = useQuery({
+  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
     queryKey: ["car-installment-payments", id],
     queryFn: async () => {
       if (!id) return [];
@@ -40,7 +54,12 @@ export const CarInstallmentDetails = () => {
         .eq("contract_id", id)
         .order("payment_date", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching payments:', error);
+        toast.error(error.message);
+        throw error;
+      }
+
       return data as CarInstallmentPayment[];
     },
     enabled: !!id
@@ -106,15 +125,15 @@ export const CarInstallmentDetails = () => {
 
       <CarInstallmentPayments 
         contractId={selectedContract.id} 
-        payments={payments || []} 
+        payments={payments} 
       />
       <CarInstallmentAnalytics 
         contract={selectedContract} 
-        payments={payments || []} 
+        payments={payments} 
       />
       <PaymentMonitoring 
         contract={selectedContract} 
-        payments={payments || []} 
+        payments={payments} 
       />
     </div>
   );
