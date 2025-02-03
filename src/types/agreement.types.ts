@@ -1,92 +1,45 @@
-import { Database } from "@/integrations/supabase/types";
-
-export type LeaseStatus = Database['public']['Enums']['lease_status'];
-export type AgreementType = Database['public']['Enums']['agreement_type'];
-export type PaymentStatus = Database['public']['Enums']['payment_status'];
-
-export interface TextStyle {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  fontSize: number;
-  alignment: 'left' | 'center' | 'right' | 'justify';
-}
-
-export interface Table {
-  rows: {
-    cells: {
-      content: string;
-      style: TextStyle;
-    }[];
-  }[];
-  style?: {
-    width: string;
-    borderCollapse: string;
-    borderSpacing: string;
-  };
-}
-
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  content: string;
-  language: string;
-  agreement_type: AgreementType;
-  rent_amount: number;
-  final_price: number;
-  agreement_duration: string;
-  daily_late_fee: number;
-  damage_penalty_rate: number;
-  late_return_fee: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  template_structure: {
-    textStyle: TextStyle;
-    tables: Table[];
-  };
-  template_sections: any[];
-  variable_mappings: Record<string, any>;
-}
-
-export interface Agreement {
+export interface AgreementWithRelations {
   id: string;
   agreement_number: string;
-  agreement_type: AgreementType;
   customer_id: string;
   vehicle_id: string;
-  start_date: string | null;
-  end_date: string | null;
-  status: LeaseStatus;
+  start_date: string;
+  end_date: string;
+  status: string;
   total_amount: number;
-  initial_mileage: number;
-  return_mileage: number | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
   rent_amount: number;
-  remaining_amount: number;
   daily_late_fee: number;
-  payment_status: string;
-  last_payment_date: string | null;
-  next_payment_date: string | null;
-  payment_frequency: string;
-  template_id?: string;
+  remaining_amount: number;
   customer?: {
     id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    email?: string | null;
+    full_name: string;
+    phone_number: string;
   };
   vehicle?: {
     id: string;
     make: string;
     model: string;
-    year: number;
     license_plate: string;
   };
-  remaining_amounts?: {
-    remaining_amount: number;
-  }[];
+}
+
+export interface Payment {
+  id: string;
+  lease_id: string;
+  amount: number;
+  amount_paid: number;
+  balance: number;
+  payment_date: string | null;
+  transaction_id: string | null;
+  payment_method: string | null;
+  security_deposit_id: string | null;
+  created_at: string;
+  updated_at: string;
+  description: string | null;
+  is_recurring: boolean;
+  recurring_interval: string | null;
+  next_payment_date: string | null;
+  type: string;
+  late_fine_amount: number;
+  days_overdue: number;
 }

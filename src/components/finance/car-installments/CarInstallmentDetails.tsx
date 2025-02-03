@@ -18,6 +18,8 @@ export const CarInstallmentDetails = () => {
   const { data: contract } = useQuery({
     queryKey: ['car-installment-contract', id],
     queryFn: async () => {
+      if (!id) throw new Error('Contract ID is required');
+      
       const { data, error } = await supabase
         .from('car_installment_contracts')
         .select('*')
@@ -33,7 +35,8 @@ export const CarInstallmentDetails = () => {
   const { data: payments, isLoading: isLoadingPayments } = useQuery({
     queryKey: ['car-installment-payments', id],
     queryFn: async () => {
-      console.log("Fetching payments for contract:", id);
+      if (!id) throw new Error('Contract ID is required');
+      
       const { data, error } = await supabase
         .from('car_installment_payments')
         .select('*')
@@ -45,7 +48,6 @@ export const CarInstallmentDetails = () => {
         throw error;
       }
       
-      console.log("Fetched payments:", data);
       return data;
     },
     enabled: !!id
