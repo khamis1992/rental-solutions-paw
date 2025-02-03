@@ -203,19 +203,6 @@ export const MaintenanceList = () => {
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
-                  <div className="flex items-center space-x-2">
-                    <Car className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-lg font-medium">
-                        {record.vehicles 
-                          ? `${record.vehicles.make} ${record.vehicles.model}`
-                          : "Vehicle details unavailable"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {record.vehicles?.license_plate || "N/A"}
-                      </p>
-                    </div>
-                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <EditMaintenanceDialog record={record} />
@@ -226,6 +213,20 @@ export const MaintenanceList = () => {
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
+                </div>
+              </div>
+
+              <div className="flex justify-center items-center space-x-2">
+                <Car className="h-5 w-5 text-primary" />
+                <div className="text-center">
+                  <p className="text-lg font-medium">
+                    {record.vehicles 
+                      ? `${record.vehicles.make} ${record.vehicles.model}`
+                      : "Vehicle details unavailable"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {record.vehicles?.license_plate || "N/A"}
+                  </p>
                 </div>
               </div>
 
