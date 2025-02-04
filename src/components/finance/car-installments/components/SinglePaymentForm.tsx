@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -23,6 +23,10 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
     setIsSubmitting(true);
 
     try {
+      if (!chequeNumber || !paymentDate || !amount || !draweeBankName) {
+        throw new Error("Please fill in all required fields");
+      }
+
       console.log("Submitting payment with data:", {
         contractId,
         chequeNumber,
