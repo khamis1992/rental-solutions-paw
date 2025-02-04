@@ -19,10 +19,13 @@ interface CarInstallmentPaymentsProps {
 export const CarInstallmentPayments = ({ contractId }: CarInstallmentPaymentsProps) => {
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
 
-  const { data: payments = [], isLoading, refetch } = useQuery({
+  const { data: payments = [], isLoading, error, refetch } = useQuery({
     queryKey: ["car-installment-payments", contractId],
     queryFn: async () => {
-      if (!contractId) return [];
+      if (!contractId) {
+        console.log("No contractId provided");
+        return [];
+      }
       
       console.log("Fetching payments for contract:", contractId);
       
@@ -39,16 +42,39 @@ export const CarInstallmentPayments = ({ contractId }: CarInstallmentPaymentsPro
       }
 
       console.log("Fetched payments:", data);
+      
+      if (!data || data.length === 0) {
+        console.log("No payments found for contract:", contractId);
+      }
+
       return data as CarInstallmentPayment[];
     },
-    enabled: !!contractId
+    enabled: !!contractId,
+    retry: 1
   });
 
   const handlePaymentSuccess = () => {
     console.log("Payment added successfully, refreshing data...");
     refetch();
     toast.success("Payment added successfully");
+    setIsAddPaymentOpen(false);
   };
+
+  if (error) {
+    console.error("Query error:", error);
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Installments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4 text-red-500">
+            Error loading payments. Please try again.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
