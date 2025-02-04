@@ -79,7 +79,7 @@ serve(async (req) => {
 
     console.log('Generated payments:', payments);
 
-    // Remove the ON CONFLICT clause and simply insert the payments
+    // Simple insert without ON CONFLICT clause
     const { data, error } = await supabase
       .from('car_installment_payments')
       .insert(payments);
@@ -101,7 +101,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Bulk payments created successfully',
-        data
+        data: payments
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
