@@ -21,7 +21,6 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { AgreementTemplateSelect } from "./form/AgreementTemplateSelect";
-import { useQueryClient } from "@tanstack/react-query";
 
 export interface CreateAgreementDialogProps {
   open?: boolean;
@@ -32,8 +31,6 @@ export interface CreateAgreementDialogProps {
 export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, children }: CreateAgreementDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
-
   const {
     open,
     setOpen,
@@ -44,10 +41,9 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
     watch,
     setValue,
     errors,
-  } = useAgreementForm(async () => {
+  } = useAgreementForm(() => {
     setOpen(false);
     setSelectedCustomerId("");
-    await queryClient.invalidateQueries({ queryKey: ["agreements"] });
     toast.success("Agreement created successfully");
   });
 
@@ -86,7 +82,7 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
             
             <Separator className="my-6" />
             
-            <AgreementBasicInfo register={register} errors={errors} watch={watch} />
+            <AgreementBasicInfo register={register} errors={errors} />
             
             <Separator className="my-6" />
             
@@ -106,8 +102,18 @@ export function CreateAgreementDialog({ open: controlledOpen, onOpenChange, chil
               watch={watch}
               setValue={setValue}
             />
-
+            
             <Separator className="my-6" />
+
+            {agreementType === "lease_to_own" && (
+              <>
+                <LeaseToOwnFields
+                  register={register}
+                  watch={watch}
+                />
+                <Separator className="my-6" />
+              </>
+            )}
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Late Fees & Penalties</h3>

@@ -1,46 +1,28 @@
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { useState, useCallback } from "react";
-import { debounce } from "lodash";
-import { LeaseStatus } from "@/types/agreement.types";
 
 interface AgreementFiltersProps {
-  onStatusChange: (value: LeaseStatus | "all") => void;
+  onSearchChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
   onSortChange: (value: string) => void;
-  onSearch: (value: string) => void;
-  searchValue: string;
 }
 
 export const AgreementFilters = ({
+  onSearchChange,
   onStatusChange,
   onSortChange,
-  onSearch,
-  searchValue,
 }: AgreementFiltersProps) => {
-  const [localSearchValue, setLocalSearchValue] = useState(searchValue);
-
-  // Debounce the search to avoid too many requests
-  const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      onSearch(value);
-    }, 300),
-    [onSearch]
-  );
-
-  const handleSearchChange = (value: string) => {
-    setLocalSearchValue(value);
-    debouncedSearch(value);
-  };
-
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center mb-6">
-      <div className="relative w-full md:w-96">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search agreements by number, customer, or vehicle..."
-          value={localSearchValue}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-8"
+          type="search"
+          placeholder="Search agreements by number, customer or vehicle"
+          className="pl-10 w-full bg-white border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+          onChange={(e) => onSearchChange(e.target.value)}
+          aria-label="Search agreements"
+          role="searchbox"
         />
       </div>
     </div>

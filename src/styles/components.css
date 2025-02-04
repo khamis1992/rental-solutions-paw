@@ -1,56 +1,42 @@
-/* Add RTL support for ReactQuill */
-.rtl-editor {
-  direction: rtl;
-  text-align: right;
-}
-
-.rtl-editor .ql-editor {
-  direction: rtl;
-  text-align: right;
-}
-
-.rtl-editor .ql-snow .ql-picker {
-  direction: rtl;
-}
-
-/* Additional RTL styles */
-.dir-rtl {
-  direction: rtl;
-}
-
-.text-right {
-  text-align: right;
-}
-
-/* Print styles for RTL */
-@media print {
-  .rtl-content {
-    direction: rtl;
-    text-align: right;
+@layer components {
+  /* Text Alignment */
+  .text-content {
+    @apply max-w-[var(--text-block-width)] mx-auto;
   }
-}
 
-/* Override ReactQuill default alignment */
-.ql-editor {
-  direction: rtl !important;
-  text-align: right !important;
-}
+  /* Card Components */
+  .enterprise-card {
+    @apply bg-card text-card-foreground rounded-lg border p-6;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
 
-.ql-snow .ql-picker.ql-header {
-  direction: rtl !important;
-}
+  /* Table Components */
+  .table-container {
+    @apply w-full overflow-x-auto rounded-lg border bg-card;
+    min-width: 0;
+  }
 
-/* Force RTL for all editor content */
-.ql-container {
-  direction: rtl !important;
-}
+  /* Form Components */
+  .form-container {
+    @apply space-y-6 max-w-[var(--text-block-width)] mx-auto;
+  }
 
-/* Adjust toolbar buttons for RTL */
-.ql-snow .ql-toolbar button {
-  float: right;
-}
+  .input-group {
+    @apply space-y-2;
+  }
 
-.ql-snow .ql-formats {
-  margin-right: 0;
-  margin-left: 15px;
+  /* Modal/Dialog Components */
+  .dialog-content {
+    @apply max-w-[min(calc(100vw-2rem),500px)] mx-auto;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }

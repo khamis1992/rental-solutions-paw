@@ -1,124 +1,116 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseAnalysis } from "./ExpenseAnalysis";
+import { BudgetingAssistance } from "./BudgetingAssistance";
 import { CashFlowMonitoring } from "./CashFlowMonitoring";
 import { ScenarioAnalysis } from "./ScenarioAnalysis";
-import { ProfitabilityTracking } from "./ProfitabilityTracking";
-import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
-import { CustomDashboard } from "./reporting/CustomDashboard";
-import { ReportScheduler } from "./reporting/ReportScheduler";
-import { PricingAnalysis } from "./PricingAnalysis";
-import { BarChart3, FileSpreadsheet, Calculator } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { FinancialGoals } from "./FinancialGoals";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Agreement } from "@/types/agreement.types";
+import { toast } from "sonner";
 
 export const VirtualCFO = () => {
-  const { data: activeAgreements, isLoading } = useQuery({
-    queryKey: ["active-rent-amounts"],
-    queryFn: async () => {
-      const { data: agreements, error } = await supabase
-        .from("leases")
-        .select(`
-          id,
-          agreement_number,
-          agreement_type,
-          customer_id,
-          vehicle_id,
-          start_date,
-          end_date,
-          status,
-          total_amount,
-          rent_amount
-        `)
-        .eq("status", "active")
-        .order("agreement_number");
+  const handleCreateScenario = async () => {
+    try {
+      const scenario = {
+        type: "fleet_expansion",
+        name: "Fleet Expansion Analysis",
+        amount: 500000,
+        totalFixedCosts: 200000,
+        totalVariableCosts: 150000
+      };
+      
+      const { data, error } = await supabase.functions.invoke('analyze-financial-data', {
+        body: JSON.stringify(scenario)
+      });
 
-      if (error) throw error;
-      return agreements as Agreement[];
-    },
-  });
+      if (error) {
+        console.error('Error creating scenario:', error);
+        toast.error("Failed to create scenario");
+        return;
+      }
+
+      toast.success("New scenario created successfully");
+    } catch (error) {
+      console.error('Error creating scenario:', error);
+      toast.error("Failed to create scenario");
+    }
+  };
 
   return (
-    <Tabs defaultValue="dashboard" className="space-y-6">
-      <TabsList className="w-full justify-start bg-background border-b rounded-none p-0 h-auto">
-        <div className="flex overflow-x-auto no-scrollbar">
-          <TabsTrigger 
-            value="dashboard" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Dashboard
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="reports" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Reports
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="pricing" 
-            className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-          >
-            <Calculator className="h-4 w-4" />
-            Pricing Analysis
-          </TabsTrigger>
-          
-          <TabsTrigger value="profitability">
-            Profitability
-          </TabsTrigger>
-          
-          <TabsTrigger value="break-even">
-            Break-Even
-          </TabsTrigger>
-          
-          <TabsTrigger value="expense-analysis">
-            Expense Analysis
-          </TabsTrigger>
-          
-          <TabsTrigger value="cash-flow">
-            Cash Flow
-          </TabsTrigger>
-          
-          <TabsTrigger value="scenarios">
-            Scenarios
-          </TabsTrigger>
-        </div>
-      </TabsList>
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs defaultValue="expense-analysis" className="space-y-4">
+            <TabsList className="w-full justify-start bg-background border-b rounded-none p-0 h-auto">
+              <div className="flex overflow-x-auto no-scrollbar">
+                <TabsTrigger 
+                  value="expense-analysis" 
+                  className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Expense Analysis
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="budgeting" 
+                  className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Budgeting
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="cash-flow" 
+                  className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Cash Flow
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="scenarios" 
+                  className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Scenarios
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="goals" 
+                  className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                >
+                  Financial Goals
+                </TabsTrigger>
+              </div>
+            </TabsList>
 
-      <TabsContent value="dashboard" className="space-y-6">
-        <CustomDashboard />
-      </TabsContent>
+            <TabsContent value="expense-analysis" className="space-y-4">
+              <ExpenseAnalysis />
+            </TabsContent>
 
-      <TabsContent value="reports">
-        <ReportScheduler />
-      </TabsContent>
+            <TabsContent value="budgeting" className="space-y-4">
+              <BudgetingAssistance />
+            </TabsContent>
 
-      <TabsContent value="pricing">
-        <PricingAnalysis />
-      </TabsContent>
+            <TabsContent value="cash-flow" className="space-y-4">
+              <CashFlowMonitoring />
+            </TabsContent>
 
-      <TabsContent value="profitability">
-        <ProfitabilityTracking agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
+            <TabsContent value="scenarios" className="space-y-4">
+              <div className="flex justify-end mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleCreateScenario}
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  New Scenario
+                </Button>
+              </div>
+              <ScenarioAnalysis />
+            </TabsContent>
 
-      <TabsContent value="break-even">
-        <BreakEvenAnalysis agreements={activeAgreements} isLoading={isLoading} />
-      </TabsContent>
-
-      <TabsContent value="expense-analysis">
-        <ExpenseAnalysis />
-      </TabsContent>
-
-      <TabsContent value="cash-flow">
-        <CashFlowMonitoring />
-      </TabsContent>
-
-      <TabsContent value="scenarios">
-        <ScenarioAnalysis />
-      </TabsContent>
-    </Tabs>
+            <TabsContent value="goals" className="space-y-4">
+              <FinancialGoals />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

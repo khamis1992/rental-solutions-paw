@@ -37,6 +37,7 @@ export const AnomalyMonitoring = () => {
 
       if (error) throw error;
       
+      // Transform the data to ensure it matches the Anomaly type
       return (data as any[]).map(item => ({
         ...item,
         affected_records: typeof item.affected_records === 'string' 
@@ -65,12 +66,14 @@ export const AnomalyMonitoring = () => {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newAnomaly = payload.new as Anomaly;
+            // Check if anomaly already exists before adding
             setRealtimeAnomalies(prev => {
               const exists = prev.some(a => a.id === newAnomaly.id);
               if (exists) return prev;
               return [newAnomaly, ...prev].slice(0, 5);
             });
             
+            // Only show toast if it's a new anomaly
             const toastConfig = {
               duration: newAnomaly.severity === 'high' ? 10000 : 5000,
               action: {

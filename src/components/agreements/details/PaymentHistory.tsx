@@ -18,7 +18,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LateFineActions } from "./LateFineActions";
 
 interface PaymentHistoryProps {
   agreementId: string;
@@ -84,16 +83,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
       if (error) throw error;
 
-      // Create audit log for payment deletion
-      await supabase.from('audit_logs').insert({
-        entity_type: 'payment',
-        entity_id: selectedPaymentId,
-        action: 'delete_payment',
-        changes: {
-          status: 'deleted'
-        }
-      });
-
       toast.success("Payment deleted successfully");
       await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
     } catch (error) {
@@ -103,10 +92,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       setIsDeleteDialogOpen(false);
       setSelectedPaymentId(null);
     }
-  };
-
-  const handleLateFineUpdate = () => {
-    queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
   };
 
   if (isLoading) {
@@ -159,17 +144,12 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                     {payment.late_fine_amount > 0 && (
                       <div className="text-destructive flex items-center justify-end gap-1">
                         <AlertTriangle className="h-4 w-4" />
-                        <span>Late Fine: {formatCurrency(payment.late_fine_amount)}</span>
+                        Late Fine: {formatCurrency(payment.late_fine_amount)}
                         {payment.days_overdue > 0 && (
                           <span className="text-sm ml-1">
                             ({payment.days_overdue} days @ 120 QAR/day)
                           </span>
                         )}
-                        <LateFineActions
-                          paymentId={payment.id}
-                          currentLateFine={payment.late_fine_amount}
-                          onUpdate={handleLateFineUpdate}
-                        />
                       </div>
                     )}
                     <div className={remainingBalance === 0 ? "text-green-600" : "text-destructive"}>

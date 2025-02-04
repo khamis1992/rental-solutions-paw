@@ -31,104 +31,85 @@ export const DeleteAgreementDialog = ({
     try {
       setIsDeleting(true);
 
-      // Delete remaining amounts first
-      const { error: remainingAmountsError } = await supabase
-        .from('remaining_amounts')
+      // 1. Delete payment audit logs first
+      const { error: auditLogsError } = await supabase
+        .from('payment_audit_logs')
+        .delete()
+        .eq('payment_id', agreementId);
+
+      if (auditLogsError) throw auditLogsError;
+
+      // 2. Delete payment history view entries
+      const { error: paymentHistoryError } = await supabase
+        .from('payment_history_view')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (remainingAmountsError) {
-        console.error('Error deleting remaining amounts:', remainingAmountsError);
-        throw remainingAmountsError;
-      }
+      if (paymentHistoryError) throw paymentHistoryError;
 
-      // Delete unified payments
+      // 3. Delete unified payments
       const { error: paymentsError } = await supabase
         .from('unified_payments')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (paymentsError) {
-        console.error('Error deleting payments:', paymentsError);
-        throw paymentsError;
-      }
+      if (paymentsError) throw paymentsError;
 
-      // Delete payment schedules
+      // 4. Delete payment schedules
       const { error: schedulesError } = await supabase
         .from('payment_schedules')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (schedulesError) {
-        console.error('Error deleting schedules:', schedulesError);
-        throw schedulesError;
-      }
+      if (schedulesError) throw schedulesError;
 
-      // Delete damages
+      // 5. Delete damages
       const { error: damagesError } = await supabase
         .from('damages')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (damagesError) {
-        console.error('Error deleting damages:', damagesError);
-        throw damagesError;
-      }
+      if (damagesError) throw damagesError;
 
-      // Delete traffic fines
+      // 6. Delete traffic fines
       const { error: trafficFinesError } = await supabase
         .from('traffic_fines')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (trafficFinesError) {
-        console.error('Error deleting traffic fines:', trafficFinesError);
-        throw trafficFinesError;
-      }
+      if (trafficFinesError) throw trafficFinesError;
 
-      // Delete agreement documents
+      // 7. Delete agreement documents
       const { error: agreementDocsError } = await supabase
         .from('agreement_documents')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (agreementDocsError) {
-        console.error('Error deleting agreement documents:', agreementDocsError);
-        throw agreementDocsError;
-      }
+      if (agreementDocsError) throw agreementDocsError;
 
-      // Delete penalties
+      // 8. Delete penalties
       const { error: penaltiesError } = await supabase
         .from('penalties')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (penaltiesError) {
-        console.error('Error deleting penalties:', penaltiesError);
-        throw penaltiesError;
-      }
+      if (penaltiesError) throw penaltiesError;
 
-      // Delete security deposits
+      // 9. Delete security deposits
       const { error: depositsError } = await supabase
         .from('security_deposits')
         .delete()
         .eq('lease_id', agreementId);
 
-      if (depositsError) {
-        console.error('Error deleting deposits:', depositsError);
-        throw depositsError;
-      }
+      if (depositsError) throw depositsError;
 
-      // Finally delete the agreement
+      // 10. Finally delete the agreement
       const { error: agreementError } = await supabase
         .from('leases')
         .delete()
         .eq('id', agreementId);
 
-      if (agreementError) {
-        console.error('Error deleting agreement:', agreementError);
-        throw agreementError;
-      }
+      if (agreementError) throw agreementError;
 
       toast.success("Agreement deleted successfully");
       onDeleted?.();

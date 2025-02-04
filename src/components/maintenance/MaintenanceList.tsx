@@ -1,34 +1,78 @@
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { formatDateToDisplay } from "@/lib/dateUtils";
-import { Wrench, Clock, AlertTriangle, Edit2, Trash2, Car, Calendar } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { MaintenanceTableHeader } from "./table/MaintenanceTableHeader";
+import { MaintenanceTableRow } from "./table/MaintenanceTableRow";
+import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination";
 import { Card } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreateJobDialog } from "./CreateJobDialog";
-import { EditMaintenanceDialog } from "./EditMaintenanceDialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { VehicleTablePagination } from "@/components/vehicles/table/VehicleTablePagination";
-import type { Maintenance } from "@/types/maintenance";
 
 const ITEMS_PER_PAGE = 10;
 
-interface MaintenanceRecord extends Maintenance {
-  vehicles?: {
-    make: string;
-    model: string;
-    license_plate: string;
-  };
+interface Vehicle {
+  make: string;
+  model: string;
+  year: number;
+  license_plate: string;
+}
+
+interface MaintenanceRecord {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  description?: string | null;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled" | "urgent";
+  cost?: number | null;
+  scheduled_date: string;
+  completed_date?: string | null;
+  performed_by?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  vehicles?: Vehicle;
 }
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('maintenance-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'maintenance'
+        },
+        async (payload) => {
+          console.log('Real-time update received:', payload);
+          
+          await queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+          await queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+          
+          const eventType = payload.eventType;
+          const message = eventType === 'INSERT' 
+            ? 'New maintenance record created'
+            : eventType === 'UPDATE'
+            ? 'Maintenance record updated'
+            : 'Maintenance record deleted';
+          
+          toast.info(message);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: records = [], isLoading, error } = useQuery({
     queryKey: ["maintenance-and-accidents"],
@@ -40,10 +84,10 @@ export const MaintenanceList = () => {
           vehicles (
             make,
             model,
+            year,
             license_plate
           )
         `)
-        .not('status', 'in', '("completed","cancelled")')
         .order('scheduled_date', { ascending: false });
 
       if (maintenanceError) throw maintenanceError;
@@ -54,6 +98,7 @@ export const MaintenanceList = () => {
           id,
           make,
           model,
+          year,
           license_plate
         `)
         .eq('status', 'accident');
@@ -64,17 +109,11 @@ export const MaintenanceList = () => {
         id: `accident-${vehicle.id}`,
         vehicle_id: vehicle.id,
         service_type: 'Accident Repair',
-        status: 'scheduled',
+        status: 'urgent',
         scheduled_date: new Date().toISOString(),
         cost: null,
         description: 'Vehicle reported in accident status',
-        vehicles: vehicle,
-        completed_date: null,
-        performed_by: null,
-        notes: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        category_id: null
+        vehicles: vehicle
       }));
 
       return [...maintenanceRecords, ...accidentRecords].sort((a, b) => 
@@ -82,40 +121,6 @@ export const MaintenanceList = () => {
       );
     },
   });
-
-  const handleStatusChange = async (recordId: string, newStatus: "scheduled" | "in_progress" | "completed" | "cancelled") => {
-    try {
-      const { error } = await supabase
-        .from('maintenance')
-        .update({ status: newStatus })
-        .eq('id', recordId);
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
-      toast.success('Status updated successfully');
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
-    }
-  };
-
-  const handleDelete = async (recordId: string) => {
-    try {
-      const { error } = await supabase
-        .from('maintenance')
-        .delete()
-        .eq('id', recordId);
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ['maintenance-and-accidents'] });
-      toast.success('Job card deleted successfully');
-    } catch (error) {
-      console.error('Error deleting job card:', error);
-      toast.error('Failed to delete job card');
-    }
-  };
 
   const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -135,17 +140,22 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="p-6 space-y-4">
-            <div className="animate-pulse space-y-3">
-              <Skeleton className="h-6 w-[70%]" />
-              <Skeleton className="h-4 w-[100%]" />
-              <Skeleton className="h-4 w-[60%]" />
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Card className="rounded-md border">
+        <Table>
+          <MaintenanceTableHeader />
+          <TableBody>
+            {[...Array(5)].map((_, i) => (
+              <tr key={i} className="animate-pulse">
+                <td className="p-4"><Skeleton className="h-4 w-[120px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[200px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
+                <td className="p-4"><Skeleton className="h-4 w-[150px]" /></td>
+              </tr>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     );
   }
 
@@ -155,111 +165,30 @@ export const MaintenanceList = () => {
         <div className="flex justify-end">
           <CreateJobDialog />
         </div>
-        <Card className="p-8 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <div className="flex flex-col items-center justify-center text-center space-y-4">
-            <div className="p-4 rounded-full bg-orange-100 border-2 border-orange-200">
-              <Wrench className="h-12 w-12 text-primary" />
-            </div>
-            <p className="text-xl font-semibold text-gray-800">No maintenance records found</p>
-            <p className="text-sm text-gray-600 max-w-md">
-              Create a new maintenance job to start tracking vehicle maintenance and repairs
-            </p>
-            <CreateJobDialog />
-          </div>
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground">No maintenance records found.</p>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-end">
         <CreateJobDialog />
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {currentRecords.map((record) => (
-          <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
-            <div className="p-6 space-y-6">
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col space-y-4">
-                  <Select
-                    value={record.status}
-                    onValueChange={(value: "scheduled" | "in_progress" | "completed" | "cancelled") => 
-                      handleStatusChange(record.id, value)
-                    }
-                  >
-                    <SelectTrigger className={`w-[130px] ${
-                      record.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      record.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <EditMaintenanceDialog record={record} />
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleDelete(record.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
+      <Card className="rounded-md border">
+        <Table>
+          <MaintenanceTableHeader />
+          <TableBody>
+            {currentRecords.map((record) => (
+              <MaintenanceTableRow key={record.id} record={record} />
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
-              <div className="flex justify-center items-center space-x-2">
-                <Car className="h-5 w-5 text-primary" />
-                <div className="text-center">
-                  <p className="text-lg font-medium">
-                    {record.vehicles 
-                      ? `${record.vehicles.make} ${record.vehicles.model}`
-                      : "Vehicle details unavailable"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {record.vehicles?.license_plate || "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 bg-gray-50 rounded-lg space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Wrench className="h-5 w-5 text-primary" />
-                  <p className="text-lg font-medium">{record.service_type}</p>
-                </div>
-                {record.description && (
-                  <p className="text-base text-gray-600 leading-relaxed">{record.description}</p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-600">
-                    {formatDateToDisplay(new Date(record.scheduled_date))}
-                  </span>
-                </div>
-                {record.cost && (
-                  <div className="px-3 py-1 bg-gray-100 rounded-full flex items-center space-x-1">
-                    <span className="font-medium text-primary">{record.cost}</span>
-                    <span className="text-sm text-gray-500">QAR</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-4">
         <VehicleTablePagination
           currentPage={currentPage}
           totalPages={totalPages}

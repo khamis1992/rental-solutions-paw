@@ -1,47 +1,21 @@
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
 import { useState } from "react";
-import { JobCardForm } from "./job-card/JobCardForm";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { JobCardForm } from "./job-card/JobCardForm";
+import { MaintenanceDocumentUpload } from "./job-card/MaintenanceDocumentUpload";
+import VehicleInspectionDialog from "./inspection/VehicleInspectionDialog";
 
 export function CreateJobDialog() {
   const [open, setOpen] = useState(false);
+  const [showInspection, setShowInspection] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const { data: vehicles = [] } = useQuery({
-    queryKey: ["available-vehicles"],
-    queryFn: async () => {
-      console.log("Fetching available vehicles...");
-      const { data, error } = await supabase
-        .from("vehicles")
-        .select("id, make, model, license_plate")
-        .eq("status", "available");
-
-      if (error) throw error;
-      console.log("Available vehicles:", data);
-      return data;
-    },
-  });
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ["maintenance-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("maintenance_categories")
-        .select("*")
-        .eq("is_active", true);
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
+  const queryClient = useQueryClient();
+  const [maintenanceId, setMaintenanceId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     vehicle_id: "",
     category_id: "",
@@ -51,90 +25,108 @@ export function CreateJobDialog() {
     cost: "",
   });
 
-  const checkExistingJobCard = async (vehicleId: string) => {
-    console.log("Checking existing job cards for vehicle:", vehicleId);
-    try {
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ["vehicles"],
+    queryFn: async () => {
+      console.log("Fetching available vehicles...");
       const { data, error } = await supabase
-        .from("maintenance")
+        .from("vehicles")
+        .select("id, make, model, license_plate")
+        .eq('status', 'available');
+      
+      if (error) throw error;
+      console.log("Available vehicles:", data);
+      return data || [];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["maintenance-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("maintenance_categories")
         .select("*")
-        .eq("vehicle_id", vehicleId)
-        .in("status", ["scheduled", "in_progress"]);
-
-      if (error) {
-        console.error("Error checking existing job cards:", error);
-        throw error;
-      }
-
-      console.log("Existing job cards:", data);
-      return data.length > 0;
-    } catch (error) {
-      console.error("Error checking existing job cards:", error);
-      throw error;
-    }
-  };
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const hasExistingJobCard = await checkExistingJobCard(formData.vehicle_id);
-      if (hasExistingJobCard) {
-        toast.error(
-          "A job card already exists for this vehicle. Please complete or cancel the existing job card first."
-        );
-        return;
-      }
-
-      const { data: maintenance, error: maintenanceError } = await supabase
+      console.log("Creating maintenance record for vehicle:", formData.vehicle_id);
+      
+      // Create maintenance record first
+      const { data: maintenanceData, error: maintenanceError } = await supabase
         .from("maintenance")
-        .insert([
-          {
-            vehicle_id: formData.vehicle_id,
-            category_id: formData.category_id,
-            service_type: formData.service_type,
-            description: formData.description,
-            scheduled_date: formData.scheduled_date,
-            cost: formData.cost ? parseFloat(formData.cost) : null,
-            status: "scheduled",
-          },
-        ])
+        .insert([{
+          ...formData,
+          cost: formData.cost ? parseFloat(formData.cost) : null,
+          status: "scheduled",
+        }])
         .select()
         .single();
 
-      if (maintenanceError) throw maintenanceError;
+      if (maintenanceError) {
+        console.error("Error creating maintenance record:", maintenanceError);
+        toast.error("Failed to create maintenance record");
+        throw maintenanceError;
+      }
 
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ status: "maintenance" })
-        .eq("id", formData.vehicle_id);
+      console.log("Maintenance record created successfully:", maintenanceData);
 
-      if (vehicleError) throw vehicleError;
+      // Invalidate relevant queries to trigger UI updates
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["maintenance"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicles"] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicle-status-counts"] })
+      ]);
 
       toast.success("Job card created successfully");
-      setOpen(false);
-      navigate(`/maintenance/${maintenance.id}/inspection`);
+      
+      // Store the maintenance ID and show inspection dialog
+      setMaintenanceId(maintenanceData.id);
+      setShowInspection(true);
+      
     } catch (error: any) {
       console.error("Error creating job card:", error);
-      toast.error(error.message);
+      toast.error(error.message || "Failed to create job card");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleInspectionComplete = () => {
+    setShowInspection(false);
+    setOpen(false);
+    setFormData({
+      vehicle_id: "",
+      category_id: "",
+      service_type: "",
+      description: "",
+      scheduled_date: "",
+      cost: "",
+    });
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Job Card
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Job Card</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[500px] px-1">
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full md:w-auto">
+            <Plus className="mr-2 h-4 w-4" /> Create Job Card
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Job Card</DialogTitle>
+          </DialogHeader>
+          
           <JobCardForm
             formData={formData}
             vehicles={vehicles}
@@ -143,8 +135,24 @@ export function CreateJobDialog() {
             onSubmit={handleSubmit}
             loading={loading}
           />
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+
+          {maintenanceId && (
+            <MaintenanceDocumentUpload
+              maintenanceId={maintenanceId}
+              onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ["maintenance"] })}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {showInspection && maintenanceId && (
+        <VehicleInspectionDialog
+          open={showInspection}
+          onOpenChange={setShowInspection}
+          maintenanceId={maintenanceId}
+          onComplete={handleInspectionComplete}
+        />
+      )}
+    </>
   );
 }

@@ -1,18 +1,15 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UseFormRegister, FieldErrors, UseFormWatch } from "react-hook-form";
+import { UseFormRegister, FieldErrors } from "react-hook-form";
 import { AgreementFormData } from "../hooks/useAgreementForm";
 import { AgreementTypeSelect } from "./AgreementTypeSelect";
 
 interface AgreementBasicInfoProps {
   register: UseFormRegister<AgreementFormData>;
   errors: FieldErrors<AgreementFormData>;
-  watch?: UseFormWatch<AgreementFormData>;
 }
 
-export const AgreementBasicInfo = ({ register, errors, watch }: AgreementBasicInfoProps) => {
-  const agreementType = watch ? watch("agreementType") : null;
-
+export const AgreementBasicInfo = ({ register, errors }: AgreementBasicInfoProps) => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Basic Agreement Information</h3>
@@ -43,26 +40,18 @@ export const AgreementBasicInfo = ({ register, errors, watch }: AgreementBasicIn
           )}
         </div>
 
-        {agreementType === "lease_to_own" && (
-          <div className="space-y-2">
-            <Label htmlFor="downPayment">Down Payment</Label>
-            <Input
-              id="downPayment"
-              type="number"
-              step="0.01"
-              {...register("downPayment", {
-                setValueAs: (v: string) => v === "" ? 0 : parseFloat(v),
-                min: {
-                  value: 0,
-                  message: "Down payment cannot be negative"
-                }
-              })}
-            />
-            {errors.downPayment && (
-              <span className="text-sm text-red-500">{errors.downPayment.message}</span>
-            )}
-          </div>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor="finalPrice">Final Price</Label>
+          <Input
+            id="finalPrice"
+            type="number"
+            step="0.01"
+            {...register("finalPrice", { required: "Final price is required" })}
+          />
+          {errors.finalPrice && (
+            <span className="text-sm text-red-500">{errors.finalPrice.message}</span>
+          )}
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="agreementDuration">Agreement Duration (months)</Label>

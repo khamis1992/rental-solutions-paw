@@ -85,7 +85,6 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        arabic: ['Noto Sans Arabic', 'sans-serif'],
       },
       fontSize: {
         'mobile-h1': ['1.75rem', { lineHeight: '2rem' }],

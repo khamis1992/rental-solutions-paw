@@ -48,9 +48,6 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       return;
     }
 
-    // Set the template ID
-    setValue("templateId", templateId);
-
     // Parse duration from agreement_duration string
     let durationMonths = 12; // Default value
     try {
@@ -68,18 +65,14 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
       console.error("Error parsing duration:", error);
     }
 
-    // Only set values if they exist in the template
+    // Apply template values to form
     setValue("agreementType", selectedTemplate.agreement_type);
-    if (selectedTemplate.rent_amount) {
-      setValue("rentAmount", selectedTemplate.rent_amount);
-    }
-    if (selectedTemplate.final_price) {
-      setValue("finalPrice", selectedTemplate.final_price);
-    }
+    setValue("rentAmount", selectedTemplate.rent_amount);
+    setValue("finalPrice", selectedTemplate.final_price);
     setValue("agreementDuration", durationMonths);
-    if (selectedTemplate.daily_late_fee) {
-      setValue("dailyLateFee", selectedTemplate.daily_late_fee);
-    }
+    setValue("dailyLateFee", selectedTemplate.daily_late_fee);
+    setValue("damagePenaltyRate", selectedTemplate.damage_penalty_rate);
+    setValue("lateReturnFee", selectedTemplate.late_return_fee);
 
     console.log("Applied template values:", selectedTemplate);
   };
