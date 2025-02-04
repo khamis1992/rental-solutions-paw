@@ -24,7 +24,7 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
         .from('car_installment_payments')
         .insert({
           contract_id: contractId,
-          cheque_number: '12345',
+          cheque_number: Math.floor(Math.random() * 1000000).toString(), // Generate random cheque number for testing
           amount: 5000,
           payment_date: new Date().toISOString().split('T')[0],
           drawee_bank: 'Test Bank',
