@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,11 +19,14 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
     try {
       console.log('Attempting to insert payment for contract:', contractId);
       
+      // Generate a random cheque number
+      const randomChequeNumber = `CHQ-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      
       const { data, error } = await supabase
         .from('car_installment_payments')
         .insert({
           contract_id: contractId,
-          cheque_number: Math.floor(Math.random() * 1000000).toString(), // Generate random cheque number for testing
+          cheque_number: randomChequeNumber,
           amount: 5000,
           payment_date: new Date().toISOString().split('T')[0],
           drawee_bank: 'Test Bank',
@@ -32,8 +34,7 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
           remaining_amount: 0,
           status: 'completed'
         })
-        .select()
-        .single();
+        .select();
 
       if (error) {
         console.error('Error inserting payment:', error);
