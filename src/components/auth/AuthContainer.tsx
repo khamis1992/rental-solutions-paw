@@ -64,6 +64,22 @@ export const AuthContainer = () => {
           }
         }}
         providers={[]}
+        localization={{
+          variables: {
+            sign_in: {
+              email_label: 'Email',
+              password_label: 'Password',
+              button_label: 'Sign In',
+              loading_button_label: 'Signing in...',
+              social_provider_text: 'Sign in with',
+              link_text: ''  // Remove "Don't have an account? Sign up"
+            },
+            forgotten_password: {
+              link_text: '',  // Remove "Forgot your password?"
+              button_label: 'Send reset email',
+            }
+          }
+        }}
       />
     </div>
   );
