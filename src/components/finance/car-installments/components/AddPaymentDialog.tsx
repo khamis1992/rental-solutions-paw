@@ -1,14 +1,6 @@
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SinglePaymentForm } from "./SinglePaymentForm";
-import { BulkPaymentForm } from "./BulkPaymentForm";
 
 export interface AddPaymentDialogProps {
   open: boolean;
@@ -23,38 +15,29 @@ export function AddPaymentDialog({
   contractId,
   onSuccess
 }: AddPaymentDialogProps) {
-  const handleSuccess = () => {
-    onSuccess?.();
-    onOpenChange(false);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Payment Installment</DialogTitle>
+          <DialogTitle>Add Payment</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[calc(90vh-120px)] px-1">
-          <Tabs defaultValue="single" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="single">Single Payment</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk Payments</TabsTrigger>
-            </TabsList>
-            <TabsContent value="single">
-              <SinglePaymentForm 
-                contractId={contractId} 
-                onSuccess={handleSuccess}
-              />
-            </TabsContent>
-            <TabsContent value="bulk">
-              <BulkPaymentForm 
-                contractId={contractId} 
-                onSuccess={handleSuccess}
-                onClose={() => onOpenChange(false)}
-              />
-            </TabsContent>
-          </Tabs>
-        </ScrollArea>
+        <Tabs defaultValue="single" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="single">Single Payment</TabsTrigger>
+            <TabsTrigger value="bulk">Bulk Payments</TabsTrigger>
+          </TabsList>
+          <TabsContent value="single">
+            <SinglePaymentForm 
+              contractId={contractId} 
+              onSuccess={onSuccess}
+            />
+          </TabsContent>
+          <TabsContent value="bulk">
+            <div className="text-center py-4 text-muted-foreground">
+              Bulk payment feature coming soon
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

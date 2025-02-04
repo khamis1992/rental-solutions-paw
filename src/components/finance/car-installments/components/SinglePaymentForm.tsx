@@ -2,65 +2,51 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface SinglePaymentFormProps {
   contractId: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormProps) {
-  const [chequeNumber, setChequeNumber] = useState("");
-  const [amount, setAmount] = useState<string>("");
-  const [paymentDate, setPaymentDate] = useState("");
-  const [draweeBankName, setDraweeBankName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+    
     try {
-      if (!chequeNumber || !paymentDate || !amount || !draweeBankName) {
-        throw new Error("Please fill in all required fields");
-      }
-
-      console.log("Submitting payment with data:", {
-        contractId,
-        chequeNumber,
-        amount,
-        paymentDate,
-        draweeBankName
-      });
-
+      console.log('Attempting to insert payment for contract:', contractId);
+      
       const { data, error } = await supabase
-        .from("car_installment_payments")
+        .from('car_installment_payments')
         .insert({
           contract_id: contractId,
-          cheque_number: chequeNumber,
-          amount: Number(amount),
-          payment_date: paymentDate,
-          drawee_bank: draweeBankName,
-          paid_amount: 0,
-          remaining_amount: Number(amount),
-          status: "pending"
+          cheque_number: '12345',
+          amount: 5000,
+          payment_date: new Date().toISOString().split('T')[0],
+          drawee_bank: 'Test Bank',
+          paid_amount: 5000,
+          remaining_amount: 0,
+          status: 'completed'
         })
         .select()
         .single();
 
       if (error) {
-        console.error("Error inserting payment:", error);
+        console.error('Error inserting payment:', error);
         throw error;
       }
 
-      console.log("Successfully created payment:", data);
+      console.log('Successfully inserted payment:', data);
       toast.success("Payment added successfully");
-      onSuccess();
+      onSuccess?.();
+      
     } catch (error) {
-      console.error("Error adding payment:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to add payment");
+      console.error('Error in handleSubmit:', error);
+      toast.error("Failed to add payment");
     } finally {
       setIsSubmitting(false);
     }
@@ -68,58 +54,19 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="chequeNumber">Cheque Number</Label>
-        <Input
-          id="chequeNumber"
-          value={chequeNumber}
-          onChange={(e) => setChequeNumber(e.target.value)}
-          required
-        />
+      <div>
+        <Label>Test Payment Form</Label>
+        <p className="text-sm text-muted-foreground mb-4">
+          This will create a test payment of 5,000 QAR for the selected contract.
+        </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="amount">Amount (QAR)</Label>
-        <Input
-          id="amount"
-          type="number"
-          step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="paymentDate">Payment Date</Label>
-        <Input
-          id="paymentDate"
-          type="date"
-          value={paymentDate}
-          onChange={(e) => setPaymentDate(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="draweeBankName">Drawee Bank Name</Label>
-        <Input
-          id="draweeBankName"
-          value={draweeBankName}
-          onChange={(e) => setDraweeBankName(e.target.value)}
-          required
-        />
-      </div>
-
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Adding Payment...
-          </>
-        ) : (
-          'Add Payment'
-        )}
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+        className="w-full"
+      >
+        {isSubmitting ? "Adding Payment..." : "Add Test Payment"}
       </Button>
     </form>
   );
