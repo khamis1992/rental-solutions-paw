@@ -43,43 +43,38 @@ export const BulkPaymentForm = ({ contractId, onSuccess, onClose }: BulkPaymentF
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      console.log("Submitting bulk payments:", {
         firstChequeNumber,
-        totalCheques: parseInt(totalCheques),
-        amount: parseFloat(amount),
+        totalCheques,
+        amount,
         startDate,
         draweeBankName,
-        contractId
-      };
-
-      console.log("Submitting bulk payments with payload:", payload);
+        contractId,
+      });
 
       const { data, error } = await supabase.functions.invoke('create-bulk-payments', {
-        body: payload
+        body: {
+          firstChequeNumber,
+          totalCheques: parseInt(totalCheques),
+          amount: parseFloat(amount),
+          startDate,
+          draweeBankName,
+          contractId
+        }
       });
 
-      if (error) {
-        console.error("Error from Edge Function:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("Response from Edge Function:", data);
-
-      if (data?.error) {
-        console.error("Error in response:", data.error);
-        throw new Error(data.error);
-      }
-
-      await queryClient.invalidateQueries({ 
-        queryKey: ['car-installment-payments', contractId] 
-      });
+      console.log("Bulk payments created:", data);
+      
+      await queryClient.invalidateQueries({ queryKey: ['car-installment-payments', contractId] });
       
       toast.success("Bulk payments created successfully");
       onSuccess?.();
       onClose?.();
     } catch (error) {
       console.error("Error creating bulk payments:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to create bulk payments");
+      toast.error("Failed to create bulk payments");
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +126,7 @@ export const BulkPaymentForm = ({ contractId, onSuccess, onClose }: BulkPaymentF
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount per Cheque (QAR)</Label>
+        <Label htmlFor="amount">Amount per Cheque</Label>
         <Input
           id="amount"
           type="number"
