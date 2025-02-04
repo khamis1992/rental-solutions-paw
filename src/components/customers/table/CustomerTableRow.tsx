@@ -1,7 +1,9 @@
-import { TableCell, TableRow } from "@/components/ui/table";
-import { FileText, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { Edit, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,142 +13,113 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import type { Customer } from "../types/customer";
 
 interface CustomerTableRowProps {
-  customer: Customer;
-  onCustomerClick: (customerId: string) => void;
+  customer: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    email: string | null;
+    address: string | null;
+  };
+  onDeleted: () => void;
 }
 
-export const CustomerTableRow = ({ customer, onCustomerClick }: CustomerTableRowProps) => {
-  const queryClient = useQueryClient();
+export const CustomerTableRow = ({ customer, onDeleted }: CustomerTableRowProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
+      // First check if customer has any active leases
+      const { data: leases, error: leaseCheckError } = await supabase
+        .from('leases')
+        .select('id, status')
+        .eq('customer_id', customer.id);
+
+      if (leaseCheckError) throw leaseCheckError;
+
+      if (leases && leases.length > 0) {
+        const activeLeases = leases.filter(lease => 
+          ['active', 'pending_payment'].includes(lease.status));
+
+        if (activeLeases.length > 0) {
+          toast.error("Cannot delete customer with active leases. Please terminate all leases first.");
+          return;
+        }
+
+        // Archive leases instead of deleting if they exist but are inactive
+        const { error: updateError } = await supabase
+          .from('leases')
+          .update({ status: 'archived' })
+          .eq('customer_id', customer.id);
+
+        if (updateError) throw updateError;
+      }
+
+      // Now we can safely delete the customer
+      const { error: deleteError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', customer.id);
 
-      if (error) {
-        console.error("Error deleting customer:", error);
-        throw error;
-      }
+      if (deleteError) throw deleteError;
 
       toast.success("Customer deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      onDeleted();
     } catch (error: any) {
-      console.error("Failed to delete customer:", error);
-      toast.error(error.message || "Failed to delete customer");
+      console.error('Error deleting customer:', error);
+      toast.error(error.message || 'Failed to delete customer');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
   return (
-    <TableRow 
-      className="hover:bg-muted/50 transition-colors"
-      key={customer.id}
-    >
-      <TableCell className="font-medium">
-        <Button
-          variant="link"
-          className="p-0 h-auto hover:text-primary transition-colors"
-          onClick={() => onCustomerClick(customer.id)}
-        >
-          {customer.full_name || 'Unnamed User'}
-        </Button>
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {customer.phone_number || 'N/A'}
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {customer.address || 'N/A'}
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {customer.driver_license || 'N/A'}
-      </TableCell>
-      <TableCell>
-        <div className="flex gap-2">
-          {customer.id_document_url && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <FileText 
-                  className="h-4 w-4 text-green-500 hover:text-green-600 transition-colors" 
-                  aria-label="ID Document"
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>ID Document Available</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {customer.license_document_url && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <FileText 
-                  className="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" 
-                  aria-label="License Document"
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>License Document Available</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {customer.contract_document_url && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <FileText 
-                  className="h-4 w-4 text-orange-500 hover:text-orange-600 transition-colors" 
-                  aria-label="Contract Document"
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Contract Document Available</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {new Date(customer.created_at).toLocaleDateString()}
-      </TableCell>
-      <TableCell>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+    <>
+      <TableRow>
+        <TableCell>{customer.full_name}</TableCell>
+        <TableCell>{customer.phone_number}</TableCell>
+        <TableCell>{customer.email}</TableCell>
+        <TableCell>{customer.address}</TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={isDeleting}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Customer</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this customer? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </TableCell>
-    </TableRow>
+          </div>
+        </TableCell>
+      </TableRow>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the customer
+              and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
