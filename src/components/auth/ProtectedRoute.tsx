@@ -18,12 +18,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   useEffect(() => {
     const checkUserRole = async () => {
       try {
-        // TEMPORARY: Authentication bypass
-        // Remove or comment out the following block when re-enabling auth
-        setIsLoading(false);
-        return;
-
-        /* Original authentication logic - uncomment to re-enable
         if (window.location.pathname === "/auth" || window.location.pathname === "/customer-portal") {
           setIsLoading(false);
           return;
@@ -53,7 +47,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         if (profile?.role === "customer" && window.location.pathname !== "/customer-portal") {
           navigate("/customer-portal");
         }
-        */
       } catch (error) {
         console.error("Error in checkUserRole:", error);
         toast.error("An error occurred while checking user access");
