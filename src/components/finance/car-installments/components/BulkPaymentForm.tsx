@@ -1,63 +1,80 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { ExistingChequeCheck } from "./ExistingChequeCheck";
 
 interface BulkPaymentFormProps {
   contractId: string;
-  onSuccess: () => void;
-  onClose: () => void;
+  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function BulkPaymentForm({ contractId, onSuccess, onClose }: BulkPaymentFormProps) {
+export const BulkPaymentForm = ({ contractId, onSuccess, onClose }: BulkPaymentFormProps) => {
   const [firstChequeNumber, setFirstChequeNumber] = useState("");
   const [totalCheques, setTotalCheques] = useState("");
   const [amount, setAmount] = useState("");
   const [startDate, setStartDate] = useState("");
   const [draweeBankName, setDraweeBankName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [chequeNumbers, setChequeNumbers] = useState<string[]>([]);
+  const queryClient = useQueryClient();
+
+  const generateChequeNumbers = () => {
+    if (!firstChequeNumber || !totalCheques) return;
+    
+    const baseNumber = firstChequeNumber.replace(/\D/g, '');
+    const prefix = firstChequeNumber.replace(/\d/g, '');
+    const total = parseInt(totalCheques);
+    
+    const numbers = Array.from({ length: total }, (_, index) => {
+      return `${prefix}${String(Number(baseNumber) + index).padStart(baseNumber.length, '0')}`;
+    });
+    
+    setChequeNumbers(numbers);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      if (!firstChequeNumber || !totalCheques || !amount || !startDate || !draweeBankName) {
-        throw new Error("Please fill in all required fields");
-      }
-
-      console.log("Creating bulk payments with data:", {
-        contractId,
+      console.log("Submitting bulk payments:", {
         firstChequeNumber,
         totalCheques,
         amount,
         startDate,
-        draweeBankName
+        draweeBankName,
+        contractId,
       });
 
       const { data, error } = await supabase.functions.invoke('create-bulk-payments', {
         body: {
-          contractId,
           firstChequeNumber,
           totalCheques: parseInt(totalCheques),
           amount: parseFloat(amount),
           startDate,
-          draweeBankName
+          draweeBankName,
+          contractId
         }
       });
 
       if (error) throw error;
 
-      console.log("Successfully created bulk payments:", data);
-      toast.success(`Successfully created ${totalCheques} payment installments`);
-      onSuccess();
-      onClose();
+      console.log("Bulk payments created:", data);
+      
+      await queryClient.invalidateQueries({ queryKey: ['car-installment-payments', contractId] });
+      
+      toast.success("Bulk payments created successfully");
+      onSuccess?.();
+      onClose?.();
     } catch (error) {
-      console.error('Error creating bulk payments:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create payments');
+      console.error("Error creating bulk payments:", error);
+      toast.error("Failed to create bulk payments");
     } finally {
       setIsSubmitting(false);
     }
@@ -70,29 +87,49 @@ export function BulkPaymentForm({ contractId, onSuccess, onClose }: BulkPaymentF
         <Input
           id="firstChequeNumber"
           value={firstChequeNumber}
-          onChange={(e) => setFirstChequeNumber(e.target.value)}
+          onChange={(e) => {
+            setFirstChequeNumber(e.target.value);
+            setChequeNumbers([]); // Reset cheque numbers when input changes
+          }}
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="totalCheques">Total Number of Cheques</Label>
+        <Label htmlFor="totalCheques">Total Cheques</Label>
         <Input
           id="totalCheques"
           type="number"
-          min="1"
           value={totalCheques}
-          onChange={(e) => setTotalCheques(e.target.value)}
+          onChange={(e) => {
+            setTotalCheques(e.target.value);
+            setChequeNumbers([]); // Reset cheque numbers when input changes
+          }}
           required
         />
       </div>
 
+      <Button 
+        type="button" 
+        variant="outline" 
+        onClick={generateChequeNumbers}
+        disabled={!firstChequeNumber || !totalCheques}
+      >
+        Check Existing Cheques
+      </Button>
+
+      {chequeNumbers.length > 0 && (
+        <ExistingChequeCheck 
+          contractId={contractId} 
+          chequeNumbers={chequeNumbers} 
+        />
+      )}
+
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount per Cheque (QAR)</Label>
+        <Label htmlFor="amount">Amount per Cheque</Label>
         <Input
           id="amount"
           type="number"
-          step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           required
@@ -100,7 +137,7 @@ export function BulkPaymentForm({ contractId, onSuccess, onClose }: BulkPaymentF
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="startDate">First Payment Date</Label>
+        <Label htmlFor="startDate">Start Date</Label>
         <Input
           id="startDate"
           type="date"
@@ -132,4 +169,4 @@ export function BulkPaymentForm({ contractId, onSuccess, onClose }: BulkPaymentF
       </Button>
     </form>
   );
-}
+};

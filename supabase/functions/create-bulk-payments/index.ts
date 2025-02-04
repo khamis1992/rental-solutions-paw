@@ -69,7 +69,7 @@ serve(async (req) => {
         contract_id: details.contractId,
         cheque_number: `${prefix}${String(Number(baseNumber) + index).padStart(baseNumber.length, '0')}`,
         amount: Number(details.amount),
-        payment_date: paymentDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        payment_date: paymentDate.toISOString(),
         drawee_bank: details.draweeBankName,
         paid_amount: 0,
         remaining_amount: Number(details.amount),
@@ -79,29 +79,69 @@ serve(async (req) => {
 
     console.log('Generated payments:', payments);
 
-    // Simple insert without ON CONFLICT clause
-    const { data, error } = await supabase
-      .from('car_installment_payments')
-      .insert(payments);
+    const results = [];
+    for (const payment of payments) {
+      try {
+        // Check if cheque number already exists for this contract
+        const { data: existingCheque, error: checkError } = await supabase
+          .from('car_installment_payments')
+          .select('cheque_number')
+          .eq('contract_id', payment.contract_id)
+          .eq('cheque_number', payment.cheque_number)
+          .maybeSingle();
 
-    if (error) {
-      console.error('Error inserting payments:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
+        if (checkError) {
+          console.error('Error checking existing cheque:', checkError);
+          results.push({ 
+            success: false, 
+            chequeNumber: payment.cheque_number, 
+            error: 'Error checking for duplicate cheque' 
+          });
+          continue;
         }
-      );
-    }
 
-    console.log('Successfully created payments:', data);
+        if (existingCheque) {
+          results.push({ 
+            success: false, 
+            chequeNumber: payment.cheque_number, 
+            error: 'Duplicate cheque number' 
+          });
+          continue;
+        }
+
+        const { error: insertError } = await supabase
+          .from('car_installment_payments')
+          .insert([payment]);
+
+        if (insertError) {
+          console.error('Error inserting payment:', insertError);
+          results.push({ 
+            success: false, 
+            chequeNumber: payment.cheque_number, 
+            error: insertError.message 
+          });
+          continue;
+        }
+        
+        results.push({ 
+          success: true, 
+          chequeNumber: payment.cheque_number 
+        });
+      } catch (error) {
+        console.error('Error processing payment:', error);
+        results.push({ 
+          success: false, 
+          chequeNumber: payment.cheque_number, 
+          error: error.message 
+        });
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Bulk payments created successfully',
-        data: payments
+        message: 'Bulk payments processed',
+        results
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

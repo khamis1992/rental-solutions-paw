@@ -79,15 +79,6 @@ export default function App() {
               path="/"
               element={
                 <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <LazyComponents.Index />
-                </Suspense>
-              }
-            />
-
-            <Route
-              path="/dashboard"
-              element={
-                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Dashboard />
                 </Suspense>
               }
