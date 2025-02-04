@@ -1,79 +1,51 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 interface ExistingChequeCheckProps {
   contractId: string;
   chequeNumbers: string[];
 }
 
-export const ExistingChequeCheck = ({ contractId, chequeNumbers }: ExistingChequeCheckProps) => {
+export function ExistingChequeCheck({ contractId, chequeNumbers }: ExistingChequeCheckProps) {
   const { data: existingCheques, isLoading } = useQuery({
     queryKey: ['existing-cheques', contractId, chequeNumbers],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('car_installment_payments')
-        .select('*')
+        .select('cheque_number')
         .eq('contract_id', contractId)
         .in('cheque_number', chequeNumbers);
 
       if (error) throw error;
-      return data;
+      return data.map(d => d.cheque_number);
     },
+    enabled: chequeNumbers.length > 0
   });
 
   if (isLoading) {
-    return <div>Checking existing cheques...</div>;
+    return <Alert>Checking existing cheques...</Alert>;
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Cheque Numbers Check</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cheque Number</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Payment Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {chequeNumbers.map((chequeNumber) => {
-              const existingCheque = existingCheques?.find(
-                (cheque) => cheque.cheque_number === chequeNumber
-              );
+  const duplicates = existingCheques || [];
+  const hasDuplicates = duplicates.length > 0;
 
-              return (
-                <TableRow key={chequeNumber}>
-                  <TableCell>{chequeNumber}</TableCell>
-                  <TableCell>
-                    {existingCheque ? (
-                      <span className="text-red-500">Already exists</span>
-                    ) : (
-                      <span className="text-green-500">Available</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {existingCheque ? formatCurrency(existingCheque.amount) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {existingCheque?.payment_date
-                      ? format(new Date(existingCheque.payment_date), 'dd/MM/yyyy')
-                      : '-'}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+  return (
+    <Alert variant={hasDuplicates ? "destructive" : "default"}>
+      <AlertDescription className="flex items-center gap-2">
+        {hasDuplicates ? (
+          <>
+            <XCircle className="h-4 w-4" />
+            The following cheque numbers already exist: {duplicates.join(", ")}
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="h-4 w-4" />
+            All cheque numbers are available
+          </>
+        )}
+      </AlertDescription>
+    </Alert>
   );
-};
+}

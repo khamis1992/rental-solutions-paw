@@ -126,7 +126,7 @@ export const BulkPaymentForm = ({ contractId, onSuccess, onClose }: BulkPaymentF
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount per Cheque</Label>
+        <Label htmlFor="amount">Amount per Cheque (QAR)</Label>
         <Input
           id="amount"
           type="number"

@@ -6,7 +6,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SinglePaymentForm } from "./SinglePaymentForm";
+import { BulkPaymentForm } from "./BulkPaymentForm";
 
 export interface AddPaymentDialogProps {
   open: boolean;
@@ -33,10 +35,25 @@ export function AddPaymentDialog({
           <DialogTitle>Add Payment Installment</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-120px)] px-1">
-          <SinglePaymentForm 
-            contractId={contractId} 
-            onSuccess={handleSuccess}
-          />
+          <Tabs defaultValue="single" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="single">Single Payment</TabsTrigger>
+              <TabsTrigger value="bulk">Bulk Payments</TabsTrigger>
+            </TabsList>
+            <TabsContent value="single">
+              <SinglePaymentForm 
+                contractId={contractId} 
+                onSuccess={handleSuccess}
+              />
+            </TabsContent>
+            <TabsContent value="bulk">
+              <BulkPaymentForm 
+                contractId={contractId} 
+                onSuccess={handleSuccess}
+                onClose={() => onOpenChange(false)}
+              />
+            </TabsContent>
+          </Tabs>
         </ScrollArea>
       </DialogContent>
     </Dialog>
