@@ -37,18 +37,16 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
 
       const { data, error } = await supabase
         .from("car_installment_payments")
-        .insert({
+        .insert([{
           contract_id: contractId,
           cheque_number: chequeNumber,
           amount: Number(amount),
           payment_date: paymentDate,
           drawee_bank: draweeBankName,
-          paid_amount: 0,
-          remaining_amount: Number(amount),
-          status: "pending"
-        })
-        .select()
-        .single();
+          paid_amount: Number(amount),
+          remaining_amount: 0,
+          status: "completed"
+        }]);
 
       if (error) {
         console.error("Error inserting payment:", error);
@@ -68,8 +66,7 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="chequeNumber">Cheque Number</Label>
+      <div className="space-y-queNumber">Cheque Number</Label>
         <Input
           id="chequeNumber"
           value={chequeNumber}
