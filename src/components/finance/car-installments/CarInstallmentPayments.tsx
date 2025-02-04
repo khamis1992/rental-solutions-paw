@@ -50,13 +50,13 @@ export const CarInstallmentPayments = ({ contractId }: CarInstallmentPaymentsPro
       return data as CarInstallmentPayment[];
     },
     enabled: !!contractId,
-    retry: 1
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 
   const handlePaymentSuccess = () => {
     console.log("Payment added successfully, refreshing data...");
     refetch();
-    toast.success("Payment added successfully");
     setIsAddPaymentOpen(false);
   };
 
