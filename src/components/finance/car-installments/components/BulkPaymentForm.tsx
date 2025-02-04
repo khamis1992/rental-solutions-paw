@@ -29,6 +29,15 @@ export function BulkPaymentForm({ contractId, onSuccess, onClose }: BulkPaymentF
         throw new Error("Please fill in all required fields");
       }
 
+      console.log("Creating bulk payments with data:", {
+        contractId,
+        firstChequeNumber,
+        totalCheques,
+        amount,
+        startDate,
+        draweeBankName
+      });
+
       const { data, error } = await supabase.functions.invoke('create-bulk-payments', {
         body: {
           contractId,
@@ -42,6 +51,7 @@ export function BulkPaymentForm({ contractId, onSuccess, onClose }: BulkPaymentF
 
       if (error) throw error;
 
+      console.log("Successfully created bulk payments:", data);
       toast.success(`Successfully created ${totalCheques} payment installments`);
       onSuccess();
       onClose();
