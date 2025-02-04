@@ -15,15 +15,13 @@ export interface AddPaymentDialogProps {
   onOpenChange: (open: boolean) => void;
   contractId: string;
   onSuccess?: () => void;
-  totalInstallments?: number;
 }
 
 export function AddPaymentDialog({ 
   open, 
   onOpenChange, 
   contractId,
-  onSuccess,
-  totalInstallments 
+  onSuccess
 }: AddPaymentDialogProps) {
   const handleSuccess = () => {
     onSuccess?.();
@@ -37,8 +35,8 @@ export function AddPaymentDialog({
           <DialogTitle>Add Payment Installment</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-120px)] px-1">
-          <Tabs defaultValue="single" className="space-y-4">
-            <TabsList>
+          <Tabs defaultValue="single" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="single">Single Payment</TabsTrigger>
               <TabsTrigger value="bulk">Bulk Payments</TabsTrigger>
             </TabsList>
@@ -46,13 +44,13 @@ export function AddPaymentDialog({
               <SinglePaymentForm 
                 contractId={contractId} 
                 onSuccess={handleSuccess}
-                totalInstallments={totalInstallments}
               />
             </TabsContent>
             <TabsContent value="bulk">
               <BulkPaymentForm 
                 contractId={contractId} 
                 onSuccess={handleSuccess}
+                onClose={() => onOpenChange(false)}
               />
             </TabsContent>
           </Tabs>
