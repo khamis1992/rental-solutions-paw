@@ -121,6 +121,7 @@ export type Database = {
           agreement_number: string | null
           amount: string | null
           category_id: string | null
+          cost_type: string | null
           created_at: string | null
           customer_name: string | null
           description: string | null
@@ -138,6 +139,7 @@ export type Database = {
           agreement_number?: string | null
           amount?: string | null
           category_id?: string | null
+          cost_type?: string | null
           created_at?: string | null
           customer_name?: string | null
           description?: string | null
@@ -155,6 +157,7 @@ export type Database = {
           agreement_number?: string | null
           amount?: string | null
           category_id?: string | null
+          cost_type?: string | null
           created_at?: string | null
           customer_name?: string | null
           description?: string | null
@@ -295,49 +298,64 @@ export type Database = {
       }
       agreement_templates: {
         Row: {
-          agreement_duration: unknown
+          agreement_duration: string
           agreement_type: Database["public"]["Enums"]["agreement_template_type"]
+          content: string | null
           created_at: string | null
           daily_late_fee: number | null
           damage_penalty_rate: number | null
           description: string | null
-          final_price: number
+          final_price: number | null
           id: string
           is_active: boolean | null
+          language: string | null
           late_return_fee: number | null
           name: string
-          rent_amount: number
+          rent_amount: number | null
+          template_sections: Json[] | null
+          template_structure: Json | null
           updated_at: string | null
+          variable_mappings: Json | null
         }
         Insert: {
-          agreement_duration: unknown
+          agreement_duration: string
           agreement_type: Database["public"]["Enums"]["agreement_template_type"]
+          content?: string | null
           created_at?: string | null
           daily_late_fee?: number | null
           damage_penalty_rate?: number | null
           description?: string | null
-          final_price: number
+          final_price?: number | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           late_return_fee?: number | null
           name: string
-          rent_amount: number
+          rent_amount?: number | null
+          template_sections?: Json[] | null
+          template_structure?: Json | null
           updated_at?: string | null
+          variable_mappings?: Json | null
         }
         Update: {
-          agreement_duration?: unknown
+          agreement_duration?: string
           agreement_type?: Database["public"]["Enums"]["agreement_template_type"]
+          content?: string | null
           created_at?: string | null
           daily_late_fee?: number | null
           damage_penalty_rate?: number | null
           description?: string | null
-          final_price?: number
+          final_price?: number | null
           id?: string
           is_active?: boolean | null
+          language?: string | null
           late_return_fee?: number | null
           name?: string
-          rent_amount?: number
+          rent_amount?: number | null
+          template_sections?: Json[] | null
+          template_structure?: Json | null
           updated_at?: string | null
+          variable_mappings?: Json | null
         }
         Relationships: []
       }
@@ -2269,6 +2287,7 @@ export type Database = {
           return_mileage: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["lease_status"] | null
+          template_id: string | null
           total_amount: number
           trade_in_value: number | null
           updated_at: string
@@ -2313,6 +2332,7 @@ export type Database = {
           return_mileage?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["lease_status"] | null
+          template_id?: string | null
           total_amount: number
           trade_in_value?: number | null
           updated_at?: string
@@ -2357,6 +2377,7 @@ export type Database = {
           return_mileage?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["lease_status"] | null
+          template_id?: string | null
           total_amount?: number
           trade_in_value?: number | null
           updated_at?: string
@@ -2375,6 +2396,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "agreement_templates"
             referencedColumns: ["id"]
           },
           {
@@ -2644,6 +2672,7 @@ export type Database = {
       }
       legal_document_templates: {
         Row: {
+          agreement_type: Database["public"]["Enums"]["agreement_type"] | null
           content: string
           created_at: string
           created_by: string | null
@@ -2652,6 +2681,7 @@ export type Database = {
           is_active: boolean | null
           language: Database["public"]["Enums"]["document_language"] | null
           name: string
+          tables: Json | null
           template_sections: Json[] | null
           template_structure: Json | null
           updated_at: string
@@ -2659,6 +2689,7 @@ export type Database = {
           variables: Json | null
         }
         Insert: {
+          agreement_type?: Database["public"]["Enums"]["agreement_type"] | null
           content: string
           created_at?: string
           created_by?: string | null
@@ -2667,6 +2698,7 @@ export type Database = {
           is_active?: boolean | null
           language?: Database["public"]["Enums"]["document_language"] | null
           name: string
+          tables?: Json | null
           template_sections?: Json[] | null
           template_structure?: Json | null
           updated_at?: string
@@ -2674,6 +2706,7 @@ export type Database = {
           variables?: Json | null
         }
         Update: {
+          agreement_type?: Database["public"]["Enums"]["agreement_type"] | null
           content?: string
           created_at?: string
           created_by?: string | null
@@ -2682,6 +2715,7 @@ export type Database = {
           is_active?: boolean | null
           language?: Database["public"]["Enums"]["document_language"] | null
           name?: string
+          tables?: Json | null
           template_sections?: Json[] | null
           template_structure?: Json | null
           updated_at?: string
@@ -4420,6 +4454,42 @@ export type Database = {
           },
         ]
       }
+      pricing_risk_metrics: {
+        Row: {
+          analysis_date: string | null
+          created_at: string | null
+          default_rate: number | null
+          id: string
+          payment_reliability_score: number | null
+          price_elasticity_score: number | null
+          risk_adjusted_markup: number | null
+          updated_at: string | null
+          vehicle_model: string
+        }
+        Insert: {
+          analysis_date?: string | null
+          created_at?: string | null
+          default_rate?: number | null
+          id?: string
+          payment_reliability_score?: number | null
+          price_elasticity_score?: number | null
+          risk_adjusted_markup?: number | null
+          updated_at?: string | null
+          vehicle_model: string
+        }
+        Update: {
+          analysis_date?: string | null
+          created_at?: string | null
+          default_rate?: number | null
+          id?: string
+          payment_reliability_score?: number | null
+          price_elasticity_score?: number | null
+          risk_adjusted_markup?: number | null
+          updated_at?: string | null
+          vehicle_model?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -4827,6 +4897,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      report_schedules: {
+        Row: {
+          created_at: string | null
+          format: string
+          frequency: string
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          next_run_at: string | null
+          recipients: string[]
+          report_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          format: string
+          frequency: string
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          recipients: string[]
+          report_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          format?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          recipients?: string[]
+          report_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       revenue_forecasts: {
         Row: {
@@ -6576,7 +6685,29 @@ export type Database = {
           type: string | null
           updated_at: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_payments_lease_id_fkey"
+            columns: ["lease_id"]
+            isOneToOne: false
+            referencedRelation: "leases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -6634,6 +6765,20 @@ export type Database = {
           },
         ]
       }
+      risk_adjusted_pricing_view: {
+        Row: {
+          current_avg_rent: number | null
+          default_rate: number | null
+          make: string | null
+          model: string | null
+          payment_reliability_score: number | null
+          price_elasticity_score: number | null
+          risk_adjusted_markup: number | null
+          risk_adjusted_price: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       analyze_vehicle_maintenance: {
@@ -6673,6 +6818,12 @@ export type Database = {
           p_daily_rate?: number
         }
         Returns: number
+      }
+      calculate_model_risk_metrics: {
+        Args: {
+          p_vehicle_model: string
+        }
+        Returns: undefined
       }
       calculate_remaining_amount: {
         Args: {
