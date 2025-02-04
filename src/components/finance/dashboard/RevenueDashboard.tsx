@@ -28,51 +28,26 @@ export const RevenueDashboard = () => {
     },
   });
 
-  const monthlyRevenue = payments?.reduce((acc: any, payment) => {
-    const date = new Date(payment.payment_date);
-    const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-    
-    if (!acc[monthYear]) {
-      acc[monthYear] = {
-        month: monthYear,
-        shortTerm: 0,
-        leaseToOwn: 0,
-        total: 0,
-      };
-    }
-
-    const amount = payment.amount_paid || 0;
-    acc[monthYear].total += amount;
-
-    if (payment.lease?.agreement_type === 'short_term') {
-      acc[monthYear].shortTerm += amount;
-    } else {
-      acc[monthYear].leaseToOwn += amount;
-    }
-
-    return acc;
-  }, {});
-
-  const revenueData = Object.values(monthlyRevenue || {});
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Revenue Overview</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : (
-          <LineChart width={600} height={300} data={revenueData}>
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <CartesianGrid strokeDasharray="3 3" />
-            <Line type="monotone" dataKey="revenue" stroke="#8884d8" />
-          </LineChart>
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div>Loading...</div>
+          ) : (
+            <LineChart width={600} height={300} data={payments}>
+              <XAxis dataKey="payment_date" />
+              <YAxis />
+              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" />
+              <Line type="monotone" dataKey="amount_paid" stroke="#8884d8" />
+            </LineChart>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

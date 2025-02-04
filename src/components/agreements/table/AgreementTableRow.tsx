@@ -1,10 +1,9 @@
+import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Printer, FileText, Trash2 } from "lucide-react";
-import type { Agreement } from "../hooks/useAgreements";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
+import { FileText, Trash2, Info } from "lucide-react";
+import type { Agreement } from "@/types/agreement.types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -13,73 +12,83 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { DeleteAgreementDialog } from "../DeleteAgreementDialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AgreementEditor } from "../print/AgreementEditor";
 
-export interface AgreementTableRowProps {
+interface AgreementTableRowProps {
   agreement: Agreement;
   onViewContract: (id: string) => void;
   onPrintContract: (id: string) => void;
   onAgreementClick: (id: string) => void;
   onNameClick: (id: string) => void;
-  onDeleted?: () => void;
+  onDeleted: () => void;
   onDeleteClick: () => void;
 }
 
 export const AgreementTableRow = ({
   agreement,
-  onViewContract,
-  onPrintContract,
   onAgreementClick,
   onNameClick,
+  onDeleted,
   onDeleteClick,
 }: AgreementTableRowProps) => {
-  const handleViewContract = async () => {
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = React.useState(false);
+  const [templateContent, setTemplateContent] = React.useState("");
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-400';
+      case 'pending_payment':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-400';
+      case 'terminated':
+        return 'bg-red-100 text-red-800 hover:bg-red-200 border-red-400';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-400';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-400';
+    }
+  };
+
+  const handleViewTemplate = async () => {
     try {
-      const { data: documents, error } = await supabase
-        .from('agreement_documents')
-        .select('document_url')
-        .eq('lease_id', agreement.id)
-        .eq('document_type', 'contract')
-        .order('created_at', { ascending: false })
-        .limit(1);
+      const { data: templateData, error } = await supabase
+        .from("agreement_templates")
+        .select("content")
+        .eq("id", agreement.template_id)
+        .single();
 
       if (error) throw error;
 
-      if (!documents || documents.length === 0) {
-        toast.error('No contract document found');
+      if (!templateData?.content) {
+        toast.error("No template content found");
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('agreement_documents')
-        .getPublicUrl(documents[0].document_url);
+      let content = templateData.content
+        .replace(/{{customer\.customer_name}}/g, agreement.customer?.full_name || "")
+        .replace(/{{customer\.phone_number}}/g, agreement.customer?.phone_number || "")
+        .replace(/{{vehicle\.make}}/g, agreement.vehicle?.make || "")
+        .replace(/{{vehicle\.model}}/g, agreement.vehicle?.model || "")
+        .replace(/{{vehicle\.year}}/g, agreement.vehicle?.year?.toString() || "")
+        .replace(/{{vehicle\.license_plate}}/g, agreement.vehicle?.license_plate || "")
+        .replace(/{{agreement\.agreement_number}}/g, agreement.agreement_number || "")
+        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement.start_date))
+        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement.end_date));
 
-      window.open(publicUrl, '_blank');
+      setTemplateContent(content);
+      setShowTemplateDialog(true);
     } catch (error) {
-      console.error('Error viewing contract:', error);
-      toast.error('Failed to view contract');
+      console.error("Error fetching template:", error);
+      toast.error("Failed to load template");
     }
   };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'expired':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-    }
-  };
-
-  // Calculate payment status based on remaining amount
-  const paymentStatus = agreement.remainingAmount > 0 ? 'pending' : 'completed';
 
   return (
-    <TableRow className="hover:bg-muted/50">
+    <TableRow className="hover:bg-muted/50 transition-colors">
       <TableCell>
         <button
           onClick={() => onNameClick(agreement.id)}
@@ -96,23 +105,25 @@ export const AgreementTableRow = ({
           {agreement.vehicle?.license_plate}
         </button>
       </TableCell>
-      <TableCell>{`${agreement.vehicle?.make} ${agreement.vehicle?.model}`}</TableCell>
+      <TableCell className="font-medium">
+        {`${agreement.vehicle?.make} ${agreement.vehicle?.model}`}
+      </TableCell>
       <TableCell>
-        <span className="font-medium">{agreement.customer?.full_name}</span>
+        <span className="font-medium truncate max-w-[200px] block">
+          {agreement.customer?.full_name}
+        </span>
       </TableCell>
       <TableCell>{formatDateToDisplay(agreement.start_date)}</TableCell>
       <TableCell>{formatDateToDisplay(agreement.end_date)}</TableCell>
       <TableCell>
         <Badge 
           variant="outline" 
-          className={`${getStatusColor(agreement.status)} capitalize`}
+          className={`capitalize ${getStatusColor(agreement.status)} border px-3 py-1`}
         >
           {agreement.status}
         </Badge>
       </TableCell>
-      <TableCell>
-        <PaymentStatusBadge status={paymentStatus} />
-      </TableCell>
+      
       <TableCell className="text-right space-x-1">
         <TooltipProvider>
           <Tooltip>
@@ -120,13 +131,14 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleViewContract()}
+                onClick={handleViewTemplate}
+                className="hover:bg-primary/10"
               >
-                <Eye className="h-4 w-4 text-primary hover:text-primary/80" />
+                <FileText className="h-4 w-4 text-primary hover:text-primary/80" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>View Contract</p>
+              <p>View Agreement Template</p>
             </TooltipContent>
           </Tooltip>
 
@@ -135,13 +147,14 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onPrintContract(agreement.id)}
+                onClick={() => onNameClick(agreement.id)}
+                className="hover:bg-blue-100"
               >
-                <Printer className="h-4 w-4 text-blue-600 hover:text-blue-500" />
+                <Info className="h-4 w-4 text-blue-600 hover:text-blue-500" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Print Contract</p>
+              <p>View Agreement Details</p>
             </TooltipContent>
           </Tooltip>
 
@@ -150,25 +163,10 @@ export const AgreementTableRow = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onAgreementClick(agreement.id)}
+                onClick={() => setShowDeleteDialog(true)}
+                className="hover:bg-red-100"
               >
-                <FileText className="h-4 w-4 text-violet-600 hover:text-violet-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>View Invoice</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onDeleteClick}
-                className="hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/90" />
+                <Trash2 className="h-4 w-4 text-red-600 hover:text-red-500" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -176,6 +174,19 @@ export const AgreementTableRow = ({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        <DeleteAgreementDialog
+          agreementId={agreement.id}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onDeleted={onDeleted}
+        />
+
+        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+          <DialogContent className="max-w-4xl">
+            <AgreementEditor initialContent={templateContent} />
+          </DialogContent>
+        </Dialog>
       </TableCell>
     </TableRow>
   );
