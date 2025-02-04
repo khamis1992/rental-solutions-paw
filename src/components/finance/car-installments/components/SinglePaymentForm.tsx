@@ -4,60 +4,26 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentAIRecommendations } from "./PaymentAIRecommendations";
 import { Loader2 } from "lucide-react";
 
 interface SinglePaymentFormProps {
   contractId: string;
   onSuccess: () => void;
-  totalInstallments?: number;
 }
 
-export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: SinglePaymentFormProps) {
-  const [firstChequeNumber, setFirstChequeNumber] = useState("");
-  const [firstPaymentDate, setFirstPaymentDate] = useState("");
+export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormProps) {
+  const [chequeNumber, setChequeNumber] = useState("");
   const [amount, setAmount] = useState<string>("");
+  const [paymentDate, setPaymentDate] = useState("");
   const [draweeBankName, setDraweeBankName] = useState("");
-  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const analyzePayment = async () => {
-    if (!firstChequeNumber || !firstPaymentDate || !amount) {
-      toast.error("Please fill in all fields first");
-      return;
-    }
-
-    setIsAnalyzing(true);
-    try {
-      const { data: suggestions, error } = await supabase.functions.invoke(
-        "analyze-payment-installment",
-        {
-          body: {
-            firstChequeNumber,
-            amount: Number(amount),
-            firstPaymentDate,
-            totalInstallments: totalInstallments || 1
-          }
-        }
-      );
-
-      if (error) throw error;
-      setAiSuggestions(suggestions);
-    } catch (error) {
-      console.error('Error analyzing payment:', error);
-      toast.error("Failed to analyze payment details");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      if (!firstChequeNumber || !firstPaymentDate || !amount || !draweeBankName) {
+      if (!chequeNumber || !paymentDate || !amount || !draweeBankName) {
         throw new Error("Please fill in all required fields");
       }
 
@@ -65,9 +31,9 @@ export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: 
         .from("car_installment_payments")
         .insert({
           contract_id: contractId,
-          cheque_number: firstChequeNumber,
+          cheque_number: chequeNumber,
           amount: Number(amount),
-          payment_date: firstPaymentDate,
+          payment_date: paymentDate,
           drawee_bank: draweeBankName,
           paid_amount: 0,
           remaining_amount: Number(amount),
@@ -76,7 +42,6 @@ export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: 
 
       if (error) throw error;
 
-      toast.success("Payment installment added successfully");
       onSuccess();
     } catch (error) {
       console.error("Error adding payment:", error);
@@ -92,8 +57,8 @@ export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: 
         <Label htmlFor="chequeNumber">Cheque Number</Label>
         <Input 
           id="chequeNumber" 
-          value={firstChequeNumber}
-          onChange={(e) => setFirstChequeNumber(e.target.value)}
+          value={chequeNumber}
+          onChange={(e) => setChequeNumber(e.target.value)}
           required 
         />
       </div>
@@ -115,8 +80,8 @@ export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: 
         <Input 
           id="paymentDate" 
           type="date"
-          value={firstPaymentDate}
-          onChange={(e) => setFirstPaymentDate(e.target.value)}
+          value={paymentDate}
+          onChange={(e) => setPaymentDate(e.target.value)}
           required 
         />
       </div>
@@ -130,33 +95,6 @@ export function SinglePaymentForm({ contractId, onSuccess, totalInstallments }: 
           required 
         />
       </div>
-
-      {!aiSuggestions && (
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="w-full"
-          onClick={analyzePayment}
-          disabled={isAnalyzing}
-        >
-          {isAnalyzing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            'Analyze Payment Details'
-          )}
-        </Button>
-      )}
-
-      {aiSuggestions && (
-        <PaymentAIRecommendations
-          riskLevel={aiSuggestions.riskAssessment.riskLevel}
-          factors={aiSuggestions.riskAssessment.factors}
-          recommendations={aiSuggestions.recommendations}
-        />
-      )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
