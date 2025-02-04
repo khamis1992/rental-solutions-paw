@@ -13,7 +13,6 @@ import { Edit2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
 
 interface LateFineActionsProps {
   paymentId: string;
@@ -25,7 +24,6 @@ export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFi
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [newLateFine, setNewLateFine] = useState(currentLateFine.toString());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { session } = useAuth();
 
   const handleUpdateLateFine = async () => {
     setIsSubmitting(true);
@@ -40,7 +38,7 @@ export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFi
 
       if (error) throw error;
 
-      // Create audit log with user information
+      // Create audit log
       await supabase.from('audit_logs').insert({
         entity_type: 'payment',
         entity_id: paymentId,
@@ -48,8 +46,7 @@ export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFi
         changes: {
           previous_amount: currentLateFine,
           new_amount: Number(newLateFine)
-        },
-        performed_by: session?.user?.id
+        }
       });
 
       toast.success("Late fine updated successfully");
@@ -76,7 +73,7 @@ export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFi
 
       if (error) throw error;
 
-      // Create audit log with user information
+      // Create audit log
       await supabase.from('audit_logs').insert({
         entity_type: 'payment',
         entity_id: paymentId,
@@ -84,8 +81,7 @@ export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFi
         changes: {
           previous_amount: currentLateFine,
           new_amount: 0
-        },
-        performed_by: session?.user?.id
+        }
       });
 
       toast.success("Late fine removed successfully");
