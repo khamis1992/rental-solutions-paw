@@ -24,6 +24,8 @@ export const CarInstallmentPayments = ({ contractId }: CarInstallmentPaymentsPro
     queryFn: async () => {
       if (!contractId) return [];
       
+      console.log("Fetching payments for contract:", contractId);
+      
       const { data, error } = await supabase
         .from("car_installment_payments")
         .select("*")
@@ -36,12 +38,14 @@ export const CarInstallmentPayments = ({ contractId }: CarInstallmentPaymentsPro
         throw error;
       }
 
+      console.log("Fetched payments:", data);
       return data as CarInstallmentPayment[];
     },
     enabled: !!contractId
   });
 
   const handlePaymentSuccess = () => {
+    console.log("Payment added successfully, refreshing data...");
     refetch();
     toast.success("Payment added successfully");
   };
