@@ -79,10 +79,10 @@ serve(async (req) => {
 
     console.log('Generated payments:', payments);
 
+    // Remove the ON CONFLICT clause and simply insert the payments
     const { data, error } = await supabase
       .from('car_installment_payments')
-      .insert(payments)
-      .select();
+      .insert(payments);
 
     if (error) {
       console.error('Error inserting payments:', error);
