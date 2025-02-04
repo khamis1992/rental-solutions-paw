@@ -43,38 +43,43 @@ export const BulkPaymentForm = ({ contractId, onSuccess, onClose }: BulkPaymentF
     setIsSubmitting(true);
 
     try {
-      console.log("Submitting bulk payments:", {
+      const payload = {
         firstChequeNumber,
-        totalCheques,
-        amount,
+        totalCheques: parseInt(totalCheques),
+        amount: parseFloat(amount),
         startDate,
         draweeBankName,
-        contractId,
-      });
+        contractId
+      };
+
+      console.log("Submitting bulk payments with payload:", payload);
 
       const { data, error } = await supabase.functions.invoke('create-bulk-payments', {
-        body: {
-          firstChequeNumber,
-          totalCheques: parseInt(totalCheques),
-          amount: parseFloat(amount),
-          startDate,
-          draweeBankName,
-          contractId
-        }
+        body: payload
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from Edge Function:", error);
+        throw error;
+      }
 
-      console.log("Bulk payments created:", data);
-      
-      await queryClient.invalidateQueries({ queryKey: ['car-installment-payments', contractId] });
+      console.log("Response from Edge Function:", data);
+
+      if (data?.error) {
+        console.error("Error in response:", data.error);
+        throw new Error(data.error);
+      }
+
+      await queryClient.invalidateQueries({ 
+        queryKey: ['car-installment-payments', contractId] 
+      });
       
       toast.success("Bulk payments created successfully");
       onSuccess?.();
       onClose?.();
     } catch (error) {
       console.error("Error creating bulk payments:", error);
-      toast.error("Failed to create bulk payments");
+      toast.error(error instanceof Error ? error.message : "Failed to create bulk payments");
     } finally {
       setIsSubmitting(false);
     }

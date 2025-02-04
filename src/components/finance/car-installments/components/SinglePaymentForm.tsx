@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -27,7 +27,15 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
         throw new Error("Please fill in all required fields");
       }
 
-      const { error } = await supabase
+      console.log("Submitting payment with data:", {
+        contractId,
+        chequeNumber,
+        amount,
+        paymentDate,
+        draweeBankName
+      });
+
+      const { data, error } = await supabase
         .from("car_installment_payments")
         .insert({
           contract_id: contractId,
@@ -38,14 +46,21 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
           paid_amount: 0,
           remaining_amount: Number(amount),
           status: "pending"
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting payment:", error);
+        throw error;
+      }
 
+      console.log("Successfully created payment:", data);
+      toast.success("Payment added successfully");
       onSuccess();
     } catch (error) {
       console.error("Error adding payment:", error);
-      toast.error("Failed to add payment installment");
+      toast.error(error instanceof Error ? error.message : "Failed to add payment");
     } finally {
       setIsSubmitting(false);
     }
@@ -55,48 +70,48 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="chequeNumber">Cheque Number</Label>
-        <Input 
-          id="chequeNumber" 
+        <Input
+          id="chequeNumber"
           value={chequeNumber}
           onChange={(e) => setChequeNumber(e.target.value)}
-          required 
+          required
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="amount">Amount (QAR)</Label>
-        <Input 
-          id="amount" 
-          type="number" 
+        <Input
+          id="amount"
+          type="number"
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          required 
+          required
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="paymentDate">Payment Date</Label>
-        <Input 
-          id="paymentDate" 
+        <Input
+          id="paymentDate"
           type="date"
           value={paymentDate}
           onChange={(e) => setPaymentDate(e.target.value)}
-          required 
+          required
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="draweeBankName">Drawee Bank Name</Label>
-        <Input 
-          id="draweeBankName" 
+        <Input
+          id="draweeBankName"
           value={draweeBankName}
           onChange={(e) => setDraweeBankName(e.target.value)}
-          required 
+          required
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
