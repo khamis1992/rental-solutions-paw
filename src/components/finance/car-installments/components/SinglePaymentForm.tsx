@@ -19,22 +19,23 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
     try {
       console.log('Attempting to insert payment for contract:', contractId);
       
-      // Generate a random cheque number
-      const randomChequeNumber = `CHQ-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      // Generate a unique cheque number with timestamp to avoid collisions
+      const timestamp = new Date().getTime();
+      const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const chequeNumber = `CHQ-${timestamp}-${randomNum}`;
       
       const { data, error } = await supabase
         .from('car_installment_payments')
-        .insert({
+        .insert([{
           contract_id: contractId,
-          cheque_number: randomChequeNumber,
+          cheque_number: chequeNumber,
           amount: 5000,
           payment_date: new Date().toISOString().split('T')[0],
           drawee_bank: 'Test Bank',
           paid_amount: 5000,
           remaining_amount: 0,
           status: 'completed'
-        })
-        .select();
+        }]);
 
       if (error) {
         console.error('Error inserting payment:', error);
