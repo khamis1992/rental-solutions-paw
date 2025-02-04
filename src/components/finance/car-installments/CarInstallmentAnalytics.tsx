@@ -14,6 +14,8 @@ export const CarInstallmentAnalytics = ({ contractId }: { contractId: string }) 
   const { data: analytics, isLoading } = useQuery({
     queryKey: ["car-installment-analytics", contractId],
     queryFn: async () => {
+      if (!contractId) throw new Error("Contract ID is required");
+
       const { data: payments, error } = await supabase
         .from("car_installment_payments")
         .select("amount, paid_amount, status")
@@ -31,7 +33,8 @@ export const CarInstallmentAnalytics = ({ contractId }: { contractId: string }) 
         total_pending,
         payment_completion_rate: total_payments ? (completed_payments / total_payments) * 100 : 0
       };
-    }
+    },
+    enabled: !!contractId
   });
 
   if (isLoading) {

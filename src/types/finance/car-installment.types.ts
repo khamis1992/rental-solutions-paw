@@ -28,3 +28,18 @@ export interface CarInstallmentPayment {
   created_at: string;
   updated_at: string;
 }
+
+export interface CarInstallmentAnalyticsProps {
+  contract: CarInstallmentContract;
+  payments: CarInstallmentPayment[];
+}
+
+export interface CarInstallmentPaymentsProps {
+  contractId: string;
+  payments: CarInstallmentPayment[];
+}
+
+export interface PaymentMonitoringProps {
+  contract: CarInstallmentContract;
+  payments: CarInstallmentPayment[];
+}
