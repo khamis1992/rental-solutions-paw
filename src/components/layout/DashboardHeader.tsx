@@ -14,7 +14,7 @@ export const DashboardHeader = () => {
         <div className="flex h-full items-center justify-between gap-2 md:gap-4 px-4">
           <div className="flex items-center gap-4">
             <div className="font-semibold text-lg hidden md:block hover:text-primary transition-colors">
-              Rental Solutions
+              Rental Solution
             </div>
             <SearchBox />
           </div>
