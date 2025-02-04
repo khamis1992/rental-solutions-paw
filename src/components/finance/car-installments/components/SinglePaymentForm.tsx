@@ -66,7 +66,8 @@ export function SinglePaymentForm({ contractId, onSuccess }: SinglePaymentFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-queNumber">Cheque Number</Label>
+      <div className="space-y-2">
+        <Label htmlFor="chequeNumber">Cheque Number</Label>
         <Input
           id="chequeNumber"
           value={chequeNumber}
