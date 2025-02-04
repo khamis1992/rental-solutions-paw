@@ -4,16 +4,7 @@ import { formatCurrency } from "@/lib/utils";
 import { AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDateToDisplay } from "@/lib/dateUtils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +47,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     },
   });
 
-  // Calculate totals including late fines
   const totals = payments?.reduce((acc, payment) => {
     const amountPaid = payment.amount_paid || 0;
     const lateFine = payment.late_fine_amount || 0;
@@ -65,8 +55,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
       amountPaid: acc.amountPaid + amountPaid,
       lateFines: acc.lateFines + lateFine,
     };
-  }, { amountPaid: 0, lateFines: 0 }) || 
-  { amountPaid: 0, lateFines: 0 };
+  }, { amountPaid: 0, lateFines: 0 }) || { amountPaid: 0, lateFines: 0 };
 
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
@@ -84,7 +73,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
       if (error) throw error;
 
-      // Create audit log for payment deletion
       await supabase.from('audit_logs').insert({
         entity_type: 'payment',
         entity_id: selectedPaymentId,
@@ -105,13 +93,33 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     }
   };
 
-  const handleLateFineUpdate = () => {
-    queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+  const handleLateFineUpdate = async () => {
+    // Invalidate queries to refresh data
+    await queryClient.invalidateQueries({ queryKey: ["payment-history", agreementId] });
+    
+    // Update the remaining amount in the leases table
+    const { data: leaseData } = await supabase
+      .from('leases')
+      .select('total_amount')
+      .eq('id', agreementId)
+      .single();
+
+    if (leaseData) {
+      const totalPaid = payments?.reduce((sum, payment) => sum + (payment.amount_paid || 0), 0) || 0;
+      const newBalance = leaseData.total_amount - totalPaid;
+
+      await supabase
+        .from('leases')
+        .update({ remaining_amount: newBalance })
+        .eq('id', agreementId);
+    }
   };
 
   if (isLoading) {
     return <div>Loading payment history...</div>;
   }
+
+  // ... keep existing code (JSX for rendering the payment history)
 
   return (
     <Card>
