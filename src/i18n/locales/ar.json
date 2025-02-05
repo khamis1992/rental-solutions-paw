@@ -1,0 +1,28 @@
+{
+  "common": {
+    "dashboard": "لوحة التحكم",
+    "vehicles": "المركبات",
+    "customers": "العملاء",
+    "agreements": "الاتفاقيات",
+    "maintenance": "الصيانة",
+    "settings": "الإعدادات",
+    "reports": "التقارير",
+    "finance": "المالية",
+    "help": "المساعدة"
+  },
+  "actions": {
+    "add": "إضافة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "search": "بحث",
+    "filter": "تصفية"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "pending": "قيد الانتظار",
+    "completed": "مكتمل"
+  }
+}
