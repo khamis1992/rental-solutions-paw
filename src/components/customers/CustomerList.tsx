@@ -21,7 +21,7 @@ export const CustomerList = () => {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  const { data, isLoading, error } = useCustomers({
+  const { data, isLoading, error, refetch } = useCustomers({
     searchQuery,
     page: currentPage,
     pageSize: ITEMS_PER_PAGE
@@ -35,11 +35,6 @@ export const CustomerList = () => {
   );
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-
-  const handleCustomerClick = (customerId: string) => {
-    setSelectedCustomerId(customerId);
-    setShowDetailsDialog(true);
-  };
 
   if (error) {
     return (
@@ -106,11 +101,11 @@ export const CustomerList = () => {
         <Table>
           <CustomerTableHeader />
           <TableBody>
-            {filteredCustomers.map((customer) => (
+            {filteredCustomers.map((customer: Customer) => (
               <CustomerTableRow 
                 key={customer.id}
                 customer={customer}
-                onCustomerClick={handleCustomerClick}
+                onDeleted={refetch}
               />
             ))}
           </TableBody>
