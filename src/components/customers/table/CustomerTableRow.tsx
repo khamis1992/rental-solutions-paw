@@ -15,17 +15,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import type { Customer } from "../types/customer";
 
 interface CustomerTableRowProps {
-  customer: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    email: string | null;
-    address: string | null;
-    driver_license: string | null;
-    created_at: string;
-  };
+  customer: Customer;
   onDeleted: () => void;
 }
 

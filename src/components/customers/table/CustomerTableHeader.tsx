@@ -15,6 +15,7 @@ export const CustomerTableHeader = () => {
         <TableHead>Driver License</TableHead>
         <TableHead>Documents</TableHead>
         <TableHead>Created</TableHead>
+        <TableHead>Actions</TableHead>
       </TableRow>
     </TableHeader>
   );

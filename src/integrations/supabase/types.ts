@@ -7002,6 +7002,7 @@ export type Database = {
         | "closed"
         | "terminated"
         | "cancelled"
+        | "archived"
       legal_case_status:
         | "pending_reminder"
         | "in_legal_process"
