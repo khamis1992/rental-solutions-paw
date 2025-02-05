@@ -5,7 +5,7 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
-import type { DashboardStats as DashboardStatsType } from "@/types/dashboard.types";
+import { DashboardStats as DashboardStatsType } from "@/types/dashboard.types";
 
 const Dashboard = () => {
   const { data: stats } = useQuery({
@@ -15,7 +15,17 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      return data as DashboardStatsType;
+      const typedData = data as DashboardStatsType;
+      
+      return {
+        totalVehicles: typedData.total_vehicles,
+        availableVehicles: typedData.available_vehicles,
+        rentedVehicles: typedData.rented_vehicles,
+        maintenanceVehicles: typedData.maintenance_vehicles,
+        totalCustomers: typedData.total_customers,
+        activeRentals: typedData.active_rentals,
+        monthlyRevenue: typedData.monthly_revenue
+      };
     },
     staleTime: 30000,
   });
@@ -29,7 +39,15 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-8">
-        {stats && <DashboardStats stats={stats} />}
+        <DashboardStats stats={stats || {
+          totalVehicles: 0,
+          availableVehicles: 0,
+          rentedVehicles: 0,
+          maintenanceVehicles: 0,
+          totalCustomers: 0,
+          activeRentals: 0,
+          monthlyRevenue: 0
+        }} />
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
