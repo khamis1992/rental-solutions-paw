@@ -14,45 +14,72 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LateFineActionsProps {
   paymentId: string;
   currentLateFine: number;
+  currentBalance: number;
   onUpdate: () => void;
 }
 
-export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFineActionsProps) => {
+export const LateFineActions = ({ 
+  paymentId, 
+  currentLateFine, 
+  currentBalance,
+  onUpdate 
+}: LateFineActionsProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [newLateFine, setNewLateFine] = useState(currentLateFine.toString());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { session } = useAuth();
+  const queryClient = useQueryClient();
+
+  const updatePaymentBalance = async (lateFineAmount: number) => {
+    const newBalance = currentBalance - lateFineAmount;
+    
+    const { error } = await supabase
+      .from('unified_payments')
+      .update({ 
+        balance: Math.max(0, newBalance)
+      })
+      .eq('id', paymentId);
+
+    if (error) throw error;
+  };
 
   const handleUpdateLateFine = async () => {
     setIsSubmitting(true);
     try {
+      // Calculate balance adjustment
+      const lateFineAdjustment = currentLateFine - Number(newLateFine);
+
       const { error } = await supabase
         .from('unified_payments')
         .update({ 
           late_fine_amount: Number(newLateFine),
+          balance: Math.max(0, currentBalance - lateFineAdjustment),
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentId);
 
       if (error) throw error;
 
-      // Create audit log with user information
+      // Create audit log
       await supabase.from('audit_logs').insert({
         entity_type: 'payment',
         entity_id: paymentId,
         action: 'update_late_fine',
         changes: {
           previous_amount: currentLateFine,
-          new_amount: Number(newLateFine)
+          new_amount: Number(newLateFine),
+          balance_adjustment: lateFineAdjustment
         },
         performed_by: session?.user?.id
       });
 
       toast.success("Late fine updated successfully");
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       onUpdate();
       setIsEditOpen(false);
     } catch (error) {
@@ -70,25 +97,28 @@ export const LateFineActions = ({ paymentId, currentLateFine, onUpdate }: LateFi
         .update({ 
           late_fine_amount: 0,
           days_overdue: 0,
+          balance: Math.max(0, currentBalance - currentLateFine),
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentId);
 
       if (error) throw error;
 
-      // Create audit log with user information
+      // Create audit log
       await supabase.from('audit_logs').insert({
         entity_type: 'payment',
         entity_id: paymentId,
         action: 'delete_late_fine',
         changes: {
           previous_amount: currentLateFine,
-          new_amount: 0
+          new_amount: 0,
+          balance_adjustment: currentLateFine
         },
         performed_by: session?.user?.id
       });
 
       toast.success("Late fine removed successfully");
+      await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
       onUpdate();
     } catch (error) {
       console.error('Error removing late fine:', error);

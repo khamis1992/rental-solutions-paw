@@ -56,18 +56,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
     },
   });
 
-  // Calculate totals including late fines
-  const totals = payments?.reduce((acc, payment) => {
-    const amountPaid = payment.amount_paid || 0;
-    const lateFine = payment.late_fine_amount || 0;
-
-    return {
-      amountPaid: acc.amountPaid + amountPaid,
-      lateFines: acc.lateFines + lateFine,
-    };
-  }, { amountPaid: 0, lateFines: 0 }) || 
-  { amountPaid: 0, lateFines: 0 };
-
   const handleDeleteClick = (paymentId: string) => {
     setSelectedPaymentId(paymentId);
     setIsDeleteDialogOpen(true);
@@ -84,7 +72,6 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
 
       if (error) throw error;
 
-      // Create audit log for payment deletion
       await supabase.from('audit_logs').insert({
         entity_type: 'payment',
         entity_id: selectedPaymentId,
@@ -126,11 +113,19 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
           <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg mb-4">
             <div>
               <div className="text-sm text-muted-foreground">Amount Paid</div>
-              <div className="text-lg font-semibold">{formatCurrency(totals.amountPaid)}</div>
+              <div className="text-lg font-semibold">
+                {formatCurrency(
+                  payments?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0
+                )}
+              </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">Late Fines</div>
-              <div className="text-lg font-semibold text-destructive">{formatCurrency(totals.lateFines)}</div>
+              <div className="text-lg font-semibold text-destructive">
+                {formatCurrency(
+                  payments?.reduce((sum, p) => sum + (p.late_fine_amount || 0), 0) || 0
+                )}
+              </div>
             </div>
           </div>
 
@@ -168,6 +163,7 @@ export const PaymentHistory = ({ agreementId }: PaymentHistoryProps) => {
                         <LateFineActions
                           paymentId={payment.id}
                           currentLateFine={payment.late_fine_amount}
+                          currentBalance={payment.balance || 0}
                           onUpdate={handleLateFineUpdate}
                         />
                       </div>
