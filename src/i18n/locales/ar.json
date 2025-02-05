@@ -8,21 +8,42 @@
     "settings": "الإعدادات",
     "reports": "التقارير",
     "finance": "المالية",
-    "help": "المساعدة"
-  },
-  "actions": {
+    "help": "المساعدة",
+    "search": "بحث",
+    "filter": "تصفية",
     "add": "إضافة",
     "edit": "تعديل",
     "delete": "حذف",
     "save": "حفظ",
-    "cancel": "إلغاء",
-    "search": "بحث",
-    "filter": "تصفية"
+    "cancel": "إلغاء"
+  },
+  "dashboard": {
+    "totalVehicles": "إجمالي المركبات",
+    "availableVehicles": "المركبات المتاحة",
+    "activeRentals": "التأجيرات النشطة",
+    "monthlyRevenue": "الإيرادات الشهرية",
+    "welcomeBack": "مرحباً بعودتك",
+    "recentActivity": "النشاط الأخير",
+    "viewAll": "عرض الكل"
   },
   "status": {
     "active": "نشط",
     "inactive": "غير نشط",
     "pending": "قيد الانتظار",
-    "completed": "مكتمل"
+    "completed": "مكتمل",
+    "cancelled": "ملغي",
+    "overdue": "متأخر"
+  },
+  "agreements": {
+    "title": "الاتفاقيات",
+    "createNew": "إنشاء اتفاقية جديدة",
+    "agreementNumber": "رقم الاتفاقية",
+    "customer": "العميل",
+    "vehicle": "المركبة",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "status": "الحالة",
+    "rentAmount": "مبلغ الإيجار",
+    "totalAmount": "المبلغ الإجمالي"
   }
 }
