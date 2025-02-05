@@ -99,6 +99,7 @@ serve(async (req) => {
           continue;
         }
 
+        // Insert new payment without ON CONFLICT clause
         const { error: insertError } = await supabase
           .from('car_installment_payments')
           .insert([payment]);
