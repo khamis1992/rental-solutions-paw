@@ -59,6 +59,8 @@ export const AgreementList = () => {
 
   const handleAgreementClick = async (agreementId: string) => {
     try {
+      console.log('Fetching agreement details for:', agreementId);
+      
       const { data: agreement, error: agreementError } = await supabase
         .from('leases')
         .select(`
@@ -86,12 +88,19 @@ export const AgreementList = () => {
         .eq('id', agreementId)
         .maybeSingle();
 
-      if (agreementError) throw agreementError;
+      if (agreementError) {
+        console.error('Error fetching agreement:', agreementError);
+        throw agreementError;
+      }
 
       if (!agreement?.agreement_templates?.content) {
+        console.error('No template found for agreement:', agreementId);
         toast.error('No template found for this agreement');
         return;
       }
+
+      console.log('Agreement data:', agreement);
+      console.log('Template content before replacement:', agreement.agreement_templates.content);
 
       let templateContent = agreement.agreement_templates.content;
 
@@ -132,6 +141,8 @@ export const AgreementList = () => {
           .replace(/{{vehicle\.vin}}/g, agreement.vehicle.vin || '');
       }
 
+      console.log('Template content after replacement:', templateContent);
+      
       setSelectedTemplate(templateContent);
       setShowTemplatePreview(true);
     } catch (error) {
