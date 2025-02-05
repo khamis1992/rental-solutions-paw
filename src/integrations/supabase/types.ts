@@ -6837,6 +6837,12 @@ export type Database = {
         }
         Returns: number
       }
+      can_delete_customer: {
+        Args: {
+          customer_id: string
+        }
+        Returns: boolean
+      }
       check_inventory_levels: {
         Args: Record<PropertyKey, never>
         Returns: undefined
