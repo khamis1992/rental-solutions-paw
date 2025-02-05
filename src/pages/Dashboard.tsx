@@ -15,39 +15,29 @@ const Dashboard = () => {
       
       if (error) throw error;
       
-      const typedData = data as DashboardStatsType;
-      
-      return {
-        totalVehicles: typedData.total_vehicles,
-        availableVehicles: typedData.available_vehicles,
-        rentedVehicles: typedData.rented_vehicles,
-        maintenanceVehicles: typedData.maintenance_vehicles,
-        totalCustomers: typedData.total_customers,
-        activeRentals: typedData.active_rentals,
-        monthlyRevenue: typedData.monthly_revenue
-      };
+      return data as DashboardStatsType;
     },
     staleTime: 30000,
   });
 
+  const defaultStats: DashboardStatsType = {
+    total_vehicles: 0,
+    available_vehicles: 0,
+    rented_vehicles: 0,
+    maintenance_vehicles: 0,
+    total_customers: 0,
+    active_rentals: 0,
+    monthly_revenue: 0
+  };
+
   return (
     <div className="pt-[calc(var(--header-height,56px)+2rem)] max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       <div className="flex justify-between items-center bg-secondary rounded-lg p-6 text-white">
-        <div>
-          <WelcomeHeader />
-        </div>
+        <WelcomeHeader />
       </div>
 
       <div className="grid gap-8">
-        <DashboardStats stats={stats || {
-          totalVehicles: 0,
-          availableVehicles: 0,
-          rentedVehicles: 0,
-          maintenanceVehicles: 0,
-          totalCustomers: 0,
-          activeRentals: 0,
-          monthlyRevenue: 0
-        }} />
+        <DashboardStats stats={stats || defaultStats} />
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">

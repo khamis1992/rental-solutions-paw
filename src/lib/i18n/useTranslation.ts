@@ -16,7 +16,7 @@ export const useTranslation = create<TranslationStore>()(
       setLanguage: (language) => set({ language }),
       t: (key) => {
         const keys = key.split('.');
-        let value = translations[get().language];
+        let value: any = translations[get().language];
         
         for (const k of keys) {
           if (value && typeof value === 'object' && k in value) {
@@ -27,7 +27,7 @@ export const useTranslation = create<TranslationStore>()(
           }
         }
         
-        return value as string;
+        return String(value);
       },
       dir: () => get().language === 'ar' ? 'rtl' : 'ltr',
     }),
