@@ -47,21 +47,26 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-noto-sans-arabic;
+    @apply bg-background text-foreground;
   }
+}
 
-  /* RTL specific styles */
-  [dir="rtl"] {
-    text-align: right;
-  }
+/* RTL Support */
+[dir="rtl"] {
+  text-align: right;
+}
 
-  [dir="rtl"] .reverse-flex {
-    flex-direction: row-reverse;
-  }
+[dir="rtl"] .flex {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
 }
