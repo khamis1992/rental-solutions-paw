@@ -12,7 +12,7 @@ interface TranslationStore {
 export const useTranslation = create<TranslationStore>()(
   persist(
     (set, get) => ({
-      language: 'en',
+      language: 'ar', // Changed default to Arabic
       setLanguage: (language) => set({ language }),
       t: (key) => {
         const keys = key.split('.');

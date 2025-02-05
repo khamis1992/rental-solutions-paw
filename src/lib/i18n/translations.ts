@@ -20,6 +20,7 @@ export const translations = {
       view: 'View',
       print: 'Print',
       download: 'Download',
+      toggleLanguage: 'Toggle Language',
     },
     navigation: {
       dashboard: 'Dashboard',
@@ -68,6 +69,7 @@ export const translations = {
       view: 'عرض',
       print: 'طباعة',
       download: 'تحميل',
+      toggleLanguage: 'تغيير اللغة',
     },
     navigation: {
       dashboard: 'لوحة التحكم',

@@ -14,7 +14,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
   const navigate = useNavigate();
-  const { dir } = useTranslation();
+  const { dir, language } = useTranslation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
@@ -29,17 +29,21 @@ export default function App() {
       console.error('Session error:', error);
       if (error.message?.includes('refresh_token_not_found') || 
           error.message?.includes('session_not_found')) {
-        toast.error('Your session has expired. Please sign in again.');
+        toast.error(language === 'ar' ? 'انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.' : 'Your session has expired. Please sign in again.');
         supabase.auth.signOut().then(() => {
           navigate('/auth');
         });
       }
     }
 
+    // Update document direction
+    document.documentElement.dir = dir();
+    document.documentElement.lang = language;
+
     return () => {
       subscription.unsubscribe();
     };
-  }, [error, navigate]);
+  }, [error, navigate, dir, language]);
 
   if (isLoading) {
     return <Skeleton className="h-screen w-screen" />;
