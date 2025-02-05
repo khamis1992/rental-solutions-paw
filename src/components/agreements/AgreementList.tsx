@@ -83,6 +83,9 @@ export const AgreementList = () => {
             color,
             license_plate,
             vin
+          ),
+          remaining_amounts!remaining_amounts_lease_id_fkey (
+            remaining_amount
           )
         `)
         .eq('id', agreementId)
@@ -105,41 +108,52 @@ export const AgreementList = () => {
       let templateContent = agreement.agreement_templates.content;
 
       // Replace agreement variables
-      templateContent = templateContent
-        .replace(/{{agreement\.start_date}}/g, formatDateToDisplay(agreement.start_date))
-        .replace(/{{agreement\.end_date}}/g, formatDateToDisplay(agreement.end_date))
-        .replace(/{{agreement\.agreement_number}}/g, agreement.agreement_number || '')
-        .replace(/{{agreement\.rent_amount}}/g, `${agreement.rent_amount} QAR`)
-        .replace(/{{agreement\.daily_late_fee}}/g, `${agreement.daily_late_fee} QAR`)
-        .replace(/{{agreement\.agreement_duration}}/g, agreement.agreement_duration || '')
-        .replace(/{{agreement\.total_amount}}/g, `${agreement.total_amount} QAR`)
-        .replace(/{{agreement\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR')
-        .replace(/{{payment\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR');
+      const agreementReplacements = {
+        'agreement.start_date': formatDateToDisplay(agreement.start_date),
+        'agreement.end_date': formatDateToDisplay(agreement.end_date),
+        'agreement.agreement_number': agreement.agreement_number || '',
+        'agreement.rent_amount': `${agreement.rent_amount} QAR`,
+        'agreement.daily_late_fee': `${agreement.daily_late_fee} QAR`,
+        'agreement.agreement_duration': agreement.agreement_duration || '',
+        'agreement.total_amount': `${agreement.total_amount} QAR`,
+        'agreement.down_payment': agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR',
+        'payment.down_payment': agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR'
+      };
 
-      // Replace customer variables with support for both formats
-      if (agreement.customer) {
-        templateContent = templateContent
-          .replace(/{{customer\.name}}/g, agreement.customer.full_name || '')
-          .replace(/{{customer\.full_name}}/g, agreement.customer.full_name || '')
-          .replace(/{{customer\.phone_number}}/g, agreement.customer.phone_number || '')
-          .replace(/{{customer\.email}}/g, agreement.customer.email || '')
-          .replace(/{{customer\.address}}/g, agreement.customer.address || '')
-          .replace(/{{customer\.nationality}}/g, agreement.customer.nationality || '')
-          .replace(/{{customer\.driver_license}}/g, agreement.customer.driver_license || '');
-      }
+      // Replace customer variables
+      const customerReplacements = {
+        'customer.name': agreement.customer?.full_name || '',
+        'customer.full_name': agreement.customer?.full_name || '',
+        'customer.phone_number': agreement.customer?.phone_number || '',
+        'customer.email': agreement.customer?.email || '',
+        'customer.address': agreement.customer?.address || '',
+        'customer.nationality': agreement.customer?.nationality || '',
+        'customer.driver_license': agreement.customer?.driver_license || ''
+      };
 
       // Replace vehicle variables
-      if (agreement.vehicle) {
-        const vehicleName = `${agreement.vehicle.make} ${agreement.vehicle.model}`;
-        templateContent = templateContent
-          .replace(/{{vehicle\.name}}/g, vehicleName)
-          .replace(/{{vehicle\.make}}/g, agreement.vehicle.make || '')
-          .replace(/{{vehicle\.model}}/g, agreement.vehicle.model || '')
-          .replace(/{{vehicle\.year}}/g, agreement.vehicle.year?.toString() || '')
-          .replace(/{{vehicle\.color}}/g, agreement.vehicle.color || '')
-          .replace(/{{vehicle\.license_plate}}/g, agreement.vehicle.license_plate || '')
-          .replace(/{{vehicle\.vin}}/g, agreement.vehicle.vin || '');
-      }
+      const vehicleReplacements = {
+        'vehicle.name': `${agreement.vehicle?.make} ${agreement.vehicle?.model}`,
+        'vehicle.make': agreement.vehicle?.make || '',
+        'vehicle.model': agreement.vehicle?.model || '',
+        'vehicle.year': agreement.vehicle?.year?.toString() || '',
+        'vehicle.color': agreement.vehicle?.color || '',
+        'vehicle.license_plate': agreement.vehicle?.license_plate || '',
+        'vehicle.vin': agreement.vehicle?.vin || ''
+      };
+
+      // Combine all replacements
+      const allReplacements = {
+        ...agreementReplacements,
+        ...customerReplacements,
+        ...vehicleReplacements
+      };
+
+      // Perform all replacements
+      Object.entries(allReplacements).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        templateContent = templateContent.replace(regex, value);
+      });
 
       console.log('Template content after replacement:', templateContent);
       
