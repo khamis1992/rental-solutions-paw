@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
   const navigate = useNavigate();
+  const { dir } = useTranslation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
@@ -45,7 +47,7 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" dir={dir()}>
         <Toaster />
         <Routes>
           {/* Public Routes - No Layout */}
