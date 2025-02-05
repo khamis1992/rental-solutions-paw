@@ -1,11 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import type { DashboardStats } from "@/types/dashboard.types";
-
-interface DashboardStatsProps {
-  stats: DashboardStats;
-}
+import type { DashboardStatsProps } from "@/types/dashboard.types";
 
 export const DashboardStats = ({ stats }: DashboardStatsProps) => {
   const { t } = useTranslation();
