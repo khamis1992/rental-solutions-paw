@@ -15,44 +15,13 @@ export default function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleAuthChange = async (event: string, currentSession: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (event === 'SIGNED_OUT') {
         navigate('/auth');
       } else if (event === 'SIGNED_IN') {
-        try {
-          await supabase.auth.refreshSession();
-          // Verify the profile exists
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', currentSession?.user?.id)
-            .single();
-
-          if (profileError) {
-            console.error('Error fetching profile:', profileError);
-            toast.error('Error loading user profile');
-            await supabase.auth.signOut();
-            navigate('/auth');
-            return;
-          }
-
-          if (!profile) {
-            console.error('No profile found');
-            toast.error('User profile not found');
-            await supabase.auth.signOut();
-            navigate('/auth');
-            return;
-          }
-        } catch (err) {
-          console.error('Session refresh error:', err);
-          toast.error('Session refresh failed');
-          await supabase.auth.signOut();
-          navigate('/auth');
-        }
+        supabase.auth.refreshSession();
       }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+    });
 
     if (error) {
       console.error('Session error:', error);
