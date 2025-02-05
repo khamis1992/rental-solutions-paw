@@ -14,7 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
 import type { Customer } from "../types/customer";
 import { Badge } from "@/components/ui/badge";
 
@@ -101,9 +100,6 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
           >
             {customer.status?.replace('_', ' ') || 'N/A'}
           </Badge>
-        </TableCell>
-        <TableCell className="py-2 text-sm">
-          {customer.created_at && format(new Date(customer.created_at), 'dd/MM/yyyy')}
         </TableCell>
         <TableCell className="py-2">
           <div className="flex items-center justify-end">
