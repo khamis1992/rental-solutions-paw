@@ -1,102 +1,22 @@
-import { useState, useCallback } from "react";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-} from "@/components/ui/command";
-import { VehicleDetailsDialog } from "@/components/vehicles/VehicleDetailsDialog";
-import { CustomerDetailsDialog } from "@/components/customers/CustomerDetailsDialog";
-import { AgreementDetailsDialog } from "@/components/agreements/AgreementDetailsDialog";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import { SearchResults } from "@/components/search/SearchResults";
-import { useSearch } from "@/components/search/useSearch";
+import { useTranslation } from "@/lib/i18n/useTranslation";
 
-export const SearchBox = () => {
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300);
-  const isMobile = useIsMobile();
-  
-  // Dialog states
-  const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
-  const [selectedAgreement, setSelectedAgreement] = useState<string | null>(null);
+interface SearchBoxProps {
+  placeholder?: string;
+}
 
-  const { data: searchResults, error, isLoading } = useSearch(debouncedSearch);
-
-  const handleSelect = useCallback((type: string, id: string) => {
-    setOpen(false);
-    switch (type) {
-      case "vehicle":
-        setSelectedVehicle(id);
-        break;
-      case "customer":
-        setSelectedCustomer(id);
-        break;
-      case "agreement":
-        setSelectedAgreement(id);
-        break;
-    }
-  }, []);
+export function SearchBox({ placeholder }: SearchBoxProps) {
+  const { dir } = useTranslation();
+  const isRTL = dir() === 'rtl';
 
   return (
-    <>
-      <div className="relative w-full max-w-[280px] md:w-80">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={isMobile ? "Search..." : "Search vehicles, customers, agreements..."}
-          className="pl-8 h-9 md:h-10"
-          onClick={() => setOpen(true)}
-        />
-      </div>
-
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className={cn("max-w-[90vw] md:max-w-[640px]")}>
-          <CommandInput 
-            placeholder="Type to search..." 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            className="h-10 md:h-12"
-          />
-          <CommandList className="max-h-[50vh] md:max-h-[400px]">
-            <SearchResults
-              isLoading={isLoading}
-              error={error}
-              searchQuery={searchQuery}
-              searchResults={searchResults}
-              handleSelect={handleSelect}
-            />
-          </CommandList>
-        </div>
-      </CommandDialog>
-
-      {selectedVehicle && (
-        <VehicleDetailsDialog
-          vehicleId={selectedVehicle}
-          open={!!selectedVehicle}
-          onOpenChange={(open) => !open && setSelectedVehicle(null)}
-        />
-      )}
-      
-      {selectedCustomer && (
-        <CustomerDetailsDialog
-          customerId={selectedCustomer}
-          open={!!selectedCustomer}
-          onOpenChange={(open) => !open && setSelectedCustomer(null)}
-        />
-      )}
-      
-      {selectedAgreement && (
-        <AgreementDetailsDialog
-          agreementId={selectedAgreement}
-          open={!!selectedAgreement}
-          onOpenChange={(open) => !open && setSelectedAgreement(null)}
-        />
-      )}
-    </>
+    <div className={`relative ${isRTL ? 'rtl' : ''}`}>
+      <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground`} />
+      <input
+        type="search"
+        placeholder={placeholder}
+        className={`h-9 w-64 rounded-md border border-input bg-background ${isRTL ? 'pr-9' : 'pl-9'} ${isRTL ? 'pl-3' : 'pr-3'} text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
+      />
+    </div>
   );
-};
+}
