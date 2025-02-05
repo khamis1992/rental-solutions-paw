@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { format } from "date-fns";
 
 interface CustomerTableRowProps {
   customer: {
@@ -22,6 +23,8 @@ interface CustomerTableRowProps {
     phone_number: string | null;
     email: string | null;
     address: string | null;
+    driver_license: string | null;
+    created_at: string;
   };
   onDeleted: () => void;
 }
@@ -85,6 +88,18 @@ export const CustomerTableRow = ({ customer, onDeleted }: CustomerTableRowProps)
         <TableCell>{customer.phone_number}</TableCell>
         <TableCell>{customer.email}</TableCell>
         <TableCell>{customer.address}</TableCell>
+        <TableCell>{customer.driver_license}</TableCell>
+        <TableCell>
+          {customer.id_document_url && (
+            <span className="text-sm text-green-600">ID Uploaded</span>
+          )}
+          {customer.license_document_url && (
+            <span className="text-sm text-green-600 ml-2">License Uploaded</span>
+          )}
+        </TableCell>
+        <TableCell>
+          {customer.created_at && format(new Date(customer.created_at), 'dd/MM/yyyy')}
+        </TableCell>
         <TableCell>
           <div className="flex items-center gap-2">
             <Button

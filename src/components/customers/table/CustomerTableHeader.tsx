@@ -10,6 +10,7 @@ export const CustomerTableHeader = () => {
       <TableRow>
         <TableHead>Name</TableHead>
         <TableHead>Phone</TableHead>
+        <TableHead>Email</TableHead>
         <TableHead>Address</TableHead>
         <TableHead>Driver License</TableHead>
         <TableHead>Documents</TableHead>
