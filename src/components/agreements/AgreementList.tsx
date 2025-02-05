@@ -107,7 +107,7 @@ export const AgreementList = () => {
         .replace(/{{agreement\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR')
         .replace(/{{payment\.down_payment}}/g, agreement.down_payment ? `${agreement.down_payment} QAR` : '0 QAR');
 
-      // Replace customer variables
+      // Replace customer variables - Updated to handle both formats
       if (agreement.customer) {
         templateContent = templateContent
           .replace(/{{customer\.name}}/g, agreement.customer.full_name || '')
