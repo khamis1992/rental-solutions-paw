@@ -9,12 +9,10 @@ import { toast } from "sonner";
 import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useTranslation } from "@/lib/i18n/useTranslation";
 
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
   const navigate = useNavigate();
-  const { dir, language } = useTranslation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
@@ -29,21 +27,17 @@ export default function App() {
       console.error('Session error:', error);
       if (error.message?.includes('refresh_token_not_found') || 
           error.message?.includes('session_not_found')) {
-        toast.error(language === 'ar' ? 'انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.' : 'Your session has expired. Please sign in again.');
+        toast.error('Your session has expired. Please sign in again.');
         supabase.auth.signOut().then(() => {
           navigate('/auth');
         });
       }
     }
 
-    // Update document direction
-    document.documentElement.dir = dir();
-    document.documentElement.lang = language;
-
     return () => {
       subscription.unsubscribe();
     };
-  }, [error, navigate, dir, language]);
+  }, [error, navigate]);
 
   if (isLoading) {
     return <Skeleton className="h-screen w-screen" />;
@@ -51,7 +45,7 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-      <div className="min-h-screen bg-background" dir={dir()}>
+      <div className="min-h-screen bg-background">
         <Toaster />
         <Routes>
           {/* Public Routes - No Layout */}

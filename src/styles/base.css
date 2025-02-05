@@ -81,19 +81,6 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* RTL Support */
-  [dir="rtl"] {
-    text-align: right;
-  }
-
-  [dir="rtl"] .rtl-flip {
-    transform: scaleX(-1);
-  }
-
-  [dir="rtl"] .rtl-rotate-180 {
-    transform: rotate(180deg);
-  }
-
   /* Fixed layout styles */
   .page-container {
     @apply min-h-screen w-full bg-background;
