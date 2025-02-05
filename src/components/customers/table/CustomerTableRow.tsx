@@ -63,59 +63,59 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
   return (
     <>
       <TableRow 
-        className="hover:bg-muted/50 cursor-pointer transition-colors"
+        className="hover:bg-muted/50 cursor-pointer transition-colors text-sm"
         onClick={onClick}
       >
-        <TableCell className="font-medium">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <UserCircle className="w-5 h-5 text-primary" />
+        <TableCell className="py-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <UserCircle className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <div>{customer.full_name}</div>
-              <div className="text-sm text-muted-foreground">{customer.email}</div>
+              <div className="font-medium">{customer.full_name}</div>
+              <div className="text-xs text-muted-foreground">{customer.email}</div>
             </div>
           </div>
         </TableCell>
-        <TableCell>{customer.phone_number}</TableCell>
-        <TableCell className="max-w-[250px] truncate">{customer.address}</TableCell>
-        <TableCell>{customer.driver_license}</TableCell>
-        <TableCell>
-          <div className="flex gap-2">
+        <TableCell className="py-2 text-sm">{customer.phone_number}</TableCell>
+        <TableCell className="max-w-[200px] truncate py-2 text-sm">{customer.address}</TableCell>
+        <TableCell className="py-2 text-sm">{customer.driver_license}</TableCell>
+        <TableCell className="py-2">
+          <div className="flex gap-1">
             {customer.id_document_url && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                 ID
               </Badge>
             )}
             {customer.license_document_url && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                 License
               </Badge>
             )}
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell className="py-2">
           <Badge 
             variant="outline" 
-            className={getStatusColor(customer.status)}
+            className={`text-xs ${getStatusColor(customer.status)}`}
           >
             {customer.status?.replace('_', ' ') || 'N/A'}
           </Badge>
         </TableCell>
-        <TableCell>
+        <TableCell className="py-2 text-sm">
           {customer.created_at && format(new Date(customer.created_at), 'dd/MM/yyyy')}
         </TableCell>
-        <TableCell>
+        <TableCell className="py-2">
           <div className="flex items-center justify-end">
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDeleteDialog(true);
               }}
               disabled={isDeleting}
-              className="hover:bg-destructive/10 hover:text-destructive"
+              className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
