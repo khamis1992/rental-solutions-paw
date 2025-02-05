@@ -86,9 +86,9 @@ export interface Agreement {
     year: number;
     license_plate: string;
   };
-  remaining_amounts?: {
+  remainingAmount?: {
     remaining_amount: number;
-  }[];
+  };
 }
 
 export interface AgreementWithRelations extends Agreement {
