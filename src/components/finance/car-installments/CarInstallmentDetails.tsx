@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploadSection } from "@/components/agreements/payment-import/FileUploadSection";
 import Papa from 'papaparse';
 
+interface CsvRow {
+  cheque_number: string;
+  amount: string;
+  payment_date: string;
+  drawee_bank: string;
+}
+
 export const CarInstallmentDetails = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
@@ -41,7 +48,7 @@ export const CarInstallmentDetails = () => {
     try {
       const text = await file.text();
       
-      Papa.parse(text, {
+      Papa.parse<CsvRow>(text, {
         header: true,
         complete: async (results) => {
           const parsedData = results.data;
@@ -55,7 +62,7 @@ export const CarInstallmentDetails = () => {
 
               const { error: insertError } = await supabase
                 .from('car_installment_payments')
-                .upsert({
+                .insert({
                   contract_id: id,
                   cheque_number: row.cheque_number,
                   amount: parseFloat(row.amount),
@@ -64,13 +71,16 @@ export const CarInstallmentDetails = () => {
                   paid_amount: 0,
                   remaining_amount: parseFloat(row.amount),
                   status: 'pending'
-                }, {
-                  onConflict: 'cheque_number'
-                });
+                })
+                .select();
 
               if (insertError) {
-                console.error('Import error:', insertError);
-                toast.error(`Failed to import cheque ${row.cheque_number}`);
+                if (insertError.code === '23505') { // Unique violation
+                  toast.error(`Cheque number ${row.cheque_number} already exists`);
+                } else {
+                  console.error('Import error:', insertError);
+                  toast.error(`Failed to import cheque ${row.cheque_number}`);
+                }
               }
             } catch (error: any) {
               console.error('Error processing row:', error);
