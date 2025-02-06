@@ -28,7 +28,7 @@ export const CarInstallmentDetails = () => {
         .from("car_installment_payments")
         .select("*")
         .eq("contract_id", id)
-        .order("payment_date", { ascending: true });
+        .order('payment_date', { ascending: true });
 
       if (error) {
         console.error("Error fetching payments:", error);
@@ -63,13 +63,17 @@ export const CarInstallmentDetails = () => {
               }
 
               // Check if cheque number already exists
-              const { data: existingCheque } = await supabase
+              const { data: existingCheques, error: checkError } = await supabase
                 .from('car_installment_payments')
                 .select('cheque_number')
-                .eq('cheque_number', row.cheque_number)
-                .single();
+                .eq('cheque_number', row.cheque_number);
 
-              if (existingCheque) {
+              if (checkError) {
+                console.error('Error checking existing cheque:', checkError);
+                throw new Error(`Error checking cheque ${row.cheque_number}`);
+              }
+
+              if (existingCheques && existingCheques.length > 0) {
                 errorCount++;
                 toast.error(`Cheque number ${row.cheque_number} already exists`);
                 continue;
