@@ -36,10 +36,10 @@ export const FileUploadSection = ({
         </Button>
       </div>
       
-      {(isUploading || isAnalyzing) && (
+      {isAnalyzing && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          {isAnalyzing ? "Analyzing file..." : "Uploading file..."}
+          Analyzing file...
         </div>
       )}
     </div>
