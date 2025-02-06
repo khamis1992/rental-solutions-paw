@@ -38,8 +38,8 @@ export const SystemOverview = () => {
   return (
     <div className="w-full space-y-8">
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">مرحباً بك في نظام إدارة التأجير</h2>
-        <p className="text-base text-muted-foreground leading-relaxed max-w-3xl">
+        <h2 className="text-2xl font-semibold text-right">مرحباً بك في نظام إدارة التأجير</h2>
+        <p className="text-base text-muted-foreground leading-relaxed max-w-3xl text-right">
           نظام إدارة التأجير هو نظام شامل مصمم لتبسيط عمليات التأجير الخاصة بك.
           سيرشدك مركز المساعدة هذا خلال جميع الميزات والوظائف في النظام.
         </p>
@@ -51,9 +51,9 @@ export const SystemOverview = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <feature.icon className="h-5 w-5 text-primary flex-shrink-0" />
-                <h3 className="text-lg font-medium">{feature.title}</h3>
+                <h3 className="text-lg font-medium text-right">{feature.title}</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed text-right">
                 {feature.description}
               </p>
             </div>

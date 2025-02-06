@@ -16,19 +16,17 @@ const Help = () => {
   return (
     <DashboardLayout>
       <div className="flex flex-col min-h-[calc(100vh-56px)] w-full">
-        {/* Header Section - Reduced top padding */}
         <div className="flex-shrink-0 w-full bg-background border-b">
           <div className="container mx-auto flex justify-between items-center py-3">
             <div>
-              <h1 className="text-2xl font-bold">مركز المساعدة</h1>
-              <p className="text-base text-muted-foreground">
+              <h1 className="text-2xl font-bold text-right">مركز المساعدة</h1>
+              <p className="text-base text-muted-foreground text-right">
                 اعثر على أدلة شاملة ووثائق ودعم لاستخدام نظام إدارة التأجير
               </p>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-grow overflow-hidden">
           <div className="container mx-auto py-4">
             <Tabs defaultValue="overview" className="h-full space-y-4">
