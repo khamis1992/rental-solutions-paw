@@ -60,7 +60,8 @@ export const CarInstallmentDetails = () => {
                 throw new Error(`Missing required fields for cheque ${row.cheque_number || 'unknown'}`);
               }
 
-              const { error: insertError } = await supabase
+              // Try to insert the payment
+              const { data, error: insertError } = await supabase
                 .from('car_installment_payments')
                 .insert({
                   contract_id: id,
@@ -71,8 +72,7 @@ export const CarInstallmentDetails = () => {
                   paid_amount: 0,
                   remaining_amount: parseFloat(row.amount),
                   status: 'pending'
-                })
-                .select();
+                });
 
               if (insertError) {
                 if (insertError.code === '23505') { // Unique violation
