@@ -78,6 +78,7 @@ export interface Agreement {
     full_name: string | null;
     phone_number: string | null;
     email?: string | null;
+    status?: string;
   };
   vehicle?: {
     id: string;
