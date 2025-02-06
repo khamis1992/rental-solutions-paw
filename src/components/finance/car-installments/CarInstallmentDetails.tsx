@@ -48,9 +48,14 @@ export const CarInstallmentDetails = () => {
           
           for (const row of parsedData) {
             try {
+              // Validate required fields
+              if (!row.cheque_number || !row.amount || !row.payment_date || !row.drawee_bank) {
+                throw new Error(`Missing required fields for cheque ${row.cheque_number || 'unknown'}`);
+              }
+
               const { error: insertError } = await supabase
                 .from('car_installment_payments')
-                .insert({
+                .upsert({
                   contract_id: id,
                   cheque_number: row.cheque_number,
                   amount: parseFloat(row.amount),
@@ -59,15 +64,17 @@ export const CarInstallmentDetails = () => {
                   paid_amount: 0,
                   remaining_amount: parseFloat(row.amount),
                   status: 'pending'
+                }, {
+                  onConflict: 'cheque_number'
                 });
 
               if (insertError) {
                 console.error('Import error:', insertError);
                 toast.error(`Failed to import cheque ${row.cheque_number}`);
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error('Error processing row:', error);
-              toast.error('Failed to process row');
+              toast.error(error.message || 'Failed to process row');
             }
           }
 
@@ -79,9 +86,9 @@ export const CarInstallmentDetails = () => {
           toast.error('Failed to parse CSV file');
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Import error:', error);
-      toast.error('Failed to import file');
+      toast.error(error.message || 'Failed to import file');
     } finally {
       setIsAnalyzing(false);
     }
