@@ -55,14 +55,14 @@ export const StepByStepGuides = () => {
     if (Array.isArray(guides)) {
       return guides.map((guide, index) => (
         <Card key={index} className="p-6">
-          <h3 className="text-lg font-medium mb-4">{guide.title}</h3>
+          <h3 className="text-lg font-medium mb-4 text-right">{guide.title}</h3>
           <ol className="space-y-3">
             {guide.steps.map((step, stepIndex) => (
               <li key={stepIndex} className="flex gap-3">
+                <span className="text-sm">{step}</span>
                 <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
                   {stepIndex + 1}
                 </span>
-                <span className="text-sm">{step}</span>
               </li>
             ))}
           </ol>
@@ -70,20 +70,19 @@ export const StepByStepGuides = () => {
       ));
     }
 
-    // Handle workflow guides which have a nested structure
     return Object.entries(guides).map(([section, sectionGuides]) => (
       <div key={section} className="space-y-4">
-        <h3 className="text-lg font-semibold capitalize">{section}</h3>
+        <h3 className="text-lg font-semibold capitalize text-right">{section}</h3>
         {sectionGuides.map((guide, index) => (
           <Card key={index} className="p-6">
-            <h4 className="text-lg font-medium mb-4">{guide.title}</h4>
+            <h4 className="text-lg font-medium mb-4 text-right">{guide.title}</h4>
             <ol className="space-y-3">
               {guide.steps.map((step, stepIndex) => (
                 <li key={stepIndex} className="flex gap-3">
+                  <span className="text-sm">{step}</span>
                   <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
                     {stepIndex + 1}
                   </span>
-                  <span className="text-sm">{step}</span>
                 </li>
               ))}
             </ol>
@@ -96,22 +95,22 @@ export const StepByStepGuides = () => {
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col space-y-2">
-        <h2 className="text-2xl font-semibold">Step-by-Step Guides</h2>
-        <p className="text-muted-foreground">
-          Comprehensive guides for system features and operations
+        <h2 className="text-2xl font-semibold text-right">الدليل خطوة بخطوة</h2>
+        <p className="text-muted-foreground text-right">
+          أدلة شاملة لميزات النظام والعمليات
         </p>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full space-y-6">
         <ScrollArea className="w-full">
           <TabsList className="w-full justify-start inline-flex">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="customers">Customers</TabsTrigger>
-            <TabsTrigger value="agreements">Agreements</TabsTrigger>
-            <TabsTrigger value="finance">Finance</TabsTrigger>
-            <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
-            <TabsTrigger value="legal">Legal</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+            <TabsTrigger value="customers">العملاء</TabsTrigger>
+            <TabsTrigger value="agreements">الاتفاقيات</TabsTrigger>
+            <TabsTrigger value="finance">المالية</TabsTrigger>
+            <TabsTrigger value="vehicles">المركبات</TabsTrigger>
+            <TabsTrigger value="legal">القانونية</TabsTrigger>
+            <TabsTrigger value="reports">التقارير</TabsTrigger>
           </TabsList>
         </ScrollArea>
 

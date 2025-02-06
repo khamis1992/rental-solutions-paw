@@ -5,43 +5,43 @@ export const SystemOverview = () => {
   const features = [
     {
       icon: Users,
-      title: "Customer Management",
-      description: "Manage customer profiles, documents, and rental history efficiently."
+      title: "إدارة العملاء",
+      description: "إدارة ملفات العملاء والوثائق وسجل التأجير بكفاءة"
     },
     {
       icon: Car,
-      title: "Vehicle Management",
-      description: "Track vehicle status, maintenance, and availability in real-time."
+      title: "إدارة المركبات",
+      description: "تتبع حالة المركبات والصيانة والتوافر في الوقت الفعلي"
     },
     {
       icon: FileText,
-      title: "Agreements",
-      description: "Create and manage rental agreements with automated workflows."
+      title: "الاتفاقيات",
+      description: "إنشاء وإدارة اتفاقيات التأجير مع سير العمل الآلي"
     },
     {
       icon: Banknote,
-      title: "Finance",
-      description: "Handle transactions, track expenses, and manage financial reports."
+      title: "المالية",
+      description: "إدارة المعاملات وتتبع النفقات وإدارة التقارير المالية"
     },
     {
       icon: AlertTriangle,
-      title: "Traffic Fines",
-      description: "Process and manage traffic fines with automatic assignment capabilities."
+      title: "المخالفات المرورية",
+      description: "معالجة وإدارة المخالفات المرورية مع إمكانيات التعيين التلقائي"
     },
     {
       icon: BarChart3,
-      title: "Reports & Analytics",
-      description: "Generate comprehensive insights with advanced reporting tools."
+      title: "التقارير والتحليلات",
+      description: "إنشاء رؤى شاملة مع أدوات تقارير متقدمة"
     }
   ];
 
   return (
     <div className="w-full space-y-8">
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Welcome to Rental Solutions</h2>
+        <h2 className="text-2xl font-semibold">مرحباً بك في نظام إدارة التأجير</h2>
         <p className="text-base text-muted-foreground leading-relaxed max-w-3xl">
-          Rental Solutions is a comprehensive vehicle rental management system designed to streamline your rental operations.
-          This help center will guide you through all features and functionalities of the system.
+          نظام إدارة التأجير هو نظام شامل مصمم لتبسيط عمليات التأجير الخاصة بك.
+          سيرشدك مركز المساعدة هذا خلال جميع الميزات والوظائف في النظام.
         </p>
       </div>
 

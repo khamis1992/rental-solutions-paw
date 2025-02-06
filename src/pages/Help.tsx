@@ -20,9 +20,9 @@ const Help = () => {
         <div className="flex-shrink-0 w-full bg-background border-b">
           <div className="container mx-auto flex justify-between items-center py-3">
             <div>
-              <h1 className="text-2xl font-bold">Help Center</h1>
+              <h1 className="text-2xl font-bold">مركز المساعدة</h1>
               <p className="text-base text-muted-foreground">
-                Find comprehensive guides, documentation, and support for using the Rental Solutions system.
+                اعثر على أدلة شاملة ووثائق ودعم لاستخدام نظام إدارة التأجير
               </p>
             </div>
           </div>
@@ -37,19 +37,19 @@ const Help = () => {
                   value="overview" 
                   className="relative px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
-                  Overview
+                  نظرة عامة
                 </TabsTrigger>
                 <TabsTrigger 
                   value="guides" 
                   className="relative px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
-                  Step-by-Step Guides
+                  الدليل خطوة بخطوة
                 </TabsTrigger>
                 <TabsTrigger 
                   value="faq" 
                   className="relative px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
-                  FAQ
+                  الأسئلة الشائعة
                 </TabsTrigger>
               </TabsList>
 

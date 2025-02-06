@@ -22,12 +22,12 @@ export const FAQSection = () => {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>جاري التحميل...</div>;
   }
 
   return (
     <div className="w-full max-w-4xl space-y-4">
-      <h2 className="text-2xl font-semibold mb-4 text-left">Frequently Asked Questions</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-right">الأسئلة الشائعة</h2>
       <Accordion type="single" collapsible className="w-full space-y-2">
         {faqs?.map((faq, index) => (
           <AccordionItem 
@@ -35,10 +35,10 @@ export const FAQSection = () => {
             value={`item-${index}`} 
             className="border rounded-lg px-4 hover:shadow-md transition-shadow"
           >
-            <AccordionTrigger className="text-left text-base py-4">
+            <AccordionTrigger className="text-right text-base py-4">
               {faq.question}
             </AccordionTrigger>
-            <AccordionContent className="text-sm pt-2 pb-4 text-left leading-relaxed">
+            <AccordionContent className="text-sm pt-2 pb-4 text-right leading-relaxed">
               {faq.answer}
             </AccordionContent>
           </AccordionItem>
