@@ -52,6 +52,8 @@ export const CarInstallmentDetails = () => {
         header: true,
         complete: async (results) => {
           const parsedData = results.data;
+          let successCount = 0;
+          let errorCount = 0;
           
           for (const row of parsedData) {
             try {
@@ -60,8 +62,21 @@ export const CarInstallmentDetails = () => {
                 throw new Error(`Missing required fields for cheque ${row.cheque_number || 'unknown'}`);
               }
 
-              // Try to insert the payment
-              const { data, error: insertError } = await supabase
+              // Check if cheque number already exists
+              const { data: existingCheque } = await supabase
+                .from('car_installment_payments')
+                .select('cheque_number')
+                .eq('cheque_number', row.cheque_number)
+                .single();
+
+              if (existingCheque) {
+                errorCount++;
+                toast.error(`Cheque number ${row.cheque_number} already exists`);
+                continue;
+              }
+
+              // Insert new payment
+              const { error: insertError } = await supabase
                 .from('car_installment_payments')
                 .insert({
                   contract_id: id,
@@ -75,21 +90,21 @@ export const CarInstallmentDetails = () => {
                 });
 
               if (insertError) {
-                if (insertError.code === '23505') { // Unique violation
-                  toast.error(`Cheque number ${row.cheque_number} already exists`);
-                } else {
-                  console.error('Import error:', insertError);
-                  toast.error(`Failed to import cheque ${row.cheque_number}`);
-                }
+                errorCount++;
+                console.error('Import error:', insertError);
+                toast.error(`Failed to import cheque ${row.cheque_number}`);
+              } else {
+                successCount++;
               }
             } catch (error: any) {
+              errorCount++;
               console.error('Error processing row:', error);
               toast.error(error.message || 'Failed to process row');
             }
           }
 
           await queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
-          toast.success('Cheques imported successfully');
+          toast.success(`Import completed: ${successCount} successful, ${errorCount} failed`);
         },
         error: (error) => {
           console.error('CSV Parse Error:', error);
