@@ -193,6 +193,15 @@ export default function App() {
             />
 
             <Route
+              path="/finance/car-installments/:id"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.CarInstallmentDetails />
+                </Suspense>
+              }
+            />
+
+            <Route
               path="/help"
               element={
                 <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
