@@ -364,7 +364,9 @@ export const CarInstallmentDetails = () => {
   const totalAmount = contract?.total_contract_value || 0;
   const totalPaid = contract?.amount_paid || 0;
   const totalPending = contract?.amount_pending || 0;
-  const overduePayments = payments?.filter(p => p.status === 'overdue').length || 0;
+  const overduePayments = payments?.filter(p => 
+    p.status === 'pending' && new Date(p.payment_date) < new Date()
+  ).length || 0;
   const completionPercentage = totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0;
   const pendingPercentage = totalAmount > 0 ? (totalPending / totalAmount) * 100 : 0;
 
@@ -449,22 +451,35 @@ export const CarInstallmentDetails = () => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Overdue Payments
-              {overduePayments > 0 && <span className="animate-pulse">🔴</span>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {overduePayments}
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                  Overdue Payments
+                  {overduePayments > 0 && <span className="animate-pulse">🔴</span>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {overduePayments}
+                </div>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  {overduePayments > 0 ? "Action required" : "All payments up to date"}
+                </div>
+              </CardContent>
+            </Card>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Overdue Payments</h4>
+              <p className="text-sm text-muted-foreground">
+                Number of payments that have passed their due date but are still pending.
+                {overduePayments > 0 && " These require immediate attention."}
+              </p>
             </div>
-            <div className="mt-2 text-sm text-muted-foreground">
-              {overduePayments > 0 ? "Requires attention" : "All payments up to date"}
-            </div>
-          </CardContent>
-        </Card>
+          </HoverCardContent>
+        </HoverCard>
       </div>
 
       <Card className="shadow-lg">
