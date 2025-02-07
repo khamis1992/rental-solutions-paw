@@ -1,86 +1,123 @@
-import { useQuery } from "@tanstack/react-query";
+
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, UserPlus, UserCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { UserCheck, UserPlus, UserClock, UserX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 export const CustomerStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["customer-stats"],
     queryFn: async () => {
-      // Get total customers
-      const { count: total } = await supabase
+      const { data: activeCustomers, error: activeError } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq('role', 'customer');
+        .select("id")
+        .eq("role", "customer")
+        .eq("status", "active");
 
-      // Get new customers this month
-      const { count: newThisMonth } = await supabase
+      const { data: newCustomers, error: newError } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq('role', 'customer')
-        .gte(
-          "created_at",
-          new Date(new Date().setDate(1)).toISOString()
-        );
+        .select("id")
+        .eq("role", "customer")
+        .eq("status", "pending_review")
+        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+      const { data: pendingCustomers, error: pendingError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "customer")
+        .eq("status", "pending_review");
+
+      const { data: inactiveCustomers, error: inactiveError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "customer")
+        .eq("status", "inactive");
+
+      if (activeError || newError || pendingError || inactiveError) throw new Error("Failed to fetch customer stats");
 
       return {
-        total: total || 0,
-        newThisMonth: newThisMonth || 0,
+        active: activeCustomers?.length || 0,
+        new: newCustomers?.length || 0,
+        pending: pendingCustomers?.length || 0,
+        inactive: inactiveCustomers?.length || 0,
       };
     },
   });
 
+  const statCards = [
+    {
+      title: "Active Customers",
+      value: stats?.active || 0,
+      icon: UserCheck,
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+      description: "Currently active customers",
+    },
+    {
+      title: "New Customers",
+      value: stats?.new || 0,
+      icon: UserPlus,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      description: "Joined in the last 30 days",
+    },
+    {
+      title: "Pending Review",
+      value: stats?.pending || 0,
+      icon: UserClock,
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
+      description: "Awaiting verification",
+    },
+    {
+      title: "Inactive Customers",
+      value: stats?.inactive || 0,
+      icon: UserX,
+      color: "text-gray-500",
+      bgColor: "bg-gray-500/10",
+      description: "Currently inactive accounts",
+    },
+  ];
+
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
+      <div className="grid gap-4 md:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="border shadow-sm">
+            <CardContent className="p-6">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-8 w-16" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
 
-  const cards = [
-    {
-      title: "Total Customers",
-      value: stats?.total || 0,
-      icon: Users,
-      color: "text-blue-500",
-      bgColor: "bg-blue-50",
-    },
-    {
-      title: "New This Month",
-      value: stats?.newThisMonth || 0,
-      icon: UserPlus,
-      color: "text-green-500",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Active Customers",
-      value: stats?.total - (stats?.newThisMonth || 0),
-      icon: UserCheck,
-      color: "text-purple-500",
-      bgColor: "bg-purple-50",
-    },
-  ];
-
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {cards.map((card, index) => (
-        <Card key={index} className="border-0 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  {card.title}
+    <div className="grid gap-4 md:grid-cols-4">
+      {statCards.map((stat) => (
+        <Card 
+          key={stat.title} 
+          className="border shadow-sm hover:shadow-md transition-all duration-300 group"
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
                 </p>
-                <p className="text-2xl font-bold">{card.value}</p>
+                <p className="text-2xl font-bold">{stat.value}</p>
               </div>
-              <div className={`p-3 rounded-full ${card.bgColor}`}>
-                <card.icon className={`h-6 w-6 ${card.color}`} />
+              <div className={cn("p-3 rounded-full transition-all duration-300 group-hover:scale-110", stat.bgColor)}>
+                <stat.icon className={cn("h-5 w-5", stat.color)} />
               </div>
             </div>
+            <p className="text-sm text-muted-foreground">
+              {stat.description}
+            </p>
           </CardContent>
         </Card>
       ))}
