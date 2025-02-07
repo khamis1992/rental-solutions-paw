@@ -46,7 +46,7 @@ const Vehicles = () => {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="container mx-auto px-4 lg:px-8 py-6 space-y-6">
         {/* Enhanced Header with Gradient Background */}
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-8 backdrop-blur-sm border border-white/10">
           <div className="relative z-10">
