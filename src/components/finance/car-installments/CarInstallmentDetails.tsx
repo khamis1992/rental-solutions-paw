@@ -15,17 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Plus, 
-  RefreshCw, 
-  TrendingDown, 
-  TrendingUp, 
-  Receipt, 
-  CreditCard, 
-  Calendar,
-  AlertCircle,
-  ChevronRight
-} from "lucide-react";
+import { Plus, RefreshCw, TrendingDown, TrendingUp, MoreHorizontal, Receipt, CreditCard } from "lucide-react";
 import Papa from 'papaparse';
 import {
   Dialog,
@@ -43,7 +33,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Progress } from "@/components/ui/progress";
 
 interface CsvRow {
   cheque_number: string;
@@ -389,104 +378,94 @@ export const CarInstallmentDetails = () => {
   return (
     <div className="space-y-6 p-6 bg-background">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="hover:scale-105 transition-transform duration-200 overflow-hidden bg-gradient-to-br from-[#dfeaf7] to-[#f4f8fc] dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-100/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              Total Amount
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalAmount)}
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                  Total Amount
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalAmount)}
+                </div>
+                <div className="mt-2 h-2 bg-blue-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Contract Overview</h4>
+              <p className="text-sm text-muted-foreground">
+                Total contract value with all installments included.
+                Currently at {completionPercentage.toFixed(1)}% completion rate.
+              </p>
             </div>
-            <Progress 
-              value={completionPercentage} 
-              className="h-2 mt-2"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {completionPercentage.toFixed(1)}% completed
-            </p>
-          </CardContent>
-        </Card>
+          </HoverCardContent>
+        </HoverCard>
 
-        <Card className="hover:scale-105 transition-transform duration-200 overflow-hidden bg-gradient-to-br from-[#e6b980] to-[#eacda3] dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-100/50">
+        <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
               Total Paid
-              <Receipt className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-4 w-4 text-green-500" />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
               {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalPaid)}
             </div>
-            <Progress 
-              value={(totalPaid / totalAmount) * 100} 
-              className="h-2 mt-2 bg-green-100"
-              indicatorClassName="bg-green-500"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {((totalPaid / totalAmount) * 100).toFixed(1)}% of total amount
-            </p>
+            <div className="mt-2 h-2 bg-green-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-500 transition-all duration-500"
+                style={{ width: `${(totalPaid / totalAmount) * 100}%` }}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:scale-105 transition-transform duration-200 overflow-hidden bg-gradient-to-br from-[#ffa485] to-[#ff7b7b] dark:from-red-900/20 dark:to-red-800/20 border border-red-100/50">
+        <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
               Pending Amount
-              <TrendingDown className="h-4 w-4 text-red-500" />
+              <TrendingDown className="h-4 w-4 text-yellow-500" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-yellow-600">
               {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalPending)}
             </div>
-            <Progress 
-              value={pendingPercentage} 
-              className="h-2 mt-2 bg-red-100"
-              indicatorClassName="bg-red-500"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {pendingPercentage.toFixed(1)}% pending payment
-            </p>
+            <div className="mt-2 h-2 bg-yellow-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-yellow-500 transition-all duration-500"
+                style={{ width: `${pendingPercentage}%` }}
+              />
+            </div>
           </CardContent>
         </Card>
 
         <HoverCard>
           <HoverCardTrigger asChild>
-            <Card className={`hover:scale-105 transition-transform duration-200 overflow-hidden 
-              ${overduePayments > 0 
-                ? 'bg-gradient-to-br from-[#ee7171] to-[#f6d794] dark:from-red-900/20 dark:to-orange-800/20 border-red-100/50' 
-                : 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-100/50'
-              } relative`}>
-              {overduePayments > 0 && (
-                <span className="absolute top-2 right-2 animate-pulse">
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                </span>
-              )}
+            <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                   Overdue Payments
+                  {overduePayments > 0 && <span className="animate-pulse">🔴</span>}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
                   {overduePayments}
                 </div>
-                <div className="mt-2 text-sm text-muted-foreground flex items-center gap-2">
-                  {overduePayments > 0 ? (
-                    <>
-                      <Calendar className="h-4 w-4 text-red-500" />
-                      <span>Requires immediate attention</span>
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="h-4 w-4 text-green-500" />
-                      <span>All payments up to date</span>
-                    </>
-                  )}
+                <div className="mt-2 text-sm text-muted-foreground">
+                  {overduePayments > 0 ? "Action required" : "All payments up to date"}
                 </div>
               </CardContent>
             </Card>
@@ -495,22 +474,18 @@ export const CarInstallmentDetails = () => {
             <div className="space-y-2">
               <h4 className="text-sm font-semibold">Overdue Payments</h4>
               <p className="text-sm text-muted-foreground">
-                {overduePayments > 0
-                  ? `${overduePayments} payment${overduePayments > 1 ? 's' : ''} ${overduePayments > 1 ? 'have' : 'is'} passed their due date and ${overduePayments > 1 ? 'are' : 'is'} still pending.`
-                  : "All payments are up to date. No overdue payments found."}
+                Number of payments that have passed their due date but are still pending.
+                {overduePayments > 0 && " These require immediate attention."}
               </p>
             </div>
           </HoverCardContent>
         </HoverCard>
       </div>
 
-      <Card className="shadow-lg transition-shadow hover:shadow-xl">
+      <Card className="shadow-lg">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              Payment Installments
-            </CardTitle>
+            <CardTitle>Payment Installments</CardTitle>
             <div className="flex gap-2">
               <Select value={selectedFilter} onValueChange={setSelectedFilter}>
                 <SelectTrigger className="w-[150px]">
@@ -535,7 +510,7 @@ export const CarInstallmentDetails = () => {
               </Button>
               <Button 
                 onClick={() => setShowAddPayment(true)}
-                className="hover:scale-105 transition-transform bg-gradient-to-r from-primary to-primary-dark"
+                className="hover:scale-105 transition-transform"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Payment
@@ -568,29 +543,23 @@ export const CarInstallmentDetails = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredPayments?.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-muted/50 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-medium flex items-center gap-2">
-                          <Receipt className="h-4 w-4 text-muted-foreground" />
-                          {payment.cheque_number}
-                        </span>
+                    <tr key={payment.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className="font-medium">{payment.cheque_number}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.amount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-green-600 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
                         {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.paid_amount || 0)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-red-600 font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
                         {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {formatDateToDisplay(payment.payment_date)}
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {formatDateToDisplay(payment.payment_date)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{payment.drawee_bank}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{payment.drawee_bank}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Select
                           value={payment.status}
@@ -632,7 +601,7 @@ export const CarInstallmentDetails = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setSelectedPayment(payment)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:scale-105"
+                          className="hover:scale-105 transition-transform"
                           title="Record Payment"
                         >
                           <CreditCard className="h-4 w-4" />
