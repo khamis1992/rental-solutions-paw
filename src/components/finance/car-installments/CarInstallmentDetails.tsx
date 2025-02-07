@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploadSection } from "@/components/agreements/payment-import/FileUploadSection";
 import { Button } from "@/components/ui/button";
 import { AddPaymentDialog } from "./components/AddPaymentDialog";
+import { formatDateToDisplay } from "@/lib/dateUtils";
 import {
   Select,
   SelectContent,
@@ -474,7 +475,7 @@ export const CarInstallmentDetails = () => {
                       {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(payment.payment_date).toLocaleDateString()}
+                      {formatDateToDisplay(payment.payment_date)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.drawee_bank}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
