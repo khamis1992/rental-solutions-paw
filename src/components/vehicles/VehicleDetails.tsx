@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { VehicleOverview } from "./profile/VehicleOverview";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
@@ -11,9 +12,10 @@ import { DocumentExpiryNotifications } from "./profile/DocumentExpiryNotificatio
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Car, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Car, AlertTriangle, License } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const VehicleDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,35 +85,42 @@ export const VehicleDetails = () => {
 
   return (
     <div className="space-y-8 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-background-alt rounded-lg p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-background-alt rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
             onClick={() => navigate("/vehicles")}
-            className="shrink-0"
+            className="shrink-0 hover:scale-105 transition-transform"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div className="flex items-center gap-3">
-            <Car className="h-6 w-6 text-primary" />
+            <Car className="h-8 w-8 text-primary animate-fade-in" />
             <h1 className="text-2xl font-bold">
               {vehicle.year} {vehicle.make} {vehicle.model}
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            License Plate:
-          </span>
-          <span className="font-medium">
-            {vehicle.license_plate}
-          </span>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2 bg-background px-4 py-2 rounded-lg border hover:bg-muted/50 transition-colors cursor-help">
+                <License className="h-5 w-5 text-primary" />
+                <span className="font-medium">
+                  {vehicle.license_plate}
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              Vehicle License Plate
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
           <VehicleQRCode 
             make={vehicle.make} 
             model={vehicle.model}
@@ -121,7 +130,7 @@ export const VehicleDetails = () => {
             vin={vehicle.vin}
           />
         </div>
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
           <VehicleStatus 
             vehicleId={id} 
             currentStatus={vehicle.status} 
@@ -129,32 +138,32 @@ export const VehicleDetails = () => {
         </div>
       </div>
 
-      <div className="bg-background-alt rounded-lg p-4">
+      <div className="bg-background-alt rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow animate-fade-in">
         <DocumentExpiryNotifications vehicleId={id} />
       </div>
       
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
         <VehicleOverview vehicleId={id} />
       </div>
 
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
         <VehicleInsurance vehicleId={id} />
       </div>
       
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
           <VehicleDocuments vehicleId={id} />
         </div>
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
           <MaintenanceHistory vehicleId={id} />
         </div>
       </div>
 
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
         <DamageHistory vehicleId={id} />
       </div>
 
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
+      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow animate-fade-in">
         <VehicleTimeline vehicleId={id} />
       </div>
     </div>
