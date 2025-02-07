@@ -1,5 +1,5 @@
 
-import { Settings, Menu, Search } from "lucide-react";
+import { Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { SearchBox } from "./SearchBox";
@@ -10,7 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();
-  const { toggle, setOpenMobile } = useSidebar();
+  const { toggle } = useSidebar();
   const isMobile = useIsMobile();
 
   return (
@@ -23,7 +23,7 @@ export const DashboardHeader = () => {
                 variant="ghost" 
                 size="icon"
                 className="md:hidden"
-                onClick={() => setOpenMobile(prev => !prev)}
+                onClick={toggle}
                 aria-label="Toggle Menu"
               >
                 <Menu className="h-5 w-5" />
@@ -51,7 +51,7 @@ export const DashboardHeader = () => {
                 }}
                 aria-label="Search"
               >
-                <Search className="h-4 w-4" />
+                <Settings className="h-4 w-4" />
               </Button>
             )}
             <NotificationsButton />
