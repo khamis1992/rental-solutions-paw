@@ -28,70 +28,70 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
     record.status?.toLowerCase() === 'urgent').length || 0;
 
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid gap-3 md:grid-cols-4">
       <Card className="overflow-hidden">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <p className="text-base font-semibold text-muted-foreground">Total Cost</p>
-              <p className="text-2xl font-bold">{formatCurrency(totalCost)}</p>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
+              <p className="text-xl font-bold">{formatCurrency(totalCost)}</p>
             </div>
-            <div className="rounded-full bg-orange-100 p-3">
-              <Wrench className="h-6 w-6 text-orange-600" />
+            <div className="rounded-full bg-orange-100 p-2">
+              <Wrench className="h-5 w-5 text-orange-600" />
             </div>
           </div>
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-orange-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-orange-100">
             <div className="h-full w-1/2 animate-pulse bg-orange-500" />
           </div>
         </CardContent>
       </Card>
 
       <Card className="overflow-hidden">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <p className="text-base font-semibold text-muted-foreground">Completed</p>
-              <p className="text-2xl font-bold">{completedCount}</p>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-muted-foreground">Completed</p>
+              <p className="text-xl font-bold">{completedCount}</p>
             </div>
-            <div className="rounded-full bg-green-100 p-3">
-              <CheckCircle2 className="h-6 w-6 text-green-600" />
+            <div className="rounded-full bg-green-100 p-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
           </div>
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-green-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-green-100">
             <div className="h-full w-1/2 animate-pulse bg-green-500" />
           </div>
         </CardContent>
       </Card>
 
       <Card className="overflow-hidden">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <p className="text-base font-semibold text-muted-foreground">Pending</p>
-              <p className="text-2xl font-bold">{pendingCount}</p>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-muted-foreground">Pending</p>
+              <p className="text-xl font-bold">{pendingCount}</p>
             </div>
-            <div className="rounded-full bg-blue-100 p-3">
-              <Clock className="h-6 w-6 text-blue-600" />
+            <div className="rounded-full bg-blue-100 p-2">
+              <Clock className="h-5 w-5 text-blue-600" />
             </div>
           </div>
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-blue-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-blue-100">
             <div className="h-full w-1/2 animate-pulse bg-blue-500" />
           </div>
         </CardContent>
       </Card>
 
       <Card className="overflow-hidden">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <p className="text-base font-semibold text-muted-foreground">Urgent</p>
-              <p className="text-2xl font-bold">{urgentCount}</p>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-muted-foreground">Urgent</p>
+              <p className="text-xl font-bold">{urgentCount}</p>
             </div>
-            <div className="rounded-full bg-red-100 p-3">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+            <div className="rounded-full bg-red-100 p-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
           </div>
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-red-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-red-100">
             <div className="h-full w-1/2 animate-pulse bg-red-500" />
           </div>
         </CardContent>
@@ -99,4 +99,3 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
     </div>
   );
 };
-
