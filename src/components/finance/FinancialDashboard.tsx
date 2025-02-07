@@ -2,8 +2,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FinancialMetricsCard } from "./charts/FinancialMetricsCard";
-import { RevenueChart } from "./charts/RevenueChart";
-import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { VirtualCFO } from "./virtual-cfo/VirtualCFO";
@@ -98,32 +96,6 @@ export const FinancialDashboard = () => {
   const percentageChangeExpenses = previousMonthExpenses === 0 ? 100 : 
     ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
 
-  const revenueData = financialData
-    .filter(t => t.type === 'INCOME')
-    .reduce((acc, transaction) => {
-      const date = transaction.transaction_date.split('T')[0];
-      const existing = acc.find(item => item.date === date);
-      if (existing) {
-        existing.revenue += transaction.amount;
-      } else {
-        acc.push({ date, revenue: transaction.amount });
-      }
-      return acc;
-    }, [] as { date: string; revenue: number }[]);
-
-  const expenseData = financialData
-    .filter(t => t.type === 'EXPENSE')
-    .reduce((acc, transaction) => {
-      const category = transaction.category?.name || 'Uncategorized';
-      const existing = acc.find(item => item.category === category);
-      if (existing) {
-        existing.amount += transaction.amount;
-      } else {
-        acc.push({ category, amount: transaction.amount });
-      }
-      return acc;
-    }, [] as { category: string; amount: number }[]);
-
   const profitLossData = financialData.reduce((acc, transaction) => {
     const date = new Date(transaction.transaction_date);
     const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -184,28 +156,6 @@ export const FinancialDashboard = () => {
           </div>
 
           <QuickActionsPanel />
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="bg-gradient-to-br from-background to-muted/50">
-              <CardHeader>
-                <CardTitle>Revenue Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RevenueChart 
-                  data={revenueData} 
-                  onExport={() => {}} 
-                />
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-background to-muted/50">
-              <CardHeader>
-                <CardTitle>Expense Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ExpenseBreakdownChart data={expenseData} />
-              </CardContent>
-            </Card>
-          </div>
 
           <Card className="bg-gradient-to-br from-background to-muted/50">
             <CardHeader>
