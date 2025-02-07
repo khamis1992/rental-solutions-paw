@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const FinancialDashboard = () => {
-  const { data: financialData, isLoading } = useQuery({
+  const { data: financialData = [], isLoading } = useQuery({
     queryKey: ["financial-metrics"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,7 +26,8 @@ export const FinancialDashboard = () => {
 
       if (error) throw error;
       
-      return (data as any[])?.map(transaction => ({
+      // Ensure we always return an array
+      return (Array.isArray(data) ? data : []).map(transaction => ({
         ...transaction,
         amount: parseFloat(transaction.amount) || 0
       })) as Transaction[];
@@ -46,44 +47,44 @@ export const FinancialDashboard = () => {
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
 
-  const currentMonthTransactions = financialData?.filter(transaction => {
+  const currentMonthTransactions = financialData.filter(transaction => {
     const transactionDate = new Date(transaction.transaction_date);
     return transactionDate.getMonth() === currentMonth && 
            transactionDate.getFullYear() === currentYear;
   });
 
-  const previousMonthTransactions = financialData?.filter(transaction => {
+  const previousMonthTransactions = financialData.filter(transaction => {
     const transactionDate = new Date(transaction.transaction_date);
     return transactionDate.getMonth() === (currentMonth - 1) && 
            transactionDate.getFullYear() === currentYear;
   });
 
-  const currentMonthRevenue = currentMonthTransactions?.reduce(
+  const currentMonthRevenue = currentMonthTransactions.reduce(
     (sum, transaction) => transaction.type === 'INCOME' ? sum + transaction.amount : sum, 
     0
-  ) || 0;
+  );
 
-  const previousMonthRevenue = previousMonthTransactions?.reduce(
+  const previousMonthRevenue = previousMonthTransactions.reduce(
     (sum, transaction) => transaction.type === 'INCOME' ? sum + transaction.amount : sum, 
     0
-  ) || 0;
+  );
 
-  const currentMonthExpenses = currentMonthTransactions?.reduce(
+  const currentMonthExpenses = currentMonthTransactions.reduce(
     (sum, transaction) => transaction.type === 'EXPENSE' ? sum + transaction.amount : sum, 
     0
-  ) || 0;
+  );
 
-  const previousMonthExpenses = previousMonthTransactions?.reduce(
+  const previousMonthExpenses = previousMonthTransactions.reduce(
     (sum, transaction) => transaction.type === 'EXPENSE' ? sum + transaction.amount : sum, 
     0
-  ) || 0;
+  );
 
   const percentageChangeRevenue = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
   const percentageChangeExpenses = ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
 
   const revenueData = financialData
-    ?.filter(t => t.type === 'INCOME')
-    ?.reduce((acc, transaction) => {
+    .filter(t => t.type === 'INCOME')
+    .reduce((acc, transaction) => {
       const date = transaction.transaction_date.split('T')[0];
       const existing = acc.find(item => item.date === date);
       if (existing) {
@@ -92,11 +93,11 @@ export const FinancialDashboard = () => {
         acc.push({ date, revenue: transaction.amount });
       }
       return acc;
-    }, [] as { date: string; revenue: number }[]) || [];
+    }, [] as { date: string; revenue: number }[]);
 
   const expenseData = financialData
-    ?.filter(t => t.type === 'EXPENSE')
-    ?.reduce((acc, transaction) => {
+    .filter(t => t.type === 'EXPENSE')
+    .reduce((acc, transaction) => {
       const category = transaction.category?.name || 'Uncategorized';
       const existing = acc.find(item => item.category === category);
       if (existing) {
@@ -105,9 +106,9 @@ export const FinancialDashboard = () => {
         acc.push({ category, amount: transaction.amount });
       }
       return acc;
-    }, [] as { category: string; amount: number }[]) || [];
+    }, [] as { category: string; amount: number }[]);
 
-  const profitLossData = financialData?.reduce((acc, transaction) => {
+  const profitLossData = financialData.reduce((acc, transaction) => {
     const date = new Date(transaction.transaction_date);
     const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     
@@ -128,7 +129,7 @@ export const FinancialDashboard = () => {
       });
     }
     return acc;
-  }, [] as { period: string; revenue: number; expenses: number; profit: number }[]) || [];
+  }, [] as { period: string; revenue: number; expenses: number; profit: number }[]);
 
   return (
     <div className="space-y-8">
@@ -200,8 +201,8 @@ export const FinancialDashboard = () => {
           </Card>
 
           <BudgetTrackingSection 
-            transactions={financialData || []}
-            categories={Array.from(new Set(financialData?.map(t => t.category)
+            transactions={financialData}
+            categories={Array.from(new Set(financialData.map(t => t.category)
               .filter(Boolean))) as Transaction['category'][]}
           />
         </TabsContent>
