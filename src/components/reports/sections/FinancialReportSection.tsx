@@ -10,7 +10,6 @@ export const FinancialReportSection = () => {
       <YearOverYearComparison />
       <ProfitMarginAnalysis />
       <RevenueChart data={[]} onExport={() => {}} />
-      <ExpenseChart data={[]} onExport={() => {}} />
     </div>
   );
 };
