@@ -1,47 +1,37 @@
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { RevenueDashboard } from "@/components/finance/dashboard/RevenueDashboard";
-import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
-import { RawDataView } from "@/components/finance/raw-data/RawDataView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FinancialOverview } from "@/components/finance/dashboard/FinancialOverview";
+import { FinancialDashboard } from "@/components/finance/FinancialDashboard";
 import { CarInstallmentContracts } from "@/components/finance/car-installments/CarInstallmentContracts";
-import { CarInstallmentDetails } from "@/components/finance/car-installments/CarInstallmentDetails";
-import { VirtualCFO } from "@/components/finance/virtual-cfo/VirtualCFO";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { FinancialNavigation } from "@/components/finance/navigation/FinancialNavigation";
+import { PaymentManagement } from "@/components/finance/payments/PaymentManagement";
 
-const Finance = () => {
-  const location = useLocation();
-  const isCarInstallmentDetails = location.pathname.includes('/car-installments/');
-
-  // Don't show navigation if we're on the details page
-  if (isCarInstallmentDetails) {
-    return (
-      <div className="container mx-auto p-6">
-        <Routes>
-          <Route path="/car-installments/:id" element={<CarInstallmentDetails />} />
-        </Routes>
-      </div>
-    );
-  }
-
+export default function Finance() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Financial Management</h1>
-        <FinancialNavigation />
-        
-        <div className="mt-6">
-          <Routes>
-            <Route index element={<RevenueDashboard />} />
-            <Route path="payments" element={<PaymentManagement />} />
-            <Route path="raw-data" element={<RawDataView />} />
-            <Route path="car-installments" element={<CarInstallmentContracts />} />
-            <Route path="car-installments/:id" element={<CarInstallmentDetails />} />
-            <Route path="virtual-cfo" element={<VirtualCFO />} />
-          </Routes>
-        </div>
+    <div className="container mx-auto py-6 space-y-8">
+      <div className="flex flex-col space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight">Financial Management</h1>
+        <p className="text-muted-foreground">
+          Manage your financial operations, track payments, and monitor revenue
+        </p>
       </div>
+
+      <FinancialOverview />
+
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="car-installments">Car Installments</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+        </TabsList>
+        <TabsContent value="dashboard">
+          <FinancialDashboard />
+        </TabsContent>
+        <TabsContent value="car-installments">
+          <CarInstallmentContracts />
+        </TabsContent>
+        <TabsContent value="payments">
+          <PaymentManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
-};
-
-export default Finance;
+}
