@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -141,45 +140,6 @@ export const CarInstallmentDetails = () => {
   const [showAddPayment, setShowAddPayment] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
-  // Subscribe to real-time updates for both payments and contract
-  useEffect(() => {
-    if (!id) return;
-
-    const channel = supabase.channel('detailed-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'car_installment_payments',
-          filter: `contract_id=eq.${id}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['car-installment-payments', id] });
-          queryClient.invalidateQueries({ queryKey: ['car-installment-contract', id] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id, queryClient]);
-
-  const { data: contract } = useQuery({
-    queryKey: ['car-installment-contract', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('car_installment_contracts')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const { data: payments, isLoading } = useQuery({
     queryKey: ["car-installment-payments", id],
     queryFn: async () => {
@@ -193,25 +153,6 @@ export const CarInstallmentDetails = () => {
       return data;
     },
   });
-
-  const handleStatusChange = async (paymentId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('car_installment_payments')
-        .update({ 
-          status: newStatus,
-          last_status_change: new Date().toISOString()
-        })
-        .eq('id', paymentId);
-
-      if (error) throw error;
-      
-      toast.success("Status updated successfully");
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error("Failed to update status");
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -275,6 +216,7 @@ export const CarInstallmentDetails = () => {
             }
           }
 
+          await queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
           toast.success(`Import completed: ${successCount} successful, ${errorCount} failed`);
         },
         error: (error) => {
@@ -308,6 +250,26 @@ export const CarInstallmentDetails = () => {
     document.body.removeChild(a);
   };
 
+  const handleStatusChange = async (paymentId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('car_installment_payments')
+        .update({ 
+          status: newStatus,
+          last_status_change: new Date().toISOString()
+        })
+        .eq('id', paymentId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error("Failed to update status");
+    }
+  };
+
   // Calculate summary statistics
   const totalAmount = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
   const totalPaid = payments?.reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
@@ -316,43 +278,6 @@ export const CarInstallmentDetails = () => {
 
   return (
     <div className="space-y-6">
-      {/* Contract Summary */}
-      {contract && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Contract Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Total Contract Value</div>
-                <div className="text-2xl font-bold">
-                  {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(contract.total_contract_value)}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Amount Paid</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(contract.amount_paid)}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Amount Pending</div>
-                <div className="text-2xl font-bold text-yellow-600">
-                  {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(contract.amount_pending)}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Remaining Installments</div>
-                <div className="text-2xl font-bold">
-                  {contract.remaining_installments} / {contract.total_installments}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
