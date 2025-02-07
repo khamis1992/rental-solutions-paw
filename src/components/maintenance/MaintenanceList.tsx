@@ -162,22 +162,11 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-[500px] w-full" />
+          <Skeleton key={i} className="h-[400px] w-full" />
         ))}
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load maintenance records. Please try again later.
-        </AlertDescription>
-      </Alert>
     );
   }
 
@@ -187,13 +176,13 @@ export const MaintenanceList = () => {
         <div className="flex justify-end">
           <CreateJobDialog />
         </div>
-        <Card className="p-10 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <div className="flex flex-col items-center justify-center text-center space-y-6">
-            <div className="p-6 rounded-full bg-orange-100 border-2 border-orange-200">
-              <Wrench className="h-16 w-16 text-primary animate-pulse" />
+        <Card className="p-8 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-full bg-orange-100 border-2 border-orange-200">
+              <Wrench className="h-12 w-12 text-primary animate-pulse" />
             </div>
-            <p className="text-2xl font-semibold text-gray-800">No maintenance records found</p>
-            <p className="text-base text-gray-600 max-w-md">
+            <p className="text-xl font-semibold text-gray-800">No maintenance records found</p>
+            <p className="text-sm text-gray-600 max-w-md">
               Create a new maintenance job to start tracking vehicle maintenance and repairs
             </p>
             <CreateJobDialog />
@@ -204,17 +193,17 @@ export const MaintenanceList = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search maintenance records..."
-              className="pl-9 h-12"
+              className="pl-8"
             />
           </div>
-          <Button variant="outline" className="gap-2 h-12">
+          <Button variant="outline" className="gap-2">
             <Filter className="h-4 w-4" />
             Filter
           </Button>
@@ -222,13 +211,13 @@ export const MaintenanceList = () => {
         <CreateJobDialog />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
         {currentRecords.map((record) => (
           <Card 
             key={record.id} 
-            className="flex flex-col min-h-[500px] max-h-[500px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform w-full p-2"
+            className="flex flex-col min-h-[400px] max-h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform w-full"
           >
-            <div className="flex flex-col flex-1 p-8 space-y-6">
+            <div className="flex flex-col flex-1 p-6 space-y-4">
               <div className="flex items-start justify-between">
                 <Select
                   value={record.status}
@@ -236,7 +225,7 @@ export const MaintenanceList = () => {
                     handleStatusChange(record.id, value)
                   }
                 >
-                  <SelectTrigger className={`w-[140px] h-10 ${
+                  <SelectTrigger className={`w-[130px] ${
                     record.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
                     record.status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
                     'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
@@ -284,44 +273,44 @@ export const MaintenanceList = () => {
                 </div>
               </div>
 
-              <div className="flex justify-center items-center space-x-3 bg-gray-50 p-6 rounded-lg">
-                <Car className="h-6 w-6 text-primary" />
+              <div className="flex justify-center items-center space-x-2 bg-gray-50 p-4 rounded-lg">
+                <Car className="h-5 w-5 text-primary" />
                 <div className="text-center">
-                  <p className="text-xl font-medium">
+                  <p className="text-lg font-medium">
                     {record.vehicles 
                       ? `${record.vehicles.make} ${record.vehicles.model}`
                       : "Vehicle details unavailable"}
                   </p>
-                  <Badge variant="secondary" className="mt-2 bg-sky-100 text-sky-800 hover:bg-sky-200 text-base px-4 py-1">
+                  <Badge variant="secondary" className="mt-1 bg-sky-100 text-sky-800 hover:bg-sky-200">
                     {record.vehicles?.license_plate || "N/A"}
                   </Badge>
                 </div>
               </div>
 
-              <div className="flex-1 bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-lg">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Wrench className="h-6 w-6 text-primary" />
-                  <p className="text-xl font-medium">{record.service_type}</p>
+              <div className="flex-1 bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Wrench className="h-5 w-5 text-primary" />
+                  <p className="text-lg font-medium">{record.service_type}</p>
                 </div>
                 {record.description && (
-                  <p className="text-base text-gray-600 leading-relaxed line-clamp-4">
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
                     {record.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-100 pt-6 mt-auto">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5 text-gray-500" />
-                  <span className="text-base text-gray-600">
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
+                <div className="flex items-center space-x-2 text-sm">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <span className="text-gray-600">
                     {formatDateToDisplay(new Date(record.scheduled_date))}
                   </span>
                 </div>
                 {record.cost && (
-                  <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 rounded-full">
-                    <Calculator className="h-5 w-5 text-green-600" />
-                    <span className="font-medium text-green-700 text-lg">{record.cost}</span>
-                    <span className="text-base text-green-600">QAR</span>
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-full">
+                    <Calculator className="h-4 w-4 text-green-600" />
+                    <span className="font-medium text-green-700">{record.cost}</span>
+                    <span className="text-sm text-green-600">QAR</span>
                   </div>
                 )}
               </div>
@@ -330,7 +319,7 @@ export const MaintenanceList = () => {
         ))}
       </div>
 
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-6">
         <VehicleTablePagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -340,3 +329,4 @@ export const MaintenanceList = () => {
     </div>
   );
 };
+
