@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { DashboardStats as DashboardStatsType } from "@/types/dashboard.types";
 import { ArrowUpRight, Sparkles } from "lucide-react";
@@ -61,15 +60,12 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Analytics and Activity Section with Improved Layout */}
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Recent Activity Feed with Enhanced Card Design */}
-          <div className="group bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ArrowUpRight className="h-5 w-5 text-primary/60" />
-            </div>
-            <RecentActivity />
+        {/* Recent Activity Feed with Enhanced Card Design - Now Full Width */}
+        <div className="group bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <ArrowUpRight className="h-5 w-5 text-primary/60" />
           </div>
+          <RecentActivity />
         </div>
       </div>
     </div>
@@ -77,3 +73,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
