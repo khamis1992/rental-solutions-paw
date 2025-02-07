@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -19,19 +20,24 @@ export const StatsCard = ({
   iconClassName,
 }: StatsCardProps) => {
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <Card className={cn(
+      "overflow-hidden transition-all duration-200 hover:shadow-lg relative group",
+      "bg-white/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800",
+      className
+    )}>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/0 opacity-50 group-hover:opacity-70 transition-opacity" />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
         <CardTitle className="text-base font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon className={cn("h-5 w-5 flex-shrink-0", iconClassName)} />
+        <Icon className={cn("h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110", iconClassName)} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative z-10">
         <div className="text-2xl font-bold tracking-tight break-words">
           {value}
         </div>
         {description && (
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-2 opacity-90">
             {description}
           </p>
         )}
