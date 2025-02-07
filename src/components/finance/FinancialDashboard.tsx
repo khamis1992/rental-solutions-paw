@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FinancialMetricsCard } from "./charts/FinancialMetricsCard";
@@ -12,8 +13,19 @@ import { Transaction } from "./types/transaction.types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface Transaction {
+  id: string;
+  type: 'INCOME' | 'EXPENSE';
+  amount: number;
+  transaction_date: string;
+  category?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 export const FinancialDashboard = () => {
-  const { data: financialData = [], isLoading } = useQuery({
+  const { data: rawData, isLoading } = useQuery({
     queryKey: ["financial-metrics"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,14 +37,15 @@ export const FinancialDashboard = () => {
         .order("transaction_date", { ascending: true });
 
       if (error) throw error;
-      
-      // Ensure we always return an array
-      return (Array.isArray(data) ? data : []).map(transaction => ({
-        ...transaction,
-        amount: parseFloat(transaction.amount) || 0
-      })) as Transaction[];
+      return data;
     },
   });
+
+  // Ensure financialData is always an array with proper type conversion
+  const financialData: Transaction[] = (rawData || []).map(transaction => ({
+    ...transaction,
+    amount: parseFloat(transaction.amount) || 0
+  }));
 
   if (isLoading) {
     return (
@@ -79,8 +92,11 @@ export const FinancialDashboard = () => {
     0
   );
 
-  const percentageChangeRevenue = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
-  const percentageChangeExpenses = ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
+  const percentageChangeRevenue = previousMonthRevenue === 0 ? 100 : 
+    ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+
+  const percentageChangeExpenses = previousMonthExpenses === 0 ? 100 : 
+    ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
 
   const revenueData = financialData
     .filter(t => t.type === 'INCOME')
@@ -161,7 +177,7 @@ export const FinancialDashboard = () => {
               previousValue={previousMonthRevenue - previousMonthExpenses}
               percentageChange={
                 ((currentMonthRevenue - currentMonthExpenses) - (previousMonthRevenue - previousMonthExpenses)) / 
-                Math.abs(previousMonthRevenue - previousMonthExpenses) * 100
+                Math.abs(previousMonthRevenue - previousMonthExpenses || 1) * 100
               }
               className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-900/30"
             />
@@ -202,8 +218,9 @@ export const FinancialDashboard = () => {
 
           <BudgetTrackingSection 
             transactions={financialData}
-            categories={Array.from(new Set(financialData.map(t => t.category)
-              .filter(Boolean))) as Transaction['category'][]}
+            categories={Array.from(new Set(financialData
+              .map(t => t.category)
+              .filter(Boolean))) as NonNullable<Transaction['category']>[]}
           />
         </TabsContent>
 
