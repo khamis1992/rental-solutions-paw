@@ -92,10 +92,21 @@ export const DashboardStats = () => {
           className="bg-white"
           iconClassName="h-5 w-5 text-blue-500"
           description={
-            <span className="flex items-center text-emerald-600 text-xs">
-              <TrendingUp className="mr-1 h-4 w-4" />
-              {stats?.growth.vehicles}
-            </span>
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground">
+                <span>Progress</span>
+                <span>{stats?.growth.vehicles}</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-500"
+                  style={{ 
+                    width: `${stats?.totalVehicles ? (stats.totalVehicles / 100) * 100 : 0}%`,
+                    borderRadius: 'inherit'
+                  }}
+                />
+              </div>
+            </div>
           }
         />
         <StatsCard
