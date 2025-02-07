@@ -2,14 +2,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FinancialMetricsCard } from "./charts/FinancialMetricsCard";
-import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { VirtualCFO } from "./virtual-cfo/VirtualCFO";
 import { QuickActionsPanel } from "./QuickActionsPanel";
 import { Loader2 } from "lucide-react";
 import { Transaction } from "./types/transaction.types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface RawTransaction {
   id: string;
@@ -96,29 +94,6 @@ export const FinancialDashboard = () => {
   const percentageChangeExpenses = previousMonthExpenses === 0 ? 100 : 
     ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
 
-  const profitLossData = financialData.reduce((acc, transaction) => {
-    const date = new Date(transaction.transaction_date);
-    const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    
-    const existing = acc.find(item => item.period === period);
-    if (existing) {
-      if (transaction.type === 'INCOME') {
-        existing.revenue += transaction.amount;
-      } else {
-        existing.expenses += transaction.amount;
-      }
-      existing.profit = existing.revenue - existing.expenses;
-    } else {
-      acc.push({
-        period,
-        revenue: transaction.type === 'INCOME' ? transaction.amount : 0,
-        expenses: transaction.type === 'EXPENSE' ? transaction.amount : 0,
-        profit: transaction.type === 'INCOME' ? transaction.amount : -transaction.amount
-      });
-    }
-    return acc;
-  }, [] as { period: string; revenue: number; expenses: number; profit: number }[]);
-
   return (
     <div className="space-y-8">
       <Tabs defaultValue="overview" className="space-y-6">
@@ -156,15 +131,6 @@ export const FinancialDashboard = () => {
           </div>
 
           <QuickActionsPanel />
-
-          <Card className="bg-gradient-to-br from-background to-muted/50">
-            <CardHeader>
-              <CardTitle>Profit & Loss Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfitLossChart data={profitLossData} />
-            </CardContent>
-          </Card>
 
           <BudgetTrackingSection 
             transactions={financialData}
