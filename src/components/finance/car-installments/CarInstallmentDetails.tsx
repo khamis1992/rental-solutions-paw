@@ -589,7 +589,7 @@ export const CarInstallmentDetails = () => {
                           className="hover:scale-105 transition-transform"
                           title="Record Payment"
                         >
-                          <Receipt className="h-4 w-4" />
+                          <CreditCard className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
