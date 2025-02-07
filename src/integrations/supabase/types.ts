@@ -882,10 +882,16 @@ export type Database = {
           cheque_number: string
           contract_id: string
           created_at: string | null
+          days_overdue: number | null
           drawee_bank: string
           id: string
+          last_status_change: string | null
+          notes: string | null
           paid_amount: number | null
           payment_date: string
+          payment_reference: string | null
+          reconciliation_date: string | null
+          reconciliation_status: string | null
           remaining_amount: number | null
           status: Database["public"]["Enums"]["payment_status_type"] | null
           updated_at: string | null
@@ -895,10 +901,16 @@ export type Database = {
           cheque_number: string
           contract_id: string
           created_at?: string | null
+          days_overdue?: number | null
           drawee_bank: string
           id?: string
+          last_status_change?: string | null
+          notes?: string | null
           paid_amount?: number | null
           payment_date: string
+          payment_reference?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
           remaining_amount?: number | null
           status?: Database["public"]["Enums"]["payment_status_type"] | null
           updated_at?: string | null
@@ -908,10 +920,16 @@ export type Database = {
           cheque_number?: string
           contract_id?: string
           created_at?: string | null
+          days_overdue?: number | null
           drawee_bank?: string
           id?: string
+          last_status_change?: string | null
+          notes?: string | null
           paid_amount?: number | null
           payment_date?: string
+          payment_reference?: string | null
+          reconciliation_date?: string | null
+          reconciliation_status?: string | null
           remaining_amount?: number | null
           status?: Database["public"]["Enums"]["payment_status_type"] | null
           updated_at?: string | null
