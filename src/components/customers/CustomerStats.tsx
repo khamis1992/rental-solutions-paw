@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { UserCheck, UserPlus, UserClock, UserX } from "lucide-react";
+import { UserCheck, UserPlus, Clock, UserX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +66,7 @@ export const CustomerStats = () => {
     {
       title: "Pending Review",
       value: stats?.pending || 0,
-      icon: UserClock,
+      icon: Clock,
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
       description: "Awaiting verification",

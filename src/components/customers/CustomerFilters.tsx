@@ -1,7 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, UserCheck, UserClock, UserX, Users } from "lucide-react";
+import { Search, Filter, UserCheck, Clock, UserX, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface CustomerFiltersProps {
@@ -51,7 +51,7 @@ export const CustomerFilters = ({
             </SelectItem>
             <SelectItem value="pending">
               <div className="flex items-center gap-2">
-                <UserClock className="h-4 w-4 text-amber-500" />
+                <Clock className="h-4 w-4 text-amber-500" />
                 <span>Pending</span>
               </div>
             </SelectItem>
