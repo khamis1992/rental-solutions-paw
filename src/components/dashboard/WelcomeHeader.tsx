@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -56,14 +57,14 @@ export const WelcomeHeader = () => {
   return (
     <div className="space-y-2">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-foreground">
           {getGreeting()}, {profile?.full_name || 'User'}
         </h1>
-        <p className="text-sm text-[#B0B0B0]">
+        <p className="text-sm text-muted-foreground">
           {format(currentTime, "EEEE, MMMM do, yyyy • h:mm a")}
         </p>
       </div>
-      <p className="text-sm text-[#D3D3D3] italic">
+      <p className="text-sm text-muted-foreground/80 italic">
         "{quote}"
       </p>
     </div>
