@@ -5,7 +5,6 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { PredictiveAnalytics } from "@/components/dashboard/PredictiveAnalytics";
 import { DashboardStats as DashboardStatsType } from "@/types/dashboard.types";
 
 const Dashboard = () => {
@@ -57,18 +56,13 @@ const Dashboard = () => {
 
         {/* Analytics and Activity Section */}
         <div className="grid gap-8 md:grid-cols-2">
-          {/* Predictive Analytics Card */}
-          <div className="col-span-2 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <PredictiveAnalytics />
-          </div>
-          
           {/* Recent Activity Feed */}
-          <div className="md:col-span-2 lg:col-span-1 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
             <RecentActivity />
           </div>
           
           {/* Alerts and Notifications */}
-          <div className="md:col-span-2 lg:col-span-1 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
             <DashboardAlerts />
           </div>
         </div>
