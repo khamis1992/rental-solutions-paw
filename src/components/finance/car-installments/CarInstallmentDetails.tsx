@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,18 +15,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, TrendingDown, TrendingUp, MoreHorizontal } from "lucide-react";
 import Papa from 'papaparse';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface CsvRow {
   cheque_number: string;
@@ -141,6 +146,7 @@ export const CarInstallmentDetails = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ["car-installment-payments", id],
@@ -355,83 +361,141 @@ export const CarInstallmentDetails = () => {
     document.body.removeChild(a);
   };
 
-  // Calculate summary statistics from contract data instead of payments
   const totalAmount = contract?.total_contract_value || 0;
   const totalPaid = contract?.amount_paid || 0;
   const totalPending = contract?.amount_pending || 0;
   const overduePayments = payments?.filter(p => p.status === 'overdue').length || 0;
+  const completionPercentage = totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0;
+  const pendingPercentage = totalAmount > 0 ? (totalPending / totalAmount) * 100 : 0;
+
+  const filteredPayments = payments?.filter(payment => {
+    if (selectedFilter === "all") return true;
+    return payment.status === selectedFilter;
+  });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 bg-background">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Amount
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalAmount)}
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+                  Total Amount
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalAmount)}
+                </div>
+                <div className="mt-2 h-2 bg-blue-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Contract Overview</h4>
+              <p className="text-sm text-muted-foreground">
+                Total contract value with all installments included.
+                Currently at {completionPercentage.toFixed(1)}% completion rate.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </HoverCardContent>
+        </HoverCard>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
               Total Paid
+              <TrendingUp className="h-4 w-4 text-green-500" />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
               {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalPaid)}
             </div>
+            <div className="mt-2 h-2 bg-green-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-500 transition-all duration-500"
+                style={{ width: `${(totalPaid / totalAmount) * 100}%` }}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
               Pending Amount
+              <TrendingDown className="h-4 w-4 text-yellow-500" />
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
               {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(totalPending)}
             </div>
+            <div className="mt-2 h-2 bg-yellow-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-yellow-500 transition-all duration-500"
+                style={{ width: `${pendingPercentage}%` }}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow duration-200 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
               Overdue Payments
+              {overduePayments > 0 && <span className="animate-pulse">🔴</span>}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {overduePayments}
             </div>
+            <div className="mt-2 text-sm text-muted-foreground">
+              {overduePayments > 0 ? "Requires attention" : "All payments up to date"}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="shadow-lg">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Payment Installments</CardTitle>
             <div className="flex gap-2">
+              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payments</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] })}
+                className="hover:scale-105 transition-transform"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
               </Button>
               <Button 
                 onClick={() => setShowAddPayment(true)}
+                className="hover:scale-105 transition-transform"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Payment
@@ -447,74 +511,99 @@ export const CarInstallmentDetails = () => {
             isAnalyzing={isAnalyzing}
           />
           
-          <div className="mt-6 rounded-md border">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cheque Number</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drawee Bank</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {payments?.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.cheque_number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.amount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.paid_amount || 0)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDateToDisplay(payment.payment_date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.drawee_bank}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Select
-                        value={payment.status}
-                        onValueChange={(value) => handleStatusChange(payment.id, value)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                          <SelectItem value="overdue">Overdue</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPayment(payment)}
-                      >
-                        Record Payment
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-                {!payments?.length && (
+          <ScrollArea className="h-[600px] mt-6">
+            <div className="rounded-md border">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-muted/50 sticky top-0">
                   <tr>
-                    <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
-                      No payments found
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cheque Number</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drawee Bank</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredPayments?.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className="font-medium">{payment.cheque_number}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.amount)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                        {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.paid_amount || 0)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
+                        {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {formatDateToDisplay(payment.payment_date)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{payment.drawee_bank}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Select
+                          value={payment.status}
+                          onValueChange={(value) => handleStatusChange(payment.id, value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">
+                              <span className="flex items-center">
+                                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 mr-2">⏳</Badge>
+                                Pending
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="paid">
+                              <span className="flex items-center">
+                                <Badge variant="outline" className="bg-green-100 text-green-800 mr-2">✓</Badge>
+                                Paid
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="cancelled">
+                              <span className="flex items-center">
+                                <Badge variant="outline" className="bg-gray-100 text-gray-800 mr-2">✕</Badge>
+                                Cancelled
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="overdue">
+                              <span className="flex items-center">
+                                <Badge variant="outline" className="bg-red-100 text-red-800 mr-2">⚠️</Badge>
+                                Overdue
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedPayment(payment)}
+                          className="hover:scale-105 transition-transform"
+                        >
+                          Record Payment
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {!filteredPayments?.length && (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
+                        No payments found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
