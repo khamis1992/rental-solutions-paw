@@ -836,6 +836,7 @@ export type Database = {
           installment_value: number
           model_year: number
           number_of_cars: number
+          overdue_payments: number | null
           price_per_car: number
           remaining_installments: number
           total_contract_value: number
@@ -852,6 +853,7 @@ export type Database = {
           installment_value: number
           model_year: number
           number_of_cars?: number
+          overdue_payments?: number | null
           price_per_car: number
           remaining_installments: number
           total_contract_value: number
@@ -868,6 +870,7 @@ export type Database = {
           installment_value?: number
           model_year?: number
           number_of_cars?: number
+          overdue_payments?: number | null
           price_per_car?: number
           remaining_installments?: number
           total_contract_value?: number
@@ -885,6 +888,7 @@ export type Database = {
           days_overdue: number | null
           drawee_bank: string
           id: string
+          last_payment_check: string | null
           last_payment_date: string | null
           last_status_change: string | null
           notes: string | null
@@ -906,6 +910,7 @@ export type Database = {
           days_overdue?: number | null
           drawee_bank: string
           id?: string
+          last_payment_check?: string | null
           last_payment_date?: string | null
           last_status_change?: string | null
           notes?: string | null
@@ -927,6 +932,7 @@ export type Database = {
           days_overdue?: number | null
           drawee_bank?: string
           id?: string
+          last_payment_check?: string | null
           last_payment_date?: string | null
           last_status_change?: string | null
           notes?: string | null
@@ -6905,6 +6911,10 @@ export type Database = {
           customer_id: string
         }
         Returns: boolean
+      }
+      check_car_installment_overdue_payments: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       check_inventory_levels: {
         Args: Record<PropertyKey, never>
