@@ -276,39 +276,47 @@ export const CarInstallmentDetails = () => {
 
   const handleStatusChange = async (paymentId: string, newStatus: string) => {
     try {
+      // Get the payment details first
+      const { data: paymentData } = await supabase
+        .from('car_installment_payments')
+        .select('amount')
+        .eq('id', paymentId)
+        .single();
+
+      if (!paymentData) throw new Error('Payment not found');
+
+      let updateData: any = {
+        status: newStatus,
+        last_status_change: new Date().toISOString()
+      };
+
       if (newStatus === 'paid') {
-        // Get the payment details first
-        const { data: paymentData } = await supabase
-          .from('car_installment_payments')
-          .select('amount')
-          .eq('id', paymentId)
-          .single();
-
-        if (!paymentData) throw new Error('Payment not found');
-
-        const { error } = await supabase
-          .from('car_installment_payments')
-          .update({ 
-            status: newStatus,
-            last_status_change: new Date().toISOString(),
-            paid_amount: paymentData.amount,
-            remaining_amount: 0,
-            last_payment_date: new Date().toISOString()
-          })
-          .eq('id', paymentId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('car_installment_payments')
-          .update({ 
-            status: newStatus,
-            last_status_change: new Date().toISOString()
-          })
-          .eq('id', paymentId);
-
-        if (error) throw error;
+        updateData = {
+          ...updateData,
+          paid_amount: paymentData.amount,
+          remaining_amount: 0,
+          last_payment_date: new Date().toISOString()
+        };
+      } else if (newStatus === 'pending' || newStatus === 'overdue') {
+        updateData = {
+          ...updateData,
+          paid_amount: 0,
+          remaining_amount: paymentData.amount
+        };
+      } else if (newStatus === 'cancelled') {
+        updateData = {
+          ...updateData,
+          paid_amount: 0,
+          remaining_amount: 0
+        };
       }
+
+      const { error } = await supabase
+        .from('car_installment_payments')
+        .update(updateData)
+        .eq('id', paymentId);
+
+      if (error) throw error;
       
       queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
       toast.success("Status updated successfully");
