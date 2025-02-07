@@ -716,6 +716,7 @@ export type Database = {
           action: string
           changes: Json | null
           created_at: string
+          description: string | null
           entity_id: string | null
           entity_type: string
           id: string
@@ -725,6 +726,7 @@ export type Database = {
           action: string
           changes?: Json | null
           created_at?: string
+          description?: string | null
           entity_id?: string | null
           entity_type: string
           id?: string
@@ -734,6 +736,7 @@ export type Database = {
           action?: string
           changes?: Json | null
           created_at?: string
+          description?: string | null
           entity_id?: string | null
           entity_type?: string
           id?: string
