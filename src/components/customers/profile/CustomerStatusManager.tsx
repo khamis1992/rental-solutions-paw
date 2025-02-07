@@ -26,7 +26,8 @@ import {
   AlertOctagon, 
   Clock, 
   ShieldAlert,
-  Loader2
+  Loader2,
+  Edit2
 } from "lucide-react";
 
 const statusOptions = [
@@ -68,6 +69,7 @@ interface CustomerStatusManagerProps {
 
 export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [newStatus, setNewStatus] = useState(profile.status || "pending_review");
   const [statusNotes, setStatusNotes] = useState(profile.status_notes || "");
   const queryClient = useQueryClient();
@@ -97,6 +99,7 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
 
       toast.success("Customer status updated successfully");
       queryClient.invalidateQueries({ queryKey: ["customer", profile.id] });
+      setIsEditing(false);
     } catch (error: any) {
       console.error('Error updating customer status:', error);
       toast.error(error.message || "Failed to update customer status");
@@ -110,26 +113,44 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle>Customer Status</CardTitle>
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "ml-2 flex items-center gap-2",
-              getCurrentStatusColor()
-            )}
-          >
-            {getCurrentStatusIcon()}
-            <span>{profile.status?.replace('_', ' ') || 'N/A'}</span>
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "ml-2 flex items-center gap-2 transition-all duration-200",
+                getCurrentStatusColor(),
+                isEditing ? "opacity-50" : "opacity-100"
+              )}
+            >
+              {getCurrentStatusIcon()}
+              <span>{profile.status?.replace('_', ' ') || 'N/A'}</span>
+            </Badge>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "h-8 w-8 transition-all duration-200",
+                isEditing ? "bg-primary/10 text-primary" : ""
+              )}
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={cn(
+        "space-y-4 transition-all duration-200",
+        isEditing ? "opacity-100" : "opacity-0 pointer-events-none h-0 !mt-0"
+      )}>
         <div className="space-y-2">
           <label className="text-sm font-medium">Update Status</label>
           <Select
             value={newStatus}
             onValueChange={setNewStatus}
+            disabled={isUpdating}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select new status" />
             </SelectTrigger>
             <SelectContent>
@@ -154,23 +175,34 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
             value={statusNotes}
             onChange={(e) => setStatusNotes(e.target.value)}
             rows={3}
+            disabled={isUpdating}
           />
         </div>
 
-        <Button 
-          onClick={handleStatusUpdate} 
-          disabled={isUpdating || (newStatus === profile.status && statusNotes === profile.status_notes)}
-          className="w-full"
-        >
-          {isUpdating ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Updating...
-            </>
-          ) : (
-            "Update Status"
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEditing(false)}
+            disabled={isUpdating}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleStatusUpdate} 
+            disabled={isUpdating || (newStatus === profile.status && statusNotes === profile.status_notes)}
+            className="flex-1"
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Status"
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
