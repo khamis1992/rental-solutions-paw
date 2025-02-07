@@ -9,6 +9,7 @@ import { VirtualCFO } from "./virtual-cfo/VirtualCFO";
 import { Loader2 } from "lucide-react";
 import { Transaction } from "./types/transaction.types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const FinancialDashboard = () => {
   const { data: financialData, isLoading } = useQuery({
@@ -131,53 +132,75 @@ export const FinancialDashboard = () => {
   return (
     <div className="space-y-8">
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+        <TabsList className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="virtual-cfo">Virtual CFO</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
-          <div className="space-y-8">
-            <div className="grid gap-4 md:grid-cols-3">
-              <FinancialMetricsCard
-                title="Monthly Revenue"
-                value={currentMonthRevenue}
-                previousValue={previousMonthRevenue}
-                percentageChange={percentageChangeRevenue}
-              />
-              <FinancialMetricsCard
-                title="Monthly Expenses"
-                value={currentMonthExpenses}
-                previousValue={previousMonthExpenses}
-                percentageChange={percentageChangeExpenses}
-              />
-              <FinancialMetricsCard
-                title="Net Profit"
-                value={currentMonthRevenue - currentMonthExpenses}
-                previousValue={previousMonthRevenue - previousMonthExpenses}
-                percentageChange={
-                  ((currentMonthRevenue - currentMonthExpenses) - (previousMonthRevenue - previousMonthExpenses)) / 
-                  Math.abs(previousMonthRevenue - previousMonthExpenses) * 100
-                }
-              />
-            </div>
-
-            <BudgetTrackingSection 
-              transactions={financialData || []}
-              categories={Array.from(new Set(financialData?.map(t => t.category)
-                .filter(Boolean))) as Transaction['category'][]}
+        <TabsContent value="overview" className="space-y-8">
+          <div className="grid gap-4 md:grid-cols-3">
+            <FinancialMetricsCard
+              title="Monthly Revenue"
+              value={currentMonthRevenue}
+              previousValue={previousMonthRevenue}
+              percentageChange={percentageChangeRevenue}
+              className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-900/30"
             />
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <RevenueChart 
-                data={revenueData} 
-                onExport={() => {}} 
-              />
-              <ExpenseBreakdownChart data={expenseData} />
-            </div>
-
-            <ProfitLossChart data={profitLossData} />
+            <FinancialMetricsCard
+              title="Monthly Expenses"
+              value={currentMonthExpenses}
+              previousValue={previousMonthExpenses}
+              percentageChange={percentageChangeExpenses}
+              className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/50 dark:to-red-900/30"
+            />
+            <FinancialMetricsCard
+              title="Net Profit"
+              value={currentMonthRevenue - currentMonthExpenses}
+              previousValue={previousMonthRevenue - previousMonthExpenses}
+              percentageChange={
+                ((currentMonthRevenue - currentMonthExpenses) - (previousMonthRevenue - previousMonthExpenses)) / 
+                Math.abs(previousMonthRevenue - previousMonthExpenses) * 100
+              }
+              className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-900/30"
+            />
           </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="bg-gradient-to-br from-background to-muted/50">
+              <CardHeader>
+                <CardTitle>Revenue Trends</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RevenueChart 
+                  data={revenueData} 
+                  onExport={() => {}} 
+                />
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-br from-background to-muted/50">
+              <CardHeader>
+                <CardTitle>Expense Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ExpenseBreakdownChart data={expenseData} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="bg-gradient-to-br from-background to-muted/50">
+            <CardHeader>
+              <CardTitle>Profit & Loss Analysis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProfitLossChart data={profitLossData} />
+            </CardContent>
+          </Card>
+
+          <BudgetTrackingSection 
+            transactions={financialData || []}
+            categories={Array.from(new Set(financialData?.map(t => t.category)
+              .filter(Boolean))) as Transaction['category'][]}
+          />
         </TabsContent>
 
         <TabsContent value="virtual-cfo">
