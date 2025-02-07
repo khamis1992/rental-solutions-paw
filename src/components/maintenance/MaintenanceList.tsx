@@ -162,7 +162,7 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[...Array(6)].map((_, i) => (
           <Skeleton key={i} className="h-[400px] w-full" />
         ))}
@@ -211,11 +211,11 @@ export const MaintenanceList = () => {
         <CreateJobDialog />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
         {currentRecords.map((record) => (
           <Card 
             key={record.id} 
-            className="flex flex-col min-h-[400px] max-h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform"
+            className="flex flex-col min-h-[400px] max-h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform w-full"
           >
             <div className="flex flex-col flex-1 p-6 space-y-4">
               <div className="flex items-start justify-between">
@@ -329,3 +329,4 @@ export const MaintenanceList = () => {
     </div>
   );
 };
+
