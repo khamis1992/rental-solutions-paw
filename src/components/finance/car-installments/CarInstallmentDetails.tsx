@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -153,6 +153,30 @@ export const CarInstallmentDetails = () => {
       return data;
     },
   });
+
+  useEffect(() => {
+    // Subscribe to changes on car_installment_payments table
+    const channel = supabase
+      .channel('payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'car_installment_payments',
+          filter: `contract_id=eq.${id}`
+        },
+        () => {
+          // Refresh the data when changes occur
+          queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
