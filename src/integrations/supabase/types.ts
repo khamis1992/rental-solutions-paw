@@ -1080,8 +1080,10 @@ export type Database = {
           alert_type: string
           created_at: string | null
           current_amount: number
+          expected_amount: number | null
           id: string
           message: string
+          payment_id: string | null
           resolved_at: string | null
           severity: string | null
           status: string | null
@@ -1091,8 +1093,10 @@ export type Database = {
           alert_type: string
           created_at?: string | null
           current_amount: number
+          expected_amount?: number | null
           id?: string
           message: string
+          payment_id?: string | null
           resolved_at?: string | null
           severity?: string | null
           status?: string | null
@@ -1102,14 +1106,24 @@ export type Database = {
           alert_type?: string
           created_at?: string | null
           current_amount?: number
+          expected_amount?: number | null
           id?: string
           message?: string
+          payment_id?: string | null
           resolved_at?: string | null
           severity?: string | null
           status?: string | null
           threshold_amount?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cash_flow_alerts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "car_installment_payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -6962,6 +6976,10 @@ export type Database = {
         Args: {
           agreement_id: string
         }
+        Returns: undefined
+      }
+      generate_cash_flow_alerts: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       get_dashboard_stats: {
