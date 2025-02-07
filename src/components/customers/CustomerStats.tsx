@@ -10,12 +10,14 @@ export const CustomerStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["customer-stats"],
     queryFn: async () => {
+      // Get customers with active agreements
       const { data: activeCustomers, error: activeError } = await supabase
         .from("profiles")
-        .select("id")
+        .select("id, leases!inner(status)")
         .eq("role", "customer")
-        .eq("status", "active");
+        .eq("leases.status", "active");
 
+      // Get new customers in last 30 days
       const { data: newCustomers, error: newError } = await supabase
         .from("profiles")
         .select("id")
@@ -23,6 +25,7 @@ export const CustomerStats = () => {
         .eq("status", "pending_review")
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
+      // Get pending review customers
       const { data: pendingCustomers, error: pendingError } = await supabase
         .from("profiles")
         .select("id")
@@ -46,7 +49,7 @@ export const CustomerStats = () => {
       icon: UserCheck,
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
-      description: "Currently active customers",
+      description: "Currently active agreements",
     },
     {
       title: "New Customers",
