@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, RefreshCw, TrendingDown, TrendingUp, MoreHorizontal } from "lucide-react";
+import { Plus, RefreshCw, TrendingDown, TrendingUp, MoreHorizontal, Receipt, CreditCard } from "lucide-react";
 import Papa from 'papaparse';
 import {
   Dialog,
@@ -583,12 +583,13 @@ export const CarInstallmentDetails = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => setSelectedPayment(payment)}
                           className="hover:scale-105 transition-transform"
+                          title="Record Payment"
                         >
-                          Record Payment
+                          <Receipt className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
