@@ -10,7 +10,8 @@ import {
   XCircle,
   Phone,
   MapPin,
-  FileCheck
+  FileCheck,
+  AlertCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
