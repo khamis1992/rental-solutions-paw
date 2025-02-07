@@ -1,3 +1,4 @@
+
 import { 
   Home, Car, Users, FileText, HelpCircle, Wrench, 
   FilePen, BarChart3, Gavel, Wallet, FileText as AuditIcon,
@@ -131,7 +132,7 @@ export const DashboardSidebar = () => {
     <>
       {isMobile && openMobile && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity"
+          className="fixed inset-0 bg-white/30 backdrop-blur-sm z-40 transition-opacity"
           onClick={() => setOpenMobile(false)}
         />
       )}
@@ -146,26 +147,26 @@ export const DashboardSidebar = () => {
       >
         <Sidebar 
           className={cn(
-            "border-r border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 h-full",
+            "bg-white border-r border-gray-100 shadow-lg h-full",
             "transition-all duration-300 ease-in-out"
           )}
         >
           <SidebarContent>
-            <div className="flex h-14 items-center border-b px-6">
-              <span className="font-semibold tracking-tight">Rental Solutions</span>
+            <div className="flex h-14 items-center border-b border-gray-100 px-6 bg-white/95">
+              <span className="font-semibold tracking-tight text-gray-900">Rental Solutions</span>
             </div>
             
-            <div className="px-2 py-2 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
+            <div className="px-2 py-2 overflow-y-auto max-h-[calc(100vh-3.5rem)] bg-white">
               {Object.entries(menuGroups).map(([key, group]) => (
                 <SidebarGroup key={key} className="py-2">
                   <button
                     onClick={() => toggleGroup(key)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-50"
                   >
                     <span>{group.label}</span>
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 transition-transform duration-200",
+                        "h-4 w-4 transition-transform duration-200 text-gray-400",
                         expandedGroups[key] ? "transform rotate-180" : ""
                       )}
                     />
@@ -187,14 +188,14 @@ export const DashboardSidebar = () => {
                                   className={cn(
                                     "flex items-center gap-2 px-3 py-2 rounded-md transition-all duration-200",
                                     isActive 
-                                      ? "bg-primary/10 text-primary hover:bg-primary/15"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                                      ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                                   )}
                                   onClick={() => isMobile && setOpenMobile(false)}
                                 >
                                   <item.icon className={cn(
                                     "h-4 w-4 transition-transform group-hover:scale-110",
-                                    isActive ? "text-primary" : "text-muted-foreground"
+                                    isActive ? "text-blue-600" : "text-gray-400"
                                   )} />
                                   <span>{item.label}</span>
                                 </Link>
