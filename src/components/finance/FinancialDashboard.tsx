@@ -6,6 +6,7 @@ import { ExpenseBreakdownChart } from "./charts/ExpenseBreakdownChart";
 import { ProfitLossChart } from "./charts/ProfitLossChart";
 import { BudgetTrackingSection } from "./budget/BudgetTrackingSection";
 import { VirtualCFO } from "./virtual-cfo/VirtualCFO";
+import { QuickActionsPanel } from "./QuickActionsPanel";
 import { Loader2 } from "lucide-react";
 import { Transaction } from "./types/transaction.types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +26,7 @@ export const FinancialDashboard = () => {
 
       if (error) throw error;
       
-      return (data as any[]).map(transaction => ({
+      return (data as any[])?.map(transaction => ({
         ...transaction,
         amount: parseFloat(transaction.amount) || 0
       })) as Transaction[];
@@ -164,6 +165,8 @@ export const FinancialDashboard = () => {
               className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-900/30"
             />
           </div>
+
+          <QuickActionsPanel />
 
           <div className="grid gap-6 md:grid-cols-2">
             <Card className="bg-gradient-to-br from-background to-muted/50">
