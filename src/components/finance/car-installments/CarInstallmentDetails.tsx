@@ -51,8 +51,8 @@ const RecordPaymentDialog = ({ payment, onClose, open }: RecordPaymentDialogProp
     setIsSubmitting(true);
 
     try {
-      const remainingAmount = payment.amount - paidAmount;
       const newPaidTotal = (payment.paid_amount || 0) + paidAmount;
+      const remainingAmount = Math.max(0, payment.amount - newPaidTotal);
       const newStatus = remainingAmount <= 0 ? 'paid' : 'pending';
 
       const { error } = await supabase
@@ -155,7 +155,6 @@ export const CarInstallmentDetails = () => {
   });
 
   useEffect(() => {
-    // Subscribe to changes on car_installment_payments table
     const channel = supabase
       .channel('payments-changes')
       .on(
@@ -167,7 +166,6 @@ export const CarInstallmentDetails = () => {
           filter: `contract_id=eq.${id}`
         },
         () => {
-          // Refresh the data when changes occur
           queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
         }
       )
@@ -177,6 +175,57 @@ export const CarInstallmentDetails = () => {
       supabase.removeChannel(channel);
     };
   }, [id, queryClient]);
+
+  const handleStatusChange = async (paymentId: string, newStatus: string) => {
+    try {
+      const { data: paymentData } = await supabase
+        .from('car_installment_payments')
+        .select('*')
+        .eq('id', paymentId)
+        .single();
+
+      if (!paymentData) throw new Error('Payment not found');
+
+      let updateData: any = {
+        status: newStatus,
+        last_status_change: new Date().toISOString()
+      };
+
+      if (newStatus === 'paid') {
+        updateData = {
+          ...updateData,
+          paid_amount: paymentData.amount,
+          remaining_amount: 0,
+          last_payment_date: new Date().toISOString()
+        };
+      } else if (newStatus === 'pending' || newStatus === 'overdue') {
+        updateData = {
+          ...updateData,
+          paid_amount: 0,
+          remaining_amount: paymentData.amount
+        };
+      } else if (newStatus === 'cancelled') {
+        updateData = {
+          ...updateData,
+          paid_amount: 0,
+          remaining_amount: 0
+        };
+      }
+
+      const { error } = await supabase
+        .from('car_installment_payments')
+        .update(updateData)
+        .eq('id', paymentId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error("Failed to update status");
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -274,67 +323,28 @@ export const CarInstallmentDetails = () => {
     document.body.removeChild(a);
   };
 
-  const handleStatusChange = async (paymentId: string, newStatus: string) => {
-    try {
-      // Get the payment details first
-      const { data: paymentData } = await supabase
-        .from('car_installment_payments')
-        .select('amount')
-        .eq('id', paymentId)
-        .single();
-
-      if (!paymentData) throw new Error('Payment not found');
-
-      let updateData: any = {
-        status: newStatus,
-        last_status_change: new Date().toISOString()
-      };
-
-      if (newStatus === 'paid') {
-        updateData = {
-          ...updateData,
-          paid_amount: paymentData.amount,
-          remaining_amount: 0,
-          last_payment_date: new Date().toISOString()
-        };
-      } else if (newStatus === 'pending' || newStatus === 'overdue') {
-        updateData = {
-          ...updateData,
-          paid_amount: 0,
-          remaining_amount: paymentData.amount
-        };
-      } else if (newStatus === 'cancelled') {
-        updateData = {
-          ...updateData,
-          paid_amount: 0,
-          remaining_amount: 0
-        };
-      }
-
-      const { error } = await supabase
-        .from('car_installment_payments')
-        .update(updateData)
-        .eq('id', paymentId);
-
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
-      toast.success("Status updated successfully");
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error("Failed to update status");
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'overdue':
+        return 'bg-red-100 text-red-800';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // Calculate summary statistics
   const totalAmount = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
   const totalPaid = payments?.reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
   const totalPending = payments?.reduce((sum, p) => sum + (p.remaining_amount || 0), 0) || 0;
-  const overduePayments = payments?.filter(p => p.days_overdue > 0).length || 0;
+  const overduePayments = payments?.filter(p => p.status === 'overdue').length || 0;
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -389,7 +399,6 @@ export const CarInstallmentDetails = () => {
         </Card>
       </div>
 
-      {/* Actions Bar */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -452,29 +461,34 @@ export const CarInstallmentDetails = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.drawee_bank}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Select
-                        value={payment.status}
-                        onValueChange={(value) => handleStatusChange(payment.id, value)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                          <SelectItem value="overdue">Overdue</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
+                        {payment.status}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPayment(payment)}
-                      >
-                        Record Payment
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={payment.status}
+                          onValueChange={(value) => handleStatusChange(payment.id, value)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="overdue">Overdue</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedPayment(payment)}
+                        >
+                          Record Payment
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
