@@ -11,7 +11,9 @@ import {
   Calendar,
   Calculator,
   Filter,
-  Search
+  Search,
+  CheckCircle2,
+  X
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -26,17 +28,29 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VehicleTablePagination } from "@/components/vehicles/table/VehicleTablePagination";
 import { Input } from "@/components/ui/input";
-import type { Maintenance } from "@/types/maintenance";
 
-const ITEMS_PER_PAGE = 10;
-
-interface MaintenanceRecord extends Maintenance {
+interface MaintenanceRecord {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  status: "scheduled" | "in_progress" | "completed" | "cancelled";
+  scheduled_date: string;
+  cost?: number;
+  description?: string;
+  completed_date?: string;
+  performed_by?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  category_id?: string;
   vehicles?: {
     make: string;
     model: string;
     license_plate: string;
   };
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export const MaintenanceList = () => {
   const queryClient = useQueryClient();

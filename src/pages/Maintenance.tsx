@@ -5,7 +5,7 @@ import { MaintenanceList } from "@/components/maintenance/MaintenanceList";
 import { MaintenanceAlerts } from "@/components/maintenance/MaintenanceAlerts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight, Settings, Tools } from "lucide-react";
+import { ChevronRight, Settings, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -46,7 +46,7 @@ const Maintenance = () => {
                 <span>Maintenance</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Tools className="h-6 w-6 text-primary" />
+                <Wrench className="h-6 w-6 text-primary" />
                 <h1 className="text-3xl font-bold">Maintenance</h1>
               </div>
             </div>
