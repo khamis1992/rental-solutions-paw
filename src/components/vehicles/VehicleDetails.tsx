@@ -12,7 +12,7 @@ import { DocumentExpiryNotifications } from "./profile/DocumentExpiryNotificatio
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Car, AlertTriangle, License } from "lucide-react";
+import { ArrowLeft, Car, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -106,7 +106,7 @@ export const VehicleDetails = () => {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2 bg-background px-4 py-2 rounded-lg border hover:bg-muted/50 transition-colors cursor-help">
-                <License className="h-5 w-5 text-primary" />
+                <FileText className="h-5 w-5 text-primary" />
                 <span className="font-medium">
                   {vehicle.license_plate}
                 </span>
