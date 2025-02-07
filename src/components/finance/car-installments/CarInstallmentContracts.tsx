@@ -9,6 +9,7 @@ import { CreateContractDialog } from "./CreateContractDialog";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface CarInstallmentContract {
   id: string;
@@ -93,6 +94,10 @@ export const CarInstallmentContracts = () => {
     );
   }
 
+  const handleContractClick = (contractId: string) => {
+    navigate(`/finance/car-installments/${contractId}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Metrics Overview */}
@@ -154,10 +159,17 @@ export const CarInstallmentContracts = () => {
                   return (
                     <TableRow 
                       key={contract.id}
-                      className="cursor-pointer transition-colors hover:bg-muted/50"
-                      onClick={() => navigate(`/finance/car-installments/${contract.id}`)}
+                      className="transition-colors hover:bg-muted/50"
                     >
-                      <TableCell className="font-medium">{contract.car_type}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto font-medium hover:text-primary"
+                          onClick={() => handleContractClick(contract.id)}
+                        >
+                          {contract.car_type}
+                        </Button>
+                      </TableCell>
                       <TableCell>{contract.model_year}</TableCell>
                       <TableCell className="text-center">{contract.number_of_cars || 1}</TableCell>
                       <TableCell className="text-right">{formatCurrency(contract.price_per_car)}</TableCell>
