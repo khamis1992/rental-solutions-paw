@@ -70,14 +70,6 @@ const Dashboard = () => {
             </div>
             <RecentActivity />
           </div>
-          
-          {/* Alerts and Notifications with Enhanced Card Design */}
-          <div className="group bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300">
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ArrowUpRight className="h-5 w-5 text-primary/60" />
-            </div>
-            <DashboardAlerts />
-          </div>
         </div>
       </div>
     </div>
