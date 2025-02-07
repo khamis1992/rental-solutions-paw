@@ -73,7 +73,7 @@ export const DashboardSidebar = () => {
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { isOpen, close } = useSidebar();
+  const { isOpen, close, openMobile } = useSidebar();
 
   useEffect(() => {
     localStorage.setItem('sidebarGroups', JSON.stringify(expandedGroups));
@@ -84,10 +84,10 @@ export const DashboardSidebar = () => {
   };
 
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && openMobile) {
       close();
     }
-  }, [location.pathname, isMobile, close]);
+  }, [location.pathname, isMobile, close, openMobile]);
 
   if (isLoading) {
     return (

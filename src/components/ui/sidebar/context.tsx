@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -35,6 +36,14 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
       [setOpenProp, open]
     );
 
+    const toggle = React.useCallback(() => {
+      return isMobile ? setOpenMobile(open => !open) : setOpen(open => !open);
+    }, [isMobile, setOpen]);
+
+    const close = React.useCallback(() => {
+      isMobile ? setOpenMobile(false) : setOpen(false);
+    }, [isMobile, setOpen]);
+
     const toggleSidebar = React.useCallback(() => {
       return isMobile ? setOpenMobile(open => !open) : setOpen(open => !open);
     }, [isMobile, setOpen]);
@@ -56,13 +65,16 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
       () => ({
         state,
         open,
+        isOpen: open,
         setOpen,
         isMobile,
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        toggle,
+        close,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, toggle, close]
     );
 
     return (

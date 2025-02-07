@@ -1,14 +1,18 @@
+
 import { VariantProps } from "class-variance-authority";
 import { sidebarMenuButtonVariants } from "./variants";
 
 export type SidebarContext = {
   state: "expanded" | "collapsed";
   open: boolean;
+  isOpen: boolean;
   setOpen: (open: boolean) => void;
   openMobile: boolean;
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  toggle: () => void;
+  close: () => void;
 };
 
 export interface SidebarProviderProps extends React.ComponentProps<"div"> {
