@@ -39,7 +39,7 @@ const Dashboard = () => {
           <div className="relative z-10">
             <WelcomeHeader />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 mix-blend-overlay" />
         </div>
 
         {/* Stats Grid with Enhanced Visual Design */}
