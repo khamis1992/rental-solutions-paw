@@ -20,13 +20,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { 
+  CheckCircle, 
+  XCircle, 
+  AlertOctagon, 
+  Clock, 
+  ShieldAlert,
+  Loader2
+} from "lucide-react";
 
 const statusOptions = [
-  { value: "active", label: "Active", color: "bg-green-100 text-green-800 border-green-200" },
-  { value: "inactive", label: "Inactive", color: "bg-gray-100 text-gray-800 border-gray-200" },
-  { value: "suspended", label: "Suspended", color: "bg-red-100 text-red-800 border-red-200" },
-  { value: "pending_review", label: "Pending Review", color: "bg-amber-100 text-amber-800 border-amber-200" },
-  { value: "blacklisted", label: "Blacklisted", color: "bg-red-100 text-red-800 border-red-200" },
+  { 
+    value: "active", 
+    label: "Active", 
+    color: "bg-green-100 text-green-800 border-green-200",
+    icon: CheckCircle
+  },
+  { 
+    value: "inactive", 
+    label: "Inactive", 
+    color: "bg-gray-100 text-gray-800 border-gray-200",
+    icon: XCircle
+  },
+  { 
+    value: "suspended", 
+    label: "Suspended", 
+    color: "bg-red-100 text-red-800 border-red-200",
+    icon: AlertOctagon
+  },
+  { 
+    value: "pending_review", 
+    label: "Pending Review", 
+    color: "bg-amber-100 text-amber-800 border-amber-200",
+    icon: Clock
+  },
+  { 
+    value: "blacklisted", 
+    label: "Blacklisted", 
+    color: "bg-red-100 text-red-800 border-red-200",
+    icon: ShieldAlert
+  },
 ];
 
 interface CustomerStatusManagerProps {
@@ -41,6 +74,11 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
 
   const getCurrentStatusColor = () => {
     return statusOptions.find(status => status.value === profile.status)?.color || statusOptions[0].color;
+  };
+
+  const getCurrentStatusIcon = () => {
+    const StatusIcon = statusOptions.find(status => status.value === profile.status)?.icon || Clock;
+    return <StatusIcon className="h-4 w-4" />;
   };
 
   const handleStatusUpdate = async () => {
@@ -75,11 +113,12 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
           <Badge 
             variant="outline" 
             className={cn(
-              "ml-2",
+              "ml-2 flex items-center gap-2",
               getCurrentStatusColor()
             )}
           >
-            {profile.status?.replace('_', ' ') || 'N/A'}
+            {getCurrentStatusIcon()}
+            <span>{profile.status?.replace('_', ' ') || 'N/A'}</span>
           </Badge>
         </div>
       </CardHeader>
@@ -95,8 +134,13 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
+                <SelectItem 
+                  key={status.value} 
+                  value={status.value}
+                  className="flex items-center gap-2"
+                >
+                  <status.icon className="h-4 w-4" />
+                  <span>{status.label}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -116,8 +160,16 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
         <Button 
           onClick={handleStatusUpdate} 
           disabled={isUpdating || (newStatus === profile.status && statusNotes === profile.status_notes)}
+          className="w-full"
         >
-          {isUpdating ? "Updating..." : "Update Status"}
+          {isUpdating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            "Update Status"
+          )}
         </Button>
       </CardContent>
     </Card>
