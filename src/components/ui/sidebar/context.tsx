@@ -99,3 +99,4 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
 );
 
 SidebarProvider.displayName = "SidebarProvider";
+
