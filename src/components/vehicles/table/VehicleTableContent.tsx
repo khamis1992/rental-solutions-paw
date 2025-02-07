@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Vehicle } from "@/types/vehicle";
 import { VehicleStatusCell } from "./VehicleStatusCell";
@@ -5,9 +6,10 @@ import { VehicleLocationCell } from "./VehicleLocationCell";
 import { VehicleInsuranceCell } from "./VehicleInsuranceCell";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Edit, Trash2, FileText, MapPin, Car } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface VehicleTableContentProps {
   vehicles: Vehicle[];
@@ -28,7 +30,10 @@ export const VehicleTableContent = ({
       {vehicles.map((vehicle) => (
         <TableRow 
           key={vehicle.id}
-          className="group hover:bg-muted/50 transition-colors"
+          className={cn(
+            "group hover:bg-muted/50 transition-all duration-200",
+            selectedVehicles.includes(vehicle.id) && "bg-primary/5"
+          )}
         >
           <TableCell className="w-12">
             <input
@@ -47,8 +52,9 @@ export const VehicleTableContent = ({
           <TableCell>
             <Link 
               to={`/vehicles/${vehicle.id}`}
-              className="font-medium text-primary hover:underline"
+              className="flex items-center gap-2 font-medium text-primary hover:underline"
             >
+              <Car className="h-4 w-4" />
               {vehicle.license_plate}
             </Link>
           </TableCell>
