@@ -44,6 +44,8 @@ export const CarInstallmentDetails = () => {
     if (!file) return;
 
     setIsAnalyzing(true);
+    let successCount = 0;
+    let errorCount = 0;
     
     try {
       const text = await file.text();
@@ -52,26 +54,21 @@ export const CarInstallmentDetails = () => {
         header: true,
         complete: async (results) => {
           const parsedData = results.data;
-          let successCount = 0;
-          let errorCount = 0;
           
           for (const row of parsedData) {
             try {
               // Validate required fields
               if (!row.cheque_number || !row.amount || !row.payment_date || !row.drawee_bank) {
-                throw new Error(`Missing required fields for cheque ${row.cheque_number || 'unknown'}`);
+                errorCount++;
+                toast.error(`Missing required fields for cheque ${row.cheque_number || 'unknown'}`);
+                continue;
               }
 
               // Check if cheque number already exists
-              const { data: existingCheques, error: checkError } = await supabase
+              const { data: existingCheques } = await supabase
                 .from('car_installment_payments')
                 .select('cheque_number')
                 .eq('cheque_number', row.cheque_number);
-
-              if (checkError) {
-                console.error('Error checking existing cheque:', checkError);
-                throw new Error(`Error checking cheque ${row.cheque_number}`);
-              }
 
               if (existingCheques && existingCheques.length > 0) {
                 errorCount++;
