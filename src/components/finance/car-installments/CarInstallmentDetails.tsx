@@ -424,7 +424,6 @@ export const CarInstallmentDetails = () => {
             <Progress 
               value={(totalPaid / totalAmount) * 100} 
               className="h-2 mt-2 bg-green-100"
-              indicatorClassName="bg-green-500"
             />
             <p className="text-xs text-muted-foreground mt-1">
               {((totalPaid / totalAmount) * 100).toFixed(1)}% of total amount
@@ -446,7 +445,6 @@ export const CarInstallmentDetails = () => {
             <Progress 
               value={pendingPercentage} 
               className="h-2 mt-2 bg-red-100"
-              indicatorClassName="bg-red-500"
             />
             <p className="text-xs text-muted-foreground mt-1">
               {pendingPercentage.toFixed(1)}% pending payment
@@ -460,7 +458,7 @@ export const CarInstallmentDetails = () => {
               ${overduePayments > 0 
                 ? 'bg-gradient-to-br from-[#ee7171] to-[#f6d794] dark:from-red-900/20 dark:to-orange-800/20 border-red-100/50' 
                 : 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-100/50'
-              } relative`}>
+              } relative cursor-pointer`}>
               {overduePayments > 0 && (
                 <span className="absolute top-2 right-2 animate-pulse">
                   <AlertCircle className="h-5 w-5 text-red-500" />
