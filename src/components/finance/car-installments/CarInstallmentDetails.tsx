@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploadSection } from "@/components/agreements/payment-import/FileUploadSection";
 import { Button } from "@/components/ui/button";
 import { AddPaymentDialog } from "./components/AddPaymentDialog";
-import { FileText, Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, FileText } from "lucide-react";
 import Papa from 'papaparse';
 
 interface CsvRow {
@@ -211,14 +210,6 @@ export const CarInstallmentDetails = () => {
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={downloadTemplate}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Download Template
               </Button>
               <Button 
                 onClick={() => setShowAddPayment(true)}
