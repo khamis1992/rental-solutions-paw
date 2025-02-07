@@ -1,4 +1,3 @@
-
 import { 
   Home, Car, Users, FileText, HelpCircle, Wrench, 
   FilePen, BarChart3, Gavel, Wallet, FileText as AuditIcon,
@@ -21,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const menuGroups = {
   core: {
@@ -73,6 +73,7 @@ export const DashboardSidebar = () => {
   const { session, isLoading } = useSessionContext();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { isOpen, close } = useSidebar();
 
   useEffect(() => {
     localStorage.setItem('sidebarGroups', JSON.stringify(expandedGroups));
@@ -81,6 +82,12 @@ export const DashboardSidebar = () => {
   const toggleGroup = (groupKey: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
   };
+
+  useEffect(() => {
+    if (isMobile) {
+      close();
+    }
+  }, [location.pathname, isMobile, close]);
 
   if (isLoading) {
     return (
@@ -100,13 +107,18 @@ export const DashboardSidebar = () => {
   }
 
   return (
-    <Sidebar className="border-r border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <Sidebar 
+      className={cn(
+        "border-r border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        isMobile && "fixed inset-y-0 left-0 z-50"
+      )}
+    >
       <SidebarContent>
         <div className="flex h-14 items-center border-b px-6">
           <span className="font-semibold tracking-tight">Rental Solutions</span>
         </div>
         
-        <div className="px-2 py-2">
+        <div className="px-2 py-2 overflow-y-auto max-h-[calc(100vh-3.5rem)]">
           {Object.entries(menuGroups).map(([key, group]) => (
             <SidebarGroup key={key} className="py-2">
               <button
