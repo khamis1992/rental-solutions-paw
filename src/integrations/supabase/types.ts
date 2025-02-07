@@ -876,56 +876,6 @@ export type Database = {
         }
         Relationships: []
       }
-      car_installment_payments: {
-        Row: {
-          amount: number
-          cheque_number: string
-          contract_id: string | null
-          created_at: string
-          drawee_bank: string
-          id: string
-          paid_amount: number | null
-          payment_date: string
-          remaining_amount: number
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          cheque_number: string
-          contract_id?: string | null
-          created_at?: string
-          drawee_bank: string
-          id?: string
-          paid_amount?: number | null
-          payment_date: string
-          remaining_amount: number
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          cheque_number?: string
-          contract_id?: string | null
-          created_at?: string
-          drawee_bank?: string
-          id?: string
-          paid_amount?: number | null
-          payment_date?: string
-          remaining_amount?: number
-          status?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "car_installment_payments_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "car_installment_contracts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       case_duration_analytics: {
         Row: {
           avg_duration: number | null
@@ -4157,6 +4107,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_installments: {
+        Row: {
+          amount: number
+          batch_id: string
+          cheque_number: string
+          contract_name: string | null
+          created_at: string | null
+          drawee_bank: string
+          id: string
+          payment_date: string
+          status: Database["public"]["Enums"]["payment_status_type"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          batch_id: string
+          cheque_number: string
+          contract_name?: string | null
+          created_at?: string | null
+          drawee_bank: string
+          id?: string
+          payment_date: string
+          status?: Database["public"]["Enums"]["payment_status_type"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          batch_id?: string
+          cheque_number?: string
+          contract_name?: string | null
+          created_at?: string | null
+          drawee_bank?: string
+          id?: string
+          payment_date?: string
+          status?: Database["public"]["Enums"]["payment_status_type"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payment_migration_logs: {
         Row: {
           error_details: string | null
@@ -7028,6 +7017,7 @@ export type Database = {
         | "Deposit"
         | "On_hold"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      payment_status_type: "pending" | "paid" | "overdue" | "cancelled"
       portal_user_status: "active" | "inactive" | "locked"
       tax_filing_status:
         | "pending"
