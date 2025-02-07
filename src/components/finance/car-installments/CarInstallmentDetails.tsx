@@ -53,7 +53,7 @@ const RecordPaymentDialog = ({ payment, onClose, open }: RecordPaymentDialogProp
     try {
       const remainingAmount = payment.amount - paidAmount;
       const newPaidTotal = (payment.paid_amount || 0) + paidAmount;
-      const newStatus = remainingAmount <= 0 ? 'completed' : 'pending';
+      const newStatus = remainingAmount <= 0 ? 'paid' : 'pending';
 
       const { error } = await supabase
         .from('car_installment_payments')
@@ -405,8 +405,9 @@ export const CarInstallmentDetails = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
+                          <SelectItem value="overdue">Overdue</SelectItem>
                         </SelectContent>
                       </Select>
                     </td>
