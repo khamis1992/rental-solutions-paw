@@ -162,8 +162,8 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
           <Skeleton key={i} className="h-[300px] w-full" />
         ))}
       </div>
@@ -211,7 +211,7 @@ export const MaintenanceList = () => {
         <CreateJobDialog />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {currentRecords.map((record) => (
           <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform">
             <div className="p-6 space-y-6">
