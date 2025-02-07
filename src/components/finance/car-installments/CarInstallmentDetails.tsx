@@ -7,8 +7,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploadSection } from "@/components/agreements/payment-import/FileUploadSection";
 import { Button } from "@/components/ui/button";
 import { AddPaymentDialog } from "./components/AddPaymentDialog";
-import { Plus, RefreshCw, FileText } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, RefreshCw } from "lucide-react";
 import Papa from 'papaparse';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CsvRow {
   cheque_number: string;
@@ -17,12 +34,111 @@ interface CsvRow {
   drawee_bank: string;
 }
 
+interface RecordPaymentDialogProps {
+  payment: any;
+  onClose: () => void;
+  open: boolean;
+}
+
+const RecordPaymentDialog = ({ payment, onClose, open }: RecordPaymentDialogProps) => {
+  const queryClient = useQueryClient();
+  const [paidAmount, setPaidAmount] = useState<number>(0);
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const remainingAmount = payment.amount - paidAmount;
+      const newPaidTotal = (payment.paid_amount || 0) + paidAmount;
+      const newStatus = remainingAmount <= 0 ? 'completed' : 'pending';
+
+      const { error } = await supabase
+        .from('car_installment_payments')
+        .update({
+          paid_amount: newPaidTotal,
+          remaining_amount: remainingAmount,
+          status: newStatus,
+          last_payment_date: new Date().toISOString(),
+          payment_notes: notes || payment.payment_notes
+        })
+        .eq('id', payment.id);
+
+      if (error) throw error;
+
+      toast.success("Payment recorded successfully");
+      queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
+      onClose();
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      toast.error("Failed to record payment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record Payment</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4">
+            <div>
+              <Label>Cheque Number</Label>
+              <Input value={payment.cheque_number} disabled />
+            </div>
+            <div>
+              <Label>Total Amount</Label>
+              <Input value={payment.amount} disabled />
+            </div>
+            <div>
+              <Label>Previously Paid</Label>
+              <Input value={payment.paid_amount || 0} disabled />
+            </div>
+            <div>
+              <Label>Payment Amount</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(Number(e.target.value))}
+                required
+              />
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add payment notes..."
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Recording..." : "Record Payment"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const CarInstallmentDetails = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ["car-installment-payments", id],
@@ -37,12 +153,6 @@ export const CarInstallmentDetails = () => {
       return data;
     },
   });
-
-  // Calculate summary statistics
-  const totalAmount = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-  const totalPaid = payments?.reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
-  const totalPending = payments?.reduce((sum, p) => sum + (p.remaining_amount || 0), 0) || 0;
-  const overduePayments = payments?.filter(p => p.days_overdue > 0).length || 0;
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -140,6 +250,32 @@ export const CarInstallmentDetails = () => {
     document.body.removeChild(a);
   };
 
+  const handleStatusChange = async (paymentId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('car_installment_payments')
+        .update({ 
+          status: newStatus,
+          last_status_change: new Date().toISOString()
+        })
+        .eq('id', paymentId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error("Failed to update status");
+    }
+  };
+
+  // Calculate summary statistics
+  const totalAmount = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+  const totalPaid = payments?.reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
+  const totalPending = payments?.reduce((sum, p) => sum + (p.remaining_amount || 0), 0) || 0;
+  const overduePayments = payments?.filter(p => p.days_overdue > 0).length || 0;
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -234,9 +370,12 @@ export const CarInstallmentDetails = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cheque Number</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drawee Bank</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -246,29 +385,45 @@ export const CarInstallmentDetails = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.amount)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.paid_amount || 0)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount || payment.amount)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(payment.payment_date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.drawee_bank}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${payment.status === 'completed' 
-                            ? 'bg-green-100 text-green-800'
-                            : payment.days_overdue > 0
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                          }`}
+                      <Select
+                        value={payment.status}
+                        onValueChange={(value) => handleStatusChange(payment.id, value)}
                       >
-                        {payment.status}
-                        {payment.days_overdue > 0 && ` (${payment.days_overdue} days overdue)`}
-                      </span>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedPayment(payment)}
+                      >
+                        Record Payment
+                      </Button>
                     </td>
                   </tr>
                 ))}
                 {!payments?.length && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
                       No payments found
                     </td>
                   </tr>
@@ -287,6 +442,14 @@ export const CarInstallmentDetails = () => {
           queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
         }}
       />
+
+      {selectedPayment && (
+        <RecordPaymentDialog
+          payment={selectedPayment}
+          open={!!selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+        />
+      )}
     </div>
   );
 };

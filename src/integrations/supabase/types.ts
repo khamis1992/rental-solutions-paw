@@ -885,10 +885,12 @@ export type Database = {
           days_overdue: number | null
           drawee_bank: string
           id: string
+          last_payment_date: string | null
           last_status_change: string | null
           notes: string | null
           paid_amount: number | null
           payment_date: string
+          payment_notes: string | null
           payment_reference: string | null
           reconciliation_date: string | null
           reconciliation_status: string | null
@@ -904,10 +906,12 @@ export type Database = {
           days_overdue?: number | null
           drawee_bank: string
           id?: string
+          last_payment_date?: string | null
           last_status_change?: string | null
           notes?: string | null
           paid_amount?: number | null
           payment_date: string
+          payment_notes?: string | null
           payment_reference?: string | null
           reconciliation_date?: string | null
           reconciliation_status?: string | null
@@ -923,10 +927,12 @@ export type Database = {
           days_overdue?: number | null
           drawee_bank?: string
           id?: string
+          last_payment_date?: string | null
           last_status_change?: string | null
           notes?: string | null
           paid_amount?: number | null
           payment_date?: string
+          payment_notes?: string | null
           payment_reference?: string | null
           reconciliation_date?: string | null
           reconciliation_status?: string | null
