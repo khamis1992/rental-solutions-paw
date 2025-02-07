@@ -1,6 +1,6 @@
 
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Phone, MapPin, FileCheck, FileText, Shield, Settings2 } from "lucide-react";
+import { UserCircle, Phone, MapPin, FileCheck, FileText, Settings2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const CustomerTableHeader = () => {
@@ -35,12 +35,6 @@ export const CustomerTableHeader = () => {
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-muted-foreground" />
             Documents
-          </div>
-        </TableHead>
-        <TableHead className="py-2 text-xs font-medium">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-muted-foreground" />
-            Status
           </div>
         </TableHead>
         <TableHead className="py-2 text-xs font-medium text-right">
