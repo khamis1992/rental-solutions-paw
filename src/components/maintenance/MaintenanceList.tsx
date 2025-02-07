@@ -164,7 +164,7 @@ export const MaintenanceList = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-[300px] w-full" />
+          <Skeleton key={i} className="h-[400px] w-full" />
         ))}
       </div>
     );
@@ -213,51 +213,53 @@ export const MaintenanceList = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {currentRecords.map((record) => (
-          <Card key={record.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform">
-            <div className="p-6 space-y-6">
+          <Card 
+            key={record.id} 
+            className="flex flex-col min-h-[400px] max-h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform"
+          >
+            <div className="flex flex-col flex-1 p-6 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="flex flex-col space-y-4">
-                  <Select
-                    value={record.status}
-                    onValueChange={(value: "scheduled" | "in_progress" | "completed" | "cancelled") => 
-                      handleStatusChange(record.id, value)
-                    }
-                  >
-                    <SelectTrigger className={`w-[130px] ${
-                      record.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                      record.status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                      'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                    }`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          Scheduled
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="in_progress">
-                        <div className="flex items-center gap-2">
-                          <Wrench className="h-4 w-4" />
-                          In Progress
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="completed">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Completed
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="cancelled">
-                        <div className="flex items-center gap-2">
-                          <X className="h-4 w-4" />
-                          Cancelled
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select
+                  value={record.status}
+                  onValueChange={(value: "scheduled" | "in_progress" | "completed" | "cancelled") => 
+                    handleStatusChange(record.id, value)
+                  }
+                >
+                  <SelectTrigger className={`w-[130px] ${
+                    record.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                    record.status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+                    'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                  }`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Scheduled
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="in_progress">
+                      <div className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4" />
+                        In Progress
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Completed
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cancelled">
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4" />
+                        Cancelled
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <div className="flex items-center space-x-2">
                   <EditMaintenanceDialog record={record} />
                   <Button 
@@ -285,17 +287,19 @@ export const MaintenanceList = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg space-y-4">
-                <div className="flex items-center space-x-2">
+              <div className="flex-1 bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
                   <Wrench className="h-5 w-5 text-primary" />
                   <p className="text-lg font-medium">{record.service_type}</p>
                 </div>
                 {record.description && (
-                  <p className="text-base text-gray-600 leading-relaxed">{record.description}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                    {record.description}
+                  </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
                 <div className="flex items-center space-x-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">
