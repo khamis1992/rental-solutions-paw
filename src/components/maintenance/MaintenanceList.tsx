@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
@@ -175,10 +176,10 @@ export const MaintenanceList = () => {
         <div className="flex justify-end">
           <CreateJobDialog />
         </div>
-        <Card className="p-8 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="p-8 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <div className="flex flex-col items-center justify-center text-center space-y-4">
-            <div className="p-4 rounded-full bg-orange-100 border-2 border-orange-200">
-              <Wrench className="h-12 w-12 text-primary animate-pulse" />
+            <div className="p-4 rounded-full bg-blue-100 border-2 border-blue-200">
+              <Wrench className="h-12 w-12 text-blue-600 animate-pulse" />
             </div>
             <p className="text-xl font-semibold text-gray-800">No maintenance records found</p>
             <p className="text-sm text-gray-600 max-w-md">
@@ -223,9 +224,10 @@ export const MaintenanceList = () => {
                     }
                   >
                     <SelectTrigger className={`w-[130px] ${
-                      record.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-                      record.status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-                      'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      record.status === 'completed' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' :
+                      record.status === 'in_progress' ? 'bg-sky-100 text-sky-800 hover:bg-sky-200' :
+                      record.status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                      'bg-amber-100 text-amber-800 hover:bg-amber-200'
                     }`}>
                       <SelectValue />
                     </SelectTrigger>
@@ -265,13 +267,13 @@ export const MaintenanceList = () => {
                     onClick={() => handleDelete(record.id)}
                     className="hover:bg-red-100 hover:text-red-600"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
               </div>
 
-              <div className="flex justify-center items-center space-x-2 bg-gray-50 p-4 rounded-lg">
-                <Car className="h-5 w-5 text-primary" />
+              <div className="flex justify-center items-center space-x-2 bg-slate-50 p-4 rounded-lg">
+                <Car className="h-5 w-5 text-sky-600" />
                 <div className="text-center">
                   <p className="text-lg font-medium">
                     {record.vehicles 
@@ -284,9 +286,9 @@ export const MaintenanceList = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg space-y-4">
+              <div className="bg-gradient-to-r from-sky-50 to-sky-100 p-4 rounded-lg space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Wrench className="h-5 w-5 text-primary" />
+                  <Wrench className="h-5 w-5 text-sky-600" />
                   <p className="text-lg font-medium">{record.service_type}</p>
                 </div>
                 {record.description && (
@@ -294,18 +296,18 @@ export const MaintenanceList = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                 <div className="flex items-center space-x-2 text-sm">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-600">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <span className="text-slate-600">
                     {formatDateToDisplay(new Date(record.scheduled_date))}
                   </span>
                 </div>
                 {record.cost && (
-                  <div className="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-full">
-                    <Calculator className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-700">{record.cost}</span>
-                    <span className="text-sm text-green-600">QAR</span>
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-50 rounded-full">
+                    <Calculator className="h-4 w-4 text-emerald-600" />
+                    <span className="font-medium text-emerald-700">{record.cost}</span>
+                    <span className="text-sm text-emerald-600">QAR</span>
                   </div>
                 )}
               </div>
