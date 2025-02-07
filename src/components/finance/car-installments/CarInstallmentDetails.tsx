@@ -154,9 +154,22 @@ export const CarInstallmentDetails = () => {
     },
   });
 
+  const { data: contract } = useQuery({
+    queryKey: ["car-installment-contract", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("car_installment_contracts")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   useEffect(() => {
-    // Subscribe to changes on car_installment_payments table
-    const channel = supabase
+    const paymentsChannel = supabase
       .channel('payments-changes')
       .on(
         'postgres_changes',
@@ -167,16 +180,82 @@ export const CarInstallmentDetails = () => {
           filter: `contract_id=eq.${id}`
         },
         () => {
-          // Refresh the data when changes occur
           queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
         }
       )
       .subscribe();
 
+    const contractChannel = supabase
+      .channel('contract-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'car_installment_contracts',
+          filter: `id=eq.${id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['car-installment-contract'] });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(paymentsChannel);
+      supabase.removeChannel(contractChannel);
     };
   }, [id, queryClient]);
+
+  const handleStatusChange = async (paymentId: string, newStatus: string) => {
+    try {
+      const { data: paymentData } = await supabase
+        .from('car_installment_payments')
+        .select('amount')
+        .eq('id', paymentId)
+        .single();
+
+      if (!paymentData) throw new Error('Payment not found');
+
+      let updateData: any = {
+        status: newStatus,
+        last_status_change: new Date().toISOString()
+      };
+
+      if (newStatus === 'paid') {
+        updateData = {
+          ...updateData,
+          paid_amount: paymentData.amount,
+          remaining_amount: 0,
+          last_payment_date: new Date().toISOString()
+        };
+      } else if (newStatus === 'pending' || newStatus === 'overdue') {
+        updateData = {
+          ...updateData,
+          paid_amount: 0,
+          remaining_amount: paymentData.amount
+        };
+      } else if (newStatus === 'cancelled') {
+        updateData = {
+          ...updateData,
+          paid_amount: 0,
+          remaining_amount: 0
+        };
+      }
+
+      const { error } = await supabase
+        .from('car_installment_payments')
+        .update(updateData)
+        .eq('id', paymentId);
+
+      if (error) throw error;
+      
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error("Failed to update status");
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -274,67 +353,14 @@ export const CarInstallmentDetails = () => {
     document.body.removeChild(a);
   };
 
-  const handleStatusChange = async (paymentId: string, newStatus: string) => {
-    try {
-      // Get the payment details first
-      const { data: paymentData } = await supabase
-        .from('car_installment_payments')
-        .select('amount')
-        .eq('id', paymentId)
-        .single();
-
-      if (!paymentData) throw new Error('Payment not found');
-
-      let updateData: any = {
-        status: newStatus,
-        last_status_change: new Date().toISOString()
-      };
-
-      if (newStatus === 'paid') {
-        updateData = {
-          ...updateData,
-          paid_amount: paymentData.amount,
-          remaining_amount: 0,
-          last_payment_date: new Date().toISOString()
-        };
-      } else if (newStatus === 'pending' || newStatus === 'overdue') {
-        updateData = {
-          ...updateData,
-          paid_amount: 0,
-          remaining_amount: paymentData.amount
-        };
-      } else if (newStatus === 'cancelled') {
-        updateData = {
-          ...updateData,
-          paid_amount: 0,
-          remaining_amount: 0
-        };
-      }
-
-      const { error } = await supabase
-        .from('car_installment_payments')
-        .update(updateData)
-        .eq('id', paymentId);
-
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
-      toast.success("Status updated successfully");
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error("Failed to update status");
-    }
-  };
-
-  // Calculate summary statistics
-  const totalAmount = payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-  const totalPaid = payments?.reduce((sum, p) => sum + (p.paid_amount || 0), 0) || 0;
-  const totalPending = payments?.reduce((sum, p) => sum + (p.remaining_amount || 0), 0) || 0;
-  const overduePayments = payments?.filter(p => p.days_overdue > 0).length || 0;
+  // Calculate summary statistics from contract data instead of payments
+  const totalAmount = contract?.total_contract_value || 0;
+  const totalPaid = contract?.amount_paid || 0;
+  const totalPending = contract?.amount_pending || 0;
+  const overduePayments = payments?.filter(p => p.status === 'overdue').length || 0;
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -389,7 +415,6 @@ export const CarInstallmentDetails = () => {
         </Card>
       </div>
 
-      {/* Actions Bar */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
