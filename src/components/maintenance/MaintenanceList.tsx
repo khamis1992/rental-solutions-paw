@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
@@ -162,9 +161,9 @@ export const MaintenanceList = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-[400px] w-full" />
+          <Skeleton key={i} className="h-[550px] w-full" />
         ))}
       </div>
     );
@@ -193,31 +192,31 @@ export const MaintenanceList = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search maintenance records..."
-              className="pl-8"
+              className="pl-9 py-5 text-lg"
             />
           </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="h-4 w-4" />
+          <Button variant="outline" className="gap-2 py-5 text-lg">
+            <Filter className="h-5 w-5" />
             Filter
           </Button>
         </div>
         <CreateJobDialog />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {currentRecords.map((record) => (
           <Card 
             key={record.id} 
-            className="flex flex-col min-h-[400px] max-h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform w-full"
+            className="flex flex-col min-h-[550px] max-h-[550px] overflow-hidden hover:shadow-lg transition-shadow duration-200 hover:scale-[1.02] transform w-full p-8"
           >
-            <div className="flex flex-col flex-1 p-6 space-y-4">
+            <div className="flex flex-col flex-1 space-y-6">
               <div className="flex items-start justify-between">
                 <Select
                   value={record.status}
@@ -225,7 +224,7 @@ export const MaintenanceList = () => {
                     handleStatusChange(record.id, value)
                   }
                 >
-                  <SelectTrigger className={`w-[130px] ${
+                  <SelectTrigger className={`w-[150px] text-lg ${
                     record.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
                     record.status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
                     'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
@@ -234,33 +233,33 @@ export const MaintenanceList = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="scheduled">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-5 w-5" />
                         Scheduled
                       </div>
                     </SelectItem>
                     <SelectItem value="in_progress">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4" />
+                      <div className="flex items-center gap-3">
+                        <Wrench className="h-5 w-5" />
                         In Progress
                       </div>
                     </SelectItem>
                     <SelectItem value="completed">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5" />
                         Completed
                       </div>
                     </SelectItem>
                     <SelectItem value="cancelled">
-                      <div className="flex items-center gap-2">
-                        <X className="h-4 w-4" />
+                      <div className="flex items-center gap-3">
+                        <X className="h-5 w-5" />
                         Cancelled
                       </div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <EditMaintenanceDialog record={record} />
                   <Button 
                     variant="ghost" 
@@ -268,49 +267,49 @@ export const MaintenanceList = () => {
                     onClick={() => handleDelete(record.id)}
                     className="hover:bg-red-100 hover:text-red-600"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-5 w-5 text-destructive" />
                   </Button>
                 </div>
               </div>
 
-              <div className="flex justify-center items-center space-x-2 bg-gray-50 p-4 rounded-lg">
-                <Car className="h-5 w-5 text-primary" />
+              <div className="flex justify-center items-center space-x-3 bg-gray-50 p-6 rounded-lg">
+                <Car className="h-6 w-6 text-primary" />
                 <div className="text-center">
-                  <p className="text-lg font-medium">
+                  <p className="text-xl font-medium">
                     {record.vehicles 
                       ? `${record.vehicles.make} ${record.vehicles.model}`
                       : "Vehicle details unavailable"}
                   </p>
-                  <Badge variant="secondary" className="mt-1 bg-sky-100 text-sky-800 hover:bg-sky-200">
+                  <Badge variant="secondary" className="mt-2 bg-sky-100 text-sky-800 hover:bg-sky-200 text-lg px-4 py-1">
                     {record.vehicles?.license_plate || "N/A"}
                   </Badge>
                 </div>
               </div>
 
-              <div className="flex-1 bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Wrench className="h-5 w-5 text-primary" />
-                  <p className="text-lg font-medium">{record.service_type}</p>
+              <div className="flex-1 bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-lg">
+                <div className="flex items-center space-x-3 mb-3">
+                  <Wrench className="h-6 w-6 text-primary" />
+                  <p className="text-xl font-medium">{record.service_type}</p>
                 </div>
                 {record.description && (
-                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                  <p className="text-lg text-gray-600 leading-relaxed line-clamp-4">
                     {record.description}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Calendar className="h-4 w-4 text-gray-500" />
+              <div className="flex items-center justify-between border-t border-gray-100 pt-6 mt-auto">
+                <div className="flex items-center space-x-2 text-lg">
+                  <Calendar className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-600">
                     {formatDateToDisplay(new Date(record.scheduled_date))}
                   </span>
                 </div>
                 {record.cost && (
-                  <div className="flex items-center space-x-2 px-3 py-1 bg-green-50 rounded-full">
-                    <Calculator className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-green-700">{record.cost}</span>
-                    <span className="text-sm text-green-600">QAR</span>
+                  <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 rounded-full">
+                    <Calculator className="h-5 w-5 text-green-600" />
+                    <span className="font-medium text-green-700 text-lg">{record.cost}</span>
+                    <span className="text-base text-green-600">QAR</span>
                   </div>
                 )}
               </div>
@@ -319,7 +318,7 @@ export const MaintenanceList = () => {
         ))}
       </div>
 
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-8">
         <VehicleTablePagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -329,4 +328,3 @@ export const MaintenanceList = () => {
     </div>
   );
 };
-
