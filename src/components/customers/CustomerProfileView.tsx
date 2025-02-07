@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,7 @@ import { CredibilityScore } from "./profile/CredibilityScore";
 import { CustomerNotes } from "./profile/CustomerNotes";
 import { CustomerDocuments } from "../agreements/CustomerDocuments";
 import { AgreementsHistory } from "./profile/AgreementsHistory";
+import { CustomerStatusManager } from "./profile/CustomerStatusManager";
 
 interface CustomerProfileViewProps {
   customerId: string;
@@ -53,18 +55,19 @@ export const CustomerProfileView = ({ customerId }: CustomerProfileViewProps) =>
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{profile?.full_name}</h1>
-          <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-            <span>{profile?.email}</span>
-            <span>•</span>
-            <span>{profile?.phone_number}</span>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{profile?.full_name}</h1>
+            <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+              <span>{profile?.email}</span>
+              <span>•</span>
+              <span>{profile?.phone_number}</span>
+            </div>
           </div>
         </div>
-        <Badge variant={profile?.role === "customer" ? "secondary" : "default"}>
-          {profile?.role}
-        </Badge>
+        
+        <CustomerStatusManager profile={profile} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
