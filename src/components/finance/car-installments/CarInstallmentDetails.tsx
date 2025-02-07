@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -470,7 +471,7 @@ export const CarInstallmentDetails = () => {
                       {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.paid_amount || 0)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount || payment.amount)}
+                      {new Intl.NumberFormat('en-QA', { style: 'currency', currency: 'QAR' }).format(payment.remaining_amount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(payment.payment_date).toLocaleDateString()}
