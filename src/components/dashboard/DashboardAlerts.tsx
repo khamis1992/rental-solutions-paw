@@ -1,224 +1,122 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle, Bell, Clock } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useState } from "react";
-import { AlertItem } from "./AlertItem";
-import { AlertDetailsDialog } from "./AlertDetailsDialog";
-import { AlertDetails } from "./types/alert-types";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, AlertTriangle, Clock, Bell } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Alert {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: 'high' | 'medium' | 'low';
+  type: 'vehicle' | 'payment' | 'maintenance';
+  created_at: string;
+  is_read: boolean;
+  vehicle_id: string | null;
+  customer_id: string | null;
+}
 
 export function DashboardAlerts() {
-  const [selectedAlert, setSelectedAlert] = useState<AlertDetails | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-
   const { data: alerts } = useQuery({
     queryKey: ["dashboard-alerts"],
     queryFn: async () => {
-      const [overdueVehicles, overduePayments, maintenanceAlerts] = await Promise.all([
-        supabase
-          .from("leases")
-          .select(`
-            id,
-            vehicle:vehicle_id (
-              id, make, model, year, license_plate
-            ),
-            customer:customer_id (
-              full_name,
-              phone_number
-            )
-          `)
-          .gt("end_date", new Date().toISOString())
-          .eq("status", "active"),
+      const { data, error } = await supabase
+        .from('alerts')
+        .select(`
+          id,
+          title,
+          description,
+          priority,
+          type,
+          created_at,
+          is_read,
+          vehicle_id,
+          customer_id
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-        supabase
-          .from("payment_schedules")
-          .select(`
-            id,
-            lease:lease_id (
-              id,
-              customer:customer_id (
-                full_name,
-                phone_number
-              )
-            )
-          `)
-          .lt("due_date", new Date().toISOString())
-          .eq("status", "pending"),
-
-        supabase
-          .from("maintenance")
-          .select(`
-            id,
-            vehicle:vehicle_id (
-              id, make, model, year, license_plate
-            )
-          `)
-          .eq("status", "scheduled")
-          .lt("scheduled_date", new Date().toISOString()),
-      ]);
-
-      return {
-        overdueVehicles: overdueVehicles.data || [],
-        overduePayments: overduePayments.data || [],
-        maintenanceAlerts: maintenanceAlerts.data || [],
-      };
+      if (error) throw error;
+      return data as Alert[];
     },
   });
 
-  const handleAlertClick = (alert: AlertDetails) => {
-    setSelectedAlert(alert);
-    setDialogOpen(true);
+  const getPriorityColor = (priority: Alert['priority']) => {
+    switch (priority) {
+      case 'high':
+        return "text-destructive border-destructive/20 bg-destructive/10";
+      case 'medium':
+        return "text-warning border-warning/20 bg-warning/10";
+      case 'low':
+        return "text-primary border-primary/20 bg-primary/10";
+    }
   };
 
-  const toggleGroupExpansion = (groupType: string) => {
-    setExpandedGroups(prev => 
-      prev.includes(groupType) 
-        ? prev.filter(type => type !== groupType)
-        : [...prev, groupType]
-    );
+  const getTypeIcon = (type: Alert['type']) => {
+    switch (type) {
+      case 'vehicle':
+        return AlertCircle;
+      case 'payment':
+        return Bell;
+      case 'maintenance':
+        return Clock;
+    }
   };
 
-  if (!alerts || 
-      (!alerts.overdueVehicles?.length && 
-       !alerts.overduePayments?.length && 
-       !alerts.maintenanceAlerts?.length)) {
-    return null;
-  }
-
-  const renderAlertGroup = (
-    title: string, 
-    alerts: AlertDetails[], 
-    count: number, 
-    groupType: string,
-    icon: React.ReactNode,
-    badgeVariant: "destructive" | "warning" | "default" = "default"
-  ) => {
-    if (!alerts.length) return null;
-    
-    const isExpanded = expandedGroups.includes(groupType);
-    const displayAlerts = isExpanded ? alerts : [alerts[0]];
-    
-    return (
-      <div className="space-y-2 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h3 className="text-sm font-medium">{title}</h3>
-          </div>
-          {count > 1 && (
-            <div className="flex items-center gap-2">
-              <Badge 
-                variant={badgeVariant}
-                className="text-xs cursor-pointer hover:opacity-80"
-                onClick={() => toggleGroupExpansion(groupType)}
-              >
-                {count} Alerts
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => toggleGroupExpansion(groupType)}
-              >
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-        <div className="space-y-2">
-          {displayAlerts.map((alert) => (
-            <AlertItem
-              key={alert.id}
-              alert={alert}
-              onClick={() => handleAlertClick(alert)}
-            />
-          ))}
-          {!isExpanded && count > 1 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-muted-foreground hover:text-primary"
-              onClick={() => toggleGroupExpansion(groupType)}
-            >
-              Show {count - 1} more alerts
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  };
+  if (!alerts?.length) return null;
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-medium flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Alerts & Notifications
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-4">
-              {renderAlertGroup(
-                "Vehicle Returns", 
-                alerts.overdueVehicles?.map(vehicle => ({
-                  type: 'vehicle',
-                  title: 'Overdue Vehicle Details',
-                  vehicle: vehicle.vehicle,
-                  customer: vehicle.customer,
-                  id: vehicle.id
-                })) || [],
-                alerts.overdueVehicles?.length || 0,
-                'vehicles',
-                <AlertTriangle className="h-4 w-4 text-destructive" />,
-                "destructive"
-              )}
-
-              {renderAlertGroup(
-                "Payment Alerts", 
-                alerts.overduePayments?.map(payment => ({
-                  type: 'payment',
-                  title: 'Overdue Payment Details',
-                  customer: payment.lease?.customer,
-                  id: payment.id
-                })) || [],
-                alerts.overduePayments?.length || 0,
-                'payments',
-                <Clock className="h-4 w-4 text-warning" />,
-                "warning"
-              )}
-
-              {renderAlertGroup(
-                "Maintenance Alerts", 
-                alerts.maintenanceAlerts?.map(maintenance => ({
-                  type: 'maintenance',
-                  title: 'Maintenance Alert Details',
-                  vehicle: maintenance.vehicle,
-                  id: maintenance.id
-                })) || [],
-                alerts.maintenanceAlerts?.length || 0,
-                'maintenance',
-                <Bell className="h-4 w-4 text-primary" />
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      <AlertDetailsDialog
-        alert={selectedAlert}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
-    </>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          Alerts & Notifications
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            {alerts.map((alert) => {
+              const Icon = getTypeIcon(alert.type);
+              return (
+                <div
+                  key={alert.id}
+                  className={cn(
+                    "flex items-start gap-4 p-4 rounded-lg border transition-colors",
+                    !alert.is_read && "bg-muted/50"
+                  )}
+                >
+                  <div className={cn(
+                    "h-8 w-8 rounded-lg flex items-center justify-center",
+                    getPriorityColor(alert.priority)
+                  )}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant={alert.priority === 'high' ? 'destructive' : alert.priority === 'medium' ? 'default' : 'secondary'}>
+                        {alert.priority.toUpperCase()}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(alert.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-medium leading-none">{alert.title}</h4>
+                    {alert.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {alert.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }

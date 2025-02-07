@@ -633,6 +633,73 @@ export type Database = {
         }
         Relationships: []
       }
+      alerts: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          id: string
+          is_read: boolean
+          priority: Database["public"]["Enums"]["alert_priority"]
+          resolved_at: string | null
+          resolved_by: string | null
+          title: string
+          type: Database["public"]["Enums"]["alert_type"]
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          is_read?: boolean
+          priority?: Database["public"]["Enums"]["alert_priority"]
+          resolved_at?: string | null
+          resolved_by?: string | null
+          title: string
+          type: Database["public"]["Enums"]["alert_type"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          is_read?: boolean
+          priority?: Database["public"]["Enums"]["alert_priority"]
+          resolved_at?: string | null
+          resolved_by?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["alert_type"]
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_insights: {
         Row: {
           action_taken: boolean | null
@@ -7062,6 +7129,8 @@ export type Database = {
     Enums: {
       agreement_template_type: "lease_to_own" | "short_term"
       agreement_type: "lease_to_own" | "short_term"
+      alert_priority: "high" | "medium" | "low"
+      alert_type: "vehicle" | "payment" | "maintenance"
       audit_action_type:
         | "create"
         | "update"
