@@ -13,12 +13,12 @@ import { Transaction } from "./types/transaction.types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface Transaction {
+interface RawTransaction {
   id: string;
   type: 'INCOME' | 'EXPENSE';
-  amount: number;
+  amount: string | number;
   transaction_date: string;
-  category?: {
+  category: {
     id: string;
     name: string;
   } | null;
@@ -37,15 +37,15 @@ export const FinancialDashboard = () => {
         .order("transaction_date", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as RawTransaction[];
     },
   });
 
-  // Ensure financialData is always an array with proper type conversion
-  const financialData: Transaction[] = (rawData || []).map(transaction => ({
+  // Initialize as empty array if null/undefined and ensure proper type conversion
+  const financialData: Transaction[] = Array.isArray(rawData) ? rawData.map(transaction => ({
     ...transaction,
-    amount: parseFloat(transaction.amount) || 0
-  }));
+    amount: typeof transaction.amount === 'string' ? parseFloat(transaction.amount) : transaction.amount
+  })) : [];
 
   if (isLoading) {
     return (
