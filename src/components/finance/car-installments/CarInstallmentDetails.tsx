@@ -276,15 +276,39 @@ export const CarInstallmentDetails = () => {
 
   const handleStatusChange = async (paymentId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('car_installment_payments')
-        .update({ 
-          status: newStatus,
-          last_status_change: new Date().toISOString()
-        })
-        .eq('id', paymentId);
+      if (newStatus === 'paid') {
+        // Get the payment details first
+        const { data: paymentData } = await supabase
+          .from('car_installment_payments')
+          .select('amount')
+          .eq('id', paymentId)
+          .single();
 
-      if (error) throw error;
+        if (!paymentData) throw new Error('Payment not found');
+
+        const { error } = await supabase
+          .from('car_installment_payments')
+          .update({ 
+            status: newStatus,
+            last_status_change: new Date().toISOString(),
+            paid_amount: paymentData.amount,
+            remaining_amount: 0,
+            last_payment_date: new Date().toISOString()
+          })
+          .eq('id', paymentId);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('car_installment_payments')
+          .update({ 
+            status: newStatus,
+            last_status_change: new Date().toISOString()
+          })
+          .eq('id', paymentId);
+
+        if (error) throw error;
+      }
       
       queryClient.invalidateQueries({ queryKey: ['car-installment-payments'] });
       toast.success("Status updated successfully");
