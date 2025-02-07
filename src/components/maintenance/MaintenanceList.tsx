@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatDateToDisplay } from "@/lib/dateUtils";
@@ -278,7 +279,7 @@ export const MaintenanceList = () => {
                       ? `${record.vehicles.make} ${record.vehicles.model}`
                       : "Vehicle details unavailable"}
                   </p>
-                  <Badge variant="secondary" className="mt-1">
+                  <Badge variant="secondary" className="mt-1 bg-sky-100 text-sky-800 hover:bg-sky-200">
                     {record.vehicles?.license_plate || "N/A"}
                   </Badge>
                 </div>
