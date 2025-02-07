@@ -1,6 +1,6 @@
 
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileContract, Car, UserCircle, Calendar, Tag, Settings2 } from "lucide-react";
+import { FileText, Car, UserCircle, Calendar, Tag, Settings2 } from "lucide-react";
 
 export const AgreementTableHeader = () => {
   return (
@@ -8,7 +8,7 @@ export const AgreementTableHeader = () => {
       <TableRow>
         <TableHead className="w-[150px] font-semibold text-primary">
           <div className="flex items-center gap-2">
-            <FileContract className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-4 w-4 text-muted-foreground" />
             Agreement Number
           </div>
         </TableHead>
