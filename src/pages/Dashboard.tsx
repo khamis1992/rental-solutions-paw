@@ -8,26 +8,23 @@ import { DashboardStats as DashboardStatsType } from "@/types/dashboard.types";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 
 const Dashboard = () => {
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dashboard_stats");
       
       if (error) throw error;
       
-      const typedData = data as DashboardStatsType;
-      
       return {
-        totalVehicles: typedData.total_vehicles,
-        availableVehicles: typedData.available_vehicles,
-        rentedVehicles: typedData.rented_vehicles,
-        maintenanceVehicles: typedData.maintenance_vehicles,
-        totalCustomers: typedData.total_customers,
-        activeRentals: typedData.active_rentals,
-        monthlyRevenue: typedData.monthly_revenue
-      };
+        totalVehicles: data.total_vehicles || 0,
+        availableVehicles: data.available_vehicles || 0,
+        rentedVehicles: data.rented_vehicles || 0,
+        maintenanceVehicles: data.maintenance_vehicles || 0,
+        totalCustomers: data.total_customers || 0,
+        activeRentals: data.active_rentals || 0,
+        monthlyRevenue: data.monthly_revenue || 0
+      } as DashboardStatsType;
     },
-    staleTime: 30000,
   });
 
   return (
@@ -60,7 +57,7 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Recent Activity Feed with Enhanced Card Design - Now Full Width */}
+        {/* Recent Activity Feed with Enhanced Card Design */}
         <div className="group bg-white/50 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
             <ArrowUpRight className="h-5 w-5 text-primary/60" />
@@ -73,4 +70,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
