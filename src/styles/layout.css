@@ -1,3 +1,4 @@
+
 @layer components {
   /* Grid System */
   .auto-grid {
@@ -11,17 +12,17 @@
 
   /* Content Containers */
   .content-container {
-    @apply mx-auto px-4 w-full max-w-[var(--content-max-width)];
+    @apply mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-[var(--content-max-width)];
   }
 
   .section-container {
-    @apply py-[var(--section-spacing)] space-y-[var(--component-spacing)];
+    @apply py-[var(--section-spacing-mobile)] sm:py-[var(--section-spacing)] space-y-[var(--component-spacing-mobile)] sm:space-y-[var(--component-spacing)];
   }
 
   /* Card Layouts */
   .card-grid {
-    @apply grid gap-6;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+    @apply grid gap-4 sm:gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   }
 
   .stats-grid {
@@ -38,6 +39,19 @@
   .form-section {
     @apply space-y-4 max-w-[var(--text-block-width)] mx-auto;
   }
+
+  /* Mobile-specific layouts */
+  .mobile-container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .mobile-section {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
 }
 
 /* Responsive Containers */
@@ -47,7 +61,7 @@
   }
   
   :root {
-    --section-spacing: 1.5rem;
+    --section-spacing: 1rem;
     --component-spacing: 0.75rem;
   }
 }

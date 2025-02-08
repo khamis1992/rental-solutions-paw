@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -40,33 +41,31 @@
     --section-spacing: 1.5rem;
     --component-spacing: 1rem;
     --text-block-width: 65ch;
+
+    /* Mobile-specific variables */
+    --section-spacing-mobile: 1rem;
+    --component-spacing-mobile: 0.75rem;
+    --touch-target-size: 44px;
+    --mobile-header-height: 56px;
   }
  
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
- 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
- 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
- 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
- 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
- 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
- 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
- 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
- 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -81,16 +80,60 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Fixed layout styles */
+  /* Mobile-optimized layout styles */
   .page-container {
-    @apply min-h-screen w-full bg-background;
+    @apply min-h-screen w-full bg-background px-4 sm:px-6 lg:px-8;
   }
 
   .content-wrapper {
-    @apply pt-[var(--header-height)] pb-6;
+    @apply pt-[var(--mobile-header-height)] pb-6 sm:pt-[var(--header-height)];
   }
 
   .content-container {
     @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-[var(--content-max-width)];
+  }
+
+  /* Touch-friendly interactive elements */
+  .touch-target {
+    @apply min-h-[var(--touch-target-size)] min-w-[var(--touch-target-size)];
+  }
+}
+
+/* Mobile-first responsive styles */
+@layer components {
+  .card-grid {
+    @apply grid gap-4 sm:gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+
+  .stats-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  }
+
+  .mobile-stack {
+    @apply flex flex-col sm:flex-row gap-4;
+  }
+
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+}
+
+/* Responsive typography */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm sm:text-base;
+  }
+
+  .heading-responsive {
+    @apply text-xl sm:text-2xl font-semibold;
+  }
+
+  .subheading-responsive {
+    @apply text-lg sm:text-xl font-medium;
   }
 }
