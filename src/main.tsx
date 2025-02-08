@@ -7,6 +7,7 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 import App from './App.tsx';
 import './index.css';
 
@@ -16,16 +17,14 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Create a stable QueryClient instance with proper configuration
+// Create a stable QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // Data remains fresh for 5 minutes
-      gcTime: 1000 * 60 * 30, // Cache is kept for 30 minutes
+      gcTime: 1000 * 60 * 60, // Cache is kept for 1 hour
       retry: 1, // Only retry failed requests once
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      refetchOnReconnect: false, // Don't refetch on reconnect
-      refetchOnMount: false, // Don't refetch on mount
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -35,11 +34,13 @@ root.render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <SessionContextProvider supabaseClient={supabase}>
-          <BrowserRouter>
-            <TooltipProvider>
-              <App />
-            </TooltipProvider>
-          </BrowserRouter>
+          <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
+            <BrowserRouter>
+              <TooltipProvider>
+                <App />
+              </TooltipProvider>
+            </BrowserRouter>
+          </ThemeProvider>
         </SessionContextProvider>
       </QueryClientProvider>
     </ErrorBoundary>
