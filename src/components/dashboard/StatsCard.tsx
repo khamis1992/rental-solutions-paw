@@ -23,7 +23,7 @@ export const StatsCard = ({
     <Card className={cn(
       "overflow-hidden transition-all duration-200 hover:shadow-lg relative group snap-center",
       "bg-white/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800",
-      "touch-manipulation active:scale-[0.98] w-[80vw] sm:w-auto flex-shrink-0",
+      "touch-manipulation active:scale-[0.98] w-[85vw] sm:w-auto flex-shrink-0",
       className
     )}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
