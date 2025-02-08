@@ -1,7 +1,9 @@
+
 import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useSessionContext } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
@@ -9,13 +11,6 @@ import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
-import { ErrorBoundary } from '@/components/ui/error-boundary';
-
-const LoadingFallback = () => (
-  <div className="h-screen w-screen flex items-center justify-center">
-    <Skeleton className="h-[200px] w-[200px]" />
-  </div>
-);
 
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
@@ -47,19 +42,20 @@ export default function App() {
   }, [error, navigate]);
 
   if (isLoading) {
-    return <LoadingFallback />;
+    return <Skeleton className="h-screen w-screen" />;
   }
 
   return (
-    <ErrorBoundary>
+    <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
       <div className="min-h-screen bg-background">
         <Toaster />
         <PWAInstallPrompt />
         <Routes>
+          {/* Public Routes - No Layout */}
           <Route
             path="/auth"
             element={
-              <Suspense fallback={<LoadingFallback />}>
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                 <LazyComponents.Auth />
               </Suspense>
             }
@@ -68,25 +64,24 @@ export default function App() {
           <Route
             path="/customer-portal"
             element={
-              <Suspense fallback={<LoadingFallback />}>
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                 <LazyComponents.CustomerPortal />
               </Suspense>
             }
           />
 
+          {/* Protected Routes - With Dashboard Layout */}
           <Route
             element={
               <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback />}>
-                  <DashboardLayout />
-                </Suspense>
+                <DashboardLayout />
               </ProtectedRoute>
             }
           >
             <Route
               path="/"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Dashboard />
                 </Suspense>
               }
@@ -95,7 +90,7 @@ export default function App() {
             <Route
               path="/vehicles"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Vehicles />
                 </Suspense>
               }
@@ -104,7 +99,7 @@ export default function App() {
             <Route
               path="/vehicles/:id"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.VehicleDetails />
                 </Suspense>
               }
@@ -113,7 +108,7 @@ export default function App() {
             <Route
               path="/customers"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Customers />
                 </Suspense>
               }
@@ -122,7 +117,7 @@ export default function App() {
             <Route
               path="/customers/:id"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.CustomerProfile />
                 </Suspense>
               }
@@ -131,7 +126,7 @@ export default function App() {
             <Route
               path="/agreements"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Agreements />
                 </Suspense>
               }
@@ -140,7 +135,7 @@ export default function App() {
             <Route
               path="/remaining-amount"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.RemainingAmount />
                 </Suspense>
               }
@@ -149,7 +144,7 @@ export default function App() {
             <Route
               path="/settings"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Settings />
                 </Suspense>
               }
@@ -158,7 +153,7 @@ export default function App() {
             <Route
               path="/maintenance/*"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Maintenance />
                 </Suspense>
               }
@@ -167,7 +162,7 @@ export default function App() {
             <Route
               path="/chauffeur-service"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.ChauffeurService />
                 </Suspense>
               }
@@ -176,7 +171,7 @@ export default function App() {
             <Route
               path="/traffic-fines"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.TrafficFines />
                 </Suspense>
               }
@@ -185,7 +180,7 @@ export default function App() {
             <Route
               path="/reports"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Reports />
                 </Suspense>
               }
@@ -194,7 +189,7 @@ export default function App() {
             <Route
               path="/finance/*"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Finance />
                 </Suspense>
               }
@@ -203,7 +198,7 @@ export default function App() {
             <Route
               path="/finance/car-installments/:id"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.CarInstallmentDetails />
                 </Suspense>
               }
@@ -212,7 +207,7 @@ export default function App() {
             <Route
               path="/help"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Help />
                 </Suspense>
               }
@@ -221,7 +216,7 @@ export default function App() {
             <Route
               path="/legal"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Legal />
                 </Suspense>
               }
@@ -230,7 +225,7 @@ export default function App() {
             <Route
               path="/audit"
               element={
-                <Suspense fallback={<LoadingFallback />}>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
                   <LazyComponents.Audit />
                 </Suspense>
               }
@@ -240,6 +235,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </ErrorBoundary>
+    </ThemeProvider>
   );
 }

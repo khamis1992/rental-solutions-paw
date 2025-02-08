@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 export const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallButton, setShowInstallButton] = useState<boolean>(false);
+  const [showInstallButton, setShowInstallButton] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
