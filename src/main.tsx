@@ -31,18 +31,18 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <SessionContextProvider supabaseClient={supabase}>
-          <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
+    <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <SessionContextProvider supabaseClient={supabase}>
             <ErrorBoundary>
               <TooltipProvider>
                 <App />
               </TooltipProvider>
             </ErrorBoundary>
-          </ThemeProvider>
-        </SessionContextProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+          </SessionContextProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   </React.StrictMode>
 );
