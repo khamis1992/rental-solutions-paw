@@ -3,7 +3,6 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useTouchGestures } from "@/hooks/use-touch-gestures";
-import { useRef } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -28,7 +27,7 @@ export const StatsCard = ({
   className,
   iconClassName,
 }: StatsCardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = React.useRef<HTMLDivElement>(null);
   
   // Add touch gesture support
   useTouchGestures(cardRef, {
@@ -37,32 +36,32 @@ export const StatsCard = ({
   });
 
   return (
-    <TooltipProvider>
-      <Card 
-        ref={cardRef}
-        className={cn(
-          // Base card styles
-          "overflow-hidden relative group cursor-pointer",
-          "w-[85vw] sm:w-auto flex-shrink-0",
-          
-          // Glassmorphism effect
-          "bg-gradient-to-br from-background/50 via-background/30 to-background/10",
-          "backdrop-blur-md border border-white/10 dark:border-white/5",
-          
-          // Shadow and hover effects
-          "shadow-lg shadow-primary/5 dark:shadow-primary/10",
-          "hover:shadow-xl hover:shadow-primary/10 dark:hover:shadow-primary/20",
-          
-          // Mobile touch animations
-          "active:scale-[0.98] touch-manipulation",
-          "transition-all duration-300 ease-out",
-          
-          // Desktop hover animations
-          "sm:hover:scale-[1.02] sm:hover:-translate-y-1",
-          
-          className
-        )}
-      >
+    <Card 
+      ref={cardRef}
+      className={cn(
+        // Base card styles
+        "overflow-hidden relative group cursor-pointer",
+        "w-[85vw] sm:w-auto flex-shrink-0",
+        
+        // Glassmorphism effect
+        "bg-gradient-to-br from-background/50 via-background/30 to-background/10",
+        "backdrop-blur-md border border-white/10 dark:border-white/5",
+        
+        // Shadow and hover effects
+        "shadow-lg shadow-primary/5 dark:shadow-primary/10",
+        "hover:shadow-xl hover:shadow-primary/10 dark:hover:shadow-primary/20",
+        
+        // Mobile touch animations
+        "active:scale-[0.98] touch-manipulation",
+        "transition-all duration-300 ease-out",
+        
+        // Desktop hover animations
+        "sm:hover:scale-[1.02] sm:hover:-translate-y-1",
+        
+        className
+      )}
+    >
+      <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <div>
@@ -110,7 +109,7 @@ export const StatsCard = ({
             <p>{title}: {value}</p>
           </TooltipContent>
         </Tooltip>
-      </Card>
-    </TooltipProvider>
+      </TooltipProvider>
+    </Card>
   );
 };
