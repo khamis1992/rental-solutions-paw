@@ -1657,57 +1657,6 @@ export type Database = {
           },
         ]
       }
-      customer_status_logs: {
-        Row: {
-          changed_by: string | null
-          created_at: string
-          customer_id: string
-          id: string
-          new_status: Database["public"]["Enums"]["customer_status_type"]
-          notes: string | null
-          previous_status:
-            | Database["public"]["Enums"]["customer_status_type"]
-            | null
-        }
-        Insert: {
-          changed_by?: string | null
-          created_at?: string
-          customer_id: string
-          id?: string
-          new_status: Database["public"]["Enums"]["customer_status_type"]
-          notes?: string | null
-          previous_status?:
-            | Database["public"]["Enums"]["customer_status_type"]
-            | null
-        }
-        Update: {
-          changed_by?: string | null
-          created_at?: string
-          customer_id?: string
-          id?: string
-          new_status?: Database["public"]["Enums"]["customer_status_type"]
-          notes?: string | null
-          previous_status?:
-            | Database["public"]["Enums"]["customer_status_type"]
-            | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_status_logs_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customer_statuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customer_status_logs_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       damages: {
         Row: {
           created_at: string
