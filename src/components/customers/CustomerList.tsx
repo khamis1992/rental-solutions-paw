@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Table,
@@ -16,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { Customer } from "./types/customer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 10;
 
