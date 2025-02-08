@@ -1,4 +1,3 @@
-
 import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,10 +10,6 @@ import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// Create a client
-const queryClient = new QueryClient();
 
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
@@ -50,197 +45,195 @@ export default function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-        <div className="min-h-screen bg-background">
-          <Toaster />
-          <PWAInstallPrompt />
-          <Routes>
-            {/* Public Routes - No Layout */}
+    <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
+      <div className="min-h-screen bg-background">
+        <Toaster />
+        <PWAInstallPrompt />
+        <Routes>
+          {/* Public Routes - No Layout */}
+          <Route
+            path="/auth"
+            element={
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                <LazyComponents.Auth />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="/customer-portal"
+            element={
+              <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                <LazyComponents.CustomerPortal />
+              </Suspense>
+            }
+          />
+
+          {/* Protected Routes - With Dashboard Layout */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route
-              path="/auth"
+              path="/"
               element={
                 <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <LazyComponents.Auth />
+                  <LazyComponents.Dashboard />
                 </Suspense>
               }
             />
 
             <Route
-              path="/customer-portal"
+              path="/vehicles"
               element={
                 <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                  <LazyComponents.CustomerPortal />
+                  <LazyComponents.Vehicles />
                 </Suspense>
               }
             />
 
-            {/* Protected Routes - With Dashboard Layout */}
             <Route
+              path="/vehicles/:id"
               element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.VehicleDetails />
+                </Suspense>
               }
-            >
-              <Route
-                path="/"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Dashboard />
-                  </Suspense>
-                }
-              />
+            />
 
-              <Route
-                path="/vehicles"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Vehicles />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/customers"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Customers />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/vehicles/:id"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.VehicleDetails />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/customers/:id"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.CustomerProfile />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/customers"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Customers />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/agreements"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Agreements />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/customers/:id"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.CustomerProfile />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/remaining-amount"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.RemainingAmount />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/agreements"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Agreements />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/settings"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Settings />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/remaining-amount"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.RemainingAmount />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/maintenance/*"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Maintenance />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/settings"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Settings />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/chauffeur-service"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.ChauffeurService />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/maintenance/*"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Maintenance />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/traffic-fines"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.TrafficFines />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/chauffeur-service"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.ChauffeurService />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/reports"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Reports />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/traffic-fines"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.TrafficFines />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/finance/*"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Finance />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/reports"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Reports />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/finance/car-installments/:id"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.CarInstallmentDetails />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/finance/*"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Finance />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/help"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Help />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/finance/car-installments/:id"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.CarInstallmentDetails />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/legal"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Legal />
+                </Suspense>
+              }
+            />
 
-              <Route
-                path="/help"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Help />
-                  </Suspense>
-                }
-              />
+            <Route
+              path="/audit"
+              element={
+                <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
+                  <LazyComponents.Audit />
+                </Suspense>
+              }
+            />
+          </Route>
 
-              <Route
-                path="/legal"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Legal />
-                  </Suspense>
-                }
-              />
-
-              <Route
-                path="/audit"
-                element={
-                  <Suspense fallback={<Skeleton className="h-screen w-screen" />}>
-                    <LazyComponents.Audit />
-                  </Suspense>
-                }
-              />
-            </Route>
-
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </ThemeProvider>
-    </QueryClientProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </ThemeProvider>
   );
 }
