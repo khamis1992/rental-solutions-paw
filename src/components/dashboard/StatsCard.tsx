@@ -21,9 +21,8 @@ export const StatsCard = ({
 }: StatsCardProps) => {
   return (
     <Card className={cn(
-      "overflow-hidden transition-all duration-200 hover:shadow-lg relative group snap-center min-w-[280px] sm:min-w-0",
+      "overflow-hidden transition-all duration-200 hover:shadow-lg relative group",
       "bg-white/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800",
-      "hover:scale-[1.02] active:scale-[0.98] touch-action-manipulation",
       className
     )}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/0 opacity-50 group-hover:opacity-70 transition-opacity" />
@@ -31,12 +30,10 @@ export const StatsCard = ({
         <CardTitle className="text-base font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center transition-transform group-hover:scale-110">
-          <Icon className={cn("h-5 w-5 text-primary", iconClassName)} />
-        </div>
+        <Icon className={cn("h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110", iconClassName)} />
       </CardHeader>
       <CardContent className="relative z-10">
-        <div className="text-2xl font-bold tracking-tight break-words transition-colors group-hover:text-primary">
+        <div className="text-2xl font-bold tracking-tight break-words">
           {value}
         </div>
         {description && (
