@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { VehicleOverview } from "./profile/VehicleOverview";
 import { VehicleDocuments } from "./profile/VehicleDocuments";
@@ -11,9 +12,23 @@ import { DocumentExpiryNotifications } from "./profile/DocumentExpiryNotificatio
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Car, AlertTriangle } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Car, 
+  AlertTriangle, 
+  FileText,
+  ActivitySquare,
+  CalendarClock,
+  ClipboardList,
+  Shield,
+  Files,
+  Wrench,
+  History,
+  QrCode
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const VehicleDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,80 +98,166 @@ export const VehicleDetails = () => {
 
   return (
     <div className="space-y-8 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-background-alt rounded-lg p-4 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/vehicles")}
-            className="shrink-0"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div className="flex items-center gap-3">
-            <Car className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">
-              {vehicle.year} {vehicle.make} {vehicle.model}
-            </h1>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="absolute inset-0 bg-grid-slate-900/[0.04] dark:bg-grid-slate-400/[0.05]" />
+        
+        <div className="relative px-6 py-8 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/vehicles")}
+                className="shrink-0 hover:scale-105 transition-transform bg-white/90 backdrop-blur-sm"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-full">
+                  <Car className="h-8 w-8 text-primary animate-fade-in" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">
+                    {vehicle.year} {vehicle.make} {vehicle.model}
+                  </h1>
+                  <p className="text-muted-foreground text-sm">
+                    VIN: {vehicle.vin}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg border shadow-sm hover:shadow-md transition-all cursor-help">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <span className="font-medium">
+                      {vehicle.license_plate}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Vehicle License Plate
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            License Plate:
-          </span>
-          <span className="font-medium">
-            {vehicle.license_plate}
-          </span>
-        </div>
       </div>
 
+      {/* Primary Action Cards */}
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <VehicleQRCode 
-            make={vehicle.make} 
-            model={vehicle.model}
-            vehicleId={id}
-            year={vehicle.year}
-            licensePlate={vehicle.license_plate}
-            vin={vehicle.vin}
-          />
-        </div>
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <VehicleStatus 
-            vehicleId={id} 
-            currentStatus={vehicle.status} 
-          />
-        </div>
+        <Card className="hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-purple-50 to-white dark:from-gray-800 dark:to-gray-900">
+          <CardContent className="p-0">
+            <VehicleQRCode 
+              make={vehicle.make} 
+              model={vehicle.model}
+              vehicleId={id}
+              year={vehicle.year}
+              licensePlate={vehicle.license_plate}
+              vin={vehicle.vin}
+            />
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-900">
+          <CardContent className="p-0">
+            <VehicleStatus 
+              vehicleId={id} 
+              currentStatus={vehicle.status} 
+            />
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-background-alt rounded-lg p-4">
-        <DocumentExpiryNotifications vehicleId={id} />
-      </div>
+      {/* Notifications Section */}
+      <Card className="hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br from-orange-50 to-white dark:from-gray-800 dark:to-gray-900">
+        <CardContent className="p-0">
+          <DocumentExpiryNotifications vehicleId={id} />
+        </CardContent>
+      </Card>
       
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-        <VehicleOverview vehicleId={id} />
-      </div>
-
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-        <VehicleInsurance vehicleId={id} />
-      </div>
-      
+      {/* Vehicle Information Grid */}
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <VehicleDocuments vehicleId={id} />
-        </div>
-        <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-          <MaintenanceHistory vehicleId={id} />
-        </div>
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardContent className="p-0">
+            <div className="p-6 border-b">
+              <div className="flex items-center gap-2 mb-4">
+                <ClipboardList className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Vehicle Overview</h2>
+              </div>
+              <VehicleOverview vehicleId={id} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardContent className="p-0">
+            <div className="p-6 border-b">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Insurance Information</h2>
+              </div>
+              <VehicleInsurance vehicleId={id} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Documents and Maintenance Section */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardContent className="p-0">
+            <div className="p-6 border-b">
+              <div className="flex items-center gap-2 mb-4">
+                <Files className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Documents</h2>
+              </div>
+              <VehicleDocuments vehicleId={id} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardContent className="p-0">
+            <div className="p-6 border-b">
+              <div className="flex items-center gap-2 mb-4">
+                <Wrench className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Maintenance History</h2>
+              </div>
+              <MaintenanceHistory vehicleId={id} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-        <DamageHistory vehicleId={id} />
-      </div>
+      {/* Full Width Sections */}
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardContent className="p-0">
+          <div className="p-6 border-b">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Damage History</h2>
+            </div>
+            <DamageHistory vehicleId={id} />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="bg-background rounded-lg shadow-card hover:shadow-card-hover transition-shadow">
-        <VehicleTimeline vehicleId={id} />
-      </div>
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardContent className="p-0">
+          <div className="p-6 border-b">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Vehicle Timeline</h2>
+            </div>
+            <VehicleTimeline vehicleId={id} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
+

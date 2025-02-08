@@ -86,16 +86,28 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
   const handleStatusUpdate = async () => {
     setIsUpdating(true);
     try {
-      const { error } = await supabase
+      // First update the profile status
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           status: newStatus,
           status_notes: statusNotes,
-          status_updated_at: new Date().toISOString(),
         })
         .eq('id', profile.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Then log the status change
+      const { error: logError } = await supabase
+        .from('customer_status_logs')
+        .insert([{
+          customer_id: profile.id,
+          previous_status: profile.status,
+          new_status: newStatus,
+          notes: statusNotes,
+        }]);
+
+      if (logError) throw logError;
 
       toast.success("Customer status updated successfully");
       queryClient.invalidateQueries({ queryKey: ["customer", profile.id] });
@@ -123,7 +135,7 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
               )}
             >
               {getCurrentStatusIcon()}
-              <span>{profile.status?.replace('_', ' ') || 'N/A'}</span>
+              <span className="capitalize">{profile.status?.replace('_', ' ') || 'N/A'}</span>
             </Badge>
             <Button 
               variant="ghost" 
@@ -141,7 +153,7 @@ export const CustomerStatusManager = ({ profile }: CustomerStatusManagerProps) =
       </CardHeader>
       <CardContent className={cn(
         "space-y-4 transition-all duration-200",
-        isEditing ? "opacity-100" : "opacity-0 pointer-events-none h-0 !mt-0"
+        isEditing ? "opacity-100 h-auto" : "opacity-0 pointer-events-none h-0 !mt-0"
       )}>
         <div className="space-y-2">
           <label className="text-sm font-medium">Update Status</label>

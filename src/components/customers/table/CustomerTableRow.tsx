@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Trash2, 
   UserCircle, 
-  CheckCircle, 
-  Clock, 
-  XCircle,
   Phone,
   MapPin,
   FileCheck,
@@ -61,39 +58,6 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
     }
   };
 
-  const getStatusIcon = (status: string | null) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="h-4 w-4 text-green-500 animate-pulse" />;
-      case 'pending_review':
-        return <Clock className="h-4 w-4 text-amber-500" />;
-      default:
-        return <XCircle className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending_review':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusDot = (status: string | null) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500';
-      case 'pending_review':
-        return 'bg-amber-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
   return (
     <>
       <TableRow 
@@ -111,10 +75,6 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <div className="font-medium">{customer.full_name}</div>
-                <div className={cn(
-                  "w-2 h-2 rounded-full",
-                  getStatusDot(customer.status)
-                )} />
               </div>
               <div className="text-xs text-muted-foreground">{customer.email}</div>
             </div>
@@ -188,18 +148,6 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
           </div>
         </TableCell>
         <TableCell className="py-3">
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "flex w-fit items-center gap-1 capitalize transition-colors",
-              getStatusColor(customer.status)
-            )}
-          >
-            {getStatusIcon(customer.status)}
-            {customer.status?.replace('_', ' ') || 'N/A'}
-          </Badge>
-        </TableCell>
-        <TableCell className="py-3">
           <div className="flex items-center justify-end gap-2">
             <TooltipProvider>
               <Tooltip>
@@ -248,4 +196,3 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
     </>
   );
 };
-
