@@ -1,6 +1,5 @@
 
 import { useState, useRef, TouchEvent } from 'react';
-import { toast } from 'sonner';
 
 interface SwipeActionsProps {
   onDelete?: () => void;
