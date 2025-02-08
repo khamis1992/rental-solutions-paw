@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const motivationalQuotes = [
   "Success is not final, failure is not fatal: it is the courage to continue that counts.",
@@ -16,10 +17,10 @@ const motivationalQuotes = [
 ];
 
 export const WelcomeHeader = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [quote, setQuote] = useState("");
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+  const [quote, setQuote] = useState<string>("");
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -53,6 +54,18 @@ export const WelcomeHeader = () => {
     if (hour < 18) return "Good afternoon";
     return "Good evening";
   };
+
+  if (isProfileLoading) {
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="h-4 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">

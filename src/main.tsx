@@ -17,7 +17,7 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Create a stable QueryClient instance
+// Create a stable QueryClient instance with retry configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -31,18 +31,18 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <ErrorBoundary>
+    <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <SessionContextProvider supabaseClient={supabase}>
           <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-            <BrowserRouter>
+            <ErrorBoundary>
               <TooltipProvider>
                 <App />
               </TooltipProvider>
-            </BrowserRouter>
+            </ErrorBoundary>
           </ThemeProvider>
         </SessionContextProvider>
       </QueryClientProvider>
-    </ErrorBoundary>
+    </BrowserRouter>
   </React.StrictMode>
 );
