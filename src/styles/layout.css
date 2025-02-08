@@ -16,7 +16,8 @@
   }
 
   .section-container {
-    @apply py-[var(--section-spacing-mobile)] sm:py-[var(--section-spacing)] space-y-[var(--component-spacing-mobile)] sm:space-y-[var(--component-spacing)];
+    @apply py-[var(--section-spacing-mobile)] sm:py-[var(--section-spacing)] 
+           space-y-[var(--component-spacing-mobile)] sm:space-y-[var(--component-spacing)];
   }
 
   /* Card Layouts */
@@ -51,6 +52,20 @@
 
   .mobile-touch-target {
     @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile scroll containers */
+  .mobile-scroll-container {
+    @apply -mx-4 px-4 pb-4 
+           snap-x snap-mandatory 
+           overflow-x-auto 
+           flex sm:block;
+  }
+
+  .mobile-scroll-item {
+    @apply flex-shrink-0 w-[80vw] sm:w-auto 
+           snap-center 
+           first:ml-4 last:mr-4 sm:first:ml-0 sm:last:mr-0;
   }
 }
 

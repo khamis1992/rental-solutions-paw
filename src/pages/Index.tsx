@@ -45,7 +45,7 @@ const Index = () => {
                 </ErrorBoundary>
               </div>
 
-              <div className="w-full">
+              <div className="snap-x snap-mandatory -mx-4 px-4 pb-4 overflow-x-auto flex sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
                     <DashboardStats />
@@ -53,7 +53,7 @@ const Index = () => {
                 </ErrorBoundary>
               </div>
               
-              <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Anomaly Monitoring" />}>
                     <AnomalyMonitoring />
@@ -67,7 +67,7 @@ const Index = () => {
                 </ErrorBoundary>
               </div>
               
-              <div className="grid gap-4 sm:gap-6 lg:grid-cols-7">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-7">
                 <div className="lg:col-span-4">
                   <ErrorBoundary>
                     <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>

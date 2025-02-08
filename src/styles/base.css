@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,6 +38,8 @@
     --component-spacing-mobile: 0.75rem;
     --touch-target-size: 44px;
     --mobile-header-height: 56px;
+    --card-spacing-mobile: 0.75rem;
+    --grid-gap-mobile: 1rem;
   }
  
   .dark {
@@ -125,5 +128,21 @@
 
   .subheading-responsive {
     @apply text-lg sm:text-xl font-medium;
+  }
+
+  /* Mobile touch optimizations */
+  .touch-friendly {
+    @apply min-h-[var(--touch-target-size)] min-w-[var(--touch-target-size)] 
+           cursor-pointer select-none touch-action-manipulation;
+  }
+
+  /* Mobile scroll snap */
+  .snap-container {
+    @apply snap-x snap-mandatory overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .snap-item {
+    @apply snap-center flex-shrink-0;
   }
 }
