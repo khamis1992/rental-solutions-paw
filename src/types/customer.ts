@@ -1,3 +1,4 @@
+
 export interface Customer {
   id: string;
   full_name: string | null;
@@ -11,4 +12,5 @@ export interface Customer {
   created_at: string;
   updated_at: string;
   status: string;
+  nationality?: string | null;
 }
