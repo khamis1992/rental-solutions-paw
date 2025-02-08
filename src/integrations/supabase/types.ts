@@ -1967,6 +1967,36 @@ export type Database = {
         }
         Relationships: []
       }
+      element_styles: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          element_type: string
+          id: string
+          style_properties: Json
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          element_type: string
+          id?: string
+          style_properties: Json
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          element_type?: string
+          id?: string
+          style_properties?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       expense_analysis: {
         Row: {
           amount: number
