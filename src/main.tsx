@@ -27,16 +27,15 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
-      networkMode: 'offlineFirst',
     },
   },
 });
 
 root.render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" attribute="class">
-        <ErrorBoundary>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" attribute="class">
           <SessionContextProvider supabaseClient={supabase}>
             <TooltipProvider>
               <BrowserRouter>
@@ -44,8 +43,8 @@ root.render(
               </BrowserRouter>
             </TooltipProvider>
           </SessionContextProvider>
-        </ErrorBoundary>
-      </ThemeProvider>
-    </QueryClientProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
