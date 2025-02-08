@@ -7,13 +7,15 @@ interface SwipeActionsProps {
   threshold?: number;
 }
 
-export const useSwipeActions = ({ onDelete, onEdit, threshold = 100 }: SwipeActionsProps = {}) => {
+export const useSwipeActions = ({ onDelete, onEdit, threshold = 80 }: SwipeActionsProps = {}) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef(0);
+  const lastOffsetRef = useRef(0);
 
   const handleTouchStart = (e: TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
+    lastOffsetRef.current = swipeOffset;
     setIsDragging(true);
   };
 
@@ -23,24 +25,34 @@ export const useSwipeActions = ({ onDelete, onEdit, threshold = 100 }: SwipeActi
     const currentX = e.touches[0].clientX;
     const diff = startXRef.current - currentX;
     
-    // Limit swipe to left only and max threshold
-    const newOffset = Math.max(0, Math.min(diff, threshold));
+    // Add resistance to the swipe as it approaches the threshold
+    const resistance = Math.min(1, (threshold - Math.abs(diff)) / threshold);
+    const newOffset = Math.max(0, Math.min(diff * resistance, threshold));
+    
     setSwipeOffset(newOffset);
+
+    // Provide haptic feedback at specific points
+    if (newOffset > threshold * 0.5 && lastOffsetRef.current <= threshold * 0.5) {
+      if (navigator.vibrate) {
+        navigator.vibrate(20);
+      }
+    }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
     
     if (swipeOffset > threshold * 0.6) {
-      // Show delete confirmation
+      setSwipeOffset(threshold);
       if (onDelete) {
-        setSwipeOffset(threshold);
-        // Trigger haptic feedback if available
+        // Stronger haptic feedback for action confirmation
         if (navigator.vibrate) {
-          navigator.vibrate(50);
+          navigator.vibrate([30, 20, 30]);
         }
+        onDelete();
       }
     } else {
+      // Spring back animation handled by CSS transition
       setSwipeOffset(0);
     }
   };
@@ -55,4 +67,3 @@ export const useSwipeActions = ({ onDelete, onEdit, threshold = 100 }: SwipeActi
     resetSwipe: () => setSwipeOffset(0),
   };
 };
-

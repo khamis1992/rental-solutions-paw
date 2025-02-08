@@ -29,7 +29,7 @@ const Agreements = () => {
         "container mx-auto space-y-6",
         isMobile ? "px-0 py-4" : "px-4 py-8"
       )}>
-        {/* Hero Section */}
+        {/* Hero Section with Glassmorphism */}
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
           <div className="absolute inset-0 bg-grid-slate-900/[0.04] dark:bg-grid-slate-400/[0.05]" />
           
@@ -84,7 +84,12 @@ const Agreements = () => {
         {isMobile && (
           <div className="fixed right-4 bottom-24 z-20">
             <Button
-              className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+              className={cn(
+                "h-14 w-14 rounded-full shadow-lg",
+                "bg-primary hover:bg-primary/90",
+                "transition-all duration-200",
+                "active:scale-95"
+              )}
               onClick={() => setShowCreateDialog(true)}
             >
               <FileText className="h-6 w-6 text-white" />

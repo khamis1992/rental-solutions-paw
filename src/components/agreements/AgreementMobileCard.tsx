@@ -4,11 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Info, Trash2, Shield, Clock, Ban, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { useSwipeActions } from "@/hooks/use-swipe-actions";
 import { Agreement } from "@/types/agreement.types";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface AgreementMobileCardProps {
   agreement: Agreement;
@@ -33,7 +32,7 @@ export const AgreementMobileCard = ({
     onDelete: () => {
       onDeleteClick();
       if (navigator.vibrate) {
-        navigator.vibrate(50);
+        navigator.vibrate([50, 30, 50]);
       }
     },
     threshold: 80,
@@ -76,10 +75,11 @@ export const AgreementMobileCard = ({
           "group relative transition-all duration-200 transform",
           "hover:shadow-md active:scale-[0.98]",
           "touch-none select-none",
+          "bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60",
         )}
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
-          transition: 'transform 0.2s ease-out'
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
         onClick={() => {
           resetSwipe();
@@ -130,7 +130,7 @@ export const AgreementMobileCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-10 w-10 p-0"
+              className="h-11 w-11 p-0 rounded-full hover:bg-primary/10"
               onClick={(e) => {
                 e.stopPropagation();
                 onViewContract(agreement.id);
@@ -142,7 +142,7 @@ export const AgreementMobileCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-10 w-10 p-0"
+              className="h-11 w-11 p-0 rounded-full hover:bg-blue-100"
               onClick={(e) => {
                 e.stopPropagation();
                 onAgreementClick(agreement.id);
