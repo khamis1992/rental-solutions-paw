@@ -56,7 +56,6 @@ export default function App() {
         <Toaster />
         <PWAInstallPrompt />
         <Routes>
-          {/* Public Routes - No Layout */}
           <Route
             path="/auth"
             element={
@@ -75,7 +74,6 @@ export default function App() {
             }
           />
 
-          {/* Protected Routes - With Dashboard Layout */}
           <Route
             element={
               <ProtectedRoute>
