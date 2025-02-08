@@ -46,25 +46,25 @@ const Vehicles = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto px-4 lg:px-8 py-6 space-y-6">
         {/* Enhanced Header with Gradient Background */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-8 backdrop-blur-sm border border-white/10">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-8 backdrop-blur-sm border border-white/10">
           <div className="relative z-10">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-primary/10 rounded-lg">
-                    <Car className="h-6 w-6 text-primary" />
+                    <Car className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <h1 className="text-2xl font-bold">Vehicle Management</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold">Vehicle Management</h1>
                 </div>
-                <p className="text-muted-foreground max-w-2xl">
+                <p className="text-muted-foreground text-sm sm:text-base max-w-2xl">
                   Manage your fleet, track vehicle status, and monitor maintenance schedules efficiently
                 </p>
               </div>
               <div className="flex gap-3">
                 <CreateVehicleDialog>
-                  <Button className="flex items-center gap-2 shadow-sm">
+                  <Button className="flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center">
                     <Plus className="h-4 w-4" />
                     Add Vehicle
                   </Button>
@@ -80,19 +80,19 @@ const Vehicles = () => {
 
         {/* Enhanced Vehicle List Section */}
         <Card className="border-none shadow-sm">
-          <CardContent className="pt-6">
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
+          <CardContent className="p-4 sm:p-6">
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-semibold">Vehicle List</h2>
-                  <p className="text-muted-foreground">
+                  <h2 className="text-lg sm:text-xl font-semibold">Vehicle List</h2>
+                  <p className="text-muted-foreground text-sm">
                     View and manage all vehicles in your fleet
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-4 mb-6">
-                <div className="relative flex-1 max-w-sm">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1 max-w-sm w-full">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search vehicles..."
@@ -101,7 +101,7 @@ const Vehicles = () => {
                     className="pl-10"
                   />
                 </div>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto justify-center">
                   <SlidersHorizontal className="h-4 w-4" />
                   Filters
                 </Button>
