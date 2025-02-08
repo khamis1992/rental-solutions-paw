@@ -1,3 +1,4 @@
+
 import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -51,8 +52,8 @@ export default function App() {
   }
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
+      <TooltipProvider>
         <Toaster />
         <PWAInstallPrompt />
         <Routes>
@@ -241,7 +242,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </div>
-    </TooltipProvider>
+      </TooltipProvider>
+    </div>
   );
 }
