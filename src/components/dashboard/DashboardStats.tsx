@@ -1,21 +1,39 @@
 
-import { Car, Users, FileText, DollarSign, ChevronUp, ChevronDown, ArrowRight, Wrench } from "lucide-react";
+import { Car, Users, FileText, DollarSign, TrendingUp, ChevronUp, ChevronDown } from "lucide-react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 
-interface DashboardStatsProps {
-  stats: {
-    totalVehicles: number;
-    availableVehicles: number;
-    rentedVehicles: number;
-    maintenanceVehicles: number;
-    totalCustomers: number;
-    activeRentals: number;
-    monthlyRevenue: number;
-  };
+interface DashboardStatsData {
+  totalVehicles: number;
+  availableVehicles: number;
+  rentedVehicles: number;
+  maintenanceVehicles: number;
+  totalCustomers: number;
+  activeRentals: number;
+  monthlyRevenue: number;
 }
 
-export const DashboardStats = ({ stats }: DashboardStatsProps) => {
+export const DashboardStats = () => {
+  const { data: stats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_dashboard_stats");
+      if (error) throw error;
+      return data as DashboardStatsData;
+    },
+    placeholderData: {
+      totalVehicles: 0,
+      availableVehicles: 0,
+      rentedVehicles: 0,
+      maintenanceVehicles: 0,
+      totalCustomers: 0,
+      activeRentals: 0,
+      monthlyRevenue: 0
+    }
+  });
+
   const calculatePercentage = (value: number, total: number) => {
     if (total === 0) return 0;
     return ((value / total) * 100).toFixed(1);
@@ -23,10 +41,9 @@ export const DashboardStats = ({ stats }: DashboardStatsProps) => {
 
   const availablePercentage = calculatePercentage(stats.availableVehicles, stats.totalVehicles);
   const rentedPercentage = calculatePercentage(stats.rentedVehicles, stats.totalVehicles);
-  const maintenancePercentage = calculatePercentage(stats.maintenanceVehicles, stats.totalVehicles);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <>
       <StatsCard
         title="Total Fleet"
         value={stats.totalVehicles.toString()}
@@ -37,7 +54,7 @@ export const DashboardStats = ({ stats }: DashboardStatsProps) => {
             <span>{availablePercentage}% available</span>
           </div>
         }
-        iconClassName="text-blue-500"
+        className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10"
       />
 
       <StatsCard
@@ -45,12 +62,12 @@ export const DashboardStats = ({ stats }: DashboardStatsProps) => {
         value={stats.activeRentals.toString()}
         icon={FileText}
         description={
-          <div className="flex items-center gap-1 text-primary">
-            <ArrowRight className="h-4 w-4" />
+          <div className="flex items-center gap-1 text-blue-600">
+            <TrendingUp className="h-4 w-4" />
             <span>{rentedPercentage}% of fleet</span>
           </div>
         }
-        iconClassName="text-purple-500"
+        className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10"
       />
 
       <StatsCard
@@ -63,7 +80,7 @@ export const DashboardStats = ({ stats }: DashboardStatsProps) => {
             <span>Active accounts</span>
           </div>
         }
-        iconClassName="text-emerald-500"
+        className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/10"
       />
 
       <StatsCard
@@ -72,14 +89,12 @@ export const DashboardStats = ({ stats }: DashboardStatsProps) => {
         icon={DollarSign}
         description={
           <div className="flex items-center gap-1 text-amber-600">
-            <Wrench className="h-4 w-4" />
-            <span>{maintenancePercentage}% in maintenance</span>
+            <ChevronUp className="h-4 w-4" />
+            <span>vs last month</span>
           </div>
         }
-        iconClassName="text-amber-500"
+        className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/10"
       />
-    </div>
+    </>
   );
 };
-
-export default DashboardStats;

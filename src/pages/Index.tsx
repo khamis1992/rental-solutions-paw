@@ -13,7 +13,7 @@ const RecentActivity = lazy(() => import("@/components/dashboard/RecentActivity"
 const SystemChatbot = lazy(() => import("@/components/chat/SystemChatbot").then(module => ({ default: module.SystemChatbot })));
 
 const ComponentLoader = ({ componentName }: { componentName: string }) => (
-  <div className="w-full space-y-4 p-4">
+  <div className="w-full space-y-4 p-4 animate-pulse">
     <div className="h-4 w-1/4">
       <Skeleton className="h-full w-full rounded-lg" />
     </div>
@@ -37,7 +37,8 @@ const Index = () => {
         <div className="pt-[var(--mobile-header-height)] sm:pt-[var(--header-height)] pb-6">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
             <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="w-full mt-4 sm:mt-6">
+              {/* Welcome Header Section */}
+              <div className="w-full mt-4 sm:mt-6 animate-fade-in">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Welcome Header" />}>
                     <WelcomeHeader />
@@ -45,7 +46,8 @@ const Index = () => {
                 </ErrorBoundary>
               </div>
 
-              <div className="snap-x snap-mandatory -mx-4 px-4 pb-4 overflow-x-auto flex sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Stats Cards Section - Horizontal scroll on mobile */}
+              <div className="snap-x snap-mandatory -mx-4 px-4 pb-4 overflow-x-auto flex sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 touch-pan-x">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
                     <DashboardStats />
@@ -53,32 +55,42 @@ const Index = () => {
                 </ErrorBoundary>
               </div>
               
+              {/* Analytics Grid Section */}
               <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Anomaly Monitoring" />}>
-                    <AnomalyMonitoring />
+                    <div className="animate-fade-in">
+                      <AnomalyMonitoring />
+                    </div>
                   </Suspense>
                 </ErrorBoundary>
 
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Alerts" />}>
-                    <DashboardAlerts />
+                    <div className="animate-fade-in delay-100">
+                      <DashboardAlerts />
+                    </div>
                   </Suspense>
                 </ErrorBoundary>
               </div>
               
+              {/* Activity and Chatbot Section */}
               <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-7">
                 <div className="lg:col-span-4">
                   <ErrorBoundary>
                     <Suspense fallback={<ComponentLoader componentName="Recent Activity" />}>
-                      <RecentActivity />
+                      <div className="animate-fade-in delay-200">
+                        <RecentActivity />
+                      </div>
                     </Suspense>
                   </ErrorBoundary>
                 </div>
                 <div className="lg:col-span-3">
                   <ErrorBoundary>
                     <Suspense fallback={<ComponentLoader componentName="System Chatbot" />}>
-                      <SystemChatbot />
+                      <div className="animate-fade-in delay-300">
+                        <SystemChatbot />
+                      </div>
                     </Suspense>
                   </ErrorBoundary>
                 </div>
