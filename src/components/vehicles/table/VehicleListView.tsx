@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -10,8 +9,8 @@ import { VehicleTableContent } from "./VehicleTableContent";
 import { VehicleTablePagination } from "./VehicleTablePagination";
 import { Vehicle } from "@/types/vehicle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
-import { VehicleCard } from "./VehicleCard";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface VehicleListViewProps {
   vehicles: Vehicle[];
@@ -21,7 +20,6 @@ interface VehicleListViewProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  isMobile: boolean;
 }
 
 export const VehicleListView = ({
@@ -32,23 +30,13 @@ export const VehicleListView = ({
   currentPage,
   totalPages,
   onPageChange,
-  isMobile,
 }: VehicleListViewProps) => {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {isMobile ? (
-          <>
-            <Skeleton className="h-[200px] w-full rounded-lg" />
-            <Skeleton className="h-[200px] w-full rounded-lg" />
-          </>
-        ) : (
-          <>
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </>
-        )}
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
       </div>
     );
   }
@@ -58,41 +46,7 @@ export const VehicleListView = ({
       <div className="flex flex-col items-center justify-center py-12 bg-background rounded-lg border">
         <div className="text-4xl mb-4">🚗</div>
         <h3 className="text-lg font-semibold mb-2">No vehicles found</h3>
-        <p className="text-muted-foreground text-center px-4">
-          Try adjusting your search or filters
-        </p>
-      </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <div className="space-y-4">
-        <div className="grid gap-4 auto-grid">
-          {vehicles.map((vehicle) => (
-            <VehicleCard
-              key={vehicle.id}
-              vehicle={vehicle}
-              isSelected={selectedVehicles.includes(vehicle.id)}
-              onSelect={(selected) => {
-                if (selected) {
-                  onSelectionChange([...selectedVehicles, vehicle.id]);
-                } else {
-                  onSelectionChange(selectedVehicles.filter(id => id !== vehicle.id));
-                }
-              }}
-            />
-          ))}
-        </div>
-        <div className="fixed bottom-4 left-0 right-0 px-4 z-10">
-          <Card className="p-4 shadow-lg">
-            <VehicleTablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={onPageChange}
-            />
-          </Card>
-        </div>
+        <p className="text-muted-foreground">Try adjusting your search or filters</p>
       </div>
     );
   }

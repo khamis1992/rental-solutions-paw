@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -16,10 +15,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <DashboardSidebar />
         <div className="flex-1">
           <DashboardHeader />
-          <main className="flex-1 pt-[var(--mobile-header-height)] sm:pt-[var(--header-height)] px-4 sm:px-6 lg:px-8 mx-auto max-w-7xl">
-            <div className="py-4 sm:py-6">
-              {children || <Outlet />}
-            </div>
+          <main className="flex-1 pt-[var(--header-height,56px)] px-4 md:px-6 lg:px-8 mx-auto max-w-7xl">
+            {children || <Outlet />}
           </main>
         </div>
       </div>

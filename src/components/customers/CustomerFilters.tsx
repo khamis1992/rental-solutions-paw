@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, UserCheck, Clock, UserX, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface CustomerFiltersProps {
   onSearchChange: (value: string) => void;
@@ -14,17 +13,9 @@ export const CustomerFilters = ({
   onSearchChange,
   onRoleFilter,
 }: CustomerFiltersProps) => {
-  const isMobile = useIsMobile();
-
   return (
-    <div className={cn(
-      "flex gap-4",
-      isMobile ? "flex-col" : "flex-row items-center"
-    )}>
-      <div className={cn(
-        "relative",
-        isMobile ? "w-full" : "w-1/3"
-      )}>
+    <div className="flex flex-col gap-4 md:flex-row md:items-center">
+      <div className="w-full md:w-1/3 relative">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -34,9 +25,7 @@ export const CustomerFilters = ({
           />
         </div>
       </div>
-      <div className={cn(
-        isMobile ? "w-full" : "w-1/4"
-      )}>
+      <div className="w-full md:w-1/4">
         <Select onValueChange={onRoleFilter} defaultValue="all">
           <SelectTrigger className={cn(
             "w-full bg-white/50 hover:bg-white/80 transition-colors",

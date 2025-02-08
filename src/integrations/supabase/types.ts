@@ -2446,7 +2446,6 @@ export type Database = {
           ownership_transferred: boolean | null
           payment_frequency: string | null
           payment_status: string | null
-          remaining_amount: number | null
           rent_amount: number | null
           rent_due_day: number | null
           return_date: string | null
@@ -2492,7 +2491,6 @@ export type Database = {
           ownership_transferred?: boolean | null
           payment_frequency?: string | null
           payment_status?: string | null
-          remaining_amount?: number | null
           rent_amount?: number | null
           rent_due_day?: number | null
           return_date?: string | null
@@ -2538,7 +2536,6 @@ export type Database = {
           ownership_transferred?: boolean | null
           payment_frequency?: string | null
           payment_status?: string | null
-          remaining_amount?: number | null
           rent_amount?: number | null
           rent_due_day?: number | null
           return_date?: string | null
@@ -7226,7 +7223,6 @@ export type Database = {
         | "terminated"
         | "cancelled"
         | "archived"
-        | "completed"
       legal_case_status:
         | "pending_reminder"
         | "in_legal_process"

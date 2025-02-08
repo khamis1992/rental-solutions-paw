@@ -9,13 +9,10 @@ import { VehicleTablePagination } from "../vehicles/table/VehicleTablePagination
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 import { CustomerTableHeader } from "./table/CustomerTableHeader";
 import { CustomerTableRow } from "./table/CustomerTableRow";
-import { CustomerCard } from "./CustomerCard";
 import { useCustomers } from "./hooks/useCustomers";
-import { useIsMobile } from "@/hooks/use-mobile";
 import type { Customer } from "./types/customer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -25,7 +22,6 @@ export const CustomerList = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
-  const isMobile = useIsMobile();
 
   const { data, isLoading, error, refetch } = useCustomers({
     searchQuery,
@@ -67,31 +63,21 @@ export const CustomerList = () => {
             onSearchChange={setSearchQuery}
             onRoleFilter={setRoleFilter}
           />
-          <div className="mt-4">
-            {isMobile ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-[200px] w-full rounded-lg" />
+          <div className="rounded-md border bg-card mt-4">
+            <Table>
+              <CustomerTableHeader />
+              <TableBody>
+                {[...Array(5)].map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="p-4"><Skeleton className="h-4 w-[200px]" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-[120px]" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-[250px]" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
+                  </tr>
                 ))}
-              </div>
-            ) : (
-              <div className="rounded-md border bg-card">
-                <Table>
-                  <CustomerTableHeader />
-                  <TableBody>
-                    {[...Array(5)].map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td className="p-4"><Skeleton className="h-4 w-[200px]" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-[120px]" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-[250px]" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
-                        <td className="p-4"><Skeleton className="h-4 w-[100px]" /></td>
-                      </tr>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
@@ -129,61 +115,31 @@ export const CustomerList = () => {
           onSearchChange={setSearchQuery}
           onRoleFilter={setRoleFilter}
         />
-        
-        {isMobile ? (
-          <div className="mt-4 space-y-4">
-            {filteredCustomers.map((customer: Customer) => (
-              <CustomerCard
-                key={customer.id}
-                customer={customer}
-                onClick={() => {
-                  setSelectedCustomerId(customer.id);
-                  setShowDetailsDialog(true);
-                }}
-                onDeleted={refetch}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-md border bg-card mt-4 overflow-hidden">
-            <Table>
-              <CustomerTableHeader />
-              <TableBody>
-                {filteredCustomers.map((customer: Customer) => (
-                  <CustomerTableRow 
-                    key={customer.id}
-                    customer={customer}
-                    onDeleted={refetch}
-                    onClick={() => {
-                      setSelectedCustomerId(customer.id);
-                      setShowDetailsDialog(true);
-                    }}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <div className="rounded-md border bg-card mt-4 overflow-hidden">
+          <Table>
+            <CustomerTableHeader />
+            <TableBody>
+              {filteredCustomers.map((customer: Customer) => (
+                <CustomerTableRow 
+                  key={customer.id}
+                  customer={customer}
+                  onDeleted={refetch}
+                  onClick={() => {
+                    setSelectedCustomerId(customer.id);
+                    setShowDetailsDialog(true);
+                  }}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-        <div className={cn(
-          "flex justify-center mt-6",
-          isMobile && "fixed bottom-4 left-0 right-0 px-4 z-10"
-        )}>
-          {isMobile ? (
-            <Card className="w-full p-4 shadow-lg">
-              <VehicleTablePagination
-                currentPage={currentPage + 1}
-                totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page - 1)}
-              />
-            </Card>
-          ) : (
-            <VehicleTablePagination
-              currentPage={currentPage + 1}
-              totalPages={totalPages}
-              onPageChange={(page) => setCurrentPage(page - 1)}
-            />
-          )}
+        <div className="flex justify-center mt-6">
+          <VehicleTablePagination
+            currentPage={currentPage + 1}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page - 1)}
+          />
         </div>
 
         {selectedCustomerId && (
