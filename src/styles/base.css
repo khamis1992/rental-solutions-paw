@@ -5,25 +5,25 @@
  
 @layer base {
   :root {
-    --background: 0 0% 95%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 24 95% 53%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 13%;
-    --muted: 0 0% 90%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 24 95% 97%;
-    --accent-foreground: 24 95% 53%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 24 95% 53%;
+    --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
 
     /* Custom layout variables */
@@ -49,7 +49,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 24 95% 53%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -72,63 +72,77 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-}
 
-@layer utilities {
-  /* Mobile-optimized touch targets */
+  /* Mobile-optimized layout styles */
+  .page-container {
+    @apply min-h-screen w-full bg-background px-4 sm:px-6 lg:px-8;
+  }
+
+  .content-wrapper {
+    @apply pt-[var(--mobile-header-height)] pb-6 sm:pt-[var(--header-height)];
+  }
+
+  .content-container {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-[var(--content-max-width)];
+  }
+
+  /* Touch-friendly interactive elements */
   .touch-target {
     @apply min-h-[var(--touch-target-size)] min-w-[var(--touch-target-size)];
   }
+}
 
-  /* Glass effects */
-  .glass {
-    @apply bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+/* Mobile-first responsive styles */
+@layer components {
+  .card-grid {
+    @apply grid gap-4 sm:gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   }
 
-  .glass-hover {
-    @apply hover:bg-background/80 hover:backdrop-blur supports-[backdrop-filter]:hover:bg-background/50 
-           transition-all duration-200 active:scale-95;
+  .stats-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
   }
 
-  /* Card styles */
-  .card-glass {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20
-           hover:bg-white/90 transition-all duration-200
-           dark:bg-gray-800/80 dark:border-gray-700/20 dark:hover:bg-gray-800/90;
+  .mobile-stack {
+    @apply flex flex-col sm:flex-row gap-4;
   }
 
-  /* Mobile safe area handling */
-  .mobile-safe-bottom {
-    @apply pb-[calc(env(safe-area-inset-bottom,_0px)_+_1rem)];
+  .mobile-only {
+    @apply block sm:hidden;
   }
 
-  /* Mobile gradients */
-  .mobile-gradient {
-    @apply bg-gradient-to-br from-white/95 to-white/75 
-           dark:from-gray-900/95 dark:to-gray-900/75;
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+}
+
+/* Responsive typography */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm sm:text-base;
   }
 
-  /* Swipe indicators */
-  .swipe-indicator {
-    @apply absolute right-0 w-1 h-16 bg-primary/20 rounded-l
-           animate-pulse pointer-events-none;
+  .heading-responsive {
+    @apply text-xl sm:text-2xl font-semibold;
   }
 
-  /* Touch interactions */
-  .touch-ripple {
-    @apply relative overflow-hidden
-           active:after:content-[''] active:after:absolute 
-           active:after:bg-black/5 active:after:rounded-full
-           active:after:animate-ripple active:after:pointer-events-none;
+  .subheading-responsive {
+    @apply text-lg sm:text-xl font-medium;
   }
 
-  /* Snap scroll */
-  .snap-x-mandatory {
-    @apply snap-x snap-mandatory;
+  /* Mobile touch optimizations */
+  .touch-friendly {
+    @apply min-h-[var(--touch-target-size)] min-w-[var(--touch-target-size)] 
+           cursor-pointer select-none touch-action-manipulation;
   }
 
-  .snap-center-always {
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
+  /* Mobile scroll snap */
+  .snap-container {
+    @apply snap-x snap-mandatory overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .snap-item {
+    @apply snap-center flex-shrink-0;
   }
 }
