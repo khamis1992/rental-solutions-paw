@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import App from './App.tsx';
 import './index.css';
 
@@ -39,7 +40,9 @@ root.render(
             storageKey="app-theme"
             disableTransitionOnChange
           >
-            <App />
+            <TooltipProvider>
+              <App />
+            </TooltipProvider>
           </ThemeProvider>
         </SessionContextProvider>
       </QueryClientProvider>
