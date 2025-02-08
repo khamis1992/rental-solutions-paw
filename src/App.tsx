@@ -1,4 +1,3 @@
-
 import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -10,7 +9,6 @@ import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 const LoadingFallback = () => (
   <div className="h-screen w-screen flex items-center justify-center">
@@ -53,196 +51,194 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <TooltipProvider>
-        <Toaster />
-        <PWAInstallPrompt />
-        <Routes>
-          {/* Public Routes - No Layout */}
+      <Toaster />
+      <PWAInstallPrompt />
+      <Routes>
+        {/* Public Routes - No Layout */}
+        <Route
+          path="/auth"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <LazyComponents.Auth />
+            </Suspense>
+          }
+        />
+
+        <Route
+          path="/customer-portal"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <LazyComponents.CustomerPortal />
+            </Suspense>
+          }
+        />
+
+        {/* Protected Routes - With Dashboard Layout */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <DashboardLayout />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        >
           <Route
-            path="/auth"
+            path="/"
             element={
               <Suspense fallback={<LoadingFallback />}>
-                <LazyComponents.Auth />
+                <LazyComponents.Dashboard />
               </Suspense>
             }
           />
 
           <Route
-            path="/customer-portal"
+            path="/vehicles"
             element={
               <Suspense fallback={<LoadingFallback />}>
-                <LazyComponents.CustomerPortal />
+                <LazyComponents.Vehicles />
               </Suspense>
             }
           />
 
-          {/* Protected Routes - With Dashboard Layout */}
           <Route
+            path="/vehicles/:id"
             element={
-              <ProtectedRoute>
-                <Suspense fallback={<LoadingFallback />}>
-                  <DashboardLayout />
-                </Suspense>
-              </ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.VehicleDetails />
+              </Suspense>
             }
-          >
-            <Route
-              path="/"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Dashboard />
-                </Suspense>
-              }
-            />
+          />
 
-            <Route
-              path="/vehicles"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Vehicles />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/customers"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Customers />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/vehicles/:id"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.VehicleDetails />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/customers/:id"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.CustomerProfile />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/customers"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Customers />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/agreements"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Agreements />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/customers/:id"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.CustomerProfile />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/remaining-amount"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.RemainingAmount />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/agreements"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Agreements />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/settings"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Settings />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/remaining-amount"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.RemainingAmount />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/maintenance/*"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Maintenance />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/settings"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Settings />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/chauffeur-service"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.ChauffeurService />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/maintenance/*"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Maintenance />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/traffic-fines"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.TrafficFines />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/chauffeur-service"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.ChauffeurService />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/reports"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Reports />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/traffic-fines"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.TrafficFines />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/finance/*"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Finance />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/reports"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Reports />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/finance/car-installments/:id"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.CarInstallmentDetails />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/finance/*"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Finance />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/help"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Help />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/finance/car-installments/:id"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.CarInstallmentDetails />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/legal"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Legal />
+              </Suspense>
+            }
+          />
 
-            <Route
-              path="/help"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Help />
-                </Suspense>
-              }
-            />
+          <Route
+            path="/audit"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <LazyComponents.Audit />
+              </Suspense>
+            }
+          />
+        </Route>
 
-            <Route
-              path="/legal"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Legal />
-                </Suspense>
-              }
-            />
-
-            <Route
-              path="/audit"
-              element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <LazyComponents.Audit />
-                </Suspense>
-              }
-            />
-          </Route>
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </TooltipProvider>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   );
 }

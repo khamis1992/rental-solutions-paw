@@ -7,6 +7,7 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import App from './App.tsx';
 import './index.css';
 
@@ -30,22 +31,24 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <SessionContextProvider supabaseClient={supabase}>
-            <ThemeProvider 
-              attribute="class" 
-              defaultTheme="light" 
-              enableSystem 
-              storageKey="app-theme"
-              disableTransitionOnChange
-            >
-              <App />
-            </ThemeProvider>
-          </SessionContextProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <TooltipProvider>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
+            <SessionContextProvider supabaseClient={supabase}>
+              <ThemeProvider 
+                attribute="class" 
+                defaultTheme="light" 
+                enableSystem 
+                storageKey="app-theme"
+                disableTransitionOnChange
+              >
+                <App />
+              </ThemeProvider>
+            </SessionContextProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
