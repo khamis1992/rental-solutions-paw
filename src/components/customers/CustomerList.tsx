@@ -16,7 +16,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { Customer } from "./types/customer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -125,16 +124,14 @@ export const CustomerList = () => {
           Customers
         </CardTitle>
       </CardHeader>
-      <CardContent className={cn(
-        isMobile ? "px-3 pb-24" : "p-6" // Added bottom padding for mobile pagination
-      )}>
+      <CardContent>
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleFilter={setRoleFilter}
         />
         
         {isMobile ? (
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-4">
             {filteredCustomers.map((customer: Customer) => (
               <CustomerCard
                 key={customer.id}
@@ -173,19 +170,11 @@ export const CustomerList = () => {
           isMobile && "fixed bottom-4 left-0 right-0 px-4 z-10"
         )}>
           {isMobile ? (
-            <Card className="w-full p-4 shadow-lg bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <Card className="w-full p-4 shadow-lg">
               <VehicleTablePagination
                 currentPage={currentPage + 1}
                 totalPages={totalPages}
-                onPageChange={(page) => {
-                  setCurrentPage(page - 1);
-                  // Smooth scroll to top on page change
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                  // Haptic feedback
-                  if (navigator.vibrate) {
-                    navigator.vibrate(50);
-                  }
-                }}
+                onPageChange={(page) => setCurrentPage(page - 1)}
               />
             </Card>
           ) : (
@@ -208,4 +197,3 @@ export const CustomerList = () => {
     </Card>
   );
 };
-

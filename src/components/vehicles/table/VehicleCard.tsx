@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2, Car } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useSwipeActions } from "@/hooks/use-swipe-actions";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -15,26 +14,14 @@ interface VehicleCardProps {
 }
 
 export const VehicleCard = ({ vehicle, isSelected, onSelect }: VehicleCardProps) => {
-  const { swipeOffset, handlers, resetSwipe } = useSwipeActions({
-    threshold: 100,
-  });
-
   return (
     <Card 
       className={cn(
         "group relative transition-all duration-200",
         "hover:shadow-md active:scale-[0.98]",
-        "bg-white/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800",
-        "overflow-hidden touch-manipulation",
-        isSelected && "ring-2 ring-primary",
+        isSelected && "ring-2 ring-primary"
       )}
-      {...handlers}
-      style={{
-        transform: `translateX(-${swipeOffset}px)`,
-      }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
-      
       <div 
         className="absolute right-2 top-2 z-10"
         onClick={(e) => {
@@ -90,28 +77,15 @@ export const VehicleCard = ({ vehicle, isSelected, onSelect }: VehicleCardProps)
         </div>
 
         <div className="flex gap-2 justify-end pt-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            asChild
-            className="hover:bg-primary/10"
-          >
+          <Button variant="ghost" size="sm" asChild>
             <Link to={`/vehicles/${vehicle.id}`}>
               <Eye className="h-4 w-4" />
             </Link>
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="hover:bg-primary/10"
-          >
+          <Button variant="ghost" size="sm">
             <Edit className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
+          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>

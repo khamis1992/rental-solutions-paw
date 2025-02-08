@@ -1,4 +1,3 @@
-
 @layer utilities {
   /* Spacing Utilities */
   .space-responsive {
@@ -24,64 +23,7 @@
   }
 
   .glass-hover {
-    @apply hover:bg-background/80 hover:backdrop-blur supports-[backdrop-filter]:hover:bg-background/50 
-           transition-all duration-200 active:scale-95;
-  }
-
-  /* Mobile Optimizations */
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px];
-  }
-
-  .card-glass {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20
-           hover:bg-white/90 transition-all duration-200
-           dark:bg-gray-800/80 dark:border-gray-700/20 dark:hover:bg-gray-800/90;
-  }
-
-  .mobile-safe-bottom {
-    @apply pb-[calc(env(safe-area-inset-bottom,_0px)_+_1rem)];
-  }
-
-  .mobile-gradient {
-    @apply bg-gradient-to-br from-white/95 to-white/75 
-           dark:from-gray-900/95 dark:to-gray-900/75;
-  }
-
-  .swipe-indicator {
-    @apply absolute right-0 w-1 h-16 bg-red-500/20 rounded-l
-           animate-pulse pointer-events-none;
-  }
-
-  /* Touch Interactions */
-  .touch-ripple {
-    @apply relative overflow-hidden
-           active:after:content-[''] active:after:absolute 
-           active:after:bg-black/5 active:after:rounded-full
-           active:after:animate-ripple active:after:pointer-events-none;
-  }
-
-  .snap-x-mandatory {
-    @apply snap-x snap-mandatory;
-  }
-
-  .snap-center-always {
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
-  }
-
-  /* Animation Utilities */
-  .animate-slide-in {
-    animation: slideIn 0.3s ease-out;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
-
-  .animate-scale {
-    @apply transition-transform duration-200 
-           active:scale-95 hover:scale-105;
+    @apply hover:bg-background/80 hover:backdrop-blur supports-[backdrop-filter]:hover:bg-background/50;
   }
 }
 
@@ -89,37 +31,5 @@
 @media print {
   .no-print {
     display: none;
-  }
-}
-
-/* Custom Animations */
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }

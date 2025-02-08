@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -70,78 +71,24 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Enhanced Mobile-optimized layout styles */
+  /* Mobile-optimized layout styles */
   .page-container {
-    @apply min-h-screen w-full bg-background px-4 sm:px-6 lg:px-8 
-           overflow-x-hidden relative;
+    @apply min-h-screen w-full bg-background px-4 sm:px-6 lg:px-8;
   }
 
   .content-wrapper {
-    @apply pt-[var(--mobile-header-height)] pb-6 
-           sm:pt-[var(--header-height)] 
-           transition-all duration-300 ease-out;
+    @apply pt-[var(--mobile-header-height)] pb-6 sm:pt-[var(--header-height)];
   }
 
   .content-container {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8 
-           max-w-[var(--content-max-width)]
-           transition-all duration-300;
+    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-[var(--content-max-width)];
   }
 
-  /* Enhanced touch-friendly interactive elements */
+  /* Touch-friendly interactive elements */
   .touch-target {
-    @apply min-h-[var(--touch-target-size)] min-w-[var(--touch-target-size)]
-           select-none touch-manipulation;
-  }
-
-  /* Enhanced mobile optimizations */
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    scrollbar-gutter: stable;
-  }
-  
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .touch-pan-x {
-    touch-action: pan-x;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .scroll-smooth {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Enhanced glass effect */
-  .glass {
-    @apply backdrop-blur-md bg-white/10 dark:bg-black/10
-           border border-white/20 dark:border-white/10
-           shadow-lg shadow-black/5 dark:shadow-white/5;
-  }
-  
-  .glass-card {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20 
-           dark:bg-gray-950/10 dark:border-gray-800/20
-           rounded-xl shadow-xl;
-  }
-  
-  .card-hover {
-    @apply transition-all duration-200
-           hover:shadow-lg hover:scale-[1.02]
-           active:scale-[0.98];
-  }
-
-  /* Enhanced touch feedback */
-  .touch-feedback {
-    @apply active:scale-95 transition-transform duration-200
-           hover:scale-105 focus:scale-105
-           active:opacity-70;
+    @apply min-h-[var(--touch-target-size)] min-w-[var(--touch-target-size)];
   }
 }
 

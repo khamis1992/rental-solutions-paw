@@ -36,7 +36,7 @@ export const VehicleListView = ({
 }: VehicleListViewProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
+      <div className="space-y-4">
         {isMobile ? (
           <>
             <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -55,7 +55,7 @@ export const VehicleListView = ({
 
   if (!vehicles.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 bg-background/50 backdrop-blur-sm rounded-lg border">
+      <div className="flex flex-col items-center justify-center py-12 bg-background rounded-lg border">
         <div className="text-4xl mb-4">🚗</div>
         <h3 className="text-lg font-semibold mb-2">No vehicles found</h3>
         <p className="text-muted-foreground text-center px-4">
@@ -68,7 +68,7 @@ export const VehicleListView = ({
   if (isMobile) {
     return (
       <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
+        <div className="grid gap-4 auto-grid">
           {vehicles.map((vehicle) => (
             <VehicleCard
               key={vehicle.id}
@@ -85,7 +85,7 @@ export const VehicleListView = ({
           ))}
         </div>
         <div className="fixed bottom-4 left-0 right-0 px-4 z-10">
-          <Card className="p-4 shadow-lg bg-white/80 backdrop-blur-sm border border-gray-200">
+          <Card className="p-4 shadow-lg">
             <VehicleTablePagination
               currentPage={currentPage}
               totalPages={totalPages}
