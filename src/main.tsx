@@ -16,17 +16,16 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Configure query client with optimized caching settings
+// Create a stable QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 15, // Data remains fresh for 15 minutes
-      gcTime: 1000 * 60 * 30, // Cache is garbage collected after 30 minutes
+      staleTime: 1000 * 60 * 5, // Data remains fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache is kept for 30 minutes
       retry: 1, // Only retry failed requests once
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
-      networkMode: 'offlineFirst',
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnReconnect: false, // Don't refetch on reconnect
+      refetchOnMount: false, // Don't refetch on mount
     },
   },
 });
