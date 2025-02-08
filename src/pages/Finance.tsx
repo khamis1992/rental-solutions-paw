@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FinancialOverview } from "@/components/finance/dashboard/FinancialOverview";
 import { FinancialDashboard } from "@/components/finance/FinancialDashboard";
@@ -17,18 +18,18 @@ export default function Finance() {
       <FinancialOverview />
 
       <Tabs defaultValue="dashboard" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="car-installments">Car Installments</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
+        <TabsList className="w-full flex overflow-x-auto no-scrollbar snap-x snap-mandatory touch-pan-x">
+          <TabsTrigger value="dashboard" className="touch-target">Dashboard</TabsTrigger>
+          <TabsTrigger value="car-installments" className="touch-target">Car Installments</TabsTrigger>
+          <TabsTrigger value="payments" className="touch-target">Payments</TabsTrigger>
         </TabsList>
-        <TabsContent value="dashboard">
+        <TabsContent value="dashboard" className="animate-fade-in">
           <FinancialDashboard />
         </TabsContent>
-        <TabsContent value="car-installments">
+        <TabsContent value="car-installments" className="animate-fade-in">
           <CarInstallmentContracts />
         </TabsContent>
-        <TabsContent value="payments">
+        <TabsContent value="payments" className="animate-fade-in">
           <PaymentManagement />
         </TabsContent>
       </Tabs>
