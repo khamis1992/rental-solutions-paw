@@ -37,7 +37,7 @@ root.render(
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <SessionContextProvider supabaseClient={supabase}>
-            <TooltipProvider>
+            <TooltipProvider delayDuration={0}>
               <App />
             </TooltipProvider>
           </SessionContextProvider>
