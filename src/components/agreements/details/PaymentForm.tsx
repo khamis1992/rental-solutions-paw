@@ -1,5 +1,5 @@
+
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface PaymentFormProps {
   agreementId: string;
@@ -26,7 +28,7 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   const [rentAmount, setRentAmount] = useState(0);
   const [dueAmount, setDueAmount] = useState(0);
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue, watch } = useForm();
+  const isMobile = useIsMobile();
 
   // Fetch rent amount and calculate late fee
   useEffect(() => {
@@ -63,10 +65,22 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
     setDueAmount(rentAmount + lateFee);
   }, [rentAmount, lateFee]);
 
-  const onSubmit = async (data: any) => {
+  const [formData, setFormData] = useState({
+    amount: "",
+    paymentMethod: "",
+    description: ""
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
+    
     try {
-      const paymentAmount = Number(data.amount);
+      const paymentAmount = Number(formData.amount);
       const balance = dueAmount - paymentAmount;
 
       const { error } = await supabase.from("unified_payments").insert({
@@ -74,8 +88,8 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
         amount: dueAmount,
         amount_paid: paymentAmount,
         balance: balance,
-        payment_method: data.paymentMethod,
-        description: data.description,
+        payment_method: formData.paymentMethod,
+        description: formData.description,
         payment_date: new Date().toISOString(),
         status: 'completed',
         type: 'Income',
@@ -86,7 +100,11 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
       if (error) throw error;
 
       toast.success("Payment added successfully");
-      reset();
+      setFormData({
+        amount: "",
+        paymentMethod: "",
+        description: ""
+      });
       
       await queryClient.invalidateQueries({ queryKey: ['unified-payments'] });
       await queryClient.invalidateQueries({ queryKey: ['payment-history'] });
@@ -100,62 +118,94 @@ export const PaymentForm = ({ agreementId }: PaymentFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="bg-muted p-4 rounded-lg mb-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className={cn(
+        "bg-muted p-4 rounded-lg mb-4",
+        "border border-border/50",
+        "hover:border-border/80 transition-colors"
+      )}>
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <div className="text-sm text-muted-foreground">Due Amount</div>
-            <div className="text-lg font-semibold">
+            <div className="text-sm text-muted-foreground mb-1">Due Amount</div>
+            <div className="text-xl font-semibold">
               {formatCurrency(dueAmount)}
-              <span className="text-sm text-muted-foreground ml-2">
-                (Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)})
-              </span>
+              <div className="text-sm text-muted-foreground mt-1">
+                Rent: {formatCurrency(rentAmount)} + Late Fee: {formatCurrency(lateFee)}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="amount">Amount Paid (QAR)</Label>
-        <Input
-          id="amount"
-          type="number"
-          step="0.01"
-          min="0"
-          {...register("amount", { required: true })}
-        />
-      </div>
-      
-      <div>
-        <Label htmlFor="paymentMethod">Payment Method</Label>
-        <Select onValueChange={(value) => setValue("paymentMethod", value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select payment method" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Cash">Cash</SelectItem>
-            <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
-            <SelectItem value="Invoice">Invoice</SelectItem>
-            <SelectItem value="On_hold">On Hold</SelectItem>
-            <SelectItem value="Deposit">Deposit</SelectItem>
-            <SelectItem value="Cheque">Cheque</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="amount" className="text-sm font-medium">
+            Amount Paid (QAR)
+          </Label>
+          <Input
+            id="amount"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.amount}
+            onChange={(e) => handleChange("amount", e.target.value)}
+            className={cn(
+              "mt-1.5",
+              isMobile && "h-12 text-lg"
+            )}
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="paymentMethod" className="text-sm font-medium">
+            Payment Method
+          </Label>
+          <Select
+            value={formData.paymentMethod}
+            onValueChange={(value) => handleChange("paymentMethod", value)}
+          >
+            <SelectTrigger 
+              className={cn(
+                "mt-1.5 w-full",
+                isMobile && "h-12 text-lg"
+              )}
+            >
+              <SelectValue placeholder="Select payment method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Cash">Cash</SelectItem>
+              <SelectItem value="WireTransfer">Wire Transfer</SelectItem>
+              <SelectItem value="Invoice">Invoice</SelectItem>
+              <SelectItem value="On_hold">On Hold</SelectItem>
+              <SelectItem value="Deposit">Deposit</SelectItem>
+              <SelectItem value="Cheque">Cheque</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          placeholder="Add payment notes or description..."
-          {...register("description")}
-        />
+        <div>
+          <Label htmlFor="description" className="text-sm font-medium">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            placeholder="Add payment notes or description..."
+            value={formData.description}
+            onChange={(e) => handleChange("description", e.target.value)}
+            className="mt-1.5"
+            rows={isMobile ? 3 : 4}
+          />
+        </div>
       </div>
 
       <Button 
         type="submit" 
         disabled={isSubmitting}
-        className="w-full"
+        className={cn(
+          "w-full transition-all",
+          isMobile && "h-12 text-lg mt-4"
+        )}
       >
         {isSubmitting ? "Adding Payment..." : "Add Payment"}
       </Button>
