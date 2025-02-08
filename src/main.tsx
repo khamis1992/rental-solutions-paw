@@ -34,8 +34,8 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <ThemeProvider defaultTheme="light" attribute="class">
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" attribute="class">
         <ErrorBoundary>
           <SessionContextProvider supabaseClient={supabase}>
             <TooltipProvider>
@@ -45,7 +45,7 @@ root.render(
             </TooltipProvider>
           </SessionContextProvider>
         </ErrorBoundary>
-      </QueryClientProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );
