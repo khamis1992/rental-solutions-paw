@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,7 @@ const MetricCard = ({ title, value, icon, trend, className }: MetricCardProps) =
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-xl font-bold">{value}</p>
           {trend !== undefined && (
             <p className={`text-sm ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
@@ -211,3 +212,4 @@ export const CarInstallmentContracts = () => {
     </div>
   );
 };
+
