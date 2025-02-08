@@ -32,7 +32,9 @@ root.render(
       <QueryClientProvider client={queryClient}>
         <SessionContextProvider supabaseClient={supabase}>
           <ThemeProvider defaultTheme="light" storageKey="app-theme">
-            <App />
+            <TooltipProvider>
+              <App />
+            </TooltipProvider>
           </ThemeProvider>
         </SessionContextProvider>
       </QueryClientProvider>
