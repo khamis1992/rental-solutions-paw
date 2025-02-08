@@ -21,7 +21,17 @@ export const DashboardStats = () => {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_dashboard_stats");
       if (error) throw error;
-      return data as DashboardStatsData;
+      
+      // Ensure we convert the snake_case response to camelCase and handle potential null values
+      return {
+        totalVehicles: Number(data.total_vehicles) || 0,
+        availableVehicles: Number(data.available_vehicles) || 0,
+        rentedVehicles: Number(data.rented_vehicles) || 0,
+        maintenanceVehicles: Number(data.maintenance_vehicles) || 0,
+        totalCustomers: Number(data.total_customers) || 0,
+        activeRentals: Number(data.active_rentals) || 0,
+        monthlyRevenue: Number(data.monthly_revenue) || 0
+      } as DashboardStatsData;
     },
     placeholderData: {
       totalVehicles: 0,
@@ -39,14 +49,15 @@ export const DashboardStats = () => {
     return ((value / total) * 100).toFixed(1);
   };
 
-  const availablePercentage = calculatePercentage(stats.availableVehicles, stats.totalVehicles);
-  const rentedPercentage = calculatePercentage(stats.rentedVehicles, stats.totalVehicles);
+  // Ensure stats is defined before calculating percentages
+  const availablePercentage = calculatePercentage(stats?.availableVehicles || 0, stats?.totalVehicles || 0);
+  const rentedPercentage = calculatePercentage(stats?.rentedVehicles || 0, stats?.totalVehicles || 0);
 
   return (
     <>
       <StatsCard
         title="Total Fleet"
-        value={stats.totalVehicles.toString()}
+        value={stats?.totalVehicles?.toString() || "0"}
         icon={Car}
         description={
           <div className="flex items-center gap-1 text-emerald-600">
@@ -59,7 +70,7 @@ export const DashboardStats = () => {
 
       <StatsCard
         title="Active Rentals"
-        value={stats.activeRentals.toString()}
+        value={stats?.activeRentals?.toString() || "0"}
         icon={FileText}
         description={
           <div className="flex items-center gap-1 text-blue-600">
@@ -72,7 +83,7 @@ export const DashboardStats = () => {
 
       <StatsCard
         title="Total Customers"
-        value={stats.totalCustomers.toString()}
+        value={stats?.totalCustomers?.toString() || "0"}
         icon={Users}
         description={
           <div className="flex items-center gap-1 text-emerald-600">
@@ -85,7 +96,7 @@ export const DashboardStats = () => {
 
       <StatsCard
         title="Monthly Revenue"
-        value={formatCurrency(stats.monthlyRevenue)}
+        value={formatCurrency(stats?.monthlyRevenue || 0)}
         icon={DollarSign}
         description={
           <div className="flex items-center gap-1 text-amber-600">
