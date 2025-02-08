@@ -137,3 +137,4 @@ export const CustomerCard = ({ customer, onClick, onDeleted }: CustomerCardProps
     </div>
   );
 };
+

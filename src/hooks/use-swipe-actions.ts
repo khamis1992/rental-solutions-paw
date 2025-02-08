@@ -55,3 +55,4 @@ export const useSwipeActions = ({ onDelete, onEdit, threshold = 100 }: SwipeActi
     resetSwipe: () => setSwipeOffset(0),
   };
 };
+
