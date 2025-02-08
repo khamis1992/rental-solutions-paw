@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,14 +38,14 @@ const MetricCard = ({ title, value, icon, trend, className }: MetricCardProps) =
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-xl font-bold">{value}</p>
+          <p className="text-lg font-bold">{value}</p>
           {trend !== undefined && (
             <p className={`text-sm ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
             </p>
           )}
         </div>
-        <div className="p-3 bg-primary/10 rounded-full">
+        <div className="p-3 rounded-full bg-primary/10">
           {icon}
         </div>
       </div>
@@ -106,28 +105,28 @@ export const CarInstallmentContracts = () => {
           value={metrics.activeContracts.toString()}
           icon={<Car className="h-6 w-6 text-primary" />}
           trend={5}
-          className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/50 dark:to-blue-900/30"
+          className="bg-gradient-to-br from-[#FDE1D3] to-[#FEC6A1] dark:from-orange-900/50 dark:to-orange-800/30"
         />
         <MetricCard
           title="Total Portfolio Value"
           value={formatCurrency(metrics.totalValue)}
           icon={<DollarSign className="h-6 w-6 text-primary" />}
           trend={8}
-          className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-900/30"
+          className="bg-gradient-to-br from-[#FFDEE2] to-[#FFD1D8] dark:from-rose-900/50 dark:to-rose-800/30"
         />
         <MetricCard
           title="Total Collections"
           value={formatCurrency(metrics.totalPaid)}
           icon={<CreditCard className="h-6 w-6 text-primary" />}
           trend={-2}
-          className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/50 dark:to-purple-900/30"
+          className="bg-gradient-to-br from-[#D3E4FD] to-[#B6D4FA] dark:from-blue-900/50 dark:to-blue-800/30"
         />
         <MetricCard
           title="Upcoming Payments"
           value={formatCurrency(metrics.upcomingPayments)}
           icon={<ChartBar className="h-6 w-6 text-primary" />}
           trend={3}
-          className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/50 dark:to-orange-900/30"
+          className="bg-gradient-to-br from-[#E5DEFF] to-[#D3C6FF] dark:from-purple-900/50 dark:to-purple-800/30"
         />
       </div>
 
@@ -212,4 +211,3 @@ export const CarInstallmentContracts = () => {
     </div>
   );
 };
-
