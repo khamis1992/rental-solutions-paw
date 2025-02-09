@@ -17,7 +17,7 @@ if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
 
-// Configure query client with optimized caching settings
+// Configure query client with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,16 +27,15 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
-      networkMode: 'offlineFirst',
     },
   },
 });
 
 const Main = () => (
   <React.StrictMode>
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-        <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
           <SessionContextProvider supabaseClient={supabase}>
             <TooltipProvider>
               <ErrorBoundary>
@@ -44,9 +43,9 @@ const Main = () => (
               </ErrorBoundary>
             </TooltipProvider>
           </SessionContextProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+        </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>
 );
 
