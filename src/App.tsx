@@ -1,3 +1,4 @@
+
 import { Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
 
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
@@ -47,6 +49,7 @@ export default function App() {
     <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
       <div className="min-h-screen bg-background">
         <Toaster />
+        <PWAInstallPrompt />
         <Routes>
           {/* Public Routes - No Layout */}
           <Route
