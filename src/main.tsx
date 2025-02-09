@@ -4,9 +4,9 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { ThemeProvider } from '@/components/theme/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import App from './App.tsx';
 import './index.css';
@@ -34,18 +34,18 @@ const queryClient = new QueryClient({
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <SessionContextProvider supabaseClient={supabase}>
-          <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-            <ErrorBoundary>
-              <TooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <SessionContextProvider supabaseClient={supabase}>
+            <TooltipProvider>
+              <BrowserRouter>
                 <App />
-              </TooltipProvider>
-            </ErrorBoundary>
-          </ThemeProvider>
-        </SessionContextProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+              </BrowserRouter>
+            </TooltipProvider>
+          </SessionContextProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </QueryClientProvider>
   </React.StrictMode>
 );

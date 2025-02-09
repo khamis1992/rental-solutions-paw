@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Table,
@@ -124,14 +125,16 @@ export const CustomerList = () => {
           Customers
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className={cn(
+        isMobile ? "px-3 pb-24" : "p-6" // Added bottom padding for mobile pagination
+      )}>
         <CustomerFilters 
           onSearchChange={setSearchQuery}
           onRoleFilter={setRoleFilter}
         />
         
         {isMobile ? (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-3">
             {filteredCustomers.map((customer: Customer) => (
               <CustomerCard
                 key={customer.id}
@@ -170,11 +173,19 @@ export const CustomerList = () => {
           isMobile && "fixed bottom-4 left-0 right-0 px-4 z-10"
         )}>
           {isMobile ? (
-            <Card className="w-full p-4 shadow-lg">
+            <Card className="w-full p-4 shadow-lg bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
               <VehicleTablePagination
                 currentPage={currentPage + 1}
                 totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page - 1)}
+                onPageChange={(page) => {
+                  setCurrentPage(page - 1);
+                  // Smooth scroll to top on page change
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // Haptic feedback
+                  if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                  }
+                }}
               />
             </Card>
           ) : (
@@ -197,3 +208,4 @@ export const CustomerList = () => {
     </Card>
   );
 };
+

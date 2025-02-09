@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types";
 
 export type LeaseStatus = Database['public']['Enums']['lease_status'];
@@ -20,14 +19,12 @@ export interface Agreement {
   agreement_number: string | null;
   rent_amount: number;
   rent_due_day: number | null;
-  remaining_amount: number;
-  daily_late_fee: number;
+  remainingAmount: number;
   customer?: {
     id: string;
     full_name: string | null;
     phone_number: string | null;
     address: string | null;
-    nationality?: string | null;
   };
   vehicle?: {
     id: string;
@@ -36,4 +33,34 @@ export interface Agreement {
     year: number;
     license_plate: string;
   };
+}
+
+export interface AgreementDocument {
+  id: string;
+  lease_id: string;
+  document_type: string;
+  document_url: string;
+  uploaded_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface Payment {
+  id: string;
+  lease_id: string;
+  amount: number;
+  amount_paid: number;
+  balance: number;
+  payment_date: string | null;
+  transaction_id: string | null;
+  payment_method: string;
+  status: PaymentStatus;
+  description: string;
+  type: string;
+  late_fine_amount: number;
+  days_overdue: number;
+  is_recurring?: boolean;
+  security_deposit_id?: string;
+  created_at: string;
+  updated_at: string;
 }
