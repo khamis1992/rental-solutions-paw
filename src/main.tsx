@@ -32,10 +32,10 @@ const queryClient = new QueryClient({
   },
 });
 
-root.render(
+const Main = () => (
   <React.StrictMode>
-    <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
-      <BrowserRouter>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="light" storageKey="rental-solutions-theme">
         <QueryClientProvider client={queryClient}>
           <SessionContextProvider supabaseClient={supabase}>
             <TooltipProvider>
@@ -45,7 +45,9 @@ root.render(
             </TooltipProvider>
           </SessionContextProvider>
         </QueryClientProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
+
+root.render(<Main />);
