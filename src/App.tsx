@@ -11,6 +11,7 @@ import * as LazyComponents from "@/routes/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PWAInstallPrompt } from "@/components/ui/pwa-install-prompt";
+import { OfflinePage } from "@/components/offline/OfflinePage";
 
 export default function App() {
   const { session, isLoading, error } = useSessionContext();
@@ -52,6 +53,8 @@ export default function App() {
         <PWAInstallPrompt />
         <Routes>
           {/* Public Routes - No Layout */}
+          <Route path="/offline" element={<OfflinePage />} />
+          
           <Route
             path="/auth"
             element={
