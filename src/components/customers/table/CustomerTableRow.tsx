@@ -1,7 +1,15 @@
+
 import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2, UserCircle } from "lucide-react";
+import { 
+  Trash2, 
+  UserCircle, 
+  Phone,
+  MapPin,
+  FileCheck,
+  AlertCircle
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -16,6 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Customer } from "../types/customer";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface CustomerTableRowProps {
   customer: Customer;
@@ -48,73 +58,116 @@ export const CustomerTableRow = ({ customer, onDeleted, onClick }: CustomerTable
     }
   };
 
-  const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'pending_review':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
     <>
       <TableRow 
-        className="hover:bg-muted/50 cursor-pointer transition-colors text-sm"
+        className="hover:bg-muted/50 cursor-pointer transition-colors text-sm group"
         onClick={onClick}
       >
-        <TableCell className="py-2">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-              <UserCircle className="w-4 h-4 text-primary" />
+        <TableCell className="py-3">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center",
+              "group-hover:scale-105 transition-transform"
+            )}>
+              <UserCircle className="w-5 h-5 text-primary" />
             </div>
-            <div>
-              <div className="font-medium">{customer.full_name}</div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <div className="font-medium">{customer.full_name}</div>
+              </div>
               <div className="text-xs text-muted-foreground">{customer.email}</div>
             </div>
           </div>
         </TableCell>
-        <TableCell className="py-2 text-sm">{customer.phone_number}</TableCell>
-        <TableCell className="max-w-[200px] truncate py-2 text-sm">{customer.address}</TableCell>
-        <TableCell className="py-2 text-sm">{customer.driver_license}</TableCell>
-        <TableCell className="py-2">
-          <div className="flex gap-1">
-            {customer.id_document_url && (
-              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                ID
-              </Badge>
-            )}
-            {customer.license_document_url && (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                License
-              </Badge>
-            )}
+        <TableCell className="py-3">
+          <div className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            {customer.phone_number}
           </div>
         </TableCell>
-        <TableCell className="py-2">
-          <Badge 
-            variant="outline" 
-            className={`text-xs ${getStatusColor(customer.status)}`}
-          >
-            {customer.status?.replace('_', ' ') || 'N/A'}
-          </Badge>
+        <TableCell className="max-w-[200px] truncate py-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            {customer.address}
+          </div>
         </TableCell>
-        <TableCell className="py-2">
-          <div className="flex items-center justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteDialog(true);
-              }}
-              disabled={isDeleting}
-              className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+        <TableCell className="py-3">
+          <div className="flex items-center gap-2">
+            <FileCheck className="h-4 w-4 text-muted-foreground" />
+            {customer.driver_license}
+          </div>
+        </TableCell>
+        <TableCell className="py-3">
+          <div className="flex gap-2">
+            <TooltipProvider>
+              {customer.id_document_url ? (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <FileCheck className="h-3 w-3 mr-1" />
+                      ID
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>ID Document Available</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      ID
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>ID Document Missing</TooltipContent>
+                </Tooltip>
+              )}
+
+              {customer.license_document_url ? (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <FileCheck className="h-3 w-3 mr-1" />
+                      License
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>License Document Available</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      License
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>License Document Missing</TooltipContent>
+                </Tooltip>
+              )}
+            </TooltipProvider>
+          </div>
+        </TableCell>
+        <TableCell className="py-3">
+          <div className="flex items-center justify-end gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteDialog(true);
+                    }}
+                    disabled={isDeleting}
+                    className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete Customer</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </TableCell>
       </TableRow>

@@ -1657,6 +1657,57 @@ export type Database = {
           },
         ]
       }
+      customer_status_logs: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          new_status: Database["public"]["Enums"]["customer_status_type"]
+          notes: string | null
+          previous_status:
+            | Database["public"]["Enums"]["customer_status_type"]
+            | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          new_status: Database["public"]["Enums"]["customer_status_type"]
+          notes?: string | null
+          previous_status?:
+            | Database["public"]["Enums"]["customer_status_type"]
+            | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["customer_status_type"]
+          notes?: string | null
+          previous_status?:
+            | Database["public"]["Enums"]["customer_status_type"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_status_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_status_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       damages: {
         Row: {
           created_at: string
@@ -2395,6 +2446,7 @@ export type Database = {
           ownership_transferred: boolean | null
           payment_frequency: string | null
           payment_status: string | null
+          remaining_amount: number | null
           rent_amount: number | null
           rent_due_day: number | null
           return_date: string | null
@@ -2440,6 +2492,7 @@ export type Database = {
           ownership_transferred?: boolean | null
           payment_frequency?: string | null
           payment_status?: string | null
+          remaining_amount?: number | null
           rent_amount?: number | null
           rent_due_day?: number | null
           return_date?: string | null
@@ -2485,6 +2538,7 @@ export type Database = {
           ownership_transferred?: boolean | null
           payment_frequency?: string | null
           payment_status?: string | null
+          remaining_amount?: number | null
           rent_amount?: number | null
           rent_due_day?: number | null
           return_date?: string | null
@@ -7172,6 +7226,7 @@ export type Database = {
         | "terminated"
         | "cancelled"
         | "archived"
+        | "completed"
       legal_case_status:
         | "pending_reminder"
         | "in_legal_process"
