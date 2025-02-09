@@ -32,11 +32,16 @@ const ComponentLoader = ({ componentName }: { componentName: string }) => (
 const Index = () => {
   usePerformanceMonitoring();
 
-  const { data: fetchedStats } = useQuery({
+  const { data: fetchedStats, isLoading, error } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
+      console.log('Fetching dashboard stats...');
       const { data, error } = await supabase.functions.invoke('get-dashboard-stats');
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching dashboard stats:', error);
+        throw error;
+      }
+      console.log('Dashboard stats received:', data);
       return data as DashboardStats;
     }
   });
@@ -58,6 +63,10 @@ const Index = () => {
     activeRentals: 0,
     monthlyRevenue: 0
   };
+
+  if (error) {
+    console.error('Error in dashboard:', error);
+  }
 
   return (
     <DashboardLayout>
