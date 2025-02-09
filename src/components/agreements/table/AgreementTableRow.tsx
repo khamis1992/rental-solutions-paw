@@ -1,8 +1,9 @@
+
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDateToDisplay } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Trash2, Info } from "lucide-react";
+import { FileText, Trash2, Info, Shield, Clock, Ban, CheckCircle } from "lucide-react";
 import type { Agreement } from "@/types/agreement.types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -50,6 +51,21 @@ export const AgreementTableRow = ({
         return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-400';
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-400';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Shield className="h-3 w-3 text-emerald-600" />;
+      case 'pending_payment':
+        return <Clock className="h-3 w-3 text-amber-600" />;
+      case 'terminated':
+        return <Ban className="h-3 w-3 text-red-600" />;
+      case 'completed':
+        return <CheckCircle className="h-3 w-3 text-blue-600" />;
+      default:
+        return null;
     }
   };
 
@@ -118,8 +134,9 @@ export const AgreementTableRow = ({
       <TableCell>
         <Badge 
           variant="outline" 
-          className={`capitalize ${getStatusColor(agreement.status)} border px-3 py-1`}
+          className={`capitalize ${getStatusColor(agreement.status)} border px-3 py-1 flex items-center gap-1.5`}
         >
+          {getStatusIcon(agreement.status)}
           {agreement.status}
         </Badge>
       </TableCell>
