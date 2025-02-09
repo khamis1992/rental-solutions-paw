@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FinancialMetricsCard } from "./charts/FinancialMetricsCard";
@@ -8,6 +7,8 @@ import { QuickActionsPanel } from "./QuickActionsPanel";
 import { Loader2 } from "lucide-react";
 import { Transaction } from "./types/transaction.types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface RawTransaction {
   id: string;
@@ -21,6 +22,8 @@ interface RawTransaction {
 }
 
 export const FinancialDashboard = () => {
+  const isMobile = useIsMobile();
+
   const { data: rawData, isLoading } = useQuery({
     queryKey: ["financial-metrics"],
     queryFn: async () => {
@@ -37,7 +40,6 @@ export const FinancialDashboard = () => {
     },
   });
 
-  // Initialize as empty array if null/undefined and ensure proper type conversion
   const financialData: Transaction[] = Array.isArray(rawData) ? rawData.map(transaction => ({
     ...transaction,
     amount: typeof transaction.amount === 'string' ? parseFloat(transaction.amount) : transaction.amount
@@ -51,7 +53,6 @@ export const FinancialDashboard = () => {
     );
   }
 
-  // Process data for different visualizations
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -95,14 +96,43 @@ export const FinancialDashboard = () => {
     ((currentMonthExpenses - previousMonthExpenses) / previousMonthExpenses) * 100;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="virtual-cfo">Virtual CFO</TabsTrigger>
+        <TabsList className={cn(
+          "w-full justify-start overflow-x-auto no-scrollbar",
+          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          "border-b rounded-none p-0 h-auto",
+          isMobile ? "sticky top-[57px] z-10" : ""
+        )}>
+          <div className="flex">
+            <TabsTrigger 
+              value="overview"
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 min-h-[44px]",
+                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-50 data-[state=active]:to-blue-100",
+                "data-[state=active]:dark:from-blue-900/50 data-[state=active]:dark:to-blue-900/30",
+                "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                "transition-all duration-200 ease-in-out rounded-none"
+              )}
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="virtual-cfo"
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 min-h-[44px]",
+                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-50 data-[state=active]:to-purple-100",
+                "data-[state=active]:dark:from-purple-900/50 data-[state=active]:dark:to-purple-900/30",
+                "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                "transition-all duration-200 ease-in-out rounded-none"
+              )}
+            >
+              Virtual CFO
+            </TabsTrigger>
+          </div>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-8">
+        <TabsContent value="overview" className="space-y-6 md:space-y-8 animate-fade-in">
           <div className="grid gap-4 md:grid-cols-3">
             <FinancialMetricsCard
               title="Monthly Revenue"
@@ -140,7 +170,7 @@ export const FinancialDashboard = () => {
           />
         </TabsContent>
 
-        <TabsContent value="virtual-cfo">
+        <TabsContent value="virtual-cfo" className="animate-fade-in">
           <VirtualCFO />
         </TabsContent>
       </Tabs>

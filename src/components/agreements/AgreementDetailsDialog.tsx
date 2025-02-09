@@ -12,7 +12,7 @@ import { VehicleInfoCard } from "./details/VehicleInfoCard";
 import { PaymentHistory } from "./details/PaymentHistory";
 import { useAgreementDetails } from "./hooks/useAgreementDetails";
 import { LeaseStatus } from "@/types/agreement.types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -34,10 +34,15 @@ import {
   UserCircle,
   CreditCard,
   FileCheck,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useTouchGestures } from "@/hooks/use-touch-gestures";
+import { cn } from "@/lib/utils";
 
 interface AgreementDetailsDialogProps {
   agreementId: string;
@@ -56,6 +61,27 @@ export const AgreementDetailsDialog = ({
   const [duration, setDuration] = useState(0);
   const [contractValue, setContractValue] = useState(0);
   const [rentAmount, setRentAmount] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState("payments");
+  const isMobile = useIsMobile();
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Setup touch gestures for tab navigation
+  useTouchGestures(contentRef, {
+    onSwipeLeft: () => {
+      const tabs = ["payments", "payment-history", "invoices", "documents", "damages", "fines"];
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1]);
+      }
+    },
+    onSwipeRight: () => {
+      const tabs = ["payments", "payment-history", "invoices", "documents", "damages", "fines"];
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex > 0) {
+        setActiveTab(tabs[currentIndex - 1]);
+      }
+    },
+  });
 
   useEffect(() => {
     if (agreement) {
@@ -168,29 +194,42 @@ export const AgreementDetailsDialog = ({
     remainingAmount: remainingAmount
   } : undefined;
 
-  const getStatusColor = (status: LeaseStatus) => {
-    switch (status) {
-      case 'active':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'pending_payment':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'terminated':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Agreement Details
-          </DialogTitle>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      modal
+      className={cn(
+        isMobile && "fixed inset-0 w-full h-full p-0"
+      )}
+    >
+      <DialogContent 
+        ref={contentRef}
+        className={cn(
+          "max-w-4xl max-h-[90vh] overflow-y-auto",
+          isMobile && "h-[100vh] w-full max-w-none rounded-none p-0 pt-safe-top pb-safe-bottom"
+        )}
+      >
+        <DialogHeader className={cn(
+          "p-6",
+          isMobile && "sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        )}>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Agreement Details
+            </DialogTitle>
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
           <DialogDescription>
             View and manage agreement details, payments, and related information.
           </DialogDescription>
@@ -202,16 +241,24 @@ export const AgreementDetailsDialog = ({
             <span className="ml-2">Loading agreement details...</span>
           </div>
         ) : agreement ? (
-          <div className="space-y-6">
-            <div className="flex justify-between items-start">
+          <div className={cn(
+            "space-y-6",
+            isMobile && "px-4"
+          )}>
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4">
               <AgreementHeader 
                 agreement={mappedAgreement}
                 remainingAmount={remainingAmount}
               />
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-end gap-2 w-full md:w-auto">
                 <Badge 
                   variant="outline" 
-                  className={`${getStatusColor(agreement.status as LeaseStatus)} px-4 py-2 text-sm flex items-center gap-2`}
+                  className={cn(
+                    "px-4 py-2 text-sm flex items-center gap-2 w-full md:w-auto justify-center",
+                    agreement.status === 'active' && "bg-green-100 text-green-800 border-green-200",
+                    agreement.status === 'pending_payment' && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                    agreement.status === 'terminated' && "bg-red-100 text-red-800 border-red-200"
+                  )}
                 >
                   <ShieldCheck className="h-4 w-4" />
                   {agreement.status}
@@ -231,7 +278,7 @@ export const AgreementDetailsDialog = ({
                     <CalendarCheck className="h-5 w-5" />
                     Agreement Duration
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <DateInput
                       label="Start Date"
                       value={startDate}
@@ -258,7 +305,7 @@ export const AgreementDetailsDialog = ({
                     <Calculator className="h-5 w-5" />
                     Financial Details
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="rent_amount">Rent Amount (QAR)</Label>
                       <div className="relative">
@@ -297,7 +344,7 @@ export const AgreementDetailsDialog = ({
               </Card>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <CustomerInfoCard customer={agreement.customer} />
               <VehicleInfoCard 
                 vehicle={agreement.vehicle}
@@ -305,52 +352,136 @@ export const AgreementDetailsDialog = ({
               />
             </div>
 
-            <Tabs defaultValue="payments" className="w-full">
-              <TabsList className="grid grid-cols-6 gap-4 w-full">
-                <TabsTrigger value="payments" className="flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Payments
-                </TabsTrigger>
-                <TabsTrigger value="payment-history" className="flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  History
-                </TabsTrigger>
-                <TabsTrigger value="invoices" className="flex items-center gap-2">
-                  <FileCheck className="h-4 w-4" />
-                  Invoices
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  Documents
-                </TabsTrigger>
-                <TabsTrigger value="damages" className="flex items-center gap-2">
-                  <Car className="h-4 w-4" />
-                  Damages
-                </TabsTrigger>
-                <TabsTrigger value="fines" className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Fines
-                </TabsTrigger>
+            <Tabs 
+              value={activeTab} 
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList 
+                className={cn(
+                  "w-full justify-start overflow-x-auto no-scrollbar",
+                  "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                  "border-b rounded-none p-0 h-auto",
+                  isMobile ? "sticky top-0 z-10" : ""
+                )}
+              >
+                <div className="flex min-w-full">
+                  <TabsTrigger 
+                    value="payments" 
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3",
+                      "data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-50 data-[state=active]:to-purple-100",
+                      "data-[state=active]:dark:from-purple-900/50 data-[state=active]:dark:to-purple-900/30",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                      "transition-all duration-200 ease-in-out",
+                      "rounded-none",
+                      isMobile ? "flex-1 min-w-[120px]" : "min-w-0"
+                    )}
+                  >
+                    <Receipt className="h-4 w-4" />
+                    <span className={cn(isMobile && "text-sm")}>Payments</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="payment-history"
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3",
+                      "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-50 data-[state=active]:to-blue-100",
+                      "data-[state=active]:dark:from-blue-900/50 data-[state=active]:dark:to-blue-900/30",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                      "transition-all duration-200 ease-in-out",
+                      "rounded-none",
+                      isMobile ? "flex-1 min-w-[120px]" : "min-w-0"
+                    )}
+                  >
+                    <History className="h-4 w-4" />
+                    <span className={cn(isMobile && "text-sm")}>History</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="invoices"
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3",
+                      "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-50 data-[state=active]:to-green-100",
+                      "data-[state=active]:dark:from-green-900/50 data-[state=active]:dark:to-green-900/30",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                      "transition-all duration-200 ease-in-out",
+                      "rounded-none",
+                      isMobile ? "flex-1 min-w-[120px]" : "min-w-0"
+                    )}
+                  >
+                    <FileCheck className="h-4 w-4" />
+                    <span className={cn(isMobile && "text-sm")}>Invoices</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="documents"
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3",
+                      "data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-50 data-[state=active]:to-yellow-100",
+                      "data-[state=active]:dark:from-yellow-900/50 data-[state=active]:dark:to-yellow-900/30",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                      "transition-all duration-200 ease-in-out",
+                      "rounded-none",
+                      isMobile ? "flex-1 min-w-[120px]" : "min-w-0"
+                    )}
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span className={cn(isMobile && "text-sm")}>Documents</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="damages"
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3",
+                      "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-50 data-[state=active]:to-red-100",
+                      "data-[state=active]:dark:from-red-900/50 data-[state=active]:dark:to-red-900/30",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                      "transition-all duration-200 ease-in-out",
+                      "rounded-none",
+                      isMobile ? "flex-1 min-w-[120px]" : "min-w-0"
+                    )}
+                  >
+                    <Car className="h-4 w-4" />
+                    <span className={cn(isMobile && "text-sm")}>Damages</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="fines"
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-3",
+                      "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-50 data-[state=active]:to-orange-100",
+                      "data-[state=active]:dark:from-orange-900/50 data-[state=active]:dark:to-orange-900/30",
+                      "data-[state=active]:border-b-2 data-[state=active]:border-primary",
+                      "transition-all duration-200 ease-in-out",
+                      "rounded-none",
+                      isMobile ? "flex-1 min-w-[120px]" : "min-w-0"
+                    )}
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className={cn(isMobile && "text-sm")}>Fines</span>
+                  </TabsTrigger>
+                </div>
               </TabsList>
               
-              <TabsContent value="payments" className="mt-6">
-                <PaymentForm agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="payment-history" className="mt-6">
-                <PaymentHistory agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="invoices" className="mt-6">
-                <InvoiceList agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="documents" className="mt-6">
-                <DocumentUpload agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="damages" className="mt-6">
-                <DamageAssessment agreementId={agreementId} />
-              </TabsContent>
-              <TabsContent value="fines" className="mt-6">
-                <TrafficFines agreementId={agreementId} />
-              </TabsContent>
+              <div className={cn(
+                "mt-6",
+                isMobile && "px-4"
+              )}>
+                <TabsContent value="payments" className="animate-fade-in">
+                  <PaymentForm agreementId={agreementId} />
+                </TabsContent>
+                <TabsContent value="payment-history" className="animate-fade-in">
+                  <PaymentHistory agreementId={agreementId} />
+                </TabsContent>
+                <TabsContent value="invoices" className="animate-fade-in">
+                  <InvoiceList agreementId={agreementId} />
+                </TabsContent>
+                <TabsContent value="documents" className="animate-fade-in">
+                  <DocumentUpload agreementId={agreementId} />
+                </TabsContent>
+                <TabsContent value="damages" className="animate-fade-in">
+                  <DamageAssessment agreementId={agreementId} />
+                </TabsContent>
+                <TabsContent value="fines" className="animate-fade-in">
+                  <TrafficFines agreementId={agreementId} />
+                </TabsContent>
+              </div>
             </Tabs>
           </div>
         ) : (

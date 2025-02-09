@@ -2,6 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Phone, MapPin, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CustomerInfoCardProps {
   customer: {
@@ -13,10 +15,15 @@ interface CustomerInfoCardProps {
 }
 
 export const CustomerInfoCard = ({ customer }: CustomerInfoCardProps) => {
+  const isMobile = useIsMobile();
+
   return (
-    <Card>
+    <Card className={cn(
+      "transition-all duration-300 ease-in-out hover:shadow-md",
+      isMobile && "touch-pan-y active:scale-[0.99]"
+    )}>
       <CardContent className="pt-6">
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-6">
           <h3 className="text-lg font-semibold">Customer Information</h3>
           {customer?.status && (
             <Badge 
