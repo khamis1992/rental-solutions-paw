@@ -1,3 +1,4 @@
+
 export interface DashboardStats {
   total_vehicles: number;
   available_vehicles: number;

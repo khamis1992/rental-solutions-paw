@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 
 export type LeaseStatus = Database['public']['Enums']['lease_status'];
@@ -52,7 +53,7 @@ export interface Template {
 
 export interface Agreement {
   id: string;
-  agreement_number: string;
+  agreement_number: string | null;
   agreement_type: AgreementType;
   customer_id: string;
   vehicle_id: string;
@@ -63,16 +64,16 @@ export interface Agreement {
   initial_mileage: number;
   return_mileage: number | null;
   notes: string | null;
-  created_at: string;
-  updated_at: string;
   rent_amount: number;
   remaining_amount: number;
   daily_late_fee: number;
-  payment_status: string;
-  last_payment_date: string | null;
-  next_payment_date: string | null;
-  payment_frequency: string;
+  payment_status?: string;
+  last_payment_date?: string | null;
+  next_payment_date?: string | null;
+  payment_frequency?: string;
   template_id?: string;
+  created_at: string;
+  updated_at: string;
   customer?: {
     id: string;
     full_name: string | null;
@@ -92,46 +93,64 @@ export interface Agreement {
   }[];
 }
 
-export interface AgreementWithRelations extends Agreement {
-  customer?: {
-    id: string;
-    full_name: string | null;
-    phone_number: string | null;
-    email: string | null;
-    address: string | null;
-    nationality: string | null;
-    driver_license: string | null;
-  };
-  vehicle?: {
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    color: string | null;
-    license_plate: string;
-    vin: string;
-  };
-  agreement_templates?: {
-    content: string;
-  };
-}
-
 export interface Payment {
   id: string;
   lease_id: string;
   amount: number;
   amount_paid: number;
   balance: number;
+  status: PaymentStatus;
   payment_date: string | null;
   transaction_id: string | null;
   payment_method: string;
-  status: PaymentStatus;
-  description: string;
+  security_deposit_id: string | null;
+  created_at: string;
+  updated_at: string;
+  description: string | null;
+  is_recurring: boolean;
+  recurring_interval?: string | null;
+  next_payment_date?: string | null;
   type: string;
   late_fine_amount: number;
   days_overdue: number;
-  is_recurring?: boolean;
-  security_deposit_id?: string;
-  created_at: string;
-  updated_at: string;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: 'INCOME' | 'EXPENSE';
+  transaction_date: string;
+  description: string;
+  status: string;
+  category: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface MaintenanceStatus {
+  status: 'cancelled' | 'completed' | 'scheduled' | 'in_progress' | 'urgent' | 'accident';
+}
+
+export interface DashboardStats {
+  total_vehicles: number;
+  available_vehicles: number;
+  rented_vehicles: number;
+  maintenance_vehicles: number;
+  total_customers: number;
+  active_rentals: number;
+  monthly_revenue: number;
+}
+
+export interface ReportSchedule {
+  id?: string;
+  report_type: string;
+  frequency: string;
+  format: string;
+  recipients: string[];
+  is_active?: boolean;
+  last_run_at?: string;
+  next_run_at?: string;
+  created_at?: string;
+  updated_at?: string;
 }

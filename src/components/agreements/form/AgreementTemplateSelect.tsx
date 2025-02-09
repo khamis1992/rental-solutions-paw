@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -36,8 +37,25 @@ export const AgreementTemplateSelect = ({ setValue }: AgreementTemplateSelectPro
         return [];
       }
 
-      console.log("Fetched templates:", data);
-      return data as Template[];
+      // Transform the raw data into Template type
+      const transformedTemplates: Template[] = data.map((template: any) => ({
+        ...template,
+        template_structure: {
+          textStyle: {
+            bold: false,
+            italic: false,
+            underline: false,
+            fontSize: 12,
+            alignment: 'left'
+          },
+          tables: []
+        },
+        template_sections: template.template_sections || [],
+        variable_mappings: template.variable_mappings || {}
+      }));
+
+      console.log("Fetched templates:", transformedTemplates);
+      return transformedTemplates;
     },
   });
 
