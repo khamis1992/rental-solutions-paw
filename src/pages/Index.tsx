@@ -5,6 +5,9 @@ import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AnomalyMonitoring } from "@/components/analytics/AnomalyMonitoring";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { DashboardStats } from "@/types/dashboard.types";
 
 const DashboardStats = lazy(() => import("@/components/dashboard/DashboardStats").then(module => ({ default: module.DashboardStats })));
 const DashboardAlerts = lazy(() => import("@/components/dashboard/DashboardAlerts").then(module => ({ default: module.DashboardAlerts })));
@@ -29,6 +32,15 @@ const ComponentLoader = ({ componentName }: { componentName: string }) => (
 const Index = () => {
   usePerformanceMonitoring();
 
+  const { data: stats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('get-dashboard-stats');
+      if (error) throw error;
+      return data as DashboardStats;
+    }
+  });
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-background">
@@ -48,7 +60,15 @@ const Index = () => {
               <div className="snap-x snap-mandatory -mx-4 px-4 pb-4 overflow-x-auto flex sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                    <DashboardStats />
+                    <DashboardStats stats={stats || {
+                      total_vehicles: 0,
+                      available_vehicles: 0,
+                      rented_vehicles: 0,
+                      maintenance_vehicles: 0,
+                      total_customers: 0,
+                      active_rentals: 0,
+                      monthly_revenue: 0
+                    }} />
                   </Suspense>
                 </ErrorBoundary>
               </div>
