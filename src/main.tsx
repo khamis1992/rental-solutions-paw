@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -33,15 +34,15 @@ const queryClient = new QueryClient({
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <SessionContextProvider supabaseClient={supabase}>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
+      <BrowserRouter>
+        <SessionContextProvider supabaseClient={supabase}>
+          <QueryClientProvider client={queryClient}>
             <TooltipProvider>
               <App />
             </TooltipProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </SessionContextProvider>
+          </QueryClientProvider>
+        </SessionContextProvider>
+      </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>
 );
