@@ -1,4 +1,3 @@
-
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useSessionContext } from "@supabase/auth-helpers-react";
@@ -6,22 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useEffect } from "react";
 
 export const AuthContainer = () => {
-  const { isLoading, session, error } = useSessionContext();
+  const { isLoading, session } = useSessionContext();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (error) {
-      if (error.message?.includes('invalid_credentials')) {
-        toast.error('Invalid login credentials. Please try again.');
-      } else {
-        toast.error('An error occurred while signing in.');
-      }
-    }
-  }, [error]);
 
   if (session) {
     navigate("/");
@@ -40,9 +27,8 @@ export const AuthContainer = () => {
   }
 
   return (
-    <Card className="p-6 max-w-md mx-auto">
+    <div>
       <div className="mb-4 text-center">
-        <h2 className="text-2xl font-bold text-primary mb-2">Welcome Back</h2>
         <p className="text-sm text-gray-600">Staff & Admin Login</p>
       </div>
       
@@ -95,6 +81,6 @@ export const AuthContainer = () => {
           }
         }}
       />
-    </Card>
+    </div>
   );
 };

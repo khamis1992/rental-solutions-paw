@@ -34,34 +34,30 @@ const Maintenance = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto space-y-6 px-4 py-6 sm:py-8">
-        {/* Header Section with Enhanced Mobile Gradient */}
-        <div className="rounded-lg bg-gradient-to-r from-orange-50/90 to-orange-100/90 dark:from-orange-900/20 dark:to-orange-800/20 p-4 sm:p-6 shadow-sm backdrop-blur-sm border border-orange-100/50 dark:border-orange-900/50">
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            {/* Title and Breadcrumb - Mobile Optimized */}
+      <div className="container mx-auto space-y-6 px-4 py-8">
+        {/* Header Section with Gradient */}
+        <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100 p-6 shadow-sm">
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+            {/* Title and Breadcrumb */}
             <div className="space-y-1">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span className="hidden sm:inline">Dashboard</span>
-                <ChevronRight className="h-4 w-4 hidden sm:inline" />
+                <span>Dashboard</span>
+                <ChevronRight className="h-4 w-4" />
                 <span>Maintenance</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Wrench className="h-6 w-6 text-primary animate-fade-in" />
-                <h1 className="text-2xl sm:text-3xl font-bold">Maintenance</h1>
+                <Wrench className="h-6 w-6 text-primary" />
+                <h1 className="text-3xl font-bold">Maintenance</h1>
               </div>
             </div>
             
-            {/* Quick Actions - Touch Optimized */}
+            {/* Quick Actions */}
             <div className="flex space-x-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="default"
-                      className="h-10 w-10 p-2 touch-target glass-hover"
-                    >
-                      <Settings className="h-5 w-5" />
+                    <Button variant="outline" size="sm" className="h-9">
+                      <Settings className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -73,9 +69,7 @@ const Maintenance = () => {
           </div>
         </div>
         
-        <div className="animate-fade-in">
-          <MaintenanceStats maintenanceData={maintenanceData || []} />
-        </div>
+        <MaintenanceStats maintenanceData={maintenanceData || []} />
         
         <div className="space-y-6">
           <MaintenanceAlerts />
