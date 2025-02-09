@@ -36,11 +36,11 @@ const MetricCard = ({ title, value, icon, trend, className }: MetricCardProps) =
   <Card className={`${className} transition-all duration-200 hover:shadow-md`}>
     <CardContent className="p-6">
       <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold">{value}</p>
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">{title}</p>
+          <p className="text-xl font-bold">{value}</p>
           {trend !== undefined && (
-            <p className={`text-sm ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            <p className={`text-xs ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
             </p>
           )}
