@@ -1,7 +1,6 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { Wrench, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Wrench, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 
 interface MaintenanceStatsProps {
   maintenanceData?: {
@@ -28,72 +27,52 @@ export const MaintenanceStats = ({ maintenanceData = [] }: MaintenanceStatsProps
     record.status?.toLowerCase() === 'urgent').length || 0;
 
   return (
-    <div className="grid gap-3 md:grid-cols-4">
-      <Card className="overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
-              <p className="text-xl font-bold">{formatCurrency(totalCost)}</p>
-            </div>
-            <div className="rounded-full bg-orange-100 p-2">
-              <Wrench className="h-5 w-5 text-orange-600" />
-            </div>
+    <div className="grid gap-4 md:grid-cols-4">
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Total Cost
+            </h3>
+            <Wrench className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-orange-100">
-            <div className="h-full w-1/2 animate-pulse bg-orange-500" />
-          </div>
+          <div className="text-2xl font-bold">{formatCurrency(totalCost)}</div>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium text-muted-foreground">Completed</p>
-              <p className="text-xl font-bold">{completedCount}</p>
-            </div>
-            <div className="rounded-full bg-green-100 p-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-            </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Completed
+            </h3>
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-green-100">
-            <div className="h-full w-1/2 animate-pulse bg-green-500" />
-          </div>
+          <div className="text-2xl font-bold">{completedCount}</div>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium text-muted-foreground">Pending</p>
-              <p className="text-xl font-bold">{pendingCount}</p>
-            </div>
-            <div className="rounded-full bg-blue-100 p-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-            </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Pending
+            </h3>
+            <Clock className="h-4 w-4 text-blue-500" />
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-blue-100">
-            <div className="h-full w-1/2 animate-pulse bg-blue-500" />
-          </div>
+          <div className="text-2xl font-bold">{pendingCount}</div>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium text-muted-foreground">Urgent</p>
-              <p className="text-xl font-bold">{urgentCount}</p>
-            </div>
-            <div className="rounded-full bg-red-100 p-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-            </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Urgent
+            </h3>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-red-100">
-            <div className="h-full w-1/2 animate-pulse bg-red-500" />
-          </div>
+          <div className="text-2xl font-bold">{urgentCount}</div>
         </CardContent>
       </Card>
     </div>

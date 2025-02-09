@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { UserCheck, UserPlus, Clock } from "lucide-react";
+import { UserCheck, UserPlus, UserClock, UserX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,14 +10,12 @@ export const CustomerStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["customer-stats"],
     queryFn: async () => {
-      // Get customers with active agreements
       const { data: activeCustomers, error: activeError } = await supabase
         .from("profiles")
-        .select("id, leases!inner(status)")
+        .select("id")
         .eq("role", "customer")
-        .eq("leases.status", "active");
+        .eq("status", "active");
 
-      // Get new customers in last 30 days
       const { data: newCustomers, error: newError } = await supabase
         .from("profiles")
         .select("id")
@@ -25,19 +23,25 @@ export const CustomerStats = () => {
         .eq("status", "pending_review")
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-      // Get pending review customers
       const { data: pendingCustomers, error: pendingError } = await supabase
         .from("profiles")
         .select("id")
         .eq("role", "customer")
         .eq("status", "pending_review");
 
-      if (activeError || newError || pendingError) throw new Error("Failed to fetch customer stats");
+      const { data: inactiveCustomers, error: inactiveError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "customer")
+        .eq("status", "inactive");
+
+      if (activeError || newError || pendingError || inactiveError) throw new Error("Failed to fetch customer stats");
 
       return {
         active: activeCustomers?.length || 0,
         new: newCustomers?.length || 0,
         pending: pendingCustomers?.length || 0,
+        inactive: inactiveCustomers?.length || 0,
       };
     },
   });
@@ -49,7 +53,7 @@ export const CustomerStats = () => {
       icon: UserCheck,
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
-      description: "Currently active agreements",
+      description: "Currently active customers",
     },
     {
       title: "New Customers",
@@ -62,17 +66,25 @@ export const CustomerStats = () => {
     {
       title: "Pending Review",
       value: stats?.pending || 0,
-      icon: Clock,
+      icon: UserClock,
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
       description: "Awaiting verification",
+    },
+    {
+      title: "Inactive Customers",
+      value: stats?.inactive || 0,
+      icon: UserX,
+      color: "text-gray-500",
+      bgColor: "bg-gray-500/10",
+      description: "Currently inactive accounts",
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
-        {[1, 2, 3].map((i) => (
+      <div className="grid gap-4 md:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="border shadow-sm">
             <CardContent className="p-6">
               <Skeleton className="h-4 w-24 mb-2" />
@@ -85,7 +97,7 @@ export const CustomerStats = () => {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-4">
       {statCards.map((stat) => (
         <Card 
           key={stat.title} 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,19 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { StickyNote, Plus, Trash2, Calendar, Loader2 } from "lucide-react";
+import { StickyNote, Plus, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface CustomerNotesProps {
   customerId: string;
@@ -27,7 +16,6 @@ interface CustomerNotesProps {
 export const CustomerNotes = ({ customerId }: CustomerNotesProps) => {
   const [newNote, setNewNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -96,8 +84,6 @@ export const CustomerNotes = ({ customerId }: CustomerNotesProps) => {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setNoteToDelete(null);
     }
   };
 
@@ -134,16 +120,9 @@ export const CustomerNotes = ({ customerId }: CustomerNotesProps) => {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !newNote.trim()}
-              className="flex-shrink-0"
             >
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Note
-                </>
-              )}
+              <Plus className="h-4 w-4 mr-2" />
+              Add Note
             </Button>
           </div>
 
@@ -151,18 +130,17 @@ export const CustomerNotes = ({ customerId }: CustomerNotesProps) => {
             {notes?.map((note) => (
               <div
                 key={note.id}
-                className="p-3 rounded-lg border bg-card relative group hover:shadow-md transition-all duration-200"
+                className="p-3 rounded-lg border bg-card relative group"
               >
                 <div className="text-sm">{note.note}</div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                  <Calendar className="h-3 w-3" />
+                <div className="text-xs text-muted-foreground mt-1">
                   {format(new Date(note.created_at), "PPp")}
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setNoteToDelete(note.id)}
+                  onClick={() => handleDelete(note.id)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -170,32 +148,11 @@ export const CustomerNotes = ({ customerId }: CustomerNotesProps) => {
             ))}
             {notes?.length === 0 && (
               <div className="text-center text-muted-foreground py-8">
-                <StickyNote className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 No notes yet
               </div>
             )}
           </div>
         </div>
-
-        <AlertDialog open={!!noteToDelete} onOpenChange={() => setNoteToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Note</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this note? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => noteToDelete && handleDelete(noteToDelete)}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </CardContent>
     </Card>
   );
