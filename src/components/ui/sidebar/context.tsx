@@ -5,7 +5,15 @@ import * as React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { SidebarContext, SidebarProviderProps } from "./types";
 
-const SidebarContext = React.createContext<SidebarContext | null>(null);
+const SidebarContext = React.createContext<SidebarContext>({
+  state: "expanded",
+  open: true,
+  setOpen: () => {},
+  isMobile: false,
+  openMobile: false,
+  setOpenMobile: () => {},
+  toggleSidebar: () => {},
+});
 
 export function useSidebar() {
   const context = React.useContext(SidebarContext);

@@ -51,6 +51,29 @@ export interface Template {
   variable_mappings: Record<string, any>;
 }
 
+export interface AgreementWithRelations extends Agreement {
+  customer?: {
+    id: string;
+    full_name: string | null;
+    phone_number: string | null;
+    email?: string | null;
+    status?: string;
+  };
+  vehicle?: {
+    id: string;
+    make: string;
+    model: string;
+    year: number;
+    license_plate: string;
+  };
+  agreement_templates?: {
+    content: string;
+  };
+  remaining_amounts?: {
+    remaining_amount: number;
+  }[];
+}
+
 export interface Agreement {
   id: string;
   agreement_number: string | null;
@@ -128,29 +151,11 @@ export interface Transaction {
   };
 }
 
-export interface MaintenanceStatus {
-  status: 'cancelled' | 'completed' | 'scheduled' | 'in_progress' | 'urgent' | 'accident';
-}
+export type MaintenanceStatus = 
+  | 'cancelled' 
+  | 'completed' 
+  | 'scheduled' 
+  | 'in_progress' 
+  | 'urgent' 
+  | 'accident';
 
-export interface DashboardStats {
-  total_vehicles: number;
-  available_vehicles: number;
-  rented_vehicles: number;
-  maintenance_vehicles: number;
-  total_customers: number;
-  active_rentals: number;
-  monthly_revenue: number;
-}
-
-export interface ReportSchedule {
-  id?: string;
-  report_type: string;
-  frequency: string;
-  format: string;
-  recipients: string[];
-  is_active?: boolean;
-  last_run_at?: string;
-  next_run_at?: string;
-  created_at?: string;
-  updated_at?: string;
-}

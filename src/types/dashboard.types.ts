@@ -10,5 +10,13 @@ export interface DashboardStats {
 }
 
 export interface DashboardStatsProps {
-  stats: DashboardStats;
+  stats: {
+    totalVehicles: number;
+    availableVehicles: number;
+    rentedVehicles: number;
+    maintenanceVehicles: number;
+    totalCustomers: number;
+    activeRentals: number;
+    monthlyRevenue: number;
+  };
 }

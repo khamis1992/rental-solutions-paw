@@ -32,32 +32,31 @@ const ComponentLoader = ({ componentName }: { componentName: string }) => (
 const Index = () => {
   usePerformanceMonitoring();
 
-  const { data: stats } = useQuery({
+  const { data: fetchedStats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('get-dashboard-stats');
       if (error) throw error;
-      const responseData = data as DashboardStats;
-      return {
-        total_vehicles: responseData.total_vehicles,
-        available_vehicles: responseData.available_vehicles,
-        rented_vehicles: responseData.rented_vehicles,
-        maintenance_vehicles: responseData.maintenance_vehicles,
-        total_customers: responseData.total_customers,
-        active_rentals: responseData.active_rentals,
-        monthly_revenue: responseData.monthly_revenue
-      };
+      return data as DashboardStats;
     }
   });
 
-  const defaultStats: DashboardStats = {
-    total_vehicles: 0,
-    available_vehicles: 0,
-    rented_vehicles: 0,
-    maintenance_vehicles: 0,
-    total_customers: 0,
-    active_rentals: 0,
-    monthly_revenue: 0
+  const stats = fetchedStats ? {
+    totalVehicles: fetchedStats.total_vehicles,
+    availableVehicles: fetchedStats.available_vehicles,
+    rentedVehicles: fetchedStats.rented_vehicles,
+    maintenanceVehicles: fetchedStats.maintenance_vehicles,
+    totalCustomers: fetchedStats.total_customers,
+    activeRentals: fetchedStats.active_rentals,
+    monthlyRevenue: fetchedStats.monthly_revenue
+  } : {
+    totalVehicles: 0,
+    availableVehicles: 0,
+    rentedVehicles: 0,
+    maintenanceVehicles: 0,
+    totalCustomers: 0,
+    activeRentals: 0,
+    monthlyRevenue: 0
   };
 
   return (
@@ -79,7 +78,7 @@ const Index = () => {
               <div className="snap-x snap-mandatory -mx-4 px-4 pb-4 overflow-x-auto flex sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <ErrorBoundary>
                   <Suspense fallback={<ComponentLoader componentName="Dashboard Stats" />}>
-                    <DashboardStats stats={stats || defaultStats} />
+                    <DashboardStats stats={stats} />
                   </Suspense>
                 </ErrorBoundary>
               </div>
