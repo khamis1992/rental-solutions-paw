@@ -7,6 +7,20 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "orientation": "any",
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/",
+      "description": "View your dashboard"
+    },
+    {
+      "name": "Vehicles",
+      "url": "/vehicles",
+      "description": "Manage vehicles"
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -20,5 +34,26 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Dashboard View"
+    }
+  ],
+  "prefer_related_applications": false,
+  "scope": "/",
+  "dir": "ltr",
+  "lang": "en",
+  "display_override": ["standalone", "browser"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "related_applications": [],
+  "features": [
+    "Cross Platform",
+    "Offline Support",
+    "Push Notifications"
   ]
 }
