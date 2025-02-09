@@ -1,8 +1,8 @@
+
 'use client';
 
 import * as React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import type { SidebarContext, SidebarProviderProps } from "./types";
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
@@ -67,20 +67,18 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
 
     return (
       <SidebarContext.Provider value={contextValue}>
-        <TooltipProvider delayDuration={0}>
-          <div
-            ref={ref}
-            style={{
-              "--sidebar-width": "16rem",
-              "--sidebar-width-icon": "3rem",
-              ...style,
-            } as React.CSSProperties}
-            className="group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
-            {...props}
-          >
-            {children}
-          </div>
-        </TooltipProvider>
+        <div
+          ref={ref}
+          style={{
+            "--sidebar-width": "16rem",
+            "--sidebar-width-icon": "3rem",
+            ...style,
+          } as React.CSSProperties}
+          className="group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar"
+          {...props}
+        >
+          {children}
+        </div>
       </SidebarContext.Provider>
     );
   }
